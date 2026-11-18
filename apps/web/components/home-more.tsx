@@ -279,9 +279,15 @@ export function TrustSection({ children }: { children?: ReactNode }) {
 export function RoutesSection({
   mine = null,
   flags = false,
+  links = true,
+  readyLead,
 }: {
   mine?: RouteKey | null;
   flags?: boolean;
+  /** The links to each route page (/how-it-works); the home has none (board 3c). Every Route stays on both. */
+  links?: boolean;
+  /** The home's own lead for the readiness statuses (the board's words); /how-it-works keeps its line. */
+  readyLead?: string;
 }) {
   const t = useT();
   const matches = (route: RouteKey) =>
@@ -296,18 +302,22 @@ export function RoutesSection({
           <strong>{flags ? <RouteLine route="china" /> : t('home.tr.door.china.route')}</strong>
           <span className="tr-status is-open">{t('home.tr.rs.open')}</span>
           <p>{t('home.tr.rs.china.text')}</p>
-          <Link prefetch={false} className="ac1-quiet" href="/corridors/bangladesh-china">
-            {t('home.tr.rs.page.china')} <Arrow />
-          </Link>
+          {links ? (
+            <Link prefetch={false} className="ac1-quiet" href="/corridors/bangladesh-china">
+              {t('home.tr.rs.page.china')} <Arrow />
+            </Link>
+          ) : null}
         </div>
         <div className={mine === 'sell' ? 'is-mine' : undefined}>
           {matches('sell')}
           <strong>{flags ? <RouteLine route="sell" /> : t('home.tr.door.sell.route')}</strong>
           <span className="tr-status is-open">{t('home.tr.rs.open')}</span>
           <p>{t('home.tr.rs.sell.text')}</p>
-          <Link prefetch={false} className="ac1-quiet" href="/corridors/bangladesh-eu">
-            {t('home.tr.rs.page.eu')} <Arrow />
-          </Link>
+          {links ? (
+            <Link prefetch={false} className="ac1-quiet" href="/corridors/bangladesh-eu">
+              {t('home.tr.rs.page.eu')} <Arrow />
+            </Link>
+          ) : null}
         </div>
         <div>
           <strong>{t('home.tr.rs.rev')}</strong>
@@ -323,7 +333,7 @@ export function RoutesSection({
         </div>
       </div>
       <div className="tr-ready">
-        <p>{t('home.tr.rs.ready')}</p>
+        <p>{readyLead ?? t('home.tr.rs.ready')}</p>
         <ul>
           {[1, 2, 3, 4, 5, 6].map((n) => (
             <li key={n} className="tr-ready-chip">
@@ -334,7 +344,13 @@ export function RoutesSection({
         <p>{t('home.tr.rs.ready.end')}</p>
       </div>
       <Link prefetch={false} className="ac1-quiet" href="/corridors">
-        {t('home.other.link')} <Arrow />
+        {t('home.other.link')}
+        {links ? (
+          <>
+            {' '}
+            <Arrow />
+          </>
+        ) : null}
       </Link>
       <h3 className="tr-h3">{t('home.tr.not.title')}</h3>
       <div className="tr-nots">

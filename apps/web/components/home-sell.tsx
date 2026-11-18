@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useId, useState } from 'react';
-import { Arrow } from './arrow';
 import { FactLabel } from './fact-label';
 import { ChoiceChip, ChoiceChipRow } from './ux/choice-chip';
 import { ExampleTag, Eyebrow } from './ux/example-tag';
@@ -204,9 +203,6 @@ export function HomeSell({
       </div>
 
       <Calculator market={market} />
-      <Link prefetch={false} className="primary-link" href={routeHref.sell}>
-        {t('home.tr.cta.sell')} <Arrow />
-      </Link>
     </section>
   );
 }
@@ -235,23 +231,31 @@ function Calculator({ market }: { market: MarketKey }) {
     meet: '',
   });
   // The currency follows the market until an amount is typed or the visitor chooses one; it never changes under typed
-  // numbers, so a figure never silently changes meaning.
+  // numbers, so a figure never silently changes meaning. Once every amount is cleared, it follows the market again.
   const [chosen, setChosen] = useState<CalculatorCurrency | null>(null);
-  const typed = (['stand', 'flight', 'hotel', 'samples'] as const).some((f) => values[f] !== '');
+  const [unreadable, setUnreadable] = useState<Partial<Record<FieldId, boolean>>>({});
+  const moneyFields = ['stand', 'flight', 'hotel', 'samples'] as const;
+  const typed = moneyFields.some((f) => values[f] !== '' || unreadable[f]);
   const [locked, setLocked] = useState<CalculatorCurrency | null>(null);
-  const currency: CalculatorCurrency = chosen ?? locked ?? marketCurrency[market];
-  const money = (n: number) => `${currency} ${number.format(Math.round(n))}`;
+  const currency: CalculatorCurrency =
+    chosen ?? (typed && locked ? locked : marketCurrency[market]);
+  const money = (n: number) => `${currency} ${number.format(n)}`;
 
   const errors: Partial<Record<FieldId, MessageKey>> = {};
   const read = (id: FieldId, whole: boolean): number => {
     const raw = values[id];
-    if (raw === '') return 0;
+    if (!unreadable[id] && raw === '') return 0;
     const x = Number(raw);
-    let error: MessageKey | null = null;
-    if (!Number.isFinite(x)) error = 'home.tr.fc.err.digits';
-    else if (x < 0) error = 'home.tr.fc.err.zero';
-    else if (whole && Math.floor(x) !== x) error = 'home.tr.fc.err.whole';
-    else if (x >= 1e11) error = 'home.tr.fc.err.large';
+    const error: MessageKey | null =
+      unreadable[id] || !Number.isFinite(x)
+        ? 'home.tr.fc.err.digits'
+        : x < 0
+          ? 'home.tr.fc.err.zero'
+          : whole && Math.floor(x) !== x
+            ? 'home.tr.fc.err.whole'
+            : x >= 1e11
+              ? 'home.tr.fc.err.large'
+              : null;
     if (error) {
       errors[id] = error;
       return 0;
@@ -260,18 +264,32 @@ function Calculator({ market }: { market: MarketKey }) {
   };
   const people = read('people', true);
   const days = read('days', true);
-  const stand = read('stand', false);
-  const flights = people * read('flight', false);
-  const hotel = people * days * read('hotel', false);
-  const samples = read('samples', false);
+  const rawStand = read('stand', false);
+  const rawFlights = people * read('flight', false);
+  const rawHotel = people * days * read('hotel', false);
+  const rawSamples = read('samples', false);
   const meetings = read('meet', true);
+  // Every line is rounded to a whole amount first and the total is the sum of the rounded lines, so the lines always
+  // add up to the total shown. A product or total too large to be real is not shown as a figure.
+  const tooLarge =
+    [rawStand, rawFlights, rawHotel, rawSamples].some((n) => n >= 1e11) ||
+    rawStand + rawFlights + rawHotel + rawSamples >= 1e11;
+  const round = (n: number) => (tooLarge ? 0 : Math.round(n));
+  const stand = round(rawStand);
+  const flights = round(rawFlights);
+  const hotel = round(rawHotel);
+  const samples = round(rawSamples);
   const total = stand + flights + hotel + samples;
   const left = fields.filter((f) => errors[f.id]).map((f) => t(f.label));
   const line = (n: number) => (n > 0 ? money(n) : t('home.tr.fc.b.none'));
-  const set = (id: FieldId, value: string) => {
-    setValues((current) => ({ ...current, [id]: value }));
-    if (!typed && !chosen && fields.find((f) => f.id === id)?.money && value !== '')
-      setLocked(marketCurrency[market]);
+  const set = (id: FieldId, value: string, bad: boolean) => {
+    const next = { ...values, [id]: value };
+    const nextBad = { ...unreadable, [id]: bad };
+    setValues(next);
+    setUnreadable(nextBad);
+    const stillTyped = moneyFields.some((f) => next[f] !== '' || nextBad[f]);
+    if (!stillTyped) setLocked(null);
+    else if (!locked && !chosen) setLocked(currency);
   };
   const half = Math.floor(meetings / 2);
   const note = chosen
@@ -318,7 +336,7 @@ function Calculator({ market }: { market: MarketKey }) {
                     unit={f.money ? currency : undefined}
                     whole={f.whole}
                     value={values[f.id]}
-                    onChange={(value) => set(f.id, value)}
+                    onChange={(value, bad) => set(f.id, value, bad)}
                     error={errors[f.id] ? t(errors[f.id]!) : null}
                   />
                 ))}
@@ -356,7 +374,7 @@ function Calculator({ market }: { market: MarketKey }) {
                   <dt>{t('home.tr.fc.b.meeting')}</dt>
                   <dd>
                     {total > 0 && meetings > 0
-                      ? money(total / meetings)
+                      ? line(Math.round(total / meetings))
                       : t('home.tr.fc.b.addMeet')}
                   </dd>
                 </div>
@@ -364,6 +382,7 @@ function Calculator({ market }: { market: MarketKey }) {
               {left.length ? (
                 <p className="tr-warn">{fill(t('home.tr.fc.left'), { names: left.join(', ') })}</p>
               ) : null}
+              {tooLarge ? <p className="tr-warn">{t('home.b3.fc.tooLarge')}</p> : null}
               <p className="tr-frame">
                 {total > 0
                   ? fill(t('home.tr.fc.frame.n'), { amount: money(total) })
@@ -373,9 +392,9 @@ function Calculator({ market }: { market: MarketKey }) {
                 <p className="tr-small">
                   {fill(t('home.tr.fc.half'), {
                     m: meetings,
-                    each: money(total / meetings),
+                    each: line(Math.round(total / meetings)),
                     half,
-                    each2: money(total / half),
+                    each2: line(Math.round(total / half)),
                   })}
                 </p>
               ) : null}
@@ -384,7 +403,7 @@ function Calculator({ market }: { market: MarketKey }) {
               ) : null}
               <p className="tr-small">{t('home.tr.fc.after')}</p>
               <Link prefetch={false} className="primary-link" href={routeHref.sell}>
-                {t('home.tr.fc.cta')} <Arrow />
+                {t('home.tr.fc.cta')}
               </Link>
             </div>
           </div>

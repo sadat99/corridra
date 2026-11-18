@@ -270,7 +270,12 @@ export function briefHref(goal: GoalKey | null, note: string): string {
   const query = new URLSearchParams();
   const job = goal ? goalJob[goal] : null;
   if (job) query.set('job', job);
-  const words = note.trim().slice(0, 1000);
+  // At most the notes field's 1000 units, cut between whole characters so no character is split in half.
+  let words = '';
+  for (const character of note.trim()) {
+    if (words.length + character.length > 1000) break;
+    words += character;
+  }
   if (words) query.set('note', words);
   const text = query.toString();
   return text ? `/plan?${text}` : '/plan';

@@ -20,26 +20,28 @@ const door = (page: Page, name: string | RegExp) =>
     .locator('xpath=following-sibling::label');
 const bar = (page: Page) => page.getByRole('group', { name: 'Choose which route this page shows' });
 const h2 = (page: Page, name: string) => page.getByRole('heading', { level: 2, name });
+// One route at a time: the route bar has no "All Routes" (board note: that view was for reviewers; Guardian 29).
+const routeButtons = ['China Route', 'Sell Abroad', 'Delegation', 'Something Else'] as const;
+const showRoute = (page: Page, name: (typeof routeButtons)[number]) =>
+  bar(page).getByRole('button', { name, exact: true }).click();
+const sectionIds = (page: Page) =>
+  page.evaluate(() => [...document.querySelectorAll('main section[id]')].map((s) => s.id));
 
 test('every product section of the board is on the home, in board order', async ({ page }) => {
   await page.goto('/');
-  await bar(page).getByRole('button', { name: 'All Routes' }).click();
-  const order = await page.evaluate(() =>
-    [...document.querySelectorAll('main section[id]')].map((s) => s.id),
-  );
-  expect(order).toEqual([
-    'hero',
-    'route-china',
-    'route-sell',
-    'route-delegation',
-    'how',
-    'brief',
-    'trust',
-    'who',
-    'faq',
-    'routes',
-    'final',
-  ]);
+  const shared = ['how', 'brief', 'trust', 'who', 'faq', 'routes', 'final'];
+  expect(await sectionIds(page)).toEqual(['hero', 'pick', ...shared]);
+  for (const [name, id] of [
+    ['China Route', 'route-china'],
+    ['Sell Abroad', 'route-sell'],
+    ['Delegation', 'route-delegation'],
+    ['Something Else', 'route-other'],
+  ] as const) {
+    await showRoute(page, name);
+    expect(await sectionIds(page)).toEqual(['hero', id, ...shared]);
+  }
+  await expect(bar(page).getByRole('button')).toHaveCount(4);
+  await expect(page.getByRole('button', { name: /All Routes|Show Every Route/ })).toHaveCount(0);
   await page.goto('/');
   await expect(page.locator('#pick')).toBeVisible();
   for (const title of [
@@ -128,21 +130,34 @@ test('the worked examples are open on the page, and every example is tagged Exam
   page,
 }) => {
   await page.goto('/');
-  await bar(page).getByRole('button', { name: 'All Routes' }).click();
-  await expect(page.locator('main details.tr-fold')).toHaveCount(0);
-  for (const name of [
-    'Three suppliers quote for the same machine. Which one is cheapest?',
-    'A factory-visit day, on two clocks.',
-    'What "comparable" means here.',
-    'Who is worth meeting?',
-    'What would one unproductive fair cost you?',
-  ])
-    await expect(page.getByRole('heading', { level: 3, name })).toBeVisible();
-  for (const id of ['route-china', 'route-sell', 'route-delegation', 'trust'])
+  await expect(page.locator('#trust .ac1-example-tag', { hasText: 'Example' })).toBeVisible();
+  for (const [name, id, headings] of [
+    [
+      'China Route',
+      'route-china',
+      [
+        'Three suppliers quote for the same machine. Which one is cheapest?',
+        'A factory-visit day, on two clocks.',
+        'What "comparable" means here.',
+      ],
+    ],
+    [
+      'Sell Abroad',
+      'route-sell',
+      ['Who is worth meeting?', 'What would one unproductive fair cost you?'],
+    ],
+    ['Delegation', 'route-delegation', []],
+  ] as const) {
+    await showRoute(page, name);
+    await expect(page.locator('main details.tr-fold')).toHaveCount(0);
+    for (const heading of headings)
+      await expect(page.getByRole('heading', { level: 3, name: heading })).toBeVisible();
     await expect(
       page.locator(`#${id} .ac1-example-tag`, { hasText: 'Example' }).first(),
     ).toBeVisible();
-  await expect(page.locator('#route-china article .ac1-example-tag')).toHaveCount(3);
+    if (id === 'route-china')
+      await expect(page.locator('#route-china article .ac1-example-tag')).toHaveCount(3);
+  }
 });
 
 test('the quote check reveals what each price leaves out, and I Cannot Tell Yet is the right answer', async ({
@@ -175,7 +190,7 @@ test('the market selector switches the shortlist, the calculator currency and on
     ['UK', 'Hallow and Finch Retail Ltd', 'GBP', 'The UK is read as a market of its own.'],
     ['US', 'Westbrine Apparel Inc', 'USD', 'The US is a big country to cover in one trip.'],
     ['Australia', 'Kestrel Bay Retail Pty Ltd', 'AUD', 'From Dhaka, Australia is a long trip.'],
-    ['Key Asian Markets', 'Larchmere Retail Pte Ltd', 'USD', 'Key Asian markets are several'],
+    ['Key Asian Markets', 'Larchmere Retail Pte Ltd', 'USD', 'Key Asian Markets are several'],
   ] as const) {
     await market
       .getByRole('radio', { name, exact: true })
@@ -288,10 +303,12 @@ test('with no support number set, no Talk or WhatsApp control is drawn (never a 
   page,
 }) => {
   await page.goto('/');
-  await bar(page).getByRole('button', { name: 'All Routes' }).click();
-  await expect(page.getByRole('link', { name: /Talk to/ })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: /WhatsApp/ })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /Talk to|WhatsApp|Send/ })).toHaveCount(0);
+  for (const name of routeButtons) {
+    await showRoute(page, name);
+    await expect(page.getByRole('link', { name: /Talk to/ })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /WhatsApp/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Talk to|WhatsApp|Send/ })).toHaveCount(0);
+  }
 });
 
 test('trust shows five labels and a correction as a new entry; the people work by arrow keys', async ({
@@ -301,7 +318,7 @@ test('trust shows five labels and a correction as a new entry; the people work b
   const trust = page.locator('#trust');
   await expect(trust.locator('.tr-five li')).toHaveCount(5);
   await expect(trust.getByText('New entry', { exact: true })).toBeVisible();
-  await expect(trust.getByRole('link', { name: 'Read the Proof Page' })).toHaveAttribute(
+  await expect(trust.getByRole('link', { name: 'How We Label Facts' })).toHaveAttribute(
     'href',
     '/trust',
   );
@@ -347,13 +364,226 @@ test('the phone start bar holds one action and its reassurance line, after the h
     'href',
     '/plan',
   );
-  await expect(group).toContainText('No account needed. Nothing is sent until you press Send.');
+  await expect(group).toContainText('No account needed. Stop any time.');
   // The page gains room at its foot while the bar shows, so the bar never covers content.
   await expect(page.locator('html')).toHaveAttribute('data-start-bar', 'on');
   await page.locator('#final').scrollIntoViewIfNeeded();
   await expect(quick).not.toHaveAttribute('data-on', 'true');
+  // Hidden, the bar is inert: nothing in it can be reached.
+  await expect(quick).toHaveAttribute('inert', '');
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(quick).toBeHidden();
+});
+
+test('at 390 two primary actions are never on screen at once, whichever route is open', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  for (const name of routeButtons) {
+    await showRoute(page, name);
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    for (let y = 0; y < height; y += 300) {
+      await page.evaluate((top) => scrollTo(0, top), y);
+      await page.waitForTimeout(60);
+      const shown = await page.evaluate(
+        () =>
+          [...document.querySelectorAll<HTMLElement>('.primary-link')].filter((el) => {
+            if (el.closest('.ux-start-bar:not([data-on="true"])')) return false;
+            const box = el.getBoundingClientRect();
+            return box.bottom > 0 && box.top < innerHeight && box.height > 0;
+          }).length,
+      );
+      const bar = await page.locator('.ux-start-bar').getAttribute('data-on');
+      if (bar === 'true') expect(shown, `${name} at ${y}`).toBe(1);
+    }
+  }
+});
+
+test('the four doors are on the first screen: both big doors start at 390, all four whole at 1440', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  for (const name of ['Buying from China', 'Sell Abroad'])
+    await expect(door(page, name)).toBeInViewport();
+  await expect(page.locator('.tr-hint')).toHaveCount(0);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  for (const name of ['Buying from China', 'Sell Abroad', 'Leading a delegation', 'Something else'])
+    await expect(door(page, name)).toBeInViewport({ ratio: 1 });
+  // The hero reads brand line, headline, lead, doors, then the one action and its reassurances.
+  const order = await page.evaluate(() =>
+    [
+      ...document.querySelectorAll(
+        '#hero .tr-brandline, #hero h1, #hero .tr-lead, #hero fieldset, #home-start',
+      ),
+    ].map((el) => el.tagName + (el.id ? '#' + el.id : '')),
+  );
+  expect(order).toEqual(['P', 'H1#home-title', 'P', 'FIELDSET', 'A#home-start']);
+});
+
+test('chosen states use the selected token and section titles use the section-title size', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await showRoute(page, 'Sell Abroad');
+  const selected = await page.evaluate(() => {
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--selected)';
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  });
+  const pressed = page.locator('.tr-bar-buttons button[aria-pressed="true"]');
+  expect(await pressed.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(selected);
+  const chip = page.getByRole('group', { name: 'Your market' }).locator('input:checked + label');
+  expect(await chip.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(selected);
+  const tab = page.getByRole('tab', { selected: true });
+  expect(await tab.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(selected);
+  expect(
+    await h2(page, 'A fair list is not a buyer list.').evaluate(
+      (el) => getComputedStyle(el).fontSize,
+    ),
+  ).toBe('24px');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await h2(page, 'A fair list is not a buyer list.').evaluate(
+      (el) => getComputedStyle(el).fontSize,
+    ),
+  ).toBe('22px');
+});
+
+test('one action per view, and no repeated block, control text or wrong promise', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const main = page.locator('main');
+  const text = await main.innerText();
+  // The full market list once in the hero lead and once in the routes block.
+  expect(
+    text.match(/the EU, the UK, the US, Australia and key Asian markets/g)?.length ?? 0,
+  ).toBeLessThanOrEqual(2);
+  expect(text).not.toContain('press Send');
+  expect(text.match(/Nothing is sent until you check your request/g)?.length).toBe(2);
+  await expect(page.locator('.tr-bar :not(.sr-only)', { hasText: 'Showing:' })).toHaveCount(0);
+  await expect(page.locator('#pick').getByRole('button')).toHaveCount(0);
+  await expect(
+    page.locator('#final').getByRole('link', { name: /See the Full Process|Explore Every Route/ }),
+  ).toHaveCount(0);
+  // One link stays: Explore Every Route to /corridors (public-experience pins the routes page link on the home).
+  await expect(page.locator('#routes').getByRole('link')).toHaveCount(1);
+  await showRoute(page, 'China Route');
+  await expect(page.locator('#route-china .primary-link')).toHaveCount(0);
+  await showRoute(page, 'Sell Abroad');
+  await expect(page.locator('#route-sell .primary-link')).toHaveCount(1);
+  expect(await main.innerText()).not.toMatch(/↗/);
+});
+
+test('the calculator follows the market again once every amount is cleared', async ({ page }) => {
+  await page.goto('/');
+  await showRoute(page, 'Sell Abroad');
+  const sell = page.locator('#route-sell');
+  const market = (name: string) =>
+    sell
+      .getByRole('group', { name: 'Your market' })
+      .getByRole('radio', { name, exact: true })
+      .locator('xpath=following-sibling::label')
+      .click();
+  await sell.getByLabel(/Stand and registration/).fill('500');
+  await market('UK');
+  await expect(sell.getByRole('radio', { name: 'EUR', exact: true })).toBeChecked();
+  await expect(sell.getByLabel(/Stand and registration/)).toHaveAccessibleName(/\(EUR\)/);
+  await sell.getByLabel(/Stand and registration/).fill('');
+  await expect(sell.getByRole('radio', { name: 'GBP', exact: true })).toBeChecked();
+  await expect(sell.getByLabel(/Stand and registration/)).toHaveAccessibleName(/\(GBP\)/);
+  await expect(sell.getByText('Set to GBP for the UK.', { exact: false })).toBeVisible();
+  await market('Australia');
+  await expect(sell.getByRole('radio', { name: 'AUD', exact: true })).toBeChecked();
+});
+
+test('the calculator says "Use digits only." for unreadable input and rounds lines and total the same way', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await showRoute(page, 'Sell Abroad');
+  const sell = page.locator('#route-sell');
+  const field = sell.getByLabel('People going');
+  await field.focus();
+  await page.keyboard.type('2e');
+  await expect(sell.getByText('Use digits only.')).toBeVisible();
+  await expect(field).toHaveAttribute('aria-invalid', 'true');
+  await field.press('Control+a');
+  await field.press('Backspace');
+  await field.press('Backspace');
+  await expect(sell.getByText('Use digits only.')).toHaveCount(0);
+  await sell.getByLabel(/Stand and registration/).fill('0.4');
+  await expect(sell.locator('.tr-total')).toContainText('Add your numbers');
+  await expect(sell.locator('.tr-breakdown')).toContainText('Not added');
+  await sell.getByLabel(/Stand and registration/).fill('100.6');
+  await sell.getByLabel(/Samples and shipping/).fill('100.6');
+  // Each line rounds to 101, and the total is the sum of the lines shown.
+  await expect(sell.locator('.tr-total')).toContainText('202');
+  await sell.getByLabel('People going').fill('99999');
+  await sell.getByLabel(/Flights per person/).fill('9999999');
+  await sell.getByLabel('Days away, with travel').fill('99999');
+  await sell.getByLabel(/Hotel per person per night/).fill('9999999');
+  await expect(sell.getByText('That total looks too large. Check the numbers.')).toBeVisible();
+});
+
+test('a door preselects the brief goal and the person only until the visitor chose them', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const brief = page.locator('#brief');
+  await brief
+    .getByRole('radio', { name: 'Buy machinery' })
+    .locator('xpath=following-sibling::label')
+    .click();
+  const tabs = page.getByRole('tablist', { name: 'Who are you?' });
+  await tabs.getByRole('tab', { name: 'Supplier' }).click();
+  await door(page, 'Sell Abroad').click();
+  await expect(brief.getByRole('radio', { name: 'Buy machinery' })).toBeChecked();
+  await expect(tabs.getByRole('tab', { name: 'Supplier' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+});
+
+test('a saved /plan draft is offered, continued with its notes, or started fresh with the note', async ({
+  page,
+}) => {
+  await page.goto('/plan?job=sourcing');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect
+    .poll(() => page.evaluate(() => Object.keys(sessionStorage).length))
+    .toBeGreaterThan(0);
+  await page.goto(`/plan?job=sourcing&note=${encodeURIComponent('From the home brief')}`);
+  const choice = page.getByRole('group', { name: /You have a saved request/ });
+  await expect(choice).toBeVisible();
+  await choice.getByRole('button', { name: 'Continue saved request' }).click();
+  const notes = () =>
+    page.evaluate(() =>
+      Object.values(sessionStorage)
+        .map((value) => {
+          try {
+            return JSON.parse(value)?.draft?.notes as string | undefined;
+          } catch {
+            return undefined;
+          }
+        })
+        .find((value) => value !== undefined),
+    );
+  expect(await notes()).toBe('');
+  await page.goto(`/plan?job=sourcing&note=${encodeURIComponent('From the home brief')}`);
+  await page
+    .getByRole('group', { name: /You have a saved request/ })
+    .getByRole('button', { name: 'Start a new request' })
+    .click();
+  await expect.poll(notes).toBe('From the home brief');
 });
 
 for (const width of [320, 390, 768, 1440])
@@ -363,24 +593,36 @@ for (const width of [320, 390, 768, 1440])
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    await bar(page).getByRole('button', { name: 'All Routes' }).click();
     await page
       .locator('#brief')
       .getByRole('radio', { name: 'Find buyers abroad' })
       .locator('xpath=following-sibling::label')
       .click();
     await page.locator('#brief textarea').fill('A'.repeat(600));
-    const sideways = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
-    expect(sideways).toBeLessThanOrEqual(0);
     // Reduced motion: the bar does not slide.
     const transition = await page
       .locator('.ux-start-bar')
       .evaluate((el) => getComputedStyle(el).transitionDuration);
     expect(transition.split(',').every((d) => parseFloat(d) < 0.01)).toBe(true);
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-      .analyze();
-    expect(results.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 120)}`)).toEqual([]);
+    for (const name of routeButtons) {
+      await showRoute(page, name);
+      if (name === 'China Route') await page.getByRole('button', { name: 'B Is Cheapest' }).click();
+      if (name === 'Sell Abroad') {
+        await page.getByLabel(/Stand and registration/).fill('6000');
+        await page
+          .getByRole('radio', { name: /Show companies outside/ })
+          .locator('xpath=following-sibling::label')
+          .click();
+      }
+      const sideways = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      expect(sideways, `${name} sideways`).toBeLessThanOrEqual(0);
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+        .analyze();
+      expect(
+        results.violations.map((v) => `${name} ${v.id}: ${v.nodes[0]?.html.slice(0, 120)}`),
+      ).toEqual([]);
+    }
   });
 
 test('Arabic, right to left, at 320 px: nothing scrolls sideways and the doors still work', async ({

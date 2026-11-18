@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Arrow } from './arrow';
 import { HomeJobs } from './home-jobs';
 import type { Shown } from './home-routes';
 import { TalkLink } from './home-talk';
@@ -16,7 +15,7 @@ import type { HomeRoutesKey } from '../lib/home-routes-keys';
 // the page shows its own actions.
 const key = (name: string) => name as HomeRoutesKey;
 /** Where the page shows its own action, the phone start bar steps aside. */
-const hideStartBarAt = ['#brief .tr-brief-actions', '#final', 'footer'];
+const hideStartBarAt = ['main .primary-link:not(.ux-start-bar .primary-link)', '#final', 'footer'];
 
 export function HomeShared({
   shown,
@@ -32,7 +31,6 @@ export function HomeShared({
   const t = useT();
   const finalTitle: Record<Shown, HomeRoutesKey> = {
     none: 'home.tr.fn.title.none',
-    all: 'home.tr.fn.title.none',
     china: 'home.tr.fn.title.china',
     sell: 'home.tr.fn.title.sell',
     delegation: 'home.tr.fn.title.delegation',
@@ -53,32 +51,15 @@ export function HomeShared({
         </div>
         <div className="tr-actions">
           <Link prefetch={false} className="primary-link" href={href} id="final-start">
-            {cta} <Arrow />
+            {cta}
           </Link>
           <TalkLink href={whatsapp} className="secondary-link tr-on-navy" />
         </div>
         <p className="tr-jobs-lead">{t('home.tr.fn.jobs')}</p>
-        <HomeJobs className="ac1-jobs tr-jobs" />
+        <HomeJobs className="tr-jobs-quiet" quiet />
         <Link prefetch={false} className="ac1-quiet tr-light-link" href="/plan">
-          {t('home.else')} <Arrow />
+          {t('home.else')}
         </Link>
-        <ul className="tr-pointers">
-          <li>
-            <Link prefetch={false} className="tr-light-link" href="/how-it-works">
-              {t('home.tr.more.how')} <Arrow />
-            </Link>
-          </li>
-          <li>
-            <Link prefetch={false} className="tr-light-link" href="/trust">
-              {t('home.facts.more')} <Arrow />
-            </Link>
-          </li>
-          <li>
-            <Link prefetch={false} className="tr-light-link" href="/corridors">
-              {t('home.other.link')} <Arrow />
-            </Link>
-          </li>
-        </ul>
       </section>
       <StartBar
         href={href}
@@ -87,6 +68,7 @@ export function HomeShared({
         name={t('home.b3.mbar')}
         after="hero"
         hideAt={hideStartBarAt}
+        watchKey={shown}
       />
     </>
   );

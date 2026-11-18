@@ -31,7 +31,7 @@ describe('home jobs order', () => {
     );
   });
 
-  it('every catalogue carries the new words in English until a native review is recorded', () => {
+  it('every catalogue carries the new words in English until a native review is recorded, except the board 3c hero drafts in bn, zh and es', () => {
     const added = Object.keys(homeEn).filter(
       (key) => key.startsWith('home.tr.') || key.endsWith('.route'),
     ) as (keyof typeof homeEn)[];

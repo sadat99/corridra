@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useState, type CSSProperties } from 'react';
-import { Arrow } from './arrow';
 import { CorridraIcon } from './corridra-icon';
 import { FactLabel, NotConfirmedLabel } from './fact-label';
 import { HomeBrief, type GoalKey } from './home-brief';
@@ -34,7 +33,7 @@ import {
 // brief and the people follow the choice, and the first action becomes the real request for it. Every example is
 // tagged Example and sends nothing. The only actions that leave the page are links to /plan and, when the owner has
 // set a support number, WhatsApp.
-export type Shown = 'none' | 'all' | RouteKey;
+export type Shown = 'none' | RouteKey;
 const key = (name: string) => name as HomeRoutesKey;
 // Delivery codes and the trust name stay as written, outside the words (they are not translated).
 const terms = {
@@ -53,7 +52,6 @@ const goalFor: Record<RouteKey, GoalKey> = {
 };
 export const ctaWords: Record<Shown, MessageKey> = {
   none: 'home.tr.cta.none',
-  all: 'home.tr.cta.none',
   china: 'home.tr.cta.china',
   sell: 'home.tr.cta.sell',
   delegation: 'home.tr.cta.delegation',
@@ -68,33 +66,22 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
   const [marketPicked, setMarketPicked] = useState(false);
   const [goal, setGoal] = useState<GoalKey | null>(null);
   const [person, setPerson] = useState(0);
-  const route = shown === 'none' || shown === 'all' ? null : shown;
+  // A door preselects the brief goal and the person only until the visitor has chosen them.
+  const [goalTouched, setGoalTouched] = useState(false);
+  const [personTouched, setPersonTouched] = useState(false);
+  const route = shown === 'none' ? null : shown;
   const href = route ? routeHref[route] : '/plan';
   const choose = (next: Shown, fromDoor = false) => {
     setShown(next);
-    setOpened(fromDoor && next !== 'all' && next !== 'none' ? next : null);
-    if (next !== 'all' && next !== 'none') {
-      setGoal(goalFor[next]);
+    setOpened(fromDoor && next !== 'none' ? next : null);
+    if (next !== 'none') {
+      if (!goalTouched) setGoal(goalFor[next]);
       const p = personFor[next];
-      if (p !== undefined) setPerson(p);
+      if (p !== undefined && !personTouched) setPerson(p);
     }
-  };
-  const show = (r: RouteKey) => shown === r || (shown === 'all' && r !== 'other');
-  const open = (r: Shown) => {
-    choose(r);
-    // The section is drawn on the next frame, so the move waits for it.
-    requestAnimationFrame(() => {
-      const target = document.getElementById(r === 'all' ? 'route-china' : `route-${r}`);
-      target?.scrollIntoView({
-        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-        block: 'start',
-      });
-      target?.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
-    });
   };
   const showingText: Record<Shown, MessageKey> = {
     none: 'home.tr.bar.none',
-    all: 'home.tr.bar.allText',
     china: 'home.tr.bar.china',
     sell: 'home.tr.bar.sell',
     delegation: 'home.tr.bar.delegationText',
@@ -117,36 +104,8 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
             </p>
           ) : null}
         </div>
-        <div className="tr-start">
-          <div className="tr-start-actions">
-            <Link prefetch={false} className="primary-link" href={href} id="home-start">
-              {t(ctaWords[shown])} <Arrow />
-            </Link>
-            <TalkLink href={whatsapp} />
-          </div>
-          <ul className="ac1-calm">
-            {(['account', 'send', 'stop'] as const).map((name) => (
-              <li key={name}>
-                <CorridraIcon name="check" size={16} />
-                {t(`home.tr.assure.${name}` as MessageKey)}
-              </li>
-            ))}
-          </ul>
-          {shown === 'none' ? <p className="tr-hint">{t('home.tr.hint')}</p> : null}
-          <p className="tr-feedback" aria-live="polite">
-            {opened ? (
-              <>
-                {fill(t('home.tr.opened'), { route: t(key(`home.tr.door.${opened}.title`)) })}{' '}
-                <a className="ac1-quiet" href={`#route-${opened}`}>
-                  {t('home.tr.goto')}
-                </a>
-              </>
-            ) : null}
-          </p>
-        </div>
         <fieldset className="tr-doors">
           <legend>{t('home.tr.q')}</legend>
-          <p className="tr-doors-sub">{t('home.tr.q.sub')}</p>
           <div className="tr-doors-big">
             {(['china', 'sell'] as const).map((r) => (
               <Door key={r} route={r} checked={shown === r} onChoose={() => choose(r, true)} big />
@@ -158,6 +117,32 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
             ))}
           </div>
         </fieldset>
+        <div className="tr-start">
+          <div className="tr-start-actions">
+            <Link prefetch={false} className="primary-link" href={href} id="home-start">
+              {t(ctaWords[shown])}
+            </Link>
+            <TalkLink href={whatsapp} />
+          </div>
+          <ul className="ac1-calm">
+            {(['account', 'send', 'stop'] as const).map((name) => (
+              <li key={name}>
+                <CorridraIcon name="check" size={16} />
+                {t(`home.tr.assure.${name}` as MessageKey)}
+              </li>
+            ))}
+          </ul>
+          <p className="tr-feedback" aria-live="polite">
+            {opened ? (
+              <>
+                {fill(t('home.tr.opened'), { route: t(key(`home.tr.door.${opened}.title`)) })}{' '}
+                <a className="ac1-quiet" href={`#route-${opened}`}>
+                  {t('home.tr.goto')}
+                </a>
+              </>
+            ) : null}
+          </p>
+        </div>
       </section>
 
       <div className="tr-bar">
@@ -166,7 +151,7 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
           {t('home.tr.bar.showing')} {t(showingText[shown])}
         </p>
         <div className="tr-bar-buttons" role="group" aria-label={t('home.tr.bar.aria')}>
-          {(['china', 'sell', 'delegation', 'other', 'all'] as const).map((r) => (
+          {(['china', 'sell', 'delegation', 'other'] as const).map((r) => (
             <button key={r} type="button" aria-pressed={shown === r} onClick={() => choose(r)}>
               {t(`home.tr.bar.${r}` as MessageKey)}
             </button>
@@ -189,31 +174,11 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
               </li>
             ))}
           </ol>
-          <div className="tr-opens">
-            {(['china', 'sell'] as const).map((r) => (
-              <button key={r} type="button" onClick={() => open(r)}>
-                <strong>{t(`home.tr.open.${r}` as MessageKey)}</strong>
-                <span>{t(`home.tr.open.${r}.text` as MessageKey)}</span>
-              </button>
-            ))}
-          </div>
-          <div className="tr-more">
-            <p>{t('home.tr.open.more')}</p>
-            <button type="button" className="tr-linkbtn" onClick={() => open('delegation')}>
-              {t('home.tr.open.delegation')}
-            </button>
-            <button type="button" className="tr-linkbtn" onClick={() => open('other')}>
-              {t('home.tr.open.other')}
-            </button>
-            <button type="button" className="tr-linkbtn" onClick={() => open('all')}>
-              {t('home.tr.open.everything')}
-            </button>
-          </div>
         </section>
       ) : null}
 
-      {show('china') ? <China /> : null}
-      {show('sell') ? (
+      {shown === 'china' ? <China /> : null}
+      {shown === 'sell' ? (
         <HomeSell
           market={market}
           onMarket={(m) => {
@@ -222,27 +187,42 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
           }}
         />
       ) : null}
-      {show('delegation') ? <Delegation whatsapp={whatsapp} /> : null}
+      {shown === 'delegation' ? <Delegation whatsapp={whatsapp} /> : null}
       {shown === 'other' ? <Other whatsapp={whatsapp} /> : null}
 
       <MissionSection />
       <HomeBrief
         route={route}
         goal={goal}
-        onGoal={setGoal}
+        onGoal={(g) => {
+          setGoal(g);
+          setGoalTouched(true);
+        }}
         market={marketPicked ? market : null}
         whatsapp={whatsapp}
       />
       <TrustSection>
+        {/* The board's proof link. Its words are How We Label Facts, the name the home's /trust link keeps (UX-06). */}
         <div className="tr-proof">
-          <Link prefetch={false} className="secondary-link tr-on-navy" href="/trust">
-            {t('home.b3.proof')} <Arrow />
+          <Link prefetch={false} className="ac1-quiet tr-light-link" href="/trust">
+            {t('home.facts.more')}
           </Link>
         </div>
       </TrustSection>
-      <People current={person} onChange={setPerson} />
+      <People
+        current={person}
+        onChange={(p) => {
+          setPerson(p);
+          setPersonTouched(true);
+        }}
+      />
       <FaqSection />
-      <RoutesSection mine={route === 'delegation' ? null : route} flags />
+      <RoutesSection
+        mine={route === 'delegation' ? null : route}
+        flags
+        links={false}
+        readyLead={t('home.b3.rs.ready')}
+      />
 
       <HomeShared shown={shown} href={href} cta={t(ctaWords[shown])} whatsapp={whatsapp} />
     </>
@@ -441,7 +421,7 @@ function China() {
                 </ul>
                 <p>{t('home.tr.q.keep')}</p>
                 <Link prefetch={false} className="primary-link" href={routeHref.china}>
-                  {t('home.tr.q.cta')} <Arrow />
+                  {t('home.tr.q.cta')}
                 </Link>
               </>
             ) : null}
@@ -521,9 +501,6 @@ function China() {
           </ol>
         </div>
       </div>
-      <Link prefetch={false} className="primary-link" href={routeHref.china}>
-        {t('home.tr.cta.china')} <Arrow />
-      </Link>
     </section>
   );
 }
@@ -648,7 +625,7 @@ function Delegation({ whatsapp }: { whatsapp: string | null }) {
       </div>
       <div className="tr-actions">
         <Link prefetch={false} className="primary-link" href={routeHref.delegation}>
-          {t('home.tr.dl.cta')} <Arrow />
+          {t('home.tr.dl.cta')}
         </Link>
         <TalkLink href={whatsapp} />
       </div>
@@ -668,7 +645,7 @@ function Other({ whatsapp }: { whatsapp: string | null }) {
         <p className="tr-sub">{t('home.tr.ot.lead')}</p>
         <div className="tr-actions">
           <Link prefetch={false} className="primary-link" href={routeHref.other}>
-            {t('home.tr.ot.cta')} <Arrow />
+            {t('home.tr.ot.cta')}
           </Link>
           <TalkLink href={whatsapp} />
         </div>

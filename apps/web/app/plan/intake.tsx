@@ -227,7 +227,16 @@ type FoldGroup = keyof typeof foldedFields;
  * fill the optional notes field of a fresh draft only, trimmed to the field's limit; a saved draft is never touched.
  */
 export function linkNote(query: URLSearchParams): string {
-  return (query.get('note') ?? '').trim().slice(0, 1000);
+  return wholeCharacters((query.get('note') ?? '').trim(), 1000);
+}
+/** At most `limit` UTF-16 units, cut between whole characters so no character is split in half. */
+function wholeCharacters(text: string, limit: number): string {
+  let out = '';
+  for (const character of text) {
+    if (out.length + character.length > limit) break;
+    out += character;
+  }
+  return out;
 }
 /** The choices a link can make (`?job`, `?companyCountry`, `?marketCode` and `?note`), applied to a draft. */
 function withLinkChoices(base: Draft): Draft {
@@ -421,6 +430,13 @@ function IntakeForm({
         )
           setJobChoice(suggestedJob);
         const note = linkNote(query);
+        // A link that carries new words (the home page brief) and a saved draft: offer the same choice as a new job,
+        // continue the saved request (its notes kept) or start a new one, which takes the link's job and words.
+        const choiceJob =
+          suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob)
+            ? suggestedJob
+            : saved?.draft?.job;
+        if (restored && note && saved.draft.notes !== note && choiceJob) setJobChoice(choiceJob);
         if (!restored && note)
           setDraft((current) => (current.notes ? current : { ...current, notes: note }));
         if (!restored && suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob))

@@ -1904,3 +1904,78 @@
   min-inline-size: 0;
   max-inline-size: 100%;
 }
+
+/* LP3 review (Guardian 29): the locked UI/UX.v3 states, sizes and shapes on the home. */
+/* Chosen states use the selected token (cobalt), never a navy fill. */
+.ux-guide-home.tr-home
+  :is(
+    .tr-bar-buttons button[aria-pressed='true'],
+    .tr-pick[aria-pressed='true'],
+    .tr-tabs button[aria-selected='true'],
+    .tr-stops button[aria-pressed='true']
+  ) {
+  border-color: var(--selected);
+  background: var(--selected);
+  color: var(--on-action);
+}
+.ux-guide-home.tr-home .tr-stops button[aria-pressed='true'] .tr-time {
+  color: var(--on-action);
+}
+/* Section titles at the locked section-title size (24, 22 on a phone); only the hero headline is display size. */
+.ux-guide-home.tr-home .tr-section h2 {
+  font-size: var(--text-h2);
+  line-height: 1.2;
+}
+/* Company names read as names: normal case in the interface face. */
+.ux-guide-home.tr-home .tr-table tbody th,
+.ux-guide-home.tr-home .tr-table tbody th :is(strong, span) {
+  font-family: var(--font-ui);
+  letter-spacing: normal;
+  text-transform: none;
+}
+/* The lock sits on the line of its row's name. */
+.ux-guide-home.tr-home .tr-table tbody th .corridra-icon {
+  display: inline-block;
+  vertical-align: -0.125rem;
+  margin-inline-end: var(--space-1);
+}
+/* The Rule tag sits inline at the start of its sentence. */
+.ux-guide-home.tr-home .tr-rule {
+  display: block;
+}
+.ux-guide-home.tr-home .tr-rule > .ux-example-tag {
+  margin-inline-end: var(--space-2);
+  vertical-align: 0.0625rem;
+}
+.ux-guide-home.tr-home .tr-rule > span:last-child {
+  display: inline;
+}
+/* Rounding B: the brand line is a label, not a badge; doors and cards 12, panels 16. */
+.ux-guide-home.tr-home .tr-brandline {
+  border-radius: var(--radius-sm);
+}
+.ux-guide-home.tr-home .ux-door label {
+  border-radius: var(--radius-md);
+}
+.ux-guide-home.tr-home
+  :is(
+    .tr-quote,
+    .tr-tests,
+    .tr-three > li,
+    .tr-nevers > div,
+    .tr-routes > div,
+    .tr-five > li,
+    .tr-people > div,
+    .tr-faq details,
+    .tr-reverse > div,
+    .tr-brief,
+    .tr-market,
+    .tr-clock,
+    .tr-two > div
+  ) {
+  border-radius: var(--radius-md);
+}
+.ux-guide-home.tr-home
+  :is(.tr-day, .tr-panel, .tr-result, .tr-brief-card, .tr-ledger, .tr-scroll, .tr-reaction) {
+  border-radius: var(--radius-lg);
+}

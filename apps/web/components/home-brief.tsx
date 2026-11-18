@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useId, useState } from 'react';
-import { Arrow } from './arrow';
 import { FactLabel } from './fact-label';
 import { ChoiceChip, ChoiceChipRow } from './ux/choice-chip';
 import { Eyebrow } from './ux/example-tag';
@@ -193,7 +192,7 @@ export function HomeBrief({
           <p className="tr-small">{t('home.b3.br.send')}</p>
           <div className="tr-brief-actions">
             <Link prefetch={false} className="primary-link" href={href} id="brief-start">
-              {t('home.tr.cta.none')} <Arrow />
+              {t('home.tr.cta.none')}
             </Link>
             {whatsapp ? (
               <a

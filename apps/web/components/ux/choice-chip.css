@@ -1,4 +1,4 @@
-/* Choice chips (board 3c). Rounding B, 44 px targets; the chosen chip is filled navy with paper words. Tokens only. */
+/* Choice chips (board 3c). Rounding B, 44 px targets; the chosen chip uses the selected token. Tokens only. */
 .ux-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -27,9 +27,9 @@
   border-color: var(--action);
 }
 .ux-chip input:checked + label {
-  border-color: var(--brand-deep);
-  background: var(--brand-deep);
-  color: var(--on-brand);
+  border-color: var(--selected);
+  background: var(--selected);
+  color: var(--on-action);
 }
 .ux-chip input:checked + label .ux-flag {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 50%, transparent);

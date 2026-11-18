@@ -12,7 +12,7 @@ const homeLandingEn = {
   'home.country.uk': 'the UK',
   'home.country.us': 'the US',
   'home.country.au': 'Australia',
-  'home.country.asia': 'Key Asian markets',
+  'home.country.asia': 'Key Asian Markets',
   'home.pass.label': 'Bangladesh to {to}',
   // Owner decision, 12 November 2026: the three jobs are unequal and each names its first route (only routes the
   // repository already states, content/corridors.ts), and the example player has a third, Delegation, example
@@ -49,7 +49,7 @@ const homeTwoEn = {
   'home.tr.door.other.text': 'Tell us in your own words',
   'home.tr.selected': 'Selected',
   'home.tr.assure.account': 'No account needed',
-  'home.tr.assure.send': 'Nothing is sent until you press Send',
+  'home.tr.assure.send': 'Nothing is sent until you check your request',
   'home.tr.assure.stop': 'Stop any time',
   'home.tr.cta.none': 'Start a Request',
   'home.tr.cta.china': 'Plan My China Sourcing',
@@ -241,7 +241,7 @@ const homeTwoEn = {
   'home.tr.mk.au.line.head': 'From Dhaka, Australia is a long trip.',
   'home.tr.mk.au.line':
     'Knowing who is worth meeting before you fly matters more when each extra day away is expensive.',
-  'home.tr.mk.asia.line.head': 'Key Asian markets are several countries, not one.',
+  'home.tr.mk.asia.line.head': 'Key Asian Markets are several countries, not one.',
   'home.tr.mk.asia.line':
     'Tell us which, and each is read on its own: Singapore, Tokyo, Seoul and Kuala Lumpur are different conversations.',
   'home.tr.w.title': 'Who is worth meeting?',
@@ -372,7 +372,7 @@ const homeTwoEn = {
   'home.tr.ot.eyebrow': 'Something else',
   'home.tr.ot.title': 'Tell us what is coming up. We say plainly if we can help.',
   'home.tr.ot.lead':
-    'A trip, a purchase, a fair or a first look at a new market. Corridra runs missions from Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets. For a route outside that list, no operating offer is announced. Ask us, and we tell you plainly in the first conversation whether we can help.',
+    'A trip, a purchase, a fair or a first look at a new market. For a route outside the open list, no operating offer is announced. Ask us, and we tell you plainly in the first conversation whether we can help.',
   'home.tr.ot.cta': 'Describe It in a Request',
   // Mission line
   'home.tr.ms.eyebrow': 'How it works, on every route',
@@ -576,8 +576,8 @@ const homeTwoEn = {
     'The programme is coming either way. Give each company its own plan.',
   'home.tr.fn.title.other':
     'Whatever is coming up, start with a plain answer on whether we can help.',
-  'home.tr.fn.r1': 'Nothing is sent until you press Send.',
-  'home.tr.fn.r1.text': 'Your draft stays with you until then.',
+  'home.tr.fn.r1': 'Nothing is sent until you check your request.',
+  'home.tr.fn.r1.text': 'Your answers stay with you until then.',
   'home.tr.fn.r2': 'Stop any time.',
   'home.tr.fn.r2.text': 'No account, no commitment to start a request.',
   'home.tr.fn.r3': 'We tell you if we cannot help.',
@@ -608,9 +608,10 @@ const homeBoardEn = {
   'home.b3.talk': 'Talk to a Person',
   'home.b3.talk.where': '(opens WhatsApp)',
   'home.b3.mbar': 'Quick start',
-  'home.b3.mbar.note': 'No account needed. Nothing is sent until you press Send.',
+  'home.b3.mbar.note': 'No account needed. Stop any time.',
   'home.b3.mine': 'Matches your route',
-  'home.b3.proof': 'Read the Proof Page',
+  'home.b3.fc.tooLarge': 'That total looks too large. Check the numbers.',
+  'home.b3.rs.ready': 'Readiness is tracked as separate statuses, never one "complete":',
   // The brief: three answers that build a draft the visitor owns, then open the real request form with them.
   'home.b3.br.title': 'Your first mission brief in 60 seconds.',
   'home.b3.br.lead':
@@ -647,8 +648,7 @@ const homeBoardEn = {
   'home.b3.br.goal.other': 'Something else',
   'home.b3.br.route.china': 'Bangladesh to China',
   'home.b3.br.route.sell': 'Bangladesh to {market}',
-  'home.b3.br.route.sellAny':
-    'Bangladesh to the EU, the UK, the US, Australia or key Asian markets. Tell us which comes first.',
+  'home.b3.br.route.sellAny': 'Bangladesh to one of the open markets. Tell us which comes first.',
   'home.b3.br.route.delegation': 'To agree with you',
   'home.b3.br.route.other': 'Tell us. We say plainly if we can help.',
   'home.b3.br.ph.none': 'Example: what you want to buy or sell, how much, and where.',

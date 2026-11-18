@@ -40,11 +40,11 @@ test('the first screen says what Corridra is, offers the doors and the first act
     await expect(
       page.getByText('Which way is your business moving?', { exact: true }),
     ).toBeInViewport();
-    if (size.width === 1440)
-      for (const name of ['Buying from China', 'Sell Abroad'])
-        await expect(door(page, name)).toBeInViewport();
+    // Board order (Guardian 29 review, D1): the doors come before the action, so the big doors start on the first
+    // screen everywhere; on a phone the start bar carries the action once the hero scrolls away.
+    for (const name of ['Buying from China', 'Sell Abroad'])
+      await expect(door(page, name)).toBeInViewport();
     await expect(start(page)).toHaveAttribute('href', '/plan');
-    if (size.width === 1440) await expect(start(page)).toBeInViewport();
   }
 });
 
@@ -103,7 +103,9 @@ for (const [label, route, cta, href, section] of [
     await expect(start(page)).toHaveAttribute('href', href);
     await expect(page.getByText(`Opened below: ${label}.`)).toBeVisible();
     await expect(bar(page).getByRole('button', { pressed: true })).toHaveCount(1);
-    // Every section ends in a real request link, never a dead control.
+    // Every route leads to a real request link, never a dead control (China's appears once a quote is picked).
+    if (route === 'china')
+      await page.locator('#route-china').getByRole('button', { name: 'B Is Cheapest' }).click();
     await expect(
       page
         .locator(`#route-${route}`)
@@ -114,27 +116,25 @@ for (const [label, route, cta, href, section] of [
     await expect(page).toHaveURL(href);
   });
 
-test('the route bar switches routes and All Routes opens China, Sell Abroad and Delegation', async ({
+test('the route bar switches routes, one at a time (no All Routes, Guardian 29 review D6)', async ({
   page,
 }) => {
   await page.goto('/');
-  await bar(page).getByRole('button', { name: 'All Routes' }).click();
-  for (const id of ['china', 'sell', 'delegation'])
-    await expect(page.locator(`#route-${id}`)).toBeVisible();
-  await expect(page.locator('#route-other')).toHaveCount(0);
+  await expect(bar(page).getByRole('button')).toHaveCount(4);
+  await bar(page).getByRole('button', { name: 'China Route', exact: true }).click();
+  await expect(page.locator('#route-china')).toBeVisible();
   await bar(page).getByRole('button', { name: 'Sell Abroad', exact: true }).click();
   await expect(page.locator('#route-china')).toHaveCount(0);
   await expect(page.locator('#route-sell')).toBeVisible();
 });
 
-test('the how-it-works strip opens a route, moves to it and focuses its heading', async ({
+test('the how-it-works strip explains the three steps and repeats no door (review D5)', async ({
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /Open the China Route/ }).click();
-  await expect(
-    page.getByRole('heading', { level: 2, name: 'Too many suppliers. Too few you can compare.' }),
-  ).toBeFocused();
+  await expect(page.locator('#pick li')).toHaveCount(3);
+  await expect(page.locator('#pick').getByRole('button')).toHaveCount(0);
+  await bar(page).getByRole('button', { name: 'China Route', exact: true }).click();
   await expect(page.locator('#pick')).toHaveCount(0);
 });
 
@@ -328,14 +328,12 @@ test('the long sections moved off the home keep their words, behind Show More on
   await expect(page.locator('.tr-nevers > div')).toHaveCount(4);
   await expect(page.locator('.tr-nots > div')).toHaveCount(8);
   await expect(page.locator('#routes .tr-routes > div')).toHaveCount(4);
-  for (const [href, name] of [
-    ['/how-it-works', 'See the Full Process'],
-    ['/trust', 'How We Label Facts'],
-    ['/corridors', 'Explore Every Route'],
-  ] as const) {
-    await page.goto('/');
-    await expect(page.locator('#final').getByRole('link', { name })).toHaveAttribute('href', href);
-  }
+  // The home now holds these sections itself (board 3c), so its close no longer points to those pages (review D4);
+  // the trust section links to /trust with the board's words.
+  await page.goto('/');
+  await expect(
+    page.locator('#trust').getByRole('link', { name: 'How We Label Facts' }),
+  ).toHaveAttribute('href', '/trust');
 });
 
 test('the three job links keep their names and links (P-07) and Something else goes to /plan', async ({
@@ -371,8 +369,10 @@ test('the page names the open markets and never limits itself to Spain or the EU
   const text = (await page.locator('main').innerText()).toLowerCase();
   for (const word of ['the eu', 'uk', 'us', 'australia', 'key asian markets'])
     expect(text).toContain(word);
-  await bar(page).getByRole('button', { name: 'All Routes' }).click();
-  expect(await page.locator('main').innerText()).not.toMatch(/—/);
+  for (const name of ['China Route', 'Sell Abroad', 'Delegation', 'Something Else']) {
+    await bar(page).getByRole('button', { name, exact: true }).click();
+    expect(await page.locator('main').innerText()).not.toMatch(/—/);
+  }
 });
 
 for (const width of widths)
@@ -419,25 +419,36 @@ for (const width of widths)
       ).toEqual([]);
     };
     await check('first visit');
-    await bar(page).getByRole('button', { name: 'All Routes' }).click();
     await page.evaluate(() =>
       document.querySelectorAll('details').forEach((fold) => (fold.open = true)),
     );
+    await bar(page).getByRole('button', { name: 'China Route', exact: true }).click();
     await page.getByRole('button', { name: 'B Is Cheapest' }).click();
+    await check('China open and used');
+    await bar(page).getByRole('button', { name: 'Sell Abroad', exact: true }).click();
     await page.getByLabel('People going').fill('2');
     await page.getByLabel(/Stand and registration/).fill('6000');
     await choose(page.getByRole('radio', { name: /Show companies outside/ }));
-    await check('every route open, every example open and used');
+    await check('Sell Abroad open and used');
+    await bar(page).getByRole('button', { name: 'Delegation', exact: true }).click();
+    await check('Delegation open');
   });
 
-// Owner goal: "get a visitor to start a request". The action is on the first screen of a phone, 320 and 390 wide.
+// Owner goal: "get a visitor to start a request". With the board's order (doors first, review D1) the action follows
+// the doors; on a phone the start bar carries it as soon as the hero has scrolled away, so it is always one tap away.
 for (const size of [
   { width: 320, height: 640 },
   { width: 390, height: 844 },
 ])
-  test(`Start a Request is on the first screen at ${size.width} px`, async ({ page }) => {
+  test(`Start a Request stays one tap away at ${size.width} px`, async ({ page }) => {
     await page.setViewportSize(size);
     await page.goto('/');
-    await expect(start(page)).toBeInViewport({ ratio: 1 });
     await expect(start(page)).toHaveAttribute('href', '/plan');
+    await page.locator('#how').scrollIntoViewIfNeeded();
+    const quick = page.getByRole('group', { name: 'Quick start' });
+    await expect(quick.getByRole('link', { name: 'Start a Request' })).toBeInViewport({ ratio: 1 });
+    await expect(quick.getByRole('link', { name: 'Start a Request' })).toHaveAttribute(
+      'href',
+      '/plan',
+    );
   });

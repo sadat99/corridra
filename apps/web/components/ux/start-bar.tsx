@@ -6,7 +6,7 @@ import './start-bar.css';
 
 // The phone bottom action area (board 3c; UI/UX.v4 step 2): one action and its reassurance line, never a tab bar.
 // Up to 760 px wide it appears once the element named `after` has scrolled away, and it hides while any element named
-// in `hideAt` (the page's own actions, the footer) is on screen. While it shows, the page gains room at its foot so it
+// in `hideAt` (the page's own actions, the footer) is on screen, so two primary actions are never on screen at once. While it shows, the page gains room at its foot so it
 // never covers content; while hidden it is inert. No motion under reduced motion.
 export function StartBar({
   href,
@@ -15,6 +15,7 @@ export function StartBar({
   name,
   after,
   hideAt,
+  watchKey,
 }: {
   href: string;
   label: string;
@@ -24,8 +25,10 @@ export function StartBar({
   name: string;
   /** Element id: the bar waits until it has left the screen. */
   after: string;
-  /** CSS selectors of elements that hide the bar while on screen. */
+  /** CSS selectors of elements that hide the bar while on screen (keep the array stable across renders). */
   hideAt: string[];
+  /** Changes when the page shows different sections, so the bar watches the new elements. */
+  watchKey?: string;
 }) {
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -39,11 +42,11 @@ export function StartBar({
         for (const entry of entries) visible.set(entry.target, entry.isIntersecting);
         setOn(![...visible.values()].some(Boolean));
       },
-      { threshold: 0, rootMargin: '-64px 0px 0px 0px' },
+      { threshold: 0 },
     );
     for (const el of watched) observer.observe(el);
     return () => observer.disconnect();
-  }, [after, hideAt]);
+  }, [after, hideAt, watchKey]);
   useEffect(() => {
     const root = document.documentElement;
     if (on) root.setAttribute('data-start-bar', 'on');
