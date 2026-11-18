@@ -676,7 +676,7 @@ const homeBoardEn = {
 } as const;
 
 // The board's draft hero lines (revision 3c). Native review pending: never shown as reviewed.
-const homeBoardDrafts = {
+export const homeBoardDrafts = {
   bn: {
     'home.tr.lead':
       'Corridra আন্তর্জাতিক ব্যবসার লক্ষ্যকে সঠিক মানুষ, বিশ্বস্ত আলোচনা এবং পরিমাপযোগ্য অগ্রগতিতে রূপ দেয়। আমরা বাংলাদেশ থেকে চীন, ইইউ, যুক্তরাজ্য, যুক্তরাষ্ট্র, অস্ট্রেলিয়া এবং এশিয়ার প্রধান বাজারগুলোতে মিশন পরিচালনা করি। আপনারটি বেছে নিন।',

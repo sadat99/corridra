@@ -2061,3 +2061,8 @@
 .ux-guide-home.tr-home .tr-hero::after {
   inset: -36% -24% auto auto;
 }
+
+/* The header is sticky on every width now, so a section reached by its address starts below it. */
+.ux-guide-home.tr-home section[id] {
+  scroll-margin-top: var(--space-24);
+}
