@@ -1979,3 +1979,10 @@
   :is(.tr-day, .tr-panel, .tr-result, .tr-brief-card, .tr-ledger, .tr-scroll, .tr-reaction) {
   border-radius: var(--radius-lg);
 }
+/* The three job links in the close: quiet text links in one wrapping row. */
+.ux-guide-home.tr-home .tr-jobs-quiet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin-block: var(--space-2) var(--space-3);
+}
