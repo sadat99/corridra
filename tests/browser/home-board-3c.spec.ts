@@ -374,7 +374,7 @@ for (const width of [320, 390, 768, 1440])
     expect(sideways).toBeLessThanOrEqual(0);
     // Reduced motion: the bar does not slide.
     const transition = await page
-      .locator('.tr-mbar')
+      .locator('.ux-start-bar')
       .evaluate((el) => getComputedStyle(el).transitionDuration);
     expect(transition.split(',').every((d) => parseFloat(d) < 0.01)).toBe(true);
     const results = await new AxeBuilder({ page })

@@ -23,7 +23,12 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  white-space: nowrap;
+  min-width: 0;
+}
+/* The mark never leaves its name; a long name may wrap inside its own box on a narrow screen. */
+.ux-flagged > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .ux-route-line {
   display: inline-flex;
