@@ -1,34 +1,23 @@
-/* A route page is one short scroll (owner step 2 board, 18 November 2026): the first card is open and the other two
-   are named disclosures, so no tab hides content and nothing is removed. Cards and disclosures are the shared
-   guide-detail-card and guide-more patterns. */
+/* A route page shows its three detail cards open on one page (owner decision, 18 November 2026: no tabs, nothing
+   removed). They sit side by side on a wide screen and stack below 1000 px. The cards are the shared
+   guide-detail-card pattern. */
 .guide-detail-open {
-  display: grid;
-  gap: var(--space-3);
   margin-bottom: var(--space-3);
+}
+.guide-detail-open .guide-detail {
   padding-block: var(--space-3);
 }
 .guide-detail-open .guide-detail-card {
   gap: var(--space-3);
   padding: var(--space-5);
 }
-.ux-public .guide-detail-open details.guide-more {
-  margin-top: 0;
-}
-.guide-detail-open details.guide-more > summary {
-  border-top: 0;
-}
 .guide-detail-open ~ .guide-note {
   margin-bottom: var(--space-4);
   padding: var(--space-4) var(--space-5);
 }
-@media (min-width: 1000px) {
-  .guide-detail-open .guide-detail-card dl {
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: var(--space-3) var(--space-5);
-    align-items: baseline;
-  }
-  .guide-detail-open .guide-detail-card dt {
-    margin-top: 0;
+@media (max-width: 1000px) {
+  .guide-detail-open .guide-detail {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (max-width: 700px) {

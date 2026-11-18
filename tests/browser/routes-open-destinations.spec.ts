@@ -2,8 +2,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
 // W1-D, owner decisions of 17 and 18 November 2026 (routes and markets) and the step 2 board, screen 02: the Routes
-// page shows six destinations as rows of one size in one order, and no tabs hide content on /corridors or on a route
-// page. What the board moved out of view sits in named disclosures, closed by default and still in the page.
+// page shows six destinations as rows of one size in one order, and no tabs or disclosures hide content on /corridors
+// or on a route page (owner's final decision, 18 November 2026: every section open, nothing removed).
 const pages = [
   '/corridors',
   '/corridors/bangladesh-china',
@@ -128,48 +128,47 @@ test('/corridors: Another Route block has its three actions and one primary', as
   ).toHaveAttribute('href', '/plan');
 });
 
-test('/corridors: what the board moved out of view is in three named disclosures, closed and still in the page', async ({
+test('/corridors: the older lead, Spain link, picker and sample mission are open below the rows, in order', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/corridors');
-  const more = page.locator('details.guide-routes-more');
-  await expect(more).toHaveCount(3);
-  await expect(more.locator('> summary')).toHaveText([
-    'About These Routes',
-    'Pick Your Route',
-    'Sample Mission',
-  ]);
-  for (let i = 0; i < 3; i++) await expect(more.nth(i)).not.toHaveAttribute('open', '');
-  // The words stay in the server HTML.
-  const served = await (await page.request.get('/corridors')).text();
-  for (const text of [
-    'The job comes first. The route gives it context.',
-    'Selling in Spain?',
-    'href="/corridors/bangladesh-spain"',
-    'Pick your route',
-    'A mission, before anyone commits.',
-  ])
-    expect(served, text).toContain(text);
+  await expect(page.locator('details')).toHaveCount(1); // only the existing Fine-Tune control inside the picker
+  const marks = [
+    page.getByRole('heading', { name: 'Another route?' }),
+    page.getByRole('heading', { name: 'The job comes first. The route gives it context.' }),
+    page.getByRole('link', { name: 'Spain', exact: true }),
+    page.getByRole('heading', { name: 'Pick your route' }),
+    page.locator('#mission-example'),
+  ];
+  const tops: number[] = [];
+  for (const mark of marks) {
+    await expect(mark).toBeVisible();
+    tops.push(await mark.evaluate((el) => el.getBoundingClientRect().top + window.scrollY));
+  }
+  expect(tops).toEqual([...tops].sort((x, y) => x - y));
+  await expect(page.locator('#atlas-any-company')).toBeVisible();
+  await expect(page.locator('#atlas-any-market')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Spain', exact: true })).toHaveAttribute(
+    'href',
+    '/corridors/bangladesh-spain',
+  );
 });
 
-test('/corridors: See a Sample Mission and the old addresses open the disclosure that holds them', async ({
+test('/corridors: See a Sample Mission and the old addresses land on their sections', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/corridors');
   await page.getByRole('link', { name: 'See a Sample Mission' }).click();
   await expect(page.locator('#mission-example')).toBeVisible();
-  await page.goto('/corridors#mission-example');
-  await expect(page.locator('#mission-example')).toBeVisible();
   await page.goto('/corridors#commercial-objective');
   await expect(page.locator('#commercial-objective')).toBeVisible();
-  await page.goto('/corridors');
-  await page.getByText('Pick Your Route', { exact: true }).click();
-  await expect(page.locator('#atlas-any-company')).toBeVisible();
-  await expect(page.locator('#atlas-any-market')).toBeVisible();
+  await page.goto('/corridors#directions-title');
+  await expect(page.locator('#directions-title')).toBeAttached();
 });
 
-test('/corridors/bangladesh-china: the board words, four jobs, two named disclosures', async ({
+test('/corridors/bangladesh-china: the board words, four jobs, three open sections', async ({
   page,
 }) => {
   await page.goto('/corridors/bangladesh-china');
@@ -183,16 +182,11 @@ test('/corridors/bangladesh-china: the board words, four jobs, two named disclos
     'Factory visits and supplier talks',
     'Commercial delegations',
   ]);
-  const more = page.locator('.guide-detail-open details.guide-more');
-  await expect(more.locator('> summary')).toHaveText([
-    'Current Availability',
-    'Where the Work Happens',
-  ]);
-  for (let i = 0; i < 2; i++) await expect(more.nth(i)).not.toHaveAttribute('open', '');
-  await more.nth(0).locator('summary').click();
+  await expect(page.locator('.guide-detail-open details')).toHaveCount(0);
+  for (const name of ['What we help with', 'Current availability', 'Where the work happens'])
+    await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
   await expect(page.getByText('Available now', { exact: true })).toBeVisible();
   await expect(page.getByText('Not offered', { exact: true })).toBeVisible();
-  await more.nth(1).locator('summary').click();
   await expect(page.getByText('A proposed visit is not a confirmed appointment.')).toBeVisible();
   await expect(
     page.getByText(
@@ -210,23 +204,11 @@ test('/corridors/bangladesh-china: the board words, four jobs, two named disclos
 });
 
 for (const slug of ['bangladesh-eu', 'bangladesh-spain'])
-  test(`/corridors/${slug}: the same two named disclosures and every statement in the page`, async ({
-    page,
-  }) => {
+  test(`/corridors/${slug}: the three sections are open without a click`, async ({ page }) => {
     await page.goto(`/corridors/${slug}`);
-    const served = await (await page.request.get(`/corridors/${slug}`)).text();
-    for (const text of [
-      'What we help with',
-      'Current availability',
-      'Where the work happens',
-      'Available now',
-      'Not offered',
-    ])
-      expect(served, text).toContain(text);
-    await expect(page.locator('.guide-detail-open details.guide-more > summary')).toHaveText([
-      'Current Availability',
-      'Where the Work Happens',
-    ]);
+    for (const name of ['What we help with', 'Current availability', 'Where the work happens'])
+      await expect(page.getByRole('heading', { name, level: 2 })).toBeVisible();
+    await expect(page.locator('main details')).toHaveCount(0);
   });
 
 for (const path of ['/corridors', '/corridors/bangladesh-china'])

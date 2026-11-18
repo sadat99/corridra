@@ -50,19 +50,17 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
         </div>
       </section>
       <section className="guide-detail-open" aria-label="About this route">
-        <article className="guide-detail-card">
-          <h2>What we help with</h2>
-          <ul>
-            {c.jobs.map((job) => (
-              <li key={job}>{job}</li>
-            ))}
-          </ul>
-        </article>
-        {/* The three tabs left (owner step 2 board, 18 November 2026): the first card stays open and the other two
-            are named disclosures, so the page is one short scroll and nothing is removed. */}
-        <details className="guide-more" id="current-availability">
-          <summary>Current Availability</summary>
-          <div className="guide-detail-card">
+        <div className="guide-detail">
+          <article className="guide-detail-card">
+            <h2>What we help with</h2>
+            <ul>
+              {c.jobs.map((job) => (
+                <li key={job}>{job}</li>
+              ))}
+            </ul>
+          </article>
+          <article className="guide-detail-card" id="current-availability">
+            <h2>Current availability</h2>
             <dl>
               <dt data-tone="positive">Available now</dt>
               <dd>{c.available}</dd>
@@ -79,15 +77,13 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
                 is confirmed.
               </dd>
             </dl>
-          </div>
-        </details>
-        <details className="guide-more" id="where-the-work-happens">
-          <summary>Where the Work Happens</summary>
-          <div className="guide-detail-card">
+          </article>
+          <article className="guide-detail-card" id="where-the-work-happens">
+            <h2>Where the work happens</h2>
             <p>{c.qualification}</p>
             <p>{c.reverse}</p>
-          </div>
-        </details>
+          </article>
+        </div>
       </section>
       <section className="guide-note">
         <p>

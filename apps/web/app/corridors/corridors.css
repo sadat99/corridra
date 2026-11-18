@@ -166,9 +166,24 @@
   }
 }
 
-/* The disclosures under the rows sit close to them and to each other. */
-.ux-public .guide-routes details.guide-routes-more {
-  margin-top: var(--space-4);
+/* The sections under the rows sit close to them and to each other. */
+.guide-routes-about {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+.guide-routes-about > h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--text-h2);
+  font-weight: 500;
+}
+.guide-routes-about > p {
+  margin: 0;
+}
+.guide-routes > .guide-route-box,
+.guide-routes > .ux-example {
+  margin-top: var(--space-6);
 }
 .guide-other-actions {
   display: flex;

@@ -6,7 +6,6 @@ import { Arrow } from '../../components/arrow';
 import '../../components/page-compact.css';
 import './corridors.css';
 import '../../components/public-body.css';
-import '../../components/public-page.css';
 export const metadata = {
   title: 'Routes | Corridra',
   description:

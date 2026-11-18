@@ -126,26 +126,14 @@ export function DiscoveryExperience({
   const [role, setRole] = useState('buyer');
   const [job, setJob] = useState<string>('sourcing');
   const [example, setExample] = useState(false);
-  // The three disclosures under the destination rows. A link to one of their parts opens the one that holds it.
-  const [open, setOpen] = useState({ about: false, pick: false, sample: false });
   const [step, setStep] = useState(0);
   const exampleHeading = useRef<HTMLHeadingElement>(null);
   const exampleTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     function openFromHash() {
-      const hash = window.location.hash;
-      if (hash === '#mission-example') {
-        setOpen((current) => ({ ...current, sample: true }));
+      if (window.location.hash === '#mission-example') {
         setExample(true);
-        requestAnimationFrame(() => {
-          document.getElementById('mission-example')?.scrollIntoView();
-          exampleHeading.current?.focus();
-        });
-      } else if (hash === '#commercial-objective') {
-        setOpen((current) => ({ ...current, pick: true }));
-        requestAnimationFrame(() =>
-          document.getElementById('commercial-objective')?.scrollIntoView(),
-        );
+        requestAnimationFrame(() => exampleHeading.current?.focus());
       }
     }
     openFromHash();
@@ -470,31 +458,13 @@ export function DiscoveryExperience({
   );
   return (
     <section className="ux-discovery guide-routes" aria-label="Explore a commercial objective">
-      {/* The six destinations come first. Everything else stays on the page behind three named disclosures, so no
-          word is lost and a link to one of its parts opens it (owner decision 18 November 2026: no tabs on Routes). */}
+      {/* The six destinations and the Another Route block come first, then the rest of the page open, in this order:
+          the older lead and the Spain link, the route picker, the sample mission (owner decision 18 November 2026:
+          no tabs on Routes, every section open, nothing removed). */}
       {children}
-      {(
-        [
-          ['about', 'About These Routes', about],
-          ['pick', 'Pick Your Route', routePanel],
-          ['sample', 'Sample Mission', samplePanel],
-        ] as const
-      ).map(([key, label, body]) =>
-        body ? (
-          <details
-            key={key}
-            className="guide-more guide-routes-more"
-            open={open[key]}
-            onToggle={(event) => {
-              const next = event.currentTarget.open;
-              setOpen((current) => (current[key] === next ? current : { ...current, [key]: next }));
-            }}
-          >
-            <summary>{label}</summary>
-            {body}
-          </details>
-        ) : null,
-      )}
+      {about ? <section className="guide-routes-about">{about}</section> : null}
+      {routePanel}
+      {samplePanel}
     </section>
   );
 }
