@@ -492,6 +492,7 @@ export const homeRouteWordKeys = [
   'home.b3.mbar',
   'home.b3.mbar.note',
   'home.b3.mine',
+  'home.b3.proof',
   'home.b3.br.title',
   'home.b3.br.lead',
   'home.b3.br.need',

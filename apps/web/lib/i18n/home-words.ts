@@ -610,6 +610,7 @@ const homeBoardEn = {
   'home.b3.mbar': 'Quick start',
   'home.b3.mbar.note': 'No account needed. Nothing is sent until you press Send.',
   'home.b3.mine': 'Matches your route',
+  'home.b3.proof': 'Read the Proof Page',
   // The brief: three answers that build a draft the visitor owns, then open the real request form with them.
   'home.b3.br.title': 'Your first mission brief in 60 seconds.',
   'home.b3.br.lead':

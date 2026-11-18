@@ -236,7 +236,7 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
       <TrustSection>
         <div className="tr-proof">
           <Link prefetch={false} className="secondary-link tr-on-navy" href="/trust">
-            {t('home.facts.more')} <Arrow />
+            {t('home.b3.proof')} <Arrow />
           </Link>
         </div>
       </TrustSection>

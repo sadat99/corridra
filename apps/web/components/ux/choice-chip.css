@@ -38,3 +38,13 @@
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
+/* With very large text a chip may be narrower than its words: it shrinks and its words wrap. */
+.ux-chip,
+.ux-chip label {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.ux-chip label {
+  overflow-wrap: anywhere;
+  text-align: center;
+}

@@ -1456,19 +1456,17 @@
    doors and two small ones, and every shared section is back on the page. Tokens only; weights 400, 500 and 600. */
 .ux-guide-home.tr-home .tr-hero {
   position: relative;
-  overflow: hidden;
   gap: var(--space-6);
   padding: var(--space-12) min(var(--space-6), 5vw) var(--space-12);
 }
-.ux-guide-home.tr-home .tr-hero::after {
-  content: '';
-  position: absolute;
-  inset: -36% -14% auto auto;
-  inline-size: min(60vw, 47.5rem);
-  aspect-ratio: 1;
-  border: 2px solid color-mix(in srgb, var(--ac-copper) 40%, transparent);
-  border-radius: 50%;
-  pointer-events: none;
+/* The copper ring of the board is painted as a background, so it never widens the hero or is counted as overflow. */
+.ux-guide-home.tr-home .tr-hero {
+  background-image: radial-gradient(
+    circle min(30vw, 23.75rem) at calc(100% + min(6vw, 4rem)) calc(-1 * min(6vw, 4rem)),
+    transparent calc(100% - 2px),
+    color-mix(in srgb, var(--ac-copper) 40%, transparent) calc(100% - 2px) 100%,
+    transparent 100%
+  );
 }
 .tr-hero > * {
   position: relative;
@@ -1630,6 +1628,7 @@
 /* The brief: three answers beside a draft card that belongs to the visitor. */
 .tr-brief-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
   margin-top: var(--space-8);
   align-items: start;
@@ -1645,7 +1644,9 @@
 }
 .tr-brief-form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0;
+  min-inline-size: 0;
 }
 .tr-brief-step {
   display: grid;
@@ -1665,8 +1666,8 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
-  float: left;
-  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
   margin-bottom: var(--space-3);
   padding: 0;
   font-family: var(--serif);
@@ -1683,8 +1684,8 @@
   line-height: 1;
 }
 .tr-brief-need {
-  clear: both;
   inline-size: 100%;
+  min-inline-size: 0;
   min-block-size: 7rem;
   padding: var(--space-3);
   border: 1px solid var(--border-strong);
@@ -1771,7 +1772,8 @@
 }
 .tr-brief-dl > div {
   display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr);
+  /* Side by side while both fit; with large text the answer moves under its name. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--line);
@@ -1793,12 +1795,6 @@
 }
 .tr-brief-next {
   font-weight: 400;
-}
-@media (max-width: 28.75rem) {
-  .tr-brief-dl > div {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-1);
-  }
 }
 .tr-brief-stated {
   display: flex;
@@ -1847,11 +1843,58 @@
 .ux-guide-home.tr-home .tr-alt {
   --tr-band: var(--surface-2);
 }
-.ux-guide-home.tr-home .tr-hero::after {
-  inset: -36% -24% auto auto;
-}
 
 /* The header is sticky on every width now, so a section reached by its address starts below it. */
 .ux-guide-home.tr-home section[id] {
   scroll-margin-top: var(--space-24);
+}
+
+/* Largest text and 200 percent browser text (Wave 6 Q-02): the brief card, its stamp, meter and answers and the
+   hero's brand line shrink with the screen instead of pushing the page sideways. */
+.ux-guide-home.tr-home .tr-brief-card {
+  padding: min(var(--space-6), 5vw);
+  min-inline-size: 0;
+}
+.ux-guide-home.tr-home .tr-brief-dl > div {
+  padding: var(--space-3) min(var(--space-4), 4vw);
+}
+.ux-guide-home.tr-home :is(.tr-stamp, .tr-brandline) {
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+}
+.ux-guide-home.tr-home .tr-meter {
+  flex-wrap: wrap;
+}
+.ux-guide-home.tr-home .tr-meter-bar {
+  min-inline-size: 4rem;
+}
+.ux-guide-home.tr-home .tr-brief-dl .guide-tag {
+  max-inline-size: 100%;
+  white-space: normal;
+}
+.ux-guide-home.tr-home .tr-hero-head,
+.ux-guide-home.tr-home .tr-start {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.ux-guide-home.tr-home .tr-brief-card :is(h3, dt, dd, span, p) {
+  overflow-wrap: anywhere;
+  min-inline-size: 0;
+}
+.ux-guide-home.tr-home .tr-stamp {
+  max-inline-size: 90%;
+}
+@media (max-width: 47.99rem) {
+  .ux-guide-home.tr-home .tr-section,
+  .ux-guide-home.tr-home .tr-hero {
+    padding-inline: min(var(--space-4), 4vw);
+  }
+}
+.ux-guide-home.tr-home :is(.tr-start, .tr-brief-card, .tr-hero-head) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ux-guide-home.tr-home :is(.tr-start-actions, .tr-actions, .tr-brief-actions),
+.ux-guide-home.tr-home :is(.tr-start-actions, .tr-actions, .tr-brief-actions) > * {
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }

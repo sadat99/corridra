@@ -301,7 +301,7 @@ test('trust shows five labels and a correction as a new entry; the people work b
   const trust = page.locator('#trust');
   await expect(trust.locator('.tr-five li')).toHaveCount(5);
   await expect(trust.getByText('New entry', { exact: true })).toBeVisible();
-  await expect(trust.getByRole('link', { name: 'How We Label Facts' })).toHaveAttribute(
+  await expect(trust.getByRole('link', { name: 'Read the Proof Page' })).toHaveAttribute(
     'href',
     '/trust',
   );
