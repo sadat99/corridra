@@ -41,7 +41,12 @@ const result = z.discriminatedUnion('state', [
     })
     .strict(),
 ]);
-type Scope = SavedMissionScope & { resourceId: string; cards?: boolean };
+type Scope = SavedMissionScope & {
+  resourceId: string;
+  cards?: boolean;
+  /** Member access is on (ADR-087 U5): passed to the decision card panel's label. */
+  memberAccess?: boolean;
+};
 export function DecisionHistory(props: Scope) {
   return (
     <PrivateHistory
@@ -50,7 +55,13 @@ export function DecisionHistory(props: Scope) {
     />
   );
 }
-function PrivateHistory({ subject, issuer, resourceId, cards = false }: Scope) {
+function PrivateHistory({
+  subject,
+  issuer,
+  resourceId,
+  cards = false,
+  memberAccess = false,
+}: Scope) {
   const [data, setData] = useState<z.infer<typeof result> | null>(null),
     [status, setStatus] = useState('idle');
   const controller = useRef<AbortController | null>(null);
@@ -204,6 +215,7 @@ function PrivateHistory({ subject, issuer, resourceId, cards = false }: Scope) {
               subject={subject}
               issuer={issuer}
               synthetic={data.synthetic}
+              memberAccess={memberAccess}
               decisions={data.decisions.map(({ id, company, decision, requirementCurrent }) => ({
                 id,
                 company,

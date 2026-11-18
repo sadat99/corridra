@@ -49,6 +49,10 @@ export const uxSwitchNames = [
   // ADR-087 U4, the member notice on /account and in the inbox. Off unless exactly "true"; separate from any U5 switch, and it
   // shows nothing while the member notice database module is not installed or no notice was delivered. It opens no access.
   'CORRIDRA_MEMBER_NOTICE',
+  // ADR-087 U5, owners and admins read members' saved reports and decision cards and download their books. Off unless exactly
+  // "true"; separate from CORRIDRA_MEMBER_NOTICE. Off, its routes answer 404 and nothing shows. Each workspace still opens only
+  // 24 hours after its member notice was delivered, and only once the member access database module is installed.
+  'CORRIDRA_MEMBER_ACCESS',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 

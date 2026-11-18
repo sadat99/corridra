@@ -18,6 +18,11 @@ export const privacyEn = {
   'privacy.reader.anyoneWithReplyLink': 'Anyone with this link until it expires',
   'privacy.reader.sendingTeam': 'The team that sent you this request',
   'privacy.reader.requester': 'The customer who asked for this introduction',
+  'privacy.reader.workspaceOwnersReport':
+    'Owners and admins of your workspace, including reports saved earlier. They can also download its books.',
+  'privacy.reader.workspaceOwnersCard':
+    'Owners and admins of your workspace, including cards made earlier',
+  'privacy.reader.workspaceMembers': 'Other members of your workspace',
 } as const;
 
 type PrivacyWords = Record<keyof typeof privacyEn, string>;
@@ -39,6 +44,11 @@ export const privacyDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', Priv
     'privacy.reader.anyoneWithReplyLink': 'এই লিংকটি যার কাছে আছে, মেয়াদ শেষ না হওয়া পর্যন্ত',
     'privacy.reader.sendingTeam': 'যে টিম আপনাকে এই অনুরোধ পাঠিয়েছে',
     'privacy.reader.requester': 'যে গ্রাহক এই পরিচয়ের অনুরোধ করেছেন',
+    'privacy.reader.workspaceOwnersReport':
+      'আপনার ওয়ার্কস্পেসের মালিক ও অ্যাডমিনরা, আগে সংরক্ষিত রিপোর্টসহ। তারা এর বইগুলোও ডাউনলোড করতে পারেন।',
+    'privacy.reader.workspaceOwnersCard':
+      'আপনার ওয়ার্কস্পেসের মালিক ও অ্যাডমিনরা, আগে তৈরি কার্ডসহ',
+    'privacy.reader.workspaceMembers': 'আপনার ওয়ার্কস্পেসের অন্য সদস্যরা',
   },
   zh: {
     'privacy.heading': '谁可以看到',
@@ -53,6 +63,10 @@ export const privacyDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', Priv
     'privacy.reader.anyoneWithReplyLink': '持有此链接的任何人，直到链接过期',
     'privacy.reader.sendingTeam': '向您发送此请求的团队',
     'privacy.reader.requester': '请求此次介绍的客户',
+    'privacy.reader.workspaceOwnersReport':
+      '您工作区的所有者和管理员，包括之前保存的报告。他们也可以下载其手册。',
+    'privacy.reader.workspaceOwnersCard': '您工作区的所有者和管理员，包括之前创建的卡片',
+    'privacy.reader.workspaceMembers': '您工作区的其他成员',
   },
   es: {
     'privacy.heading': 'Quién puede verlo',
@@ -69,6 +83,11 @@ export const privacyDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', Priv
     'privacy.reader.anyoneWithReplyLink': 'Cualquier persona con este enlace, hasta que caduque',
     'privacy.reader.sendingTeam': 'El equipo que le envió esta solicitud',
     'privacy.reader.requester': 'El cliente que pidió esta presentación',
+    'privacy.reader.workspaceOwnersReport':
+      'Propietarios y administradores de su espacio de trabajo, incluidos los informes guardados antes. También pueden descargar sus libros.',
+    'privacy.reader.workspaceOwnersCard':
+      'Propietarios y administradores de su espacio de trabajo, incluidas las tarjetas creadas antes',
+    'privacy.reader.workspaceMembers': 'Otros miembros de su espacio de trabajo',
   },
   ar: {
     'privacy.heading': 'من يمكنه رؤيته',
@@ -84,6 +103,11 @@ export const privacyDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', Priv
     'privacy.reader.anyoneWithReplyLink': 'أي شخص لديه هذا الرابط، حتى تنتهي صلاحيته',
     'privacy.reader.sendingTeam': 'الفريق الذي أرسل إليك هذا الطلب',
     'privacy.reader.requester': 'العميل الذي طلب هذا التعريف',
+    'privacy.reader.workspaceOwnersReport':
+      'مالكو مساحة عملك ومشرفوها، بما في ذلك التقارير المحفوظة سابقًا. ويمكنهم أيضًا تنزيل كتبها.',
+    'privacy.reader.workspaceOwnersCard':
+      'مالكو مساحة عملك ومشرفوها، بما في ذلك البطاقات المنشأة سابقًا',
+    'privacy.reader.workspaceMembers': 'أعضاء آخرون في مساحة عملك',
   },
   fr: {
     'privacy.heading': 'Qui peut le voir',
@@ -101,6 +125,11 @@ export const privacyDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', Priv
       "Toute personne disposant de ce lien, jusqu'à son expiration",
     'privacy.reader.sendingTeam': "L'équipe qui vous a envoyé cette demande",
     'privacy.reader.requester': 'Le client qui a demandé cette mise en relation',
+    'privacy.reader.workspaceOwnersReport':
+      'Les propriétaires et administrateurs de votre espace de travail, y compris pour les rapports enregistrés plus tôt. Ils peuvent aussi télécharger ses livrets.',
+    'privacy.reader.workspaceOwnersCard':
+      'Les propriétaires et administrateurs de votre espace de travail, y compris pour les cartes créées plus tôt',
+    'privacy.reader.workspaceMembers': 'Les autres membres de votre espace de travail',
   },
   de: {
     'privacy.heading': 'Wer es sehen kann',
@@ -116,5 +145,10 @@ export const privacyDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', Priv
     'privacy.reader.anyoneWithReplyLink': 'Alle mit diesem Link, bis er abläuft',
     'privacy.reader.sendingTeam': 'Das Team, das Ihnen diese Anfrage gesendet hat',
     'privacy.reader.requester': 'Der Kunde, der um diese Vorstellung gebeten hat',
+    'privacy.reader.workspaceOwnersReport':
+      'Inhaber und Admins Ihres Arbeitsbereichs, auch für früher gespeicherte Berichte. Sie können auch seine Bücher herunterladen.',
+    'privacy.reader.workspaceOwnersCard':
+      'Inhaber und Admins Ihres Arbeitsbereichs, auch für früher erstellte Karten',
+    'privacy.reader.workspaceMembers': 'Andere Mitglieder Ihres Arbeitsbereichs',
   },
 };

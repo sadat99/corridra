@@ -112,6 +112,38 @@ const surfaces = {
 export type PrivacySurface = keyof typeof surfaces;
 export const privacySurfaces = Object.keys(surfaces) as readonly PrivacySurface[];
 
-export function privacyReaders(surface: PrivacySurface): readonly PrivacyReader[] {
-  return surfaces[surface];
+// ADR-087 U5 and U6: with member access on (CORRIDRA_MEMBER_ACCESS, read on the server and passed down), the owners and
+// admins of the same workspace read every saved report and decision card a current member made there, including older
+// ones, and download the report's books. The "Other people in your workspace" row is then split: owners and admins are
+// confirmed by the member access module, every other member stays "Not stated". Off, the rows are exactly as above.
+const memberAccessRows: Partial<Record<PrivacySurface, readonly PrivacyReader[]>> = {
+  savedReport: [
+    {
+      reader: 'privacy.reader.workspaceOwnersReport',
+      status: 'confirmed',
+      sourceNote:
+        'packages/db/member-access-migrations/0001_member_access.sql:customer.workspace_saved_missions',
+    },
+    notStated('privacy.reader.workspaceMembers'),
+  ],
+  decisionCard: [
+    {
+      reader: 'privacy.reader.workspaceOwnersCard',
+      status: 'confirmed',
+      sourceNote:
+        'packages/db/member-access-migrations/0002_member_decision_cards.sql:customer.workspace_decision_cards',
+    },
+    notStated('privacy.reader.workspaceMembers'),
+  ],
+};
+
+export function privacyReaders(
+  surface: PrivacySurface,
+  { memberAccess = false }: { memberAccess?: boolean } = {},
+): readonly PrivacyReader[] {
+  const rows = memberAccess ? memberAccessRows[surface] : undefined;
+  if (!rows) return surfaces[surface];
+  return surfaces[surface].flatMap((row) =>
+    row.reader === 'privacy.reader.workspace' ? rows : [row],
+  );
 }
