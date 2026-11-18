@@ -320,10 +320,10 @@ describe('message patterns with elements', () => {
 // The sentences that stay English in every language (Lane 11: legal, consent and privacy statements stay English;
 // owner ruling of 30 October 2026: also how long information is kept and that nothing is an offer).
 const staysEnglish = [
-  // W1-C (owner 2a, 18 Nov 2026): the callout and its two account sentences are gone; the privacy lines under the
-  // choices and the saved-draft line replace them, in English until a native review.
-  'Nothing is sent until you check it. You make an account at the last step, so your request stays private.',
-  'Nothing is sent until you check it. You are signed in, so your request stays private in your account.',
+  // W1-C (owner 2a, 18 Nov 2026): the callout box is gone. Its account sentence stays in the page heading, the one
+  // privacy line sits under the choices, and the saved-draft line replaces the old draft line.
+  'Create an account at the final step to keep your request and replies private.',
+  'Nothing is sent until you check it.',
   'Saved in this tab for up to 24 hours.',
   'Read the privacy and request notice',
   'Read the test intake notice',

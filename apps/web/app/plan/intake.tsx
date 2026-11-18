@@ -1010,14 +1010,8 @@ function IntakeForm({
   // The job disclosure is open when a job is set, when the job has an error, or when the person opened it.
   const jobFoldOpen = jobFoldChoice ?? (draft.job !== '' || !!errors.job?.length);
   const nothingChosen = draft.objective === '' && draft.job === '';
-  const signedIn = account !== null;
-  const privacyLine = englishIsland(
-    !realMode
-      ? 'Nothing is sent until you check it.'
-      : signedIn
-        ? 'Nothing is sent until you check it. You are signed in, so your request stays private in your account.'
-        : 'Nothing is sent until you check it. You make an account at the last step, so your request stays private.',
-  );
+  // One privacy line under the choices. The account sentence lives in the page heading (owner 2a, 18 Nov 2026).
+  const privacyLine = englishIsland('Nothing is sent until you check it.');
   // The summary line counts the three answers the summary shows, out of three.
   const chosenCount =
     (chosenJob ? 1 : 0) +
