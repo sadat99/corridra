@@ -33,7 +33,7 @@ import './library-ac1.css';
 
 const endpoint = '/api/customer-member-access';
 const helper =
-  'Reports saved and decision cards made by other members of workspaces you own or manage. You can read them and download their books. Only the member can remove a report or withdraw a card. Each report or card you open and each book you download is recorded with your name.';
+  'Reports saved and decision cards made by other members of workspaces you own or manage. You can read them and download their books. Only the member can remove a report or withdraw a card. Each list, report or card you open and each book you download is recorded with your account.';
 type Failure = 'denied' | 'unavailable' | 'limit' | 'failed';
 type Status = 'loading' | 'ready' | Failure;
 const failure = (error: unknown): Failure =>
@@ -526,7 +526,10 @@ function CardList({ workspaceId, scope }: { workspaceId: string; scope: SavedMis
               {decisionCardStateWords[card.state]}
             </span>
             <span>{madeBy(card.memberLabel)}</span>
-            <span>Link works until {formatDateTime(card.expiresAt)}.</span>
+            <span>
+              {card.state === 'EXPIRED' ? 'Card ended' : 'Card expires'}{' '}
+              {formatDateTime(card.expiresAt)}.
+            </span>
             {card.state === 'ACTIVE' && (
               <button
                 type="button"

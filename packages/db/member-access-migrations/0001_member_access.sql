@@ -16,6 +16,8 @@
 --      reader as principal, with the workspace id in its input) and the existing delivery.book.generated event, within the existing
 --      limit of 30 books an hour per person and report. Its projection is a copy of customer.saved_mission_book (books 0001:15-96):
 --      the install refuses unless that function is present with exactly the text this copy was made from.
+--   customer.member_access_others(workspace): the count of other current members, for a current owner or admin, so /account shows the
+--   tab only where there is someone to read. It reads no item and records nothing.
 --   Every list with items, every open and every book writes exactly one event through the existing writer
 --   customer_private.workspace_access_event, kind customer.member_item.read or customer.member_item.book, with ids only. The writer
 --   records the reader as initiator_id of the app.domain_event and an app.audit_event joined to it (ADR-087, Protections kept).
@@ -44,6 +46,7 @@ BEGIN
  IF to_regprocedure('customer_private.member_access_reader(uuid)') IS NOT NULL
   OR to_regprocedure('customer_private.member_saved_item(uuid,uuid,uuid)') IS NOT NULL
   OR to_regprocedure('customer_private.member_access_label(uuid,uuid)') IS NOT NULL
+  OR to_regprocedure('customer.member_access_others(uuid)') IS NOT NULL
   OR to_regprocedure('customer.workspace_saved_missions(uuid,uuid,integer)') IS NOT NULL
   OR to_regprocedure('customer.workspace_saved_mission(uuid,uuid)') IS NOT NULL
   OR to_regprocedure('customer.workspace_saved_mission_book(uuid,uuid,text,uuid,boolean)') IS NOT NULL THEN
@@ -93,6 +96,22 @@ CREATE FUNCTION customer_private.member_access_label(workspace uuid,person uuid)
   ORDER BY w.created_at DESC LIMIT 1
 $$;
 
+-- How many current members other than the caller this workspace has, for a current owner or admin only. It reads no member item,
+-- does not need the workspace to be open and records nothing: /account shows the Members' Reports tab only when it is above 0.
+CREATE FUNCTION customer.member_access_others(workspace uuid) RETURNS integer
+ LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE reader uuid:=customer_private.saved_mission_actor();
+BEGIN
+ IF workspace IS NULL OR NOT EXISTS(SELECT FROM customer.collaborative_workspaces() c WHERE c.id=workspace AND c.role IN ('owner','admin')) THEN
+  RAISE EXCEPTION 'Workspace owner or admin required' USING ERRCODE='42501';
+ END IF;
+ RETURN (SELECT count(DISTINCT x.p)::integer FROM (
+   SELECT m.principal_id AS p FROM customer.membership m WHERE m.tenant_id=workspace
+   UNION SELECT w.principal_id FROM customer_private.workspace_member w WHERE w.tenant_id=workspace
+    AND NOT EXISTS(SELECT FROM customer_private.workspace_access_revocation r WHERE r.member_id=w.id)) x
+  WHERE x.p<>reader);
+END $$;
+
 -- 2. One saved report of the workspace the reader may read, or the same refusal as an unknown id.
 CREATE FUNCTION customer_private.member_saved_item(workspace uuid,reader uuid,resource uuid) RETURNS customer_private.saved_mission
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
@@ -112,14 +131,16 @@ END $$;
 CREATE FUNCTION customer.workspace_saved_missions(workspace uuid,after_id uuid DEFAULT NULL,page_size integer DEFAULT 25) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE reader uuid:=customer_private.member_access_reader(workspace);s customer_private.saved_mission;l app.delivery_link;title text;
- items jsonb:='[]'::jsonb;ids jsonb:='[]'::jsonb;last_id uuid;more boolean:=false;label text;
+ items jsonb:='[]'::jsonb;ids jsonb:='[]'::jsonb;last_id uuid;more boolean:=false;label text;members uuid[]:='{}';
 BEGIN
  IF page_size IS NULL OR page_size NOT BETWEEN 1 AND 25 THEN RAISE EXCEPTION 'Invalid page size' USING ERRCODE='23514'; END IF;
- FOR s IN SELECT m.* FROM customer_private.saved_mission m
-  WHERE m.removed_at IS NULL AND m.principal_id<>reader AND (after_id IS NULL OR m.id>after_id)
+ -- Driven from the workspace's own requests, then their delivery assignment (one per link), then the member's live save of
+ -- that link; the same rule as customer_private.member_saved_item, ordered and paged by the save id.
+ FOR s IN SELECT m.* FROM customer_private.owned_request o
+  JOIN app.customer_delivery_assignment a ON a.request_id=o.id
+  JOIN customer_private.saved_mission m ON m.link_tenant_id=a.tenant_id AND m.link_id=a.link_id AND m.principal_id=o.principal_id
+  WHERE o.workspace_id=workspace AND m.removed_at IS NULL AND m.principal_id<>reader AND (after_id IS NULL OR m.id>after_id)
    AND customer_private.workspace_member_current(workspace,m.principal_id)
-   AND EXISTS(SELECT FROM app.customer_delivery_assignment a JOIN customer_private.owned_request o ON o.id=a.request_id
-    WHERE a.tenant_id=m.link_tenant_id AND a.link_id=m.link_id AND o.principal_id=m.principal_id AND o.workspace_id=workspace)
   ORDER BY m.id LIMIT page_size+1 LOOP
   IF jsonb_array_length(ids)=page_size THEN more:=true; EXIT; END IF;
   title:=NULL;l:=NULL;
@@ -135,10 +156,16 @@ BEGIN
   items:=items||jsonb_build_array(jsonb_build_object('id',s.id,'available',l.id IS NOT NULL,'title',title,
    'expiresAt',CASE WHEN l.id IS NOT NULL THEN to_char(l.expires_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') END,
    'savedAt',to_char(s.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),'memberLabel',label));
-  ids:=ids||jsonb_build_array(s.id);last_id:=s.id;
+  ids:=ids||jsonb_build_array(s.id);last_id:=s.id;members:=members||s.principal_id;
  END LOOP;
  IF jsonb_array_length(ids)>0 THEN
   PERFORM pg_advisory_xact_lock(hashtextextended('customer.access.workspace:'||workspace::text,0));
+  -- Recheck after the lock wait: a reader who lost the role, a member removed or a save removed meanwhile ends the read.
+  IF customer_private.member_access_reader(workspace) IS DISTINCT FROM reader
+  OR EXISTS(SELECT FROM unnest(members) p WHERE NOT customer_private.workspace_member_current(workspace,p))
+  OR EXISTS(SELECT FROM jsonb_array_elements_text(ids) i JOIN customer_private.saved_mission m ON m.id=i::uuid WHERE m.removed_at IS NOT NULL) THEN
+   RAISE EXCEPTION 'Member access changed' USING ERRCODE='42501';
+  END IF;
   PERFORM customer_private.workspace_access_event(workspace,reader,gen_random_uuid(),'customer.member_item.read',
    jsonb_build_object('view','saved_list','resourceIds',ids));
  END IF;
@@ -158,6 +185,11 @@ BEGIN
  END IF;
  result:=app.delivery_report(saved.token_hash,'CLIENT_PROGRESS');
  PERFORM pg_advisory_xact_lock(hashtextextended('customer.access.workspace:'||workspace::text,0));
+ -- Recheck after the lock wait: the reader still owns or manages the open workspace, and the save is still a current member's.
+ IF customer_private.member_access_reader(workspace) IS DISTINCT FROM reader THEN
+  RAISE EXCEPTION 'Member access changed' USING ERRCODE='42501';
+ END IF;
+ saved:=customer_private.member_saved_item(workspace,reader,resource);
  PERFORM customer_private.workspace_access_event(workspace,reader,gen_random_uuid(),'customer.member_item.read',
   jsonb_build_object('view','saved_report','resourceId',resource));
  IF customer.actor_id() IS DISTINCT FROM reader OR l.expires_at<=clock_timestamp() THEN
@@ -243,6 +275,9 @@ BEGIN
    jsonb_build_object('resourceId',resource,'bookKind',kind,'commandId',command));
  END IF;
  -- Recheck after any lock wait with the real clock: access lost meanwhile rolls back the record and both events.
+ IF customer_private.member_access_reader(workspace) IS DISTINCT FROM reader THEN
+  RAISE EXCEPTION 'Member access changed' USING ERRCODE='42501';
+ END IF;
  saved:=customer_private.member_saved_item(workspace,reader,resource);
  IF customer.actor_id() IS DISTINCT FROM reader OR l.expires_at<=clock_timestamp()
  OR app.delivery_report(saved.token_hash,'CLIENT_PROGRESS') IS DISTINCT FROM document THEN
@@ -252,9 +287,9 @@ BEGIN
 END $$;
 
 REVOKE ALL ON FUNCTION customer_private.member_access_reader(uuid),customer_private.member_saved_item(uuid,uuid,uuid),customer_private.member_access_label(uuid,uuid),
- customer.workspace_saved_missions(uuid,uuid,integer),customer.workspace_saved_mission(uuid,uuid),
+ customer.member_access_others(uuid),customer.workspace_saved_missions(uuid,uuid,integer),customer.workspace_saved_mission(uuid,uuid),
  customer.workspace_saved_mission_book(uuid,uuid,text,uuid,boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
-GRANT EXECUTE ON FUNCTION customer.workspace_saved_missions(uuid,uuid,integer),customer.workspace_saved_mission(uuid,uuid),
+GRANT EXECUTE ON FUNCTION customer.member_access_others(uuid),customer.workspace_saved_missions(uuid,uuid,integer),customer.workspace_saved_mission(uuid,uuid),
  customer.workspace_saved_mission_book(uuid,uuid,text,uuid,boolean) TO corridra_runtime;
 COMMENT ON FUNCTION customer.workspace_saved_missions(uuid,uuid,integer) IS
  'ADR-087 U5: a workspace owner or admin lists the saved reports of current members, once the workspace notice interval has passed. Audited.';
@@ -280,7 +315,7 @@ DECLARE f record;
 BEGIN
  FOR f IN SELECT p.oid::regprocedure::text AS sig,p.prosecdef,p.proconfig,p.proacl FROM pg_proc p
   WHERE p.oid IN ('customer_private.member_access_reader(uuid)'::regprocedure,'customer_private.member_saved_item(uuid,uuid,uuid)'::regprocedure,
-   'customer_private.member_access_label(uuid,uuid)'::regprocedure,
+   'customer_private.member_access_label(uuid,uuid)'::regprocedure,'customer.member_access_others(uuid)'::regprocedure,
    'customer.workspace_saved_missions(uuid,uuid,integer)'::regprocedure,'customer.workspace_saved_mission(uuid,uuid)'::regprocedure,
    'customer.workspace_saved_mission_book(uuid,uuid,text,uuid,boolean)'::regprocedure) LOOP
   IF NOT f.prosecdef OR f.proconfig IS DISTINCT FROM ARRAY['search_path=pg_catalog'] THEN
@@ -298,7 +333,8 @@ BEGIN
   OR has_function_privilege('corridra_runtime','customer_private.member_access_label(uuid,uuid)','EXECUTE') THEN
   RAISE EXCEPTION 'Member access: the runtime role must not call the private helpers';
  END IF;
- IF NOT has_function_privilege('corridra_runtime','customer.workspace_saved_missions(uuid,uuid,integer)','EXECUTE')
+ IF NOT has_function_privilege('corridra_runtime','customer.member_access_others(uuid)','EXECUTE')
+  OR NOT has_function_privilege('corridra_runtime','customer.workspace_saved_missions(uuid,uuid,integer)','EXECUTE')
   OR NOT has_function_privilege('corridra_runtime','customer.workspace_saved_mission(uuid,uuid)','EXECUTE')
   OR NOT has_function_privilege('corridra_runtime','customer.workspace_saved_mission_book(uuid,uuid,text,uuid,boolean)','EXECUTE') THEN
   RAISE EXCEPTION 'Member access: the runtime role must list, open and download';

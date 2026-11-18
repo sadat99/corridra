@@ -34,11 +34,16 @@ $guard$;
 CREATE FUNCTION customer.workspace_decision_cards(workspace uuid,after_id uuid DEFAULT NULL,page_size integer DEFAULT 25) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE reader uuid:=customer_private.member_access_reader(workspace);c customer_private.decision_card;resolved jsonb;live text;
- items jsonb:='[]'::jsonb;ids jsonb:='[]'::jsonb;last_id uuid;more boolean:=false;
+ items jsonb:='[]'::jsonb;ids jsonb:='[]'::jsonb;last_id uuid;more boolean:=false;members uuid[]:='{}';
 BEGIN
  IF page_size IS NULL OR page_size NOT BETWEEN 1 AND 25 THEN RAISE EXCEPTION 'Invalid page size' USING ERRCODE='23514'; END IF;
- FOR c IN SELECT d.* FROM customer_private.decision_card d JOIN customer_private.saved_mission s ON s.id=d.saved_mission_id
-  WHERE d.workspace_id=workspace AND d.principal_id<>reader AND s.removed_at IS NULL AND (after_id IS NULL OR d.id>after_id)
+ -- Driven from the workspace's own requests, their delivery assignment (one per link), the creator's live save of that link and
+ -- its cards; every predicate of the card read below is kept, ordered and paged by the card id.
+ FOR c IN SELECT d.* FROM customer_private.owned_request o
+  JOIN app.customer_delivery_assignment a ON a.request_id=o.id
+  JOIN customer_private.saved_mission s ON s.link_tenant_id=a.tenant_id AND s.link_id=a.link_id AND s.principal_id=o.principal_id
+  JOIN customer_private.decision_card d ON d.saved_mission_id=s.id AND d.principal_id=s.principal_id
+  WHERE o.workspace_id=workspace AND d.workspace_id=workspace AND d.principal_id<>reader AND s.removed_at IS NULL AND (after_id IS NULL OR d.id>after_id)
    AND customer_private.workspace_member_current(workspace,d.principal_id)
    AND NOT EXISTS(SELECT FROM customer_private.decision_card_withdrawal w WHERE w.card_id=d.id)
   ORDER BY d.id LIMIT page_size+1 LOOP
@@ -55,10 +60,16 @@ BEGIN
    'company',CASE WHEN live='ACTIVE' THEN resolved->'fields'->>'company' END,
    'decision',CASE WHEN live='ACTIVE' THEN resolved->'fields'->>'decision' END,
    'memberLabel',customer_private.member_access_label(workspace,c.principal_id)));
-  ids:=ids||jsonb_build_array(c.id);last_id:=c.id;
+  ids:=ids||jsonb_build_array(c.id);last_id:=c.id;members:=members||c.principal_id;
  END LOOP;
  IF jsonb_array_length(ids)>0 THEN
   PERFORM pg_advisory_xact_lock(hashtextextended('customer.access.workspace:'||workspace::text,0));
+  -- Recheck after the lock wait: the reader's role, each creator's membership, and no card withdrawn meanwhile.
+  IF customer_private.member_access_reader(workspace) IS DISTINCT FROM reader
+  OR EXISTS(SELECT FROM unnest(members) p WHERE NOT customer_private.workspace_member_current(workspace,p))
+  OR EXISTS(SELECT FROM jsonb_array_elements_text(ids) i JOIN customer_private.decision_card_withdrawal w ON w.card_id=i::uuid) THEN
+   RAISE EXCEPTION 'Member access changed' USING ERRCODE='42501';
+  END IF;
   PERFORM customer_private.workspace_access_event(workspace,reader,gen_random_uuid(),'customer.member_item.read',
    jsonb_build_object('view','card_list','cardIds',ids));
  END IF;
@@ -82,6 +93,10 @@ BEGIN
  expiry:=least(c.expires_at,(resolved->>'expiresAt')::timestamptz);
  IF expiry<=clock_timestamp() THEN RAISE EXCEPTION 'Decision card unavailable' USING ERRCODE='42501'; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('customer.access.workspace:'||workspace::text,0));
+ IF customer_private.member_access_reader(workspace) IS DISTINCT FROM reader
+ OR NOT customer_private.workspace_member_current(workspace,c.principal_id) THEN
+  RAISE EXCEPTION 'Member access changed' USING ERRCODE='42501';
+ END IF;
  PERFORM customer_private.workspace_access_event(workspace,reader,gen_random_uuid(),'customer.member_item.read',
   jsonb_build_object('view','card','cardId',card));
  -- Recheck after the lock wait: a card withdrawn meanwhile rolls back the event and answers as unavailable.

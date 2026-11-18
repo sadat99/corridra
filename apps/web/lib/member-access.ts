@@ -4,7 +4,7 @@
 // only 24 hours after its member notice was delivered, and writes one audit event per list, open or book. Off unless
 // CORRIDRA_MEMBER_ACCESS is exactly "true" (separate from CORRIDRA_MEMBER_NOTICE): off, every method refuses as not found.
 import { z } from 'zod';
-import type { DatabaseClient } from '@corridra/db';
+import type { DatabaseClient, DatabasePool } from '@corridra/db';
 import { CustomerSessionBoundary } from '@corridra/auth/customer-session';
 import { DomainError } from '@corridra/domain';
 import { bookKind, bookResult, type BookRecord } from '@corridra/domain/books';
@@ -12,6 +12,23 @@ import { uxSwitchOn } from './ux-switches';
 
 export const memberAccessOn = (env: NodeJS.ProcessEnv = process.env) =>
   uxSwitchOn('CORRIDRA_MEMBER_ACCESS', env);
+
+/**
+ * Whether the privacy labels may name workspace owners and admins as readers: only when the switch is on and the member access
+ * module is installed. Off, not installed or not checkable: false, so the labels stay exactly as they are without U5. The
+ * installation is read only after the switch is on.
+ */
+export async function memberAccessAvailable(
+  readInstalled: () => Promise<boolean>,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<boolean> {
+  if (!memberAccessOn(env)) return false;
+  try {
+    return (await readInstalled()) === true;
+  } catch {
+    return false;
+  }
+}
 
 const installedSql =
   "SELECT to_regprocedure('customer.workspace_saved_missions(uuid,uuid,integer)') IS NOT NULL AS present";
@@ -35,6 +52,8 @@ export type MemberAccessWorkspace = {
   opensAt: string | null;
   open: boolean;
   cards: boolean;
+  /** Current members other than this person. The Members' Reports tab shows only where some workspace has one or more. */
+  others: number;
 };
 export type MemberSavedReport = {
   id: string;
@@ -77,6 +96,17 @@ function refusal(error: unknown): never {
 }
 
 export class CustomerMemberAccessService extends CustomerSessionBoundary {
+  private readonly runtimePool: DatabasePool;
+  constructor(...args: ConstructorParameters<typeof CustomerSessionBoundary>) {
+    super(...args);
+    this.runtimePool = args[0];
+  }
+  /** Installation metadata only: whether the module's saved report list exists. Reads no customer data. */
+  async installedForLabels(): Promise<boolean> {
+    return (
+      (await this.runtimePool.query<{ present: boolean }>(installedSql)).rows[0]?.present === true
+    );
+  }
   // Off: not found. In real data mode the report switch that guards the member's own saved reports guards these too.
   private guard(env: NodeJS.ProcessEnv) {
     if (!memberAccessOn(env)) throw notFound();
@@ -99,8 +129,10 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
             name: string;
             role: 'owner' | 'admin';
             opens_at: Date | null;
+            others: number;
           }>(
-            `SELECT w.id,w.name,w.role,s.opens_at FROM customer.collaborative_workspaces() w
+            `SELECT w.id,w.name,w.role,s.opens_at,customer.member_access_others(w.id) AS others
+             FROM customer.collaborative_workspaces() w
              LEFT JOIN LATERAL customer.member_notice_state(w.id) s ON true
              WHERE w.role IN ('owner','admin') ORDER BY w.id`,
           );
@@ -113,6 +145,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
               opensAt: row.opens_at ? row.opens_at.toISOString() : null,
               open: !!row.opens_at && row.opens_at.getTime() <= now,
               cards,
+              others: row.others,
             })),
           };
         },

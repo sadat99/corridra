@@ -11,7 +11,7 @@ import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { SavedCommercialReport } from '../saved-commercial-report';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
-import { memberAccessOn } from '../../../../lib/member-access';
+import { memberAccessForPage } from '../../../../lib/foundations';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -55,7 +55,7 @@ export default async function Page({ params }: { params: Promise<{ resourceId: s
         books={await booksForPage()}
         decisionCards={customerDecisionCardsEnabled()}
         lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
-        memberAccess={memberAccessOn()}
+        memberAccess={await memberAccessForPage()}
       />
     </CustomerShell>
   );

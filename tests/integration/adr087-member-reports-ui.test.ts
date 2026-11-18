@@ -129,10 +129,108 @@ describe('PL1 with member access off or absent: byte for byte what it was', () =
     expect(render(ce(DecisionCardPanelView, { panel, decisions, memberAccess: false }))).toBe(
       plain,
     );
-    // The pages that pass the switch pass it only from the server, read from CORRIDRA_MEMBER_ACCESS.
+    // The pages that pass the switch pass it only from the server: CORRIDRA_MEMBER_ACCESS on and the module installed.
     expect(read('apps/web/app/account/missions/[resourceId]/page.tsx')).toContain(
-      'memberAccess={memberAccessOn()}',
+      'memberAccess={await memberAccessForPage()}',
     );
+  });
+  it('the server check: off, not installed or unreadable keep the labels as they are; only on and installed names owners', async () => {
+    const { memberAccessAvailable } = await import('../../apps/web/lib/member-access');
+    let asked = 0;
+    const installed = (answer: boolean | Error) => async () => {
+      asked++;
+      if (answer instanceof Error) throw answer;
+      return answer;
+    };
+    // Off: the installation is not even read.
+    expect(await memberAccessAvailable(installed(true), {})).toBe(false);
+    expect(await memberAccessAvailable(installed(true), { CORRIDRA_MEMBER_ACCESS: 'false' })).toBe(
+      false,
+    );
+    expect(asked).toBe(0);
+    const on = { CORRIDRA_MEMBER_ACCESS: 'true' } as NodeJS.ProcessEnv;
+    expect(await memberAccessAvailable(installed(false), on)).toBe(false);
+    expect(await memberAccessAvailable(installed(new Error('no database')), on)).toBe(false);
+    expect(await memberAccessAvailable(installed(true), on)).toBe(true);
+    expect(asked).toBe(3);
+    // The installation check is the module's own list function, read as metadata only.
+    const lib = read('apps/web/lib/member-access.ts');
+    expect(lib).toContain(
+      "SELECT to_regprocedure('customer.workspace_saved_missions(uuid,uuid,integer)') IS NOT NULL AS present",
+    );
+    expect(read('apps/web/lib/foundations.ts')).toMatch(
+      /export function memberAccessForPage\(\): Promise<boolean> \{\s*return memberAccessAvailable\(/,
+    );
+  });
+});
+
+describe('the member access route: the shared delivery budget on every action', () => {
+  const saved = { ...process.env };
+  afterEach(() => {
+    vi.doUnmock('../../apps/web/lib/foundations');
+    vi.resetModules();
+    process.env = { ...saved };
+  });
+  it('every list, open and book is counted per client before any read, and a spent budget reads nothing', async () => {
+    process.env.CORRIDRA_MEMBER_ACCESS = 'true';
+    process.env.CORRIDRA_UX_BOOKS = 'true';
+    delete process.env.VERCEL;
+    const origin = 'https://app.example';
+    const budget = vi.fn();
+    const service = {
+      savedReports: vi.fn(),
+      report: vi.fn(),
+      decisionCards: vi.fn(),
+      decisionCard: vi.fn(),
+      book: vi.fn(),
+    };
+    vi.resetModules();
+    vi.doMock('../../apps/web/lib/foundations', async () => {
+      const { DomainError } = await import('../../packages/domain/src/index');
+      budget.mockImplementation(async () => {
+        throw new DomainError('Too many requests. Try again in an hour.', 429);
+      });
+      return {
+        foundations: () => ({
+          ready: Promise.resolve(),
+          config: { APP_ORIGIN: origin },
+          delivery: { budget },
+          customerMemberAccess: service,
+        }),
+      };
+    });
+    const { POST } = await loadWeb('app/api/customer-member-access/route.ts');
+    const C = '44444444-4444-4444-8444-444444444444';
+    const cases: [Record<string, unknown>, string][] = [
+      [{ action: 'reports', workspaceId: W, after: null }, W],
+      [{ action: 'cards', workspaceId: W, after: null }, W],
+      [{ action: 'report', workspaceId: W, resourceId: R }, R],
+      [{ action: 'card', workspaceId: W, cardId: C }, C],
+      [
+        {
+          action: 'book',
+          workspaceId: W,
+          resourceId: R,
+          commandId: C,
+          kind: 'TRIP',
+          acknowledged: true,
+        },
+        R,
+      ],
+    ];
+    for (const [body, key] of cases) {
+      const response = (await POST(
+        new Request(`${origin}/api/customer-member-access`, {
+          method: 'POST',
+          headers: { origin, 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        }),
+      )) as Response;
+      expect(response.status, String(body.action)).toBe(429);
+      expect(budget).toHaveBeenLastCalledWith('local', key);
+    }
+    expect(budget).toHaveBeenCalledTimes(5);
+    for (const [name, fn] of Object.entries(service)) expect(fn, name).not.toHaveBeenCalled();
   });
 });
 
@@ -280,6 +378,14 @@ describe('the missions components: default unchanged, member mode read only', ()
     expect(report).toMatch(/\{!member && \(\s*<p>\s*Your original private invitation/);
     expect(report).toContain('"The member\'s self-declared response:"');
     expect(report).toContain('omitted: !!props.member');
+    // Each member read writes an audit event, so a tab switch neither clears nor reads it again, and a page restored from
+    // the back-forward cache stays closed until it is reloaded. The member's own report keeps both behaviours.
+    expect(report).toContain(
+      "if (!memberWorkspace) document.addEventListener('visibilitychange', visible);",
+    );
+    expect(report).toMatch(
+      /if \(event\.persisted\) \{\s*clear\(\);\s*if \(memberWorkspace\) setStatus\('closed'\);\s*else read\(\);/,
+    );
     // The member read asks the member access route for this one report, never the member's own route.
     expect(report).toContain("{ action: 'report', workspaceId: memberWorkspace, resourceId }");
     expect(report).toContain("fields: { action: 'book', workspaceId: member.workspaceId }");
@@ -335,7 +441,7 @@ describe("Members' Reports", () => {
       ce(MemberReports, { subject: 's', issuer: 'https://example.invalid/auth' }),
     );
     expect(html).toContain(
-      '<p>Reports saved and decision cards made by other members of workspaces you own or manage. You can read them and download their books. Only the member can remove a report or withdraw a card. Each report or card you open and each book you download is recorded with your name.</p>',
+      '<p>Reports saved and decision cards made by other members of workspaces you own or manage. You can read them and download their books. Only the member can remove a report or withdraw a card. Each list, report or card you open and each book you download is recorded with your account.</p>',
     );
     expect(html).toContain('<p role="status">Loading members&#x27; reports…</p>');
     expect(controls(html)).toEqual([]);
@@ -345,6 +451,11 @@ describe("Members' Reports", () => {
     const actions = [...source.matchAll(/action: '([a-z]+)'/g)].map((m) => m[1]).sort();
     expect(actions).toEqual(['card', 'cards', 'reports']);
     expect(source).not.toContain('—');
+    // A card's date says when the card itself ends, not a link.
+    expect(source).not.toContain('Link works until');
+    expect(source).toMatch(
+      /\{card\.state === 'EXPIRED' \? 'Card ended' : 'Card expires'\}\{' '\}\s*\{formatDateTime\(card\.expiresAt\)\}\./,
+    );
   });
   it('opens a card only from its button, and shows the six fields read only', async () => {
     const { CardDetail } = await loadWeb('app/account/member-reports.tsx');
@@ -398,11 +509,14 @@ describe("Members' Reports", () => {
     expect(page).toMatch(
       /members=\{\s*savedMissionIssuer &&\s*memberReportsVisible && \(\s*<MemberReports subject=\{data\.user\.id\} issuer=\{savedMissionIssuer\} \/>/,
     );
-    // The tab shows only with the switch on and for someone who owns or manages a workspace: the server asks the member access
-    // service for the workspaces (a read of no member item, recorded nowhere) and any failure means no tab.
+    // The tab shows only with the switch on and for someone who owns or manages a workspace with at least one other current
+    // member: the server asks the member access service for the workspaces and their member counts (a read of no member item,
+    // recorded nowhere) and any failure means no tab. The counts themselves are proved on a real database in
+    // adr087-member-access.test.ts.
     expect(page).toMatch(
-      /let memberReportsVisible = false;\s*if \(savedMissionIssuer && memberAccessOn\(\)\) \{[\s\S]*?customerMemberAccess\.workspaces\(data\.user\.id, savedMissionIssuer\)\)\s*\?\.workspaces\.length \?\? 0\) > 0;/,
+      /let memberReportsVisible = false;\s*if \(savedMissionIssuer && memberAccessOn\(\)\) \{[\s\S]*?customerMemberAccess\.workspaces\(data\.user\.id, savedMissionIssuer\)\s*\)\?\.workspaces\.some\(\(workspace\) => workspace\.others > 0\) \?\? false;/,
     );
+    expect(page).not.toMatch(/workspaces\.length/);
   });
 });
 

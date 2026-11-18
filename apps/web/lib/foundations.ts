@@ -1,5 +1,5 @@
 import { CustomerMemberNoticeService } from './member-notice';
-import { CustomerMemberAccessService } from './member-access';
+import { CustomerMemberAccessService, memberAccessAvailable } from './member-access';
 import {
   CustomerProgrammeProjectionsService,
   customerProgrammeProjectionsEnabled,
@@ -1000,3 +1000,14 @@ function createServices() {
   };
 }
 export const foundations = recoverableResource(createServices);
+
+// ADR-087 U5, for server pages: the S3 and S4 privacy labels name workspace owners and admins only when CORRIDRA_MEMBER_ACCESS
+// is on and the member access module is installed. Fails closed to today's labels.
+export function memberAccessForPage(): Promise<boolean> {
+  return memberAccessAvailable(async () => {
+    const services = foundations();
+    if (!services) return false;
+    await services.ready;
+    return services.customerMemberAccess.installedForLabels();
+  });
+}

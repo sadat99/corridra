@@ -166,23 +166,26 @@ function PrivateReport({
       if (document.hidden) clear();
       else read();
     }
+    // A member read writes an audit event, so it happens once, when the page is opened: switching tabs neither clears nor
+    // reads it again, and a page restored from the back-forward cache stays closed until it is reloaded.
     function show(event: PageTransitionEvent) {
       if (event.persisted) {
         clear();
-        read();
+        if (memberWorkspace) setStatus('closed');
+        else read();
       }
     }
     read();
     window.addEventListener('pagehide', clear);
     window.addEventListener('pageshow', show);
-    document.addEventListener('visibilitychange', visible);
+    if (!memberWorkspace) document.addEventListener('visibilitychange', visible);
     return () => {
       controller.current?.abort();
       window.removeEventListener('pagehide', clear);
       window.removeEventListener('pageshow', show);
       document.removeEventListener('visibilitychange', visible);
     };
-  }, [read]);
+  }, [read, memberWorkspace]);
   useEffect(() => {
     if (bookDenial) bookAlert.current?.focus();
   }, [bookDenial]);
@@ -356,6 +359,11 @@ function PrivateReport({
           {member
             ? 'This report could not be loaded. Try again.'
             : 'Your approved report could not be loaded. Try again.'}
+        </p>
+      )}
+      {status === 'closed' && (
+        <p role="status">
+          This report closed when you left the page. Reload the page to open it again.
         </p>
       )}
       {status === 'limit' && <p role="alert">{limitWords}</p>}

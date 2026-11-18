@@ -83,6 +83,11 @@ export async function POST(request: Request) {
       action?: unknown;
     };
     const [subject, issuer] = who(request);
+    // The original shared per-client delivery budget, on every action: each list, open and book is a read that writes an audit
+    // event, so none may be repeated without bound. Keyed by the item read, or the workspace for a list.
+    const client = process.env.VERCEL
+      ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
+      : 'local';
     if (body?.action === 'book') {
       if (!customerBooksEnabled())
         throw new DomainError('Trip and Supplier books are unavailable', 503);
@@ -94,9 +99,6 @@ export async function POST(request: Request) {
         kind: parsed.kind,
         acknowledged: parsed.acknowledged,
       };
-      const client = process.env.VERCEL
-        ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
-        : 'local';
       await s.delivery.budget(client, input.resourceId);
       const { record: book, file: pdf } = await s.customerMemberAccess.book(
         input,
@@ -118,6 +120,14 @@ export async function POST(request: Request) {
       });
     }
     const input = readInput.parse(body);
+    await s.delivery.budget(
+      client,
+      'resourceId' in input
+        ? input.resourceId
+        : 'cardId' in input
+          ? input.cardId
+          : input.workspaceId,
+    );
     const service = s.customerMemberAccess;
     const result =
       input.action === 'reports'
