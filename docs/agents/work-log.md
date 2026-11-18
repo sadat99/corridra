@@ -4510,3 +4510,15 @@ Test-bound deviations from the board (confirmed by G29): "Something else? Tell u
 Verification at ead0971 (local, gate.mjs, production build, PostgreSQL 16 per KI-15): format, lint, typecheck, test, build exit 0; test:e2e 744 passed; test:ux 590 passed (readability included, no baseline raised); operator shard 3/6 417 passed and its one failure fixed (ux-home-languages 51/51); operator specs importing touched files 169 passed; verification 647 passed, 3 failed on /fairs (404 with CORRIDRA_UX_FAIRS off locally, outside the diff); integration files importing touched files 304 passed; security-scan clean on this branch's commits (the W1-B fingerprint is allowlisted by PR 561). Not run: other operator shards, full test:integration, deployment.
 
 Follow-ups: docs/agents/ui-direction.md rows for the home's no-budget decision and the shared patterns (DS1); the board file's status line or register entry (DS1); native review of the bn, zh and es hero drafts; WhatsApp with a real number.
+
+### 18 November 2026: W1-D flags, flags and the compass mark in the six Routes rows (Builder W1-D, Sonnet, Class B, branch claude/w1d-flags, Guardian G29)
+
+Base main 374c9cd (LP3 merged, shared `components/ux/flag.tsx` on main). Guardian G29 order: wire `Flag` for the five sovereign or EU rows and `RegionMark` (compass) for Key Asian Markets in the /corridors route rows, always with the written name, never alone (UI/UX.v4 flag policy; owner step 2 board, screen 02).
+
+Built: `destinationRows` in content/corridors.ts gains `mark` (cn, eu, gb, us, au, region); app/corridors/page.tsx writes each row heading as `<Flagged code={row.mark}>name</Flagged>` and the empty `.guide-direction-flag` slot and its CSS are gone. No new component, no new colour. The flags are decorative beside the written name; Key Asian Markets gets the compass and never a flag.
+
+Tests: `routes-open-destinations.spec.ts` replaces the "slots are empty" assertion with one that checks five flags in order (cn, eu, gb, us, au) loaded and decorative, the compass mark only on Key Asian Markets, each mark before its written name in the heading, and the names unchanged. It fails on the previous build (expected 5 flags, received 0).
+
+Measure: the first version of the flags took the /corridors phone length from 4.729 to 4.752 screens (about 20 px), over the locked 4.75 (UI/UX.v4 Routes pages row). Guardian G29 refused a limit raise, so `routesLimits` phone stays 4.75 and the change recovers the height: `.guide-direction-text h3 .ux-flagged` is `display: flex`, so the mark sits inline with the heading text and adds no line box. Re-measured on a production build: /corridors at 390 is 3991 px (4.729 screens), the same as without the flags; at 1440 2731 px (3.034).
+
+Not verified: a real device, WebKit and Firefox, signed-in pages. Follow-ups: align the rows to the shared route-row component if one is added; the board raw-height targets remain unmet (footer included).

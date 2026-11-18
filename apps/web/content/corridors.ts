@@ -65,42 +65,48 @@ export const openNote = 'Open now from Bangladesh. Describe your mission and we 
  * The six open destinations from Bangladesh, as rows of the same size, weight and action in this order (owner step 2
  * board, screen 02, 18 November 2026, on the 17 November routes and markets wording). Key Asian Markets is an open
  * label that names no countries. A row with a `slug` has its own page; the others open the request with the countries
- * filled in. `flag` is the slot for the shared flag mark: it stays empty until that component exists, and Key Asian
- * Markets never gets a country flag.
+ * filled in. `mark` is what stands before the written name (UI/UX.v4 flag policy): a flag for each sovereign state and the EU,
+ * the neutral compass `region` mark for Key Asian Markets, which never gets a country flag.
  */
 export const destinationRows = [
   {
     key: 'china',
+    mark: 'cn',
     name: 'China',
     tagline: 'Buy products and machinery',
     href: '/corridors/bangladesh-china',
   },
   {
     key: 'eu',
+    mark: 'eu',
     name: 'EU',
     tagline: 'Sell to buyers in EU countries',
     href: '/corridors/bangladesh-eu',
   },
   {
     key: 'uk',
+    mark: 'gb',
     name: 'UK',
     tagline: 'Sell your products',
     href: '/plan?companyCountry=BD&marketCode=GB',
   },
   {
     key: 'us',
+    mark: 'us',
     name: 'US',
     tagline: 'Sell your products',
     href: '/plan?companyCountry=BD&marketCode=US',
   },
   {
     key: 'au',
+    mark: 'au',
     name: 'Australia',
     tagline: 'Sell your products',
     href: '/plan?companyCountry=BD&marketCode=AU',
   },
   {
     key: 'asia',
+    mark: 'region',
     name: 'Key Asian Markets',
     tagline: 'Name the market in your request',
     href: '/plan?companyCountry=BD',
