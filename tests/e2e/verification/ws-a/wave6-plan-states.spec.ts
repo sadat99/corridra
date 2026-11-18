@@ -119,7 +119,7 @@ test('Q-06 /plan send: busy while in flight, one request for a double click, res
     });
   });
   await toSubmit(page);
-  const button = page.locator('.guide-actions .primary-link');
+  const button = page.locator('.plan-action-bar .primary-link');
   await button.dblclick();
   const form = page.locator('form.intake-form');
   const busy = async () =>
