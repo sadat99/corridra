@@ -38,7 +38,8 @@ type Handlers = {
   copy?: () => void;
   withdraw?: (cardId: string) => void;
 };
-const stateWords: Record<CardSummary['state'], string> = {
+/** The visible word for a card's state; the members' reports list (ADR-087 U5) uses the same words. */
+export const decisionCardStateWords: Record<CardSummary['state'], string> = {
   ACTIVE: 'Active',
   WITHDRAWN: 'Withdrawn',
   EXPIRED: 'Expired',
@@ -51,11 +52,14 @@ export function DecisionCardPanelView({
   decisions = [],
   handlers = {},
   real = false,
+  memberAccess = false,
 }: {
   panel?: Panel;
   decisions?: Decision[];
   handlers?: Handlers;
   real?: boolean;
+  /** Member access is on (ADR-087 U5): the label names the workspace's owners and admins. */
+  memberAccess?: boolean;
 }) {
   if (real)
     return (
@@ -75,7 +79,7 @@ export function DecisionCardPanelView({
         Make a private link to one decision you have reviewed. You see exactly what it shows before
         anything is made.
       </p>
-      <PrivacyLabel surface="decisionCard" />
+      <PrivacyLabel surface="decisionCard" memberAccess={memberAccess} />
       {offered.length === 0 ? (
         <p>There is no reviewed decision to share yet.</p>
       ) : (
@@ -178,7 +182,7 @@ export function DecisionCardPanelView({
             {panel.cards.map((card) => (
               <li key={card.id}>
                 <span>
-                  {stateWords[card.state]} · expires {formatDateTime(card.expiresAt)}
+                  {decisionCardStateWords[card.state]} · expires {formatDateTime(card.expiresAt)}
                 </span>
                 <span>{countsWords(card.opens)}</span>
                 {card.lastOpenedAt && <span>Last opened {formatDateTime(card.lastOpenedAt)}.</span>}
@@ -224,12 +228,14 @@ export function DecisionCardPanel({
   issuer,
   decisions,
   synthetic,
+  memberAccess = false,
 }: {
   resourceId: string;
   subject: string;
   issuer: string;
   decisions: Decision[];
   synthetic: boolean;
+  memberAccess?: boolean;
 }) {
   const [panel, dispatch] = useReducer(panelReducer, initialPanel);
   // The card whose withdrawal is being confirmed.
@@ -332,6 +338,7 @@ export function DecisionCardPanel({
         decisions={decisions}
         handlers={handlers}
         real={!synthetic}
+        memberAccess={memberAccess}
       />
       <Dialog
         open={!!asked}

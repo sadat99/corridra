@@ -8,6 +8,8 @@ import { neonAuth } from '../../lib/neon-auth';
 import { AccountSignout } from './signout';
 import { CustomerMissions } from './customer-missions';
 import { SavedMissions } from './saved-missions';
+import { MemberReports } from './member-reports';
+import { memberAccessOn } from '../../lib/member-access';
 import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-missions';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { OperatorInvitationHint } from '../../components/operator-invitation-hint';
@@ -323,6 +325,12 @@ export default async function Page({
                       </p>
                     )}
                   </>
+                }
+                members={
+                  savedMissionIssuer &&
+                  memberAccessOn() && (
+                    <MemberReports subject={data.user.id} issuer={savedMissionIssuer} />
+                  )
                 }
               />
             </InvitationProvider>

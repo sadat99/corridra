@@ -6,16 +6,19 @@ import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
  * and Shared With Me. The tab is kept in ?tab=. Every old address still lands: #customer-missions opens
  * Shared With Me (where the invitation lives), and #saved-commercial-missions and anything inside a panel open the tab that holds it. A tab
  * appears only when its content exists, and a single one is shown without a tab list. Nothing is removed from
- * any panel and no access is added.
+ * any panel and no access is added. Members' Reports (ADR-087 U5) comes last and exists only while
+ * CORRIDRA_MEMBER_ACCESS is on (decided on the server).
  */
 export function ReportsTabs({
   delivered,
   saved,
   shared,
+  members,
 }: {
   delivered?: ReactNode;
   saved?: ReactNode;
   shared?: ReactNode;
+  members?: ReactNode;
 }) {
   const tabs: SubTab[] = [];
   if (delivered)
@@ -38,6 +41,12 @@ export function ReportsTabs({
       label: 'Shared With Me',
       panel: shared,
       aliases: ['customer-missions'],
+    });
+  if (members)
+    tabs.push({
+      id: 'members',
+      label: "Members' Reports",
+      panel: members,
     });
   if (tabs.length === 0) return null;
   if (tabs.length === 1) return <>{tabs[0]!.panel}</>;
