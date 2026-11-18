@@ -77,7 +77,8 @@
   }
   .guide-routes .guide-route-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Two columns at normal text; one column when text is large (the picker is open on the page now). */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
     gap: var(--space-2);
   }
   .guide-routes .guide-route-actions > a {
@@ -125,13 +126,14 @@
   gap: var(--space-3);
 }
 .ux-public .guide-routes .guide-directions li.guide-direction-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-flow: row wrap;
   align-items: center;
   gap: var(--space-2) var(--space-4);
   padding: var(--space-3) var(--space-5);
 }
 .guide-direction-flag {
+  flex: none;
   inline-size: 2rem;
   block-size: 1.5rem;
 }
@@ -139,14 +141,19 @@
   display: none;
 }
 .guide-direction-text {
-  display: grid;
-  gap: var(--space-1);
+  flex: 1 1 12rem;
   min-width: 0;
+  overflow-wrap: anywhere;
+}
+.guide-direction-text p {
+  margin-top: var(--space-1);
 }
 .ux-public .guide-routes .guide-directions li.guide-direction-row > a {
+  flex: none;
   align-self: center;
+  max-width: 100%;
   margin-top: 0;
-  white-space: nowrap;
+  white-space: normal;
 }
 .guide-route-steps {
   margin: 0;
@@ -154,15 +161,8 @@
   font-size: var(--text-base);
 }
 @media (max-width: 480px) {
-  .ux-public .guide-routes .guide-directions li.guide-direction-row {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
   .ux-public .guide-routes .guide-directions li.guide-direction-row > a {
-    grid-column: 1 / -1;
-    align-self: start;
-  }
-  .guide-direction-flag:empty + .guide-direction-text {
-    grid-column: 1 / -1;
+    flex: 1 1 100%;
   }
 }
 
@@ -212,4 +212,35 @@
   padding-block: var(--space-2);
   text-align: center;
   white-space: normal;
+}
+
+/* The picker and the sample are open on the page now (no tab), so their parts must fit the narrowest phone at the
+   largest text: the situation cards shrink below 13 rem, long words wrap, and the result actions wrap. */
+.guide-routes .ux-situations {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+.guide-routes .ux-situation {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.guide-routes .guide-route-actions > a {
+  max-width: 100%;
+  white-space: normal;
+}
+@media (max-width: 700px) {
+  .ux-public .guide-routes .guide-directions li.guide-direction-row {
+    padding-inline: var(--space-3);
+  }
+  .guide-routes .guide-route-actions > a {
+    padding-inline: var(--space-3);
+  }
+}
+.guide-routes .ux-atlas,
+.guide-routes .guide-route-result {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.guide-routes .ux-atlas > * {
+  min-width: 0;
+  max-width: 100%;
 }

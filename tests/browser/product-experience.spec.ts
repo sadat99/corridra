@@ -5,9 +5,9 @@ test('corridor pages explain the actual direction, status and geographic limits'
   page,
 }) => {
   for (const [slug, name] of [
-    ['bangladesh-china', 'Bangladesh–China'],
-    ['bangladesh-spain', 'Bangladesh–Spain'],
-    ['bangladesh-eu', 'Bangladesh–EU'],
+    ['bangladesh-china', 'Bangladesh China'],
+    ['bangladesh-spain', 'Bangladesh Spain'],
+    ['bangladesh-eu', 'Bangladesh EU'],
   ]) {
     await page.goto(`/corridors/${slug}`);
     await expect(page.getByText(name, { exact: true })).toBeVisible();

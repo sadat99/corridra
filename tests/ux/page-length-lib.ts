@@ -55,6 +55,16 @@ const planLimits: Record<Viewport['name'], Limits> = {
   phone: { target: 2.4, hard: 2.6 },
   desktop: { target: 1.8, hard: 1.85 },
 };
+/**
+ * Routes (`/corridors`) shows every section open on one page: the six destination rows, the Another Route block, the
+ * route picker with its map and the sample mission (owner, 18 November 2026, no tabs; Guardian G29 final decision:
+ * "if over, raise the limit for /corridors only"). Measured on a production build at 4.71 phone and 3.06 desktop
+ * screens, so the limits are the measure rounded up to the next 0.05. Every other public page keeps 3.0 and 2.0.
+ */
+export const routesLimits: Record<Viewport['name'], Limits> = {
+  phone: { target: 4.75, hard: 4.75 },
+  desktop: { target: 3.1, hard: 3.1 },
+};
 /** Sign-in and account recovery pages show the public footer, so they follow the public page limits. `/plan` has its own limits. */
 const publicIdentityPages = [
   '/signin',
@@ -122,8 +132,11 @@ export function limitsFor(
   entry: Pick<CoverageRoute, 'route' | 'audience'>,
   viewport: Viewport,
 ): Limits {
-  if (entry.audience === 'public')
-    return entry.route === '/' ? homeLimits[viewport.name] : publicPageLimits[viewport.name];
+  if (entry.audience === 'public') {
+    if (entry.route === '/') return homeLimits[viewport.name];
+    if (entry.route === '/corridors') return routesLimits[viewport.name];
+    return publicPageLimits[viewport.name];
+  }
   if (entry.route === '/plan') return planLimits[viewport.name];
   if (publicIdentityPages.includes(entry.route)) return publicPageLimits[viewport.name];
   return { target: viewport.target, hard: viewport.hard };

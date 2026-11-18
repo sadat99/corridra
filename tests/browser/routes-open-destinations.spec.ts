@@ -118,14 +118,12 @@ test('/corridors: Another Route block has its three actions and one primary', as
     'href',
     '/plan',
   );
-  await expect(page.getByRole('link', { name: 'See a Sample Mission' })).toHaveAttribute(
-    'href',
-    '#mission-example',
-  );
-  await expect(page.locator('main a.primary-link')).toHaveCount(1);
   await expect(
-    page.getByRole('link', { name: 'Start a Request', exact: true }).last(),
-  ).toHaveAttribute('href', '/plan');
+    page.locator('main').getByRole('link', { name: 'See a Sample Mission' }),
+  ).toHaveAttribute('href', '#mission-example');
+  await expect(page.locator('.guide-other-route a.primary-link')).toHaveCount(1);
+  await expect(page.locator('.guide-other-route a.primary-link')).toHaveText('Start a Request');
+  await expect(page.locator('.guide-other-route a.primary-link')).toHaveAttribute('href', '/plan');
 });
 
 test('/corridors: the older lead, Spain link, picker and sample mission are open below the rows, in order', async ({
@@ -133,7 +131,7 @@ test('/corridors: the older lead, Spain link, picker and sample mission are open
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/corridors');
-  await expect(page.locator('details')).toHaveCount(1); // only the existing Fine-Tune control inside the picker
+  await expect(page.locator('main details')).toHaveCount(1); // only the existing Fine-Tune control inside the picker
   const marks = [
     page.getByRole('heading', { name: 'Another route?' }),
     page.getByRole('heading', { name: 'The job comes first. The route gives it context.' }),
@@ -160,7 +158,7 @@ test('/corridors: See a Sample Mission and the old addresses land on their secti
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/corridors');
-  await page.getByRole('link', { name: 'See a Sample Mission' }).click();
+  await page.locator('main').getByRole('link', { name: 'See a Sample Mission' }).click();
   await expect(page.locator('#mission-example')).toBeVisible();
   await page.goto('/corridors#commercial-objective');
   await expect(page.locator('#commercial-objective')).toBeVisible();
@@ -193,10 +191,9 @@ test('/corridors/bangladesh-china: the board words, four jobs, three open sectio
       'We check each company against the scope you agree. We do not claim a supplier network or certification. We do not guarantee buyers.',
     ),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'How We Label Facts' })).toHaveAttribute(
-    'href',
-    '/trust',
-  );
+  await expect(
+    page.locator('main').getByRole('link', { name: 'How We Label Facts' }),
+  ).toHaveAttribute('href', '/trust');
   await expect(page.getByRole('link', { name: 'Start a Request on This Route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=BD&marketCode=CN',
