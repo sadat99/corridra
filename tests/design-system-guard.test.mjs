@@ -485,6 +485,8 @@ test('every entry point names UI/UX.v4 and the contract keeps UI/UX.v3 as supers
     '.claude/skills/corridra-squad/SKILL.md',
     '.github/pull_request_template.md',
     'docs/documentation-map.json',
+    'docs/agents/conductor/SKILL.md',
+    'docs/agents/conductor/references/experience.md',
   ];
   for (const path of entryPoints) {
     const text = read(join(root, path));
