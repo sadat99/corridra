@@ -8468,6 +8468,9 @@ samp {
   opacity: 0;
   transform: translateY(1rem);
   pointer-events: none;
+  /* Gone at once, not faded: the floating Help now carries a word, and a word caught mid-fade is a contrast failure and
+     a control nobody can see. It is back after the page stops scrolling (useScrollHide), so Tab always finds it. */
+  visibility: hidden;
 }
 .header-help {
   display: none;
