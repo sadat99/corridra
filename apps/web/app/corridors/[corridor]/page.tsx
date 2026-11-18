@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { corridorPages } from '../../../content/corridors';
 import { Lines } from '../../../components/public-page';
-import { SubTabs } from '../../../components/ux/sub-tabs';
 import '../../../components/page-compact.css';
 import './corridor.css';
 export function generateStaticParams() {
@@ -34,7 +33,7 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
               Routes
             </Link>
           </nav>
-          <p className="label">{c.title}</p>
+          <p className="label">{c.title.replace('\u2013', ' ')}</p>
           <h1>
             <Lines text={c.heading} />
           </h1>
@@ -50,68 +49,41 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
           </div>
         </div>
       </section>
-      <section className="guide-detail-tabs" aria-label="About this route">
-        <SubTabs
-          label="About this route"
-          tabs={[
-            {
-              id: 'help',
-              label: 'What We Help With',
-              panel: (
-                <div className="guide-detail">
-                  <article className="guide-detail-card">
-                    <h2>What we help with</h2>
-                    <ul>
-                      {c.jobs.map((job) => (
-                        <li key={job}>{job}</li>
-                      ))}
-                    </ul>
-                  </article>
-                </div>
-              ),
-            },
-            {
-              id: 'availability',
-              label: 'Current Availability',
-              panel: (
-                <div className="guide-detail">
-                  <article className="guide-detail-card">
-                    <h2>Current availability</h2>
-                    <dl>
-                      <dt data-tone="positive">Available now</dt>
-                      <dd>{c.available}</dd>
-                      <dt data-tone="info">What happens</dt>
-                      <dd>
-                        Send a request and follow it in your account. Our team reviews it, agrees
-                        the scope and a written quote with you, and only then starts the research
-                        and meeting planning.
-                      </dd>
-                      <dt data-tone="unknown">Not offered</dt>
-                      <dd>
-                        Online payment, automated outreach and AI assistance are switched off. We do
-                        not claim local coverage we have not checked, and a visit counts only once
-                        the meeting is confirmed.
-                      </dd>
-                    </dl>
-                  </article>
-                </div>
-              ),
-            },
-            {
-              id: 'work',
-              label: 'Where the Work Happens',
-              panel: (
-                <div className="guide-detail">
-                  <article className="guide-detail-card">
-                    <h2>Where the work happens</h2>
-                    <p>{c.qualification}</p>
-                    <p>{c.reverse}</p>
-                  </article>
-                </div>
-              ),
-            },
-          ]}
-        />
+      <section className="guide-detail-open" aria-label="About this route">
+        <div className="guide-detail">
+          <article className="guide-detail-card">
+            <h2>What we help with</h2>
+            <ul>
+              {c.jobs.map((job) => (
+                <li key={job}>{job}</li>
+              ))}
+            </ul>
+          </article>
+          <article className="guide-detail-card" id="current-availability">
+            <h2>Current availability</h2>
+            <dl>
+              <dt data-tone="positive">Available now</dt>
+              <dd>{c.available}</dd>
+              <dt data-tone="info">What happens</dt>
+              <dd>
+                Send a request and follow it in your account. Our team reviews it and agrees the
+                scope and a written quote with you. Only then does our team start the research and
+                meeting planning.
+              </dd>
+              <dt data-tone="unknown">Not offered</dt>
+              <dd>
+                Online payment is switched off. So are automated outreach and AI assistance. We do
+                not claim local coverage we have not checked, and a visit counts only once the
+                meeting is confirmed.
+              </dd>
+            </dl>
+          </article>
+          <article className="guide-detail-card" id="where-the-work-happens">
+            <h2>Where the work happens</h2>
+            <p>{c.qualification}</p>
+            <p>{c.reverse}</p>
+          </article>
+        </div>
       </section>
       <section className="guide-note">
         <p>
@@ -119,7 +91,7 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
           certification. We do not guarantee buyers.
         </p>
         <Link prefetch={false} href="/trust" className="text-link">
-          How evidence and uncertainty are handled
+          How We Label Facts
         </Link>
       </section>
     </PublicShell>

@@ -77,8 +77,9 @@
   }
   .guide-routes .guide-route-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-2);
+    /* One column: the shared action rhythm already spaces stacked actions (the picker is open on the page now). */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
   .guide-routes .guide-route-actions > a {
     align-self: stretch;
@@ -116,38 +117,85 @@
   }
 }
 
-/* Three short tab labels fit one row on a phone with a little less side padding (scoped to this page). */
-@media (max-width: 700px) {
-  .guide-routes .ux-subtabs-tab {
-    padding-inline: var(--space-2);
+/* Six destinations as rows of the same size, weight and action, in this order: China, EU, UK, US, Australia, Key Asian
+   Markets (owner decisions 17 and 18 November 2026, step 2 board screen 02). The flag slot takes no room while it is
+   empty. */
+.guide-routes .guide-directions ul {
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: var(--space-3);
+}
+.ux-public .guide-routes .guide-directions li.guide-direction-row {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-5);
+}
+.guide-direction-flag {
+  flex: none;
+  inline-size: 2rem;
+  block-size: 1.5rem;
+}
+.guide-direction-flag:empty {
+  display: none;
+}
+.guide-direction-text {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.guide-direction-text p {
+  margin-top: var(--space-1);
+}
+.ux-public .guide-routes .guide-directions li.guide-direction-row > a {
+  flex: none;
+  align-self: center;
+  max-width: 100%;
+  margin-top: 0;
+  white-space: normal;
+}
+.guide-route-steps {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-base);
+}
+@media (max-width: 480px) {
+  .ux-public .guide-routes .guide-directions li.guide-direction-row > a {
+    flex: 1 1 100%;
   }
 }
 
-/* Open destinations without a page of their own are compact cards (title and one link); on a phone they sit two a row so
-   the page keeps its length budget (owner decision 17 November 2026, routes and markets). */
+/* The sections under the rows sit close to them and to each other. */
+.guide-routes-about {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+.guide-routes-about > h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--text-h2);
+  font-weight: 500;
+}
+.guide-routes-about > p {
+  margin: 0;
+}
+.guide-routes > .guide-route-box,
+.guide-routes > .ux-example {
+  margin-top: var(--space-6);
+}
+.guide-other-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+}
 @media (max-width: 700px) {
-  .ux-public .guide-routes .guide-directions ul {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .ux-public .guide-routes .guide-directions li {
-    grid-column: 1 / -1;
-  }
-  .ux-public .guide-routes .guide-directions li.guide-direction-compact {
-    grid-column: auto;
-    padding: var(--space-3);
-  }
-  .ux-public .guide-page-hero a.primary-link.guide-hero-start {
-    display: none;
-  }
-  .ux-public .guide-routes .guide-directions li.guide-direction-compact {
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
-  }
-  .ux-public .guide-routes .guide-directions li.guide-direction-compact h3,
-  .ux-public .guide-routes .guide-directions li.guide-direction-compact a {
-    font-size: var(--text-sm);
-    line-height: 1.3;
-    overflow-wrap: anywhere;
+  .guide-other-actions > .button-secondary,
+  .guide-other-actions > .primary-link {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -158,10 +206,64 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.guide-other-route > a {
+.guide-other-actions > a {
   max-width: 100%;
   min-width: 0;
   padding-block: var(--space-2);
   text-align: center;
   white-space: normal;
+}
+
+/* The picker and the sample are open on the page now (no tab), so their parts must fit the narrowest phone at the
+   largest text: the situation cards shrink below 13 rem, long words wrap, and the result actions wrap. */
+.guide-routes .ux-situations {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+.guide-routes .ux-situation {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.guide-routes .guide-route-actions > a {
+  max-width: 100%;
+  white-space: normal;
+}
+@media (max-width: 700px) {
+  .ux-public .guide-routes .guide-directions li.guide-direction-row {
+    padding-inline: var(--space-3);
+  }
+  .guide-routes .guide-route-actions > a {
+    padding-inline: var(--space-3);
+  }
+}
+.guide-routes .ux-atlas,
+.guide-routes .guide-route-result {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.guide-routes .ux-atlas > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The three closing actions share one height, and the two picker actions stretch to one height, so a wrapped row never
+   staggers (action alignment rule). The selectors name the page so they win over the shared button rules. */
+.guide-routes .guide-other-actions > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--guided-touch);
+  padding-block: 0;
+}
+.guide-routes .guide-route-actions {
+  align-items: stretch;
+}
+.guide-routes .guide-route-actions > a {
+  align-self: stretch;
+  height: auto;
+  margin: 0;
+}
+@media (max-width: 700px) {
+  .guide-routes .guide-other-actions > a {
+    width: 100%;
+  }
 }

@@ -4,16 +4,14 @@ import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
-import { corridorPages } from '../content/corridors';
+import { corridorPages, openNote } from '../content/corridors';
 import { Arrow } from './arrow';
 import { CorridorMap } from './corridor-map';
 import { WorldRouteMap } from './world-route-map';
-import { SubTabs } from './ux/sub-tabs';
 
 // Open destinations from Bangladesh, as equals (owner decision 17 November 2026, routes and markets). China and the EU
 // have their own pages; the UK, the US and Australia have none yet and open the request with both countries filled in.
 // The Spain page stays reachable at its own address but is no longer offered as a route here.
-const openNote = 'Open now from Bangladesh. Describe your mission and we will review it.';
 const directions = [
   {
     key: 'bangladesh-china',
@@ -114,7 +112,13 @@ const exampleSteps = [
 ] as const;
 
 /** Educational selectors only. No identity, readiness decision, persisted mission or API call. */
-export function DiscoveryExperience({ children }: { children?: ReactNode }) {
+export function DiscoveryExperience({
+  children,
+  about,
+}: {
+  children?: ReactNode;
+  about?: ReactNode;
+}) {
   const [direction, setDirection] = useState(directions[0].key);
   // Any other route: a company country and a target market chosen freely. Empty means none.
   const [other, setOther] = useState({ company: '', market: '' });
@@ -454,16 +458,13 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
   );
   return (
     <section className="ux-discovery guide-routes" aria-label="Explore a commercial objective">
-      <SubTabs
-        label="Routes"
-        tabs={[
-          // The routes come first: the list of every route and the way to start a request is what the page
-          // opens on (P-06); the picker and the sample are one tap away.
-          ...(children ? [{ id: 'routes', label: 'Explore a Route', panel: children }] : []),
-          { id: 'route', label: 'Pick Your Route', panel: routePanel },
-          { id: 'sample', label: 'Sample Mission', panel: samplePanel },
-        ]}
-      />
+      {/* The six destinations and the Another Route block come first, then the rest of the page open, in this order:
+          the older lead and the Spain link, the route picker, the sample mission (owner decision 18 November 2026:
+          no tabs on Routes, every section open, nothing removed). */}
+      {children}
+      {about ? <section className="guide-routes-about">{about}</section> : null}
+      {routePanel}
+      {samplePanel}
     </section>
   );
 }
