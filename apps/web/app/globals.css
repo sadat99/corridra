@@ -2551,6 +2551,11 @@ th {
     animation-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  /* UI/UX.v4 motion: the busy ring is the one infinite animation; under reduced motion it turns once and rests,
+     as Less Movement already does (comfort.css), instead of flickering. */
+  :is(.button, .button-secondary)[aria-busy='true']::after {
+    animation-iteration-count: 1 !important;
+  }
   .primary-link:hover,
   .button:hover {
     transform: none;

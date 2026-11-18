@@ -54,33 +54,39 @@ Authority order from the package: latest owner decision (this brand and composit
 
 One canonical colour layer now lives in the "Design system layer" `:root` of `apps/web/app/globals.css`. The two legacy roots (top of file and the UX10X foundations block) no longer declare colours; they keep their non-colour values. Raw hex appears only as `--ac-*` primitives; everything else is a `var()` or a `color-mix()` of primitives.
 
-| Token (unchanged name)                      | Before (forest/ivory)     | After (AC/1)                  | Role                                                                           |
-| ------------------------------------------- | ------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
-| `--paper`, `--surface-0`                    | `#f5f3ec`                 | Porcelain `#f6f8fb`           | Page canvas                                                                    |
-| `--ink`, `--text-1`, `--text-strong`        | `#222d29`                 | Ink `#18283c`                 | Primary text                                                                   |
-| `--text-2`                                  | `#4a564f`                 | `#4b5a6c`                     | Secondary text                                                                 |
-| `--muted`, `--text-3`, `--text-muted`       | `#58635d`                 | `#59677b`                     | Tertiary text                                                                  |
-| `--line`, `--border-subtle`                 | `#d6d9ce`                 | `#d8e0ea`                     | Dividers                                                                       |
-| `--border-strong`                           | `#8c978a`                 | `#a4b1c2`                     | Control borders                                                                |
-| `--surface-1`, `--surface-raised`           | `#fffefa`                 | `#ffffff`                     | Raised surface                                                                 |
-| `--surface-2`, `--surface-subtle`           | `#eef1e8` / `#e9eee5`     | `#eff3f8`                     | Quiet grouping                                                                 |
-| `--brand-deep`                              | `#173f31` (also CTA fill) | Navy `#142438`                | Chrome, dark contrast surface, next-step card. **No longer a CTA fill**        |
-| `--brand`                                   | `#244b39`                 | Cobalt `#2856c5`              | Interactive accent, focus ring, text links                                     |
-| `--brand-hover`                             | `#0f2f24`                 | `#234eb0`                     | Hover of cobalt                                                                |
-| `--on-brand`                                | `#fffefa`                 | `#ffffff`                     | Text on navy or cobalt                                                         |
-| `--action` (CTA fill)                       | brand green               | Cobalt                        | Every primary action. New: `--action-hover`, `--action-pressed`, `--on-action` |
-| `--selected`, `--selected-surface` (new)    | was `--brand-deep` fill   | Cobalt / `#e7eeff`            | Current tab, current step, pressed toggle, selection                           |
-| `--nav-hover` (new)                         | n/a                       | `#263c56`                     | Hover on a navy surface (dark tiles)                                           |
-| `--accent`                                  | `#526544` olive           | Cobalt (deprecated alias)     | Legacy focus and hover consumers only                                          |
-| `--accent-gold`, `--editorial-accent` (new) | `#b98a4e` gold            | Copper `#bf7548`              | Decorative dots, underline decoration, map pins. Never text, never warning     |
-| `--positive` / surface                      | `#285b3b` / `#e7f0e7`     | `#116653` / `#e8f5f0`         | Status only                                                                    |
-| `--caution` / surface                       | `#805018` / `#f7ecd9`     | `#865018` / `#fff2e2`         | Status only                                                                    |
-| `--critical` / surface                      | `#963d31` / `#f9e8e3`     | `#a52f43` / `#fbecef`         | Status only, destructive                                                       |
-| `--info` / surface                          | `#365e62` / `#e6eeee`     | `#2856c5` / `#e7eeff`         | Informational state                                                            |
-| `--unknown` / surface                       | `#5b594e` / `#efede5`     | `#526073` / `#eff3f8`         | Unknown, not measured yet                                                      |
-| `--ring`                                    | green 14%                 | Cobalt 16%                    | Focus halo on fields and choices                                               |
-| `--shadow-1..3`                             | green-tinted              | Navy-tinted, same geometry    | Overlays and lift only                                                         |
-| `--map-*`                                   | greens and gold           | Navy, cobalt and copper mixes | Atlas map (commercial direction, never a shipping route)                       |
+| Token (unchanged name)                      | Before (forest/ivory)     | After (AC/1)                                           | Role                                                                           |
+| ------------------------------------------- | ------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `--paper`, `--surface-0`                    | `#f5f3ec`                 | Porcelain `#f6f8fb`                                    | Page canvas                                                                    |
+| `--ink`, `--text-1`, `--text-strong`        | `#222d29`                 | Ink `#18283c`                                          | Primary text                                                                   |
+| `--text-2`                                  | `#4a564f`                 | `#4b5a6c`                                              | Secondary text                                                                 |
+| `--muted`, `--text-3`, `--text-muted`       | `#58635d`                 | `#59677b`                                              | Tertiary text                                                                  |
+| `--line`, `--border-subtle`                 | `#d6d9ce`                 | `#d8e0ea`                                              | Dividers                                                                       |
+| `--border-strong`                           | `#8c978a`                 | `#a4b1c2`                                              | Control borders                                                                |
+| `--surface-1`, `--surface-raised`           | `#fffefa`                 | `#ffffff`                                              | Raised surface                                                                 |
+| `--surface-2`, `--surface-subtle`           | `#eef1e8` / `#e9eee5`     | `#eff3f8`                                              | Quiet grouping                                                                 |
+| `--brand-deep`                              | `#173f31` (also CTA fill) | Navy `#142438`                                         | Chrome, dark contrast surface, next-step card. **No longer a CTA fill**        |
+| `--brand`                                   | `#244b39`                 | Cobalt `#2856c5`                                       | Interactive accent, focus ring, text links                                     |
+| `--brand-hover`                             | `#0f2f24`                 | `#234eb0`                                              | Hover of cobalt                                                                |
+| `--on-brand`                                | `#fffefa`                 | `#ffffff`                                              | Text on navy or cobalt                                                         |
+| `--action` (CTA fill)                       | brand green               | Cobalt                                                 | Every primary action. New: `--action-hover`, `--action-pressed`, `--on-action` |
+| `--selected`, `--selected-surface` (new)    | was `--brand-deep` fill   | Cobalt / `#e7eeff`                                     | Current tab, current step, pressed toggle, selection                           |
+| `--nav-hover` (new)                         | n/a                       | `#263c56`                                              | Hover on a navy surface (dark tiles)                                           |
+| `--accent`                                  | `#526544` olive           | Cobalt (deprecated alias)                              | Legacy focus and hover consumers only                                          |
+| `--accent-gold`, `--editorial-accent` (new) | `#b98a4e` gold            | Copper `#bf7548`                                       | Decorative dots, underline decoration, map pins. Never text, never warning     |
+| `--positive` / surface                      | `#285b3b` / `#e7f0e7`     | `#116653` / `#e8f5f0`                                  | Status only                                                                    |
+| `--caution` / surface                       | `#805018` / `#f7ecd9`     | `#865018` / `#fff2e2`                                  | Status only                                                                    |
+| `--critical` / surface                      | `#963d31` / `#f9e8e3`     | `#a52f43` / `#fbecef`                                  | Status only, destructive                                                       |
+| `--info` / surface                          | `#365e62` / `#e6eeee`     | `#2856c5` / `#e7eeff`                                  | Informational state                                                            |
+| `--unknown` / surface                       | `#5b594e` / `#efede5`     | `#526073` / `#eff3f8`                                  | Unknown, not measured yet                                                      |
+| `--ring`                                    | green 14%                 | Cobalt 16%                                             | Focus halo on fields and choices                                               |
+| `--shadow-1..3`                             | green-tinted              | Navy-tinted, same geometry                             | Overlays and lift only                                                         |
+| `--map-*`                                   | greens and gold           | Navy, cobalt and copper mixes                          | Atlas map (commercial direction, never a shipping route)                       |
+| `--dur-short` (new, UI/UX.v4)               | n/a                       | 160 ms (the existing `--dur`)                          | State changes                                                                  |
+| `--dur-step` (new, UI/UX.v4)                | n/a                       | 260 ms                                                 | One behaviour, always under 300 ms                                             |
+| `--dur-tick` (new, UI/UX.v4)                | n/a                       | 420 ms                                                 | The Done tick only; the longest motion allowed                                 |
+| `--ease-product` (new, UI/UX.v4)            | n/a                       | cubic-bezier(0.2, 0.7, 0.2, 1) (the existing `--ease`) | Product ease                                                                   |
+| `--bottom-action-h` (new, UI/UX.v4)         | n/a                       | 60 px                                                  | Phone bottom action area                                                       |
+| `--header-h-phone` (new, UI/UX.v4)          | n/a                       | 60 px                                                  | Phone header (was 72 px)                                                       |
 
 Consumers re-pointed by role (presentation only, no class, id, name, link or payload change):
 

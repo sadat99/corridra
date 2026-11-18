@@ -552,7 +552,7 @@ export const MOTION_EXCEPTIONS = [
   {
     file: 'apps/web/app/globals.css',
     selector: ":is(.button, .button-secondary)[aria-busy='true']::after",
-    why: 'the busy ring (ac1-busy, 0.8 s a turn): a progress indicator the person started; Less Movement stops it after one turn',
+    why: 'the busy ring (ac1-busy, 0.8 s a turn): a progress indicator the person started; reduced motion and Less Movement stop it after one turn',
   },
   {
     file: 'apps/web/components/site-footer.css',
@@ -701,6 +701,15 @@ test('CSS motion stays inside the UI/UX.v4 motion spec: at most 420 ms, off unde
   }
   assert.deepEqual(tooLong, [], `motion longer than ${MOTION_LIMIT_MS} ms`);
   assert.deepEqual(noOffSwitch, [], 'keyframe animation without a reduced-motion off switch');
+  // An exception that animates still stops under reduced motion: the busy ring turns once and rests.
+  const busy = MOTION_EXCEPTIONS[0].selector;
+  assert.ok(
+    reducedMotionBlocks(globals).some(
+      (b) =>
+        b.includes(busy) && /animation-iteration-count\s*:\s*1\b/.test(b.slice(b.indexOf(busy))),
+    ),
+    'the busy ring stops after one turn under reduced motion',
+  );
   // Every listed exception still exists, so the list can only shrink.
   for (const e of MOTION_EXCEPTIONS) {
     assert.ok(
