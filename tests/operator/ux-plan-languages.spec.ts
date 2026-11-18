@@ -86,7 +86,7 @@ test.beforeAll(async () => {
         // buttons, headings and pills keep to their own length limits (checked in language-form.test.ts), so they
         // are made longer but get no compound.
         const {words}=await import(${JSON.stringify(resolve('apps/web/lib/i18n/form-words/de.ts'))});
-        const limited=/^form\.(step|action|head|pending|receipt|check)\.|(Pill|Heading)$/;
+        const limited=/^form\.(step|action|head|pending|receipt|check)\.|^form\.plan\.(stepLine|nextLine|exactJob|pickToContinue|savedTab)$|(Pill|Heading)$/;
         let n=0;
         for(const key of Object.keys(formEn)){
           const text=formEn[key],extra=Math.ceil(text.length*0.4);
@@ -700,8 +700,9 @@ test.describe('with the form released', () => {
     await open(page, 'de', 'pages=true');
     await expect(page.locator('#main')).toHaveAttribute('lang', 'en');
     await expect(page.locator('h1')).toHaveText(formEn['form.head.title']);
+    // UI/UX.v4: before a choice the English button says why it waits.
     await expect(page.locator('form.intake-form .plan-action-bar .primary-link')).toHaveText(
-      formEn['form.action.continue'],
+      formEn['form.plan.pickToContinue'],
     );
   });
 

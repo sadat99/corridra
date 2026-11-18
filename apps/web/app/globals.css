@@ -7382,6 +7382,7 @@ th {
       :is(
           .guide-actions,
           .guide-actions-row,
+          .plan-action-row,
           .ux-controls-section-heading,
           .ux-start-actions,
           .ux-start-foot,
@@ -7415,6 +7416,7 @@ th {
       :is(
           .guide-actions,
           .guide-actions-row,
+          .plan-action-row,
           .ux-controls-section-heading,
           .ux-start-actions,
           .ux-start-foot,
@@ -7441,6 +7443,7 @@ th {
       :is(
           .guide-actions,
           .guide-actions-row,
+          .plan-action-row,
           .ux-controls-section-heading,
           .ux-start-actions,
           .ux-start-foot,
