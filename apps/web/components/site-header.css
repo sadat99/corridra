@@ -470,9 +470,6 @@
    cobalt stays the one action fill, the logo is the reversed colorway (cobalt on navy fails contrast, brand identity
    section 2). The open phone sheet keeps its light surface. Destinations, names and order are unchanged. */
 .site-header.public-header:not([data-open='true']) {
-  position: sticky;
-  top: 0;
-  z-index: 40;
   border-bottom-color: color-mix(in srgb, var(--on-brand) 18%, transparent);
   background: color-mix(in srgb, var(--brand-deep) 96%, transparent);
   backdrop-filter: blur(14px);
@@ -533,7 +530,18 @@
     background: color-mix(in srgb, var(--on-brand) 10%, transparent);
   }
 }
+/* The navy runs edge to edge without clipping the What We Do panel: a border image outset sideways paints past the
+   content column and adds no scroll width. */
 .site-header.public-header:not([data-open='true']) {
-  box-shadow: 0 0 0 100vmax color-mix(in srgb, var(--brand-deep) 96%, transparent);
-  clip-path: inset(0 -100vmax);
+  border-image: conic-gradient(color-mix(in srgb, var(--brand-deep) 96%, transparent) 0 0) fill 0 //
+    0 100vmax;
+}
+/* Below 1001 px only the home keeps the bar on screen (as on the board); other pages, such as the request form, keep
+   the in-flow header they were measured with (their target-size and length checks). Wider, globals.css makes it sticky. */
+@media (max-width: 1000px) {
+  :root:has(main.ux-guide-home) .site-header.public-header:not([data-open='true']) {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
 }
