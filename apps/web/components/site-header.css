@@ -12,11 +12,40 @@
   gap: 0 var(--space-2);
   min-height: 4.5rem;
 }
-/* Below the width where globals.css makes the header sticky, it still sits above the page so the Help sheet shows. */
-@media (max-width: 1000px) {
+/* UI/UX.v4 top bar (owner, 18 Nov 2026, board screen 10): sticky at every width with a light translucent fill, so Listen
+   and the language are reachable at any scroll depth. The 60 px phone height is the token --header-h-phone. */
+.site-header.public-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  backdrop-filter: saturate(1.4) blur(14px);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+}
+@media (max-width: 700px) {
   .site-header.public-header {
-    position: relative;
-    z-index: 2;
+    height: var(--header-h-phone);
+    min-height: var(--header-h-phone);
+  }
+  /* The orb replaces the wordmark on phones only. */
+  .public-header .brand-word {
+    display: none;
+  }
+}
+.public-bar-tools {
+  flex: none;
+}
+.public-drawer-tools {
+  display: none;
+}
+/* Under 360 px Listen and the language move into the drawer. */
+@media (max-width: 359.98px) {
+  .public-bar-tools {
+    display: none;
+  }
+  .public-drawer-tools {
+    display: block;
+    padding: var(--space-3) 0 0;
   }
 }
 .public-header .brand {
@@ -41,13 +70,11 @@
 .public-header .menu-toggle:hover {
   background: var(--surface-2);
 }
-/* On a narrow phone the Help button sits beside Menu, so Menu drops its icon to keep one row with the logo. */
-@container public-header (max-width: 24.5rem) {
+/* Menu keeps its icon and its word; on the narrowest bars it gives up a little padding so the row still fits. */
+@container public-header (max-width: 26rem) {
   .public-header .menu-toggle {
+    gap: var(--space-1);
     padding: 0 var(--space-3);
-  }
-  .public-header .menu-toggle .corridra-icon {
-    display: none;
   }
 }
 
@@ -200,39 +227,6 @@
   background: var(--critical-surface);
   border-radius: var(--radius-sm);
 }
-.public-nav-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-.public-nav-chips button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: 2.75rem;
-  padding: 0 var(--space-4);
-  font: inherit;
-  font-size: var(--text-base);
-  color: var(--text-1);
-  background: var(--surface-1);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-/* AC/1: cobalt marks the selected state; navy stays chrome. */
-.public-nav-chips button[aria-pressed='true'] {
-  font-weight: 600;
-  color: var(--on-action);
-  background: var(--selected);
-  border-color: var(--selected);
-}
-.public-nav-chips button:hover:not([aria-pressed='true']) {
-  border-color: var(--action);
-}
-.public-nav-chips small {
-  font-size: var(--text-sm);
-}
-
 /* The open sheet (only the narrow layout has Menu). */
 .site-header.public-header[data-open='true'] {
   position: fixed;
@@ -258,9 +252,6 @@
 
 /* The narrow layout. */
 @container public-header (max-width: 66.99rem) {
-  .public-header .public-nav-actions .lang-switcher {
-    display: none;
-  }
   .public-header .public-nav.is-open {
     display: flex;
     flex: 0 0 100%;
@@ -305,32 +296,69 @@
   .public-job-title {
     font-weight: 500;
   }
-  .public-nav-languages {
-    padding: var(--space-4) 0 var(--space-6);
-  }
+  /* The drawer rows in the board's order: the links, Sign In, then Start a Request and Help as the last two rows.
+     Sign In and Start a Request stay in a foot that holds to the bottom of the window, so Start a Request is always in
+     view, even with larger text; Help follows it as the last row. */
   .public-nav.is-open .public-nav-actions {
     position: sticky;
     bottom: 0;
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 0;
     margin-top: auto;
-    padding: var(--space-3) 0 var(--space-5);
+    padding: 0 0 var(--space-3);
     background: var(--surface-1);
-    border-top: 1px solid var(--line);
     box-shadow: 0 0 0 100vmax var(--surface-1);
     clip-path: inset(0 -100vmax);
   }
-  .public-nav.is-open .public-nav-account {
-    justify-content: center;
-    min-height: 3.25rem;
-    padding: 0 var(--space-6);
+  .public-nav.is-open .public-nav-account,
+  .public-nav.is-open .public-nav-actions > button.nav-signout {
+    min-height: 3.5rem;
+    padding: 0;
+    font-size: var(--text-lg);
     font-weight: 600;
-    background: var(--surface-1);
-    border: 1px solid var(--border-strong);
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
   }
   .public-nav.is-open .nav-cta {
-    flex: 1 1 auto;
-    width: auto;
-    min-height: 3.25rem;
+    width: 100%;
+    min-height: 3.5rem;
+    margin: var(--space-3) 0 0;
     font-size: var(--text-lg);
+  }
+  /* Help, the last row. Its sheet opens inline under the row. */
+  .public-nav .drawer-help {
+    position: static;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: var(--space-4);
+  }
+  .public-nav .drawer-help .dock-button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--space-3);
+    width: 100%;
+    height: auto;
+    min-height: 3.5rem;
+    padding: 0;
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-1);
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .public-nav .drawer-help .dock-button::after {
+    content: none;
+  }
+  .public-nav .drawer-help .dock-sheet {
+    width: 100%;
+    margin-top: var(--space-2);
+    box-shadow: none;
   }
 }
 /* The bar on a wide screen. */
@@ -338,10 +366,14 @@
   .public-header .brand {
     margin-inline-end: var(--space-8);
   }
-  .public-header .menu-toggle {
+  .public-header .menu-toggle,
+  .public-header .drawer-help,
+  .public-header .public-drawer-tools {
     display: none;
   }
+  /* The top bar tools close the wide bar, after Sign In and Start a Request. */
   .public-header .public-nav {
+    order: 1;
     position: relative;
     display: flex;
     flex: 1 1 auto;
@@ -359,8 +391,7 @@
     color: var(--text-2);
   }
   /* The bar has the language chip (LanguageSwitcher); the chips are the sheet's. */
-  .public-nav-link .public-nav-chevron,
-  .public-nav-languages {
+  .public-nav-link .public-nav-chevron {
     display: none;
   }
   .public-nav-what .public-nav-chevron {
@@ -394,14 +425,8 @@
   .public-nav-account:hover {
     background: var(--surface-2);
   }
-  .public-header .lang-switcher > summary {
-    color: var(--text-2);
-    background: transparent;
-    border-color: transparent;
-  }
-  .public-header .lang-switcher > summary:hover {
-    color: var(--text-1);
-    background: var(--surface-2);
+  .public-header .public-bar-tools {
+    order: 2;
   }
   .public-jobs {
     position: absolute;
@@ -463,5 +488,19 @@
   .public-nav-chevron,
   .public-jobs li a {
     transition: none;
+  }
+}
+
+/* Under 360 px the drawer is compact so the links, the tools, Sign In and Start a Request still fit a 320 px window. */
+@media (max-width: 359.98px) {
+  .site-header.public-header[data-open='true'] .brand {
+    min-height: var(--header-h-phone);
+  }
+  .public-header .public-nav-what,
+  .public-header .public-nav-link {
+    min-height: 3.25rem;
+  }
+  .public-header .public-jobs li a {
+    min-height: 2.75rem;
   }
 }

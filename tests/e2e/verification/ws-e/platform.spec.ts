@@ -78,6 +78,9 @@ test('CQ-47 and UX-15: no Sample or Real badge in the public header; Help is rea
   const response = await page.goto('/');
   expect(response?.status()).toBe(200);
   await expect(page.locator('.mr-mode')).toHaveCount(0);
+  // On phones Help is the last row of the menu (UI/UX.v4 screen 10), so the menu is opened first.
+  if (info.project.name === 'w390')
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
   const help = page.getByRole('button', { name: 'Help', exact: true });
   await expect(help).toHaveCount(1);
   await expect(help).toBeVisible();
@@ -88,8 +91,8 @@ test('CQ-47 and UX-15: no Sample or Real badge in the public header; Help is rea
   await page.keyboard.press('Escape');
   await expect(help).toBeFocused();
   if (info.project.name === 'w390') {
-    // On phones Help lives in the header, never floating over the page.
-    await expect(page.locator('header .header-help')).toBeVisible();
+    // On phones Help lives in the menu, never floating over the page.
+    await expect(page.locator('header .drawer-help')).toBeVisible();
     await expect(page.locator('.corner-dock:not(.header-help)')).toBeHidden();
   }
   await evidence(page, `UX-15-${info.project.name}`);

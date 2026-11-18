@@ -108,25 +108,23 @@ export function useScrollHide(enabled: boolean) {
  * Listen, so nothing covers the page or right-to-left text (UX-15).
  */
 /** Not shown on a bare page. The check sits outside the dock so its hooks always run in the same order. */
-export function CornerDock({ variant = 'corner' }: { variant?: 'corner' | 'header' | 'rail' }) {
+export function CornerDock({
+  variant = 'corner',
+}: {
+  variant?: 'corner' | 'header' | 'rail' | 'drawer';
+}) {
   const pathname = usePathname();
   return isBarePublicPage(pathname) ? null : <CornerDockView variant={variant} />;
 }
 
-function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' }) {
+/**
+ * What Listen needs, shared by the corner dock, the top bar and the drawer: whether this browser can speak the page
+ * language, whether it is speaking, and a toggle that starts or stops the reading. A reading belongs to the page and
+ * language it started on; when either changes it stops, so it is never left running with no way to stop it.
+ */
+export function useListenControl() {
   const supported = useSyncExternalStore(subscribe, canSpeak, () => false);
   const [speaking, setSpeaking] = useState(false);
-  const [open, setOpen] = useState(false);
-  const helpButton = useRef<HTMLButtonElement>(null);
-  const sheet = useRef<HTMLDivElement>(null);
-  const sheetId = `help-sheet-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
-  // 'rail': one Help item at the foot of the signed-in left bar; its sheet also offers Listen.
-  const rail = variant === 'rail';
-  const header = variant === 'header' || rail;
-  const scrolledAway = useScrollHide(!header);
-
-  // A reading belongs to the page and language it started on. When either changes it stops, so it is never left
-  // running with no way to stop it (Listen may not be offered for the new page's language).
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
     return watchContent(() => {
@@ -134,8 +132,7 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' }) 
       setSpeaking(false);
     });
   }, []);
-
-  function toggleListen() {
+  function toggle() {
     const synth = window.speechSynthesis;
     if (speaking) {
       synth.cancel();
@@ -152,6 +149,21 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' }) 
     synth.speak(utterance);
     setSpeaking(true);
   }
+  return { supported, speaking, toggle };
+}
+
+function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' | 'drawer' }) {
+  const { supported, speaking, toggle: toggleListen } = useListenControl();
+  const [open, setOpen] = useState(false);
+  const helpButton = useRef<HTMLButtonElement>(null);
+  const sheet = useRef<HTMLDivElement>(null);
+  const sheetId = `help-sheet-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  // 'rail': one Help item at the foot of the signed-in left bar; its sheet also offers Listen.
+  const rail = variant === 'rail';
+  // 'drawer': the last row of the public drawer (UI/UX.v4 screen 10); the sheet opens inline under the row.
+  const drawer = variant === 'drawer';
+  const header = variant === 'header' || rail || drawer;
+  const scrolledAway = useScrollHide(!header);
 
   function closeHelp(returnFocus: boolean) {
     setOpen(false);
@@ -172,7 +184,13 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' }) 
   return (
     <div
       className={
-        rail ? 'corner-dock rail-help' : header ? 'corner-dock header-help' : 'corner-dock'
+        rail
+          ? 'corner-dock rail-help'
+          : drawer
+            ? 'corner-dock header-help drawer-help'
+            : header
+              ? 'corner-dock header-help'
+              : 'corner-dock'
       }
       data-hidden={!header && scrolledAway && !open ? 'true' : undefined}
       onKeyDown={(event) => {
@@ -220,19 +238,19 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' }) 
         ref={helpButton}
         type="button"
         className="dock-button"
-        data-tip={rail ? undefined : 'Help'}
+        data-tip={rail || drawer ? undefined : 'Help'}
         aria-label="Help"
         aria-expanded={open}
         aria-controls={open ? sheetId : undefined}
         onClick={() => setOpen(!open)}
       >
         <CorridraIcon name="help" />
-        {rail ? <span aria-hidden="true">Help</span> : null}
+        {rail || drawer ? <span aria-hidden="true">Help</span> : null}
       </button>
       {supported && !header && (
         <button
           type="button"
-          className="dock-button"
+          className="dock-button dock-listen"
           data-active={speaking}
           data-tip={speaking ? 'Stop Reading' : 'Listen to This Page'}
           aria-label={speaking ? 'Stop Reading' : 'Listen to This Page'}

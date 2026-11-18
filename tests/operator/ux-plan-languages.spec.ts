@@ -525,18 +525,10 @@ async function openTranslated(page: Page, code: FormLanguage, query: string) {
   );
 }
 
-/** Picks a language with the real language chip in the header. */
+/** Picks a language with the real language control in the header: its code opens the language sheet (UI/UX.v4). */
 async function chooseLanguage(page: Page, code: Locale) {
-  await page
-    .locator('details:has(button[lang]) > summary')
-    .filter({ visible: true })
-    .first()
-    .click();
-  await page
-    .locator(`details[open] button[lang="${localeMeta[code].html}"]`)
-    .filter({ visible: true })
-    .first()
-    .click();
+  await page.locator('header button[aria-haspopup="dialog"]:visible').first().click();
+  await page.getByRole('dialog').locator(`button[lang="${localeMeta[code].html}"]`).click();
 }
 
 /** English form words still on screen outside the parts that stay English (should be none). */

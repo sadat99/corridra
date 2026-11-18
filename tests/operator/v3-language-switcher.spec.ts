@@ -102,16 +102,18 @@ const headerLink = (page: Page, name: string) =>
   page.locator('header').getByRole('link', { name, exact: true });
 const footerLink = (page: Page, name: string) =>
   page.locator('footer').getByRole('link', { name, exact: true });
-// The header's chip. The footer carries the same chip at the end of the page.
-const chip = (page: Page) => page.locator('header .lang-switcher > summary');
-/** By the language's own tag, because the "(draft)" word follows the language being shown. */
+// The header's language control: an icon and the short code, opening the language sheet (UI/UX.v4 screen 10). The
+// footer keeps its own chip at the end of the page.
+const chip = (page: Page) => page.locator('header button[aria-haspopup="dialog"]:visible');
+const sheet = (page: Page) => page.getByRole('dialog');
+/** By the language's own tag, because the "draft" word follows the language being shown. */
 async function pickCode(page: Page, html: string) {
   await chip(page).click();
-  await page.locator(`header .lang-switcher button[lang="${html}"]`).click();
+  await sheet(page).locator(`button[lang="${html}"]`).click();
 }
 async function pick(page: Page, name: string) {
   await chip(page).click();
-  await page.getByRole('button', { name }).click();
+  await sheet(page).getByRole('button', { name }).click();
 }
 
 test('with only English offered there is no chip and the page is English', async ({ page }) => {
@@ -127,8 +129,9 @@ test('choosing a language changes the words, the page language and survives a re
   page,
 }) => {
   await page.goto(`${origin}/?offered=${all}&draft=bn,zh,es,ar`);
-  await expect(chip(page)).toHaveAccessibleName('Language: English');
-  await pick(page, 'বাংলা (draft)');
+  await expect(chip(page)).toHaveAccessibleName('EN, Language: English');
+  await expect(chip(page)).toContainText('EN');
+  await pick(page, 'বাংলা');
   await expect(headerLink(page, 'কীভাবে কাজ করে')).toBeVisible();
   await expect(footerLink(page, 'কীভাবে কাজ করে')).toBeVisible();
   await expect(page.getByText('বাজারে প্রবেশ হোক সুচিন্তিত।')).toBeVisible();
@@ -173,14 +176,17 @@ test('the chip works with the keyboard: open, move, choose, Escape closes', asyn
   await page.goto(`${origin}/?offered=en,es`);
   await chip(page).focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('button', { name: 'Español' })).toBeVisible();
+  await expect(sheet(page).getByRole('button', { name: 'Español' })).toBeVisible();
+  // Focus lands on the language in use, and Tab stays inside the sheet.
+  await expect(sheet(page).getByRole('button', { name: 'English' })).toBeFocused();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: 'Español' })).toBeHidden();
+  await expect(sheet(page)).toHaveCount(0);
   await expect(chip(page)).toBeFocused();
   await page.keyboard.press('Enter');
   await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
+  await expect(sheet(page).getByRole('button', { name: 'Español' })).toBeFocused();
   await page.keyboard.press('Enter');
+  await expect(sheet(page)).toHaveCount(0);
   await expect(headerLink(page, 'Cómo funciona')).toBeVisible();
   await expect(chip(page)).toBeFocused();
 });
@@ -270,34 +276,41 @@ test('every language fits at 320, 390, 768 and 1440 wide and passes the accessib
   }
 });
 
-test('the chip is a 44 pixel target on a phone and inside the open menu', async ({ page }) => {
+test('the chip and every row of the sheet are 44 pixel targets on a phone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${origin}/?offered=en,es`);
-  await page.getByRole('button', { name: /^Menu/ }).click();
-  // Navigation v1 (board PublicMobile): the open menu shows the offered languages as chips, one tap each.
-  await expect(page.getByRole('group', { name: 'Language' })).toBeVisible();
-  // Located by class from here, because the group's own name changes with the language chosen.
-  const languages = page.locator('.public-nav-languages');
-  const english = languages.getByRole('button', { name: 'English' });
-  const spanish = languages.getByRole('button', { name: 'Español' });
+  // UI/UX.v4 screen 10: the language is a code in the top bar, and its sheet lists the languages, one tap each.
+  expect((await chip(page).boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await chip(page).click();
+  await expect(sheet(page)).toBeVisible();
+  const english = sheet(page).getByRole('button', { name: 'English' });
+  const spanish = sheet(page).getByRole('button', { name: 'Español' });
   await expect(english).toHaveAttribute('aria-pressed', 'true');
   for (const option of [english, spanish])
     expect((await option.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await spanish.click();
-  await expect(spanish).toHaveAttribute('aria-pressed', 'true');
+  await expect(sheet(page)).toHaveCount(0);
   expect(await attrs(page)).toEqual({ lang: 'es', dir: 'ltr', stored: 'es' });
+  await chip(page).click();
+  await expect(sheet(page).getByRole('button', { name: 'Español' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 });
 
-test('the wide bar offers one language control: the chip, never the phone menu chips as well', async ({
+test('every width offers one language control in the header, never the old chips as well', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${origin}/?offered=en,bn&draft=bn`);
+  await expect(chip(page)).toHaveCount(1);
   await expect(chip(page)).toBeVisible();
-  await expect(page.locator('.public-nav-languages')).toBeHidden();
-  await expect(page.getByRole('button', { name: 'বাংলা (draft)' })).toHaveCount(0);
+  await expect(page.locator('.public-nav-languages')).toHaveCount(0);
+  await expect(page.locator('header .lang-switcher')).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: /^Menu/ }).click();
-  await expect(chip(page)).toBeHidden();
-  await expect(page.locator('.public-nav-languages')).toBeVisible();
+  await expect(chip(page)).toHaveCount(1);
+  await page.setViewportSize({ width: 320, height: 700 });
+  await expect(chip(page)).toHaveCount(1);
+  await expect(chip(page)).toBeVisible();
 });
