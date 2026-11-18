@@ -77,9 +77,9 @@
   }
   .guide-routes .guide-route-actions {
     display: grid;
-    /* Two columns at normal text; one column when text is large (the picker is open on the page now). */
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
-    gap: var(--space-2);
+    /* One column: the shared action rhythm already spaces stacked actions (the picker is open on the page now). */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
   .guide-routes .guide-route-actions > a {
     align-self: stretch;
@@ -243,4 +243,27 @@
 .guide-routes .ux-atlas > * {
   min-width: 0;
   max-width: 100%;
+}
+
+/* The three closing actions share one height, and the two picker actions stretch to one height, so a wrapped row never
+   staggers (action alignment rule). The selectors name the page so they win over the shared button rules. */
+.guide-routes .guide-other-actions > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--guided-touch);
+  padding-block: 0;
+}
+.guide-routes .guide-route-actions {
+  align-items: stretch;
+}
+.guide-routes .guide-route-actions > a {
+  align-self: stretch;
+  height: auto;
+  margin: 0;
+}
+@media (max-width: 700px) {
+  .guide-routes .guide-other-actions > a {
+    width: 100%;
+  }
 }
