@@ -4,7 +4,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { MissionPassport } from '../../../components/mission-passport';
-import { PrivacyLabel } from '../../../components/privacy-label';
+import { PrivacyLabel, PrivacyLabelScope } from '../../../components/privacy-label';
 import { MissionExperienceView } from '../../mission-experience-view';
 import { displayMoney } from '@corridra/domain/locale';
 import { formatMoment, formatUtcDay } from '../../../lib/ux/format';
@@ -17,7 +17,7 @@ import { translate } from '../../../lib/i18n/messages';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionHistory } from './decision-history';
 import { SpecificationConfirmation } from './specification-confirmation';
-import { BookDownloads, createPendingBooks } from './book-downloads';
+import { BookDownloads, createPendingBooks, type BookTarget } from './book-downloads';
 import { limitWords } from '../../../lib/account-limit';
 import { report } from '../../../lib/saved-report-check';
 import './report-page.css';
@@ -43,13 +43,28 @@ type Scope = SavedMissionScope & {
    * report once. It is told the report and the read state whenever either changes.
    */
   onReport?: (report: DeliveryReport | null, status: string) => void;
+  /** Member access (`CORRIDRA_MEMBER_ACCESS`, read on the server) is on: the labels name the workspace's owners and admins. */
+  memberAccess?: boolean;
+  /** The same for the decision card label (S4): on only when part 2 of the module (decision cards) is installed too. */
+  memberAccessCards?: boolean;
+  /**
+   * ADR-087 U5: a workspace owner or admin reads a member's saved report, read only, through the member access route.
+   * There is no response form, no decision or confirmation panel and no label: only the report and its books.
+   */
+  member?: { workspaceId: string };
 };
+type MemberSource = { label: string | null; workspaceName: string | null };
+const memberEndpoint = '/api/customer-member-access';
 export function SavedCommercialReport(props: Scope) {
   return (
-    <PrivateReport
-      key={JSON.stringify([props.issuer, props.subject, props.resourceId])}
-      {...props}
-    />
+    <PrivacyLabelScope
+      value={{ memberAccess: props.memberAccess === true, omitted: !!props.member }}
+    >
+      <PrivateReport
+        key={JSON.stringify([props.issuer, props.subject, props.resourceId])}
+        {...props}
+      />
+    </PrivacyLabelScope>
   );
 }
 function PrivateReport({
@@ -64,6 +79,8 @@ function PrivateReport({
   section = 'all',
   renderTrip,
   onReport,
+  memberAccessCards = false,
+  member,
 }: Scope) {
   const responsePrefix = useId();
   const [data, setData] = useState<DeliveryReport | null>(null),
@@ -86,22 +103,35 @@ function PrivateReport({
     null,
   );
   const bookAlert = useRef<HTMLParagraphElement>(null);
+  // Who saved the report and in which workspace, for the member read only.
+  const [source, setSource] = useState<MemberSource | null>(null);
+  const memberWorkspace = member?.workspaceId;
   const read = useCallback(() => {
     controller.current?.abort();
     const task = new AbortController();
     controller.current = task;
-    void fetch('/api/customer-saved-missions', {
+    void fetch(memberWorkspace ? memberEndpoint : '/api/customer-saved-missions', {
       method: 'POST',
       cache: 'no-store',
       signal: task.signal,
       headers: savedMissionHeaders({ subject, issuer }),
-      body: JSON.stringify({ action: 'view', resourceId, audience: 'CLIENT_PROGRESS' }),
+      body: JSON.stringify(
+        memberWorkspace
+          ? { action: 'report', workspaceId: memberWorkspace, resourceId }
+          : { action: 'view', resourceId, audience: 'CLIENT_PROGRESS' },
+      ),
     })
       .then(savedMissionRead)
       .then((value) => {
         const next = report(value, resourceId);
+        const from = value as { memberLabel?: unknown; workspaceName?: unknown };
         if (!task.signal.aborted) {
           setData(next);
+          if (memberWorkspace)
+            setSource({
+              label: typeof from.memberLabel === 'string' ? from.memberLabel : null,
+              workspaceName: typeof from.workspaceName === 'string' ? from.workspaceName : null,
+            });
           setStatus('ready');
           setBookDenial(null);
         }
@@ -114,9 +144,10 @@ function PrivateReport({
             setDrafts({});
             pendingBooks.clear();
             setBookDenial(null);
-            setNotice(
-              'Access or request state changed. Local response recovery was cleared for privacy.',
-            );
+            if (!memberWorkspace)
+              setNotice(
+                'Access or request state changed. Local response recovery was cleared for privacy.',
+              );
           }
           setStatus(
             error instanceof Error && ['denied', 'unavailable', 'limit'].includes(error.message)
@@ -125,7 +156,7 @@ function PrivateReport({
           );
         }
       });
-  }, [subject, issuer, resourceId, pendingBooks]);
+  }, [subject, issuer, resourceId, pendingBooks, memberWorkspace]);
   useEffect(() => {
     function clear() {
       controller.current?.abort();
@@ -137,23 +168,26 @@ function PrivateReport({
       if (document.hidden) clear();
       else read();
     }
+    // A member read writes an audit event, so it happens once, when the page is opened: switching tabs neither clears nor
+    // reads it again, and a page restored from the back-forward cache stays closed until it is reloaded.
     function show(event: PageTransitionEvent) {
       if (event.persisted) {
         clear();
-        read();
+        if (memberWorkspace) setStatus('closed');
+        else read();
       }
     }
     read();
     window.addEventListener('pagehide', clear);
     window.addEventListener('pageshow', show);
-    document.addEventListener('visibilitychange', visible);
+    if (!memberWorkspace) document.addEventListener('visibilitychange', visible);
     return () => {
       controller.current?.abort();
       window.removeEventListener('pagehide', clear);
       window.removeEventListener('pageshow', show);
       document.removeEventListener('visibilitychange', visible);
     };
-  }, [read]);
+  }, [read, memberWorkspace]);
   useEffect(() => {
     if (bookDenial) bookAlert.current?.focus();
   }, [bookDenial]);
@@ -259,23 +293,43 @@ function PrivateReport({
   const showEvidence = section === 'all' || section === 'evidence';
   const showRest = section === 'all';
   const showTrip = section === 'trip';
+  // The member read is read only: none of the panels that act on the report or speak for its owner are drawn.
+  const showDecisions = decisionsEnabled && !member;
+  const showConfirmations = specificationConfirmationsEnabled && !member;
+  const bookTarget: BookTarget | undefined = member && {
+    endpoint: memberEndpoint,
+    fields: { action: 'book', workspaceId: member.workspaceId },
+  };
   if (section === 'none') return null;
   return (
     <section
       className="delivery-view ux-saved-commercial-report"
       aria-label="Approved saved commercial report"
     >
-      {showRest && (
+      {showRest && !member && (
         <a className="text-link ux-back" href="/account#saved-commercial-missions">
           Back to my saved commercial missions
         </a>
       )}
-      <p>
-        {realCustomerInput()
-          ? 'Your submitted information. This is the operator-approved report scope, not automatic access to every company, contact, offer or participant record.'
-          : 'Sample data only. This is the operator-approved report scope, not automatic access to every company, contact, offer or participant record.'}{' '}
-      </p>
-      {status === 'loading' && <p role="status">Opening your approved commercial report…</p>}
+      {!(member && realCustomerInput()) && (
+        <p>
+          {realCustomerInput()
+            ? 'Your submitted information. This is the operator-approved report scope, not automatic access to every company, contact, offer or participant record.'
+            : 'Sample data only. This is the operator-approved report scope, not automatic access to every company, contact, offer or participant record.'}{' '}
+        </p>
+      )}
+      {member && source && status === 'ready' && (
+        <p>
+          Saved by {source.label ?? 'a member of this workspace'}
+          {source.workspaceName ? ` in ${source.workspaceName}` : ''}. You can read it and download
+          its books. You cannot change or remove it.
+        </p>
+      )}
+      {status === 'loading' && (
+        <p role="status">
+          {member ? 'Opening this report…' : 'Opening your approved commercial report…'}
+        </p>
+      )}
       {status === 'denied' && bookDenial && (
         <>
           <p role="alert" tabIndex={-1} ref={bookAlert}>
@@ -290,18 +344,29 @@ function PrivateReport({
       )}
       {status === 'denied' && !bookDenial && (
         <p role="alert">
-          This saved mission is unavailable or access could not be confirmed. No commercial report
-          content is shown.
+          {member
+            ? 'This report is not available to you. It may have been removed by the member who saved it, or your access changed. No report content is shown.'
+            : 'This saved mission is unavailable or access could not be confirmed. No commercial report content is shown.'}
         </p>
       )}
       {status === 'unavailable' && (
         <p role="status">
-          Saved commercial reports are temporarily unavailable. Your original invitation is
-          separate.
+          {member
+            ? 'Reports are not available right now. Try again later.'
+            : 'Saved commercial reports are temporarily unavailable. Your original invitation is separate.'}
         </p>
       )}
       {status === 'failed' && (
-        <p role="alert">Your approved report could not be loaded. Try again.</p>
+        <p role="alert">
+          {member
+            ? 'This report could not be loaded. Try again.'
+            : 'Your approved report could not be loaded. Try again.'}
+        </p>
+      )}
+      {status === 'closed' && (
+        <p role="status">
+          This report closed when you left the page. Reload the page to open it again.
+        </p>
       )}
       {status === 'limit' && <p role="alert">{limitWords}</p>}
       {data && status === 'ready' && (
@@ -340,15 +405,16 @@ function PrivateReport({
             const trip = showTrip && renderTrip && renderTrip(m.itinerary);
             const decisions = (
               <>
-                {showEvidence && decisionsEnabled && (
+                {showEvidence && showDecisions && (
                   <DecisionHistory
                     subject={subject}
                     issuer={issuer}
                     resourceId={resourceId}
                     cards={decisionCards}
+                    memberAccess={memberAccessCards}
                   />
                 )}
-                {showEvidence && specificationConfirmationsEnabled && (
+                {showEvidence && showConfirmations && (
                   <SpecificationConfirmation
                     subject={subject}
                     issuer={issuer}
@@ -422,8 +488,15 @@ function PrivateReport({
                           <p>
                             {evidenceRequestStatusWords(q.status)} · Due {formatUtcDay(q.dueAt)}
                           </p>
-                          {q.response && <p>Your self-declared response: {q.response}</p>}
-                          {(q.status === 'OPEN' || pending?.requestId === q.id) && (
+                          {q.response && (
+                            <p>
+                              {member
+                                ? "The member's self-declared response:"
+                                : 'Your self-declared response:'}{' '}
+                              {q.response}
+                            </p>
+                          )}
+                          {!member && (q.status === 'OPEN' || pending?.requestId === q.id) && (
                             <form
                               className="operator-form"
                               onSubmit={(event) => {
@@ -500,14 +573,16 @@ function PrivateReport({
                         </article>
                       ))
                     )}
-                    <p>
-                      Your original private invitation also remains available in{' '}
-                      <a className="text-link" href="/account#customer-missions">
-                        My shared missions
-                      </a>
-                      . Responses are self-declarations, not verified conclusions or supplier
-                      quotations.
-                    </p>
+                    {!member && (
+                      <p>
+                        Your original private invitation also remains available in{' '}
+                        <a className="text-link" href="/account#customer-missions">
+                          My shared missions
+                        </a>
+                        . Responses are self-declarations, not verified conclusions or supplier
+                        quotations.
+                      </p>
+                    )}
                   </section>
                 )}
               </>
@@ -524,6 +599,7 @@ function PrivateReport({
                     pending={pendingBooks}
                     onDenied={bookDenied}
                     onChanged={read}
+                    target={bookTarget}
                   />
                 )}
               </>
@@ -540,7 +616,7 @@ function PrivateReport({
                       tabs={[
                         { id: 'companies', label: 'Companies and Quotes', panel: companies },
                         { id: 'meetings', label: 'Meetings and Progress', panel: meetings },
-                        ...(decisionsEnabled || specificationConfirmationsEnabled || m.requests
+                        ...(showDecisions || showConfirmations || m.requests
                           ? [
                               {
                                 id: 'evidence',

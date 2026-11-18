@@ -27,3 +27,35 @@
     border-color: CanvasText;
   }
 }
+/* Members' Reports (ADR-087 U5): one card per workspace, its saved reports as cards and its decision cards as rows.
+   Read only, tokens only. */
+.member-reports,
+.member-reports-workspace,
+.member-reports-list {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.member-reports-cards {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.member-reports-cards li {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.member-reports-card {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.member-reports-card dd {
+  margin: 0;
+}

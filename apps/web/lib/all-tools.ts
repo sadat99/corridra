@@ -198,6 +198,10 @@ export const excludedPages: readonly ExcludedPage[] = [
     why: 'Needs one shared item. It opens from the Library.',
   },
   {
+    route: '/account/member-reports/[workspaceId]/[resourceId]',
+    why: "Needs one shared item. It opens from Members' Reports.",
+  },
+  {
     route: '/account/profile/[workspaceId]',
     why: 'Needs a workspace. It opens from company details.',
   },

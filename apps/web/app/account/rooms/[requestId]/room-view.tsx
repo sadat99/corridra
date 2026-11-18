@@ -70,6 +70,7 @@ export function RoomView({
   specificationConfirmationsEnabled = false,
   lenses = false,
   trip = false,
+  memberAccess = false,
   initialLens,
   task,
   hintClosed = false,
@@ -86,6 +87,8 @@ export function RoomView({
   lenses?: boolean;
   /** Batch E (`CORRIDRA_UX_TRIP`, read on the server): a fourth lens with the reviewed meetings and visits. */
   trip?: boolean;
+  /** ADR-087 U5 (read on the server): CORRIDRA_MEMBER_ACCESS on and the member access module installed. */
+  memberAccess?: boolean;
   /**
    * Where the Room opens when the address asks for Meetings (`?view=meetings`) or the comparison
    * (`?view=compare`). The Overview when absent. The comparison opens only once the saved report shows something
@@ -600,6 +603,7 @@ export function RoomView({
                 section={reportSection}
                 renderTrip={(itinerary) => <TripList itinerary={itinerary} locale={locale} />}
                 onReport={onReport}
+                memberAccess={memberAccess}
               />
             </div>
           ) : lenses && lens !== 'overview' ? (
