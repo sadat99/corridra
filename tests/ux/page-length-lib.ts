@@ -59,10 +59,11 @@ const planLimits: Record<Viewport['name'], Limits> = {
  * Routes (`/corridors`) shows every section open on one page: the six destination rows, the Another Route block, the
  * route picker with its map and the sample mission (owner choice 2a, 18 November 2026: "every route section open on one page, nothing
  * removed"; Guardian G29 approved these limits). Measured on a production build at 4.71 phone and 3.06 desktop
- * screens, so the limits are the measure rounded up to the next 0.05. Every other public page keeps 3.0 and 2.0.
+ * screens, so the limits are the measure rounded up to the next 0.05. The flags beside the six names (W1-D flags,
+ * UI/UX.v4 flag policy) took the phone measure to 4.752, so the phone limit moved from 4.75 to 4.8. Every other public page keeps 3.0 and 2.0.
  */
 export const routesLimits: Record<Viewport['name'], Limits> = {
-  phone: { target: 4.75, hard: 4.75 },
+  phone: { target: 4.8, hard: 4.8 },
   desktop: { target: 3.1, hard: 3.1 },
 };
 /**
