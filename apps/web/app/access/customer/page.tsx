@@ -4,7 +4,6 @@ import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { AccessCard, AccessPage, accessDoorMetadata } from '../../../components/access-page';
-import { CreatePanel } from './create-panel';
 import { customerDoorPage as page, customerDoorView } from '../../../lib/access-doors';
 
 // The sign-in and programme words depend on settings read when the page is asked for.
@@ -14,7 +13,8 @@ export function generateMetadata() {
 }
 
 export default function Page() {
-  const { signIn } = page.panels;
+  const { create, signIn } = page.panels;
+  const { doors } = page;
   const view = customerDoorView({
     signInAvailable: readNeonAuthConfig() !== null,
     workspaces: customerWorkspacesEnabled(),
@@ -22,11 +22,36 @@ export default function Page() {
     programmes: customerProgrammesEnabled(),
   });
   return (
-    <AccessPage id="customer" eyebrow={page.eyebrow} title={page.title} lead={page.lead}>
+    <AccessPage
+      id="customer"
+      eyebrow={page.eyebrow}
+      title={page.title}
+      lead={page.lead}
+      notCustomer
+    >
       <div className="access-panels">
-        <CreatePanel text={view.createText} button={view.createButton} />
+        <section className="access-panel" aria-labelledby="access-new">
+          <h2 id="access-new">{doors.new.heading}</h2>
+          <p>{doors.new.text}</p>
+          <div className="ux-state-actions access-panel-actions">
+            {view.createButton ? (
+              <>
+                <Link prefetch={false} className="button" href={doors.new.request.href}>
+                  {doors.new.request.text}
+                </Link>
+                <Link prefetch={false} className="text-link" href={create.primary.href}>
+                  {create.primary.text}
+                </Link>
+              </>
+            ) : (
+              <Link prefetch={false} className="text-link" href={create.textLink.href}>
+                {create.textLink.text}
+              </Link>
+            )}
+          </div>
+        </section>
         <section className="access-panel" aria-labelledby="access-existing">
-          <h2 id="access-existing">{signIn.heading}</h2>
+          <h2 id="access-existing">{doors.existing.heading}</h2>
           <p>{view.signInText}</p>
           {view.signInButton && (
             <Link prefetch={false} className="button-secondary" href={signIn.secondary.href}>
@@ -36,23 +61,19 @@ export default function Page() {
         </section>
       </div>
       {view.cards.length > 0 && (
-        <section aria-labelledby="access-other">
-          <h2 id="access-other">{page.otherWays.heading}</h2>
-          <div
-            className={
-              view.cards.length === 3 ? 'access-cards access-cards--three' : 'access-cards'
-            }
-          >
+        <details className="access-more">
+          <summary>{doors.invitedHeading}</summary>
+          <div className="access-cards access-cards--three">
             {view.cards.map((card) => (
-              <AccessCard key={card.id} icon={card.icon} title={card.title}>
+              <AccessCard key={card.id} icon={card.icon} title={card.title} level={2}>
                 <p>{card.text}</p>
-                <Link prefetch={false} className="button-secondary" href={card.action.href}>
+                <Link prefetch={false} className="text-link" href={card.action.href}>
                   {card.action.text}
                 </Link>
               </AccessCard>
             ))}
           </div>
-        </section>
+        </details>
       )}
     </AccessPage>
   );

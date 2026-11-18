@@ -36,7 +36,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Qu
       ),
     );
   }
-  if (readNeonAuthConfig()) return <AccountAccess title="Sign in to Corridra." mode="signin" />;
+  if (readNeonAuthConfig()) return <AccountAccess title="Sign in." mode="signin" />;
   if (process.env.CORRIDRA_FOUNDATIONS_ENABLED === 'true') redirect('/operator/signin');
   return (
     <PublicShell>

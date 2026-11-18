@@ -209,6 +209,76 @@
     flex-basis: auto;
   }
 }
+/* W1-B: the customer door is two doors (the existing panel) and one closed disclosure for the invited and programme
+   ways. The disclosure keeps the native open and close marker. */
+.access-more {
+  width: 100%;
+}
+.access-more summary {
+  /* A list item keeps the native open and close marker, so the line reads as something that opens. */
+  display: list-item;
+  list-style-position: inside;
+  min-height: 2.75rem;
+  padding-block: var(--space-2);
+  color: var(--text-1);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+.access-more > .access-cards {
+  margin-block-start: var(--space-3);
+}
+/* W1-B: the sign-in form. Show or Hide and Forgot Your Password? share one quiet row under the password (links inside a
+   paragraph keep the quiet look the system gives them), "More ways in" is the same disclosure the customer door uses,
+   holding three quiet list links, and a failed sign-in banner carries an icon. Every link is a 44 px target. */
+.access-signin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+.access-signin-row .text-link,
+.account-more .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+.access-signin-row .field-error {
+  flex-basis: 100%;
+}
+.account-more-links {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ux-error-summary .access-error-icon {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-inline-end: var(--space-2);
+  vertical-align: text-bottom;
+  color: var(--critical);
+}
+/* The single "Not a customer?" line (customer door and customer sign-in): one wrapping row, quiet inline links. */
+.access-not-customer p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+.access-not-customer-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.access-not-customer .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
 /* The helper interest form (ADR-0085): a disclosure on the team door, two short steps. Tokens only. */
 .access-interest {
   display: grid;
