@@ -422,3 +422,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Decision:** owner, first hand, 17 November 2026: "Narrow exception (Recommended)". `pnpm-workspace.yaml` has `auditConfig.ignoreGhsas` with that one id. The audit level is unchanged.
 - **Exposure:** no `apps/` or `packages/` source or manifest uses picomatch, micromatch or minimatch directly. picomatch 4.0.7 is a transitive dependency of build and test tooling (vite, tinyglobby, fdir, workflow builders), which matches file globs chosen by the repo, not user input. No untrusted input reaches it at runtime.
 - **Removal:** when picomatch 4.0.8 or later is published, run `pnpm update picomatch --recursive` (or add an override), confirm the lockfile has no picomatch 4.x below 4.0.8, delete `auditConfig` from `pnpm-workspace.yaml`, delete this entry, and run `pnpm audit --prod --audit-level high`. `tests/audit-exception.test.mjs` fails once the lockfile is patched, and after 2026-12-31 regardless.
+
+### KI-64 `integration (2)` checkout stalled until the 30-minute timeout (18 November 2026, runner, passed on rerun)
+
+- **Seen:** main push CI run 44186733354 on 014b294, attempt 1: the `integration (2)` job stalled at checkout for 24 minutes and hit the 30-minute job timeout. No test ran in that shard.
+- **Action taken:** one rerun of the failed jobs passed. Same class as KI-02 (hosted runner infrastructure, not the application or the tests). No workflow change was made.
+- **Avoid:** rerun only the failed jobs once and read the log; if a stall repeats, record the run id here before changing a timeout.
