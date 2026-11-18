@@ -6,7 +6,7 @@ import { briefGoals, briefHref, goalJob } from '../../apps/web/lib/home-routes-d
 // (P-05), the visitor's words travel as ?note within the notes field's 1000 characters, and nothing else is added.
 describe('home brief to /plan', () => {
   it('maps every goal to a job the request form accepts, or to none for Something else', () => {
-    const keys = new Set(missionCatalogue.map((t) => t.key));
+    const keys = new Set<string>(missionCatalogue.map((t) => t.key));
     for (const goal of briefGoals) {
       const job = goalJob[goal];
       if (goal === 'other') expect(job).toBeNull();
