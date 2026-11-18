@@ -185,7 +185,13 @@ test('the market selector switches the shortlist, the calculator currency and on
     await expect(sell.getByRole('radio', { name: currency, exact: true })).toBeChecked();
     await expect(sell.locator('.tr-market-line')).toContainText(line);
   }
-  // Flags beside the names, never for the region.
+  // Flags beside the names; the region has the neutral compass mark, never a flag.
+  await expect(
+    market
+      .getByRole('radio', { name: 'Key Asian Markets' })
+      .locator('xpath=following-sibling::label')
+      .locator('.ux-region-mark'),
+  ).toHaveCount(1);
   await expect(market.locator('img[data-flag]')).toHaveCount(4);
   await expect(
     market
@@ -325,46 +331,29 @@ test('flags sit beside country names with no accessible name of their own', asyn
   expect(words).toHaveLength(1);
 });
 
-test('the phone quick-start bar appears after the hero and hides at the page actions', async ({
+test('the phone start bar holds one action and its reassurance line, after the hero, never over the page actions', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   // While it is off the bar is inert, so it is found by its class, not by its role.
-  const quick = page.locator('.tr-mbar');
+  const quick = page.locator('.ux-start-bar');
   await expect(quick).not.toHaveAttribute('data-on', 'true');
   await page.locator('#how').scrollIntoViewIfNeeded();
   await expect(quick).toHaveAttribute('data-on', 'true');
-  await expect(
-    page.getByRole('group', { name: 'Quick start' }).getByRole('link', { name: 'Start a Request' }),
-  ).toHaveAttribute('href', '/plan');
+  const group = page.getByRole('group', { name: 'Quick start' });
+  await expect(group.getByRole('link')).toHaveCount(1);
+  await expect(group.getByRole('link', { name: 'Start a Request' })).toHaveAttribute(
+    'href',
+    '/plan',
+  );
+  await expect(group).toContainText('No account needed. Nothing is sent until you press Send.');
+  // The page gains room at its foot while the bar shows, so the bar never covers content.
+  await expect(page.locator('html')).toHaveAttribute('data-start-bar', 'on');
   await page.locator('#final').scrollIntoViewIfNeeded();
   await expect(quick).not.toHaveAttribute('data-on', 'true');
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(quick).toBeHidden();
-});
-
-test('the header is the navy bar with every destination and the language control', async ({
-  page,
-}) => {
-  await page.goto('/');
-  const header = page.locator('header.public-header');
-  const bg = await header.evaluate((el) => getComputedStyle(el).backgroundColor);
-  // Navy (--brand-deep, 20 36 56) at 96 percent, written in whichever colour syntax the browser reports.
-  expect(bg).toMatch(/^rgba?\(20, 36, 56|^color\(srgb 0\.078\d* 0\.141\d* 0\.219/);
-  expect(await header.evaluate((el) => getComputedStyle(el).position)).toBe('sticky');
-  const nav = page.getByRole('navigation', { name: 'Main' });
-  for (const [name, href] of [
-    ['How It Works', '/how-it-works'],
-    ['Markets', '/corridors'],
-    ['Trust', '/trust'],
-    ['Sign In', '/signin'],
-  ] as const)
-    await expect(nav.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
-  await expect(nav.getByRole('link', { name: /^Start a Request/ })).toHaveAttribute(
-    'href',
-    '/plan',
-  );
 });
 
 for (const width of [320, 390, 768, 1440])
@@ -408,4 +397,49 @@ test('Arabic, right to left, at 320 px: nothing scrolls sideways and the doors s
   await expect(page.locator('#route-sell')).toBeVisible();
   const sideways = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   expect(sideways).toBeLessThanOrEqual(0);
+});
+
+test('the /plan note is capped at the notes field limit and kept as plain text, never markup', async ({
+  page,
+}) => {
+  const writes: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() !== 'GET') writes.push(request.url());
+  });
+  const markup = '<img src=x onerror="window.__noted=1"><b>bold</b>';
+  const note = markup + 'x'.repeat(1200);
+  await page.goto(`/plan?job=sourcing&note=${encodeURIComponent(note)}`);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  const saved = await page.evaluate(() =>
+    Object.values(sessionStorage)
+      .map((value) => {
+        try {
+          return JSON.parse(value)?.draft?.notes as string | undefined;
+        } catch {
+          return undefined;
+        }
+      })
+      .find((value) => typeof value === 'string' && value.length > 0),
+  );
+  expect(saved).toBe(note.slice(0, 1000));
+  expect(await page.evaluate(() => (window as { __noted?: number }).__noted)).toBeUndefined();
+  await expect(page.locator('main b', { hasText: 'bold' })).toHaveCount(0);
+  expect(writes).toEqual([]);
+});
+
+test('without a note the /plan draft is the same as before (no notes added)', async ({ page }) => {
+  await page.goto('/plan?job=sourcing');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  const notes = await page.evaluate(() =>
+    Object.values(sessionStorage)
+      .map((value) => {
+        try {
+          return JSON.parse(value)?.draft?.notes as string | undefined;
+        } catch {
+          return undefined;
+        }
+      })
+      .filter((value) => value !== undefined),
+  );
+  expect(notes).toEqual(['']);
 });

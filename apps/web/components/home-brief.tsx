@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useId, useState } from 'react';
 import { Arrow } from './arrow';
 import { FactLabel } from './fact-label';
+import { ChoiceChip, ChoiceChipRow } from './ux/choice-chip';
+import { Eyebrow } from './ux/example-tag';
 import { useT } from './language-provider';
 import { fill } from '../lib/i18n/fill';
 import type { HomeRoutesKey } from '../lib/home-routes-keys';
@@ -77,7 +79,7 @@ export function HomeBrief({
     );
   return (
     <section className="tr-section tr-alt" id="brief" aria-labelledby="brief-title">
-      <p className="label ac1-rule">{t('home.tr.br.eyebrow')}</p>
+      <Eyebrow>{t('home.tr.br.eyebrow')}</Eyebrow>
       <h2 id="brief-title">{t('home.b3.br.title')}</h2>
       <p className="tr-sub">{t('home.b3.br.lead')}</p>
       <div className="tr-brief-grid">
@@ -89,22 +91,19 @@ export function HomeBrief({
               </span>
               {t('home.tr.br.goals')}
             </legend>
-            <div className="tr-chips">
+            <ChoiceChipRow>
               {briefGoals.map((g) => (
-                <span className="tr-choice" key={g}>
-                  <input
-                    className="sr-only"
-                    type="radio"
-                    name="home-brief-goal"
-                    id={`${ids}-goal-${g}`}
-                    value={g}
-                    checked={goal === g}
-                    onChange={() => onGoal(g)}
-                  />
-                  <label htmlFor={`${ids}-goal-${g}`}>{t(key(`home.tr.br.g.${g}`))}</label>
-                </span>
+                <ChoiceChip
+                  key={g}
+                  name="home-brief-goal"
+                  id={`${ids}-goal-${g}`}
+                  value={g}
+                  checked={goal === g}
+                  onChoose={() => onGoal(g)}
+                  label={t(key(`home.tr.br.g.${g}`))}
+                />
               ))}
-            </div>
+            </ChoiceChipRow>
           </fieldset>
           <div className="tr-brief-step">
             <label className="tr-brief-q" htmlFor={`${ids}-need`}>
@@ -134,22 +133,19 @@ export function HomeBrief({
               </span>
               {t('home.b3.br.when')}
             </legend>
-            <div className="tr-chips">
+            <ChoiceChipRow>
               {briefTimings.map((n) => (
-                <span className="tr-choice" key={n}>
-                  <input
-                    className="sr-only"
-                    type="radio"
-                    name="home-brief-when"
-                    id={`${ids}-when-${n}`}
-                    value={n}
-                    checked={when === n}
-                    onChange={() => setWhen(n)}
-                  />
-                  <label htmlFor={`${ids}-when-${n}`}>{t(key(`home.b3.br.when.${n}`))}</label>
-                </span>
+                <ChoiceChip
+                  key={n}
+                  name="home-brief-when"
+                  id={`${ids}-when-${n}`}
+                  value={String(n)}
+                  checked={when === n}
+                  onChoose={() => setWhen(n)}
+                  label={t(key(`home.b3.br.when.${n}`))}
+                />
               ))}
-            </div>
+            </ChoiceChipRow>
           </fieldset>
         </div>
         <div className="tr-brief-card" role="group" aria-labelledby={`${ids}-card`}>

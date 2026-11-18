@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useId, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Arrow } from './arrow';
 import { CorridraIcon } from './corridra-icon';
 import { FactLabel, NotConfirmedLabel } from './fact-label';
 import { HomeBrief, type GoalKey } from './home-brief';
 import { FaqSection, MissionSection, People, RoutesSection, TrustSection } from './home-more';
-import { Flagged, type FlagCode } from './flag';
+import { DoorCard } from './ux/door-card';
+import { ExampleTag, Eyebrow } from './ux/example-tag';
+import { Flagged, type FlagCode } from './ux/flag';
 import { RouteLine } from './home-route-line';
 import { HomeSell } from './home-sell';
 import { HomeShared } from './home-shared';
@@ -174,7 +176,7 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
 
       {shown === 'none' ? (
         <section className="tr-section tr-choose" id="pick" aria-labelledby="pick-title">
-          <p className="label ac1-rule">{t('home.tr.pick.eyebrow')}</p>
+          <Eyebrow>{t('home.tr.pick.eyebrow')}</Eyebrow>
           <h2 id="pick-title">{t('home.tr.pick.title')}</h2>
           <ol className="tr-three">
             {[1, 2, 3].map((n) => (
@@ -259,39 +261,20 @@ function Door({
   big?: boolean;
 }) {
   const t = useLanguage().t;
-  const id = useId();
   return (
-    <div className={big ? 'tr-door tr-door-big' : 'tr-door'}>
-      <input
-        className="sr-only"
-        type="radio"
-        name="home-route"
-        id={id}
-        value={route}
-        checked={checked}
-        onChange={onChoose}
-      />
-      <label htmlFor={id}>
-        {big ? (
-          <span className="tr-door-side">
-            {t(route === 'china' ? 'home.tr.side.supply' : 'home.tr.side.demand')}
-          </span>
-        ) : null}
-        {big ? (
-          <span className="tr-door-route">
-            <RouteLine route={route as 'china' | 'sell'} />
-          </span>
-        ) : null}
-        <strong>{t(key(`home.tr.door.${route}.title`))}</strong>
-        <span className="tr-door-text">{t(key(`home.tr.door.${route}.text`))}</span>
-        {checked ? (
-          <span className="tr-door-picked">
-            <CorridraIcon name="check" size={16} />
-            {t('home.tr.selected')}
-          </span>
-        ) : null}
-      </label>
-    </div>
+    <DoorCard
+      className="tr-door"
+      name="home-route"
+      value={route}
+      checked={checked}
+      onChoose={onChoose}
+      size={big ? 'big' : 'small'}
+      side={big ? t(route === 'china' ? 'home.tr.side.supply' : 'home.tr.side.demand') : undefined}
+      route={big ? <RouteLine route={route as 'china' | 'sell'} /> : undefined}
+      title={t(key(`home.tr.door.${route}.title`))}
+      text={t(key(`home.tr.door.${route}.text`))}
+      picked={t('home.tr.selected')}
+    />
   );
 }
 
@@ -320,7 +303,7 @@ function China() {
     <section className="tr-section tr-alt" id="route-china" aria-labelledby="china-title">
       <div className="tr-intro">
         <div>
-          <p className="label ac1-rule">{t('home.tr.cn.eyebrow')}</p>
+          <Eyebrow>{t('home.tr.cn.eyebrow')}</Eyebrow>
           <p className="tr-side">
             <RouteLine route="china" />
           </p>
@@ -364,7 +347,7 @@ function China() {
                     <strong id={`quote-${letter}`}>
                       {fill(t('home.tr.q.supplier'), { letter: letter.toUpperCase() })}
                     </strong>
-                    <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+                    <ExampleTag>{t('home.tr.q.example')}</ExampleTag>
                   </header>
                   <p className="tr-price">
                     <small>USD</small> {q.price}
@@ -464,7 +447,7 @@ function China() {
             ) : null}
           </div>
           <p className="tr-rule">
-            <span className="ac1-example-tag">{t('home.tr.q.rule')}</span>
+            <ExampleTag>{t('home.tr.q.rule')}</ExampleTag>
             <span>
               <strong>{t('home.tr.q.rule.title')}</strong> {t('home.tr.q.rule.text')}
             </span>
@@ -480,7 +463,7 @@ function China() {
           <div className="tr-day" role="group" aria-label={t('home.tr.visit.title')}>
             <div className="tr-day-head">
               <strong>{t('home.tr.visit.day')}</strong>
-              <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+              <ExampleTag>{t('home.tr.q.example')}</ExampleTag>
             </div>
             <div className="tr-clocks">
               <Clock
@@ -599,7 +582,7 @@ function Delegation({ whatsapp }: { whatsapp: string | null }) {
   const stages = ['defined', 'matched', 'met', 'offers', 'followed'] as const;
   return (
     <section className="tr-section tr-alt" id="route-delegation" aria-labelledby="del-title">
-      <p className="label ac1-rule">{t('home.tr.dl.eyebrow')}</p>
+      <Eyebrow>{t('home.tr.dl.eyebrow')}</Eyebrow>
       <h2 id="del-title" tabIndex={-1}>
         {t('home.tr.dl.title')}
       </h2>
@@ -639,7 +622,7 @@ function Delegation({ whatsapp }: { whatsapp: string | null }) {
             </table>
             <div className="tr-table-foot">
               <span>{t('home.tr.dl.total')}</span>
-              <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+              <ExampleTag>{t('home.tr.q.example')}</ExampleTag>
             </div>
           </div>
           <p className="tr-small">{t('home.tr.dl.key')}</p>
@@ -678,7 +661,7 @@ function Other({ whatsapp }: { whatsapp: string | null }) {
   return (
     <section className="tr-section tr-alt" id="route-other" aria-labelledby="oth-title">
       <div className="tr-other">
-        <p className="label ac1-rule">{t('home.tr.ot.eyebrow')}</p>
+        <Eyebrow>{t('home.tr.ot.eyebrow')}</Eyebrow>
         <h2 id="oth-title" tabIndex={-1}>
           {t('home.tr.ot.title')}
         </h2>

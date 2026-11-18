@@ -1,10 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useId, useState, type ReactNode } from 'react';
+import { useId, useState } from 'react';
 import { Arrow } from './arrow';
 import { FactLabel } from './fact-label';
-import { Flagged, type FlagCode } from './flag';
+import { ChoiceChip, ChoiceChipRow } from './ux/choice-chip';
+import { ExampleTag, Eyebrow } from './ux/example-tag';
+import { Flagged, type FlagCode } from './ux/flag';
+import { NumberField } from './ux/number-field';
 import { marketFlag } from './home-route-line';
 import { useT } from './language-provider';
 import { fill } from '../lib/i18n/fill';
@@ -50,7 +53,7 @@ export function HomeSell({
     <section className="tr-section" id="route-sell" aria-labelledby="sell-title">
       <div className="tr-intro">
         <div>
-          <p className="label ac1-rule">{t('home.tr.sl.eyebrow')}</p>
+          <Eyebrow>{t('home.tr.sl.eyebrow')}</Eyebrow>
           <p className="tr-side">
             <Flagged code="bd">{t('home.country.bd')}</Flagged> {t('home.b3.to')}{' '}
             <Flagged code={marketFlag(market)}>{t(key(`home.tr.mk.${market}`))}</Flagged>
@@ -72,9 +75,9 @@ export function HomeSell({
 
       <fieldset className="tr-market">
         <legend>{t('home.tr.mk.legend')}</legend>
-        <div className="tr-chips">
+        <ChoiceChipRow>
           {marketKeys.map((m) => (
-            <Choice
+            <ChoiceChip
               key={m}
               name="home-market"
               value={m}
@@ -83,7 +86,7 @@ export function HomeSell({
               label={<Flagged code={marketFlag(m)}>{t(key(`home.tr.mk.${m}`))}</Flagged>}
             />
           ))}
-        </div>
+        </ChoiceChipRow>
         <p className="tr-market-line" aria-live="polite">
           <strong>{t(key(`home.tr.mk.${market}.line.head`))}</strong>{' '}
           {t(key(`home.tr.mk.${market}.line`))}
@@ -95,16 +98,16 @@ export function HomeSell({
         </h3>
         <div className="tr-block-body">
           <p className="tr-brief">
-            <span className="ac1-example-tag">{t('home.tr.w.brief')}</span>
+            <ExampleTag>{t('home.tr.w.brief')}</ExampleTag>
             <span>
               <strong>{t('home.tr.w.brief.lead')}</strong> {t(key(`home.tr.mk.${market}.brief`))}
             </span>
           </p>
           <fieldset className="tr-steps">
             <legend>{t('home.tr.w.steps')}</legend>
-            <div className="tr-chips">
+            <ChoiceChipRow>
               {([1, 2, 3] as const).map((n) => (
-                <Choice
+                <ChoiceChip
                   key={n}
                   name="home-worth-step"
                   value={String(n)}
@@ -113,7 +116,7 @@ export function HomeSell({
                   label={`${n}. ${t(key(`home.tr.w.step${n}`))}`}
                 />
               ))}
-            </div>
+            </ChoiceChipRow>
           </fieldset>
           <p className="tr-sum" aria-live="polite">
             <span className="tr-big">{summary}</span> {t(key(`home.tr.w.sum${step}`))}
@@ -190,7 +193,7 @@ export function HomeSell({
             </table>
           </div>
           <p className="tr-small">
-            <span className="ac1-example-tag">{t('home.tr.q.example')}</span>{' '}
+            <ExampleTag>{t('home.tr.q.example')}</ExampleTag>{' '}
             {fill(t('home.tr.w.note'), {
               selfDeclared: 'Self-declared',
               evidence: 'Evidence available',
@@ -205,36 +208,6 @@ export function HomeSell({
         {t('home.tr.cta.sell')} <Arrow />
       </Link>
     </section>
-  );
-}
-
-function Choice({
-  name,
-  value,
-  checked,
-  onChoose,
-  label,
-}: {
-  name: string;
-  value: string;
-  checked: boolean;
-  onChoose: () => void;
-  label: ReactNode;
-}) {
-  const id = useId();
-  return (
-    <span className="tr-choice">
-      <input
-        className="sr-only"
-        type="radio"
-        name={name}
-        id={id}
-        value={value}
-        checked={checked}
-        onChange={onChoose}
-      />
-      <label htmlFor={id}>{label}</label>
-    </span>
   );
 }
 
@@ -320,9 +293,9 @@ function Calculator({ market }: { market: MarketKey }) {
             <div className="tr-panel">
               <fieldset className="tr-steps">
                 <legend>{t('home.tr.fc.currency')}</legend>
-                <div className="tr-chips">
+                <ChoiceChipRow>
                   {calculatorCurrencies.map((c) => (
-                    <Choice
+                    <ChoiceChip
                       key={c}
                       name="home-currency"
                       value={c}
@@ -331,37 +304,24 @@ function Calculator({ market }: { market: MarketKey }) {
                       label={c}
                     />
                   ))}
-                </div>
+                </ChoiceChipRow>
               </fieldset>
               <p className="tr-small" aria-live="polite">
                 {note}
               </p>
               <div className="tr-fields">
-                {fields.map((f) => {
-                  const id = `${prefix}-${f.id}`;
-                  return (
-                    <div className="tr-field" key={f.id}>
-                      <label htmlFor={id}>
-                        {t(f.label)}
-                        {f.money ? <span> ({currency})</span> : null}
-                      </label>
-                      <input
-                        id={id}
-                        type="number"
-                        inputMode={f.whole ? 'numeric' : 'decimal'}
-                        min={0}
-                        step={f.whole ? 1 : 'any'}
-                        value={values[f.id]}
-                        aria-invalid={errors[f.id] ? true : undefined}
-                        aria-describedby={`${id}-error`}
-                        onChange={(event) => set(f.id, event.target.value)}
-                      />
-                      <p className="tr-error" id={`${id}-error`} aria-live="polite">
-                        {errors[f.id] ? t(errors[f.id]!) : null}
-                      </p>
-                    </div>
-                  );
-                })}
+                {fields.map((f) => (
+                  <NumberField
+                    key={f.id}
+                    id={`${prefix}-${f.id}`}
+                    label={t(f.label)}
+                    unit={f.money ? currency : undefined}
+                    whole={f.whole}
+                    value={values[f.id]}
+                    onChange={(value) => set(f.id, value)}
+                    error={errors[f.id] ? t(errors[f.id]!) : null}
+                  />
+                ))}
               </div>
               <p className="tr-small">{t('home.tr.fc.help')}</p>
             </div>

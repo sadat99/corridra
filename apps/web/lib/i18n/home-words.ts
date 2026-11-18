@@ -606,11 +606,9 @@ const homeBoardEn = {
   'home.b3.draft': 'Draft translation. Native review pending.',
   'home.b3.to': 'to',
   'home.b3.talk': 'Talk to a Person',
-  'home.b3.talk.short': 'Talk to Us',
   'home.b3.talk.where': '(opens WhatsApp)',
   'home.b3.mbar': 'Quick start',
-  'home.b3.hdr.short': 'Start',
-  'home.b3.selected': 'Selected · {route}',
+  'home.b3.mbar.note': 'No account needed. Nothing is sent until you press Send.',
   'home.b3.mine': 'Matches your route',
   // The brief: three answers that build a draft the visitor owns, then open the real request form with them.
   'home.b3.br.title': 'Your first mission brief in 60 seconds.',

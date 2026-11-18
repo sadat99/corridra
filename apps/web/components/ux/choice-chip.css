@@ -1,0 +1,40 @@
+/* Choice chips (board 3c). Rounding B, 44 px targets; the chosen chip is filled navy with paper words. Tokens only. */
+.ux-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.ux-chip {
+  position: relative;
+  display: inline-flex;
+}
+.ux-chip label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: 0 min(var(--space-4), 4vw);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--text-1);
+  font: 600 var(--text-sm) / 1.2 var(--font-ui);
+  cursor: pointer;
+}
+.ux-chip label:hover {
+  border-color: var(--action);
+}
+.ux-chip input:checked + label {
+  border-color: var(--brand-deep);
+  background: var(--brand-deep);
+  color: var(--on-brand);
+}
+.ux-chip input:checked + label .ux-flag {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 50%, transparent);
+}
+.ux-chip input:focus-visible + label {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}

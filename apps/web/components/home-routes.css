@@ -65,71 +65,7 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
 }
-.tr-door {
-  position: relative;
-  display: grid;
-}
-.tr-door label {
-  display: grid;
-  align-content: start;
-  gap: var(--space-1);
-  min-height: 2.75rem;
-  padding: min(var(--space-3), 3vw) min(var(--space-4), 4vw);
-  border: 1px solid color-mix(in srgb, var(--on-brand) 35%, transparent);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--on-brand) 8%, transparent);
-  color: var(--on-brand);
-  cursor: pointer;
-  transition:
-    background var(--dur) var(--ease),
-    border-color var(--dur) var(--ease);
-}
-.tr-door label:hover {
-  border-color: var(--on-brand);
-}
-.tr-door label strong {
-  font-family: var(--serif);
-  font-size: var(--text-lg);
-  font-weight: 500;
-  line-height: 1.2;
-}
-.tr-door-big label strong {
-  font-size: var(--text-2xl);
-}
-.tr-door-side {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  color: color-mix(in srgb, var(--on-brand) 80%, transparent);
-}
-.tr-door-route,
-.tr-door-text {
-  font-size: var(--text-sm);
-  color: color-mix(in srgb, var(--on-brand) 82%, transparent);
-  line-height: 1.4;
-}
-.tr-door input:checked + label {
-  border-color: var(--surface-1);
-  background: var(--surface-1);
-  color: var(--text-1);
-}
-.tr-door input:checked + label .tr-door-side,
-.tr-door input:checked + label .tr-door-route,
-.tr-door input:checked + label .tr-door-text {
-  color: var(--text-2);
-}
-.tr-door input:focus-visible + label {
-  outline: 3px solid var(--on-brand);
-  outline-offset: 3px;
-}
-.tr-door-picked {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--action);
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
+
 .tr-start {
   display: grid;
   gap: var(--space-2);
@@ -184,8 +120,7 @@
 .tr-bar-buttons button,
 .tr-pick,
 .tr-quiet-button,
-.tr-steps label,
-.tr-chips label {
+.tr-steps label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -199,15 +134,10 @@
   cursor: pointer;
 }
 .tr-bar-buttons button[aria-pressed='true'],
-.tr-pick[aria-pressed='true'],
-.tr-chips input:checked + label {
+.tr-pick[aria-pressed='true'] {
   border-color: var(--brand-deep);
   background: var(--brand-deep);
   color: var(--on-brand);
-}
-.tr-chips input:focus-visible + label {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
 }
 
 /* Sections */
@@ -677,16 +607,7 @@
   padding: 0;
   font-weight: 600;
 }
-.tr-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-.tr-choice {
-  position: relative;
-  display: inline-flex;
-}
+
 .tr-market-line {
   max-width: 52rem;
   margin: var(--space-3) 0 0;
@@ -801,42 +722,7 @@
   gap: var(--space-3);
   margin-top: var(--space-3);
 }
-.tr-field {
-  display: grid;
-  gap: var(--space-1);
-  align-content: start;
-}
-.tr-field label {
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-.tr-field label span {
-  color: var(--text-2);
-  font-weight: 400;
-}
-.tr-field input {
-  width: 100%;
-  min-height: 2.75rem;
-  padding: 0 min(var(--space-3), 3vw);
-  border: 1.5px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-1);
-  color: var(--text-1);
-  font: 500 var(--text-lg) var(--font-ui);
-  font-variant-numeric: tabular-nums;
-}
-.tr-field input[aria-invalid='true'] {
-  border-color: var(--critical);
-}
-.tr-error {
-  margin: 0;
-  color: var(--critical);
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-.tr-error:empty {
-  display: none;
-}
+
 .tr-result {
   display: grid;
   gap: var(--space-3);
@@ -1263,12 +1149,6 @@
   font-size: var(--text-sm);
 }
 
-/* On a phone the route line repeats the words below it, so the first screen keeps the title and one line. */
-@media (max-width: 47.99rem) {
-  .tr-door-route {
-    display: none;
-  }
-}
 @media (min-width: 48rem) {
   .tr-doors-big,
   .tr-doors-small,
@@ -1333,31 +1213,23 @@
     align-items: start;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .tr-door label {
-    transition: none;
-  }
-}
 
 /* With Largest text and 200 percent browser text the root is 40 px and a phone is 8 rem wide: every word may break
    inside itself, and no control or card keeps a minimum width of its own. */
 .tr-home :is(button, a, label, summary, legend, dt, dd, th, td, strong, span, p, li, small, input) {
   overflow-wrap: anywhere;
 }
-.tr-home :is(.tr-bar, .tr-bar-buttons, .tr-opens, .tr-goals, .tr-chips, .tr-stops, .tr-tabs) > * {
+.tr-home :is(.tr-bar, .tr-bar-buttons, .tr-opens, .tr-goals, .tr-stops, .tr-tabs) > * {
   min-width: 0;
 }
 
 /* On a phone, controls that wrap are equal columns, so stacked controls share one width. */
 @media (max-width: 40rem) {
   .tr-bar-buttons,
-  .tr-chips,
   .tr-tabs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .tr-choice,
-  .tr-choice label,
   .tr-bar-buttons button,
   .tr-tabs button {
     width: 100%;
@@ -1457,9 +1329,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-2);
   }
-  .tr-doors-small .tr-door label {
-    padding: var(--space-2);
-  }
+
   .tr-bar-buttons {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -1520,9 +1390,7 @@
   .tr-doors legend {
     font-size: var(--text-lg);
   }
-  .tr-door label {
-    padding-block: var(--space-2);
-  }
+
   .tr-intro {
     gap: var(--space-2);
   }
@@ -1652,35 +1520,8 @@
   .tr-doors-small {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .tr-door-big label {
-    min-block-size: 12rem;
-    padding: var(--space-6);
-  }
 }
-.tr-door label {
-  border-radius: var(--radius-lg);
-}
-.tr-door-route {
-  display: block;
-}
-.tr-route-line {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-2);
-}
-.tr-route-place {
-  display: inline-flex;
-}
-.tr-route-to {
-  font-weight: 400;
-}
-.tr-door .cr-flag {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 40%, transparent);
-}
-.tr-door input:checked + label .cr-flag {
-  box-shadow: 0 0 0 1px var(--border-strong);
-}
+
 .tr-start {
   justify-items: center;
   text-align: center;
@@ -1759,15 +1600,7 @@
   color: var(--text-2);
   font-size: var(--text-sm);
 }
-.tr-clock-city .cr-flagged {
-  white-space: normal;
-}
-.tr-chips label .cr-flagged {
-  gap: var(--space-2);
-}
-.tr-chips input:checked + label .cr-flag {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 50%, transparent);
-}
+
 .tr-reaction .primary-link,
 .tr-section > .primary-link,
 .tr-section > .tr-actions {
@@ -1841,9 +1674,7 @@
   font-weight: 500;
   line-height: 1.25;
 }
-.tr-brief-step .tr-chips {
-  clear: both;
-}
+
 .tr-brief-step .tr-n {
   color: var(--action);
   font-family: var(--font-ui);
@@ -2000,48 +1831,6 @@
 }
 
 /* The phone quick-start bar (board 3c). Up to 760 px wide, only while the page shows no action of its own. */
-.tr-mbar {
-  display: none;
-}
-@media (max-width: 47.5rem) {
-  .tr-mbar {
-    position: fixed;
-    inset: auto 0 0;
-    z-index: 40;
-    display: flex;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid color-mix(in srgb, var(--on-brand) 25%, transparent);
-    background: var(--brand-deep);
-    transform: translateY(110%);
-    visibility: hidden;
-  }
-  .tr-mbar[data-on='true'] {
-    transform: none;
-    visibility: visible;
-  }
-  .tr-mbar .primary-link {
-    flex: 1;
-    justify-content: center;
-    min-height: 3rem;
-  }
-  .tr-mbar .secondary-link {
-    flex: none;
-    min-height: 3rem;
-  }
-}
-@media (max-width: 47.5rem) and (prefers-reduced-motion: no-preference) {
-  .tr-mbar {
-    transition:
-      transform var(--dur) var(--ease),
-      visibility 0s linear var(--dur);
-  }
-  .tr-mbar[data-on='true'] {
-    transition:
-      transform var(--dur) var(--ease),
-      visibility 0s;
-  }
-}
 
 /* Bands run edge to edge, as on the board: the band colour bleeds past the content column without adding width. */
 .ux-guide-home.tr-home .tr-hero,

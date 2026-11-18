@@ -1,0 +1,22 @@
+/* Example tags and section eyebrows (board 3c). Tokens only. */
+.ux-example-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--caution-surface);
+  color: var(--caution-text);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+.ux-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ux-eyebrow::before {
+  content: '';
+  inline-size: 1rem;
+  block-size: 2px;
+  background: var(--ac-copper);
+}
