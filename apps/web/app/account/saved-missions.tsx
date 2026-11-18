@@ -22,7 +22,8 @@ type Item = {
   expiresAt?: string;
 };
 type Page = { missions: Item[]; nextAfter: string | null; synthetic: boolean };
-const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
+/** A saved mission id as the saved mission routes write it (also the member access lists, ADR-087 U5). */
+export const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 function item(value: unknown): value is Item {
   if (!value || typeof value !== 'object') return false;
   const row = value as Item;

@@ -308,6 +308,8 @@ describe('M-10 no new export, and a book carries no price, quote, markup or cont
     );
     expect(files.sort()).toEqual([
       'app/api/customer-books/route.ts',
+      // ADR-087 U5 member book download, reviewed in PR 561
+      'app/api/customer-member-access/route.ts',
       'app/api/customer-programme-exports/route.ts',
       'app/api/delivery/route.ts',
       'app/api/workspace/[action]/route.ts',

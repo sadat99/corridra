@@ -61,6 +61,7 @@ import {
 import { migrateViewerExportAccess } from '../packages/db/src/viewer-export-access-migrate';
 import { migrateQuotationLinkCheck } from '../packages/db/src/quotation-link-check-migrate';
 import { migrateMemberNotice } from '../packages/db/src/member-notice-migrate';
+import { migrateMemberAccess } from '../packages/db/src/member-access-migrate';
 import {
   assertMemberNoticeLive,
   deliverMemberNotice,
@@ -132,6 +133,7 @@ const v = z
     QUOTATION_LINK_CHECK_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     // ADR-087 U4: install writes no row; deliver writes the notices for the listed workspaces (or all) and starts their 4d clock.
     MEMBER_NOTICE_ACTION: z.enum(['unchanged', 'install', 'deliver']).default('unchanged'),
+    MEMBER_ACCESS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     // Only for deliver: the live app's https origin (repository variable APP_ORIGIN), asked before anything is written.
     MEMBER_NOTICE_APP_ORIGIN: z.string().optional(),
     COUNTERPARTY_CHANGES_ACTION: z
@@ -322,6 +324,8 @@ if (v.QUOTATION_LINK_CHECK_ACTION !== 'unchanged' && !apply)
   throw new Error('Quotation link check installation requires INSTALL_APPLY=yes');
 if (v.MEMBER_NOTICE_ACTION !== 'unchanged' && !apply)
   throw new Error('Member notice installation or delivery requires INSTALL_APPLY=yes');
+if (v.MEMBER_ACCESS_ACTION !== 'unchanged' && !apply)
+  throw new Error('Member access installation requires INSTALL_APPLY=yes');
 // ADR-087 4d: the clock may start only while the /account notice is live. Asked before the report and before any write.
 if (v.MEMBER_NOTICE_ACTION === 'deliver') await assertMemberNoticeLive(v.MEMBER_NOTICE_APP_ORIGIN);
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
@@ -402,6 +406,7 @@ const registries = [
   'viewer_export_access_migrations',
   'quotation_link_check_migrations',
   'member_notice_migrations',
+  'member_access_migrations',
   'recipient_response_revision_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
@@ -809,6 +814,15 @@ try {
         console.log(
           `  ${row.workspaceId.slice(0, 8)} ${row.delivered ? 'delivered' : 'already delivered'} ${row.deliveredAt.toISOString()} opens ${row.opensAt.toISOString()} notices ${row.notices}`,
         );
+    }
+    // ADR-087 U5, member access, is never part of the base run. It installs read-only functions only and writes no row; it refuses
+    // unless the member notice module (U4) is installed. Each workspace opens 24 hours after its notice delivery, and only while the
+    // application switch CORRIDRA_MEMBER_ACCESS is on. The decision card part waits until the decision card module is installed.
+    if (v.MEMBER_ACCESS_ACTION === 'install') {
+      const result = await migrateMemberAccess(pool);
+      console.log(
+        `installed or already current: member access (applied ${result.applied.join(', ') || 'nothing new'}${result.waiting.length ? `; waiting ${result.waiting.join(', ')}` : ''}; switch CORRIDRA_MEMBER_ACCESS unchanged)`,
+      );
     }
     // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
     // the one control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action
