@@ -415,7 +415,7 @@ describe('signing in again from the workspace comes back to the same workspace a
     const links: [string, string][] = [
       [
         'apps/web/components/account-form.tsx',
-        '<a className="text-link" href={operatorSignInPage}>\n            Invited Operator Sign-in\n          </a>',
+        '<a className="text-link" href={operatorSignInPage}>\n                  Invited Operator Sign-in\n                </a>',
       ],
       [
         'apps/web/app/operator/reset-password/page.tsx',

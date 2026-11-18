@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
@@ -45,6 +45,9 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
+    // Files under public/ are served by Next at the site root (the flag pictures and the region mark, LP3); the
+    // fixture leaves those addresses as they are instead of bundling them.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
@@ -127,8 +130,11 @@ for (const code of localeCodes) {
     await expect(main).toHaveAttribute('dir', localeMeta[code].dir);
     await expect(page.locator('h1')).toHaveText(translate(code, 'home.title'));
     await expect(page.locator('.tr-lead')).toHaveText(translate(code, 'home.tr.lead'));
-    // The five trust labels moved to /trust on 17 November 2026; the home draws none of them any more.
-    await expect(page.locator('.tr-five')).toHaveCount(0);
+    // The five trust labels are back on the home with the board 3c (owner, 18 November 2026); their names stay English.
+    await expect(page.locator('.tr-five')).toHaveCount(1);
+    await expect(
+      page.locator('.tr-five').getByText('Self-declared', { exact: true }),
+    ).toBeVisible();
     if (code !== 'en')
       await expect(page.locator('h1')).not.toHaveText(translate('en', 'home.title'));
   });
@@ -253,27 +259,30 @@ test('a reading stops when the page or its language changes, so it is never left
   await expect(page.getByRole('button', { name: 'Stop Reading' })).toHaveCount(0);
 });
 
+// The home draws no arrow on its same-site links any more (board 3c review, Guardian 29, 18 November 2026), so the
+// shared arrow icon is placed in the home's main region to check the same rule: it points the other way when read
+// right to left, and not otherwise.
+const placedArrowTransform = (target: Page) =>
+  target.evaluate(() => {
+    const arrow = document.createElement('span');
+    arrow.className = 'arrow-icon';
+    arrow.textContent = '>';
+    document.getElementById('main')!.append(arrow);
+    return getComputedStyle(arrow).transform;
+  });
+
 test('read right to left, arrows point the other way (the people tabs, with their swapped arrow keys, moved to /how-it-works)', async ({
   page,
 }) => {
-  const transform = () =>
-    page
-      .locator('.arrow-icon')
-      .first()
-      .evaluate((el) => getComputedStyle(el).transform);
   await page.addInitScript((v) => localStorage.setItem('corridra.language', v), 'ar');
   await page.goto(`${origin}/?pages=1`);
   await expect(page.locator('main#main')).toHaveAttribute('dir', 'rtl');
-  expect(await transform()).toBe('matrix(-1, 0, 0, 1, 0, 0)');
+  await expect(page.locator('main .arrow-icon')).toHaveCount(0);
+  expect(await placedArrowTransform(page)).toBe('matrix(-1, 0, 0, 1, 0, 0)');
   const english = await page.context().newPage();
   await english.addInitScript((v) => localStorage.setItem('corridra.language', v), 'en');
   await english.goto(`${origin}/?pages=1`);
-  expect(
-    await english
-      .locator('.arrow-icon')
-      .first()
-      .evaluate((el) => getComputedStyle(el).transform),
-  ).toBe('none');
+  expect(await placedArrowTransform(english)).toBe('none');
 });
 
 for (const width of [320, 390, 768, 1440]) {

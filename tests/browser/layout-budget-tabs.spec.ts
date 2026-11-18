@@ -1,17 +1,14 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
-// Layout budget, Phase 2b-i (docs/revamp/specs/layout-budget.md): How it works, Routes and the three route pages
-// are cut into tabs with the shared SubTabs. About left the tabs for one Editorial page (owner, 6 November 2026);
+// Layout budget, Phase 2b-i (docs/revamp/specs/layout-budget.md): How it works is cut into tabs with the shared SubTabs.
+// Routes and the three route pages left the tabs on 18 November 2026 (owner decision, W1-D); their checks are in
+// routes-open-destinations.spec.ts and routes-page-length.spec.ts. About left the tabs for one Editorial page (owner, 6 November 2026);
 // its anchors, disclosures and length are checked in about-editorial.spec.ts. Each tab fits 2.0 desktop screens (1440 x 900) and 3.0 phone
 // screens (390 x 844), footer included (owner decision of 6 November 2026). Nothing is removed: every word stays in the server HTML, an old #address opens the tab that
 // holds it, an in-page link opens its own target's tab, and a hidden panel is never shown by a page rule.
 const tabbed = [
   { path: '/how-it-works', tabs: ['before-you-meet', 'meet-and-follow-up'] },
-  { path: '/corridors', tabs: ['routes', 'route', 'sample'] },
-  { path: '/corridors/bangladesh-china', tabs: ['help', 'availability', 'work'] },
-  { path: '/corridors/bangladesh-spain', tabs: ['help', 'availability', 'work'] },
-  { path: '/corridors/bangladesh-eu', tabs: ['help', 'availability', 'work'] },
 ] as const;
 const sizes = {
   phone: { width: 390, height: 844 },
@@ -117,22 +114,14 @@ for (const { path, tabs } of tabbed) {
 
   for (const [name, size] of Object.entries(sizes))
     test(`${path}: keeps its primary action above the fold at ${name}`, async ({ page }) => {
-      // Routes is a chooser: on a phone the list of routes comes first and its start link follows the cards
-      // (it is above the fold on a wide screen).
-      test.skip(path === '/corridors' && name === 'phone', 'the chooser comes first on a phone');
       await page.setViewportSize(size);
       await page.goto(path);
-      // Routes opens on the list of routes, whose way to start a request is the /plan link. The home is not
-      // tabbed any more (concept G); its first-screen check is in home-concept-g.spec.ts.
+      // The home is not tabbed any more (concept G); its first-screen check is in home-concept-g.spec.ts.
       // Changed knowingly (9 Nov 2026, PR 370): from 67rem the header bar shows Start a Request and the page hero
       // does not repeat it, so the action in view is the header's there and the hero's below it. It is still the
       // first visible primary action; public-hero-layout.spec.ts proves one of the two is always in view.
       const action = page
-        .locator(
-          path === '/corridors'
-            ? 'main a[href="/plan"]'
-            : '.public-header .nav-cta:visible, main a.primary-link:visible',
-        )
+        .locator('.public-header .nav-cta:visible, main a.primary-link:visible')
         .first();
       await expect(action).toBeVisible();
       const box = (await action.boundingBox())!;
@@ -140,20 +129,3 @@ for (const { path, tabs } of tabbed) {
       expect(box.y + box.height).toBeLessThanOrEqual(size.height);
     });
 }
-
-// An old address lands on its content: the tab that holds it opens, then the element is shown.
-const oldAddresses: [string, string, string][] = [
-  ['/corridors#mission-example', 'sample', '#mission-example'],
-  ['/corridors#commercial-objective', 'route', '#commercial-objective'],
-  ['/corridors#directions-title', 'routes', '#directions-title'],
-];
-for (const [address, tab, target] of oldAddresses)
-  test(`${address} opens the ${tab} tab and shows ${target}`, async ({ page }) => {
-    await page.setViewportSize(sizes.desktop);
-    await page.goto(address);
-    await expect(page.locator(`[role="tab"][data-tab="${tab}"]`), `${address} tab`).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    await expect(page.locator(target)).toBeVisible();
-  });

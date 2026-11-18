@@ -7,9 +7,14 @@ import { accountClient } from '../lib/neon-auth-client';
 import { forgetVerifyEmail, recallVerifyEmail, rememberVerifyEmail } from './verify-email-handoff';
 import { announceSessionChange } from './session-events';
 import { accountAccessPath, accountReturnTo } from '../lib/account-return';
+import { CorridraIcon } from './corridra-icon';
 export type AccountFormMode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
 // How long a person waits before asking for another sign-in code.
 const resendSeconds = 30;
+// The one sentence for a refused password sign-in. It is the same whatever the address, so it never says whether the
+// address has an account. The identity client throws its own words for a refused password; those are replaced by this.
+const credentialsMismatch = 'That email and password do not match. Check both and try again.';
+const refusedStatuses = [400, 401, 403, 404, 422];
 // The identity client can return an error or throw one. The code route reads only the status and
 // the code from either and never shows the provider's own words, which could reveal an account.
 async function settle(call: () => Promise<{ error?: unknown } | undefined | void>) {
@@ -50,6 +55,10 @@ export function AccountForm({
   const [sent, setSent] = useState(mode === 'verify');
   const [codeRequested, setCodeRequested] = useState(false);
   const [failed, setFailed] = useState(false);
+  // True only while the banner is the refused-credentials sentence. Only then are the fields marked and the hint shown.
+  const [credentialRefused, setCredentialRefused] = useState(false);
+  // Sign-in only: the password shows as text while this is on. It changes the input type and nothing else.
+  const [showPassword, setShowPassword] = useState(false);
   // Sign in with a code: a second route into the same sign-in form. Password stays the default.
   const [viaCode, setViaCode] = useState(
     mode === 'signin' && codeSignIn && query.get('method') === 'code',
@@ -107,6 +116,7 @@ export function AccountForm({
     if (inFlight.current) return;
     inFlight.current = true;
     setFailed(false);
+    setCredentialRefused(false);
     setBusy(true);
     setMessage('');
     try {
@@ -135,7 +145,7 @@ export function AccountForm({
         router.refresh();
       } else if (mode === 'signin') {
         const result = await accountClient.signIn.email({ email, password });
-        if (result.error) throw new Error('Sign-in failed. Check your details and try again.');
+        if (result.error) throw new Error(credentialsMismatch);
         setPassword('');
         announceSessionChange();
         router.replace(destination);
@@ -192,10 +202,25 @@ export function AccountForm({
       }
     } catch (error) {
       setFailed(true);
+      const status = (error as { status?: unknown } | null)?.status;
+      const refused =
+        mode === 'signin' &&
+        !(codeEnabled && viaCode) &&
+        typeof status === 'number' &&
+        refusedStatuses.includes(status);
+      setCredentialRefused(
+        refused ||
+          (mode === 'signin' &&
+            !(codeEnabled && viaCode) &&
+            error instanceof Error &&
+            error.message === credentialsMismatch),
+      );
       setMessage(
-        error instanceof Error
-          ? error.message
-          : 'The request could not be completed. Please try again.',
+        refused
+          ? credentialsMismatch
+          : error instanceof Error
+            ? error.message
+            : 'The request could not be completed. Please try again.',
       );
     } finally {
       inFlight.current = false;
@@ -249,24 +274,55 @@ export function AccountForm({
             autoComplete="email"
             required
             maxLength={254}
+            aria-invalid={credentialRefused ? true : undefined}
           />
         </label>
       )}
       {['signin', 'signup', 'reset'].includes(mode) && !(mode === 'reset' && sent) && !viaCode && (
-        <label className="field">
-          {mode === 'reset' ? 'New password' : 'Password'}
-          <input
-            type="password"
-            value={password}
-            disabled={busy}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            minLength={mode === 'signin' ? undefined : 14}
-            maxLength={128}
-            required
-            aria-describedby={mode === 'reset' ? 'account-password-rule' : undefined}
-          />
-        </label>
+        <>
+          <label className="field">
+            {mode === 'reset' ? 'New password' : 'Password'}
+            <input
+              type={mode === 'signin' && showPassword ? 'text' : 'password'}
+              value={password}
+              disabled={busy}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              minLength={mode === 'signin' ? undefined : 14}
+              maxLength={128}
+              required
+              aria-invalid={credentialRefused ? true : undefined}
+              aria-describedby={
+                mode === 'reset'
+                  ? 'account-password-rule'
+                  : credentialRefused
+                    ? 'account-password-hint'
+                    : undefined
+              }
+            />
+          </label>
+          {mode === 'signin' && (
+            <p className="access-signin-row">
+              <button
+                type="button"
+                className="text-link"
+                disabled={busy}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((on) => !on)}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+              <Link prefetch={false} className="text-link" href={accessPath('/forgot-password')}>
+                Forgot Your Password?
+              </Link>
+              {credentialRefused && (
+                <span className="field-error" id="account-password-hint">
+                  Check your password.
+                </span>
+              )}
+            </p>
+          )}
+        </>
       )}
       {/* CQ-38: the rule is visible before the person submits (the create-account page shows it above
           the form, so only the new-password form adds it here). */}
@@ -314,6 +370,9 @@ export function AccountForm({
           aria-live={failed ? 'assertive' : 'polite'}
           className={failed ? 'ux-error-summary' : 'ux-draft-notice'}
         >
+          {failed && mode === 'signin' && (
+            <CorridraIcon name="close" className="access-error-icon" />
+          )}
           {message}
         </p>
       )}
@@ -416,18 +475,32 @@ export function AccountForm({
       )}
       {mode === 'signin' && (
         <>
-          <Link prefetch={false} className="text-link" href={accessPath('/forgot-password')}>
-            Forgot Your Password?
-          </Link>
-          <Link prefetch={false} className="text-link" href={accessPath('/signup')}>
-            Create an Account
-          </Link>
-          <Link prefetch={false} className="text-link" href={accessPath('/verify-email')}>
-            Verify Your Email
-          </Link>
-          <a className="text-link" href={operatorSignInPage}>
-            Invited Operator Sign-in
-          </a>
+          <details className="access-more account-more">
+            <summary>More ways in</summary>
+            <ul className="account-more-links">
+              <li>
+                <Link prefetch={false} className="text-link" href={accessPath('/signup')}>
+                  Create an Account
+                </Link>
+              </li>
+              <li>
+                <Link prefetch={false} className="text-link" href={accessPath('/verify-email')}>
+                  Verify Your Email
+                </Link>
+              </li>
+              <li>
+                <a className="text-link" href={operatorSignInPage}>
+                  Invited Operator Sign-in
+                </a>
+              </li>
+            </ul>
+          </details>
+          <p className="access-signin-row">
+            <span>New here?</span>
+            <Link prefetch={false} className="text-link" href="/plan">
+              Start a Request
+            </Link>
+          </p>
         </>
       )}
       {(mode === 'signup' || mode === 'verify') && (

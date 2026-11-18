@@ -15,13 +15,13 @@ test.beforeEach(({}, info) => {
   test.skip(info.project.name !== 'desktop', 'sizes are set in each case');
 });
 
-const screens = async (page: Page) =>
-  (await page.evaluate(() =>
-    Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
-  )) / (await page.evaluate(() => innerHeight));
 const bar = (page: Page) => page.getByRole('group', { name: 'Choose which route this page shows' });
+// The doors are the hero's radio group (the brief below has its own "Something else" answer).
 const door = (page: Page, name: string | RegExp) =>
-  page.getByRole('radio', { name }).locator('xpath=following-sibling::label');
+  page
+    .getByRole('group', { name: 'Which way is your business moving?' })
+    .getByRole('radio', { name })
+    .locator('xpath=following-sibling::label');
 const choose = (radio: Locator) => radio.locator('xpath=following-sibling::label').click();
 const start = (page: Page) => page.locator('#home-start');
 
@@ -40,45 +40,22 @@ test('the first screen says what Corridra is, offers the doors and the first act
     await expect(
       page.getByText('Which way is your business moving?', { exact: true }),
     ).toBeInViewport();
-    if (size.width === 1440)
-      for (const name of ['Buying from China', 'Sell Abroad'])
-        await expect(door(page, name)).toBeInViewport();
+    // Board order (Guardian 29 review, D1): the doors come before the action, so the big doors start on the first
+    // screen everywhere; on a phone the start bar carries the action once the hero scrolls away.
+    for (const name of ['Buying from China', 'Sell Abroad'])
+      await expect(door(page, name)).toBeInViewport();
     await expect(start(page)).toHaveAttribute('href', '/plan');
-    if (size.width === 1440) await expect(start(page)).toBeInViewport();
   }
 });
 
-// Owner, 17 November 2026, "go ahead with the height": the home fits the standing budget, 3.0 screens at 1440 x 900
-// and 4.25 at 390 x 844, footer included, with the worked examples closed. The long sections moved to /how-it-works,
-// /trust and /corridors. All Routes (a reviewer's view of three routes at once) is measured and reported, not held.
-test('the home fits 3.0 screens at 1440 x 900 and 4.25 at 390 x 844, first visit and every door', async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  const measured: string[] = [];
-  for (const [name, size] of Object.entries(sizes)) {
-    await page.setViewportSize(size);
-    await page.goto('/');
-    await page.evaluate(() => document.fonts.ready);
-    const limit = name === 'desktop' ? 3.0 : 4.25;
-    const first = await screens(page);
-    measured.push(`${name} first visit ${first.toFixed(2)}`);
-    expect(first, `${name} first visit`).toBeLessThanOrEqual(limit);
-    for (const route of ['China Route', 'Sell Abroad', 'Delegation', 'Something Else']) {
-      await bar(page).getByRole('button', { name: route, exact: true }).click();
-      const length = await screens(page);
-      measured.push(`${name} ${route} ${length.toFixed(2)}`);
-      expect(length, `${name} ${route}`).toBeLessThanOrEqual(limit);
-    }
-    await bar(page).getByRole('button', { name: 'All Routes', exact: true }).click();
-    measured.push(`${name} All Routes ${(await screens(page)).toFixed(2)} (not held)`);
-  }
-  test.info().annotations.push({ type: 'page-length', description: measured.join(', ') });
-});
+// The home page-length budget (3.0 screens at 1440 x 900, 4.25 at 390 x 844) no longer applies to the home. Owner,
+// 18 November 2026, first hand to Guardian 29: "the page size limit is not applicable here". Every other page keeps
+// its own budget; the page-length report (tests/ux/page-length.spec.ts) still measures the home.
 
-// The worked examples are closed disclosures; a test that uses one opens it first.
+// The worked examples are open under their own headings again, as on the board (owner, 18 November 2026); a test that
+// used to open one now checks its heading is shown.
 const openFold = (scope: Locator, name: string | RegExp) =>
-  scope.locator('summary', { hasText: name }).click();
+  expect(scope.getByRole('heading', { level: 3, name })).toBeVisible();
 
 for (const [label, route, cta, href, section] of [
   [
@@ -116,13 +93,19 @@ for (const [label, route, cta, href, section] of [
     await page.goto('/');
     await expect(page.locator(`#route-${route}`)).toHaveCount(0);
     await door(page, label).click();
-    await expect(page.getByRole('radio', { name: label })).toBeChecked();
+    await expect(
+      page
+        .getByRole('group', { name: 'Which way is your business moving?' })
+        .getByRole('radio', { name: label }),
+    ).toBeChecked();
     await expect(page.getByRole('heading', { level: 2, name: section })).toBeVisible();
     await expect(start(page)).toHaveText(cta);
     await expect(start(page)).toHaveAttribute('href', href);
     await expect(page.getByText(`Opened below: ${label}.`)).toBeVisible();
     await expect(bar(page).getByRole('button', { pressed: true })).toHaveCount(1);
-    // Every section ends in a real request link, never a dead control.
+    // Every route leads to a real request link, never a dead control (China's appears once a quote is picked).
+    if (route === 'china')
+      await page.locator('#route-china').getByRole('button', { name: 'B Is Cheapest' }).click();
     await expect(
       page
         .locator(`#route-${route}`)
@@ -133,27 +116,35 @@ for (const [label, route, cta, href, section] of [
     await expect(page).toHaveURL(href);
   });
 
-test('the route bar switches routes and All Routes opens China, Sell Abroad and Delegation', async ({
+test('the route bar switches routes, one at a time; All Routes is the page with none open (review rounds 1 and 2)', async ({
   page,
 }) => {
   await page.goto('/');
-  await bar(page).getByRole('button', { name: 'All Routes' }).click();
-  for (const id of ['china', 'sell', 'delegation'])
-    await expect(page.locator(`#route-${id}`)).toBeVisible();
-  await expect(page.locator('#route-other')).toHaveCount(0);
+  await expect(bar(page).getByRole('button')).toHaveCount(5);
+  await expect(bar(page).getByRole('button', { name: 'All Routes', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await bar(page).getByRole('button', { name: 'China Route', exact: true }).click();
+  await expect(page.locator('#route-china')).toBeVisible();
   await bar(page).getByRole('button', { name: 'Sell Abroad', exact: true }).click();
   await expect(page.locator('#route-china')).toHaveCount(0);
   await expect(page.locator('#route-sell')).toBeVisible();
+  await bar(page).getByRole('button', { name: 'All Routes', exact: true }).click();
+  await expect(page.locator('main section[id^="route-"]')).toHaveCount(0);
+  await expect(page.locator('#pick')).toBeVisible();
 });
 
-test('the how-it-works strip opens a route, moves to it and focuses its heading', async ({
+test('the how-it-works strip explains the three steps and closes with in-page choices, never a request link (review round 2, D12)', async ({
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /Open the China Route/ }).click();
-  await expect(
-    page.getByRole('heading', { level: 2, name: 'Too many suppliers. Too few you can compare.' }),
-  ).toBeFocused();
+  await expect(page.locator('#pick li')).toHaveCount(3);
+  // Two outlined cards and three quiet choices; none is a link or a primary action.
+  await expect(page.locator('#pick').getByRole('button')).toHaveCount(5);
+  await expect(page.locator('#pick').getByRole('link')).toHaveCount(0);
+  await expect(page.locator('#pick .primary-link')).toHaveCount(0);
+  await bar(page).getByRole('button', { name: 'China Route', exact: true }).click();
   await expect(page.locator('#pick')).toHaveCount(0);
 });
 
@@ -283,7 +274,9 @@ test('the delegation example shows private rows, a programme total and what the 
   await page.goto('/');
   await door(page, 'Leading a delegation').click();
   const del = page.locator('#route-delegation');
-  await openFold(del, 'Example programme view');
+  await expect(
+    del.getByRole('region', { name: 'Example programme view for an organiser' }),
+  ).toBeVisible();
   await expect(del.getByRole('row')).toHaveCount(5);
   await expect(
     del.getByText('Programme total: 4 companies, 3 met at least one counterpart'),
@@ -345,14 +338,22 @@ test('the long sections moved off the home keep their words, behind Show More on
   await expect(page.locator('.tr-nevers > div')).toHaveCount(4);
   await expect(page.locator('.tr-nots > div')).toHaveCount(8);
   await expect(page.locator('#routes .tr-routes > div')).toHaveCount(4);
-  for (const [href, name] of [
-    ['/how-it-works', 'See the Full Process'],
-    ['/trust', 'How We Label Facts'],
-    ['/corridors', 'Explore Every Route'],
-  ] as const) {
-    await page.goto('/');
-    await expect(page.locator('#final').getByRole('link', { name })).toHaveAttribute('href', href);
-  }
+  // The home now holds these sections itself (board 3c), so its close no longer points to those pages (review D4);
+  // the trust section links to /trust with the board's words.
+  await page.goto('/');
+  await expect(
+    page.locator('#trust').getByRole('link', { name: 'How We Label Facts' }),
+  ).toHaveAttribute('href', '/trust');
+  // The pages that hold the full process and every route stay one click from the home, in its header or footer
+  // (review round 2, K2), and the routes block still names /corridors.
+  for (const href of ['/how-it-works', '/corridors'])
+    expect(
+      await page.locator(`header a[href="${href}"], footer a[href="${href}"]`).count(),
+      `${href} is linked from the home's header or footer`,
+    ).toBeGreaterThan(0);
+  await expect(
+    page.locator('#routes').getByRole('link', { name: 'Explore Every Route' }),
+  ).toHaveAttribute('href', '/corridors');
 });
 
 test('the three job links keep their names and links (P-07) and Something else goes to /plan', async ({
@@ -388,8 +389,10 @@ test('the page names the open markets and never limits itself to Spain or the EU
   const text = (await page.locator('main').innerText()).toLowerCase();
   for (const word of ['the eu', 'uk', 'us', 'australia', 'key asian markets'])
     expect(text).toContain(word);
-  await bar(page).getByRole('button', { name: 'All Routes' }).click();
-  expect(await page.locator('main').innerText()).not.toMatch(/—/);
+  for (const name of ['China Route', 'Sell Abroad', 'Delegation', 'Something Else']) {
+    await bar(page).getByRole('button', { name, exact: true }).click();
+    expect(await page.locator('main').innerText()).not.toMatch(/—/);
+  }
 });
 
 for (const width of widths)
@@ -436,25 +439,36 @@ for (const width of widths)
       ).toEqual([]);
     };
     await check('first visit');
-    await bar(page).getByRole('button', { name: 'All Routes' }).click();
     await page.evaluate(() =>
       document.querySelectorAll('details').forEach((fold) => (fold.open = true)),
     );
+    await bar(page).getByRole('button', { name: 'China Route', exact: true }).click();
     await page.getByRole('button', { name: 'B Is Cheapest' }).click();
+    await check('China open and used');
+    await bar(page).getByRole('button', { name: 'Sell Abroad', exact: true }).click();
     await page.getByLabel('People going').fill('2');
     await page.getByLabel(/Stand and registration/).fill('6000');
     await choose(page.getByRole('radio', { name: /Show companies outside/ }));
-    await check('every route open, every example open and used');
+    await check('Sell Abroad open and used');
+    await bar(page).getByRole('button', { name: 'Delegation', exact: true }).click();
+    await check('Delegation open');
   });
 
-// Owner goal: "get a visitor to start a request". The action is on the first screen of a phone, 320 and 390 wide.
+// Owner goal: "get a visitor to start a request". With the board's order (doors first, review D1) the action follows
+// the doors; on a phone the start bar carries it as soon as the hero has scrolled away, so it is always one tap away.
 for (const size of [
   { width: 320, height: 640 },
   { width: 390, height: 844 },
 ])
-  test(`Start a Request is on the first screen at ${size.width} px`, async ({ page }) => {
+  test(`Start a Request stays one tap away at ${size.width} px`, async ({ page }) => {
     await page.setViewportSize(size);
     await page.goto('/');
-    await expect(start(page)).toBeInViewport({ ratio: 1 });
     await expect(start(page)).toHaveAttribute('href', '/plan');
+    await page.locator('#how').scrollIntoViewIfNeeded();
+    const quick = page.getByRole('group', { name: 'Quick start' });
+    await expect(quick.getByRole('link', { name: 'Start a Request' })).toBeInViewport({ ratio: 1 });
+    await expect(quick.getByRole('link', { name: 'Start a Request' })).toHaveAttribute(
+      'href',
+      '/plan',
+    );
   });

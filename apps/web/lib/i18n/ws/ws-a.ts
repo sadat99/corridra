@@ -16,6 +16,8 @@ export const wsAEn = {
     'You have a saved request. Continue it, or start a new request for “{job}”?',
   'wsa.plan.jobChoice.continue': 'Continue saved request',
   'wsa.plan.jobChoice.start': 'Start a new request',
+  'wsa.plan.noteChoice':
+    'You have a saved request. Continue it, or start a new request with the notes from the link you opened?',
   'wsa.plan.countries.pinned': 'Most requested',
   'wsa.plan.countries.eu': 'EU countries',
   'wsa.plan.countries.other': 'Other countries',
@@ -37,6 +39,8 @@ export const wsA: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsAEn, strin
       'আপনার একটি সংরক্ষিত অনুরোধ আছে। সেটি চালিয়ে যাবেন, নাকি “{job}” এর জন্য নতুন অনুরোধ শুরু করবেন?',
     'wsa.plan.jobChoice.continue': 'সংরক্ষিত অনুরোধ চালিয়ে যান',
     'wsa.plan.jobChoice.start': 'নতুন অনুরোধ শুরু করুন',
+    'wsa.plan.noteChoice':
+      'আপনার একটি সংরক্ষিত অনুরোধ আছে। সেটি চালিয়ে যাবেন, নাকি খোলা লিংকের নোট দিয়ে নতুন অনুরোধ শুরু করবেন?',
     'wsa.plan.countries.pinned': 'সবচেয়ে বেশি অনুরোধ করা',
     'wsa.plan.countries.eu': 'ইইউ দেশ',
     'wsa.plan.countries.other': 'অন্যান্য দেশ',
@@ -55,6 +59,8 @@ export const wsA: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsAEn, strin
     'wsa.plan.jobChoice': '您有一个已保存的请求。继续该请求，还是为“{job}”开始新的请求？',
     'wsa.plan.jobChoice.continue': '继续已保存的请求',
     'wsa.plan.jobChoice.start': '开始新的请求',
+    'wsa.plan.noteChoice':
+      '您有一个已保存的请求。继续该请求，还是用您打开的链接中的备注开始新的请求？',
     'wsa.plan.countries.pinned': '最常选择',
     'wsa.plan.countries.eu': '欧盟国家',
     'wsa.plan.countries.other': '其他国家',
@@ -74,6 +80,8 @@ export const wsA: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsAEn, strin
       'Tiene una solicitud guardada. ¿Desea continuarla o empezar una nueva solicitud para «{job}»?',
     'wsa.plan.jobChoice.continue': 'Continuar la solicitud',
     'wsa.plan.jobChoice.start': 'Empezar una nueva',
+    'wsa.plan.noteChoice':
+      'Tiene una solicitud guardada. ¿Desea continuarla o empezar una nueva solicitud con las notas del enlace que abrió?',
     'wsa.plan.countries.pinned': 'Los más solicitados',
     'wsa.plan.countries.eu': 'Países de la UE',
     'wsa.plan.countries.other': 'Otros países',
@@ -92,6 +100,8 @@ export const wsA: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsAEn, strin
     'wsa.plan.jobChoice': 'لديك طلب محفوظ. هل تريد متابعته أم بدء طلب جديد لـ «{job}»؟',
     'wsa.plan.jobChoice.continue': 'متابعة الطلب المحفوظ',
     'wsa.plan.jobChoice.start': 'بدء طلب جديد',
+    'wsa.plan.noteChoice':
+      'لديك طلب محفوظ. هل تريد متابعته أم بدء طلب جديد بالملاحظات الواردة في الرابط الذي فتحته؟',
     'wsa.plan.countries.pinned': 'الأكثر طلبًا',
     'wsa.plan.countries.eu': 'دول الاتحاد الأوروبي',
     'wsa.plan.countries.other': 'دول أخرى',
@@ -111,6 +121,8 @@ export const wsA: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsAEn, strin
       'Vous avez une demande enregistrée. Voulez-vous la poursuivre ou commencer une nouvelle demande pour « {job} » ?',
     'wsa.plan.jobChoice.continue': 'Poursuivre la demande',
     'wsa.plan.jobChoice.start': 'Nouvelle demande',
+    'wsa.plan.noteChoice':
+      'Vous avez une demande enregistrée. La poursuivre, ou commencer une nouvelle demande avec les notes du lien ouvert ?',
     'wsa.plan.countries.pinned': 'Les plus demandés',
     'wsa.plan.countries.eu': 'Pays de l’UE',
     'wsa.plan.countries.other': 'Autres pays',
@@ -130,6 +142,8 @@ export const wsA: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsAEn, strin
       'Sie haben eine gespeicherte Anfrage. Möchten Sie sie fortsetzen oder eine neue Anfrage für „{job}“ beginnen?',
     'wsa.plan.jobChoice.continue': 'Gespeicherte fortsetzen',
     'wsa.plan.jobChoice.start': 'Neue Anfrage beginnen',
+    'wsa.plan.noteChoice':
+      'Sie haben eine gespeicherte Anfrage. Möchten Sie sie fortsetzen oder eine neue Anfrage mit den Notizen aus dem geöffneten Link beginnen?',
     'wsa.plan.countries.pinned': 'Am häufigsten gewählt',
     'wsa.plan.countries.eu': 'EU-Länder',
     'wsa.plan.countries.other': 'Weitere Länder',

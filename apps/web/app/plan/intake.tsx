@@ -222,10 +222,30 @@ const foldedFields = {
   results: ['worthwhile', 'notes'],
 } as const;
 type FoldGroup = keyof typeof foldedFields;
-/** The choices a link can make (`?job`, `?companyCountry` and `?marketCode`), applied to a draft. */
+/**
+ * The home page brief (owner board "Corridra Two Routes" 3c, LP3) can carry the visitor's own words as `?note`. They
+ * fill the optional notes field of a fresh draft only, trimmed to the field's limit; a saved draft is never touched.
+ */
+export function linkNote(query: URLSearchParams): string {
+  return wholeCharacters((query.get('note') ?? '').trim(), 1000);
+}
+/** At most `limit` UTF-16 units, cut between whole characters so no character is split in half. */
+function wholeCharacters(text: string, limit: number): string {
+  let out = '';
+  for (const character of text) {
+    if (out.length + character.length > limit) break;
+    out += character;
+  }
+  return out;
+}
+// The saved-draft prompt for a link that brings notes but no job of its own (no job is named).
+const noteOnlyChoice = '#note';
+/** The choices a link can make (`?job`, `?companyCountry`, `?marketCode` and `?note`), applied to a draft. */
 function withLinkChoices(base: Draft): Draft {
   const query = new URLSearchParams(window.location.search);
   const next = { ...base };
+  const note = linkNote(query);
+  if (note && !next.notes) next.notes = note;
   const job = query.get('job');
   if (job && missionCatalogue.some((t) => t.key === job)) {
     next.job = job;
@@ -411,6 +431,16 @@ function IntakeForm({
           saved.draft.job !== suggestedJob
         )
           setJobChoice(suggestedJob);
+        const note = linkNote(query);
+        // A link that carries new words (the home page brief) and a saved draft: offer the same choice as a new job,
+        // continue the saved request (its notes kept) or start a new one, which takes the link's job and words. The
+        // prompt names a job only when the link chose it; otherwise it speaks of the link's notes.
+        const linkJob =
+          suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob) ? suggestedJob : '';
+        if (restored && note && saved.draft.notes !== note)
+          setJobChoice((current) => current || linkJob || noteOnlyChoice);
+        if (!restored && note)
+          setDraft((current) => (current.notes ? current : { ...current, notes: note }));
         if (!restored && suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob))
           setDraft((current) => ({
             ...current,
@@ -1100,9 +1130,11 @@ function IntakeForm({
           {jobChoice && !finished && !pendingReady && (
             <section className="ux-job-choice" role="group" aria-labelledby="job-choice-text">
               <p id="job-choice-text">
-                {fill(wsa('wsa.plan.jobChoice'), {
-                  job: say(jobWord(jobChoice as (typeof missionCatalogue)[number]['key'])),
-                })}
+                {jobChoice === noteOnlyChoice
+                  ? wsa('wsa.plan.noteChoice')
+                  : fill(wsa('wsa.plan.jobChoice'), {
+                      job: say(jobWord(jobChoice as (typeof missionCatalogue)[number]['key'])),
+                    })}
               </p>
               <div className="guide-actions">
                 <button type="button" className="button-secondary" onClick={() => setJobChoice('')}>

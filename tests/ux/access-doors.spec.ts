@@ -105,7 +105,23 @@ for (const entry of pages) {
       const on = process.env.CORRIDRA_UX_ACCESS_DOORS === 'true';
       const robots = (await page.locator('meta[name="robots"]').getAttribute('content')) ?? '';
       expect(robots.includes('noindex')).toBe(!on);
-      await expect(page.getByRole('navigation', { name: 'Not what you need?' })).toBeVisible();
+      // The customer door shows the single "Not a customer?" line instead of the bar (owner board, screen 03, and the
+      // owner's 18 November "unsolicited redundancy"). The other two doors keep the bar.
+      const customerDoor = entry.path === '/access/customer';
+      const nav = page.getByRole('navigation', {
+        name: customerDoor ? 'Not a customer?' : 'Not what you need?',
+      });
+      await expect(nav).toBeVisible();
+      if (customerDoor) {
+        await expect(nav.getByRole('link', { name: 'Team and Network Access' })).toHaveAttribute(
+          'href',
+          '/access/team',
+        );
+        await expect(nav.getByRole('link', { name: 'Private Link Access' })).toHaveAttribute(
+          'href',
+          '/access/link',
+        );
+      }
     });
   });
 }

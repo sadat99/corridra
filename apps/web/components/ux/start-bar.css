@@ -1,0 +1,53 @@
+/* The phone bottom action area (board 3c; UI/UX.v4 step 2). Up to 760 px wide only; tokens only. */
+.ux-start-bar {
+  display: none;
+}
+@media (max-width: 47.5rem) {
+  .ux-start-bar {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    display: grid;
+    gap: var(--space-1);
+    justify-items: stretch;
+    padding: var(--space-2) var(--space-4) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid color-mix(in srgb, var(--on-brand) 25%, transparent);
+    background: var(--brand-deep);
+    color: var(--on-brand);
+    transform: translateY(110%);
+    visibility: hidden;
+  }
+  .ux-start-bar[data-on='true'] {
+    transform: none;
+    visibility: visible;
+  }
+  .ux-start-bar .primary-link {
+    justify-content: center;
+    min-height: 3rem;
+  }
+  .ux-start-bar-note {
+    margin: 0;
+    color: color-mix(in srgb, var(--on-brand) 85%, transparent);
+    font-size: var(--text-xs);
+    text-align: center;
+  }
+  /* Room at the foot of the page while the bar shows, so it never covers the last words or a control. */
+  html[data-start-bar='on'] body {
+    padding-bottom: 6.5rem;
+  }
+  html[data-start-bar='on'] {
+    scroll-padding-bottom: 6.5rem;
+  }
+}
+@media (max-width: 47.5rem) and (prefers-reduced-motion: no-preference) {
+  .ux-start-bar {
+    transition:
+      transform var(--dur) var(--ease),
+      visibility 0s linear var(--dur);
+  }
+  .ux-start-bar[data-on='true'] {
+    transition:
+      transform var(--dur) var(--ease),
+      visibility 0s;
+  }
+}

@@ -1,7 +1,7 @@
 import { PublicShell } from '../../components/public-shell';
 import { DiscoveryExperience } from '../../components/discovery-experience';
 import Link from 'next/link';
-import { corridorPages } from '../../content/corridors';
+import { destinationRows } from '../../content/corridors';
 import { Arrow } from '../../components/arrow';
 import '../../components/page-compact.css';
 import './corridors.css';
@@ -24,75 +24,71 @@ export default function Page() {
             <span aria-current="page">Routes</span>
           </nav>
           <p className="label">Routes</p>
-          <h1>The job comes first. The route gives it context.</h1>
-          <p className="guide-lead">
-            We run missions from Bangladesh. Open now: China, the EU, the UK, the US, Australia and
-            key Asian markets. Pick where your company is and the market you want to reach, and
-            every request follows the same steps.
-          </p>
-          <Link prefetch={false} className="primary-link guide-hero-start" href="/plan">
-            Start a Request
-          </Link>
+          <h1>Routes from Bangladesh</h1>
+          <p className="guide-lead">Pick where you want to work.</p>
+          <p className="guide-route-steps">Every route follows the same steps.</p>
         </div>
       </section>
-      <DiscoveryExperience>
+      <DiscoveryExperience
+        about={
+          <>
+            <h2>The job comes first. The route gives it context.</h2>
+            <p>
+              We run missions from Bangladesh. Open now: China, the EU, the UK, the US, Australia
+              and key Asian markets. Pick where your company is and the market you want to reach,
+              and every request follows the same steps.
+            </p>
+            <p className="guide-route-note">
+              Selling in Spain?{' '}
+              <Link prefetch={false} href="/corridors/bangladesh-spain" className="text-link">
+                Spain
+              </Link>
+            </p>
+          </>
+        }
+      >
         <section className="guide-directions" aria-labelledby="directions-title">
-          <h2 id="directions-title">Explore a route</h2>
+          <h2 id="directions-title" className="sr-only">
+            Explore a route
+          </h2>
+          {/* Owner decisions 17 and 18 Nov 2026, routes and markets and the step 2 board: six rows of the same size,
+              weight and action in this order. The flag slot is empty until the shared flag mark exists. */}
           <ul>
-            {/* Owner decision 17 Nov 2026, routes and markets: the open destinations are shown as equals. Spain stays
-                a plain link inside the EU card, so its page is never orphaned. */}
-            {(['bangladesh-china', 'bangladesh-eu'] as const).map((slug) => (
-              <li key={slug}>
-                <h3>{corridorPages[slug].title}</h3>
-                <p>{corridorPages[slug].description}</p>
-                <Link prefetch={false} href={`/corridors/${slug}`} className="text-link">
-                  Explore this route <Arrow />
+            {destinationRows.map((row) => (
+              <li key={row.key} className="guide-direction-row">
+                <span className="guide-direction-flag" aria-hidden="true" data-flag={row.key} />
+                <div className="guide-direction-text">
+                  <h3>{row.name}</h3>
+                  <p>{row.tagline}</p>
+                </div>
+                <Link
+                  prefetch={false}
+                  id={`route-${row.key}`}
+                  href={row.href}
+                  className="text-link"
+                  aria-label={`See This Route: ${row.name}`}
+                >
+                  See This Route <Arrow />
                 </Link>
-                {slug === 'bangladesh-eu' ? (
-                  <p className="guide-route-note">
-                    Selling in Spain?{' '}
-                    <Link prefetch={false} href="/corridors/bangladesh-spain" className="text-link">
-                      Spain
-                    </Link>
-                  </p>
-                ) : null}
               </li>
             ))}
-            {(
-              [
-                ['Bangladesh to the UK', 'GB'],
-                ['Bangladesh to the US', 'US'],
-                ['Bangladesh to Australia', 'AU'],
-              ] as const
-            ).map(([name, market]) => (
-              <li key={market} className="guide-direction-compact">
-                <h3>
-                  <Link
-                    prefetch={false}
-                    href={`/plan?companyCountry=BD&marketCode=${market}`}
-                    className="text-link"
-                  >
-                    {name} <Arrow />
-                  </Link>
-                </h3>
-              </li>
-            ))}
-            <li key="asia" className="guide-direction-compact">
-              <h3>
-                <Link prefetch={false} href="/plan?companyCountry=BD" className="text-link">
-                  Bangladesh to key Asian markets <Arrow />
-                </Link>
-              </h3>
-            </li>
           </ul>
           <div className="guide-other-route">
             <div>
-              <h3>Any other route</h3>
+              <h3>Another route?</h3>
               <p>No operating offer announced. We tell you plainly if we can help.</p>
             </div>
-            <Link prefetch={false} className="button-secondary" href="/plan">
-              Plan a Mission on Another Route <Arrow />
-            </Link>
+            <div className="guide-other-actions">
+              <Link prefetch={false} className="button-secondary" href="/plan">
+                Plan a Mission on Another Route <Arrow />
+              </Link>
+              <Link prefetch={false} className="text-link" href="#mission-example">
+                See a Sample Mission
+              </Link>
+              <Link prefetch={false} className="primary-link" href="/plan">
+                Start a Request
+              </Link>
+            </div>
           </div>
         </section>
       </DiscoveryExperience>
