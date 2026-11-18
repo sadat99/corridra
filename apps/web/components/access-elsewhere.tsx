@@ -14,3 +14,27 @@ export function AccessElsewhere({ current }: { current: AccessDoorId }) {
     </nav>
   );
 }
+
+/**
+ * The single line on the customer door and the customer sign-in, in place of the bar (owner board, screen 03, and the
+ * owner's 18 November "unsolicited redundancy"): "Not a customer?" and a link to each of the other two doors. The links
+ * sit inside a paragraph, so they keep the quiet inline look.
+ */
+export function AccessNotCustomer({ current = 'customer' }: { current?: AccessDoorId }) {
+  const doors = otherAccessDoors(current);
+  return (
+    <nav className="access-not-customer" aria-label={accessElsewhereWords.notCustomer}>
+      <p>
+        <span>{accessElsewhereWords.notCustomer}</span>
+        {doors.map((door, index) => (
+          <span key={door.id} className="access-not-customer-item">
+            {index > 0 && <span aria-hidden="true">·</span>}
+            <Link prefetch={false} className="text-link" href={door.href}>
+              {door.title}
+            </Link>
+          </span>
+        ))}
+      </p>
+    </nav>
+  );
+}

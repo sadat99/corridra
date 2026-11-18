@@ -86,7 +86,9 @@ test('the account-free request and the other two doors are still linked', async 
   await expect(
     page.locator('main').getByRole('link', { name: 'Start a Request', exact: true }),
   ).toHaveAttribute('href', '/plan');
-  const bar = page.getByRole('navigation', { name: 'Not what you need?' });
+  // One line, not the bar: owner board screen 03 and the owner's 18 November "unsolicited redundancy".
+  const bar = page.getByRole('navigation', { name: 'Not a customer?' });
+  await expect(page.getByRole('navigation', { name: 'Not what you need?' })).toHaveCount(0);
   await expect(bar.getByRole('link', { name: 'Team and Network Access' })).toHaveAttribute(
     'href',
     '/access/team',

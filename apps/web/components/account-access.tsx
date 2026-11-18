@@ -7,8 +7,7 @@ import { AccountForm, type AccountFormMode } from './account-form';
 import { PendingRequestNotice } from './pending-request-notice';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { emailReturnPagesOn } from '../lib/ux-switches';
-import { AccessOptions } from './access-options';
-import { accessHelp } from '../lib/access-doors';
+import { AccessNotCustomer } from './access-elsewhere';
 import '../app/access/access.css';
 export function AccountAccess({ title, mode }: { title: string; mode: AccountFormMode }) {
   const config = readNeonAuthConfig();
@@ -53,12 +52,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
             before creating an account. Team access needs a separate invitation.
           </p>
         )}
-        {mode === 'signin' && (
-          <details className="ux-journey-disclosure">
-            <summary>Not a Customer?</summary>
-            <AccessOptions {...accessHelp.customerOtherRoutes} />
-          </details>
-        )}
+        {mode === 'signin' && <AccessNotCustomer />}
       </section>
     </WorkspaceShell>
   );

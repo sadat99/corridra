@@ -323,7 +323,11 @@ export const linkDoorPage = {
 };
 
 /** The "Not what you need?" bar shared by the three pages. */
-export const accessElsewhereWords = { heading: 'Not what you need?' } as const;
+export const accessElsewhereWords = {
+  heading: 'Not what you need?',
+  /** The one line that replaces the bar on the customer door and the customer sign-in (owner board, screen 03). */
+  notCustomer: 'Not a customer?',
+} as const;
 
 export type AccessHelpLink = { href: string; text: string; plainAnchor?: boolean };
 export type AccessHelp = { label: string; intro?: string; links: AccessHelpLink[] };

@@ -85,12 +85,18 @@ test('More ways in is one closed disclosure and keeps every destination', async 
     'href',
     '/plan',
   );
-  // The older "Not a Customer?" disclosure keeps its four routes.
-  await page.getByText('Not a Customer?').click();
-  for (const href of ['/operator', '/workspace', '/contributor', '/plan'])
-    await expect(
-      page.locator(`nav[aria-label="Other access routes"] a[href="${href}"]`),
-    ).toHaveCount(1);
+  // The one "Not a customer?" line replaces the older "Not a Customer?" disclosure (owner board screen 03 and the
+  // owner's 18 November "unsolicited redundancy"): both other doors stay one tap away, and the disclosure is gone.
+  await expect(page.getByText('Not a Customer?', { exact: true })).toHaveCount(0);
+  const line = page.getByRole('navigation', { name: 'Not a customer?' });
+  await expect(line.getByRole('link', { name: 'Team and Network Access' })).toHaveAttribute(
+    'href',
+    '/access/team',
+  );
+  await expect(line.getByRole('link', { name: 'Private Link Access' })).toHaveAttribute(
+    'href',
+    '/access/link',
+  );
 });
 
 test('a return address is carried to the links in More ways in', async ({ page }) => {

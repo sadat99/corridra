@@ -261,6 +261,24 @@
   vertical-align: text-bottom;
   color: var(--critical);
 }
+/* The single "Not a customer?" line (customer door and customer sign-in): one wrapping row, quiet inline links. */
+.access-not-customer p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+.access-not-customer-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.access-not-customer .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
 /* The helper interest form (ADR-0085): a disclosure on the team door, two short steps. Tokens only. */
 .access-interest {
   display: grid;

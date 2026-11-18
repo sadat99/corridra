@@ -22,7 +22,13 @@ export default function Page() {
     programmes: customerProgrammesEnabled(),
   });
   return (
-    <AccessPage id="customer" eyebrow={page.eyebrow} title={page.title} lead={page.lead}>
+    <AccessPage
+      id="customer"
+      eyebrow={page.eyebrow}
+      title={page.title}
+      lead={page.lead}
+      notCustomer
+    >
       <div className="access-panels">
         <section className="access-panel" aria-labelledby="access-new">
           <h2 id="access-new">{doors.new.heading}</h2>
