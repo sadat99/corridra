@@ -80,7 +80,7 @@ export function HomeSell({
               value={m}
               checked={market === m}
               onChoose={() => setMarket(m)}
-              label={t(key(`home.tr.mk.${m}`))}
+              label={<Flagged code={marketFlag(m)}>{t(key(`home.tr.mk.${m}`))}</Flagged>}
             />
           ))}
         </div>
