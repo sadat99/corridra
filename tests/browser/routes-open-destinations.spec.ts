@@ -100,12 +100,57 @@ test('/corridors: every row has the same action and every route link is kept', a
   expect(asia).not.toMatch(
     /China|India|Japan|Singapore|Korea|Vietnam|Indonesia|Thailand|Malaysia|marketCode/i,
   );
-  // No flag mark exists yet, so every flag slot is empty (the shared flag component is wired later).
+});
+
+// UI/UX.v4 flag policy (owner, 17 and 18 November 2026): the five sovereign states and the EU get a flag beside the
+// written name; Key Asian Markets, a region of several countries, gets the neutral compass mark and never a flag. A
+// mark is never alone and never the only way to read the name.
+test('/corridors: each destination has its flag beside the name, Key Asian Markets the compass mark', async ({
+  page,
+}) => {
+  await page.goto('/corridors');
+  const flags = rows(page).locator('img.ux-flag');
+  await expect(flags).toHaveCount(5);
+  expect(await flags.evaluateAll((items) => items.map((item) => item.getAttribute('alt')))).toEqual(
+    ['', '', '', '', ''],
+  );
   expect(
-    await page
-      .locator('.guide-direction-flag')
-      .evaluateAll((e) => e.map((x) => x.childElementCount)),
-  ).toEqual([0, 0, 0, 0, 0, 0]);
+    await flags.evaluateAll((items) => items.map((item) => item.getAttribute('data-flag'))),
+  ).toEqual(['cn', 'eu', 'gb', 'us', 'au']);
+  // The pictures load, so no row shows a broken image.
+  await expect
+    .poll(() =>
+      flags.evaluateAll((items) =>
+        items.every(
+          (item) =>
+            (item as HTMLImageElement).complete && (item as HTMLImageElement).naturalWidth > 0,
+        ),
+      ),
+    )
+    .toBe(true);
+  const asia = rows(page).nth(5);
+  await expect(asia.locator('.ux-region-mark')).toHaveCount(1);
+  await expect(asia.locator('img.ux-flag')).toHaveCount(0);
+  await expect(asia.locator('.ux-region-mark')).toHaveAttribute('aria-hidden', 'true');
+  // Every mark sits inside its row's heading with the written name; the name is read once.
+  await expect(rows(page).locator('h3 .ux-flagged')).toHaveCount(6);
+  await expect(rows(page).locator('h3')).toHaveText([
+    'China',
+    'EU',
+    'UK',
+    'US',
+    'Australia',
+    'Key Asian Markets',
+  ]);
+  for (let i = 0; i < 6; i++) {
+    const row = rows(page).nth(i);
+    const mark = row.locator('h3 .ux-flagged > :first-child');
+    const name = row.locator('h3 .ux-flagged > span').last();
+    const [markBox, nameBox] = [await mark.boundingBox(), await name.boundingBox()];
+    expect(markBox!.x + markBox!.width, `row ${i} mark is before its name`).toBeLessThanOrEqual(
+      nameBox!.x + 1,
+    );
+  }
 });
 
 test('/corridors: Another Route block has its three actions and one primary', async ({ page }) => {
