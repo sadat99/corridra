@@ -104,6 +104,24 @@ export const customerDoorPage = {
       secondary: { text: 'Sign In', href: '/signin' } as AccessAction,
     },
   },
+  /**
+   * The two doors of the page (W1-B, owner board screen 03): one for a person who has no account yet, one for a
+   * person who has. The request door's button reads `request` when customer sign-in is on and `requestWithoutAccount`
+   * (the words the page always had) when it is not, because then that request is the only thing the door can do.
+   */
+  doors: {
+    new: {
+      heading: 'I am new here',
+      text: 'Start a request. No account needed to begin.',
+      request: { text: 'Start a Request', href: '/plan' } as AccessAction,
+    },
+    existing: {
+      heading: 'I have an account',
+      text: 'Sign in with your email and password.',
+    },
+    /** The one disclosure that holds the three ways of joining by invitation or programme. */
+    invitedHeading: 'I was invited, or I am in a programme',
+  },
   otherWays: {
     heading: 'Other ways to join',
     cards: [
