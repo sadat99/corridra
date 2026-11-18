@@ -1574,6 +1574,11 @@
       "use": "Exact hashed ledger at c095cb8 (Guardian 11 records 10 and the simplify decision), before Guardian 12 records 13 recorded the takeover, the 529 and 531 merges and the PR 530 scope; preserves the Guardian 11 Takeover, Main, Lanes and follow-up bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g28-records-2026-11-18.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 163a998 (the PR 559 merge), before Guardian 28 records recorded rotations G21 to G28, merges 547 to 559, the 18 Nov ADR-087 installs and the U5 next action; preserves the Takeover 16 Nov, Main 529/531, merged 13 to 16 Nov, session ids and RM1 bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
