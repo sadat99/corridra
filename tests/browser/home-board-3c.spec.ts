@@ -449,7 +449,7 @@ test('chosen states use the selected token; titles, sub-heads and key sentences 
   // What a person gets is a selected surface with a selected edge, never a cobalt fill (review round 2, D9).
   const get = page.locator('.tr-people .is-get');
   expect(await get.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(selected);
-  expect(await get.evaluate((el) => getComputedStyle(el).borderTopColor)).toBe(selected);
+  expect(await get.evaluate((el) => getComputedStyle(el).borderInlineStartColor)).toBe(selected);
   const sizes = () =>
     page.evaluate(() => {
       const px = (selector: string) =>

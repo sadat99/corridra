@@ -204,8 +204,8 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
               />
             ))}
           </div>
-          <p className="tr-open-more">
-            <span>{t('home.tr.open.more')}</span>
+          <div className="tr-open-more">
+            <p>{t('home.tr.open.more')}</p>
             <QuietButton onClick={() => openHere('delegation')}>
               {t('home.tr.open.delegation')}
             </QuietButton>
@@ -213,7 +213,7 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
             <QuietButton onClick={() => openHere('none')}>
               {t('home.tr.open.everything')}
             </QuietButton>
-          </p>
+          </div>
         </section>
       ) : null}
 

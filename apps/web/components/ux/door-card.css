@@ -113,3 +113,18 @@
     padding-inline-end: calc(var(--space-6) + 1.75rem);
   }
 }
+/* A narrow door at a large text size: the circle takes its own line at the top end instead of a reserved column, so
+   the words keep the whole width. */
+.ux-door {
+  container-type: inline-size;
+}
+@container (max-width: 16rem) {
+  .ux-door label,
+  .ux-door.is-big label {
+    padding-inline-end: min(var(--space-4), 4vw);
+  }
+  .ux-door-dot {
+    position: static;
+    justify-self: end;
+  }
+}
