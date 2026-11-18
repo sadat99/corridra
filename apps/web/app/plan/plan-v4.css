@@ -30,10 +30,12 @@
 }
 .plan-action-note {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--text-2);
   font-size: var(--text-sm);
 }
-@media (max-width: 700px) {
+@media (max-width: 700px) and (min-height: 32rem) {
   .plan-action-bar {
     position: fixed;
     inset-inline: 0;
@@ -44,11 +46,9 @@
     border-top: 1px solid var(--border-strong);
     backdrop-filter: blur(8px);
   }
-  .plan-action-row {
-    flex-wrap: nowrap;
-  }
   .plan-action-row .primary-link {
-    flex: 1 1 auto;
+    flex: 1 1 10rem;
+    min-width: 0;
     min-height: var(--bottom-action-h);
   }
   /* The page keeps room for the bar under the footer too, so it never covers the last field, a footer link or the
@@ -63,6 +63,8 @@
   }
 }
 .plan-action-note .text-link {
+  white-space: normal;
+  text-align: start;
   min-height: 2.75rem;
   padding-inline: var(--space-1);
   background: none;

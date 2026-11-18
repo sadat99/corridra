@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+/** The exact job sits behind "Know the exact job? Choose it" until a job is chosen; open it only if it is closed. */
+async function openExactJob(page: import('@playwright/test').Page) {
+  const toggle = page.getByRole('button', { name: 'Know the exact job? Choose it' });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+}
+
 // Sample mode (the public test server). A request recorded earlier is remembered on this device,
 // so a new tab or a later visit still shows it, until the person asks the device to forget it.
 const code = 'c'.repeat(64);
@@ -64,6 +70,7 @@ test('a remembered request is still there in a new tab, and can be forgotten on 
   await expect(
     third.getByRole('region', { name: 'Keep your private receipt.', exact: true }),
   ).toHaveCount(0);
+  await openExactJob(third);
   await expect(third.getByRole('combobox', { name: 'Commercial job', exact: true })).toBeVisible();
   await third.close();
   expect(keys).toHaveLength(2);
@@ -84,6 +91,7 @@ test('a request that is older than thirty days, or a bad value, is not shown', a
     [code],
   );
   await page.goto('/plan');
+  await openExactJob(page);
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toBeVisible();
   await expect(
     page.getByRole('region', { name: 'Keep your private receipt.', exact: true }),
@@ -105,6 +113,7 @@ test('with browser storage blocked the form still works and the request is not c
     });
   });
   await page.goto('/plan');
+  await openExactJob(page);
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toBeVisible();
   await expect(page.getByText('Your request is saved on this device.')).toHaveCount(0);
 });

@@ -46,10 +46,11 @@ async function continueToContact(page: Page) {
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await form.locator('.guide-options input[type="checkbox"]').first().check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expect(currentWord(page)).toHaveText('Contact');
+  await expect(currentWord(page)).toHaveText('Step 5 of 5: Contact');
 }
 
-const currentWord = (page: Page) => page.locator('.guide-journey-bar li[aria-current="step"] b');
+// UI/UX.v4 (owner 18 Nov 2026, "Progress as words"): the step is a line of words, "Step N of M: Name · Next: Name".
+const currentWord = (page: Page) => page.locator('.plan-progress-line');
 
 // The request page above is measured on its first step, with the goal cards. Here the form is walked on: the
 // attendance row on the where step, and the contact step, whose word sits at the far end of the step bar.
@@ -60,9 +61,9 @@ test('with 200% text the request form fits at 320, 390, 768 and 1280 on its wher
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 });
     await openPlanLarge(page);
-    await expect(currentWord(page)).toHaveText('Goal');
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
-    await expect(currentWord(page)).toHaveText('Where');
+    await expect(currentWord(page)).toHaveText('Step 1 of 5: Goal · Next: Where');
+    await page.getByRole('button', { name: /^(Continue|Pick One to Continue)$/ }).click();
+    await expect(currentWord(page)).toHaveText('Step 2 of 5: Where · Next: Details');
     await expect(page.locator('form.intake-form .guide-options-row .choice')).toHaveCount(3);
     expect(await problems(page), `/plan where step at ${width}`).toEqual([]);
     expect(
@@ -78,39 +79,30 @@ test('with 200% text the request form fits at 320, 390, 768 and 1280 on its wher
   }
 });
 
-test('on a 320 px phone with 200% text the current step word has its own line under the dots on the first and last step', async ({
+test('on a 320 px phone with 200% text the progress words fit on the first and last step, and the step list stays for screen readers', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 900 });
   await openPlanLarge(page);
-  const bar = page.locator('.guide-journey-bar');
-  await expect(bar).toHaveAttribute('aria-label', 'Request steps');
-  /** Where the current word sits: from the bar's start edge, inside the bar, below the dots; connectors hidden. */
-  const place = () =>
-    bar.evaluate((list) => {
-      const box = list.getBoundingClientRect();
-      const word = list.querySelector('li[aria-current="step"] b')!.getBoundingClientRect();
-      const dots = Array.from(list.querySelectorAll('span')).map((dot) =>
-        dot.getBoundingClientRect(),
-      );
-      return {
-        startGap: Math.round(word.left - box.left),
-        inside: word.right <= box.right + 0.5 && word.bottom <= box.bottom + 0.5,
-        belowDots: word.top >= Math.max(...dots.map((dot) => dot.bottom)) - 0.5,
-        connector: getComputedStyle(list.querySelector('li')!, '::after').display,
-      };
+  const line = currentWord(page);
+  const steps = page.locator('ol.sr-only[aria-label="Request steps"]');
+  /** The line stays inside the window and wraps instead of pushing the page sideways. */
+  const fits = () =>
+    line.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return box.left >= -0.5 && box.right <= document.documentElement.clientWidth + 0.5;
     });
-  const compact = { startGap: 0, inside: true, belowDots: true, connector: 'none' };
-  await expect(currentWord(page)).toHaveText('Goal');
-  expect(await place(), 'step 1').toEqual(compact);
+  await expect(line).toHaveText('Step 1 of 5: Goal · Next: Where');
+  expect(await fits(), 'step 1').toBe(true);
   expect(await problems(page), 'step 1').toEqual([]);
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: /^(Continue|Pick One to Continue)$/ }).click();
   await continueToContact(page);
-  expect(await place(), 'step 5').toEqual(compact);
+  await expect(line).toHaveText('Step 5 of 5: Contact');
+  expect(await fits(), 'step 5').toBe(true);
   expect(await problems(page), 'step 5').toEqual([]);
-  // Every word stays in the list for screen readers; only the current one shows.
-  await expect(bar.locator('li b')).toHaveText(['Goal', 'Where', 'Details', 'Results', 'Contact']);
-  await expect(bar.locator('li[aria-current="step"] span')).toHaveText('5');
+  // Every step stays in the list for screen readers, and the current one is announced.
+  await expect(steps.locator('li')).toHaveText(['Goal', 'Where', 'Details', 'Results', 'Contact']);
+  await expect(steps.locator('li[aria-current="step"]')).toHaveText('Contact');
 });
 
 test('at normal text the phone keeps its two-column phase step, with the heading beside the number', async ({
