@@ -15,13 +15,13 @@ test.beforeEach(({}, info) => {
   test.skip(info.project.name !== 'desktop', 'sizes are set in each case');
 });
 
-const screens = async (page: Page) =>
-  (await page.evaluate(() =>
-    Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
-  )) / (await page.evaluate(() => innerHeight));
 const bar = (page: Page) => page.getByRole('group', { name: 'Choose which route this page shows' });
+// The doors are the hero's radio group (the brief below has its own "Something else" answer).
 const door = (page: Page, name: string | RegExp) =>
-  page.getByRole('radio', { name }).locator('xpath=following-sibling::label');
+  page
+    .getByRole('group', { name: 'Which way is your business moving?' })
+    .getByRole('radio', { name })
+    .locator('xpath=following-sibling::label');
 const choose = (radio: Locator) => radio.locator('xpath=following-sibling::label').click();
 const start = (page: Page) => page.locator('#home-start');
 
@@ -48,37 +48,14 @@ test('the first screen says what Corridra is, offers the doors and the first act
   }
 });
 
-// Owner, 17 November 2026, "go ahead with the height": the home fits the standing budget, 3.0 screens at 1440 x 900
-// and 4.25 at 390 x 844, footer included, with the worked examples closed. The long sections moved to /how-it-works,
-// /trust and /corridors. All Routes (a reviewer's view of three routes at once) is measured and reported, not held.
-test('the home fits 3.0 screens at 1440 x 900 and 4.25 at 390 x 844, first visit and every door', async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  const measured: string[] = [];
-  for (const [name, size] of Object.entries(sizes)) {
-    await page.setViewportSize(size);
-    await page.goto('/');
-    await page.evaluate(() => document.fonts.ready);
-    const limit = name === 'desktop' ? 3.0 : 4.25;
-    const first = await screens(page);
-    measured.push(`${name} first visit ${first.toFixed(2)}`);
-    expect(first, `${name} first visit`).toBeLessThanOrEqual(limit);
-    for (const route of ['China Route', 'Sell Abroad', 'Delegation', 'Something Else']) {
-      await bar(page).getByRole('button', { name: route, exact: true }).click();
-      const length = await screens(page);
-      measured.push(`${name} ${route} ${length.toFixed(2)}`);
-      expect(length, `${name} ${route}`).toBeLessThanOrEqual(limit);
-    }
-    await bar(page).getByRole('button', { name: 'All Routes', exact: true }).click();
-    measured.push(`${name} All Routes ${(await screens(page)).toFixed(2)} (not held)`);
-  }
-  test.info().annotations.push({ type: 'page-length', description: measured.join(', ') });
-});
+// The home page-length budget (3.0 screens at 1440 x 900, 4.25 at 390 x 844) no longer applies to the home. Owner,
+// 18 November 2026, first hand to Guardian 29: "the page size limit is not applicable here". Every other page keeps
+// its own budget; the page-length report (tests/ux/page-length.spec.ts) still measures the home.
 
-// The worked examples are closed disclosures; a test that uses one opens it first.
+// The worked examples are open under their own headings again, as on the board (owner, 18 November 2026); a test that
+// used to open one now checks its heading is shown.
 const openFold = (scope: Locator, name: string | RegExp) =>
-  scope.locator('summary', { hasText: name }).click();
+  expect(scope.getByRole('heading', { level: 3, name })).toBeVisible();
 
 for (const [label, route, cta, href, section] of [
   [
@@ -116,7 +93,11 @@ for (const [label, route, cta, href, section] of [
     await page.goto('/');
     await expect(page.locator(`#route-${route}`)).toHaveCount(0);
     await door(page, label).click();
-    await expect(page.getByRole('radio', { name: label })).toBeChecked();
+    await expect(
+      page
+        .getByRole('group', { name: 'Which way is your business moving?' })
+        .getByRole('radio', { name: label }),
+    ).toBeChecked();
     await expect(page.getByRole('heading', { level: 2, name: section })).toBeVisible();
     await expect(start(page)).toHaveText(cta);
     await expect(start(page)).toHaveAttribute('href', href);
@@ -283,7 +264,9 @@ test('the delegation example shows private rows, a programme total and what the 
   await page.goto('/');
   await door(page, 'Leading a delegation').click();
   const del = page.locator('#route-delegation');
-  await openFold(del, 'Example programme view');
+  await expect(
+    del.getByRole('region', { name: 'Example programme view for an organiser' }),
+  ).toBeVisible();
   await expect(del.getByRole('row')).toHaveCount(5);
   await expect(
     del.getByText('Programme total: 4 companies, 3 met at least one counterpart'),

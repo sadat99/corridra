@@ -127,8 +127,11 @@ for (const code of localeCodes) {
     await expect(main).toHaveAttribute('dir', localeMeta[code].dir);
     await expect(page.locator('h1')).toHaveText(translate(code, 'home.title'));
     await expect(page.locator('.tr-lead')).toHaveText(translate(code, 'home.tr.lead'));
-    // The five trust labels moved to /trust on 17 November 2026; the home draws none of them any more.
-    await expect(page.locator('.tr-five')).toHaveCount(0);
+    // The five trust labels are back on the home with the board 3c (owner, 18 November 2026); their names stay English.
+    await expect(page.locator('.tr-five')).toHaveCount(1);
+    await expect(
+      page.locator('.tr-five').getByText('Self-declared', { exact: true }),
+    ).toBeVisible();
     if (code !== 'en')
       await expect(page.locator('h1')).not.toHaveText(translate('en', 'home.title'));
   });
