@@ -23,7 +23,7 @@ test.beforeAll(async () => {
       import{BrandLockup}from ${at('apps/web/components/site-header.tsx')};
       const kind = new URLSearchParams(location.search).get('kind');
       createRoot(document.getElementById('fixture')).render(
-        <LanguageProvider offered={[{code:'en',draft:false},{code:'bn',draft:false},{code:'zh',draft:false}]}>
+        <LanguageProvider offered={[{code:'en',draft:false},{code:'bn',draft:false},{code:'zh',draft:false},{code:'ar',draft:false}]}>
           <div className="site-shell"><AppHeader kind={kind} live={false} notifications brandMark={<BrandLockup/>}/></div>
         </LanguageProvider>);`,
       loader: 'tsx',
@@ -170,13 +170,17 @@ for (const kind of kinds)
             : page.locator('header .ux-util-language > .ux-menu-button');
         if (kind === 'customer') {
           expect(names).not.toContain('Language');
-          expect(names).not.toContain('Listen');
           if (folded(width)) expect(names).not.toContain('Help and accessibility');
           else expect(names).toContain('Help and accessibility');
           // Under 360 px Listen and the language code are in the drawer, so the bar draws neither.
           if (width < 360) {
             await expect(page.locator('header .ux-bar-topbar')).toBeHidden();
           } else {
+            // Listen is in the bar wherever this browser can read the page aloud (it can here), beside the language code.
+            const listen = page.locator('header .ux-bar-topbar button[aria-pressed]');
+            await expect(listen).toBeVisible();
+            await expect(listen).toHaveAccessibleName('Listen to This Page');
+            await expect(listen).toContainText('Listen');
             for (const tool of await page.locator('header .ux-bar-topbar button').all()) {
               const label = await tool.getAttribute('aria-label');
               expect(await spill(tool), `${label} at rest`).toEqual([]);
@@ -343,8 +347,11 @@ test('the customer tools stay inside the window at 768 px with 200% text, on at 
     expect(rect.left).toBeGreaterThanOrEqual(-0.5);
     expect(rect.right).toBeLessThanOrEqual(768.5);
   }
-  const centres = boxes.map((rect) => (rect.top + rect.bottom) / 2);
-  expect(Math.max(...centres) - Math.min(...centres), 'vertical spread').toBeLessThan(2 * 88);
+  // At most two lines: distinct row centres (controls within 20 px of each other share a row).
+  const rows: number[] = [];
+  for (const centre of boxes.map((rect) => (rect.top + rect.bottom) / 2).sort((a, b) => a - b))
+    if (!rows.some((row) => Math.abs(row - centre) < 20)) rows.push(centre);
+  expect(rows, 'rows of tools').toHaveLength(2);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -363,7 +370,11 @@ for (const width of [640, 700])
       const { request, language } = await tools(page);
       // Beside New Request with a gap, or, where Listen and the language code no longer fit the line (200% text), on
       // the next line: never touching it.
-      if (Math.abs(request!.centre - language!.centre) < 4) {
+      if (!zoomed) {
+        // At the normal text size they share the line, with a gap.
+        expect(Math.abs(request!.centre - language!.centre), 'on the same line').toBeLessThan(4);
+        expect(language!.left - request!.right, 'gap in px').toBeGreaterThanOrEqual(4);
+      } else if (Math.abs(request!.centre - language!.centre) < 4) {
         expect(language!.left - request!.right, 'gap in px').toBeGreaterThanOrEqual(4);
       } else {
         expect(language!.centre - request!.centre, 'on the next line').toBeGreaterThan(30);
@@ -434,3 +445,41 @@ test.describe('the customer account menu', () => {
         expect(await menu.evaluate((panel) => panel.scrollHeight > panel.clientHeight)).toBe(true);
     });
 });
+
+// Arabic (right to left): the customer header keeps Listen and the language code on the screen at 320 and 390 px, with
+// 44 px targets and no sideways scroll; at 390 they are in the bar, at 320 they are in the drawer (the bar draws neither).
+for (const width of [320, 390])
+  test(`the customer header in Arabic at ${width} px: right to left, inside the window, 44 px targets`, async ({
+    page,
+  }) => {
+    // A browser with an Arabic voice, so Listen is offered (it is hidden where there is no voice for the page language).
+    await page.addInitScript(() => {
+      window.localStorage.setItem('corridra.language', 'ar');
+      Object.defineProperty(window.speechSynthesis, 'getVoices', {
+        configurable: true,
+        value: () => [{ lang: 'ar-SA' }, { lang: 'en-US' }],
+      });
+    });
+    await open(page, 'customer', width, false);
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+    ).toBeLessThanOrEqual(0);
+    const bar = page.locator('header .ux-bar-topbar');
+    if (width < 360) {
+      await expect(bar).toBeHidden();
+      return;
+    }
+    const tools = await bar.locator('button').all();
+    expect(tools.length).toBeGreaterThanOrEqual(2);
+    for (const tool of tools) {
+      const box = (await tool.boundingBox())!;
+      expect(box.height).toBeGreaterThanOrEqual(43.5);
+      expect(box.width).toBeGreaterThanOrEqual(43.5);
+      expect(box.x).toBeGreaterThanOrEqual(-0.5);
+      expect(box.x + box.width).toBeLessThanOrEqual(width + 0.5);
+    }
+    await expect(bar.locator('button[aria-haspopup="dialog"]')).toContainText('AR');
+  });

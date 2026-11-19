@@ -288,8 +288,19 @@ test.describe('phone width, switch on', () => {
         account: true,
       });
       await expect(page.locator('.ux-pocket-title')).toHaveText('Your move');
-      // One heading, untouched.
+      // One heading, untouched. Where the page title is not in the header (below 480 px) the heading is the visible
+      // orientation: it is on screen, directly under the header.
       await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+      if (width < 480) {
+        const h1 = page.getByRole('heading', { level: 1 });
+        await expect(h1).toBeVisible();
+        const [headerBox, headingBox] = await Promise.all([
+          header(page).boundingBox(),
+          h1.boundingBox(),
+        ]);
+        expect(headingBox!.y).toBeGreaterThanOrEqual(headerBox!.y + headerBox!.height - 1);
+        expect(headingBox!.y).toBeLessThan(844);
+      }
     });
   }
 
@@ -979,14 +990,23 @@ test.describe('scrolling', () => {
     expect(list.y).toBeGreaterThanOrEqual(0);
   });
 
-  test('adds no page length: the document is as tall as without it', async ({ page }) => {
+  test('adds no page length: everything under the header is as tall as without it', async ({
+    page,
+  }) => {
+    // The header differs on purpose (with the button it is the short one row; without it Listen and the language code make
+    // the old header wrap on a phone, UI/UX.v4 top bar), so the pin is on everything under the header: the page minus its
+    // header must be exactly as tall with the button as without it, so no content is cut or added.
+    const underHeader = () =>
+      page.evaluate(
+        () =>
+          document.documentElement.scrollHeight -
+          document.querySelector('header.ux-customer-header')!.getBoundingClientRect().height,
+      );
     await mount(page, '/account', '?signals=draft&rows=40');
-    const on = await page.evaluate(() => document.documentElement.scrollHeight);
+    const on = await underHeader();
     await mount(page, '/account', '?pocket=off&signals=draft&rows=40');
-    const off = await page.evaluate(() => document.documentElement.scrollHeight);
-    // The button adds no length. With it the header is the short one row; without it Listen and the language code make the
-    // old header wrap onto a second row on a phone (UI/UX.v4 top bar), so the page is not taller with the button.
-    expect(on).toBeLessThanOrEqual(off);
+    const off = await underHeader();
+    expect(on).toBe(off);
   });
 
   test('the plus is above the device safe area, and that is its only bottom offset', async ({

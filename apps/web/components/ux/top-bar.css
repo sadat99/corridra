@@ -25,6 +25,12 @@
 .top-bar-tool:hover {
   background: var(--surface-2);
 }
+/* In forced colours the tools keep a visible edge (their resting border is none, which the header spec pins). */
+@media (forced-colors: active) {
+  .top-bar-tool {
+    border: 1px solid ButtonText;
+  }
+}
 .top-bar-tool:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;

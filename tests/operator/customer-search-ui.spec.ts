@@ -1454,8 +1454,7 @@ test.describe('header geometry (M4)', () => {
 
   // Listen and the language code joined the bar (UI/UX.v4 top bar, owner option 1a), so at 768 px with 200% text the
   // row cannot hold one line any more. It wraps onto a second line instead of running off the screen: every control
-  // stays inside the window, and the header grows by one control row at most (225 px before, 329 px was the old
-  // three-line failure).
+  // stays inside the window, and the header grows by one control row at most (225 px before; two rows measure 329 px).
   test('768 px with 200% text: Search and the tools stay inside the window on at most two lines', async ({
     page,
   }) => {
@@ -1478,9 +1477,14 @@ test.describe('header geometry (M4)', () => {
       expect(rect.left).toBeGreaterThanOrEqual(-0.5);
       expect(rect.right).toBeLessThanOrEqual(768.5);
     }
-    const centres = boxes.map((rect) => rect.centre);
-    expect(Math.max(...centres) - Math.min(...centres), 'vertical spread').toBeLessThan(2 * 88);
-    expect((await headerNumbers(page)).header.height).toBeLessThanOrEqual(329);
+    // At most two lines: distinct row centres (controls within 20 px of each other share a row).
+    const rows: number[] = [];
+    for (const centre of boxes.map((rect) => rect.centre).sort((a, b) => a - b))
+      if (!rows.some((row) => Math.abs(row - centre) < 20)) rows.push(centre);
+    expect(rows, 'rows of tools').toHaveLength(2);
+    // Measured: two rows of tools at 200% text make the header 329 px high.
+    const HEIGHT_TWO_ROWS = 329;
+    expect((await headerNumbers(page)).header.height).toBeLessThanOrEqual(HEIGHT_TWO_ROWS);
   });
 
   test('1024 and wider: the field starts at the page column and the other tools stay at the right edge', async ({

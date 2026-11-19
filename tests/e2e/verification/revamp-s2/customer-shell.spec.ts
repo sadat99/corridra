@@ -253,6 +253,7 @@ test('W1-A2 Listen and the language code are in the customer header from 360 px,
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/account');
   await expect(barTools.getByRole('button', { name: /Language/ })).toBeVisible();
+  await expect(barTools.getByRole('button', { name: 'Listen to This Page' })).toBeVisible();
   for (const button of await barTools.getByRole('button').all())
     expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
   expect(
@@ -265,6 +266,10 @@ test('W1-A2 Listen and the language code are in the customer header from 360 px,
   const drawer = page.getByRole('dialog', { name: 'Customer navigation' });
   const language = drawer.getByRole('button', { name: /Language/ });
   await expect(language).toBeVisible();
+  // Listen too, where the browser can read the page aloud (it can here).
+  const listen = drawer.getByRole('button', { name: 'Listen to This Page' });
+  await expect(listen).toBeVisible();
+  await expect(listen).toContainText('Listen');
   // They are a group of their own above the choices, not choices themselves.
   const first = await drawer.getByRole('link', { name: 'New Request' }).boundingBox();
   expect((await language.boundingBox())!.y).toBeLessThan(first!.y);
