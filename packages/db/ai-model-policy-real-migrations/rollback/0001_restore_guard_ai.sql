@@ -1,6 +1,21 @@
 -- ADR-089 rollback. Restores the exact app.guard_ai() definition of migrations/0026_governed_intelligence.sql (sample workspaces
--- only for every table, 1 to 20 processing locations) and drops the marker. Rows already recorded stay (append-only); a policy
--- with more than 20 countries stays readable and any run stays gated. Run only through a further reviewed forward run.
+-- only for every table, 1 to 20 processing locations), drops the marker and removes the module's row from
+-- ai_model_policy_real_migrations.applied, so a later install applies the module again instead of skipping it. Rows already
+-- recorded stay (append-only); a policy with more than 20 countries stays readable and any run stays gated. Run only through a
+-- further reviewed forward run, as one transaction (one query string, or psql --single-transaction).
+-- It refuses, changing nothing, unless app.guard_ai() is exactly the ADR-089 definition (the hash of pg_get_functiondef, taken
+-- the same way the install pins the 0026 definition) and the module's registry row is present, so it never overwrites a later
+-- replacement.
+DO $guard$ DECLARE n integer; BEGIN
+ IF to_regprocedure('app.guard_ai()') IS NULL
+  OR to_regclass('ai_model_policy_real_migrations.applied') IS NULL
+  OR encode(sha256(convert_to(pg_get_functiondef('app.guard_ai()'::regprocedure),'UTF8')),'hex')<>'56f7f56c1971ecba9b42278a3889b7e12105741cb58882cd0e956100fe3b202e'
+ THEN RAISE EXCEPTION 'AI model policy rollback refused: app.guard_ai is not the ADR-089 definition'; END IF;
+ DELETE FROM ai_model_policy_real_migrations.applied WHERE name='0001_real_workspace_model_policy.sql';
+ GET DIAGNOSTICS n = ROW_COUNT;
+ IF n<>1 THEN RAISE EXCEPTION 'AI model policy rollback refused: the module is not recorded as installed'; END IF;
+END $guard$;
+
 CREATE OR REPLACE FUNCTION app.guard_ai() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog AS $$
 DECLARE run app.ai_run; attempt app.ai_attempt; policy app.ai_model_policy; cfg jsonb; n integer;
 BEGIN

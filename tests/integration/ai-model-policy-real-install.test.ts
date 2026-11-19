@@ -128,16 +128,46 @@ test('only the policy opening check and its bound differ from the 0026 definitio
   ).toBe(was);
 });
 
-test('the rollback restores the 0026 definition and drops the marker', async () => {
+test('the rollback refuses unless guard_ai is the ADR-089 definition, and then changes nothing', async () => {
   const installed = await guard();
-  await f.owner.query(readFileSync(`${dir}/rollback/0001_restore_guard_ai.sql`, 'utf8'));
+  const rollback = readFileSync(`${dir}/rollback/0001_restore_guard_ai.sql`, 'utf8');
+  // The pin in the rollback is the hash of the definition the install leaves behind.
+  expect(rollback).toContain(`<>'${installed.h}'`);
+  const rows = async () => (await f.owner.query(`SELECT name,sha256 FROM ${registry}`)).rows;
+  const recorded = await rows();
+  const later = installed.d.replace(/RETURN NEW;(?![\s\S]*RETURN NEW;)/, 'RETURN NEW; /* later */');
+  expect(later).not.toBe(installed.d);
+  await f.owner.query(later);
+  try {
+    await expect(f.owner.query(rollback)).rejects.toThrow(
+      'AI model policy rollback refused: app.guard_ai is not the ADR-089 definition',
+    );
+    expect((await guard()).d).toBe(later);
+    expect(await marker()).not.toBeNull();
+    expect(await rows()).toEqual(recorded);
+  } finally {
+    await f.owner.query(installed.d);
+  }
+  expect((await guard()).h).toBe(installed.h);
+});
+
+test('the rollback as shipped restores the 0026 definition, drops the marker and its registry row; a reinstall works', async () => {
+  const installed = await guard();
+  const rollback = readFileSync(`${dir}/rollback/0001_restore_guard_ai.sql`, 'utf8');
+  await f.owner.query(rollback);
   expect((await guard()).h).toBe(
     '6b4f74d16b5cbdc81a25b3aba81d296bac77c888be5aec3af891015762ce8e1b',
   );
   expect(await marker()).toBeNull();
-  // Installing again after a rollback works from the restored definition.
-  await f.owner.query(`DELETE FROM ${registry}`);
+  expect((await f.owner.query(`SELECT name FROM ${registry}`)).rows).toEqual([]);
+  // A second rollback finds the 0026 definition and refuses.
+  await expect(f.owner.query(rollback)).rejects.toThrow('AI model policy rollback refused');
+  // Installing again after a rollback applies the module again, with nothing removed by hand.
   await migrateAiModelPolicyReal(f.owner);
   expect((await guard()).h).toBe(installed.h);
   expect(await marker()).not.toBeNull();
+  expect((await f.owner.query('SELECT app.ai_model_policy_location_limit() n')).rows[0].n).toBe(30);
+  expect((await f.owner.query(`SELECT name,sha256 FROM ${registry}`)).rows).toEqual([
+    { name: file, sha256: sha(`${dir}/${file}`) },
+  ]);
 });
