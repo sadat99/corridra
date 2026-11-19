@@ -25,12 +25,37 @@ export function Lines({ text }: { text: string }) {
   );
 }
 
+/** Progress as words: "Step 3 of 6: Compare" with the next step's name when there is one. */
+function StepLine({ section, number, total, next }: StepLineProps) {
+  return (
+    <p className="guide-step-line">
+      <span>
+        Step {number} of {total}: {section.name}
+      </span>
+      {next?.name && (
+        <>
+          <span aria-hidden="true"> · </span>
+          <span>Next: {next.name}</span>
+        </>
+      )}
+    </p>
+  );
+}
+
+type Section = PublicPageContent['sections'][number];
+type StepLineProps = { section: Section; number: number; total: number; next?: Section };
+
 function StepItem({
   section,
   number,
+  total,
+  next,
 }: {
-  section: PublicPageContent['sections'][number];
+  section: Section;
   number: number;
+  /** Set only on the phase tabs page, where the step line shows progress as words. */
+  total?: number;
+  next?: Section;
 }) {
   return (
     <li>
@@ -38,7 +63,12 @@ function StepItem({
         {number}
       </span>
       <h3>{section.title}</h3>
-      {section.name && <p className="label guide-step-name">{section.name}</p>}
+      {section.name &&
+        (total ? (
+          <StepLine section={section} number={number} total={total} next={next} />
+        ) : (
+          <p className="label guide-step-name">{section.name}</p>
+        ))}
       <p>{section.text}</p>
     </li>
   );
@@ -80,7 +110,13 @@ function Steps({ content }: { content: PublicPageContent }) {
           </header>
           <ol data-count={items.length}>
             {items.map((section, i) => (
-              <StepItem key={section.title} section={section} number={start + i + 1} />
+              <StepItem
+                key={section.title}
+                section={section}
+                number={start + i + 1}
+                total={sections.length}
+                next={sections[start + i + 1]}
+              />
             ))}
           </ol>
         </div>

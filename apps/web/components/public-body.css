@@ -60,6 +60,19 @@
 .ux-public .guide-journey--tabs .guide-phase li p {
   line-height: 1.65;
 }
+/* The step line is one sentence-case secondary line: "Step 3 of 6: Compare, Next: Visit". */
+.ux-public .guide-journey--tabs .guide-phase li p.guide-step-line {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--text-2);
+}
+.ux-public .guide-journey--tabs .guide-phase header p {
+  font-weight: 500;
+}
+/* The hero label steps back on this page (the breadcrumb already uses the muted token). */
+.ux-public:has(.guide-journey--tabs) .guide-page-hero .label {
+  color: var(--text-3);
+}
 
 /* Show More: one quiet control after a gap, without the two stacked lines above it. */
 .ux-public details.guide-more {
@@ -76,6 +89,19 @@
 }
 .ux-public details.guide-more .guide-statements {
   border-top: 0;
+}
+/* How it works, Show More: the three statements are serif lines separated by hairlines, not cards. */
+.ux-public details.guide-more .guide-statements ul {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.ux-public details.guide-more .guide-statements li {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--line);
+  font-family: var(--serif);
+  font-size: var(--text-h2);
+  font-weight: 500;
+  line-height: 1.25;
 }
 
 /* Routes: the tabs and the route cards get the same breathing room. */
@@ -113,6 +139,12 @@
   }
   .ux-public .guide-routes {
     margin-top: var(--space-12);
+  }
+}
+
+@media (min-width: 1000px) {
+  .ux-public .guide-journey--tabs .guide-phase li h3 {
+    font-size: var(--text-2xl);
   }
 }
 
