@@ -4587,6 +4587,70 @@ Guardian 30 review round (head af4caf1): accepted the Pocket title rule with a v
 
 Decisions for the owner: the Pocket phone header drops the page title below 480 px to make room; the Pocket-off phone header wraps to two rows at 390 px; at 768 px with 200% text the customer header wraps to two lines. Team and contributor headers are not on the top bar yet.
 
+### 19 November 2026: Scribe record for main 626d2f8 (merges 560 to 572, verification, owner decisions relayed), Corridra scribe
+
+Request: record only (no code, UI, ADR, commit or push): bring the ledger to main 626d2f8 (19 Nov 2026 17:09 +0600), update the Wave table and owner decisions in `docs/revamp/apple-grade-plan.md`, keep the plan register in agreement, and log what was verified.
+
+Changed: `docs/V3_LEDGER.md` (Main bullet replaced; verification, PR 573 and NOT VERIFIED lines; older bullets condensed to fit the 12 KiB and 36 KiB caps; exact prior text in the new snapshot `docs/v3/history/ledger-before-w1-records-2026-11-19.md`, 10615 bytes, sha256 4aa8238af1ddfdd5f662fe736ed39247c44fc4599a4bd5c0d1bc1bab170524dd, added to `docs/v3/history/manifest.json` and `docs/documentation-map.json`; KI note: a PR failed once without the manifest entry); `docs/revamp/apple-grade-plan.md` (Wave table to merged state, closed OPEN items, dated 19 Nov owner-decisions block); `docs/PLAN_STATUS.md` (apple-grade row text; word stays CURRENT).
+
+Merges since 163a998 (git log, PR -> merge SHA): 560 97e1118 records; 561 48a55f3 ADR-087 U5 member access; 566 2db5d40 DS1 UI/UX.v4; 564 36562f6 W1-B; 563 be2982c W1-D routes; 565 374c9cd LP3 home; 567 c6a54e6 W1-D flags; 569 8a5f8a4 W1-A shell; 568 f7b6c35 W1-C; 570 1f5c415 W1-A2 first commit; 572 b5cd220 W1-E; 571 626d2f8 W1-A2 customer bar. Before, 17 Nov: 540 0fb1223, 541 fde7d9f, 543 b0aed3a, 544 a34c82e, 545 b764f01, 546 d0961d3.
+
+Verified on 626d2f8 (facts supplied in the scribe brief from the verifying session's receipts; the scribe session re-ran only the checks below): main CI 44512299567 and CodeQL 44512299348 success (GitHub); Vercel dpl_3Vb8bhFUNgizCxB8Fqp4zToysLMH READY production, runtime errors 24h only two Neon 57P01 connection recycles, last 18 Nov (Vercel MCP); live /sw.js contains 626d2f8, public pages 200, /account 307 to /signin, /operator 307 to operator signin, /api/customer-inbox 401, CSP, HSTS and frame headers present (curl probes); local typecheck, lint, test:docs 117/117 and build exit 0 (gate receipts). Local integration was NOT usable (no local database sandbox, no ClamAV daemon).
+
+NOT VERIFIED: any signed-in journey; whether the U5 install ran (the module exists; CORRIDRA_MEMBER_ACCESS is off); the scope of the "switch-on-all phase 2" install workflow runs 110 to 113 (19 Nov, all success on 1f5c415, module scope not read); member_notice_deliver is still not run and needs APP_ORIGIN and the owner. No production variable is claimed set except where the owner's words are quoted as relayed.
+
+PR 573 (draft, W1-A2 follow-up, shared Listen state) is RED. Diagnosis: `tests/integration/language-catalog.test.ts:304` still expects the corner-dock source to contain `document.getElementById('main')?.lang`, which moved to `lib/ux/listen-store`; one `integration (2)` job failed and `validate` failed because of it. The fix belongs to the builder on that branch. Dependabot 542 and 527 preserved, not merged.
+
+Owner decisions of 19 Nov (RELAYED via a handoff file written by another agent, not first hand; recorded in the plan's block): "All recommended" for the Wave 2 and Wave 3 open choices; the sizes rule; the language ruling (all six non-English languages shown as reviewed, answer "earlier"; production reported as CORRIDRA_LANGUAGES_REVIEWED=bn,zh,es,ar,fr,de, relayed, not read by this session). This is an owner directive, not a native-speaker review; native review is still recorded as not done.
+
+Preserved: closed gates (native language review, real payments, outreach, inference, scanner deferred) stay closed; no ADR, code, test, ui-direction or language-review-record edit.
+
+Follow-ups for the owner or the next lane: (1) /robots.txt and /sitemap.xml return 404, intent unknown; (2) `docs/product/language-review-record.md` still lists Room Trip view and Books as "Draft, needs native review", which disagrees with the directive; (3) UI/UX.v4 needs the sizes rule and the language directive added by its owner-role writer; (4) whether the U5 install ran; (5) scope of the switch-on-all phase 2 runs 110 to 113; (6) the handoff said W1-A2 was unresolved but git shows 570 and 571 merged; (7) fix PR 573.
+
+Next action: fix PR 573, then Wave 2 (04 Your Move, 05 Room, 07 Road, 06 Compare Class A) planned by the Guardian, and ADR-087 U6.
+
+Tested head: 626d2f8 (this change is documentation only, uncommitted in the working tree).
+
+### 19 November 2026: Scribe corrections (install state, owner answers first hand, language record), Corridra scribe
+
+Request: record only (no code, test, ADR, ui-direction, commit or push): correct the earlier 19 Nov scribe records with verified install state and first-hand owner answers.
+
+Changed: `docs/V3_LEDGER.md` (install, owner-decision, PR 573, lane and next-action lines; older bullets condensed; exact pre-edit text in the new snapshot `docs/v3/history/ledger-before-install-correction-2026-11-19.md`, 10616 bytes, sha256 0fb8cbc57fe563120bd69ed3548f30dc5a2d3daebf104e810ee4c117f2119f44, registered in `docs/v3/history/manifest.json` and `docs/documentation-map.json`); `docs/revamp/apple-grade-plan.md` (19 Nov block relabelled first hand, exact quotes); `docs/PLAN_STATUS.md` (apple-grade row text; word stays CURRENT); `docs/product/language-review-record.md` (two rows and a dated note).
+
+A. Install state, VERIFIED by the brief from the GitHub Actions job logs of Install customer modules runs 44463564099 (#110, 19 Nov 05:35Z) and 44469177020 (#113, 06:03Z), both head 1f5c415, success ("After install": core 30; customer_real_use 21; commercial_readiness 12; member_notice 1 applied; member_access not installed; recipient_response_revision 2; viewer_reply_metadata 2; viewer_export_access 1; quotation_link_check 1; customer_profile_picture 1). Corrected the stale ledger statements: U4 member notice IS installed; response_revision and viewer_reply_metadata 0002 ARE installed; profile_picture IS installed; U5 member access is NOT installed. UNVERIFIED: whether member_notice_deliver ever ran, the CORRIDRA_MEMBER_NOTICE and CORRIDRA_MEMBER_ACCESS values, runs 111 (44467647554) and 112 (44468281847) module inputs (success, logs not read), any install after run 113. Still needing the owner: U5 install, member_notice_deliver (needs APP_ORIGIN), U6 privacy wording shown first.
+
+B. Owner answers FIRST HAND in the Orchestrator chat, 19 Nov 2026 (typos kept): "All recommended 100% corrcetly. just the font & stuffs size you suggest are little bigger in some places, we may choose in between what we have and what u suggested but must be the apple grade ensured"; languages, asked keep the labels (1) or keep the earlier order (2): "earlier". The original order to Guardian 29 is REPORTED by G29; its words are not recorded. The production variable value stays relayed, not read.
+
+C. Owner answers first hand with this Guardian, 19 Nov: "my answer is 1 & a for the questions below". (1) this session is the one Guardian for records; Guardian 30 (session_0187kU9skQa54Q8gSxsCdzCd, REPORTED) finishes or hands over PR 573 and the switch-on-all installs, then stops writing records and merging; this session cannot reach G30, so the owner must tell it. (a) search engines find the public pages only: robots.txt blocking signed-in and staff areas, sitemap of public pages; decided, NOT built, NOT deployed; needs its own unit and a branch slot (8 branches now: main, claude/connect-ai-server, claude/lp2-landing-copy, claude/w1a2-listen-store, claude/wonderful-feynman-rzn7bb, two Dependabot, claude/funny-shannon-j251ze; owner to delete claude/lp2-landing-copy, PR 562 closed; claude/connect-ai-server unidentified, who made it UNVERIFIED). Lane chain REPORTED: G28 to G29 (packet 18 Nov 05:45Z), G29 to G30 (19 Nov about 05:48Z).
+
+D. PR 573: open draft, red, owner not needed; builder fix on claude/w1a2-listen-store: repoint tests/integration/language-catalog.test.ts:304 to apps/web/lib/ux/listen-store. Scan of the last 16 closed PRs (VERIFIED 19 Nov): 558 to 572 merged as listed; 562 closed unmerged (LP2); no other unmerged closed PR.
+
+E. Language record: the Room Trip view and Trip Book and Supplier Book rows now read "Shown as reviewed by owner directive, 19 Nov 2026 (not a native-speaker review)...", with a dated note: "earlier" first hand; home.tr.* keys English only, no translation drafted; nothing is a review until a name and a date are filled in. Code fact (grep): the "Six of seven are draft translations" line in `apps/web/components/ux/language-sheet.tsx` is generated from the count of non-reviewed offered languages (CORRIDRA_LANGUAGES_REVIEWED via `apps/web/lib/i18n/locales.ts`) and should disappear when all six are reviewed. Follow-up: the UI/UX.v4 row Language chooser still quotes the line unconditionally; check wording when the owner confirms (ui-direction.md not edited).
+
+Preserved: closed gates stay closed; native language review not done; no variable claimed set without an owner quote.
+
+Next action: (1) fix PR 573 test; (2) robots.txt and sitemap.xml unit (needs a branch slot); (3) Wave 2 plan: the Guardian owes the owner a combined chosen-sizes table before the first Wave 2 merge and proposed names for the five operator groups; (4) U6.
+
+Tested head: 9b54bfd base (documentation only, uncommitted in the working tree).
+
+### 19 November 2026: Wave 2 unit 04 Your Move, UI/UX.v4 rows and owner decisions (docs only), Corridra scribe
+
+Request: record only (no code, test, ADR, language-review-record, commit or push): write the UI/UX.v4 rows for Wave 2 unit 04 Your Move and the 19 Nov owner decisions before any visible code.
+
+Changed: `docs/agents/ui-direction.md` (Current locked decisions: new rows "Your Move (UI/UX.v4)" and "Sizes in between (19 Nov 2026)", a bullet block with the owner words and the four assumed answers D1 to D4, the Quick row now adds ONE phone row "Shortcuts" and drops "unchanged until the owner decides", the Pocket list order gains "Shortcuts (see Quick)", the Language chooser row now says the draft line is shown only while a language is offered but not reviewed and that the 19 Nov "earlier" ruling is an OWNER DIRECTIVE and NOT a native review; Shared components: the malformed last row (shifted columns) is fixed with its meaning unchanged, only the name was shortened to "Sheet page help (`LanguageSheetExtra`)", and five Planned, not built rows are added: quiet greeting title (`quietTitle`), holder line, This device section, device read-mark store `apps/web/lib/ux/move-seen.ts`, Quick Shortcuts row; that table's whitespace padding was re-aligned by Prettier because the malformed row broke its column widths); `docs/revamp/apple-grade-plan.md` (new dated block of the owner's Guardian-session words and the four assumed answers; Wave 2 row split into unit 04 approved to build, board replaced by a canvas after the 3/10 rating, docs rows written, code not started, and units 05, 06, 07 not started; Wave 3 unchanged); `docs/PLAN_STATUS.md` (apple-grade row wording only; the plan's `Document status:` stays CURRENT, register agrees); `docs/V3_LEDGER.md` (next action item 3, one owner-decision line; the 8-branch detail and the long follow-up list were condensed to pointers; exact pre-edit text in the new snapshot `docs/v3/history/ledger-before-unit04-records-2026-11-19.md`, 10636 bytes, sha256 b3990d901b686e8f28af14770c1758d2b31064238287b4fc0a93e7685de76129, added to `docs/v3/history/manifest.json` and `docs/documentation-map.json`); this entry.
+
+Owner words quoted exactly in the rows, labelled first hand in the Orchestrator chat (19 Nov: "All recommended 100% corrcetly. just the font & stuffs size you suggest are little bigger in some places, we may choose in between what we have and what u suggested but must be the apple grade ensured"; "earlier") or first hand in the Guardian session (19 Nov: "my answer is 1 & a for the questions below"; "didnt like the design, ux/ui. 3/10"; "all of it"; "yes for move"). The owner did not change D1 to D4; the recommended answers are written as assumptions, owner may change: D1 three shortcuts stay plain rows on the empty Home; D2 phone Quick gets one Shortcuts row, above 640 px they live in All tools; D3 the read-marks reset moves to Account, Preferences, This device; D4 no Today / With you tabs. Chosen sizes are the between-values listed in the Sizes row; final values are re-measured per PR.
+
+Verification: `node scripts/authority.mjs stamp` auth-ef67cbac9d77 before and `check` PASS (77 documents); `node scripts/v3-context.mjs verify` PASS before; after the edits `node scripts/authority.mjs check` exit 0, `node scripts/v3-context.mjs verify` exit 0 (the first verify failed on the always-read budget by 729 bytes until the ledger was condensed; the first test:docs run failed 116/117 because the new snapshot was missing from `docs/documentation-map.json`, an entry added), `node scripts/gate.mjs scribe-checks-3 -- pnpm test:docs` exit 0, 117/117, receipt `work/scribe-checks-3-2026-11-19T16-45-15-932Z.log`, `pnpm format:check` on the changed files exit 0. New stamp auth-3ecb000bef56 (the changed ui-direction.md and plan files are authority inputs).
+
+Omissions: no code, tests or ADRs; `docs/product/language-review-record.md` untouched; the canvas was not opened by the scribe (its content comes from the design facts in the request); component file paths for the Planned rows are not invented and are named in the unit 04 PR; the Wave 2 unit 04 visible code is NOT built; native language review NOT done.
+
+Preserved: closed real-operation gates; UI/UX.v4 legacy and superseded rows; native language review gate open.
+
+Next action: build Wave 2 unit 04 Your Move behind its switch, class B, measuring the chosen sizes per PR; the Guardian still owes the combined chosen-sizes table for units 05 to 07 and names for the five operator groups; robots.txt and sitemap unit; PR 573 test.
+
+Tested head: 00f77ff base (documentation only, uncommitted in the working tree).
+
 ### 19 November 2026: W1-A2 follow-up, one shared Listen across the app, Builder W1-A, Guardian G30
 
 Request: Guardian G30, from the Codex P2 on PR 571: `useListenControl` (top bar, dock) and `useListen` (account, Help and drawer menus) each kept their own `speaking` state over the same speech synthesizer, so a reading started from the account menu left the header Listen button at "Listen" and clicking it restarted the reading. Branch `claude/w1a2-listen-store` from main 626d2f8.
@@ -4596,3 +4660,21 @@ Changed: new `apps/web/lib/ux/listen-store.ts` holds the one shared state (speak
 Spec: `tests/operator/ux-language-trigger-shape.spec.ts` gains "Listen state is shared between the header button and the account menu at 390 px" (stubbed speech): started from the account menu the header button flips to Stop Reading and back; started from the header the account menu row shows Stop Reading and stops it. Proof: red on main's code (header stayed pressed false), green with the store; the whole file passes (77).
 
 Local, fast checks only as G30 asked (CI is the proof): format:check, lint, typecheck, test:docs. Not run locally: the full suites. Next: CI on the pushed head.
+
+### 19 November 2026: records, PR 573 merged, PRs 574 and 575 open, owner standing words, Corridra scribe
+
+Request: record only (docs; no code, commit or push) the verified GitHub facts of 19 Nov.
+
+Changed: `docs/V3_LEDGER.md` (Resume immediately: main 704144e; PR 573 'W1-A2 follow-up: one shared Listen state' MERGED at 16:39:58Z by the owner account, head ae5b259, whose test repoint to apps/web/lib/ux/listen-store.ts fixed the red integration (2) at language-catalog.test.ts:304; at merge 22 of 23 checks green and operator (6) still running, about 30 minutes, the job timeout; CI and deploy of main 704144e NOT verified; open drafts 574 and 575 listed, 575 being Connect AI PR 1, Class A, two Opus reviews plus fixes and a final targeted review with no blocking finding, 31/31 DB tests on a private PostgreSQL 16, installer NOT dispatched, owner approval needed at the customer-modules-install gate; Guardian 30 status unknown; the owner's standing words first hand in this Guardian session; next action). Stale words were replaced in place, so no snapshot was needed. `docs/revamp/apple-grade-plan.md` (Wave 1 row: 573 merged). `docs/PLAN_STATUS.md` does not mention 573 as open, so it is unchanged. This entry.
+
+Owner words (first hand, this Guardian, 19 Nov): "yes open the PR and push connect-ai too. u must merge and deploy and continue by yourself upon all checks and reviewes". Read as: open PRs, merge and deploy after the full Gate and reviews, and continue; closed real-world gates, installs at the environment gate, repository variables and production switches stay owner-only. The Guardian is this session (option 1).
+
+Verification: stamp auth-3ecb000bef56 before; `node scripts/authority.mjs check` PASS and `node scripts/v3-context.mjs verify` PASS before the edits. After the edits the always-read cap failed until install, switch and lane lines were condensed to pointers; exact pre-edit ledger in the new snapshot `docs/v3/history/ledger-before-pr573-merge-records-2026-11-19.md`, 10602 bytes, sha256 ef058dcf716bc40f0d77c0fc51a8d2f3f8b498c167a2c2ee6838be33501376ed, registered in the manifest and `docs/documentation-map.json`.
+
+Omissions: the facts come from the caller's request (GitHub, 19 Nov); the scribe did not re-read GitHub. Merged-main CI and deploy not read. No code, tests or ADRs touched.
+
+Preserved: closed real-operation gates; owner-only installs and switches; the owner's decisions in the ledger.
+
+Next action: merge 574 after the Gate; restart the branch from main and build Wave 2 unit 04 in nine small commits with the combined sizes table shown to the owner before any Wave 2 merge; merge 575 after the Gate and its checks (install is the owner's); then units 05, 06, 07; U5 install and member_notice_deliver need the owner's word.
+
+Tested head: 4ed3102 base (documentation only, uncommitted in the working tree).
