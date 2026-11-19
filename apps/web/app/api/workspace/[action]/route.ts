@@ -39,6 +39,14 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         'ai-sources': () =>
           s.intelligence.sources(ctx, z.uuid().parse(new URL(request.url).searchParams.get('run'))),
         intelligence: () => s.intelligence.workspace(ctx),
+        'ai-connect': () => {
+          if (!uxSwitchOn('CORRIDRA_AI_CONNECT_FORM')) throw new DomainError('Not found', 404);
+          return s.intelligence.connectOptions(
+            ctx,
+            // An empty ?adapter= means no provider was chosen, the same as leaving it out.
+            new URL(request.url).searchParams.get('adapter') || undefined,
+          );
+        },
         network: () => {
           const q = new URL(request.url).searchParams;
           return s.network.workspace(ctx, {
@@ -255,6 +263,10 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       'ai-rights': () => s.intelligence.rights(ctx, input),
       'network-rule': () => s.network.rule(ctx, input),
       'ai-policy': () => s.intelligence.configure(ctx, input),
+      'ai-connect': () => {
+        if (!uxSwitchOn('CORRIDRA_AI_CONNECT_FORM')) throw new DomainError('Not found', 404);
+        return s.intelligence.connect(ctx, input);
+      },
       'ai-run': () => s.intelligence.run(ctx, input),
       'ai-review': () => s.intelligence.review(ctx, input),
       'network-profile': () => s.network.profile(ctx, input),

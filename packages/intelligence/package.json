@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./adapters": "./src/adapters.ts",
+    "./connect-form": "./src/connect-form.ts",
     "./registry": "./src/registry.ts",
     "./service": "./src/service.ts",
     "./local-fixture": "./src/local-fixture.ts"

@@ -700,6 +700,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_AI_CONNECT_FORM',
+    label: 'Guided AI connection',
+    line: 'Owners and admins connect an AI provider with a guided form instead of raw JSON. It does not switch AI on.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_SOURCING_WORKFLOW',
     label: 'Sourcing workflow',
     line: 'Shows the sourcing steps built on a route profile (category questions, comparison terms, sample steps) once its database module is installed and opened. Nothing is shown while it is off. Steps, in order: run the real-use install first, then the install workflow with field_modules_action sourcing_workflow_install, then sourcing_workflow_enable to open it (sourcing_workflow_pause closes it and keeps every record). Opening the module is not launch approval.',

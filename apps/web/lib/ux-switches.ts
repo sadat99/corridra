@@ -53,6 +53,9 @@ export const uxSwitchNames = [
   // "true"; separate from CORRIDRA_MEMBER_NOTICE. Off, its routes answer 404 and nothing shows. Each workspace still opens only
   // 24 hours after its member notice was delivered, and only once the member access database module is installed.
   'CORRIDRA_MEMBER_ACCESS',
+  // ADR-089, the guided Connect AI form over the existing model policy command. Off unless exactly "true"; off, its two routes
+  // answer 404. It never switches AI on: inference stays behind its own switches and the deployment settings.
+  'CORRIDRA_AI_CONNECT_FORM',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 

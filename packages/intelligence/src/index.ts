@@ -16,7 +16,7 @@ export const modelPolicy = z
     approved: z.literal(true),
     evaluationStatus: z.enum(['SYNTHETIC_ONLY', 'APPROVED_PROVIDER']),
     evaluationSourceId: z.uuid().toLowerCase(),
-    processingLocations: z.array(countryCode).min(1).max(20),
+    processingLocations: z.array(countryCode).min(1).max(30),
     tasks: z.array(taskId).min(1).max(12),
     fallbackPolicyIds: z.array(z.uuid().toLowerCase()).max(1).default([]),
     inputRateMinorPerMillion: minor,

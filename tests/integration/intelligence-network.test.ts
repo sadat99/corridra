@@ -13,7 +13,10 @@ import { OperationsService } from '../../packages/missions/src/operations';
 import { CommercialMissionService } from '../../packages/missions/src/commercial';
 import { missionCatalogue, machineryFields } from '../../packages/domain/src/commercial-missions';
 import { command as commercialCommand } from './access-fixture';
+import { SdkInferenceAdapter } from '../../packages/intelligence/src/adapters';
 import { taskIds } from '../../packages/intelligence/src/registry';
+import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
+import { migrateAiModelPolicyReal } from '../../packages/db/src/ai-model-policy-real-migrate';
 let f: Awaited<ReturnType<typeof commercialFixture>>,
   routes: CorridorService,
   network: NetworkService,
@@ -739,4 +742,87 @@ test('network profiles and tasks come in pages with an exact total and no loss o
       tasksAfter: first.tasksNext as string,
     }),
   ).rejects.toMatchObject({ status: 400 });
+});
+
+// ADR-089. An EU policy stores country codes only, and every run check is a subset test: the policy authorizes a run only when
+// the rights review of each cited source lists every one of its countries.
+test('a guided EU policy authorizes a run only when the cited source rights review lists every member country', async () => {
+  await migrateCustomerRealUse(f.owner);
+  await migrateAiModelPolicyReal(f.owner);
+  const source = (
+    await f.evidence.createSource(f.ctx, {
+      kind: 'public_record',
+      locator: 'Synthetic public capacity fixture for an EU policy',
+      observedAt: new Date().toISOString(),
+      classification: 'PUBLIC',
+      purpose: 'synthetic_validation',
+      retentionUntil: later(10),
+      aiPolicy: 'REVIEW_REQUIRED',
+    })
+  ).id;
+  const claim = (
+    await f.evidence.createClaim(f.ctx, {
+      sourceId: source,
+      statement: 'Synthetic machine capacity is 100 units per hour.',
+    })
+  ).id;
+  const rights = (version: number, locations: string[]) =>
+    rawContext(
+      f.runtime,
+      f.users.owner.ctx,
+      `INSERT INTO app.data_rights_policy(id,tenant_id,source_id,version,licence,permitted_reuse,data_role,data_purpose,data_classification,jurisdictions,subject_locations,processing_locations,retention_until,ai_permission,transfer_status,transfer_mechanism,effective_from,reason,created_by) VALUES($1,$2,$3,$4,'Synthetic test-only licence',ARRAY['AI_REVIEW'],'CONTROLLER','synthetic_validation','PUBLIC',ARRAY['DE'],ARRAY[]::text[],$5,$6,'REVIEW_REQUIRED','APPROVED','Synthetic test review',now(),$7,$8)`,
+      [randomUUID(), f.tenantA, source, version, locations, later(9), reason, f.users.owner.id],
+    );
+  const created = await ai.connect(f.users.owner.ctx, {
+    adapter: 'google',
+    model: 'synthetic-eu-v1',
+    evaluationStatus: 'SYNTHETIC_ONLY',
+    processingScope: { kind: 'market', key: 'EU' },
+    termsSourceId: source,
+    evaluationSourceId: source,
+    inputRateMinorPerMillion: '100',
+    outputRateMinorPerMillion: '200',
+    maxCostMinor: '100',
+    dailyBudgetMinor: '1000',
+    effectiveUntil: later(5),
+    tasks: ['commercial_intent'],
+    reason,
+    expectedVersion: 0,
+    confirmed: true,
+  });
+  const stored = (
+    await f.owner.query('SELECT configuration FROM app.ai_model_policy WHERE id=$1', [created.id])
+  ).rows[0].configuration;
+  expect(stored.processingLocations).toHaveLength(27);
+  expect(JSON.stringify(stored)).not.toContain('"EU"');
+  const j = await setup('BD', 'CN', 'machinery_procurement', created.id);
+  const authorized = async () =>
+    (
+      await rawContext(
+        f.runtime,
+        f.users.owner.ctx,
+        'SELECT app.ai_run_authorized($1,$2,$3,$4,$5::jsonb,$6) ok',
+        [
+          f.tenantA,
+          j.t.missionId,
+          created.id,
+          f.users.owner.id,
+          JSON.stringify({ task: 'commercial_intent', schemaVersion: 1, claimIds: [claim] }),
+          'commercial_intent',
+        ],
+      )
+    ).rows[0].ok;
+  await rights(1, ['DE']);
+  expect(await authorized()).toBe(false);
+  await rights(2, stored.processingLocations);
+  expect(await authorized()).toBe(true);
+  // The provider adapter has its own subset test, from the deployment setting.
+  const eu = stored.processingLocations as string[];
+  const ready = (list: string[]) =>
+    new SdkInferenceAdapter({
+      CORRIDRA_GOOGLE_API_KEY: 'unit-test-not-a-key',
+      CORRIDRA_GOOGLE_PROCESSING_LOCATIONS: list.join(','),
+    }).ready({ ...stored, evaluationStatus: 'APPROVED_PROVIDER' });
+  expect(ready(eu.slice(1))).toBe(false);
+  expect(ready(eu)).toBe(true);
 });
