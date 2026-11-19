@@ -1,6 +1,12 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '../fixtures';
 
+/** The exact job sits behind "Know the Exact Job? Choose It" (UI/UX.v4); open it only if it is closed. */
+async function openExactJob(page: import('@playwright/test').Page) {
+  const toggle = page.getByRole('button', { name: 'Know the Exact Job? Choose It' });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+}
+
 // Intake parity guard (revamp Wave 3 precondition). Every one of the 15 mission jobs is opened from its
 // deep link and sent through the real /plan form, and the request that leaves the browser is checked
 // field by field: which fields the job asks for, the role and objective it produces, original currency,
@@ -283,6 +289,7 @@ test('P-02 a quantity without a unit and a partial budget are refused on their o
 test('P-05 an old or unknown job link opens the plan with no job chosen', async ({ page }) => {
   for (const path of ['/plan', '/plan?job=not_a_job', '/plan?job=']) {
     await page.goto(path);
+    await openExactJob(page);
     await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
       '',
     );

@@ -87,7 +87,9 @@ const specimen = `
 async function mount(page: Page, width: number) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto('/plan');
-  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeEnabled();
+  await expect(
+    page.getByRole('button', { name: /^(Continue|Pick One to Continue)$/ }),
+  ).toBeEnabled();
   await page.evaluate((html) => {
     document.body.innerHTML = html;
     document.body.className = '';

@@ -320,8 +320,11 @@ describe('message patterns with elements', () => {
 // The sentences that stay English in every language (Lane 11: legal, consent and privacy statements stay English;
 // owner ruling of 30 October 2026: also how long information is kept and that nothing is an offer).
 const staysEnglish = [
+  // W1-C (owner 2a, 18 Nov 2026): the callout box is gone. Its account sentence stays in the page heading, the one
+  // privacy line sits under the choices, and the saved-draft line replaces the old draft line.
   'Create an account at the final step to keep your request and replies private.',
-  'At the final step, create an account or sign in to keep your request and replies private.',
+  'Nothing is sent until you check it.',
+  'Saved in this tab for up to 24 hours.',
   'Read the privacy and request notice',
   'Read the test intake notice',
   'Sample requests stay private to this account.',
@@ -331,7 +334,6 @@ const staysEnglish = [
   'I have read the test intake notice and am submitting invented test details.',
   'Your password goes only to the account provider.',
   'Activate your account to submit it and read replies privately.',
-  'Drafts stay in this tab for 24 hours.',
   'Anyone with this code can read the mission status and replies.',
   'It expires after 30 days.',
   'Your request is saved on this device. You do not need to copy a code. Use another device? Copy the code first.',
@@ -644,8 +646,7 @@ describe('the drafted form words', () => {
           Math.max(30, 1.7 * formEn[key].length),
         );
       expect(drafts[code]['form.receipt.another'].length, code).toBeLessThanOrEqual(55);
-      for (const key of ['form.notice.realPill', 'form.notice.samplePill'] as const)
-        expect(drafts[code][key].length, `${code} ${key}`).toBeLessThanOrEqual(20);
+      // The two notice pills are gone with the callout box (owner 2a, 18 Nov 2026), so their length limit goes too.
     }
   });
 

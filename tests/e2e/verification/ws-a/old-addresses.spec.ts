@@ -1,6 +1,12 @@
 import { test, expect } from '../fixtures';
 import { corridorPages } from '../../../../apps/web/content/corridors';
 
+/** The exact job sits behind "Know the Exact Job? Choose It" (UI/UX.v4); open it only if it is closed. */
+async function openExactJob(page: import('@playwright/test').Page) {
+  const toggle = page.getByRole('button', { name: 'Know the Exact Job? Choose It' });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+}
+
 // Spec pack 1 (docs/revamp/specs/public-home.md), P-06 and P-07. Every old public address still answers, and
 // the link on it that starts a request keeps the job it names today. Frozen on 4 Nov 2026 from
 // apps/web/content/public-pages.ts, apps/web/app/corridors and apps/web/app/page.tsx. If a job here has to
@@ -50,6 +56,7 @@ for (const [slug, corridor] of Object.entries(corridorPages))
     await expect(link.first()).toBeVisible();
     await link.first().click();
     await expect(page).toHaveURL(/\/plan\?companyCountry=BD&marketCode=/);
+    await openExactJob(page);
     await page
       .getByRole('combobox', { name: 'Commercial job', exact: true })
       .selectOption('sourcing');

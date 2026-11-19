@@ -119,5 +119,8 @@ test('job-first navigation exposes machinery and commercial trips with real entr
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'business_trips',
   );
+  // The Bangla guidance is in the language sheet when a language button is offered, and on the page otherwise.
+  const languageButton = page.locator('header button[aria-haspopup="dialog"]:visible');
+  if (await languageButton.count()) await languageButton.first().click();
   await expect(page.getByText('বাংলায় সংক্ষিপ্ত নির্দেশনা', { exact: true })).toBeVisible();
 });

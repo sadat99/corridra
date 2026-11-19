@@ -28,7 +28,8 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
 }) => {
   await page.goto('/plan');
   expect((await page.request.get('/api/workspace/tenants')).status()).toBe(401);
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  // UI/UX.v4: before a choice the button says why it waits; it is still the same submit with the same error.
+  await page.getByRole('button', { name: 'Pick One to Continue', exact: true }).click();
   await expect(page.getByText('Choose what you want to do', { exact: true })).toBeVisible();
   await page.getByLabel('Sell in a new market', { exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();

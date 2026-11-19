@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation';
 import { accountClient } from '../../lib/neon-auth-client';
 import { accountAccessPath } from '../../lib/account-return';
 import { browserStores, forgetReceipt, readReceipt, saveReceipt } from '../../lib/receipt-memory';
-import { JourneyBar } from '../../components/journey-bar';
+import { PlanActionBar } from './plan-action-bar';
+import { PlanJobFold } from './plan-job-fold';
+import { PlanProgress } from './plan-progress';
 import { objectiveForJob, selectedPicture, pictures } from '../../lib/first-question';
 import { FirstQuestion } from '../../components/mr/first-question';
 import { rememberVerifyEmail } from '../../components/verify-email-handoff';
@@ -35,7 +37,9 @@ import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
 import { intakeExperience } from '@corridra/domain/experience';
 import { originalAmountToMinor } from '@corridra/domain/locale';
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { useLanguage } from '../../components/language-provider';
+import { LanguageSheetExtra } from '../../components/ux/language-sheet-slot';
 import { subscribeToHash } from '../../lib/address-store';
 import {
   briefSchema,
@@ -281,6 +285,20 @@ function inputDirection(name: string, type: string) {
     return 'ltr';
   return 'auto';
 }
+/** True when the draft holds an answer worth keeping; a cleared draft says nothing is saved. */
+function hasDraftContent(v: Draft) {
+  return [
+    v.objective,
+    v.job,
+    v.companyCountry,
+    v.marketCode,
+    v.offer,
+    v.notes,
+    v.name,
+    v.company,
+    v.email,
+  ].some((value) => String(value).trim() !== '');
+}
 function saveDraft(draft: Draft, step: number, key: string, storageKey: string) {
   sessionStorage.setItem(
     storageKey,
@@ -354,6 +372,8 @@ function IntakeForm({
     englishProps,
     wsa,
   } = useFormWords();
+  // The language button exists only when more than one language is offered (language-sheet.tsx).
+  const languageChip = useLanguage().offered.length > 1;
   const draftStorageKey =
     privateSubmission?.draftStorageKey ??
     (realMode ? 'corridra-real-mission-draft' : 'corridra-mission-draft');
@@ -381,6 +401,10 @@ function IntakeForm({
     [draftNotice, setDraftNotice] = useState(''),
     // A link asked for another job than the saved draft has (CQ-14): the person chooses which to keep.
     [jobChoice, setJobChoice] = useState(''),
+    // The person's own open or close choice for the exact job disclosure; without one it is open when a job is set.
+    [jobFoldChoice, setJobFoldChoice] = useState<boolean | undefined>(undefined),
+    // A draft of this request is saved in this tab (UI/UX.v4 reassurance line); it is only claimed once one exists.
+    [draftSaved, setDraftSaved] = useState(false),
     [checkEmpty, setCheckEmpty] = useState(false),
     // The person's own open or close choice for each fold; without one a fold is open when it holds a value.
     [foldChoice, setFoldChoice] = useState<Partial<Record<FoldGroup, boolean>>>({});
@@ -418,6 +442,7 @@ function IntakeForm({
           setDraftNotice(formEn['form.message.draftResumed']);
           key.current = saved.key;
           setDraft({ ...empty, ...saved.draft });
+          setDraftSaved(true);
           setStep(saved.version === 2 ? Math.max(0, Math.min(4, Number(saved.step) || 0)) : 0);
         }
         if (saved && !restored)
@@ -547,6 +572,7 @@ function IntakeForm({
     if (!key.current) key.current = crypto.randomUUID();
     try {
       saveDraft(v, n, key.current, draftStorageKey);
+      setDraftSaved(hasDraftContent(v));
     } catch {
       setDraftNotice(
         realMode
@@ -962,6 +988,63 @@ function IntakeForm({
         ? wsa('wsa.plan.countries.eu')
         : wsa('wsa.plan.countries.other');
   const delegation = draft.job === 'delegations';
+  // UI/UX.v4: progress as words ("Step 1 of 5: Goal · Next: Where"). The templates are English until a native review;
+  // the step names are the form's own words in the shown language.
+  const stepNames = stepWords.map((word) => say(word));
+  const stepName = (index: number) =>
+    translated ? (
+      <span lang={tag} dir={dir}>
+        {stepNames[index]}
+      </span>
+    ) : (
+      stepNames[index]
+    );
+  const progressLine = (
+    <>
+      {english(`Step ${step + 1} of ${groups.length}: `)}
+      {stepName(step)}
+      {step + 1 < stepWords.length && (
+        <>
+          {english(' · Next: ')}
+          {stepName(step + 1)}
+        </>
+      )}
+    </>
+  );
+  // The job disclosure is open when a job is set, when the job has an error, or when the person opened it.
+  // A job error forces it open (the field must be visible); "Something else" has no default job, so it opens too.
+  const jobFoldOpen =
+    !!errors.job?.length ||
+    (jobFoldChoice ?? (draft.job !== '' || draft.objective === 'Something else'));
+  const nothingChosen = draft.objective === '' && draft.job === '';
+  // One privacy line under the choices. The account sentence lives in the page heading (owner 2a, 18 Nov 2026).
+  const privacyLine = englishIsland('Nothing is sent until you check it.');
+  // The Bangla guidance (board screen 10: it lives in the language button's sheet, W1-A's language sheet `extra` slot).
+  // The same words stay on the page as a disclosure only when no language button is offered.
+  const bengaliBody = (
+    <>
+      <p>
+        আপনি কী অর্জন করতে চান, প্রতিষ্ঠান কোন দেশে এবং কোন বাজারে কাজ করতে চান তা জানান। পণ্য,
+        যন্ত্রপাতির প্রয়োজন, সময় এবং প্রত্যাশিত ফল সংক্ষেপে লিখুন। প্রতিটি প্রতিষ্ঠানের কাজ ও গোপন
+        তথ্য আলাদা রাখা হয়।
+      </p>
+      <p>
+        {realMode
+          ? 'শেষ ধাপে আপনার যোগাযোগের তথ্য দিন এবং অ্যাকাউন্ট তৈরি করুন বা সাইন ইন করুন। ইমেইল যাচাই করার পরে আপনার ব্যক্তিগত অ্যাকাউন্টে অনুরোধ এবং উত্তর দেখতে পারবেন। এখন নথি আপলোড করতে হবে না।'
+          : 'শুধু কাল্পনিক পরীক্ষামূলক তথ্য এবং @example.invalid ঠিকানা ব্যবহার করুন। প্রকৃত গ্রাহকের কাজ এখানে গ্রহণ করা হচ্ছে না। নথি এখন আপলোড করতে হবে না।'}
+      </p>
+    </>
+  );
+  const bengaliGuidance = useMemo(
+    () => (
+      <section lang="bn" dir="ltr" className="language-sheet-guide" data-plan-guidance="">
+        <h3>বাংলায় সংক্ষিপ্ত নির্দেশনা</h3>
+        {bengaliBody}
+      </section>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the body only changes with realMode
+    [realMode],
+  );
   // The summary line counts the three answers the summary shows, out of three.
   const chosenCount =
     (chosenJob ? 1 : 0) +
@@ -974,35 +1057,19 @@ function IntakeForm({
     // Without real use (a preview or local copy) everything entered here is made up, and the page says so.
     <div className="ux-intake-layout" data-madeup-panel={realMode ? undefined : ''}>
       <div className="guide-plan-top">
-        {realMode ? (
-          <aside className="intake-notice">
-            <span className="guide-pill">{say('form.notice.realPill')}</span>
-            <p>
-              <strong>{say('form.notice.realLead')}</strong>
-              {englishIsland(
-                ' At the final step, create an account or sign in to keep your request and replies private.',
-              )}{' '}
-              {englishIsland(
-                <>
-                  <Link prefetch={false} href="/privacy">
-                    Read the privacy and request notice
-                  </Link>
-                  .
-                </>,
-              )}
-            </p>
-            {translated && <p>{say('form.notice.englishParts')}</p>}
-          </aside>
-        ) : (
-          <aside className="intake-notice intake-notice-compact">
-            <span className="guide-pill">{say('form.notice.samplePill')}</span>
-            {/* The availability sentence stays in view beside the pill. The rest of the notice is one toggle away. */}
-            <p>
-              <strong>{say('form.notice.sampleLead')}</strong>
-            </p>
-            {translated && <p>{say('form.notice.englishParts')}</p>}
-            <details className="intake-notice-more">
-              <summary>{english('Read the Test Notice')}</summary>
+        {/* UI/UX.v4 (owner 2a, 18 Nov 2026): the "Your Request" callout box is gone. Real mode keeps its one useful
+            line in the page heading and the privacy line under the choices; the sample notice keeps its availability
+            sentence in view and the rest of it one toggle away. */}
+        {!realMode && (
+          <div className="plan-sample-note" data-plan-sample="">
+            {/* One short line under the heading (G29 round 1, D2): the availability sentence and the way to the whole
+                notice, which holds the old lead and the rest. */}
+            <details>
+              <summary>
+                <strong>{say('form.notice.sampleLead')}</strong>{' '}
+                <span className="plan-sample-link">{english('Read the Test Notice')}</span>
+              </summary>
+              <p>{say('form.head.sampleLead')}</p>
               <p>
                 {sayWith('form.notice.sampleUse', { domain: english('@example.invalid') })}{' '}
                 {privateMode
@@ -1019,21 +1086,18 @@ function IntakeForm({
                 )}
               </p>
             </details>
-          </aside>
+            {translated && <p>{say('form.notice.englishParts')}</p>}
+          </div>
         )}
-        <details lang="bn" className="guide-bn" dir={dir === 'rtl' ? 'ltr' : undefined}>
-          <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
-          <p>
-            আপনি কী অর্জন করতে চান, প্রতিষ্ঠান কোন দেশে এবং কোন বাজারে কাজ করতে চান তা জানান। পণ্য,
-            যন্ত্রপাতির প্রয়োজন, সময় এবং প্রত্যাশিত ফল সংক্ষেপে লিখুন। প্রতিটি প্রতিষ্ঠানের কাজ ও
-            গোপন তথ্য আলাদা রাখা হয়।
-          </p>
-          <p>
-            {realMode
-              ? 'শেষ ধাপে আপনার যোগাযোগের তথ্য দিন এবং অ্যাকাউন্ট তৈরি করুন বা সাইন ইন করুন। ইমেইল যাচাই করার পরে আপনার ব্যক্তিগত অ্যাকাউন্টে অনুরোধ এবং উত্তর দেখতে পারবেন। এখন নথি আপলোড করতে হবে না।'
-              : 'শুধু কাল্পনিক পরীক্ষামূলক তথ্য এবং @example.invalid ঠিকানা ব্যবহার করুন। প্রকৃত গ্রাহকের কাজ এখানে গ্রহণ করা হচ্ছে না। নথি এখন আপলোড করতে হবে না।'}
-          </p>
-        </details>
+        {languageChip ? (
+          <LanguageSheetExtra>{bengaliGuidance}</LanguageSheetExtra>
+        ) : (
+          // Only English is offered, so there is no language button to hold the Bangla guidance: it stays here.
+          <details lang="bn" className="guide-bn" data-plan-guidance="" dir="ltr">
+            <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
+            {bengaliBody}
+          </details>
+        )}
         <p role="status" aria-live="polite" className="guide-status" hidden={!message}>
           {showMessage(message)}
         </p>
@@ -1162,21 +1226,14 @@ function IntakeForm({
           )}
           {!finished && !pendingReady && (
             <form className="intake-form" onSubmit={submit} noValidate inert={!ready || busy}>
-              <p className="label">
-                {sayWith('form.step.counter', { step: step + 1, total: String(groups.length) })}
-              </p>
-              <JourneyBar
-                steps={stepWords.map((word) => say(word))}
+              <PlanProgress
+                line={progressLine}
+                names={stepWords.map((word) => say(word))}
                 current={step}
-                label={say('form.step.journey')}
+                listLabel={say('form.step.journey')}
+                progressLabel={say('form.step.progress')}
               />
-              <progress
-                className="sr-only"
-                value={step + 1}
-                max={5}
-                aria-label={say('form.step.progress')}
-              />
-              <h2 ref={heading} tabIndex={-1}>
+              <h2 ref={heading} tabIndex={-1} className={step === 0 ? 'sr-only' : undefined}>
                 {say(titles[step])}
               </h2>
               {Object.values(errors).some((messages) => messages.length) && (
@@ -1201,42 +1258,68 @@ function IntakeForm({
                       }}
                     />
                   ) : (
-                    <div className="guide-options">
-                      {objectiveOptions.map((v) => (
-                        <label className="choice" key={v}>
-                          <input
-                            type="radio"
-                            name="objective"
-                            value={v}
-                            checked={draft.objective === v}
-                            onChange={() => change('objective', v)}
-                          />
-                          {say(objectiveWords[v])}
-                        </label>
-                      ))}
-                    </div>
+                    <>
+                      <p className="guide-hint">{english('Pick one. You can change it later.')}</p>
+                      <div className="guide-options">
+                        {objectiveOptions.map((v) => (
+                          <label className="choice" key={v}>
+                            <input
+                              type="radio"
+                              name="objective"
+                              value={v}
+                              checked={draft.objective === v}
+                              onChange={() => change('objective', v)}
+                            />
+                            {say(objectiveWords[v])}
+                          </label>
+                        ))}
+                      </div>
+                    </>
                   )}
                   {error('objective')}
-                  <label className="field guide-more">
-                    {say('form.goal.job')}
-                    <select
-                      value={draft.job}
-                      onChange={(e) => change('job', e.target.value)}
-                      required
-                      aria-describedby="job-hint"
-                    >
-                      <option value="">{say('form.goal.choose')}</option>
-                      {missionCatalogue.map((job) => (
-                        <option key={job.key} value={job.key}>
-                          {say(jobWord(job.key))}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <p id="job-hint" className="guide-hint">
-                    {say('form.goal.hint')}
-                  </p>
+                  <PlanJobFold
+                    id="plan-job-fold"
+                    open={jobFoldOpen}
+                    onToggle={() => setJobFoldChoice(!jobFoldOpen)}
+                    label={english('Know the Exact Job? Choose It')}
+                  >
+                    <label className="field guide-more">
+                      {say('form.goal.job')}
+                      <select
+                        value={draft.job}
+                        onChange={(e) => change('job', e.target.value)}
+                        required
+                        aria-describedby="job-hint"
+                      >
+                        <option value="">{say('form.goal.choose')}</option>
+                        {missionCatalogue.map((job) => (
+                          <option key={job.key} value={job.key}>
+                            {say(jobWord(job.key))}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <p id="job-hint" className="guide-hint">
+                      {say('form.goal.hint')}
+                    </p>
+                  </PlanJobFold>
                   {error('job')}
+                  <p className="guide-hint plan-privacy-line">
+                    {privacyLine}
+                    {realMode && (
+                      <>
+                        {' '}
+                        {englishIsland(
+                          <Link prefetch={false} href="/privacy">
+                            Read the privacy and request notice
+                          </Link>,
+                        )}
+                      </>
+                    )}
+                  </p>
+                  {realMode && translated && (
+                    <p className="guide-hint">{say('form.notice.englishParts')}</p>
+                  )}
                 </fieldset>
               )}
               {step === 1 && (
@@ -1551,7 +1634,31 @@ function IntakeForm({
                   </p>
                 </>
               )}
-              <div className="guide-actions">
+              <PlanActionBar
+                waiting={step === 0 && nothingChosen}
+                note={
+                  <>
+                    {draftSaved && <>{english('Saved in this tab for up to 24 hours.')} </>}
+                    <button
+                      className="text-link"
+                      type="button"
+                      onClick={() => {
+                        // A cleared draft starts again from what the link asked for (CQ-14).
+                        const fresh = withLinkChoices(empty);
+                        key.current = crypto.randomUUID();
+                        setDraft(fresh);
+                        setDraftNotice('');
+                        setJobChoice('');
+                        setStep(0);
+                        setErrors({});
+                        persist(fresh, 0);
+                      }}
+                    >
+                      {say('form.action.clearDraft')}
+                    </button>
+                  </>
+                }
+              >
                 {step > 0 && (
                   <button
                     type="button"
@@ -1579,29 +1686,11 @@ function IntakeForm({
                       ? realMode && !privateMode && !account
                         ? say('form.action.createAccount')
                         : say('form.action.submit')
-                      : say('form.action.continue')}
+                      : step === 0 && nothingChosen && !translated
+                        ? 'Pick One to Continue'
+                        : say('form.action.continue')}
                 </button>
-              </div>
-              <p className="guide-hint guide-draft-line">
-                {english('Drafts stay in this tab for 24 hours.')}{' '}
-                <button
-                  className="text-link"
-                  type="button"
-                  onClick={() => {
-                    // A cleared draft starts again from what the link asked for (CQ-14).
-                    const fresh = withLinkChoices(empty);
-                    key.current = crypto.randomUUID();
-                    setDraft(fresh);
-                    setDraftNotice('');
-                    setJobChoice('');
-                    setStep(0);
-                    setErrors({});
-                    persist(fresh, 0);
-                  }}
-                >
-                  {say('form.action.clearDraft')}
-                </button>
-              </p>
+              </PlanActionBar>
             </form>
           )}
           {receipt && (
@@ -1770,13 +1859,13 @@ function IntakeForm({
             className="ux-brief-summary"
             aria-label={realMode ? say('form.side.realLabel') : say('form.side.sampleLabel')}
           >
-            <p className="label ux-brief-heading">
+            <p className="plan-summary-heading ux-brief-heading">
               {realMode ? say('form.side.realHeading') : say('form.side.sampleHeading')}
             </p>
             <details className="ux-brief-details">
               <summary>
                 <span>
-                  <span className="label">
+                  <span className="plan-summary-heading">
                     {realMode ? say('form.side.realHeading') : say('form.side.sampleHeading')}
                   </span>
                   <span className="ux-brief-count">{english(`, ${chosenCount} of 3 chosen`)}</span>
@@ -1828,6 +1917,9 @@ function IntakeForm({
                   'form.side.draftOnly',
                   'Nothing here is an offer, a quote or a promise.',
                 )}
+                {/* Board 01: the English summary also says nothing is sent until checked. Translated forms say it in the
+                    privacy line under the choices, so the summary does not grow by an English line there. */}
+                {!translated && ' Nothing is sent until you check it.'}
               </p>
             </details>
           </aside>

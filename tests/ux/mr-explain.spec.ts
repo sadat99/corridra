@@ -65,7 +65,9 @@ async function mount(
 ) {
   await page.setViewportSize({ width, height: options.height ?? 900 });
   await page.goto(options.static ? '/plan#static' : '/plan');
-  await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeEnabled();
+  await expect(
+    page.getByRole('button', { name: /^(Continue|Pick One to Continue)$/ }),
+  ).toBeEnabled();
   await page.evaluate(
     ({ css }) => {
       document.body.innerHTML = '<div id="mount"></div>';

@@ -9,9 +9,6 @@ export const words: FormCatalog = {
   'form.head.realLead': 'ابدأ بهدفك.',
   'form.head.sampleLead': 'يكفي طلب قصير. لا تحتاج إلى حساب.',
 
-  'form.notice.realPill': 'طلبك',
-  'form.notice.realLead': 'ابدأ بالعمل الذي تحتاج إليه.',
-  'form.notice.samplePill': 'وضع تجريبي',
   'form.notice.sampleLead': 'الطلبات التجريبية متاحة. لا تُقبل مهام العملاء الحقيقية.',
   'form.notice.sampleUse': 'استخدم بيانات خيالية وبريدًا إلكترونيًا ينتهي بـ {domain}.',
   'form.notice.sampleReceipt': 'احتفظ بإيصالك لقراءة الردود.',
@@ -29,7 +26,6 @@ export const words: FormCatalog = {
   'form.pending.codeSignIn': 'تسجيل الدخول برمز لرؤية طلبك',
   'form.pending.return': 'العودة إلى النموذج',
 
-  'form.step.counter': 'الخطوة {step} من {total}',
   'form.step.goal': 'الهدف',
   'form.step.where': 'المكان',
   'form.step.details': 'التفاصيل',

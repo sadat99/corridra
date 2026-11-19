@@ -1,6 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+/** The exact job sits behind "Know the Exact Job? Choose It" until a job is chosen; open it only if it is closed. */
+async function openExactJob(page: import('@playwright/test').Page) {
+  const toggle = page.getByRole('button', { name: 'Know the Exact Job? Choose It' });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+}
+
 async function openFineTune(page: Page) {
   const details = page.locator('.ux-fine-tune');
   if ((await details.getAttribute('open')) === null) await details.locator('summary').click();
@@ -97,6 +103,7 @@ test('UX-02 expired and corrupt drafts recover to a usable form without claiming
     sessionStorage.setItem('corridra-mission-draft', JSON.stringify(saved));
   });
   await page.reload();
+  await openExactJob(page);
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue('');
   await expect(page.getByText('Drafts expire after 24 hours.', { exact: false })).toBeVisible();
   await page.evaluate(() => sessionStorage.setItem('corridra-mission-draft', '{broken'));
@@ -104,7 +111,8 @@ test('UX-02 expired and corrupt drafts recover to a usable form without claiming
   await expect(
     page.getByText('A saved draft could not be restored.', { exact: false }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  // UI/UX.v4: before a choice the button says why it waits; it is still a real submit and shows the same error.
+  await page.getByRole('button', { name: 'Pick One to Continue', exact: true }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Check this step.' })).toBeFocused();
   await page.getByLabel('Source suppliers', { exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
@@ -295,6 +303,7 @@ test('saved request receipt uses the shared cards, copies safely, checks replies
     .getByRole('button', { name: 'Start Another Request (Save Your Receipt First)', exact: true })
     .click();
   await expect(saved).toHaveCount(0);
+  await openExactJob(page);
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toBeVisible();
   expect(await page.evaluate(() => sessionStorage.getItem('corridra-mission-receipt'))).toBeNull();
 });

@@ -1,0 +1,165 @@
+/* /plan in UI/UX.v4 (W1-C): progress as words, the job disclosure and the phone bottom action area.
+   Tokens only. Every motion is under 300 ms and is switched off under reduced motion. */
+.plan-progress-line {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-title);
+}
+.plan-job-fold {
+  display: grid;
+  gap: var(--space-3);
+}
+.plan-job-toggle {
+  justify-self: start;
+  min-height: 2.75rem;
+}
+.plan-action-bar {
+  display: grid;
+  gap: var(--space-2);
+}
+.plan-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.plan-action-row .primary-link {
+  min-width: min(10rem, 100%);
+  max-width: 100%;
+  min-height: 3rem;
+  transition: background-color var(--dur-step) var(--ease-product);
+}
+.plan-action-note {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+@media (max-width: 700px) and (min-height: 32rem) {
+  .plan-action-bar:not([data-flow]) {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 20;
+    padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--paper) 94%, transparent);
+    border-top: 1px solid var(--border-strong);
+    backdrop-filter: blur(8px);
+  }
+  .plan-action-row .primary-link {
+    flex: 1 1 10rem;
+    min-width: 0;
+    min-height: var(--bottom-action-h);
+  }
+  /* The page keeps room for the bar under the footer too, so it never covers the last field, a footer link or the
+     end of the page. The room is fixed, so the page does not change height when the script reports the bar's real height;
+     only a bar taller than that room (large text) makes it grow. */
+  body:has(.plan-action-bar:not([data-flow])) {
+    padding-bottom: max(
+      calc(var(--bottom-action-h) + var(--space-24) + var(--space-8)),
+      calc(var(--plan-action-bar-h, 0px) + var(--space-8))
+    );
+  }
+  /* A field that takes focus, or is scrolled to, stops above the bar instead of under it (focus is never covered). */
+  html:has(.plan-action-bar:not([data-flow])) {
+    scroll-padding-bottom: calc(var(--plan-action-bar-h, var(--bottom-action-h)) + var(--space-8));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan-action-row .primary-link {
+    transition: none;
+  }
+}
+.plan-action-note .text-link {
+  white-space: normal;
+  text-align: start;
+  min-height: 2.75rem;
+  padding-inline: var(--space-1);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+/* The sample notice (UI/UX.v4, owner 2a; one short line, G29 round 1 D2): the availability sentence and the link to
+   the whole notice are one summary line; the old lead and the rest open from it. */
+.plan-sample-note {
+  display: grid;
+  gap: var(--space-1);
+}
+.plan-sample-note p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
+  color: var(--text-2);
+}
+.plan-sample-note details {
+  display: grid;
+  gap: var(--space-2);
+}
+.plan-sample-note summary {
+  display: block;
+  min-height: 2.75rem;
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.plan-sample-note summary strong {
+  color: var(--text-1);
+}
+/* Above phone width the summary line and the translated English-parts sentence share one row, as the old notice did,
+   so a translated page is no taller than the English one. */
+@media (min-width: 701px) {
+  .plan-sample-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+  .plan-sample-note > details {
+    flex: 2 1 0;
+    min-width: 0;
+  }
+  .plan-sample-note > p {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+.plan-sample-link {
+  color: var(--brand-deep);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.plan-privacy-line {
+  margin: 0;
+  max-width: 62ch;
+}
+.plan-summary-heading {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+/* The Bangla guidance in the language sheet (board screen 10). The sheet sits in the page body, outside the form, so
+   these rules are not scoped to the form. The test address in the words is one long token: it may break at any width. */
+.language-sheet-guide {
+  margin-block-start: var(--space-4);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+.language-sheet-guide h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.language-sheet-guide p {
+  max-width: 62ch;
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
