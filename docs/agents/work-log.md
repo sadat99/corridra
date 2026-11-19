@@ -4660,3 +4660,21 @@ Changed: new `apps/web/lib/ux/listen-store.ts` holds the one shared state (speak
 Spec: `tests/operator/ux-language-trigger-shape.spec.ts` gains "Listen state is shared between the header button and the account menu at 390 px" (stubbed speech): started from the account menu the header button flips to Stop Reading and back; started from the header the account menu row shows Stop Reading and stops it. Proof: red on main's code (header stayed pressed false), green with the store; the whole file passes (77).
 
 Local, fast checks only as G30 asked (CI is the proof): format:check, lint, typecheck, test:docs. Not run locally: the full suites. Next: CI on the pushed head.
+
+### 19 November 2026: records, PR 573 merged, PRs 574 and 575 open, owner standing words, Corridra scribe
+
+Request: record only (docs; no code, commit or push) the verified GitHub facts of 19 Nov.
+
+Changed: `docs/V3_LEDGER.md` (Resume immediately: main 704144e; PR 573 'W1-A2 follow-up: one shared Listen state' MERGED at 16:39:58Z by the owner account, head ae5b259, whose test repoint to apps/web/lib/ux/listen-store.ts fixed the red integration (2) at language-catalog.test.ts:304; at merge 22 of 23 checks green and operator (6) still running, about 30 minutes, the job timeout; CI and deploy of main 704144e NOT verified; open drafts 574 and 575 listed, 575 being Connect AI PR 1, Class A, two Opus reviews plus fixes and a final targeted review with no blocking finding, 31/31 DB tests on a private PostgreSQL 16, installer NOT dispatched, owner approval needed at the customer-modules-install gate; Guardian 30 status unknown; the owner's standing words first hand in this Guardian session; next action). Stale words were replaced in place, so no snapshot was needed. `docs/revamp/apple-grade-plan.md` (Wave 1 row: 573 merged). `docs/PLAN_STATUS.md` does not mention 573 as open, so it is unchanged. This entry.
+
+Owner words (first hand, this Guardian, 19 Nov): "yes open the PR and push connect-ai too. u must merge and deploy and continue by yourself upon all checks and reviewes". Read as: open PRs, merge and deploy after the full Gate and reviews, and continue; closed real-world gates, installs at the environment gate, repository variables and production switches stay owner-only. The Guardian is this session (option 1).
+
+Verification: stamp auth-3ecb000bef56 before; `node scripts/authority.mjs check` PASS and `node scripts/v3-context.mjs verify` PASS before the edits. After the edits the always-read cap failed until install, switch and lane lines were condensed to pointers; exact pre-edit ledger in the new snapshot `docs/v3/history/ledger-before-pr573-merge-records-2026-11-19.md`, 10602 bytes, sha256 ef058dcf716bc40f0d77c0fc51a8d2f3f8b498c167a2c2ee6838be33501376ed, registered in the manifest and `docs/documentation-map.json`.
+
+Omissions: the facts come from the caller's request (GitHub, 19 Nov); the scribe did not re-read GitHub. Merged-main CI and deploy not read. No code, tests or ADRs touched.
+
+Preserved: closed real-operation gates; owner-only installs and switches; the owner's decisions in the ledger.
+
+Next action: merge 574 after the Gate; restart the branch from main and build Wave 2 unit 04 in nine small commits with the combined sizes table shown to the owner before any Wave 2 merge; merge 575 after the Gate and its checks (install is the owner's); then units 05, 06, 07; U5 install and member_notice_deliver need the owner's word.
+
+Tested head: 4ed3102 base (documentation only, uncommitted in the working tree).

@@ -1589,6 +1589,11 @@
       "use": "Exact hashed ledger at 00f77ff, before the 19 Nov unit 04 Your Move records condensed the 8-branch detail and the long owner-visible follow-up list; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-pr573-merge-records-2026-11-19.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 4ed3102, before the 19 Nov records for the PR 573 merge condensed install, switch and lane lines; use the current ledger for live state."
+    },
+    {
       "path": "docs/v3/history/ledger-before-w1-records-2026-11-19.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger at 626d2f8 (the PR 571 merge), before the 19 Nov W1 records recorded merges 560 to 571, the 19 Nov verification and the PR 573 diagnosis; preserves the Guardian 28 Main bullet and the 547 to 559 merge list; use the current ledger for live state."

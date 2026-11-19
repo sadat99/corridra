@@ -589,6 +589,12 @@
       "bytes": 10636,
       "sha256": "b3990d901b686e8f28af14770c1758d2b31064238287b4fc0a93e7685de76129",
       "meaning": "Exact active ledger at 00f77ff, before the 19 Nov unit 04 Your Move records replaced the 8-branch detail in the owner-decision line and the long owner-visible follow-up list with pointers, and recorded the owner's 'yes for move' and the four assumed answers. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "archive": "docs/v3/history/ledger-before-pr573-merge-records-2026-11-19.md",
+      "bytes": 10602,
+      "sha256": "ef058dcf716bc40f0d77c0fc51a8d2f3f8b498c167a2c2ee6838be33501376ed",
+      "meaning": "Exact active ledger at 4ed3102, before the 19 Nov records for the merge of PR 573 (main 704144e) and the open PRs 574 and 575 condensed install, switch, owner-decision and lane lines to pointers. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
