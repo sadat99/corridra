@@ -18,12 +18,16 @@
   font-weight: 500;
   color: var(--text-1);
   background: transparent;
-  border: 1px solid transparent;
+  border: 0;
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
 .top-bar-tool:hover {
   background: var(--surface-2);
+}
+.top-bar-tool:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 .top-bar-tool[data-active='true'] {
   color: var(--on-action);
@@ -44,4 +48,23 @@
 /* The top bar replaces the floating Listen button on pages that have it (the corner dock keeps Help). */
 body:has(.public-header) .corner-dock .dock-listen {
   display: none;
+}
+
+/* The signed-in customer header (W1-A2): Listen and the language code sit in the bar from 360 px; under 360 px the
+   drawer's top holds them instead, as a group of their own above the choices. */
+.ux-bar-topbar {
+  display: flex;
+  align-items: center;
+}
+.ux-drawer-topbar {
+  display: none;
+}
+@media (max-width: 359.98px) {
+  .ux-bar-topbar {
+    display: none;
+  }
+  .ux-drawer-topbar {
+    display: block;
+    padding-bottom: var(--space-3);
+  }
 }

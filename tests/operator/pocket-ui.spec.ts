@@ -222,6 +222,9 @@ async function visibleHeader(page: Page) {
       help: !!root.querySelector('.ux-util-help') && shown(root.querySelector('.ux-util-help')!),
       title:
         !!root.querySelector('.ux-pocket-title') && shown(root.querySelector('.ux-pocket-title')!),
+      // Listen and the language code, the top bar (UI/UX.v4, owner option 1a): in the bar from 360 px.
+      topBar:
+        !!root.querySelector('.ux-bar-topbar') && shown(root.querySelector('.ux-bar-topbar')!),
       inbox: !!root.querySelector('.ux-bar-inbox') && shown(root.querySelector('.ux-bar-inbox')!),
       account:
         !!root.querySelector('.ux-util-avatar') && shown(root.querySelector('.ux-util-avatar')!),
@@ -270,7 +273,8 @@ test.describe('phone width, switch on', () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         width,
       );
-      // The header keeps the menu or title, the inbox and the account menu, and nothing else.
+      // The header keeps the menu, Listen and the language code (from 360 px; under it they are in the drawer), the
+      // page title where it has room (from 480 px), the inbox and the account menu, and nothing else.
       const shown = await visibleHeader(page);
       expect(shown).toMatchObject({
         brand: false,
@@ -278,7 +282,8 @@ test.describe('phone width, switch on', () => {
         newRequest: false,
         language: false,
         help: false,
-        title: true,
+        title: width >= 480,
+        topBar: width >= 360,
         inbox: true,
         account: true,
       });
@@ -979,7 +984,9 @@ test.describe('scrolling', () => {
     const on = await page.evaluate(() => document.documentElement.scrollHeight);
     await mount(page, '/account', '?pocket=off&signals=draft&rows=40');
     const off = await page.evaluate(() => document.documentElement.scrollHeight);
-    expect(on).toBe(off);
+    // The button adds no length. With it the header is the short one row; without it Listen and the language code make the
+    // old header wrap onto a second row on a phone (UI/UX.v4 top bar), so the page is not taller with the button.
+    expect(on).toBeLessThanOrEqual(off);
   });
 
   test('the plus is above the device safe area, and that is its only bottom offset', async ({

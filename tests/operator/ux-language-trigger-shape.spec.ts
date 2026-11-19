@@ -162,8 +162,48 @@ for (const kind of kinds)
         // The account menu is on the row at every width. Language and Help join it from 640 px; the customer header
         // adds the inbox.
         expect(names).toContain('Account menu');
-        const language = page.locator('header .ux-util-language > .ux-menu-button');
-        if (folded(width)) {
+        // The customer header's language is the top bar's sheet button (UI/UX.v4, owner option 1a): an icon and its code,
+        // beside Listen, from 360 px; under 360 px both are in the drawer. The team header keeps its menu.
+        const language =
+          kind === 'customer'
+            ? page.locator('header .ux-bar-topbar button[aria-haspopup="dialog"]')
+            : page.locator('header .ux-util-language > .ux-menu-button');
+        if (kind === 'customer') {
+          expect(names).not.toContain('Language');
+          expect(names).not.toContain('Listen');
+          if (folded(width)) expect(names).not.toContain('Help and accessibility');
+          else expect(names).toContain('Help and accessibility');
+          // Under 360 px Listen and the language code are in the drawer, so the bar draws neither.
+          if (width < 360) {
+            await expect(page.locator('header .ux-bar-topbar')).toBeHidden();
+          } else {
+            for (const tool of await page.locator('header .ux-bar-topbar button').all()) {
+              const label = await tool.getAttribute('aria-label');
+              expect(await spill(tool), `${label} at rest`).toEqual([]);
+              await page.mouse.move(0, 0);
+              await tool.hover();
+              const hovered = await shape(tool);
+              expect(hovered.background, `${label} hover shade`).not.toBe('rgba(0, 0, 0, 0)');
+              expect(hovered.height, `${label} height`).toBeGreaterThanOrEqual(44);
+              expect(hovered.width, `${label} width`).toBeGreaterThanOrEqual(44);
+              expect(await spill(tool), `${label} on hover`).toEqual([]);
+              await tool.blur();
+              await page.keyboard.press('Tab');
+              await tool.focus();
+              const focused = await shape(tool);
+              expect(focused.focusVisible, `${label} focus-visible`).toBe(true);
+              expect(focused.outlineWidth).toBeGreaterThanOrEqual(3);
+              expect(await spill(tool), `${label} on focus`).toEqual([]);
+            }
+            // The language sheet opens from the code and closes on Escape with focus back on it.
+            await language.click();
+            await expect(language).toHaveAttribute('aria-expanded', 'true');
+            await expect(page.getByRole('dialog', { name: 'Language' })).toBeVisible();
+            await page.keyboard.press('Escape');
+            await expect(page.getByRole('dialog')).toHaveCount(0);
+            await expect(language).toBeFocused();
+          }
+        } else if (folded(width)) {
           await expect(language).toBeHidden();
           expect(names).not.toContain('Language');
           expect(names).not.toContain('Help and accessibility');
@@ -229,6 +269,26 @@ for (const kind of kinds)
         page,
       }) => {
         await open(page, kind, width, zoomed);
+        if (kind === 'customer' && !folded(width)) {
+          // The customer header's language is the sheet: every language in its own script with its code, one tap each.
+          const code = page.locator('header .ux-bar-topbar button[aria-haspopup="dialog"]');
+          await expect(code).toContainText('EN');
+          await code.click();
+          const sheet = page.getByRole('dialog', { name: 'Language' });
+          for (const [short, name] of [
+            ['EN', 'English'],
+            ['BN', 'বাংলা'],
+            ['ZH', '中文'],
+          ])
+            await expect(
+              sheet.getByRole('button', { name: new RegExp(`${short}\\s*${name}`) }),
+            ).toBeVisible();
+          await expect(sheet.getByRole('button', { name: /EN\s*English/ })).toHaveAttribute(
+            'aria-pressed',
+            'true',
+          );
+          return;
+        }
         const language = page.getByRole('button', { name: 'Language', exact: true });
         const opener = folded(width)
           ? page.getByRole('button', { name: 'Account menu', exact: true })
@@ -258,7 +318,7 @@ async function tools(page: Page) {
       box(document.querySelector(`header button[aria-label="${name}"]`));
     return {
       request: box(document.querySelector('header .ux-bar-primary')),
-      language: named('Language'),
+      language: box(document.querySelector('header .ux-bar-topbar button[aria-haspopup="dialog"]')),
       inbox: named('Inbox'),
       help: named('Help and accessibility'),
       account: named('Account menu'),
@@ -266,19 +326,30 @@ async function tools(page: Page) {
   });
 }
 
-// At 768 px with 200% text the tools box is 688 px and the controls need 627 px plus their gaps. The gap is the space
-// token in rem, so it doubled with the text and left the account menu 3 px short, alone on a third line (the header
-// went from 225 to 329 px). The gap now stays 8 px, so all five controls share one line.
-test('the customer tools share one line at 768 px with 200% text', async ({ page }) => {
+// At 768 px with 200% text the header now has Listen and the language code too (UI/UX.v4 top bar), seven controls in a
+// 688 px box, so it cannot hold one line. It wraps instead of running off the screen: every control stays inside the
+// window, none sits on another, and the tools take at most two lines.
+test('the customer tools stay inside the window at 768 px with 200% text, on at most two lines', async ({
+  page,
+}) => {
   await open(page, 'customer', 768, true);
-  const all = await tools(page);
-  const centres = Object.values(all).map((one) => one!.centre);
-  // One line: the centres differ by a few px (the inbox box is shorter than the triggers). A control on a line of its
-  // own is a whole control height (44 px or more) away.
+  const boxes = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('header .ux-bar-tools > *, header .ux-bar-topbar > * > *'))
+      .map((node) => node.getBoundingClientRect())
+      .filter((rect) => rect.width > 0 && rect.height > 0)
+      .map((rect) => ({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom })),
+  );
+  for (const rect of boxes) {
+    expect(rect.left).toBeGreaterThanOrEqual(-0.5);
+    expect(rect.right).toBeLessThanOrEqual(768.5);
+  }
+  const centres = boxes.map((rect) => (rect.top + rect.bottom) / 2);
+  expect(Math.max(...centres) - Math.min(...centres), 'vertical spread').toBeLessThan(2 * 88);
   expect(
-    Math.max(...centres) - Math.min(...centres),
-    'vertical spread of the five tools',
-  ).toBeLessThan(44);
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
 });
 
 // From 640 px the language trigger sits beside New Request. The phone rule (up to 700 px) had set the gap between the
@@ -290,8 +361,13 @@ for (const width of [640, 700])
     }) => {
       await open(page, 'customer', width, zoomed);
       const { request, language } = await tools(page);
-      expect(Math.abs(request!.centre - language!.centre), 'on the same line').toBeLessThan(4);
-      expect(language!.left - request!.right, 'gap in px').toBeGreaterThanOrEqual(4);
+      // Beside New Request with a gap, or, where Listen and the language code no longer fit the line (200% text), on
+      // the next line: never touching it.
+      if (Math.abs(request!.centre - language!.centre) < 4) {
+        expect(language!.left - request!.right, 'gap in px').toBeGreaterThanOrEqual(4);
+      } else {
+        expect(language!.centre - request!.centre, 'on the next line').toBeGreaterThan(30);
+      }
     });
 
 for (const kind of kinds)
@@ -299,8 +375,13 @@ for (const kind of kinds)
     page,
   }) => {
     await open(page, kind, 1440, false);
-    await page.getByRole('button', { name: 'Language', exact: true }).click();
-    await expect(page.getByRole('menu', { name: 'Language' })).toBeVisible();
+    if (kind === 'customer') {
+      await page.locator('header .ux-bar-topbar button[aria-haspopup="dialog"]').click();
+      await expect(page.getByRole('dialog', { name: 'Language' })).toBeVisible();
+    } else {
+      await page.getByRole('button', { name: 'Language', exact: true }).click();
+      await expect(page.getByRole('menu', { name: 'Language' })).toBeVisible();
+    }
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(axe.violations.map((v) => v.id)).toEqual([]);
   });
