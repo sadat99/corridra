@@ -4565,6 +4565,18 @@ Changed: `apps/web/app/globals.css` only (the `.corner-dock` opacity and transfo
 
 Proof on this exact code (the same CSS as the tested tree; this commit adds only KI-65 and this entry): the full operator run on a fresh database failed `workspace.spec.ts:1755` (axe color-contrast on `.dock-help`), `y-ux05-governance` and `zzz-v3-founder` before the change, and passed 2039, exit 0, after it; pnpm test:e2e 768 passed; pnpm test:ux 604 passed with only the known `readability /fairs` failing; pnpm test:verification (all widths in one run) 650 passed, exit 0; lint, format, typecheck, build, security-scan, pnpm test exit 0. `pnpm test:integration`: 4 failures that need the Docker scanner or a backup tool this container lacks (adapters ClamAV, blob real scan, foundations backup restore, scan-bypass), as in KI-15; 6717 passed. The customer header on the top bar (the rest of W1-A2) is not built yet.
 
+### 19 November 2026: Connect AI PR 1, server and migration (Builder, Class A, draft PR, ADR-089 Proposed)
+
+Request: Conductor, owner decisions relayed: real workspaces may hold a model policy only, EU resolved server-side to stored country codes with the cap raised from 20 to 30, inference stays off and every runtime gate untouched, EU wording never claims data residency or legal compliance. Branch `claude/connect-ai-server` from main 1f5c4157. No visible change; nothing installed.
+
+Built: `packages/db/ai-model-policy-real-migrations/0001_real_workspace_model_policy.sql` (hash-checked replacement of `app.guard_ai()`; only the opening check for `ai_model_policy` and its location bound differ, the check for run, attempt, result, review and completion is byte-identical; marker `app.ai_model_policy_location_limit()` returns 30), its rollback SQL, `packages/db/src/ai-model-policy-real-migrate.ts`, the installer option `field_modules_action = ai_model_policy_real` (no new workflow input), `packages/intelligence/src/connect-form.ts`, `IntelligenceService.connectOptions` and `connect` (one transaction, expectedVersion, server-side EU resolution from `app.market_member`, source pre-checks, shared `insertPolicy`), the `ai-connect` route action behind `CORRIDRA_AI_CONNECT_FORM` (off unless exactly "true", 404 while off), the switch registry row, ADR-089 with its index row and documentation map entry.
+
+Pinned hash: the guard_ai definition hash 6b4f74d1...8e1b was computed on a fixture database after the core migrations and again after the real-use install (identical), never guessed. If production differs, the install refuses and changes nothing.
+
+Tests: tests/integration/ai-model-policy-real-install.test.ts, ai-connect-form.test.ts, ai-connect.test.ts (real and sample workspace authority, step-up, denial, recovery, part4_enabled and config_version unchanged, spy adapter never called, ai_run, attempt, result and completion still refused in a real workspace, EU resolution) and a new case in intelligence-network.test.ts (an EU policy authorizes a run only when the source rights review lists all 27 countries; the provider adapter ready check is a subset test too).
+
+Not done here: the route 404 while the switch is off is proved with the operator suite in PR 2 (the route needs the full app environment); the installer run needs the owner's approval after merge (`field_modules_action = ai_model_policy_real`, `apply = yes`).
+
 ### 19 November 2026: W1-E How it works, /how-it-works (Builder W1-E, Sonnet, Class B, draft PR)
 
 Request: build the approved UI spec for /how-it-works (UI/UX.v4, presentation only). Owner decisions: keep the phase tabs, add no switch. Branch `claude/w1e-how-it-works` from main 1f5c415.

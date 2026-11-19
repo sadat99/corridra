@@ -205,13 +205,14 @@ describe('service contracts', () => {
     await expect(listDeliveredPublications({} as never, 'not a proof', 'x')).resolves.toEqual([]);
     expect(notificationTypes).toHaveLength(9);
   });
-  test('the five program flags are registered and described', () => {
+  test('the program flags are registered and described', () => {
     const names = [
       'CORRIDRA_UX_SHELLS_V2',
       'CORRIDRA_UX_MISSIONS_V2',
       'CORRIDRA_NOTIFICATIONS_V2',
       'CORRIDRA_TEAM_INVITES',
       'CORRIDRA_ROUTE_PACK_FORM',
+      'CORRIDRA_AI_CONNECT_FORM',
     ];
     for (const name of names) {
       expect(uxSwitchNames).toContain(name);

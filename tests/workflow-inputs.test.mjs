@@ -106,6 +106,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'sourcing_workflow_install',
     'sourcing_workflow_enable',
     'sourcing_workflow_pause',
+    'ai_model_policy_real',
     'data_cleanup_inventory',
   ]);
   const defaults = Object.fromEntries(
@@ -156,6 +157,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['sourcing_workflow_install', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_enable', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_pause', u, u, u, u, u, u, u, u],
+    ['ai_model_policy_real', u, u, u, u, u, u, u, u],
     ['data_cleanup_inventory', u, u, u, u, u, u, u, u],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
@@ -171,6 +173,11 @@ test('each field-module choice maps to install only and reaches the exact-head c
     assert.equal(evaluate(env.PROBLEM_REPORTS_ACTION, inputs), reports);
     // Programme pages (ADR-080): the choice installs the database module and nothing else; the app switch is separate.
     assert.equal(evaluate(env.PROGRAMME_PAGES_ACTION, inputs), pages);
+    // ADR-089: the choice installs the real-workspace model policy module and nothing else, and no other choice does.
+    assert.equal(
+      evaluate(env.AI_MODEL_POLICY_REAL_ACTION, inputs),
+      choice === 'ai_model_policy_real' ? 'install' : u,
+    );
     assert.equal(
       evaluate(env.HELPER_INTEREST_ACTION, inputs),
       choice === 'helper_interest' ? 'install' : u,
