@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import type { PoolClient } from 'pg';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
@@ -155,6 +156,13 @@ test('the rollback refuses unless guard_ai is the ADR-089 definition, and then c
 // one statement per call, so a file that passes through it is a single statement and is applied whole or not at all.
 const oneStatement = (text: string) => ({ text, queryMode: 'extended' as const });
 const rollbackFile = () => readFileSync(`${dir}/rollback/0001_restore_guard_ai.sql`, 'utf8');
+// A checked-out client goes back to the pool only after ROLLBACK, so a failed assertion inside an open transaction cannot leave
+// the migration lock, a registry change or a pg_proc change held for the next test. If ROLLBACK itself fails the client is destroyed.
+const settle = (client: PoolClient) =>
+  client.query('ROLLBACK').then(
+    () => client.release(),
+    (error: Error) => client.release(error),
+  );
 const state = async () => ({
   h: (await guard()).h,
   marker: await marker(),
@@ -179,7 +187,7 @@ test('the rollback is one statement with no commit of its own, so a caller can s
     expect((await db.query(`SELECT name FROM ${registry}`)).rows).toEqual([]);
     await db.query('ROLLBACK');
   } finally {
-    db.release();
+    await settle(db);
   }
   expect(await state()).toEqual(before);
 });
@@ -198,8 +206,8 @@ test('the rollback waits for the migration lock the installer takes and changes 
     await runner.query('ROLLBACK');
     await holder.query('ROLLBACK');
   } finally {
-    holder.release();
-    runner.release();
+    await settle(runner);
+    await settle(holder);
   }
   expect(await state()).toEqual(before);
 });

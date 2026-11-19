@@ -70,6 +70,12 @@ describe('the Connect AI actions on the workspace route', () => {
       expect.objectContaining({ token: 'staff-token', tenantId: tenant }),
       undefined,
     );
+    // An empty adapter value is the same as none.
+    expect((await get('&adapter=')).status).toBe(200);
+    expect(connectOptions).toHaveBeenLastCalledWith(
+      expect.objectContaining({ token: 'staff-token', tenantId: tenant }),
+      undefined,
+    );
     // The chosen provider reaches the service, which leaves that provider's own connection out of the fallbacks.
     expect((await get('&adapter=openai')).status).toBe(200);
     expect(connectOptions).toHaveBeenLastCalledWith(

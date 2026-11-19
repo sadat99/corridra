@@ -43,7 +43,8 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           if (!uxSwitchOn('CORRIDRA_AI_CONNECT_FORM')) throw new DomainError('Not found', 404);
           return s.intelligence.connectOptions(
             ctx,
-            new URL(request.url).searchParams.get('adapter') ?? undefined,
+            // An empty ?adapter= means no provider was chosen, the same as leaving it out.
+            new URL(request.url).searchParams.get('adapter') || undefined,
           );
         },
         network: () => {
