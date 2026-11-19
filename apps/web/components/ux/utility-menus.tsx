@@ -13,6 +13,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useId, useState, useSyncExternalStore } from 'react';
 import { CorridraIcon } from '../corridra-icon';
 import { useLanguage } from '../language-provider';
+import { useListenControl } from '../corner-dock';
 import { useSignOut } from '../use-sign-out';
 import {
   customerAvatarItems,
@@ -93,52 +94,9 @@ export function MenuSoon({ children }: { children: string }) {
   );
 }
 
-/** Speaks the main region aloud, only where this browser has a voice for the page language (as the corner Help does). */
+/** Speaks the main region aloud, only where this browser has a voice for the page language. Shared with the top bar and the dock. */
 export function useListen() {
-  const supported = useSyncExternalStore(
-    (notify) => {
-      if (!('speechSynthesis' in window)) return () => undefined;
-      window.speechSynthesis.addEventListener('voiceschanged', notify);
-      return () => window.speechSynthesis.removeEventListener('voiceschanged', notify);
-    },
-    () => {
-      if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined')
-        return false;
-      const language = (
-        document.getElementById('main')?.lang ||
-        document.documentElement.lang ||
-        'en'
-      )
-        .slice(0, 2)
-        .toLowerCase();
-      const voices = window.speechSynthesis.getVoices();
-      return voices.length === 0
-        ? language === 'en'
-        : voices.some((voice) => voice.lang.toLowerCase().startsWith(language));
-    },
-    () => false,
-  );
-  const [speaking, setSpeaking] = useState(false);
-  useEffect(() => () => window.speechSynthesis?.cancel(), []);
-  function toggle() {
-    const synth = window.speechSynthesis;
-    if (speaking) {
-      synth.cancel();
-      setSpeaking(false);
-      return;
-    }
-    const main = document.getElementById('main');
-    const text = main?.innerText.trim();
-    if (!text) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = main?.lang || document.documentElement.lang || 'en';
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    synth.cancel();
-    synth.speak(utterance);
-    setSpeaking(true);
-  }
-  return { supported, speaking, toggle };
+  return useListenControl();
 }
 
 function SignOutRow({ label }: { label: string }) {
