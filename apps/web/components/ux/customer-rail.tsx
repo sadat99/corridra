@@ -22,6 +22,7 @@ import { CorridraIcon } from '../corridra-icon';
 import { OperatorIcon } from '../operator-icon';
 import { customerGroupHere, newRequestHref } from '../../lib/ux/customer-navigation';
 import { useWorkspaces } from './customer-bar';
+import { TopBarTools } from './top-bar';
 import { activeWorkspaces } from '../../lib/workspace-choice';
 import {
   journeyCountText,
@@ -271,7 +272,15 @@ export function CustomerSideNav({
 }
 
 export function CustomerRailTop() {
-  return <NewRequestLink />;
+  return (
+    <>
+      {/* Under 360 px the header has no room for Listen and the language code, so they open the drawer (UI/UX.v4 top bar). */}
+      <div className="ux-drawer-topbar">
+        <TopBarTools variant="drawer" />
+      </div>
+      <NewRequestLink />
+    </>
+  );
 }
 
 /**

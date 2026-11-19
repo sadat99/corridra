@@ -222,6 +222,9 @@ async function visibleHeader(page: Page) {
       help: !!root.querySelector('.ux-util-help') && shown(root.querySelector('.ux-util-help')!),
       title:
         !!root.querySelector('.ux-pocket-title') && shown(root.querySelector('.ux-pocket-title')!),
+      // Listen and the language code, the top bar (UI/UX.v4, owner option 1a): in the bar from 360 px.
+      topBar:
+        !!root.querySelector('.ux-bar-topbar') && shown(root.querySelector('.ux-bar-topbar')!),
       inbox: !!root.querySelector('.ux-bar-inbox') && shown(root.querySelector('.ux-bar-inbox')!),
       account:
         !!root.querySelector('.ux-util-avatar') && shown(root.querySelector('.ux-util-avatar')!),
@@ -270,7 +273,8 @@ test.describe('phone width, switch on', () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         width,
       );
-      // The header keeps the menu or title, the inbox and the account menu, and nothing else.
+      // The header keeps the menu, Listen and the language code (from 360 px; under it they are in the drawer), the
+      // page title where it has room (from 480 px), the inbox and the account menu, and nothing else.
       const shown = await visibleHeader(page);
       expect(shown).toMatchObject({
         brand: false,
@@ -278,13 +282,25 @@ test.describe('phone width, switch on', () => {
         newRequest: false,
         language: false,
         help: false,
-        title: true,
+        title: width >= 480,
+        topBar: width >= 360,
         inbox: true,
         account: true,
       });
       await expect(page.locator('.ux-pocket-title')).toHaveText('Your move');
-      // One heading, untouched.
+      // One heading, untouched. Where the page title is not in the header (below 480 px) the heading is the visible
+      // orientation: it is on screen, directly under the header.
       await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+      if (width < 480) {
+        const h1 = page.getByRole('heading', { level: 1 });
+        await expect(h1).toBeVisible();
+        const [headerBox, headingBox] = await Promise.all([
+          header(page).boundingBox(),
+          h1.boundingBox(),
+        ]);
+        expect(headingBox!.y).toBeGreaterThanOrEqual(headerBox!.y + headerBox!.height - 1);
+        expect(headingBox!.y).toBeLessThan(844);
+      }
     });
   }
 
@@ -974,11 +990,22 @@ test.describe('scrolling', () => {
     expect(list.y).toBeGreaterThanOrEqual(0);
   });
 
-  test('adds no page length: the document is as tall as without it', async ({ page }) => {
+  test('adds no page length: everything under the header is as tall as without it', async ({
+    page,
+  }) => {
+    // The header differs on purpose (with the button it is the short one row; without it Listen and the language code make
+    // the old header wrap on a phone, UI/UX.v4 top bar), so the pin is on everything under the header: the page minus its
+    // header must be exactly as tall with the button as without it, so no content is cut or added.
+    const underHeader = () =>
+      page.evaluate(
+        () =>
+          document.documentElement.scrollHeight -
+          document.querySelector('header.ux-customer-header')!.getBoundingClientRect().height,
+      );
     await mount(page, '/account', '?signals=draft&rows=40');
-    const on = await page.evaluate(() => document.documentElement.scrollHeight);
+    const on = await underHeader();
     await mount(page, '/account', '?pocket=off&signals=draft&rows=40');
-    const off = await page.evaluate(() => document.documentElement.scrollHeight);
+    const off = await underHeader();
     expect(on).toBe(off);
   });
 

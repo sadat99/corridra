@@ -209,6 +209,16 @@
   body:has(.ux-pocket) .ux-customer-header .ux-bar-tools {
     flex: none;
   }
+  /* Listen and the language code are in the top bar now (UI/UX.v4, owner option 1a), so below 480 px the bar has no
+     room left for the page title; the page's own heading is the first thing under the header. From 480 px it stays. */
+  @media (max-width: 479.98px) {
+    body:has(.ux-pocket) .ux-customer-header .ux-pocket-title {
+      display: none;
+    }
+    body:has(.ux-pocket) .ux-customer-header .ux-bar-tools {
+      margin-inline-start: auto;
+    }
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .ux-pocket {
