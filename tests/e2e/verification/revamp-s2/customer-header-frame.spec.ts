@@ -14,7 +14,9 @@ test.beforeEach(async ({ context }, info) => {
 // task, so the one-line check is made at the other widths and 768 keeps the rule and place checks.
 for (const [width, start, oneLine] of [
   [320, 16, true],
-  [390, 16, true],
+  // 390: with the Pocket off, Listen and the language code (UI/UX.v4 top bar) no longer fit the brand, Search and New Request on
+  // one line, so the row may use a second line; with the Pocket on (production) the header is the short one-line header.
+  [390, 16, false],
   [640, 16, true],
   [768, 32, false],
   [1023, 32, true],
@@ -52,7 +54,9 @@ for (const [width, start, oneLine] of [
     expect(m.menu.left).toBe(start);
     expect(width - m.tools.right).toBeCloseTo(start, 0);
     // One line, no second row, no sideways scroll.
-    if (oneLine) expect(new Set(m.tops.filter((top) => top < 200)).size).toBe(1);
+    const rows = new Set(m.tops.filter((top) => top < 200)).size;
+    if (oneLine) expect(rows).toBe(1);
+    else expect(rows).toBeLessThanOrEqual(2);
     expect(m.scrollWidth).toBeLessThanOrEqual(width);
     // The mark is whole: its box is the artwork's shape (the brand file's 533 by 511), inside the window, clear of the menu.
     expect(m.mark.left).toBeGreaterThanOrEqual(m.menu.right);
