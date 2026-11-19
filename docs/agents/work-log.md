@@ -4650,3 +4650,13 @@ Preserved: closed real-operation gates; UI/UX.v4 legacy and superseded rows; nat
 Next action: build Wave 2 unit 04 Your Move behind its switch, class B, measuring the chosen sizes per PR; the Guardian still owes the combined chosen-sizes table for units 05 to 07 and names for the five operator groups; robots.txt and sitemap unit; PR 573 test.
 
 Tested head: 00f77ff base (documentation only, uncommitted in the working tree).
+
+### 19 November 2026: W1-A2 follow-up, one shared Listen across the app, Builder W1-A, Guardian G30
+
+Request: Guardian G30, from the Codex P2 on PR 571: `useListenControl` (top bar, dock) and `useListen` (account, Help and drawer menus) each kept their own `speaking` state over the same speech synthesizer, so a reading started from the account menu left the header Listen button at "Listen" and clicking it restarted the reading. Branch `claude/w1a2-listen-store` from main 626d2f8.
+
+Changed: new `apps/web/lib/ux/listen-store.ts` holds the one shared state (speaking, start, stop, the page and language watcher, and the support check) and `useListenControl` and `useListen` both read it, so a reading started anywhere shows as speaking everywhere and any control stops it. A reading still stops when the page or its language changes; an older reading ending after a newer one started no longer switches the newer one off. No visible words, layout or styles changed. `useListen` no longer cancels speech when its menu unmounts, because the store stops it on a page change.
+
+Spec: `tests/operator/ux-language-trigger-shape.spec.ts` gains "Listen state is shared between the header button and the account menu at 390 px" (stubbed speech): started from the account menu the header button flips to Stop Reading and back; started from the header the account menu row shows Stop Reading and stops it. Proof: red on main's code (header stayed pressed false), green with the store; the whole file passes (77).
+
+Local, fast checks only as G30 asked (CI is the proof): format:check, lint, typecheck, test:docs. Not run locally: the full suites. Next: CI on the pushed head.

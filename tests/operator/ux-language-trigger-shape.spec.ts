@@ -483,3 +483,54 @@ for (const width of [320, 390])
     }
     await expect(bar.locator('button[aria-haspopup="dialog"]')).toContainText('AR');
   });
+
+// One Listen for the whole app: a reading started from the account menu shows as speaking on the header button, and
+// the header button stops it; a reading started from the header shows as speaking in the account menu. The speech
+// synthesizer is stubbed so a reading stays running (headless Chromium has no voice that would keep it going).
+// The account menu carries Listen on phones (from 640 px it sits in the Help menu), the width the review named.
+for (const width of [390])
+  test(`Listen state is shared between the header button and the account menu at ${width} px`, async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(window.speechSynthesis, 'getVoices', {
+        configurable: true,
+        value: () => [{ lang: 'en-US' }],
+      });
+      window.speechSynthesis.speak = () => undefined;
+      window.speechSynthesis.cancel = () => undefined;
+    });
+    await open(page, 'customer', width, false);
+    const header = page.locator('header .ux-bar-topbar').getByRole('button', {
+      name: /^(Listen to This Page|Stop Reading)$/,
+    });
+    const account = page.getByRole('button', { name: 'Account menu', exact: true });
+    const menuListen = page.getByRole('menuitemcheckbox', {
+      name: /^(Listen to This Page|Stop Reading)$/,
+    });
+    await expect(header).toHaveAttribute('aria-pressed', 'false');
+
+    // Started from the account menu: the header button flips to its stop state.
+    await account.click();
+    await expect(menuListen).toHaveAttribute('aria-checked', 'false');
+    await menuListen.click();
+    await expect(header).toHaveAttribute('aria-pressed', 'true');
+    await expect(header).toHaveAccessibleName('Stop Reading');
+
+    // The header button stops it, and the account menu agrees.
+    await header.click();
+    await expect(header).toHaveAttribute('aria-pressed', 'false');
+    await expect(header).toHaveAccessibleName('Listen to This Page');
+    await account.click();
+    await expect(menuListen).toHaveAttribute('aria-checked', 'false');
+    await page.keyboard.press('Escape');
+
+    // Started from the header: the account menu shows the stop state, and its row stops the reading.
+    await header.click();
+    await expect(header).toHaveAttribute('aria-pressed', 'true');
+    await account.click();
+    await expect(menuListen).toHaveAttribute('aria-checked', 'true');
+    await expect(menuListen).toHaveText('Stop Reading');
+    await menuListen.click();
+    await expect(header).toHaveAttribute('aria-pressed', 'false');
+  });
