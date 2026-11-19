@@ -300,9 +300,14 @@ describe('main content keeps its own language', () => {
     expect(open).toContain('dir="ltr"');
   });
   it('Listen takes its language from the main region, not the chrome around it', () => {
-    const text = readFileSync(resolve(root, 'apps/web/components/corner-dock.tsx'), 'utf8');
-    expect(text).toContain("document.getElementById('main')?.lang");
-    expect(text).not.toMatch(/utterance\.lang = document\.documentElement\.lang/);
+    // The reading logic lives in the shared Listen store; the dock, the top bar and the menus only call it.
+    const store = readFileSync(resolve(root, 'apps/web/lib/ux/listen-store.ts'), 'utf8');
+    expect(store).toContain("document.getElementById('main')?.lang");
+    expect(store).toContain('utterance.lang = contentLanguage()');
+    expect(store).not.toMatch(/utterance\.lang = document\.documentElement\.lang/);
+    const dock = readFileSync(resolve(root, 'apps/web/components/corner-dock.tsx'), 'utf8');
+    expect(dock).toContain("from '../lib/ux/listen-store'");
+    expect(dock).not.toMatch(/utterance\.lang = document\.documentElement\.lang/);
   });
 });
 
