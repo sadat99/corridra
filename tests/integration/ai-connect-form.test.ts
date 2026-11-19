@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, test } from 'vitest';
 import { connectionCommand, guidedConnection } from '../../packages/intelligence/src/connect-form';
 import { modelPolicy, type ModelPolicy } from '../../packages/intelligence/src/index';
-import { SdkInferenceAdapter } from '../../packages/intelligence/src/adapters';
+import { adapterSecretRef, SdkInferenceAdapter } from '../../packages/intelligence/src/adapters';
 import { taskIds } from '../../packages/intelligence/src/registry';
 
 // ADR-089. The guided command is a strict schema over the same model policy command the developer path accepts.
@@ -99,6 +99,18 @@ describe('guided connection, accepted', () => {
         connectionCommand(guidedConnection.parse({ ...valid(), adapter }), server()).policy
           .secretRef,
       ).toBe(ref);
+  });
+  test('the provider to key name mapping cannot be changed by a caller', () => {
+    expect(Object.isFrozen(adapterSecretRef)).toBe(true);
+    // Test files are ES modules, so strict mode makes a write to a frozen object throw.
+    expect(() => {
+      (adapterSecretRef as Record<string, string>).openai = 'CORRIDRA_OTHER_KEY';
+    }).toThrow(TypeError);
+    expect(adapterSecretRef.openai).toBe('CORRIDRA_OPENAI_API_KEY');
+    expect(
+      connectionCommand(guidedConnection.parse({ ...valid(), adapter: 'openai' }), server()).policy
+        .secretRef,
+    ).toBe('CORRIDRA_OPENAI_API_KEY');
   });
 });
 
