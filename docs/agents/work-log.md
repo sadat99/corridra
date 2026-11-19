@@ -4576,6 +4576,7 @@ Pinned hash: the guard_ai definition hash 6b4f74d1...8e1b was computed on a fixt
 Tests: tests/integration/ai-model-policy-real-install.test.ts, ai-connect-form.test.ts, ai-connect.test.ts (real and sample workspace authority, step-up, denial, recovery, part4_enabled and config_version unchanged, spy adapter never called, ai_run, attempt, result and completion still refused in a real workspace, EU resolution) and a new case in intelligence-network.test.ts (an EU policy authorizes a run only when the source rights review lists all 27 countries; the provider adapter ready check is a subset test too).
 
 Not done here: the route 404 while the switch is off is proved with the operator suite in PR 2 (the route needs the full app environment); the installer run needs the owner's approval after merge (`field_modules_action = ai_model_policy_real`, `apply = yes`).
+
 ### 19 November 2026: W1-E How it works, /how-it-works (Builder W1-E, Sonnet, Class B, draft PR)
 
 Request: build the approved UI spec for /how-it-works (UI/UX.v4, presentation only). Owner decisions: keep the phase tabs, add no switch. Branch `claude/w1e-how-it-works` from main 1f5c415.
