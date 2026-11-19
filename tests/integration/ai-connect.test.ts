@@ -7,6 +7,7 @@ import { AccessService } from '../../packages/auth/src/access';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateAiModelPolicyReal } from '../../packages/db/src/ai-model-policy-real-migrate';
 import { IntelligenceService } from '../../packages/intelligence/src/service';
+import { connectionCommand, guidedConnection } from '../../packages/intelligence/src/connect-form';
 import type { InferenceAdapter } from '../../packages/intelligence/src/adapters';
 
 // ADR-089, on the database. The guided connection writes the existing model policy row; real workspaces may hold one once the
@@ -127,6 +128,45 @@ async function toReal() {
   vi.stubEnv('CORRIDRA_REAL_USE_ENABLED', 'true');
   purposeOf = 'commercial_qualification';
 }
+// A direct runtime insert of a complete, valid policy row (the developer path), so a refusal is about who and where only.
+function rawPolicy(
+  ctx: ReturnType<typeof rawCtx>,
+  tenant: string,
+  key: string,
+  sources: { terms: string; evaluation: string },
+) {
+  const c = connectionCommand(guidedConnection.parse(form(sources.terms, sources.evaluation)), {
+    id: randomUUID(),
+    version: 1,
+    processingLocations: ['DE'],
+    effectiveFrom: new Date().toISOString(),
+  });
+  return rawContext(
+    f.runtime,
+    ctx,
+    `INSERT INTO app.ai_model_policy(id,tenant_id,key,version,configuration,terms_source_id,daily_budget_minor,effective_from,created_by,reason) VALUES($1,$2,$3,1,$4::jsonb,$5,$6,now(),app.actor_id(),$7) RETURNING id`,
+    [
+      c.policy.id,
+      tenant,
+      key,
+      JSON.stringify(c.policy),
+      c.termsSourceId,
+      c.dailyBudgetMinor,
+      c.reason,
+    ],
+  );
+}
+// The real-use configuration is immutable for the application; only the database owner can change it, as here.
+async function realUse(enabled: boolean) {
+  await f.owner.query('ALTER TABLE customer_private.real_use_configuration DISABLE TRIGGER USER');
+  try {
+    await f.owner.query('UPDATE customer_private.real_use_configuration SET enabled=$1', [enabled]);
+  } finally {
+    await f.owner.query('ALTER TABLE customer_private.real_use_configuration ENABLE TRIGGER USER');
+  }
+}
+const allPolicies = async () =>
+  (await f.owner.query('SELECT count(*)::int n FROM app.ai_model_policy')).rows[0].n;
 const stale = (user: { sessionId: string }) =>
   f.owner.query(
     "UPDATE identity.assurance SET verified_at=now()-interval '10 minutes' WHERE session_id=$1",
@@ -155,6 +195,7 @@ describe('sample workspace before the module is installed', () => {
       moduleInstalled: false,
       realWorkspace: false,
       canConnect: true,
+      blockedReason: null,
       locationLimit: 20,
     });
     expect(o.eu.codes).toEqual([...EU].sort());
@@ -163,13 +204,19 @@ describe('sample workspace before the module is installed', () => {
     const [t, e] = [await source(), await source()];
     await expect(
       ai.connect(ownerCtx(), form(t, e, { processingScope: { kind: 'market', key: 'EU' } })),
-    ).rejects.toMatchObject({ status: 409 });
+    ).rejects.toMatchObject({
+      status: 409,
+      message: 'EU member countries are not available yet. Choose the countries one by one.',
+    });
     await expect(
       ai.connect(
         ownerCtx(),
         form(t, e, { processingScope: { kind: 'countries', codes: EU.slice(0, 21) } }),
       ),
-    ).rejects.toMatchObject({ status: 409 });
+    ).rejects.toMatchObject({
+      status: 409,
+      message: 'Choose at most 20 countries until the AI connection module is installed.',
+    });
     expect(await policies()).toHaveLength(0);
   });
   test('an owner with a fresh check connects: version 1, sixteen keys, one event, server secret name', async () => {
@@ -216,6 +263,42 @@ describe('sample workspace before the module is installed', () => {
     const r = await ai.connect(f.users.reviewer.ctx, form(t, e, { adapter: 'openai' }));
     expect(r.version).toBe(1);
   });
+  test('only the latest version of a key is offered and accepted as a fallback', async () => {
+    const [t, e] = [await source(), await source()];
+    const versions = (await policies()).filter((p) => p.key === 'connect-anthropic');
+    expect(versions.map((p) => p.version)).toEqual([1, 2]);
+    const [v1, v2] = versions.map((p) => p.id as string);
+    const offered = (await ai.connectOptions(ownerCtx())).fallbackCandidates.map(
+      (p: { id: string }) => p.id,
+    );
+    expect(offered).toContain(v2);
+    expect(offered).not.toContain(v1);
+    const count = (await policies()).length;
+    const refused = {
+      status: 409,
+      message:
+        'The fallback connection is not a current connection. Refresh and choose a current fallback, or save without one.',
+    };
+    // v1 passes the database guard on insert, but app.ai_run_authorized only authorizes the latest version of a key.
+    await expect(
+      ai.connect(
+        ownerCtx(),
+        form(t, e, { adapter: 'openai', expectedVersion: 1, fallbackPolicyId: v1 }),
+      ),
+    ).rejects.toMatchObject(refused);
+    // A fallback of the key being saved stops being the latest as soon as the new version is written.
+    await expect(
+      ai.connect(ownerCtx(), form(t, e, { expectedVersion: 2, fallbackPolicyId: v2 })),
+    ).rejects.toMatchObject(refused);
+    expect((await policies()).length).toBe(count);
+    const r = await ai.connect(
+      ownerCtx(),
+      form(t, e, { adapter: 'openai', expectedVersion: 1, fallbackPolicyId: v2 }),
+    );
+    expect(r.version).toBe(2);
+    const saved = (await policies()).find((p) => p.id === r.id)!;
+    expect(saved.configuration.fallbackPolicyIds).toEqual([v2]);
+  });
   test('a stale authenticator check gets STEP_UP_REQUIRED and nothing is written', async () => {
     const [t, e] = [await source(), await source()];
     const count = (await policies()).length;
@@ -254,8 +337,16 @@ describe('real workspace', () => {
     await toReal();
     [t, e] = [await source(), await source()];
     const o = await ai.connectOptions(ownerCtx());
-    expect(o).toMatchObject({ moduleInstalled: false, realWorkspace: true, canConnect: false });
-    await expect(ai.connect(ownerCtx(), form(t, e))).rejects.toMatchObject({ status: 403 });
+    expect(o).toMatchObject({
+      moduleInstalled: false,
+      realWorkspace: true,
+      canConnect: false,
+      blockedReason: 'MODULE_NOT_INSTALLED',
+    });
+    await expect(ai.connect(ownerCtx(), form(t, e))).rejects.toMatchObject({
+      status: 403,
+      code: 'MODULE_NOT_INSTALLED',
+    });
     // The developer JSON path is refused by the database in the same way.
     await expect(
       rawContext(
@@ -273,6 +364,7 @@ describe('real workspace', () => {
       moduleInstalled: true,
       realWorkspace: true,
       canConnect: true,
+      blockedReason: null,
       locationLimit: 30,
     });
     const before = await gates();
@@ -293,6 +385,53 @@ describe('real workspace', () => {
     );
     expect(second.version).toBe(2);
     expect(await gates()).toEqual(before);
+  });
+  test('with real use switched off, options and connect say so plainly and the database refuses a direct insert', async () => {
+    const count = await allPolicies();
+    await realUse(false);
+    try {
+      expect(await ai.connectOptions(ownerCtx())).toMatchObject({
+        moduleInstalled: true,
+        realWorkspace: true,
+        canConnect: false,
+        blockedReason: 'REAL_USE_OFF',
+      });
+      await expect(
+        ai.connect(ownerCtx(), form(t, e, { adapter: 'google', expectedVersion: 2 })),
+      ).rejects.toMatchObject({
+        status: 403,
+        code: 'REAL_USE_OFF',
+        message:
+          'Connecting an AI provider is not available while real use is switched off for this workspace. Ask the owner to switch real use on.',
+      });
+      await expect(
+        rawPolicy(rawCtx(), f.tenantA, 'raw-real-use', { terms: t, evaluation: e }),
+      ).rejects.toThrow('Scoped synthetic actor required');
+      expect(await allPolicies()).toBe(count);
+    } finally {
+      await realUse(true);
+    }
+    // The same direct insert is accepted with real use on, so the refusal above is the switch and nothing else.
+    await rawPolicy(rawCtx(), f.tenantA, 'raw-real-use', { terms: t, evaluation: e });
+    expect(await allPolicies()).toBe(count + 1);
+  });
+  test('after the install a policy insert into another workspace is refused by the database', async () => {
+    const count = await allPolicies();
+    const sources = { terms: t, evaluation: e };
+    // A member of the other workspace, writing into this one.
+    await expect(
+      rawPolicy(
+        { ...f.users.other.ctx, tenantId: f.tenantA, purpose: purposeOf },
+        f.tenantA,
+        'raw-cross',
+        sources,
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+    // An owner of this workspace, writing a row for the other one.
+    await expect(rawPolicy(rawCtx(), f.tenantB, 'raw-cross', sources)).rejects.toMatchObject({
+      code: '42501',
+    });
+    expect(await allPolicies()).toBe(count);
   });
   test('operator, reviewer-turned-admin rules: operator and viewer are denied; stale owner is stepped up', async () => {
     const count = (await policies()).length;
@@ -320,7 +459,7 @@ describe('real workspace', () => {
       ),
     ).rejects.toMatchObject({ code: '42501' });
   });
-  test('an ai_run, attempt, result and completion are still refused in a real workspace', async () => {
+  test('an ai_run, attempt, result, completion and review are still refused in a real workspace by the opening check', async () => {
     const id = randomUUID();
     const rows: [string, unknown[]][] = [
       [
@@ -337,6 +476,11 @@ describe('real workspace', () => {
       ],
       [
         "INSERT INTO app.ai_completion(id,tenant_id,run_id,status,reason_code,created_by) VALUES($1,$2,$1,'MANUAL_REVIEW','PROVIDER_OR_BUDGET_UNAVAILABLE',app.actor_id())",
+        [id, f.tenantA],
+      ],
+      // The review branch has a later check ('Current source and policy required for review'); the opening check comes first.
+      [
+        "INSERT INTO app.ai_review(id,tenant_id,result_id,decision,reason,created_by) VALUES($1,$2,$1,'REJECT','raw review attempt',app.actor_id())",
         [id, f.tenantA],
       ],
     ];
@@ -384,7 +528,10 @@ describe('real workspace', () => {
             processingScope: { kind: 'market', key: 'EU' },
           }),
         ),
-      ).rejects.toMatchObject({ status: 409 });
+      ).rejects.toMatchObject({
+        status: 409,
+        message: 'The EU member list could not be used. Choose the countries one by one.',
+      });
     } finally {
       await f.owner.query(
         "UPDATE app.market_member SET effective_until=NULL,effective_from=DATE '2026-10-12' WHERE market_key='EU'",
@@ -392,17 +539,6 @@ describe('real workspace', () => {
       await f.owner.query('ALTER TABLE app.market_member ENABLE TRIGGER USER');
     }
   });
-  test('an EU policy authorizes nothing until a source rights review lists every country', async () => {
-    const eu = (await policies()).filter((p) => p.key === 'connect-google').pop()!;
-    const run = (policy: string) =>
-      rawContext(f.runtime, rawCtx(), 'SELECT app.ai_run_authorized($1,$2,$3,$4,$5::jsonb,$6) ok', [
-        f.tenantA,
-        randomUUID(),
-        policy,
-        f.users.owner.id,
-        JSON.stringify({ task: 'translation', schemaVersion: 1, claimIds: [randomUUID()] }),
-        'translation',
-      ]);
-    expect((await run(eu.id)).rows[0].ok).toBe(false);
-  });
+  // Whether an EU policy authorizes a run is proved with a real mission, claim and rights review (false until the review lists
+  // every member country, then true) in intelligence-network.test.ts, 'a guided EU policy authorizes a run only when ...'.
 });

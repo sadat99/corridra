@@ -87,6 +87,28 @@ async function isRealWorkspace(t: TenantTransaction) {
     .rows[0];
   return !row || row.synthetic !== true;
 }
+// ADR-089. Why a guided connection cannot be made, read as app.guard_ai() reads it: a real workspace needs the module and
+// real use switched on (app.real_use_allowed). The database still enforces both; this only answers plainly before the insert.
+type ConnectBlock = 'MODULE_NOT_INSTALLED' | 'REAL_USE_OFF';
+const connectBlockMessage: Record<ConnectBlock, string> = {
+  MODULE_NOT_INSTALLED:
+    'Connecting an AI provider is not available for this workspace yet. Ask the owner to install the AI connection module.',
+  REAL_USE_OFF:
+    'Connecting an AI provider is not available while real use is switched off for this workspace. Ask the owner to switch real use on.',
+};
+async function connectBlock(
+  t: TenantTransaction,
+  markerInstalled: boolean,
+): Promise<ConnectBlock | null> {
+  if (!(await isRealWorkspace(t))) return null;
+  if (!markerInstalled) return 'MODULE_NOT_INSTALLED';
+  // The module installs only over the real-use modules, so app.real_use_allowed exists whenever the marker does.
+  const allowed = await t.db.query('SELECT app.real_use_allowed($1) AS allowed', [t.tenantId]);
+  return allowed.rows[0].allowed === true ? null : 'REAL_USE_OFF';
+}
+// A policy a run can use as a fallback: current, in this workspace and the latest version of its key, the same test
+// app.ai_run_authorized applies. An older version of a key passes the guard on insert but never authorizes a run.
+const currentLatestPolicy = `p.tenant_id=$1 AND p.effective_from<=now() AND (p.configuration->>'effectiveUntil')::timestamptz>now() AND p.version=(SELECT max(version) FROM app.ai_model_policy latest WHERE latest.tenant_id=p.tenant_id AND latest.key=p.key AND latest.effective_from<=now())`;
 // The members of the EU market in force today, as stored. Only country codes are ever kept in a policy.
 async function euMembers(t: TenantTransaction) {
   const rows = (
@@ -117,6 +139,7 @@ export class IntelligenceService {
     return withTenant(this.pool, ctx, 'trust.write', async (t) => {
       const markerInstalled = await locationMarker(t);
       const real = await isRealWorkspace(t);
+      const blocked = await connectBlock(t, markerInstalled);
       const latest = (
         await t.db.query(
           `SELECT DISTINCT ON (key) key,id,version,configuration,configuration->>'adapter' AS adapter,configuration->>'model' AS model,configuration->>'effectiveUntil' AS "effectiveUntil",terms_source_id AS "termsSourceId",daily_budget_minor::text AS "dailyBudgetMinor" FROM app.ai_model_policy WHERE tenant_id=$1 ORDER BY key,version DESC LIMIT 50`,
@@ -125,7 +148,7 @@ export class IntelligenceService {
       ).rows;
       const candidates = (
         await t.db.query(
-          `SELECT id,key,version,configuration->>'adapter' AS adapter,configuration->>'model' AS model FROM app.ai_model_policy WHERE tenant_id=$1 AND effective_from<=now() AND (configuration->>'effectiveUntil')::timestamptz>now() ORDER BY created_at DESC LIMIT 50`,
+          `SELECT p.id,p.key,p.version,p.configuration->>'adapter' AS adapter,p.configuration->>'model' AS model FROM app.ai_model_policy p WHERE ${currentLatestPolicy} ORDER BY p.created_at DESC LIMIT 50`,
           [t.tenantId],
         )
       ).rows;
@@ -133,7 +156,8 @@ export class IntelligenceService {
       return {
         moduleInstalled: markerInstalled,
         realWorkspace: real,
-        canConnect: markerInstalled || !real,
+        canConnect: blocked === null,
+        blockedReason: blocked,
         locationLimit: markerInstalled ? connectLocationLimit : legacyLocationLimit,
         latest,
         fallbackCandidates: candidates,
@@ -146,11 +170,8 @@ export class IntelligenceService {
     const v = guidedConnection.parse(raw);
     return withTenant(this.pool, ctx, 'opportunities.accounting', async (t) => {
       const markerInstalled = await locationMarker(t);
-      if (!markerInstalled && (await isRealWorkspace(t)))
-        throw new DomainError(
-          'Connecting an AI provider is not available for this workspace yet. Ask the owner to install the AI connection module.',
-          403,
-        );
+      const blocked = await connectBlock(t, markerInstalled);
+      if (blocked) throw new DomainError(connectBlockMessage[blocked], 403, blocked);
       const key = `connect-${v.adapter}`;
       const latest = Number(
         (
@@ -165,6 +186,18 @@ export class IntelligenceService {
           'This connection changed since you opened it. Refresh to see the latest version, then try again.',
           409,
         );
+      // The new version replaces the latest of its own key, so a fallback of the same key would stop being current at once.
+      if (v.fallbackPolicyId) {
+        const fallback = await t.db.query(
+          `SELECT p.key FROM app.ai_model_policy p WHERE ${currentLatestPolicy} AND p.id=$2`,
+          [t.tenantId, v.fallbackPolicyId],
+        );
+        if (!fallback.rowCount || fallback.rows[0].key === key)
+          throw new DomainError(
+            'The fallback connection is not a current connection. Refresh and choose a current fallback, or save without one.',
+            409,
+          );
+      }
       let processingLocations: string[];
       if (v.processingScope.kind === 'market') {
         if (!markerInstalled)
