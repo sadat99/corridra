@@ -223,23 +223,59 @@ test('CX-03 the avatar menu never offers a link that does not open', async ({ pa
   void request;
 });
 
-test('CX-03 the language menu offers the languages in their own names and the choice applies', async ({
+test('CX-03 the language control is the top bar sheet: the languages in their own script with their codes, and the choice applies', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  const trigger = header(page).getByRole('button', { name: 'Language' });
+  const trigger = header(page).locator('.ux-bar-topbar button[aria-haspopup="dialog"]');
   await expect(trigger).toBeVisible();
+  await expect(trigger).toContainText('EN');
   expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
   await trigger.click();
-  const menu = page.getByRole('menu', { name: 'Language' });
-  await expect(menu.getByRole('menuitemradio', { name: 'English' })).toHaveAttribute(
-    'aria-checked',
+  const sheet = page.getByRole('dialog', { name: 'Language' });
+  await expect(sheet.getByRole('button', { name: /EN\s*English/ })).toHaveAttribute(
+    'aria-pressed',
     'true',
   );
-  await expect(menu.getByRole('menuitemradio', { name: 'বাংলা' })).toBeVisible();
-  await expect(menu.getByRole('menuitemradio', { name: 'Español' })).toBeVisible();
-  await expect(menu.getByRole('menuitemradio', { name: '中文' })).toBeVisible();
+  await expect(sheet.getByRole('button', { name: /BN\s*বাংলা/ })).toBeVisible();
+  await expect(sheet.getByRole('button', { name: /ES\s*Español/ })).toBeVisible();
+  await expect(sheet.getByRole('button', { name: /ZH\s*中文/ })).toBeVisible();
+  await sheet.getByRole('button', { name: /ES\s*Español/ }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'es');
+  await expect(trigger).toContainText('ES');
+});
+
+test('W1-A2 Listen and the language code are in the customer header from 360 px, and in the drawer under it', async ({
+  page,
+}) => {
+  const barTools = header(page).locator('.ux-bar-topbar');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/account');
+  await expect(barTools.getByRole('button', { name: /Language/ })).toBeVisible();
+  await expect(barTools.getByRole('button', { name: 'Listen to This Page' })).toBeVisible();
+  for (const button of await barTools.getByRole('button').all())
+    expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+  ).toBeLessThanOrEqual(0);
+
+  await page.setViewportSize({ width: 320, height: 800 });
+  await expect(barTools).toBeHidden();
+  await page.locator('[data-leftnav-opener]').click();
+  const drawer = page.getByRole('dialog', { name: 'Customer navigation' });
+  const language = drawer.getByRole('button', { name: /Language/ });
+  await expect(language).toBeVisible();
+  // Listen too, where the browser can read the page aloud (it can here).
+  const listen = drawer.getByRole('button', { name: 'Listen to This Page' });
+  await expect(listen).toBeVisible();
+  await expect(listen).toContainText('Listen');
+  // They are a group of their own above the choices, not choices themselves.
+  const first = await drawer.getByRole('link', { name: 'New Request' }).boundingBox();
+  expect((await language.boundingBox())!.y).toBeLessThan(first!.y);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+  ).toBeLessThanOrEqual(0);
 });
 
 test('CX-02 Help and accessibility: real things are links or switches, the rest is plain text tagged Coming soon', async ({
@@ -857,13 +893,15 @@ test('CX-02 every destination the customer menus reached before is still reachab
   // tests/integration/revamp-nav-customer-model.test.ts); this server has that switch off.
 });
 
-test('CX-02 on a phone the language and help menus are inside the avatar menu, so nothing is lost when the row is narrow', async ({
+test('CX-02 on a phone the language row and Help are inside the avatar menu, so nothing is lost when the row is narrow', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/account');
-  await expect(header(page).getByRole('button', { name: 'Language' })).toBeHidden();
+  // The old language menu is folded into the avatar menu (below), while the top bar shows the language code, which
+  // opens the sheet (UI/UX.v4, owner option 1a). Help is only in the avatar menu on a phone.
   await expect(header(page).getByRole('button', { name: 'Help and accessibility' })).toBeHidden();
+  await expect(header(page).locator('.ux-bar-topbar button[aria-haspopup="dialog"]')).toBeVisible();
   await header(page).getByRole('button', { name: 'Account menu' }).click();
   const menu = page.getByRole('menu', { name: 'Account menu' });
   await menu.getByRole('menuitem', { name: /^Language/ }).click();

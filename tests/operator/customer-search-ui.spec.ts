@@ -1452,24 +1452,39 @@ test.describe('header geometry (M4)', () => {
     }
   }
 
-  test('768 px with 200% text: Search and the five tools share one line (the header stays 225 px)', async ({
+  // Listen and the language code joined the bar (UI/UX.v4 top bar, owner option 1a), so at 768 px with 200% text the
+  // row cannot hold one line any more. It wraps onto a second line instead of running off the screen: every control
+  // stays inside the window, and the header grows by one control row at most (225 px before; two rows measure 329 px).
+  test('768 px with 200% text: Search and the tools stay inside the window on at most two lines', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 768, height: 800 });
     await mount(page);
     await page.addStyleTag({ content: 'html{font-size:200% !important}' });
     await page.waitForTimeout(250);
-    const centres = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.ux-bar-tools > *'))
-        .filter((node) => node.getBoundingClientRect().width > 0)
-        .map((node) => {
-          const rect = node.getBoundingClientRect();
-          return (rect.top + rect.bottom) / 2;
-        }),
+    const boxes = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.ux-bar-tools > *, .ux-bar-topbar > * > *'))
+        .map((node) => node.getBoundingClientRect())
+        .filter((rect) => rect.width > 0 && rect.height > 0)
+        .map((rect) => ({
+          left: rect.left,
+          right: rect.right,
+          centre: (rect.top + rect.bottom) / 2,
+        })),
     );
-    expect(centres).toHaveLength(6);
-    expect(Math.max(...centres) - Math.min(...centres)).toBeLessThan(44);
-    expect((await headerNumbers(page)).header.height).toBeLessThanOrEqual(225);
+    expect(boxes.length).toBeGreaterThanOrEqual(7);
+    for (const rect of boxes) {
+      expect(rect.left).toBeGreaterThanOrEqual(-0.5);
+      expect(rect.right).toBeLessThanOrEqual(768.5);
+    }
+    // At most two lines: distinct row centres (controls within 20 px of each other share a row).
+    const rows: number[] = [];
+    for (const centre of boxes.map((rect) => rect.centre).sort((a, b) => a - b))
+      if (!rows.some((row) => Math.abs(row - centre) < 20)) rows.push(centre);
+    expect(rows, 'rows of tools').toHaveLength(2);
+    // Measured: two rows of tools at 200% text make the header 329 px high.
+    const HEIGHT_TWO_ROWS = 329;
+    expect((await headerNumbers(page)).header.height).toBeLessThanOrEqual(HEIGHT_TWO_ROWS);
   });
 
   test('1024 and wider: the field starts at the page column and the other tools stay at the right edge', async ({
