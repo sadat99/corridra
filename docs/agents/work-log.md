@@ -4565,6 +4565,14 @@ Changed: `apps/web/app/globals.css` only (the `.corner-dock` opacity and transfo
 
 Proof on this exact code (the same CSS as the tested tree; this commit adds only KI-65 and this entry): the full operator run on a fresh database failed `workspace.spec.ts:1755` (axe color-contrast on `.dock-help`), `y-ux05-governance` and `zzz-v3-founder` before the change, and passed 2039, exit 0, after it; pnpm test:e2e 768 passed; pnpm test:ux 604 passed with only the known `readability /fairs` failing; pnpm test:verification (all widths in one run) 650 passed, exit 0; lint, format, typecheck, build, security-scan, pnpm test exit 0. `pnpm test:integration`: 4 failures that need the Docker scanner or a backup tool this container lacks (adapters ClamAV, blob real scan, foundations backup restore, scan-bypass), as in KI-15; 6717 passed. The customer header on the top bar (the rest of W1-A2) is not built yet.
 
+### 19 November 2026: W1-E How it works, /how-it-works (Builder W1-E, Sonnet, Class B, draft PR)
+
+Request: build the approved UI spec for /how-it-works (UI/UX.v4, presentation only). Owner decisions: keep the phase tabs, add no switch. Branch `claude/w1e-how-it-works` from main 1f5c415.
+
+Built: each step shows progress as words in one sentence-case Geist 14 px secondary line ("Step 3 of 6: Compare · Next: Visit", last step "Step 6 of 6: Follow through" with no Next), replacing the mono capitals name line on this page only (the other `StepItem` branch keeps `guide-step-name`); step titles 18 px on a phone and 24 px from 1000 px; the hero label steps back to the muted token; the three Show More statements are serif lines separated by hairlines, no cards. No copy, catalog key, switch or class name was removed; the step line is English only like the text around it.
+
+Page length at 390 x 844 (footer included, Show More closed, production build with CORRIDRA_UX_FAIRS=true): before 2.623 and 2.654 screens (Before You Meet, Meet and Follow Up), after 2.610 and 2.642 (limit 3.0). At 1440 x 900: before 1.752 and 1.752, after 1.757 and 1.757 (limit 2.0). No baseline raised. Screenshots: docs/revamp/evidence/w1e-how-it-works/ (before and after, 390 and 1440, both tabs). New test: tests/browser/how-it-works-steps.spec.ts. The full suite results at the pushed head are in the pull request description.
+
 ### 19 November 2026: W1-A2 customer header on the top bar (Listen and the language code), Builder W1-A, Guardian G29
 
 Request: Guardian G29 (after PR 569 and 570 merged): the signed-in customer header gets the top-bar Listen and the language as icon plus code with the same sheet, and under 360 px they move into the drawer, per owner option 1a ("on every page"); pinned specs rewritten to equal or stricter checks; team and contributor headers stay. Branch `claude/w1a2-customer-bar` from main 1f5c415.
