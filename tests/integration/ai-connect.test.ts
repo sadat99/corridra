@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { changeMemberNow } from './change-member';
@@ -263,16 +264,35 @@ describe('sample workspace before the module is installed', () => {
     const r = await ai.connect(f.users.reviewer.ctx, form(t, e, { adapter: 'openai' }));
     expect(r.version).toBe(1);
   });
-  test('only the latest version of a key is offered and accepted as a fallback', async () => {
+  test('only the latest version of another key is offered and accepted as a fallback', async () => {
     const [t, e] = [await source(), await source()];
     const versions = (await policies()).filter((p) => p.key === 'connect-anthropic');
     expect(versions.map((p) => p.version)).toEqual([1, 2]);
     const [v1, v2] = versions.map((p) => p.id as string);
-    const offered = (await ai.connectOptions(ownerCtx())).fallbackCandidates.map(
-      (p: { id: string }) => p.id,
-    );
-    expect(offered).toContain(v2);
-    expect(offered).not.toContain(v1);
+    const offered = async (adapter?: string) => {
+      const o = await ai.connectOptions(ownerCtx(), adapter);
+      return {
+        fallbackFor: o.fallbackFor,
+        ids: o.fallbackCandidates.map((p: { id: string }) => p.id),
+        keys: o.fallbackCandidates.map((p: { key: string }) => p.key),
+      };
+    };
+    // No provider chosen yet: every current candidate comes back with its key, for the screen to filter.
+    const any = await offered();
+    expect(any.fallbackFor).toBeNull();
+    expect(any.ids).toContain(v2);
+    expect(any.ids).not.toContain(v1);
+    expect(any.keys).toContain('connect-anthropic');
+    // A connection is never offered as its own fallback; another provider is offered it.
+    const own = await offered('anthropic');
+    expect(own.fallbackFor).toBe('connect-anthropic');
+    expect(own.ids).not.toContain(v2);
+    expect(own.keys).not.toContain('connect-anthropic');
+    const other = await offered('openai');
+    expect(other.fallbackFor).toBe('connect-openai');
+    expect(other.ids).toContain(v2);
+    expect(other.ids).not.toContain(v1);
+    await expect(ai.connectOptions(ownerCtx(), 'mistral')).rejects.toBeInstanceOf(z.ZodError);
     const count = (await policies()).length;
     const refused = {
       status: 409,
@@ -289,7 +309,11 @@ describe('sample workspace before the module is installed', () => {
     // A fallback of the key being saved stops being the latest as soon as the new version is written.
     await expect(
       ai.connect(ownerCtx(), form(t, e, { expectedVersion: 2, fallbackPolicyId: v2 })),
-    ).rejects.toMatchObject(refused);
+    ).rejects.toMatchObject({
+      status: 409,
+      message:
+        'A connection cannot be its own fallback. Choose another connection or save without one.',
+    });
     expect((await policies()).length).toBe(count);
     const r = await ai.connect(
       ownerCtx(),

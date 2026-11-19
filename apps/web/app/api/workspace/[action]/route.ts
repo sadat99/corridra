@@ -41,7 +41,10 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         intelligence: () => s.intelligence.workspace(ctx),
         'ai-connect': () => {
           if (!uxSwitchOn('CORRIDRA_AI_CONNECT_FORM')) throw new DomainError('Not found', 404);
-          return s.intelligence.connectOptions(ctx);
+          return s.intelligence.connectOptions(
+            ctx,
+            new URL(request.url).searchParams.get('adapter') ?? undefined,
+          );
         },
         network: () => {
           const q = new URL(request.url).searchParams;

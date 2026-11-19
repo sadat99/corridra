@@ -2,11 +2,17 @@
 -- only for every table, 1 to 20 processing locations), drops the marker and removes the module's row from
 -- ai_model_policy_real_migrations.applied, so a later install applies the module again instead of skipping it. Rows already
 -- recorded stay (append-only); a policy with more than 20 countries stays readable and any run stays gated. Run only through a
--- further reviewed forward run, as one transaction (one query string, or psql --single-transaction).
+-- further reviewed forward run.
+-- The whole rollback is one statement (one DO block), so it is all or nothing however it is run: as one query string, under
+-- psql -f with or without --single-transaction, or inside a caller's transaction. It has no BEGIN or COMMIT of its own on
+-- purpose: in one query string a refusal after an explicit BEGIN leaves the session in an aborted transaction, and inside a
+-- caller's transaction an explicit COMMIT would end that transaction early. It first takes the migration lock the installer
+-- takes (pg_advisory_xact_lock(hashtext('corridra:migrations'))), held until the enclosing transaction ends.
 -- It refuses, changing nothing, unless app.guard_ai() is exactly the ADR-089 definition (the hash of pg_get_functiondef, taken
 -- the same way the install pins the 0026 definition) and the module's registry row is present, so it never overwrites a later
--- replacement.
+-- replacement. The restored definition below is byte for byte the 0026 one, run through EXECUTE.
 DO $guard$ DECLARE n integer; BEGIN
+ PERFORM pg_advisory_xact_lock(hashtext('corridra:migrations'));
  IF to_regprocedure('app.guard_ai()') IS NULL
   OR to_regclass('ai_model_policy_real_migrations.applied') IS NULL
   OR encode(sha256(convert_to(pg_get_functiondef('app.guard_ai()'::regprocedure),'UTF8')),'hex')<>'56f7f56c1971ecba9b42278a3889b7e12105741cb58882cd0e956100fe3b202e'
@@ -14,9 +20,7 @@ DO $guard$ DECLARE n integer; BEGIN
  DELETE FROM ai_model_policy_real_migrations.applied WHERE name='0001_real_workspace_model_policy.sql';
  GET DIAGNOSTICS n = ROW_COUNT;
  IF n<>1 THEN RAISE EXCEPTION 'AI model policy rollback refused: the module is not recorded as installed'; END IF;
-END $guard$;
-
-CREATE OR REPLACE FUNCTION app.guard_ai() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog AS $$
+ EXECUTE $restore$CREATE OR REPLACE FUNCTION app.guard_ai() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog AS $$
 DECLARE run app.ai_run; attempt app.ai_attempt; policy app.ai_model_policy; cfg jsonb; n integer;
 BEGIN
  IF NEW.created_at IS DISTINCT FROM now() THEN RAISE EXCEPTION 'Server-recorded AI timestamp required'; END IF;
@@ -56,6 +60,7 @@ BEGIN
   IF NOT coalesce(app.member_role(NEW.tenant_id) IN ('owner','admin','operator','reviewer') AND app.fresh_mfa(),false) OR NOT EXISTS(SELECT FROM app.ai_result WHERE tenant_id=NEW.tenant_id AND id=NEW.result_id AND status='SUCCEEDED') THEN RAISE EXCEPTION 'AI review authority required' USING ERRCODE='42501'; END IF;
  END IF;
  RETURN NEW;
-END $$;
-
-DROP FUNCTION IF EXISTS app.ai_model_policy_location_limit();
+END $$
+$restore$;
+ EXECUTE 'DROP FUNCTION IF EXISTS app.ai_model_policy_location_limit()';
+END $guard$;

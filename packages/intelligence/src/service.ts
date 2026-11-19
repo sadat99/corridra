@@ -16,7 +16,7 @@ import {
   type Source,
 } from './index';
 import { taskInput, registeredTask, taskId } from './registry';
-import { SdkInferenceAdapter, type InferenceAdapter } from './adapters';
+import { SdkInferenceAdapter, adapterId, type InferenceAdapter } from './adapters';
 import {
   connectionCommand,
   connectLocationLimit,
@@ -135,7 +135,12 @@ export class IntelligenceService {
     return withTenant(this.pool, ctx, 'opportunities.accounting', (t) => insertPolicy(t, v));
   }
   // ADR-089. What the guided Connect AI form needs to draw itself. Reads only; no secret and no key presence.
-  connectOptions(ctx: RequestContext) {
+  // A connection is never its own fallback, because saving it supersedes its own latest version. With an adapter, the
+  // fallback candidates leave out that adapter's connection key. Without one (no provider chosen yet), every current
+  // candidate is returned with its key, so the screen leaves out the key of the provider chosen later.
+  async connectOptions(ctx: RequestContext, rawAdapter?: unknown) {
+    const adapter = adapterId.optional().parse(rawAdapter);
+    const ownKey = adapter ? `connect-${adapter}` : null;
     return withTenant(this.pool, ctx, 'trust.write', async (t) => {
       const markerInstalled = await locationMarker(t);
       const real = await isRealWorkspace(t);
@@ -148,8 +153,8 @@ export class IntelligenceService {
       ).rows;
       const candidates = (
         await t.db.query(
-          `SELECT p.id,p.key,p.version,p.configuration->>'adapter' AS adapter,p.configuration->>'model' AS model FROM app.ai_model_policy p WHERE ${currentLatestPolicy} ORDER BY p.created_at DESC LIMIT 50`,
-          [t.tenantId],
+          `SELECT p.id,p.key,p.version,p.configuration->>'adapter' AS adapter,p.configuration->>'model' AS model FROM app.ai_model_policy p WHERE ${currentLatestPolicy} AND ($2::text IS NULL OR p.key<>$2) ORDER BY p.created_at DESC LIMIT 50`,
+          [t.tenantId, ownKey],
         )
       ).rows;
       const eu = await euMembers(t);
@@ -160,6 +165,7 @@ export class IntelligenceService {
         blockedReason: blocked,
         locationLimit: markerInstalled ? connectLocationLimit : legacyLocationLimit,
         latest,
+        fallbackFor: ownKey,
         fallbackCandidates: candidates,
         eu: { codes: eu.codes, recordedOn: eu.recordedOn },
       };
@@ -186,13 +192,18 @@ export class IntelligenceService {
           'This connection changed since you opened it. Refresh to see the latest version, then try again.',
           409,
         );
-      // The new version replaces the latest of its own key, so a fallback of the same key would stop being current at once.
       if (v.fallbackPolicyId) {
         const fallback = await t.db.query(
           `SELECT p.key FROM app.ai_model_policy p WHERE ${currentLatestPolicy} AND p.id=$2`,
           [t.tenantId, v.fallbackPolicyId],
         );
-        if (!fallback.rowCount || fallback.rows[0].key === key)
+        // The new version replaces the latest of its own key, so a fallback of the same key would stop being current at once.
+        if (fallback.rows[0]?.key === key)
+          throw new DomainError(
+            'A connection cannot be its own fallback. Choose another connection or save without one.',
+            409,
+          );
+        if (!fallback.rowCount)
           throw new DomainError(
             'The fallback connection is not a current connection. Refresh and choose a current fallback, or save without one.',
             409,

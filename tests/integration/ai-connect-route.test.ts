@@ -23,7 +23,7 @@ const route = async () => await import('../../apps/web/app/api/workspace/[action
 const tenant = randomUUID();
 const url = `https://app.corridra.test/api/workspace/ai-connect?tenant=${tenant}`;
 const params = () => ({ params: Promise.resolve({ action: 'ai-connect' }) });
-const get = async () => (await route()).GET(new Request(url), params());
+const get = async (query = '') => (await route()).GET(new Request(url + query), params());
 const post = async () =>
   (await route()).POST(
     new Request(url, {
@@ -66,8 +66,15 @@ describe('the Connect AI actions on the workspace route', () => {
     const read = await get();
     expect(read.status).toBe(200);
     expect(await read.json()).toEqual({ canConnect: true });
-    expect(connectOptions).toHaveBeenCalledWith(
+    expect(connectOptions).toHaveBeenLastCalledWith(
       expect.objectContaining({ token: 'staff-token', tenantId: tenant }),
+      undefined,
+    );
+    // The chosen provider reaches the service, which leaves that provider's own connection out of the fallbacks.
+    expect((await get('&adapter=openai')).status).toBe(200);
+    expect(connectOptions).toHaveBeenLastCalledWith(
+      expect.objectContaining({ token: 'staff-token', tenantId: tenant }),
+      'openai',
     );
     const write = await post();
     expect(write.status).toBe(201);
