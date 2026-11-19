@@ -332,14 +332,14 @@ export const en = {
   'fq.buyProducts.label': 'Buy products',
   'fq.buyProducts.hint': 'Find suppliers for goods or materials.',
   'fq.buyMachine.label': 'Buy a machine',
-  'fq.buyMachine.hint': 'Find suppliers for machinery or equipment.',
+  'fq.buyMachine.hint': 'Find suppliers for machinery.',
   'fq.sellAbroad.label': 'Sell abroad',
   'fq.sellAbroad.hint': 'Find buyers, distributors or partners.',
   'fq.groupTrip.label': 'Lead a group trip',
   'fq.groupTrip.hint': 'Plan the programme and the meetings.',
   // New entry wording uses the existing English fallback until each translation is reviewed.
   'fq.visits.label': 'Trips, visits or fairs',
-  'fq.visits.hint': 'Or another international business goal.',
+  'fq.visits.hint': 'Or another business goal abroad.',
 } as const;
 
 export type MessageKey = keyof typeof en;

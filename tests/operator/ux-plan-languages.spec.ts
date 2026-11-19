@@ -32,6 +32,9 @@ import { countryCodes } from '../../packages/domain/src/countries';
 // names the commit that carries that form. That commit is kept reachable because the pull request is merged with
 // a merge commit, not squashed (no tag), so main's history holds it.
 // Layout Phase 2a (5 Nov 2026): English action labels moved to Title Case on purpose, so the baseline is the commit that carries them.
+// W1-C (18 November 2026): the baseline copies in tests/operator/fixtures/plan-baseline were refreshed to the page after the
+// UI/UX.v4 change (progress words, exact job disclosure, action area, no callout box), so the equality tests keep proving
+// that language and switch settings change nothing else. The allowlist below follows the new notice block.
 // Request page length (S13, 9 November 2026): the baseline is a committed copy of the request page as it was BEFORE
 // that change (page.tsx and intake.tsx from main dd6e1e13, in tests/operator/fixtures/plan-baseline), read as text,
 // because a squash merge drops a pull request's commits from main's history and an old SHA would stop resolving (see
@@ -255,7 +258,7 @@ async function open(page: Page, language: string, query: string) {
   await page.addInitScript((value) => localStorage.setItem('corridra.language', value), language);
   await stubApi(page);
   await page.goto(`${origin}/?${query}`);
-  await expect(page.locator('form.intake-form .guide-actions .primary-link')).toBeEnabled();
+  await expect(page.locator('form.intake-form .plan-action-bar .primary-link')).toBeEnabled();
 }
 
 async function chooseCountry(form: Locator, index: number, code: string) {
@@ -291,7 +294,7 @@ async function walk(
   };
   const states = [await look('step 1')];
   const form = page.locator('form.intake-form');
-  const next = form.locator('.guide-actions .primary-link');
+  const next = form.locator('.plan-action-bar .primary-link');
   const heading = form.locator('h2');
   const go = async (name: string) => {
     const before = await heading.textContent();
@@ -302,7 +305,7 @@ async function walk(
   await next.click();
   await expect(page.locator('.ux-error-summary')).toBeVisible();
   states.push(await look('step 1 errors'));
-  await form.locator('select').first().selectOption('machinery_procurement');
+  await chooseJob(form, 'machinery_procurement');
   await go('step 2');
   await next.click();
   await expect(page.locator('.ux-error-summary')).toBeVisible();
@@ -376,9 +379,9 @@ function allowed(html: string) {
       .replace(/<[^>]*>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
-  // The second alternative is the baseline's test notice: the pill "Test mode" must be inside the same aside.
+  // W1-C (owner 2a, 18 Nov 2026): the callout box is gone. The sample notice is one block, "plan-sample-note".
   const noticeTest =
-    /<aside class="intake-notice[^"]*intake-notice-compact">[\s\S]*?<\/aside>|<aside class="intake-notice">(?=(?:(?!<\/aside>)[\s\S])*?class="guide-pill">Test mode<)[\s\S]*?<\/aside>/;
+    /<div class="plan-sample-note"[^>]*>[\s\S]*?<\/details>(?:<p[^>]*>[\s\S]*?<\/p>)?<\/div>/;
   const summaryTest = /<aside class="ux-brief-summary"[^>]*>[\s\S]*?<\/aside>/;
   const notice = html.match(noticeTest)?.[0] ?? '';
   const summary = html.match(summaryTest)?.[0] ?? '';
@@ -398,18 +401,17 @@ function allowed(html: string) {
       .replace(/ Read the Test Notice$/, ''),
     summary: words(
       summary
-        .replace(/<p class="label ux-brief-heading">[\s\S]*?<\/p>/, '')
+        .replace(/<p class="plan-summary-heading ux-brief-heading">[\s\S]*?<\/p>/, '')
         .replace(/<span class="ux-brief-count">[\s\S]*?<\/span>/, ''),
     ),
   };
 }
 
 /**
- * The aria snapshot without exactly the two named landmarks, which are compared by their words and attributes above:
- * the example request summary (a complementary landmark named "Your example request" or "Your request") and, in the
- * sample form, the test notice (the complementary landmark with no name that holds the pill "Test mode"). Every other
- * landmark, the real form's notice included, stays in the snapshot. It also returns how many it dropped, so a snapshot
- * cannot lose a third landmark unseen.
+ * The aria snapshot without exactly the one named landmark, which is compared by its words and attributes above: the
+ * example request summary (a complementary landmark named "Your example request" or "Your request"). Every other
+ * landmark stays in the snapshot. W1-C (owner 2a, 18 Nov 2026): the sample notice is no longer a landmark, so it is no
+ * longer dropped. The function also returns how many it dropped, so a snapshot cannot lose a second landmark unseen.
  */
 function withoutAside(aria: string) {
   const lines = aria.split('\n');
@@ -422,10 +424,9 @@ function withoutAside(aria: string) {
       let end = i + 1;
       while (end < lines.length && lines[end]!.length - lines[end]!.trimStart().length > indent)
         end++;
-      const block = lines.slice(i, end).join('\n');
       const summary = /^\s*- complementary "Your (example )?request"/.test(line);
-      const testNotice = !/^\s*- complementary "/.test(line) && block.includes('Test mode');
-      if (summary || testNotice) {
+      // The sample notice is no longer a landmark (owner 2a, 18 Nov 2026), so only the summary is dropped.
+      if (summary) {
         dropped++;
         i = end - 1;
         continue;
@@ -456,7 +457,7 @@ async function compareWithBaseline(
       expect(newState.summary, `${label} summary found`).not.toBe('');
       expect(oldState.summary, `${label} baseline summary found`).not.toBe('');
       if (mode === 'sample')
-        expect(newState.notice, `${label} notice found`).toContain('Test mode');
+        expect(newState.notice, `${label} notice found`).toContain('Test intake is open.');
     }
     expect(newState.rest, label).toBe(oldState.rest);
     expect(newState.noticeAttributes, `${label} notice links and labels`).toBe(
@@ -517,10 +518,26 @@ const stepWords: FormKey[] = [
   'form.step.contact',
 ];
 
+/** The progress words of a step (1 to 5) in the shown language: "Step 2 of 5: Where · Next: Details". The template is
+ * English until a native review; the step names are the form's own words. */
+function progressWords(names: readonly string[], step: number) {
+  return `Step ${step} of 5: ${names[step - 1]}${names[step] ? ` · Next: ${names[step]}` : ''}`;
+}
+
+/** The exact job sits behind "Know the Exact Job? Choose It" (UI/UX.v4); open it if it is closed, then choose. */
+// The language button of the top bar, which opens the language sheet.
+const languageChip = (page: Page) => page.locator('header button[aria-haspopup="dialog"]:visible');
+
+async function chooseJob(form: Locator, job: string) {
+  const toggle = form.getByRole('button', { name: 'Know the Exact Job? Choose It' });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await form.locator('select').first().selectOption(job);
+}
+
 async function openTranslated(page: Page, code: FormLanguage, query: string) {
   await open(page, code, query);
   await expect(page.locator('#main')).toHaveAttribute('lang', localeMeta[code].html);
-  await expect(page.locator('form.intake-form .guide-actions .primary-link')).toHaveText(
+  await expect(page.locator('form.intake-form .plan-action-bar .primary-link')).toHaveText(
     drafts[code]['form.action.continue'],
   );
 }
@@ -539,7 +556,7 @@ async function englishLeft(page: Page, code: FormLanguage) {
     .filter((text) => text.length >= 12);
   return page.locator('#main').evaluate((main, list) => {
     const clone = main.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll('[lang="en"], .guide-bn, .mr-fq').forEach((el) => el.remove());
+    clone.querySelectorAll('[lang="en"], .mr-fq').forEach((el) => el.remove());
     const text = clone.textContent ?? '';
     return list.filter((words) => text.includes(words));
   }, english);
@@ -586,23 +603,39 @@ test.describe('with the form released', () => {
       // The first question keeps its own language and words.
       await expect(page.locator('.mr-fq')).toHaveAttribute('lang', localeMeta[code].html);
       await expect(page.locator('.mr-fq-legend')).toHaveText(translate(code, 'fq.legend'));
-      await expect(page.locator('.guide-journey-bar b')).toHaveText(
-        stepWords.map((key) => words[key]),
+      // UI/UX.v4 progress as words; the step list stays for screen readers in the form's language.
+      await expect(page.locator('.plan-progress-line')).toHaveText(
+        progressWords(
+          stepWords.map((key) => words[key]),
+          1,
+        ),
       );
-      await expect(page.locator('.guide-journey-bar')).toHaveAttribute(
+      await expect(page.locator('ol.sr-only li')).toHaveText(stepWords.map((key) => words[key]));
+      await expect(page.locator('ol.sr-only')).toHaveAttribute(
         'aria-label',
         words['form.step.journey'],
       );
+      // Owner 2a, 18 Nov 2026: no callout box. The sample notice keeps its link and its English-parts sentence.
+      await expect(page.locator('aside.intake-notice')).toHaveCount(0);
       await expect(
-        page.locator('.intake-notice .lang-island[lang="en"][dir="ltr"] a[href="/privacy"]'),
+        page.locator('.plan-sample-note .lang-island[lang="en"][dir="ltr"] a[href="/privacy"]'),
       ).toHaveText('Read the test intake notice');
-      await expect(page.locator('.intake-notice > p').last()).toHaveText(
+      await expect(page.locator('.plan-sample-note > p').last()).toHaveText(
         words['form.notice.englishParts'],
       );
-      await expect(page.locator('.guide-draft-line span[lang="en"][dir="ltr"]')).toHaveText(
-        'Drafts stay in this tab for 24 hours.',
+      // The reassurance line claims a saved draft only once one exists, and Clear Draft is always there.
+      await expect(page.locator('.plan-action-note')).not.toContainText('Saved in this tab');
+      await expect(page.locator('.plan-action-note button')).toHaveText(
+        words['form.action.clearDraft'],
       );
-      await expect(page.locator('.guide-bn')).toHaveAttribute('lang', 'bn');
+      // The Bangla guidance is in the language sheet now, not on the page (board screen 10).
+      await expect(page.locator('#main [data-plan-guidance]')).toHaveCount(0);
+      await languageChip(page).first().click();
+      await expect(page.locator('.language-sheet [data-plan-guidance]')).toHaveAttribute(
+        'lang',
+        'bn',
+      );
+      await page.keyboard.press('Escape');
       await walk(page, 'sample', async (state) => {
         expect(await englishLeft(page, code), `${code} ${state}`).toEqual([]);
         if (state === 'receipt')
@@ -612,8 +645,11 @@ test.describe('with the form released', () => {
         const step = Number(state.match(/^step (\d)/)?.[1] ?? 0);
         if (!step) return;
         await expect(form.locator('h2')).toHaveText(words[titles[step - 1]]);
-        await expect(form.locator('> p.label')).toHaveText(
-          fill(words['form.step.counter'], { step, total: '5' }),
+        await expect(page.locator('.plan-progress-line')).toHaveText(
+          progressWords(
+            stepWords.map((key) => words[key]),
+            step,
+          ),
         );
         if (state.endsWith('errors'))
           await expect(page.locator('.ux-error-summary strong')).toHaveText(
@@ -665,8 +701,9 @@ test.describe('with the form released', () => {
     await open(page, 'de', 'pages=true');
     await expect(page.locator('#main')).toHaveAttribute('lang', 'en');
     await expect(page.locator('h1')).toHaveText(formEn['form.head.title']);
-    await expect(page.locator('form.intake-form .guide-actions .primary-link')).toHaveText(
-      formEn['form.action.continue'],
+    // UI/UX.v4: before a choice the English button says why it waits.
+    await expect(page.locator('form.intake-form .plan-action-bar .primary-link')).toHaveText(
+      'Pick One to Continue',
     );
   });
 
@@ -676,9 +713,14 @@ test.describe('with the form released', () => {
     await open(page, 'de', 'mode=private&form=true');
     await expect(page.locator('#main')).toHaveAttribute('lang', 'en');
     await expect(page.locator('form.intake-form h2')).toHaveText(formEn['form.step.titleGoal']);
-    // No language or direction is added anywhere inside: only the Bangla guide says its own language.
-    await expect(page.locator('#main [lang]')).toHaveCount(1);
-    await expect(page.locator('#main .guide-bn')).toHaveAttribute('lang', 'bn');
+    // No language or direction is added anywhere inside the form; the Bangla guidance is in the language sheet.
+    await expect(page.locator('#main [lang]')).toHaveCount(0);
+    await expect(page.locator('#main [data-plan-guidance]')).toHaveCount(0);
+    await languageChip(page).first().click();
+    await expect(page.locator('.language-sheet [data-plan-guidance]')).toHaveAttribute(
+      'lang',
+      'bn',
+    );
     await expect(page.locator('#main [dir]')).toHaveCount(0);
   });
 
@@ -702,7 +744,7 @@ test.describe('with the form released', () => {
     await failed;
     await expect(page.locator('#main')).toHaveAttribute('lang', 'en');
     await expect(page.locator('h1')).toHaveText(formEn['form.head.title']);
-    await page.locator('form.intake-form .guide-actions .primary-link').click();
+    await page.locator('form.intake-form .plan-action-bar .primary-link').click();
     await expect(page.locator('.ux-error-summary strong')).toHaveText(formEn['form.summary.title']);
     // Another released language still loads; the browser keeps a failed module fetch for the life of the page.
     await chooseLanguage(page, 'fr');
@@ -758,8 +800,8 @@ test.describe('with the form released', () => {
   test('a reload resumes the draft in the chosen language', async ({ page }) => {
     await openTranslated(page, 'de', 'form=true');
     const form = page.locator('form.intake-form');
-    await form.locator('select').first().selectOption('machinery_procurement');
-    await form.locator('.guide-actions .primary-link').click();
+    await chooseJob(form, 'machinery_procurement');
+    await form.locator('.plan-action-bar .primary-link').click();
     await expect(form.locator('h2')).toHaveText(de['form.step.titleWhere']);
     await chooseCountry(form, 0, 'DE');
     await page.reload();
@@ -806,7 +848,7 @@ test.describe('with the form released', () => {
         setItem.call(this, key, value);
       };
     });
-    await blocked.locator('form.intake-form select').first().selectOption('buyers');
+    await chooseJob(blocked.locator('form.intake-form'), 'buyers');
     await expect(blocked.locator('.ux-draft-notice')).toHaveText(
       de['form.message.draftUnsavedSample'],
     );
@@ -861,12 +903,12 @@ test.describe('with the form released', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openTranslated(page, 'de', 'form=true');
     const form = page.locator('form.intake-form');
-    const next = form.locator('.guide-actions .primary-link');
+    const next = form.locator('.plan-action-bar .primary-link');
     await next.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('.ux-error-summary')).toBeFocused();
     await expect(page.locator('.ux-error-summary strong')).toHaveText(de['form.summary.title']);
-    await form.locator('select').first().selectOption('machinery_procurement');
+    await chooseJob(form, 'machinery_procurement');
     for (const [index, key] of titles.slice(1, 3).entries()) {
       await next.focus();
       await page.keyboard.press('Enter');
@@ -905,16 +947,16 @@ test.describe('with the form released', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openTranslated(page, 'de', 'form=true');
     const form = page.locator('form.intake-form');
-    const notice = page.locator('.intake-notice > p').first();
+    const notice = page.locator('.plan-sample-note > p').first();
     const style = (el: Element) =>
       `${getComputedStyle(el).overflowWrap} ${getComputedStyle(el).hyphens}`;
     expect(await notice.evaluate(style)).toBe('anywhere auto');
     // Step 3 with a sourcing budget, so the summary shows an amount, which breaks anywhere in English too.
-    await form.locator('select').first().selectOption('sourcing');
-    await form.locator('.guide-actions .primary-link').click();
+    await chooseJob(form, 'sourcing');
+    await form.locator('.plan-action-bar .primary-link').click();
     await chooseCountry(form, 0, 'BD');
     await chooseCountry(form, 1, 'CN');
-    await form.locator('.guide-actions .primary-link').click();
+    await form.locator('.plan-action-bar .primary-link').click();
     await form.locator('details summary').click();
     await form.locator('#brief-budgetAmount').fill('12.30');
     await form.locator('details select').selectOption('CNY');
@@ -951,14 +993,15 @@ test.describe('with the form released', () => {
       const page = await context.newPage();
       await openTranslated(page, code, 'form=true');
       const notice = await page
-        .locator('.intake-notice > p')
+        .locator('.plan-sample-note > p')
         .evaluateAll((paragraphs) =>
           paragraphs.map(
             (p) => `${getComputedStyle(p).overflowWrap} ${getComputedStyle(p).hyphens}`,
           ),
         );
       const hyphens = ['de', 'fr', 'es'].includes(code) ? 'auto' : 'manual';
-      expect(notice, code).toEqual([`anywhere ${hyphens}`, `anywhere ${hyphens}`]);
+      // W1-C (G29 round 1, D2): the notice is one summary line, so only its English-parts sentence is a direct paragraph.
+      expect(notice, code).toEqual([`anywhere ${hyphens}`]);
       const english = await page
         .locator('#main [lang="en"]')
         .evaluateAll((parts) => parts.map((part) => getComputedStyle(part).hyphens));
@@ -982,7 +1025,7 @@ test.describe('with the form released', () => {
         await page.evaluate(() => document.fonts.ready);
         const form = page.locator('form.intake-form');
         const answers = [
-          () => form.locator('select').first().selectOption('sourcing'),
+          () => chooseJob(form, 'sourcing'),
           async () => {
             await chooseCountry(form, 0, 'BD');
             await chooseCountry(form, 1, 'CN');
@@ -991,14 +1034,15 @@ test.describe('with the form released', () => {
           () => form.locator('input[type="checkbox"]').first().check(),
         ];
         for (const [step, answer] of [...answers, null].entries()) {
-          await expect(form.locator('.guide-journey-bar li[aria-current="step"] b')).toHaveText(
-            drafts[code][stepWords[step]!],
+          await expect(page.locator('.plan-progress-line')).toHaveText(
+            progressWords(
+              stepWords.map((key) => drafts[code][key]),
+              step + 1,
+            ),
           );
           // How far the word reaches past the form's content box (inside its border and padding) on either side.
           const past = await page.evaluate(() => {
-            const word = document
-              .querySelector('.guide-journey-bar li[aria-current="step"] b')!
-              .getBoundingClientRect();
+            const word = document.querySelector('.plan-progress-line')!.getBoundingClientRect();
             const card = document.querySelector('form.intake-form')!;
             const box = card.getBoundingClientRect();
             const style = getComputedStyle(card);
@@ -1011,7 +1055,7 @@ test.describe('with the form released', () => {
           expect(past, `${code} ${width} step ${step + 1}`).toBeLessThanOrEqual(0.5);
           if (!answer) break;
           await answer();
-          await form.locator('.guide-actions .primary-link').click();
+          await form.locator('.plan-action-bar .primary-link').click();
         }
         await context.close();
       }
@@ -1050,6 +1094,7 @@ test.describe('with the form released', () => {
       if (code === 'en') await open(page, 'en', 'form=true');
       else await openTranslated(page, code, 'form=true');
       await page.evaluate(() => document.fonts.ready);
+      await page.getByRole('button', { name: 'Know the Exact Job? Choose It' }).click();
       const jobs = page.locator('form.intake-form select').first();
       await expect(jobs.locator('option[value="sourcing"]')).toHaveCount(1);
       const { box, labels } = await jobs.evaluate((select: HTMLSelectElement) => {
@@ -1095,29 +1140,23 @@ test.describe('with the form released', () => {
     expect(cutsByLanguage).toEqual({});
   });
 
-  test('ar: right to left, the journey connectors clear the step dots and the main button sits at the inline end', async ({
+  test('ar: right to left, and the actions start at the inline start with Continue after Back', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 768, height: 900 });
     await openTranslated(page, 'ar', 'form=true');
     const form = page.locator('form.intake-form');
     await expect(page.locator('#main')).toHaveAttribute('dir', 'rtl');
-    await form.locator('select').first().selectOption('buyers');
-    await form.locator('.guide-actions .primary-link').click();
+    await chooseJob(form, 'buyers');
+    await form.locator('.plan-action-bar .primary-link').click();
     await expect(form.locator('h2')).toHaveText(ar['form.step.titleWhere']);
-    const connector = await page
-      .locator('.guide-journey-bar li')
-      .first()
-      .evaluate((li) => {
-        const after = getComputedStyle(li, '::after');
-        return { left: after.left, right: after.right };
-      });
-    expect(connector).toEqual({ left: '8px', right: '40px' });
-    const primary = (await form.locator('.guide-actions .primary-link').boundingBox())!;
-    const back = (await form.locator('.guide-actions .button-secondary').boundingBox())!;
+    const primary = (await form.locator('.plan-action-bar .primary-link').boundingBox())!;
+    const back = (await form.locator('.plan-action-bar .button-secondary').boundingBox())!;
+    // G29 round 1 (D3): the actions start at the start edge of their column (right in Arabic), Back first and Continue
+    // after it, never pushed to the far end.
     expect(primary.x).toBeLessThan(back.x);
-    const actions = (await form.locator('.guide-actions').boundingBox())!;
-    expect(Math.abs(primary.x - actions.x)).toBeLessThanOrEqual(1);
+    const actions = (await form.locator('.plan-action-row').boundingBox())!;
+    expect(Math.abs(back.x + back.width - (actions.x + actions.width))).toBeLessThanOrEqual(1);
     const transforms = await page.evaluate(() =>
       Array.from(document.querySelectorAll('#main svg')).map(
         (svg) => getComputedStyle(svg).transform,
@@ -1202,7 +1241,7 @@ test.describe('the page-length budget', () => {
         );
         const form = page.locator('form.intake-form');
         const answers = [
-          () => form.locator('select').first().selectOption('sourcing'),
+          () => chooseJob(form, 'sourcing'),
           async () => {
             await chooseCountry(form, 0, 'BD');
             await chooseCountry(form, 1, 'CN');
@@ -1212,11 +1251,11 @@ test.describe('the page-length budget', () => {
         ];
         const screens: { main: number; question: number; card: number }[] = [];
         for (const [step, answer] of [...answers, null].entries()) {
-          await expect(form.locator('> p.label')).toHaveText(
-            fill(code === 'en' ? formEn['form.step.counter'] : drafts[code]['form.step.counter'], {
-              step: step + 1,
-              total: '5',
-            }),
+          await expect(page.locator('.plan-progress-line')).toHaveText(
+            progressWords(
+              stepWords.map((key) => (code === 'en' ? formEn[key] : drafts[code][key])),
+              step + 1,
+            ),
           );
           screens.push(
             await page.evaluate(() => {
@@ -1228,7 +1267,7 @@ test.describe('the page-length budget', () => {
           );
           if (!answer) break;
           await answer();
-          await form.locator('.guide-actions .primary-link').click();
+          await form.locator('.plan-action-bar .primary-link').click();
         }
         await context.close();
         return mode === 'real' ? screens.slice(4) : screens;
@@ -1281,13 +1320,13 @@ test.describe('the page-length budget', () => {
 /** Fills every step with valid answers (a buyer search, Bangladesh to China) up to the send button. */
 async function complete(page: Page, mode: 'sample' | 'real' = 'sample') {
   const form = page.locator('form.intake-form');
-  const next = form.locator('.guide-actions .primary-link');
+  const next = form.locator('.plan-action-bar .primary-link');
   const step = async () => {
     const before = await form.locator('h2').textContent();
     await next.click();
     await expect(form.locator('h2')).not.toHaveText(before ?? '');
   };
-  await form.locator('select').first().selectOption('buyers');
+  await chooseJob(form, 'buyers');
   await step();
   await chooseCountry(form, 0, 'BD');
   await chooseCountry(form, 1, 'CN');
@@ -1328,7 +1367,7 @@ test.describe('messages in the chosen language', () => {
       const words = drafts[code];
       await openTranslated(page, code, 'form=true');
       const form = page.locator('form.intake-form');
-      const next = form.locator('.guide-actions .primary-link');
+      const next = form.locator('.plan-action-bar .primary-link');
       const heading = form.locator('h2');
       const step = async () => {
         const before = await heading.textContent();
@@ -1341,7 +1380,7 @@ test.describe('messages in the chosen language', () => {
         words['form.message.chooseObjective'],
       );
       await expect(page.locator('#job-error')).toHaveText(words['form.message.chooseJob']);
-      await form.locator('select').first().selectOption('machinery_procurement');
+      await chooseJob(form, 'machinery_procurement');
       await step();
       await next.click();
       await expect(
@@ -1428,8 +1467,8 @@ test.describe('messages in the chosen language', () => {
     }) => {
       await openTranslated(page, code, 'form=true');
       const form = page.locator('form.intake-form');
-      const next = form.locator('.guide-actions .primary-link');
-      await form.locator('select').first().selectOption('sourcing');
+      const next = form.locator('.plan-action-bar .primary-link');
+      await chooseJob(form, 'sourcing');
       await next.click();
       await expect(form.locator('h2')).toHaveText(drafts[code]['form.step.titleWhere']);
       await chooseCountry(form, 0, 'BD');
@@ -1461,9 +1500,9 @@ test.describe('messages in the chosen language', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openTranslated(page, 'ar', 'form=true');
     const form = page.locator('form.intake-form');
-    const next = form.locator('.guide-actions .primary-link');
+    const next = form.locator('.plan-action-bar .primary-link');
     for (const [key, answer] of [
-      ['form.step.titleGoal', () => form.locator('select').first().selectOption('sourcing')],
+      ['form.step.titleGoal', () => chooseJob(form, 'sourcing')],
       [
         'form.step.titleWhere',
         async () => {
@@ -1595,7 +1634,7 @@ test('GAP-010 request country search keeps every supported country and EU market
   test.setTimeout(60000);
   await open(page, 'en', 'form=all&job=sourcing&companyCountry=BD&marketCode=CN');
   const form = page.locator('form.intake-form');
-  await form.locator('.guide-actions .primary-link').click();
+  await form.locator('.plan-action-bar .primary-link').click();
   await form.locator('#brief-companyCountry').click();
   for (const heading of ['Most requested', 'EU countries', 'Other countries'])
     await expect(form.getByRole('listbox').getByText(heading, { exact: true })).toBeVisible();
@@ -1618,13 +1657,13 @@ test('GAP-010 request country search supports keyboard choice, clearing and requ
 }) => {
   await open(page, 'en', 'form=all&job=sourcing&companyCountry=BD&marketCode=CN');
   const form = page.locator('form.intake-form');
-  await form.locator('.guide-actions .primary-link').click();
+  await form.locator('.plan-action-bar .primary-link').click();
   const input = form.locator('#brief-companyCountry');
   await input.fill('Germany');
   await input.press('Enter');
   await expect(form.locator('input[name="companyCountry"]')).toHaveValue('DE');
   await input.fill('');
-  await form.locator('.guide-actions .primary-link').click();
+  await form.locator('.plan-action-bar .primary-link').click();
   await expect(input).toHaveAttribute('aria-invalid', 'true');
   await expect(
     form.getByRole('alert').filter({ hasText: 'Choose the company country' }),
@@ -1632,7 +1671,7 @@ test('GAP-010 request country search supports keyboard choice, clearing and requ
   await input.fill('Zimbabwe');
   await input.press('Enter');
   await expect(form.locator('input[name="companyCountry"]')).toHaveValue('ZW');
-  await form.locator('.guide-actions .primary-link').click();
+  await form.locator('.plan-action-bar .primary-link').click();
   await expect(form.locator('#brief-companyCountry')).toHaveCount(0);
 });
 
@@ -1641,7 +1680,7 @@ test.describe('GAP-010 request country search with touch', () => {
   test('touch selects country and EU market without sideways overflow', async ({ page }) => {
     await open(page, 'en', 'form=all&job=sourcing&companyCountry=BD&marketCode=CN');
     const form = page.locator('form.intake-form');
-    await form.locator('.guide-actions .primary-link').tap();
+    await form.locator('.plan-action-bar .primary-link').tap();
     await form.locator('#brief-companyCountry').tap();
     await expect(form.getByRole('option').first()).toHaveText('Bangladesh');
     // owner decision 17 Nov 2026, routes and markets: Spain is no longer pinned, so it is found by search, as the EU is below

@@ -112,19 +112,23 @@ Open slots, to be filled by the lane that owns them, never by a guess:
 
 Rule (UI/UX.v4, 18 November 2026): a new visible pattern is added to this table before it is used. A screen reuses a row here before it builds its own; a component that is not here is not a shared pattern.
 
-| Name                                         | File                                                                                            | Owner unit | Status             |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------- | ------------------ |
-| `Flag`, `RegionMark`, `Flagged`, `RouteLine` | `apps/web/components/ux/flag.tsx`                                                               | LP3        | In review (PR 565) |
-| Door card                                    | `apps/web/components/ux/door-card.tsx`                                                          | LP3        | In review (PR 565) |
-| Choice chip                                  | `apps/web/components/ux/choice-chip.tsx`                                                        | LP3        | In review (PR 565) |
-| Number field                                 | `apps/web/components/ux/number-field.tsx`                                                       | LP3        | In review (PR 565) |
-| `ExampleTag`, `Eyebrow`                      | `apps/web/components/ux/example-tag.tsx`                                                        | LP3        | In review (PR 565) |
-| Start bar                                    | `apps/web/components/ux/start-bar.tsx`                                                          | LP3        | In review (PR 565) |
-| Top bar (Listen, language code, Menu)        | `apps/web/components/ux/top-bar.tsx` (`TopBarTools`, `ListenButton`), used by `site-header.tsx` | W1-A       | In review          |
-| Language sheet                               | `apps/web/components/ux/language-sheet.tsx` (`LanguageButton`, `draftLine`)                     | W1-A       | In review          |
-| Quick (Pocket plus with its word)            | `apps/web/components/ux/pocket-button.tsx` (existing, gains the word)                           | W1-A       | In review          |
-| Access doors                                 | `apps/web/components/access-page.tsx`, `apps/web/components/access-elsewhere.tsx`               | W1-B       | In review (PR 564) |
-| Route rows                                   | `apps/web/components/discovery-experience.tsx`, `apps/web/app/corridors/corridors.css`          | W1-D       | In review (PR 563) |
+| Name                                         | File                                                                                            | Owner unit | Status                                           |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------ |
+| `Flag`, `RegionMark`, `Flagged`, `RouteLine` | `apps/web/components/ux/flag.tsx`                                                               | LP3        | In review (PR 565)                               |
+| Door card                                    | `apps/web/components/ux/door-card.tsx`                                                          | LP3        | In review (PR 565)                               |
+| Choice chip                                  | `apps/web/components/ux/choice-chip.tsx`                                                        | LP3        | In review (PR 565)                               |
+| Number field                                 | `apps/web/components/ux/number-field.tsx`                                                       | LP3        | In review (PR 565)                               |
+| `ExampleTag`, `Eyebrow`                      | `apps/web/components/ux/example-tag.tsx`                                                        | LP3        | In review (PR 565)                               |
+| Start bar                                    | `apps/web/components/ux/start-bar.tsx`                                                          | LP3        | In review (PR 565)                               |
+| Top bar (Listen, language code, Menu)        | `apps/web/components/ux/top-bar.tsx` (`TopBarTools`, `ListenButton`), used by `site-header.tsx` | W1-A       | In review                                        |
+| Language sheet                               | `apps/web/components/ux/language-sheet.tsx` (`LanguageButton`, `draftLine`)                     | W1-A       | In review                                        |
+| Quick (Pocket plus with its word)            | `apps/web/components/ux/pocket-button.tsx` (existing, gains the word)                           | W1-A       | In review                                        |
+| Access doors                                 | `apps/web/components/access-page.tsx`, `apps/web/components/access-elsewhere.tsx`               | W1-B       | In review (PR 564)                               |
+| Route rows                                   | `apps/web/components/discovery-experience.tsx`, `apps/web/app/corridors/corridors.css`          | W1-D       | In review (PR 563)                               |
+| Progress words (`PlanProgress`)              | `apps/web/app/plan/plan-progress.tsx`                                                           | W1-C       | In review (draft PR)                             |
+| Phone bottom action area (`PlanActionBar`)   | `apps/web/app/plan/plan-action-bar.tsx`, `apps/web/app/plan/plan-v4.css`                        | W1-C       | In review (draft PR)                             |
+| Exact job disclosure (`PlanJobFold`)         | `apps/web/app/plan/plan-job-fold.tsx`                                                           | W1-C       | In review (draft PR)                             |
+|                                              | Language sheet page help (`LanguageSheetExtra`)                                                 |            | `apps/web/components/ux/language-sheet-slot.tsx` |     | W1-C | In review (draft PR) |
 
 ## Legacy (not to be followed for new work)
 

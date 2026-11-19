@@ -8,9 +8,6 @@ export const words: FormCatalog = {
   'form.head.realLead': 'Beginnen Sie mit Ihrem Ziel.',
   'form.head.sampleLead': 'Eine kurze Anfrage genügt. Sie brauchen kein Konto.',
 
-  'form.notice.realPill': 'Ihre Anfrage',
-  'form.notice.realLead': 'Beginnen Sie mit der Arbeit, die Sie brauchen.',
-  'form.notice.samplePill': 'Beispielmodus',
   'form.notice.sampleLead':
     'Beispielanfragen sind möglich. Echte Kundenmissionen werden nicht angenommen.',
   'form.notice.sampleUse':
@@ -30,7 +27,6 @@ export const words: FormCatalog = {
   'form.pending.codeSignIn': 'Mit einem Code anmelden und die Anfrage sehen',
   'form.pending.return': 'Zurück zum Formular',
 
-  'form.step.counter': 'Schritt {step} von {total}',
   'form.step.goal': 'Ziel',
   'form.step.where': 'Ort',
   'form.step.details': 'Details',

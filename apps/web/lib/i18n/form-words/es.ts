@@ -8,9 +8,6 @@ export const words: FormCatalog = {
   'form.head.realLead': 'Empiece por su objetivo.',
   'form.head.sampleLead': 'Basta con una solicitud breve. No necesita una cuenta.',
 
-  'form.notice.realPill': 'Su solicitud',
-  'form.notice.realLead': 'Empiece por el trabajo que necesita.',
-  'form.notice.samplePill': 'Modo de ejemplo',
   'form.notice.sampleLead':
     'Las solicitudes de ejemplo están abiertas. No se aceptan misiones reales de clientes.',
   'form.notice.sampleUse': 'Use datos inventados y un correo que termine en {domain}.',
@@ -29,7 +26,6 @@ export const words: FormCatalog = {
   'form.pending.codeSignIn': 'Iniciar sesión con un código para ver su solicitud',
   'form.pending.return': 'Volver al formulario',
 
-  'form.step.counter': 'Paso {step} de {total}',
   'form.step.goal': 'Objetivo',
   'form.step.where': 'Lugar',
   'form.step.details': 'Detalles',

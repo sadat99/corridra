@@ -9,9 +9,6 @@ export const words: FormCatalog = {
   'form.head.realLead': '请从您的目标开始。',
   'form.head.sampleLead': '简短的需求就够了。无需账户。',
 
-  'form.notice.realPill': '您的需求',
-  'form.notice.realLead': '请从您需要的工作开始。',
-  'form.notice.samplePill': '示例模式',
   'form.notice.sampleLead': '示例需求已开放。不接受真实的客户任务。',
   'form.notice.sampleUse': '请使用虚构的信息和以 {domain} 结尾的邮箱地址。',
   'form.notice.sampleReceipt': '请保留回执以查看回复。',
@@ -28,7 +25,6 @@ export const words: FormCatalog = {
   'form.pending.codeSignIn': '用验证码登录并查看需求',
   'form.pending.return': '返回表单',
 
-  'form.step.counter': '第 {step} 步，共 {total} 步',
   'form.step.goal': '目标',
   'form.step.where': '地点',
   'form.step.details': '详情',

@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom';
 import { localeMeta, type Locale, type OfferedLanguage } from '../../lib/i18n/locales';
 import { useLanguage } from '../language-provider';
 import { CorridraIcon } from '../corridra-icon';
+import { useLanguageSheetSlot } from './language-sheet-slot';
 
 const numberWords = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'];
 
@@ -34,6 +35,7 @@ function Sheet({ onClose, extra }: { onClose: () => void; extra?: ReactNode }) {
   const titleId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const panel = useRef<HTMLDivElement>(null);
   const line = draftLine(offered);
+  const pageHelp = useLanguageSheetSlot();
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -113,8 +115,10 @@ function Sheet({ onClose, extra }: { onClose: () => void; extra?: ReactNode }) {
             {line}
           </p>
         )}
-        {/* Optional room under the rows for a page's own language help; nothing uses it yet. */}
+        {/* Room under the rows for a page's own language help: the `extra` prop, or what the open page registered
+            with <LanguageSheetExtra> (the plan form's Bangla guidance). */}
         {extra}
+        {pageHelp}
       </div>
     </div>
   );

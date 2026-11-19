@@ -10,9 +10,6 @@ export const words: FormCatalog = {
   'form.head.realLead': 'আপনার লক্ষ্য দিয়ে শুরু করুন।',
   'form.head.sampleLead': 'ছোট একটি অনুরোধই যথেষ্ট। কোনো অ্যাকাউন্ট লাগবে না।',
 
-  'form.notice.realPill': 'আপনার অনুরোধ',
-  'form.notice.realLead': 'যে কাজটি দরকার, তা দিয়ে শুরু করুন।',
-  'form.notice.samplePill': 'নমুনা মোড',
   'form.notice.sampleLead': 'নমুনা অনুরোধ চালু আছে। প্রকৃত গ্রাহকের মিশন গ্রহণ করা হচ্ছে না।',
   'form.notice.sampleUse':
     'কাল্পনিক তথ্য এবং {domain} দিয়ে শেষ হওয়া একটি ইমেইল ঠিকানা ব্যবহার করুন।',
@@ -31,7 +28,6 @@ export const words: FormCatalog = {
   'form.pending.codeSignIn': 'কোড দিয়ে সাইন ইন করে অনুরোধ দেখুন',
   'form.pending.return': 'ফর্মে ফিরে যান',
 
-  'form.step.counter': 'ধাপ {step} / {total}',
   'form.step.goal': 'লক্ষ্য',
   'form.step.where': 'কোথায়',
   'form.step.details': 'বিবরণ',
