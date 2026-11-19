@@ -51,7 +51,11 @@ test('A-1 public pages carry no test, sample or invented wording and one main he
               : 'Before You Meet',
           })
           .click();
-      await expect(steps.getByText(name, { exact: true }).first(), `${path} ${name}`).toBeVisible();
+      // Each step names its road in its progress line ("Step 3 of 6: Compare", W1-E).
+      await expect(
+        steps.getByText(new RegExp(`^Step \\d of 6: ${name}\\b`)).first(),
+        `${path} ${name}`,
+      ).toBeVisible();
     }
   }
   // About uses the controller wording from the privacy notice exactly (D4).
