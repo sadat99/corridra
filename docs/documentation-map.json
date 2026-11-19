@@ -1649,6 +1649,11 @@
       "use": "Accepted 17 Nov 2026 by Guardian 18 under the ADR-086 owner decision; the person's own profile picture: own table, private evidence stores under avatar/, server check and metadata-free redraw, private reads, scanning deferred, erasure through the queue; switched off in code, install pending"
     },
     {
+      "path": "docs/adr/0089-guided-ai-connection-and-real-workspace-model-policy.md",
+      "classification": "Architecture decision",
+      "use": "Proposed 19 Nov 2026 on owner decisions relayed by Conductor; guided Connect AI over the existing model policy command, real workspaces may hold a model policy only, EU resolved server-side to stored country codes with the cap raised to 30, every runtime gate still a subset check; nothing built or installed"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v4 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"

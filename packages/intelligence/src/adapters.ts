@@ -35,6 +35,8 @@ const refs = {
   anthropic: 'CORRIDRA_ANTHROPIC_API_KEY',
   google: 'CORRIDRA_GOOGLE_API_KEY',
 } as const;
+// The one server-side mapping from a provider to the name of its deployment key (the name only, never a value).
+export const adapterSecretRef = refs;
 // No configurable URL, arbitrary provider options, model tools, telemetry or raw responses.
 export class SdkInferenceAdapter implements InferenceAdapter {
   constructor(

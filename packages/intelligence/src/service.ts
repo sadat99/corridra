@@ -2,7 +2,12 @@ import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { dataRights } from '@corridra/domain/policy';
-import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  withTenant,
+  type DatabasePool,
+  type RequestContext,
+  type TenantTransaction,
+} from '@corridra/db';
 import {
   IntelligenceGateway,
   modelPolicy,
@@ -12,6 +17,12 @@ import {
 } from './index';
 import { taskInput, registeredTask, taskId } from './registry';
 import { SdkInferenceAdapter, type InferenceAdapter } from './adapters';
+import {
+  connectionCommand,
+  connectLocationLimit,
+  guidedConnection,
+  legacyLocationLimit,
+} from './connect-form';
 
 const runCommand = z
   .object({
@@ -40,6 +51,54 @@ const reviewCommand = z
     reason: z.string().min(3).max(500),
   })
   .strict();
+type PolicyCommand = z.infer<typeof policyCommand>;
+async function insertPolicy(t: TenantTransaction, v: PolicyCommand) {
+  return (
+    await t.db.query(
+      `INSERT INTO app.ai_model_policy(id,tenant_id,key,version,configuration,terms_source_id,daily_budget_minor,effective_from,created_by,reason) VALUES($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10) RETURNING id,version`,
+      [
+        v.policy.id,
+        t.tenantId,
+        v.key,
+        v.policy.version,
+        JSON.stringify(v.policy),
+        v.termsSourceId,
+        v.dailyBudgetMinor,
+        v.effectiveFrom,
+        t.actorId,
+        v.reason,
+      ],
+    )
+  ).rows[0];
+}
+// The marker the module adds; without it the database still enforces the old limit of 20 countries and sample workspaces only.
+async function locationMarker(t: TenantTransaction) {
+  const found = await t.db.query(
+    "SELECT to_regprocedure('app.ai_model_policy_location_limit()') IS NOT NULL AS present",
+  );
+  if (!found.rows[0].present) return false;
+  return (
+    Number((await t.db.query('SELECT app.ai_model_policy_location_limit() AS n')).rows[0].n) >=
+    connectLocationLimit
+  );
+}
+async function isRealWorkspace(t: TenantTransaction) {
+  const row = (await t.db.query('SELECT synthetic FROM app.tenant WHERE id=$1', [t.tenantId]))
+    .rows[0];
+  return !row || row.synthetic !== true;
+}
+// The members of the EU market in force today, as stored. Only country codes are ever kept in a policy.
+async function euMembers(t: TenantTransaction) {
+  const rows = (
+    await t.db.query(
+      "SELECT country_code,effective_from::text AS from FROM app.market_member WHERE market_key='EU' AND effective_from<=current_date AND (effective_until IS NULL OR effective_until>current_date) ORDER BY country_code",
+    )
+  ).rows;
+  return {
+    codes: rows.map((r) => r.country_code as string),
+    recordedOn: rows.map((r) => r.from as string).sort()[rows.length - 1] ?? null,
+  };
+}
 export class IntelligenceService {
   private gateway: IntelligenceGateway;
   constructor(
@@ -51,29 +110,109 @@ export class IntelligenceService {
   }
   async configure(ctx: RequestContext, raw: unknown) {
     const v = policyCommand.parse(raw);
-    return withTenant(
-      this.pool,
-      ctx,
-      'opportunities.accounting',
-      async (t) =>
+    return withTenant(this.pool, ctx, 'opportunities.accounting', (t) => insertPolicy(t, v));
+  }
+  // ADR-089. What the guided Connect AI form needs to draw itself. Reads only; no secret and no key presence.
+  connectOptions(ctx: RequestContext) {
+    return withTenant(this.pool, ctx, 'trust.write', async (t) => {
+      const markerInstalled = await locationMarker(t);
+      const real = await isRealWorkspace(t);
+      const latest = (
+        await t.db.query(
+          `SELECT DISTINCT ON (key) key,id,version,configuration,configuration->>'adapter' AS adapter,configuration->>'model' AS model,configuration->>'effectiveUntil' AS "effectiveUntil",terms_source_id AS "termsSourceId",daily_budget_minor::text AS "dailyBudgetMinor" FROM app.ai_model_policy WHERE tenant_id=$1 ORDER BY key,version DESC LIMIT 50`,
+          [t.tenantId],
+        )
+      ).rows;
+      const candidates = (
+        await t.db.query(
+          `SELECT id,key,version,configuration->>'adapter' AS adapter,configuration->>'model' AS model FROM app.ai_model_policy WHERE tenant_id=$1 AND effective_from<=now() AND (configuration->>'effectiveUntil')::timestamptz>now() ORDER BY created_at DESC LIMIT 50`,
+          [t.tenantId],
+        )
+      ).rows;
+      const eu = await euMembers(t);
+      return {
+        moduleInstalled: markerInstalled,
+        realWorkspace: real,
+        canConnect: markerInstalled || !real,
+        locationLimit: markerInstalled ? connectLocationLimit : legacyLocationLimit,
+        latest,
+        fallbackCandidates: candidates,
+        eu: { codes: eu.codes, recordedOn: eu.recordedOn },
+      };
+    });
+  }
+  // ADR-089. The guided connection: the same insert as configure, built on the server inside one transaction.
+  async connect(ctx: RequestContext, raw: unknown) {
+    const v = guidedConnection.parse(raw);
+    return withTenant(this.pool, ctx, 'opportunities.accounting', async (t) => {
+      const markerInstalled = await locationMarker(t);
+      if (!markerInstalled && (await isRealWorkspace(t)))
+        throw new DomainError(
+          'Connecting an AI provider is not available for this workspace yet. Ask the owner to install the AI connection module.',
+          403,
+        );
+      const key = `connect-${v.adapter}`;
+      const latest = Number(
         (
           await t.db.query(
-            `INSERT INTO app.ai_model_policy(id,tenant_id,key,version,configuration,terms_source_id,daily_budget_minor,effective_from,created_by,reason) VALUES($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10) RETURNING id,version`,
-            [
-              v.policy.id,
-              t.tenantId,
-              v.key,
-              v.policy.version,
-              JSON.stringify(v.policy),
-              v.termsSourceId,
-              v.dailyBudgetMinor,
-              v.effectiveFrom,
-              t.actorId,
-              v.reason,
-            ],
+            'SELECT coalesce(max(version),0)::int AS version FROM app.ai_model_policy WHERE tenant_id=$1 AND key=$2',
+            [t.tenantId, key],
           )
-        ).rows[0],
-    );
+        ).rows[0].version,
+      );
+      if (latest !== v.expectedVersion)
+        throw new DomainError(
+          'This connection changed since you opened it. Refresh to see the latest version, then try again.',
+          409,
+        );
+      let processingLocations: string[];
+      if (v.processingScope.kind === 'market') {
+        if (!markerInstalled)
+          throw new DomainError(
+            'EU member countries are not available yet. Choose the countries one by one.',
+            409,
+          );
+        const eu = await euMembers(t);
+        if (eu.codes.length < 1 || eu.codes.length > connectLocationLimit)
+          throw new DomainError(
+            'The EU member list could not be used. Choose the countries one by one.',
+            409,
+          );
+        processingLocations = eu.codes;
+      } else {
+        processingLocations = [...v.processingScope.codes].sort();
+        if (!markerInstalled && processingLocations.length > legacyLocationLimit)
+          throw new DomainError(
+            `Choose at most ${legacyLocationLimit} countries until the AI connection module is installed.`,
+            409,
+          );
+      }
+      for (const [label, id] of [
+        ['provider terms', v.termsSourceId],
+        ['evaluation record', v.evaluationSourceId],
+      ] as const) {
+        const ok = await t.db.query(
+          'SELECT 1 FROM app.source_record WHERE tenant_id=$1 AND id=$2 AND retention_until>now() AND observed_at<=now() AND app.can_access(tenant_id,classification,purpose)',
+          [t.tenantId, id],
+        );
+        if (!ok.rowCount)
+          throw new DomainError(
+            `The ${label} source is expired or not available to you. Choose a current source.`,
+            400,
+          );
+      }
+      return insertPolicy(
+        t,
+        policyCommand.parse(
+          connectionCommand(v, {
+            id: randomUUID(),
+            version: latest + 1,
+            processingLocations,
+            effectiveFrom: new Date().toISOString(),
+          }),
+        ),
+      );
+    });
   }
   rights(ctx: RequestContext, raw: unknown) {
     const v = z

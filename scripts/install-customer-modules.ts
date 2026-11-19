@@ -49,6 +49,7 @@ import { migrateCustomerProgrammeErasure } from '../packages/db/src/customer-pro
 import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-change-migrate';
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-migrate';
+import { migrateAiModelPolicyReal } from '../packages/db/src/ai-model-policy-real-migrate';
 import { configureSourcingWorkflow } from '../packages/auth/src/sourcing-workflow-configuration';
 import { migrateSupplySources } from '../packages/db/src/supply-source-migrate';
 import { migrateHelperInterest } from '../packages/db/src/helper-interest-migrate';
@@ -128,6 +129,8 @@ const v = z
     PROGRAMME_ERASURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PERSONAL_PROFILE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROFILE_PICTURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    // ADR-089: real workspaces may hold a model policy only; AI inference stays off.
+    AI_MODEL_POLICY_REAL_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_REPLY_METADATA_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_EXPORT_ACCESS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     QUOTATION_LINK_CHECK_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
@@ -316,6 +319,8 @@ if (v.PERSONAL_PROFILE_ACTION !== 'unchanged' && !apply)
   throw new Error('Personal profile installation requires INSTALL_APPLY=yes');
 if (v.PROFILE_PICTURE_ACTION !== 'unchanged' && !apply)
   throw new Error('Profile picture installation requires INSTALL_APPLY=yes');
+if (v.AI_MODEL_POLICY_REAL_ACTION !== 'unchanged' && !apply)
+  throw new Error('AI model policy for real workspaces requires INSTALL_APPLY=yes');
 if (v.VIEWER_REPLY_METADATA_ACTION !== 'unchanged' && !apply)
   throw new Error('Viewer reply metadata installation requires INSTALL_APPLY=yes');
 if (v.VIEWER_EXPORT_ACCESS_ACTION !== 'unchanged' && !apply)
@@ -364,6 +369,7 @@ const registries = [
   'customer_problem_report_migrations',
   'counterparty_change_migrations',
   'sourcing_workflow_migrations',
+  'ai_model_policy_real_migrations',
   'supply_source_migrations',
   'helper_interest_migrations',
   'customer_migrations',
@@ -857,6 +863,15 @@ try {
           `Sourcing workflow ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
+    }
+    // ADR-089 is never part of the base run. It replaces app.guard_ai() after a hash check so real workspaces may hold a reviewed
+    // model policy only; runs stay sample-only and AI stays off. Needs the real-use modules installed and the owner's word.
+    // Reached only through field_modules_action=ai_model_policy_real.
+    if (v.AI_MODEL_POLICY_REAL_ACTION === 'install') {
+      await migrateAiModelPolicyReal(pool);
+      console.log(
+        'AI model policy for real workspaces installed or already current (inference stays off)',
+      );
     }
     // Supply sources (ADR-082) are never part of the base run. Install leaves the module control closed; enable and pause
     // touch only that control and need a reason. Reached through field_modules_action (supply_sources_install,
