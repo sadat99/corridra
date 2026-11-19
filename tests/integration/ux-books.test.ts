@@ -156,9 +156,9 @@ describe('the words', () => {
     for (const code of localeCodes.filter((c) => c !== 'en'))
       for (const key of keys) expect(translate(code, key), `${code}.${key}`).toBe(en[key]);
   });
-  it('are recorded as needing review, never as reviewed', () => {
+  it('are never recorded as a native-speaker review (owner directive, 19 Nov 2026)', () => {
     expect(read('docs/product/language-review-record.md')).toMatch(
-      /books\.\*[^\n]*review not yet recorded/i,
+      /books\.\*[^\n]*native-speaker review: not done/i,
     );
   });
 });
