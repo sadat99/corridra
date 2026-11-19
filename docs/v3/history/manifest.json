@@ -581,6 +581,14 @@
       "bytes": 10616,
       "sha256": "0fb8cbc57fe563120bd69ed3548f30dc5a2d3daebf104e810ee4c117f2119f44",
       "meaning": "Exact active ledger at 9b54bfd (main 626d2f8 records), before the 19 Nov install correction replaced the stale install statements (U4 member notice, response_revision, viewer_reply_metadata 0002 and profile_picture installed per the run 110 and 113 reports; U5 not installed), recorded the owner decisions of 19 Nov and condensed older bullets, including the 18 Nov install runs, the 17 Nov merge SHAs, the 16 Nov owner words and the longer follow-up and owner-decision lists. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "00f77ff1ebe927523e8d547fed0346431d7eb6d6",
+      "archive": "docs/v3/history/ledger-before-unit04-records-2026-11-19.md",
+      "bytes": 10636,
+      "sha256": "b3990d901b686e8f28af14770c1758d2b31064238287b4fc0a93e7685de76129",
+      "meaning": "Exact active ledger at 00f77ff, before the 19 Nov unit 04 Your Move records replaced the 8-branch detail in the owner-decision line and the long owner-visible follow-up list with pointers, and recorded the owner's 'yes for move' and the four assumed answers. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

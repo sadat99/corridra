@@ -133,6 +133,17 @@ Limits of the language ruling, stated plainly: this is an owner directive, not a
 
 Owed by the Guardian before the first Wave 2 merge: a combined chosen-sizes table (today, board, chosen value) and proposed names for the five operator groups, both for the owner. Follow-ups, not done here: UI/UX.v4 ([ui-direction.md](../agents/ui-direction.md)) needs the sizes rule and the language directive added by its owner-role writer; where this plan and ui-direction.md differ, ui-direction.md wins.
 
+### Owner decisions, 19 November 2026, in the Guardian session (first hand)
+
+Quoted exactly, typos kept. Wave 2 unit 04 (Your Move) only; nothing for units 05, 06, 07 or Wave 3.
+
+- "my answer is 1 & a for the questions below": one Guardian; search engines may index public pages, not built.
+- "didnt like the design, ux/ui. 3/10" then "all of it": the first Your Move board was rejected on both the screen design and the board; a new canvas of screens replaced it (<https://claude.ai/artifact/PurX3fdh664Y5JSBSWQMje>).
+- "yes for move": go to build Wave 2 unit 04, Your Move.
+- The owner did not change the four open design decisions, so the recommended answers apply as stated assumptions, owner may change: (D1) the three shortcuts stay as plain rows on the empty Home at every width; (D2) on phone Quick gets ONE row, Shortcuts, which opens the three (top level seven rows or fewer); above 640 px they live in All tools; (D3) "Forget Which Replies I Have Read on This Device" moves to Account, Preferences, a "This device" section with an instant clear and a visible result line; (D4) no "Today / With you" tabs.
+
+The binding rows are in [UI/UX.v4](../agents/ui-direction.md) ("Your Move (UI/UX.v4)" and "Sizes between today and the board (19 Nov 2026)"); where this plan and that file differ, that file wins.
+
 ## Wave order and status
 
 Each wave ships behind the existing switches, passes every release check and is verified on the live site before the next one starts. Status here is plan status; live state is only in the [V3 ledger](../V3_LEDGER.md).
@@ -142,7 +153,8 @@ Each wave ships behind the existing switches, passes every release check and is 
 | 0     | DS1, UI/UX.v4 design system         | Contract, tokens and guards; no screen                                                          | A (design-system contract)                                       | Merged (PR 566, 2db5d40)                                                                                                                                                                                                               |
 | 0     | LP3, home page board 3c             | Home page; shared components flag, door card, choice chip, number field, example tag, start bar | B                                                                | Merged (PR 565, 374c9cd)                                                                                                                                                                                                               |
 | 1     | Wave 1, public and shell            | 10 Shell (W1-A), 03 Access and Sign in (W1-B), 01 Plan (W1-C), 02 Routes (W1-D)                 | B                                                                | Approved ("start"). All merged: W1-A shell 569, W1-A2 570 and 571 (top bar and customer bar), W1-B 564, W1-C 568, W1-D 563 and 567, W1-E 572 (how it works). Not seen signed in. Follow-up PR 573 (shared Listen state) is a red draft |
-| 2     | Wave 2, signed-in core              | 04 Your Move, 05 Room, 07 Road and lanes, 06 Compare                                            | B, and A for 06 (money and trust labels)                         | Not started. Owner choices decided 19 Nov (first hand, Orchestrator chat)                                                                                                                                                              |
+| 2     | Wave 2 unit 04, Your Move           | 04 Your Move                                                                                    | B, and A for 06 (money and trust labels)                         | Approved to build 19 Nov ("yes for move"); board replaced by a canvas after the 3/10 rating; UI/UX.v4 rows written; code not started                                                                                                   |
+| 2     | Wave 2 units 05, 06, 07             | 05 Room, 07 Road and lanes, 06 Compare                                                          | B, and A for 06 (money and trust labels)                         | Not started. Owner choices decided 19 Nov (first hand, Orchestrator chat)                                                                                                                                                              |
 | 3     | Wave 3, outside people and the team | 08 Buyer reply, 09 Before Send, 11 Operator desk                                                | A for 08 (consent and sharing) and 09 (access display), B for 11 | Not started. Owner choices decided 19 Nov (first hand, Orchestrator chat)                                                                                                                                                              |
 
 Dark mode is not in step two: the product stays light only through all three waves, and is revisited after Wave 3 with its own token set and a contrast test for the hatch patterns.
