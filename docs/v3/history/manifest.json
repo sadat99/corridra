@@ -565,6 +565,14 @@
       "bytes": 10632,
       "sha256": "051d30ab0aeb064b29f28d963d3167b6cffa756ff374eebd4a6e5afaa0316db8",
       "meaning": "Exact active ledger at 163a998 (Guardian 28 takeover, before records g28 recorded the 547 to 559 merges, the ADR-087 U4 member notice and the three installs of 18 Nov), including the Takeover 16 Nov, Main 529/531, merged 13 to 16 Nov, Session ids and older follow-up text later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "626d2f8888cacdc45fd6ec9ec43ccb7486d2fbfd",
+      "archive": "docs/v3/history/ledger-before-w1-records-2026-11-19.md",
+      "bytes": 10615,
+      "sha256": "4aa8238af1ddfdd5f662fe736ed39247c44fc4599a4bd5c0d1bc1bab170524dd",
+      "meaning": "Exact active ledger at 626d2f8 (the PR 571 merge), before the 19 Nov W1 records replaced the Main 163a998 bullet with the 560 to 571 merges and the 19 Nov verification, including the Guardian G28 Main bullet with the 547 to 559 merge list, the owner A to all of 17 Nov and the KI-64 note. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
