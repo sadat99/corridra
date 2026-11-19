@@ -49,3 +49,15 @@ export const robotsDisallowPaths: readonly string[] = [
   '/reset-password',
   '/verify-email',
 ];
+
+export type RobotsDocument = {
+  rules: { userAgent: string; allow: string; disallow: string[] }[];
+  sitemap: string;
+};
+
+export function robotsDocument(sitemapUrl: string): RobotsDocument {
+  return {
+    rules: [{ userAgent: '*', allow: '/', disallow: [...robotsDisallowPaths] }],
+    sitemap: sitemapUrl,
+  };
+}
