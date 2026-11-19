@@ -40,9 +40,11 @@ test('the headline, the two tabs and their data-tab ids are unchanged, at 44 px'
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/how-it-works');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'One commercial objective. One mission. A clear record of what happens next.',
-  );
+  await expect(page.getByRole('heading', { level: 1 }).locator('span')).toHaveText([
+    'One commercial objective.',
+    'One mission.',
+    'A clear record of what happens next.',
+  ]);
   const tablist = page.getByRole('tablist', { name: 'Phases of the approach' });
   await expect(tablist.getByRole('tab')).toHaveText(['Before You Meet', 'Meet and Follow Up']);
   for (const id of ['before-you-meet', 'meet-and-follow-up']) {
