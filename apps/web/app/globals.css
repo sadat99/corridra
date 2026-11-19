@@ -8405,11 +8405,8 @@ samp {
 }
 
 /* Floating Help and Listen (UX-15): out of the way while reading, and in the header on phones. */
-.corner-dock {
-  transition:
-    opacity 160ms ease,
-    transform 160ms ease;
-}
+/* No fade in or out: the floating Help carries a word, and a word caught mid-fade is read as a contrast failure and is
+   a control nobody can see for a moment. The dock appears and goes at once. */
 .corner-dock[data-hidden='true']:not(:focus-within) {
   opacity: 0;
   transform: translateY(1rem);
@@ -8445,11 +8442,6 @@ samp {
     inset-inline-end: 0;
     top: calc(100% + var(--space-2));
     z-index: 60;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .corner-dock {
-    transition: none;
   }
 }
 
