@@ -25,6 +25,14 @@ test('robots.txt blocks signed-in, staff and token areas and names the sitemap',
     '/reply',
     '/mute',
     '/delegations',
+    '/access',
+    '/workspace',
+    '/client',
+    '/buyer',
+    '/decision-card',
+    '/pulse',
+    '/signin',
+    '/signup',
   ])
     expect(disallow).toContain(path);
   expect(robots().sitemap).toBe(`${canonicalSiteOrigin}/sitemap.xml`);
