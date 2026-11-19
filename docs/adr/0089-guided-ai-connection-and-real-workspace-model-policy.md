@@ -47,6 +47,8 @@ Amends ADR-028 forward for one table only. Everything else ADR-028 decides stays
 
 ## Consequences
 
+- The options read (`GET ai-connect`) takes an optional `adapter` query value, validated against the three adapter ids, and returns `fallbackFor`, the connection key it left out of the fallback list. With no adapter every current, latest candidate comes back with its `key`, so the PR 2 screen can filter. A connection cannot be its own fallback, because saving a new version at once supersedes the old one at run time; the service says so plainly. Both additions are read-side only.
+
 - New: `packages/db/ai-model-policy-real-migrations/0001_real_workspace_model_policy.sql`, its `rollback/0001_restore_guard_ai.sql`, `packages/db/src/ai-model-policy-real-migrate.ts`, one new option `ai_model_policy_real` on the existing `field_modules_action` input (no new workflow input), and installer wiring in `scripts/install-customer-modules.ts`.
 - An EU connection is usable only if the owner sets `CORRIDRA_<ADAPTER>_PROCESSING_LOCATIONS` to include every resolved country and the rights review of each source lists them all. The screen and runbook say so.
 - Adding a version stops AI for route packs pinned to the earlier version, because `ai_run_authorized` accepts only the latest version for a key. The screen says so.
