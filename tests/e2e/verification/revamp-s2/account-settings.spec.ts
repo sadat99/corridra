@@ -91,10 +91,19 @@ test('CI-U4 reading comfort on the Preferences page works by keyboard and has no
   );
   const left = async (name: string | RegExp, role: 'radiogroup' | 'switch') =>
     (await panel.getByRole(role, { name }).boundingBox())!.x;
-  expect(await left('Text Size', 'radiogroup')).toBe(await left('Stronger Colours', 'switch'));
-  expect(
-    (await panel.getByRole('heading', { name: 'Reading comfort', level: 3 }).boundingBox())!.x,
-  ).toBe(await left('Stronger Colours', 'switch'));
+  // The text size reaches the page one frame after the radio reports it, so the
+  // columns are compared once the layout has settled, never loosened.
+  const headingLeft = async () =>
+    (await panel.getByRole('heading', { name: 'Reading comfort', level: 3 }).boundingBox())!.x;
+  await expect
+    .poll(
+      async () =>
+        (await left('Text Size', 'radiogroup')) - (await left('Stronger Colours', 'switch')),
+    )
+    .toBe(0);
+  await expect
+    .poll(async () => (await headingLeft()) - (await left('Stronger Colours', 'switch')))
+    .toBe(0);
   await expect(panel.getByText('These choices are kept on this device only.')).toBeVisible();
   const results = await new AxeBuilder({ page }).include('.ux-account-settings').analyze();
   expect(results.violations).toEqual([]);
