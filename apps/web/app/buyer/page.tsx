@@ -18,6 +18,7 @@ export default function BuyerPage() {
     >
       <BuyerIntroduction
         replyPage={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
+        beforeSend={uxSwitchOn('CORRIDRA_UX_BEFORE_SEND')}
         chineseReleased={offeredLanguages().some((language) => language.code === 'zh')}
       />
       <AccessOptions {...accessHelp.buyer} />

@@ -34,9 +34,11 @@ const labels = {
 export function BuyerIntroduction({
   replyPage = false,
   chineseReleased = false,
+  beforeSend = false,
 }: {
   replyPage?: boolean;
   chineseReleased?: boolean;
+  beforeSend?: boolean;
 }) {
   const capability = usePrivateCapability();
   return (
@@ -45,6 +47,7 @@ export function BuyerIntroduction({
       capability={capability}
       replyPage={replyPage}
       chineseReleased={chineseReleased}
+      beforeSend={beforeSend}
     />
   );
 }
@@ -52,10 +55,12 @@ function ScopedIntroduction({
   capability,
   replyPage,
   chineseReleased,
+  beforeSend,
 }: {
   capability: string;
   replyPage: boolean;
   chineseReleased: boolean;
+  beforeSend: boolean;
 }) {
   // The Reply Page reads `t=<token>&l=<language>&ask=<terms>`; an older link is the bare token. With the
   // switch off the whole fragment is the token, exactly as before.
@@ -207,6 +212,7 @@ function ScopedIntroduction({
           data={data}
           token={data.capability ?? ''}
           language={fragment.language}
+          beforeSend={beforeSend}
           ask={fragment.ask}
           busy={busy}
           pending={pending ? pending.decision : null}

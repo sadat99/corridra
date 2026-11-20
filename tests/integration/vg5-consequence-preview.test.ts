@@ -74,7 +74,7 @@ describe('the preview only says what the database enforces', () => {
 describe('the words', () => {
   it('has every line in all seven languages, each draft its own', () => {
     expect(Object.keys(catalogs).sort()).toEqual(['ar', 'bn', 'de', 'en', 'es', 'fr', 'zh']);
-    expect(keys.length).toBe(6);
+    expect(keys.length).toBe(8);
     for (const [code, catalog] of Object.entries(catalogs))
       for (const key of keys) {
         const word = (catalog as Record<string, string>)[key];

@@ -1,0 +1,73 @@
+/* Before Send: one quiet read-only block above a Send. Three rows of icon, bold question and one fact, then (evidence
+   only) the one-response sentence with a lock. Tokens only. Phone value is the floor, the desktop value the ceiling,
+   spacing scales fluidly between them, and only the Send height steps at 768 px. */
+.before-send {
+  display: grid;
+  gap: clamp(var(--space-6), calc(var(--space-6) + (100vw - 320px) * 0.00715), var(--space-8));
+  margin-block: var(--space-6);
+  padding: clamp(var(--space-4), calc(var(--space-4) + (100vw - 320px) * 0.00715), var(--space-6));
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+}
+.before-send p {
+  margin: 0;
+}
+.before-send-rows {
+  display: grid;
+  gap: clamp(var(--space-6), calc(var(--space-6) + (100vw - 320px) * 0.00715), var(--space-8));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.before-send-row,
+.before-send-once {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+.before-send-row > div,
+.before-send-once > span {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.before-send .corridra-icon {
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+}
+.before-send .before-send-row .before-send-question {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.before-send-readers {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.before-send-status {
+  font-weight: 500;
+}
+/* The Send under the block (the :not keeps it above the 44 px rule of .delivery-view button): 56 px on a phone, 48 px from 768 px, never below a 44 px target. */
+.before-send + button:not([type='button']),
+.before-send + .reply-actions > button:not([type='button']) {
+  min-block-size: 3.5rem;
+}
+@media (min-width: 768px) {
+  .before-send + button:not([type='button']),
+  .before-send + .reply-actions > button:not([type='button']) {
+    min-block-size: 3rem;
+  }
+}
+/* The declaration box row on the evidence form: a 44 px target with the words beside the box. */
+.before-send-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-block-size: 2.75rem;
+}

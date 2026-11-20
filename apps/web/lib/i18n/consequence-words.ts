@@ -9,6 +9,11 @@ export const consequenceEn = {
   'consequence.what': 'What is sent',
   'consequence.whatBody':
     'The text you typed in the response box, recorded as your own declaration. One response is kept for each request, and a different one cannot be sent afterwards.',
+  'consequence.whatSent':
+    'The text you typed in the response box, recorded as your own declaration.',
+  'consequence.oneResponse':
+    'One response is kept for each request, and a different one cannot be sent afterwards.',
+  'beforeSend.tick': 'Tick this box to send.',
   'consequence.until': 'Until when',
   'consequence.untilBody': 'At most until the link expires or is withdrawn. This link expires on',
   'privacy.reader.anyoneWithThisLink': 'Anyone with this link',
@@ -24,6 +29,11 @@ export const consequenceDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', 
       'consequence.what': 'কী পাঠানো হয়',
       'consequence.whatBody':
         'উত্তরের বাক্সে আপনি যা লিখেছেন, আপনার নিজের ঘোষণা হিসেবে সংরক্ষিত হবে। প্রতিটি অনুরোধের জন্য একটি উত্তরই রাখা হয়, পরে অন্য উত্তর পাঠানো যায় না।',
+      'consequence.whatSent':
+        'উত্তরের বাক্সে আপনি যা লিখেছেন, আপনার নিজের ঘোষণা হিসেবে সংরক্ষিত হবে।',
+      'consequence.oneResponse':
+        'প্রতিটি অনুরোধের জন্য একটি উত্তরই রাখা হয়, পরে অন্য উত্তর পাঠানো যায় না।',
+      'beforeSend.tick': 'পাঠাতে এই বাক্সে টিক দিন।',
       'consequence.until': 'কতদিন পর্যন্ত',
       'consequence.untilBody':
         'বড়জোর লিংকটির মেয়াদ শেষ বা প্রত্যাহার না হওয়া পর্যন্ত। এই লিংকের মেয়াদ শেষ হবে',
@@ -34,6 +44,9 @@ export const consequenceDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', 
       'consequence.what': '发送的内容',
       'consequence.whatBody':
         '您在回复框中输入的文字，将记录为您本人的声明。每个请求只保留一份回复，之后无法再发送不同的回复。',
+      'consequence.whatSent': '您在回复框中输入的文字，将记录为您本人的声明。',
+      'consequence.oneResponse': '每个请求只保留一份回复，之后无法再发送不同的回复。',
+      'beforeSend.tick': '请勾选此框后再发送。',
       'consequence.until': '保留到何时',
       'consequence.untilBody': '最长保留到链接过期或被撤回。此链接的过期时间为',
       'privacy.reader.anyoneWithThisLink': '持有此链接的任何人',
@@ -43,6 +56,11 @@ export const consequenceDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', 
       'consequence.what': 'Qué se envía',
       'consequence.whatBody':
         'El texto que escribió en el cuadro de respuesta, registrado como su propia declaración. Se conserva una sola respuesta por solicitud y después no se puede enviar otra distinta.',
+      'consequence.whatSent':
+        'El texto que escribió en el cuadro de respuesta, registrado como su propia declaración.',
+      'consequence.oneResponse':
+        'Se conserva una sola respuesta por solicitud y después no se puede enviar otra distinta.',
+      'beforeSend.tick': 'Marque esta casilla para enviar.',
       'consequence.until': 'Hasta cuándo',
       'consequence.untilBody':
         'Como máximo hasta que el enlace caduque o se retire. Este enlace caduca el',
@@ -53,6 +71,9 @@ export const consequenceDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', 
       'consequence.what': 'ما الذي يُرسل',
       'consequence.whatBody':
         'النص الذي كتبتَه في خانة الرد، ويُسجَّل بوصفه إقرارًا منك. يُحتفظ بردّ واحد لكل طلب، ولا يمكن إرسال ردّ مختلف بعد ذلك.',
+      'consequence.whatSent': 'النص الذي كتبتَه في خانة الرد، ويُسجَّل بوصفه إقرارًا منك.',
+      'consequence.oneResponse': 'يُحتفظ بردّ واحد لكل طلب، ولا يمكن إرسال ردّ مختلف بعد ذلك.',
+      'beforeSend.tick': 'ضع علامة في هذه الخانة للإرسال.',
       'consequence.until': 'حتى متى',
       'consequence.untilBody':
         'على الأكثر حتى تنتهي صلاحية الرابط أو يُسحب. تنتهي صلاحية هذا الرابط في',
@@ -63,6 +84,11 @@ export const consequenceDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', 
       'consequence.what': 'Ce qui est envoyé',
       'consequence.whatBody':
         'Le texte saisi dans la zone de réponse, enregistré comme votre propre déclaration. Une seule réponse est conservée par demande, et une autre ne pourra plus être envoyée ensuite.',
+      'consequence.whatSent':
+        'Le texte saisi dans la zone de réponse, enregistré comme votre propre déclaration.',
+      'consequence.oneResponse':
+        'Une seule réponse est conservée par demande, et une autre ne pourra plus être envoyée ensuite.',
+      'beforeSend.tick': 'Cochez cette case pour envoyer.',
       'consequence.until': "Jusqu'à quand",
       'consequence.untilBody':
         "Au plus jusqu'à ce que le lien expire ou soit retiré. Ce lien expire le",
@@ -73,6 +99,10 @@ export const consequenceDrafts: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', 
       'consequence.what': 'Was gesendet wird',
       'consequence.whatBody':
         'Der Text im Antwortfeld, erfasst als Ihre eigene Erklärung. Pro Anfrage wird eine Antwort gespeichert, danach kann keine andere mehr gesendet werden.',
+      'consequence.whatSent': 'Der Text im Antwortfeld, erfasst als Ihre eigene Erklärung.',
+      'consequence.oneResponse':
+        'Pro Anfrage wird eine Antwort gespeichert, danach kann keine andere mehr gesendet werden.',
+      'beforeSend.tick': 'Setzen Sie dieses Häkchen, um zu senden.',
       'consequence.until': 'Bis wann',
       'consequence.untilBody':
         'Höchstens bis der Link abläuft oder zurückgezogen wird. Dieser Link läuft ab am',

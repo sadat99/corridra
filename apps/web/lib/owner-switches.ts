@@ -672,6 +672,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_BEFORE_SEND',
+    label: 'Before Send block',
+    line: 'Directly above each Send on an evidence response and on the last step of a recipient reply, one block says in three short rows who can see what is sent, what is sent and until when, with the same facts the pages already state, and a missing declaration tick shows one clear message beside the box. Nothing is sent, shown or kept differently. Off by default. Turn it off by removing the setting in Vercel and redeploying.',
+    group: 'Delivery',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_NOTIFICATIONS_V2',
     label: 'Inbox and hand-off emails',
     line: 'Every hand-off writes an inbox item and sends an email when the person has chosen email. Needs the commercial readiness database module.',
