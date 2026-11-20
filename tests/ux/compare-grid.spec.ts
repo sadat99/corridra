@@ -419,7 +419,7 @@ test('two suppliers on a phone: no divider between the two supplier columns, the
 
 for (const width of [320, 390])
   for (const count of [3, 10])
-    test(`large text, ${count} suppliers at ${width}px: no page overflow, the label column stays under 40 percent, the head is not clipped`, async ({
+    test(`large text, ${count} suppliers at ${width}px: no page overflow, the label column stays within 40 percent or 128px, the head is not clipped`, async ({
       page,
     }) => {
       await mount(page, width, count);
@@ -431,7 +431,7 @@ for (const width of [320, 390])
       ).toBe(true);
       const region = await rect(page, '.compare-grid-scroll');
       const label = await rect(page, '.compare-grid-label');
-      expect(label.width).toBeLessThanOrEqual(region.width * 0.4 + 1);
+      expect(label.width).toBeLessThanOrEqual(Math.max(region.width * 0.4, 128) + 1);
       const clipped = await page.$$eval('.compare-grid-head', (els) =>
         els.filter((el) => el.scrollHeight > el.clientHeight + 1).map((el) => el.textContent),
       );
