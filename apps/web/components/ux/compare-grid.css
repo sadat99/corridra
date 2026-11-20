@@ -416,7 +416,14 @@
     border-radius: 0;
     box-shadow: none;
   }
-  .compare-grid-table[data-cols='2'] .compare-grid-head + .compare-grid-head {
-    border-inline-start: 1px solid var(--line);
+  /* No divider between the two supplier columns: each head carries its own surface, and the outer border and the
+     row dividers stay. */
+}
+@container (width < 24rem) {
+  @media (forced-colors: active) {
+    /* Forced colours drop the head surface, so the two columns keep one CanvasText line between them. */
+    .compare-grid-table[data-cols='2'] .compare-grid-head + .compare-grid-head {
+      border-inline-start: 1px solid CanvasText;
+    }
   }
 }
