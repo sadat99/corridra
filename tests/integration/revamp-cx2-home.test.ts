@@ -6,7 +6,7 @@ import type { WorkItem, WorkList } from '../../apps/web/lib/work-items/types';
 // CX PR 2a, Home (docs/revamp/specs/customer-experience.md): the one next step as a single row with no second
 // primary action and no mono-capital label, up to five active-work rows that are each one link, and a slim
 // six-segment stage bar for the newest request where a stage with no data is plain grey and never says
-// "not tracked yet". Case ids: CX-01 (content kept short), CX-06, CX-02 (the links stay).
+// "not tracked yet" (CX-06 still holds on Home; the Room alone shows it, per the 20 Nov 2026 amendment). Case ids: CX-01 (content kept short), CX-06, CX-02 (the links stay).
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (
   type: unknown,

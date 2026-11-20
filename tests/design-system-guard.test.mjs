@@ -335,6 +335,7 @@ test('the type scale tokens match UI/UX.v3', () => {
     'var(--text-lg)',
     'the retired 20 px step lands on the card title size',
   );
+  assert.equal(token('--text-stage')[0], '1.25rem', 'the Room stage heading is 20 px');
   assert.equal(token('--text-2xl')[0], '1.5rem');
   // Page title 40 on desktop and 29 on a phone; section title 24 and 22; home display 56 and 30 on a phone.
   assert.match(token('--text-h1')[0], /^clamp\(1\.8125rem,.*\b2\.5rem\)$/);

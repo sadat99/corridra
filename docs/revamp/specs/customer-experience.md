@@ -135,6 +135,8 @@ record is a plain grey segment. Measured with a BD-China sample: 1.00 desktop sc
 | CX-06 | No amber banner, no "NOT TRACKED YET" and no mono capitals for state anywhere in the customer area. The help dock never overlaps an interactive element.                                          |
 | CX-07 | Before and after screenshots at 390 and 1440 for every page go in the PR, for the owner's named review.                                                                                           |
 
+**Amendment to CX-06 (20 November 2026, forward; the row above is kept as written).** For the request Room only, the "no NOT TRACKED YET" rule is superseded by the owner's approval of the Room board on 20 November 2026 (Wave 2 unit 05). The Room shows "Not tracked yet" in sentence case, never mono capitals, as part of the locked shape set (dashed circle, see Visual grammar in `docs/agents/ui-direction.md`). The rest of CX-06 (no amber banner, no mono capitals for state, a help dock that never overlaps) and every other customer page (Home, Requests, Move) are unchanged.
+
 ## Order (S2)
 
 1. Shell: left bar, top bar and account menu (L-01 and CX-03).

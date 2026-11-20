@@ -305,12 +305,14 @@ test('shows who and what the request is, where it stands and what the team said'
   ).toBeVisible();
   await expect(page.getByText('China · Received')).toBeVisible();
   // MEETINGS is Visit. A delivered report lights Compare; no decision is ever claimed, and a stage with no
-  // record is a plain grey segment, never "Not tracked yet" (CX-06).
+  // record says "Not tracked yet", never Done or Later.
   const stage = page.locator('.room-stage .mr-stage');
   await expect(stage.locator('[aria-current="step"]')).toContainText('Visit');
-  await expect(stage.locator('li')).toHaveCount(6);
-  await expect(page.locator('.room-stage').getByText('Stage 4 of 6:')).toBeVisible();
-  await expect(page.getByText('Not tracked yet')).toHaveCount(0);
+  await expect(stage.locator('li[data-shape]')).toHaveCount(6);
+  await expect(page.locator('.room-stage').getByText('Step 4 of 6:')).toBeVisible();
+  await expect(page.locator('.mr-stage-lines')).toContainText('Done: Define, Find, Compare');
+  await expect(page.locator('.mr-stage-lines')).toContainText('Later: Follow through');
+  await expect(page.locator('.mr-stage-lines')).toContainText('Not tracked yet: Decide');
   await expect(page.getByText('Meetings are being arranged for November.')).toBeVisible();
   await expect(page.getByText('We have shortlisted three suppliers.')).toHaveCount(0);
   await page.getByRole('button', { name: /Read Every Reply/ }).click();
@@ -568,7 +570,8 @@ test('without lenses there is no lens control, and without a report the Road doe
   // Without a report Compare is not lit: only Define and Find, the stages before Visit, are done.
   const stage = page.locator('.room-stage .mr-stage');
   await expect(stage.locator('li[data-state="done"]')).toHaveCount(2);
-  await expect(page.getByText('Not tracked yet')).toHaveCount(0);
+  await expect(page.locator('.mr-stage-lines')).toContainText('Not tracked yet: Compare, Decide');
+  await expect(page.locator('.mr-stage-lines')).not.toContainText('Done: Define, Find, Compare');
 });
 
 // Source follow-ups 1 and 3 (S63): a machinery mission says which offer leaves out commissioning, and each quote carries the date it
@@ -2189,29 +2192,36 @@ test('AC/1: the next-step card is navy, its muted text reads at 4.5:1 and it has
   await expect(buttons).toHaveCSS('outline-style', 'solid');
 });
 
-test('AC/1: the stage timeline is vertical from tablet width, in order, and the card stays first on a phone', async ({
+test('AC/1: the stage timeline is vertical on a desktop, folds the finished stages, and the card stays first on a phone', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page);
-  const items = page.locator('.room-stage .mr-stage li');
+  const items = page.locator('.room-stage .mr-stage li[data-shape]');
   await expect(items).toHaveCount(6);
-  const boxes = await items.evaluateAll((els) =>
-    els.map((el) => {
-      const r = el.getBoundingClientRect();
-      return { x: Math.round(r.x), y: r.y };
-    }),
-  );
-  expect(new Set(boxes.map((b) => b.x)).size).toBe(1);
-  expect(boxes.map((b) => b.y)).toEqual([...boxes.map((b) => b.y)].sort((a, b) => a - b));
-  const words = await page.locator('.room-stage .mr-stage-name').allTextContents();
-  expect(words).toEqual(['Define', 'Find', 'Compare', 'Visit', 'Decide', 'Follow through']);
+  // One folded Done row, then the current stage, each later stage, then what is not tracked yet.
+  const rows = await page
+    .locator('.room-stage .mr-stage > li:not([data-shape="done"])')
+    .evaluateAll((els) =>
+      els
+        .map((el) => ({ y: el.getBoundingClientRect().y, text: el.textContent ?? '' }))
+        .sort((a, b) => a.y - b.y)
+        .map((row) => row.text),
+    );
+  expect(rows).toEqual([
+    'Done: Define, Find, Compare',
+    expect.stringMatching(/^VisitNow/),
+    expect.stringMatching(/^Follow throughLater/),
+    expect.stringMatching(/^DecideNot tracked yet/),
+  ]);
   await expect(page.locator('.room-stage .mr-stage [aria-current="step"]')).toContainText('Visit');
+  await expect(page.locator('.room-stage .mr-stage-heading')).toContainText('Step 4 of 6: Visit');
   await page.setViewportSize({ width: 390, height: 844 });
   const phone = await items.evaluateAll((els) =>
     els.map((el) => Math.round(el.getBoundingClientRect().y)),
   );
   expect(new Set(phone).size).toBe(1);
+  await expect(page.locator('.room-stage .mr-stage-lines')).toBeVisible();
   const card = await page.locator('.room-next').boundingBox();
   expect(card!.y + card!.height).toBeLessThan(844);
 });
@@ -2372,4 +2382,202 @@ test.describe('terms no quote states, in one row', () => {
       }),
     ).toContainText('Not stated');
   });
+});
+
+// Owner rule: the same size on every phone, growing smoothly with width, and the chosen size on a desktop.
+test('Room sizes are identical at 320, 360 and 390, never shrink as the width grows, and match the design at 1440', async ({
+  page,
+}) => {
+  const body = reportBody([
+    { label: 'Meeting with Lantern Cutting Works', status: 'PROPOSED', scheduleChanged: false },
+  ]);
+  await open(
+    page,
+    { trip: true },
+    {
+      body: detail({
+        original: {
+          objective: 'Find customers or distributors',
+          experience: { schemaVersion: 1, companyCountry: 'BD', marketCode: 'ES' },
+        },
+      }),
+    },
+    { body },
+  );
+  const measure = async (width: number) => {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator('.mr-stage-shape').first()).toBeVisible();
+    return await page.evaluate(() => {
+      const size = (selector: string) => {
+        const el = document.querySelector(selector);
+        return el ? parseFloat(getComputedStyle(el).fontSize) : -1;
+      };
+      const high = (selector: string) => {
+        const el = document.querySelector(selector);
+        return el ? Math.round(el.getBoundingClientRect().height) : -1;
+      };
+      const wide = (selector: string) => {
+        const el = document.querySelector(selector);
+        return el ? Math.round(el.getBoundingClientRect().width) : -1;
+      };
+      return {
+        title: size('.room-head h2'),
+        stage: size('.mr-stage-heading'),
+        sentence: size('.room-next-words b'),
+        chip: size('.room-tag'),
+        word: size('.room-lens span'),
+        chipHeight: high('.room-tag'),
+        lensHeight: high('.room-lens'),
+        buttonHeight: high('.room-next .button-primary'),
+        shape: wide('.mr-stage-shape'),
+      };
+    });
+  };
+  const phones = [await measure(320), await measure(360), await measure(390)];
+  expect(phones[1]).toEqual(phones[0]);
+  expect(phones[2]).toEqual(phones[0]);
+  const widths = [390, 768, 1024, 1280, 1440];
+  let previous = phones[2];
+  for (const width of widths) {
+    const now = await measure(width);
+    for (const key of ['title', 'sentence', 'stage', 'chip', 'word', 'shape'] as const) {
+      expect(now[key], `${key} at ${width}`).toBeGreaterThanOrEqual(previous[key]);
+    }
+    previous = now;
+  }
+  const desktop = await measure(1440);
+  expect(await measure(1024)).toMatchObject({ title: desktop.title, sentence: desktop.sentence });
+  expect(phones[0]).toMatchObject({
+    title: 22,
+    sentence: 22,
+    stage: 20,
+    chip: 14,
+    word: 14,
+    shape: 24,
+  });
+  expect(desktop).toMatchObject({
+    title: 24,
+    sentence: 24,
+    stage: 20,
+    chip: 14,
+    word: 14,
+    chipHeight: 28,
+    lensHeight: 52,
+    shape: 24,
+  });
+  expect(phones[0].lensHeight).toBe(56);
+  expect(phones[0].buttonHeight).toBe(56);
+  expect(desktop.buttonHeight).toBe(48);
+});
+
+// The count pill is tied to its icon: inside its own tab and clear of the word.
+async function pillProblems(page: Page) {
+  return await page.locator('.room-lens').evaluateAll((tabs) => {
+    const problems: string[] = [];
+    for (const tab of tabs) {
+      const icon = tab.querySelector('.room-lens-icon[data-count]');
+      if (!icon) continue;
+      const pill = getComputedStyle(icon, '::after');
+      const at = icon.getBoundingClientRect();
+      const left = at.left + parseFloat(pill.left);
+      const top = at.top + parseFloat(pill.top);
+      const box = {
+        left,
+        right: left + parseFloat(pill.width),
+        top,
+        bottom: top + parseFloat(pill.height),
+      };
+      const cell = tab.getBoundingClientRect();
+      const word = tab.querySelector('span:not(.room-lens-icon)')!.getBoundingClientRect();
+      if (box.left < cell.left || box.right > cell.right || box.top < cell.top)
+        problems.push('leaves its tab');
+      const overlaps =
+        box.left < word.right &&
+        box.right > word.left &&
+        box.top < word.bottom &&
+        box.bottom > word.top;
+      if (overlaps) problems.push('overlaps the word');
+    }
+    return problems;
+  });
+}
+
+test('in Arabic at 320 the Room reads right to left, keeps the new English words marked, and nothing overflows', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await open(page, { offered: 'en,ar' });
+  await page.evaluate(() => window.localStorage.setItem('corridra.language', 'ar'));
+  await page.reload();
+  await expect(page.locator('.room')).toHaveAttribute('dir', 'rtl');
+  await expect(page.locator('.mr-stage-heading bdi[lang="en"]')).toContainText('Step 4 of 6');
+  await expect(page.locator('.room-lenses')).toBeVisible();
+  const outside = await page.locator('.room-lenses button, .mr-stage-shape').evaluateAll(
+    (els) =>
+      els.filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.left < 0 || r.right > document.documentElement.clientWidth;
+      }).length,
+  );
+  expect(outside).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  // The colon stays with the English run, and the Done line joins names with the Arabic comma.
+  await expect(page.locator('.mr-stage-heading bdi[lang="en"]')).toHaveAttribute('dir', 'ltr');
+  await expect(page.locator('.mr-stage-heading bdi[lang="en"]')).toHaveText(/^Step 4 of 6:$/);
+  await expect(page.locator('.mr-stage-lines p').first()).toContainText('،');
+  expect(await pillProblems(page)).toEqual([]);
+  // The six shapes keep one row and the lens tabs stay one row above 23rem and two by two below it.
+  const lensRows = await page
+    .locator('.room-lenses button')
+    .evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().y))).size);
+  expect(lensRows).toBe(2);
+});
+
+test('the pill stays tied to its icon on phones, and the odd third tab spans the 2 by 2 grid at 320', async ({
+  page,
+}) => {
+  await open(page);
+  for (const width of [320, 390, 768]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator('.room-lens-icon[data-count]').first()).toBeVisible();
+    expect(await pillProblems(page), `pill at ${width}`).toEqual([]);
+  }
+  await page.setViewportSize({ width: 320, height: 900 });
+  const tabs = await page
+    .locator('.room-lens')
+    .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().width)));
+  expect(tabs[2]).toBe(tabs[0] + tabs[1]);
+  const label = await page.locator('.room-next-words small').boundingBox();
+  const sentence = await page.locator('.room-next-words b').boundingBox();
+  expect(sentence!.y).toBeGreaterThan(label!.y + label!.height - 1);
+});
+
+test('the done ticks are whole once the draw animation has finished, at 320, 768 and 1440', async ({
+  page,
+}) => {
+  await open(page);
+  for (const width of [320, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForFunction(() =>
+      document.getAnimations().every((animation) => animation.playState !== 'running'),
+    );
+    const ticks = await page
+      .locator('[data-shape="done"] .corridra-icon path')
+      .evaluateAll((paths) =>
+        paths.map((path) => {
+          const style = getComputedStyle(path);
+          const total = (path as SVGPathElement).getTotalLength();
+          return {
+            offset: parseFloat(style.strokeDashoffset),
+            dash: parseFloat(style.strokeDasharray),
+            total,
+          };
+        }),
+      );
+    expect(ticks.length).toBe(3);
+    for (const tick of ticks) {
+      expect(tick.offset).toBe(0);
+      expect(tick.dash).toBeGreaterThanOrEqual(tick.total);
+    }
+  }
 });

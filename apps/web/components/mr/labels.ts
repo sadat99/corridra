@@ -36,6 +36,10 @@ function build(say: Say) {
         later: say('mr.road.state.later'),
         notTracked: say('mr.road.state.notTracked'),
       },
+      /** "Step {n} of {total}": the Room's stage heading. */
+      stepOf: say('mr.road.stepOf'),
+      /** What joins stage names in the Done and Later lines (the Arabic comma in Arabic). */
+      join: say('mr.road.join'),
       legend: say('mr.road.legend'),
       /** The legend's sentences, in the same language as the words above. */
       hints: {

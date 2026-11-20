@@ -30,6 +30,14 @@ import './room-frame.css';
 import './room-budget.css';
 
 type Lens = 'overview' | 'compare' | 'evidence' | 'trip';
+/** One existing icon per view, drawn above its word in the segmented control. */
+const lensIcon: Record<Lens, string> = {
+  overview: 'grid',
+  compare: 'list',
+  evidence: 'evidence',
+  trip: 'trip',
+};
+
 const lensKey: Record<Lens, MessageKey> = {
   overview: 'room.lens.overview',
   compare: 'room.lens.compare',
@@ -320,6 +328,7 @@ export function RoomView({
   return (
     <div
       className="room"
+      data-room="request"
       lang={html}
       dir={dir}
       data-journey={journey ? journeyKey[journey] : undefined}
@@ -373,15 +382,13 @@ export function RoomView({
                 records={roadRecords(link)}
                 labels={labels.road}
                 name={title}
-                named
+                variant="room"
+                stepLang={locale !== 'en' ? 'en' : undefined}
               />
             </div>
           </header>
 
           <section className="room-next" aria-label="Your next step" lang="en">
-            <span className="room-next-mark" aria-hidden="true">
-              <CorridraIcon name="arrow" />
-            </span>
             <span className="room-next-words">
               <small>Your next step</small>
               <b>{next.words}</b>
@@ -504,6 +511,9 @@ export function RoomView({
                     setLens(item);
                   }}
                 >
+                  <span className="room-lens-icon" data-count={lensCount(item)}>
+                    <CorridraIcon name={lensIcon[item]} />
+                  </span>
                   {/* An English word until native review (D16), marked so it is read as English. */}
                   <span lang={lensLang(item)}>{lensWords(item)}</span>
                 </button>
