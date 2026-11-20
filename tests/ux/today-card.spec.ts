@@ -284,6 +284,7 @@ for (const [language, copy] of Object.entries(headlines)) {
           scrolls: document.documentElement.scrollWidth > document.documentElement.clientWidth,
           outside,
           cut: cut.length,
+          clippedTall: h1.scrollHeight > h1.clientHeight,
           fontSize: parseFloat(getComputedStyle(h1).fontSize),
           h1Height: Math.round(h1.getBoundingClientRect().height),
           blockHeight: Math.round(
@@ -299,6 +300,8 @@ for (const [language, copy] of Object.entries(headlines)) {
       if (percent === 200) expect(fit.scrolls).toBe(false);
       expect(fit.outside).toEqual([]);
       expect(fit.cut).toBe(0);
+      // Bangla and Arabic marks above and below the line are not clipped by the line box.
+      expect(fit.clippedTall).toBe(false);
       expect(fit.fontSize).toBe(29 * (percent / 100));
     });
   }

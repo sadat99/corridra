@@ -1074,7 +1074,7 @@
 }
 /* Your Move only: the global --text-h1 is left alone. */
 .move-view {
-  --move-h1: clamp(1.8125rem, 1.1875rem + 1.44vw, 2.5rem);
+  --move-h1: clamp(1.8125rem, 1.1875rem + 1.46vw, 2.5rem);
 }
 .move-lede-block {
   display: grid;
@@ -1087,7 +1087,7 @@
   /* One fluid size for this page only: 29 px on every phone (no easing below 390), about 30 at 768, 34 at 1024, 40 from 1440. */
   font-size: var(--move-h1);
   font-weight: 500;
-  line-height: var(--leading-heading);
+  line-height: 1.2;
   min-inline-size: 0;
   max-inline-size: 100%;
   overflow-wrap: anywhere;
