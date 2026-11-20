@@ -1594,6 +1594,11 @@
       "use": "Exact hashed ledger at 4ed3102, before the 19 Nov records for the PR 573 merge condensed install, switch and lane lines; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-pr583-records-2026-11-20.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 7eaf3f4 (main after PR 583), before the 20 Nov records for PRs 574 to 583 and the ai_model_policy_real and member_access installs; use the current ledger for live state."
+    },
+    {
       "path": "docs/v3/history/ledger-before-w1-records-2026-11-19.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger at 626d2f8 (the PR 571 merge), before the 19 Nov W1 records recorded merges 560 to 571, the 19 Nov verification and the PR 573 diagnosis; preserves the Guardian 28 Main bullet and the 547 to 559 merge list; use the current ledger for live state."

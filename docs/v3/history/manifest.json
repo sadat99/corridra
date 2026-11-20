@@ -595,6 +595,14 @@
       "bytes": 10602,
       "sha256": "ef058dcf716bc40f0d77c0fc51a8d2f3f8b498c167a2c2ee6838be33501376ed",
       "meaning": "Exact active ledger at 4ed3102, before the 19 Nov records for the merge of PR 573 (main 704144e) and the open PRs 574 and 575 condensed install, switch, owner-decision and lane lines to pointers. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "7eaf3f4",
+      "archive": "docs/v3/history/ledger-before-pr583-records-2026-11-20.md",
+      "bytes": 10534,
+      "sha256": "3d09f8e35693ed369c21ea85385794af253c4c46126a49373ecac31be94fecec",
+      "meaning": "Exact active ledger at 7eaf3f4 (main after PR 583), before the 20 Nov records for PRs 574 to 583 and the ai_model_policy_real and member_access installs replaced the 19 Nov resume text. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
