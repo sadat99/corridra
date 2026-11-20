@@ -155,9 +155,14 @@ describe('25: the Move switch counts', () => {
     const sell = nav.slice(nav.indexOf('journey=sell'));
     const sellLink = sell.slice(0, sell.indexOf('</a>'));
     expect(sellLink).toContain('<em>0</em><span class="sr-only"> things need you</span>');
-    expect(sellLink.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ')).toContain(
-      'Selling, 0 things need you',
-    );
+    // Visible plus screen-reader text: keep what sits outside every tag.
+    const sellWords = sellLink
+      .split('>')
+      .map((part) => part.split('<')[0])
+      .join('')
+      .split(/\s+/)
+      .join(' ');
+    expect(sellWords).toContain('Selling, 0 things need you');
   });
 
   it('keeps the count out of a capsule: the switch count has no pill radius', () => {
