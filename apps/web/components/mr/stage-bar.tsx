@@ -1,4 +1,7 @@
 import './stage-bar.css';
+import './stage-bar-room.css';
+import { CorridraIcon } from '../corridra-icon';
+import { fill } from '../../lib/i18n/fill';
 import { mrLabels } from './labels';
 import {
   roadSteps,
@@ -6,6 +9,7 @@ import {
   statusToRoadStep,
   type RoadRecords,
   type RoadStep,
+  type RoadStepState,
 } from './road-status';
 
 type RoadLabels = typeof mrLabels.road;
@@ -24,6 +28,8 @@ export function StageBar({
   name,
   named = false,
   note,
+  variant,
+  stepLang,
 }: {
   /** The mission status a customer may read, exactly as returned (for example `MEETINGS`). */
   status: string;
@@ -35,6 +41,13 @@ export function StageBar({
   named?: boolean;
   /** A short fact that follows the stage on the same line ("8 companies shortlisted"). */
   note?: string;
+  /**
+   * `room`: the Room's stage heading, a shape and a word for every stage, and "Done: ..." and "Later: ..." lines.
+   * Left out, the bar is exactly as every other screen draws it.
+   */
+  variant?: 'room';
+  /** Language of the "Step N of M" words when they are not yet reviewed in the reader's language. */
+  stepLang?: string;
 }) {
   const marker = statusToRoadStep(status);
   const states = roadStates(marker, records);
@@ -44,6 +57,76 @@ export function StageBar({
         ? `${labels.asides.unknown} ${marker.status.replaceAll('_', ' ').toLowerCase()}`
         : labels.asides[marker.reason]
       : null;
+  if (variant === 'room') {
+    const names = (state: RoadStepState) =>
+      roadSteps
+        .filter((step) => states[step] === state)
+        .map((step) => labels.steps[step])
+        .join(', ');
+    const lines: { state: RoadStepState; words: string }[] = (
+      ['done', 'later', 'notTracked'] as const
+    )
+      .map((state) => ({ state, words: names(state) }))
+      .filter((line) => line.words);
+    return (
+      <div className="mr-stage-wrap" data-variant="room">
+        {marker.kind === 'marker' ? (
+          <h3 className="mr-stage-heading">
+            <span lang={stepLang}>
+              {fill(labels.stepOf, {
+                n: String(roadSteps.indexOf(marker.step) + 1),
+                total: String(roadSteps.length),
+              })}
+              :
+            </span>{' '}
+            {labels.steps[marker.step]}
+          </h3>
+        ) : null}
+        <ol className="mr-stage" aria-label={name ?? labels.title}>
+          {names('done') ? (
+            <li className="mr-stage-fold" aria-hidden="true">
+              {labels.states.done}: {names('done')}
+            </li>
+          ) : null}
+          {roadSteps.map((step: RoadStep) => {
+            const state = states[step];
+            const shown = state === 'notTracked' ? 'grey' : state;
+            const spoken = state === 'done' || state === 'now' ? `, ${labels.states[state]}` : '';
+            return (
+              <li
+                key={step}
+                data-state={shown}
+                data-shape={state}
+                aria-current={state === 'now' ? 'step' : undefined}
+              >
+                <span className="mr-stage-shape" aria-hidden="true">
+                  {state === 'done' ? <CorridraIcon name="check" /> : null}
+                </span>
+                <span className="mr-stage-name" aria-hidden="true">
+                  {labels.steps[step]}
+                </span>
+                <span className="mr-stage-state" aria-hidden="true">
+                  {labels.states[state]}
+                </span>
+                <span className="sr-only">
+                  {labels.steps[step]}
+                  {spoken}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        <div className="mr-stage-lines" aria-hidden="true">
+          {lines.map((line) => (
+            <p key={line.state} data-state={line.state}>
+              {labels.states[line.state]}: <b>{line.words}</b>
+            </p>
+          ))}
+        </div>
+        {aside ? <p className="mr-stage-line">{aside}</p> : null}
+      </div>
+    );
+  }
   return (
     <div className="mr-stage-wrap" data-named={named ? 'true' : undefined}>
       <ol className="mr-stage" aria-label={name ?? labels.title}>

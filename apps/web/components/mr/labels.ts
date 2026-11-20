@@ -36,6 +36,8 @@ function build(say: Say) {
         later: say('mr.road.state.later'),
         notTracked: say('mr.road.state.notTracked'),
       },
+      /** "Step {n} of {total}": the Room's stage heading. */
+      stepOf: say('mr.road.stepOf'),
       legend: say('mr.road.legend'),
       /** The legend's sentences, in the same language as the words above. */
       hints: {

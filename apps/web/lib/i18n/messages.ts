@@ -22,6 +22,7 @@ import { wsE, wsEEn } from './ws/ws-e';
  * these English words, so no unreviewed translation is shown. The review replaces them one language at a time.
  */
 const tripWords = {
+  'mr.road.stepOf': 'Step {n} of {total}',
   'room.lens.trip': 'Trip',
   'room.trip.heading': 'Your meetings and visits',
   'room.trip.line':

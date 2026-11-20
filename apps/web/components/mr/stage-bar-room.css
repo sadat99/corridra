@@ -1,0 +1,164 @@
+/* The Room's stage bar (variant="room"): tokens only, logical properties only. A phone and a tablet get a row of
+   six shapes with the Done and Later words below; a desktop gets a vertical timeline with finished stages folded
+   into one row. Shape and word carry the state, never colour alone. */
+.mr-stage-wrap[data-variant='room'] {
+  display: grid;
+  gap: var(--space-3);
+}
+.mr-stage-wrap[data-variant='room'] .mr-stage-heading {
+  margin: 0;
+  color: var(--ink);
+  font: 600 var(--text-stage) / var(--leading-title) var(--font-ui);
+}
+.mr-stage-wrap[data-variant='room'] .mr-stage {
+  align-items: center;
+  gap: var(--space-2);
+}
+.mr-stage-wrap[data-variant='room'] .mr-stage li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: auto;
+  border-radius: 0;
+  background: none;
+}
+.mr-stage-wrap[data-variant='room'] .mr-stage .mr-stage-fold,
+.mr-stage-wrap[data-variant='room'] .mr-stage-name,
+.mr-stage-wrap[data-variant='room'] .mr-stage-state {
+  display: none;
+}
+.mr-stage-wrap[data-variant='room'] .mr-stage-shape {
+  display: grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border-radius: 50%;
+  color: var(--surface-raised);
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+.mr-stage-wrap[data-variant='room'] [data-shape='done'] .mr-stage-shape {
+  background: var(--brand);
+  box-shadow: none;
+}
+.mr-stage-wrap[data-variant='room'] [data-shape='done'] .corridra-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+.mr-stage-wrap[data-variant='room'] [data-shape='done'] .corridra-icon path {
+  stroke-dasharray: 16;
+  stroke-dashoffset: 0;
+  animation: mr-stage-tick var(--dur-tick) ease-out;
+}
+.mr-stage-wrap[data-variant='room'] [data-shape='now'] .mr-stage-shape {
+  background: var(--surface-raised);
+  box-shadow:
+    inset 0 0 0 2px var(--brand),
+    0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent);
+}
+.mr-stage-wrap[data-variant='room'] [data-shape='later'] .mr-stage-shape {
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+.mr-stage-wrap[data-variant='room'] [data-shape='notTracked'] .mr-stage-shape {
+  background: transparent;
+  border: 2px dashed var(--text-2);
+  box-shadow: none;
+}
+.mr-stage-wrap[data-variant='room'] .mr-stage-lines {
+  display: grid;
+  gap: var(--space-1);
+}
+.mr-stage-wrap[data-variant='room'] .mr-stage-lines p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-base);
+}
+.mr-stage-wrap[data-variant='room'] .mr-stage-lines b {
+  color: var(--ink);
+  font-weight: 600;
+}
+@keyframes mr-stage-tick {
+  from {
+    stroke-dashoffset: 16;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mr-stage-wrap[data-variant='room'] [data-shape='done'] .corridra-icon path {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .mr-stage-wrap[data-variant='room'] .mr-stage-shape {
+    color: CanvasText;
+    border-color: CanvasText;
+    forced-color-adjust: none;
+    background: Canvas;
+    box-shadow: inset 0 0 0 2px CanvasText;
+  }
+  .mr-stage-wrap[data-variant='room'] [data-shape='done'] .mr-stage-shape {
+    background: CanvasText;
+    color: Canvas;
+  }
+  .mr-stage-wrap[data-variant='room'] [data-shape='notTracked'] .mr-stage-shape {
+    box-shadow: none;
+    border: 2px dashed CanvasText;
+  }
+}
+
+/* Desktop: a vertical timeline. One folded Done row, then Now, each Later, then Not tracked yet. */
+@media (min-width: 64rem) {
+  .mr-stage-wrap[data-variant='room'] .mr-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage li {
+    justify-content: flex-start;
+    order: 2;
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage .mr-stage-fold {
+    display: block;
+    order: 0;
+    color: var(--text-2);
+    font-size: var(--text-base);
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage li[data-shape='done'] {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage li[data-shape='now'] {
+    order: 1;
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage li[data-shape='notTracked'] {
+    order: 3;
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage-name,
+  .mr-stage-wrap[data-variant='room'] .mr-stage-state {
+    display: inline;
+    font-size: var(--text-base);
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage-name {
+    color: var(--ink);
+  }
+  .mr-stage-wrap[data-variant='room'] [data-shape='now'] .mr-stage-name {
+    font-weight: 600;
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage-state {
+    color: var(--text-2);
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage-lines {
+    display: none;
+  }
+}
