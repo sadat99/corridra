@@ -16,8 +16,8 @@ export function ThisDevice() {
   const blocked = useStorageBlocked();
   return (
     <>
-      <h3>This device</h3>
-      <p>Which replies you have read is kept on this device only.</p>
+      <h3 dir="auto">This device</h3>
+      <p dir="auto">Which replies you have read is kept on this device only.</p>
       <button
         type="button"
         className="button button-secondary"
@@ -28,7 +28,9 @@ export function ThisDevice() {
       >
         {translate(locale, 'move.forget')}
       </button>
-      <p role="status">{done ? translate(locale, 'move.forgotten') : ''}</p>
+      <p role="status" dir="auto">
+        {done && !blocked ? translate(locale, 'move.forgotten') : ''}
+      </p>
       {blocked ? (
         <p role="alert" lang="en" dir="ltr">
           {storageWords}

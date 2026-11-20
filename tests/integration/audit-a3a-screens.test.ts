@@ -47,9 +47,9 @@ type Finder = {
 const finder = allTools as unknown as Finder;
 
 describe('All Tools: nothing is removed', () => {
-  it('still lists the sixteen tools, each with its own address, in the six groups', () => {
-    expect(tools).toHaveLength(16);
-    expect(new Set(tools.map((tool) => tool.href)).size).toBe(16);
+  it('still lists the seventeen tools, each with its own address, in the six groups', () => {
+    expect(tools).toHaveLength(17);
+    expect(new Set(tools.map((tool) => tool.href)).size).toBe(17);
     expect([...toolGroups]).toEqual([
       'Start',
       'Your Move',
@@ -66,11 +66,11 @@ describe('All Tools: the finder rules', () => {
     expect(finder.filterTools(tools, {})).toEqual([...tools]);
     expect(finder.filterTools(tools, { query: '   ' })).toEqual([...tools]);
   });
-  it('reaches every one of the sixteen tools by searching its own name', () => {
+  it('reaches every one of the seventeen tools by searching its own name', () => {
     for (const tool of tools)
       expect(finder.filterTools(tools, { query: tool.label })).toContain(tool);
   });
-  it('reaches every tool through its group chip, and the chips together cover all sixteen', () => {
+  it('reaches every tool through its group chip, and the chips together cover all seventeen', () => {
     const seen = new Set<string>();
     for (const group of toolGroups) {
       const inGroup = finder.filterTools(tools, { group });
@@ -80,7 +80,7 @@ describe('All Tools: the finder rules', () => {
         seen.add(tool.href);
       }
     }
-    expect(seen.size).toBe(16);
+    expect(seen.size).toBe(17);
   });
   it('matches words in the name or the line, in any case, and every word must match', () => {
     const billing = finder.filterTools(tools, { query: 'BILLING' });
@@ -122,9 +122,10 @@ describe('All Tools: the finder on the page', () => {
       }),
     );
   };
-  const links = (html: string) => [...html.matchAll(/<a href="([^"]+)"/g)].map((m) => m[1]);
+  const links = (html: string) =>
+    [...html.matchAll(/<a href="([^"]+)"/g)].map((m) => m[1].replaceAll('&amp;', '&'));
 
-  it('shows all sixteen tools with their addresses before anything is typed', async () => {
+  it('shows all seventeen tools with their addresses before anything is typed', async () => {
     const html = await mount();
     expect(links(html)).toEqual(tools.map((tool) => tool.href));
     expect(html).not.toContain('Showing');
@@ -157,12 +158,12 @@ describe('All Tools: the finder on the page', () => {
     const html = await mount();
     expect(html).toContain('All');
     expect(html).toMatch(/Requests<span class="ux-segment-count"> 4<\/span>/);
-    expect(html).toMatch(/All<span class="ux-segment-count"> 16<\/span>/);
+    expect(html).toMatch(/All<span class="ux-segment-count"> 17<\/span>/);
   });
-  it('narrows to a search from the address and says how many of the sixteen are shown', async () => {
+  it('narrows to a search from the address and says how many of the seventeen are shown', async () => {
     const html = await mount({ initialQuery: 'billing' });
     expect(links(html)).toEqual(['/account/billing']);
-    expect(html).toContain('Showing 1 of 16 tools.');
+    expect(html).toContain('Showing 1 of 17 tools.');
     expect(html).toContain('Clear Search');
   });
   it('narrows to a group from the address, and an unknown group means all', async () => {

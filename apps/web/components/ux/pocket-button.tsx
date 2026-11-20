@@ -154,7 +154,7 @@ function PocketView({
     { key: 'meetings', label: 'Meetings', icon: 'calendar', href: '/account/meetings' },
     { key: 'shortcuts', label: 'Shortcuts', icon: 'list', run: () => setView('shortcuts') },
     ...(read?.drafts.href && move.key !== 'draft'
-      ? [{ key: 'draft', label: 'Continue Draft', icon: 'draft', href: read.drafts.href }]
+      ? [{ key: 'draft', label: 'Continue Draft', icon: 'document', href: read.drafts.href }]
       : []),
     ...(move.key !== 'new'
       ? [

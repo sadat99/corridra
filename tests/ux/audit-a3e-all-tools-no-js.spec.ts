@@ -99,11 +99,11 @@ for (const width of [390, 768, 1440]) {
       await expect(page.getByRole('button', { name: 'Find', exact: true })).toBeVisible();
     });
 
-    test('with no search all sixteen tools are on the page and visible, every group open', async ({
+    test('with no search all seventeen tools are on the page and visible, every group open', async ({
       page,
     }) => {
       await open(page, width);
-      await expect(toolLinks(page)).toHaveCount(16);
+      await expect(toolLinks(page)).toHaveCount(17);
       for (const link of await toolLinks(page).all()) await expect(link).toBeVisible();
       await expect(status(page)).toHaveText('');
       await expect(page.getByRole('button', { name: 'Clear Search' })).toHaveCount(0);
@@ -116,7 +116,7 @@ for (const width of [390, 768, 1440]) {
       await expect(toolLinks(page)).toHaveCount(1);
       await expect(page.getByRole('link', { name: /See your plan and billing/ })).toBeVisible();
       await expect(search(page)).toHaveValue('billing');
-      await expect(status(page)).toHaveText('Showing 1 of 16 tools.');
+      await expect(status(page)).toHaveText('Showing 1 of 17 tools.');
     });
 
     test('an address with ?group= filters by group, and the chip for it is chosen', async ({
@@ -126,14 +126,14 @@ for (const width of [390, 768, 1440]) {
       await expect(page.getByRole('radio', { name: /^Requests/ })).toBeChecked();
       await expect(toolLinks(page)).toHaveCount(4);
       await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Requests (4)']);
-      await expect(status(page)).toHaveText('Showing 4 of 16 tools.');
+      await expect(status(page)).toHaveText('Showing 4 of 17 tools.');
     });
 
     test('a search and a group together, and an unknown group means all', async ({ page }) => {
       await open(page, width, '?group=missions&q=delegation');
       await expect(toolLinks(page)).toHaveCount(2);
       await open(page, width, '?group=nope');
-      await expect(toolLinks(page)).toHaveCount(16);
+      await expect(toolLinks(page)).toHaveCount(17);
     });
 
     test('typing a word and pressing Find loads ?q= and shows the matches', async ({ page }) => {
@@ -156,7 +156,7 @@ for (const width of [390, 768, 1440]) {
       await expect(toolLinks(page)).toHaveCount(4);
     });
 
-    test('a word that matches nothing says so, and Clear Search brings all sixteen back', async ({
+    test('a word that matches nothing says so, and Clear Search brings all seventeen back', async ({
       page,
     }) => {
       await open(page, width, '?q=zzzz');
@@ -167,7 +167,7 @@ for (const width of [390, 768, 1440]) {
       await expect(clear).toBeVisible();
       await clear.click();
       await expect(page).not.toHaveURL(/q=zzzz/);
-      await expect(toolLinks(page)).toHaveCount(16);
+      await expect(toolLinks(page)).toHaveCount(17);
       await expect(search(page)).toHaveValue('');
       await expect(status(page)).toHaveText('');
     });
@@ -177,7 +177,7 @@ for (const width of [390, 768, 1440]) {
       await expect(page.getByRole('radio', { name: /^Library/ })).toBeChecked();
       await page.getByRole('button', { name: 'Clear Search' }).click();
       await expect(page.getByRole('radio', { name: /^All/ })).toBeChecked();
-      await expect(toolLinks(page)).toHaveCount(16);
+      await expect(toolLinks(page)).toHaveCount(17);
     });
 
     test('every tool opens by its own name: the search for each label finds that tool', async ({
@@ -185,7 +185,7 @@ for (const width of [390, 768, 1440]) {
     }) => {
       await open(page, width);
       const labels = await toolLinks(page).locator('strong').allTextContents();
-      expect(labels).toHaveLength(16);
+      expect(labels).toHaveLength(17);
       for (const label of labels) {
         await open(page, width, `?q=${encodeURIComponent(label)}`);
         await expect(

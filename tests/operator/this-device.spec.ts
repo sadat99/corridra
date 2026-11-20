@@ -131,7 +131,7 @@ test('the line about this device is shown', async ({ page }) => {
   ).toBeVisible();
 });
 
-test('says so when this device cannot remember, and still does not fail on press', async ({
+test('when this device cannot remember, only the cannot-remember alert shows, never Done', async ({
   page,
 }) => {
   await mount(page, 'en', true);
@@ -139,7 +139,11 @@ test('says so when this device cannot remember, and still does not fail on press
     'This device cannot remember what you have read.',
   );
   await page.getByRole('button', { name: buttons.en }).click();
-  await expect(page.getByRole('status')).toHaveText(forgotten.en);
+  await expect(page.getByRole('status')).toHaveText('');
+  await expect(page.getByText('Done.')).toHaveCount(0);
+  await expect(page.getByRole('alert')).toHaveText(
+    'This device cannot remember what you have read.',
+  );
 });
 
 test('axe is clean, in English and in Arabic', async ({ page }) => {
