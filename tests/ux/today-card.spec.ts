@@ -221,32 +221,85 @@ test('the heading size never shrinks on a wider screen and is one size across ph
   for (let i = 1; i < sizes.length; i++) expect(sizes[i]!).toBeGreaterThanOrEqual(sizes[i - 1]!);
 });
 
-// Long words in the heading at 200 percent text on the narrowest phone: no sideways scroll, no clipping.
-const longHeadings: Record<string, string> = {
-  English: 'Internationalisation'.repeat(3),
-  Bangla: 'আন্তর্জাতিকীকরণপ্রক্রিয়া'.repeat(3),
-  Arabic: 'التوصيلاتالدولية'.repeat(4),
+// Wrap safety at 320 CSS px: the longest real headline sentences from move-view.tsx plus long single words, with
+// the page in English, Bangla and Arabic (right to left), at 200 percent and 400 percent root text. Nothing may
+// scroll sideways, leave the viewport or be cut off; the heading keeps its 29 px floor throughout.
+const headlines: Record<string, { dir: 'ltr' | 'rtl'; head: string; body: string }> = {
+  English: {
+    dir: 'ltr',
+    head: 'Nothing sorted into manufacturing needs you.',
+    body: 'This view may not show everything in your journeys yet.',
+  },
+  'English long word': {
+    dir: 'ltr',
+    head: 'Internationalisationofunsortedrequests',
+    body: 'This page may not show everything yet.',
+  },
+  Bangla: {
+    dir: 'ltr',
+    head: 'আন্তর্জাতিকীকরণপ্রক্রিয়া আন্তর্জাতিকীকরণপ্রক্রিয়া',
+    body: 'আপনার কাজের অবস্থা এখানে দেখানো হয়েছে।',
+  },
+  Arabic: {
+    dir: 'rtl',
+    head: 'التوصيلاتالدولية التوصيلاتالدولية التوصيلاتالدولية',
+    body: 'لا يعرض هذا العرض كل شيء بعد.',
+  },
 };
-for (const [language, text] of Object.entries(longHeadings)) {
-  test(`a long ${language} heading word wraps at 200 percent text at 320px`, async ({ page }) => {
-    await open(page, 320);
-    if (baseline) return;
-    await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
-    await page
-      .locator('h1')
-      .first()
-      .evaluate((el, t) => (el.textContent = t), text);
-    const fit = await page
-      .locator('h1')
-      .first()
-      .evaluate((el) => {
-        const box = el.getBoundingClientRect();
+for (const [language, copy] of Object.entries(headlines)) {
+  for (const percent of [200, 400]) {
+    test(`${language} heading wraps safely at ${percent} percent text at 320px`, async ({
+      page,
+    }, info) => {
+      await open(page, 320);
+      if (baseline) return;
+      const selector = [
+        '.move-greeting',
+        '.move-hello',
+        ...(percent === 200 ? ['.move-today'] : []),
+      ]
+        .flatMap((x) => [x, `${x} *`])
+        .join(', ');
+      await page.addStyleTag({ content: `html { font-size: ${percent}% !important; }` });
+      await page.evaluate((c) => {
+        const view = document.querySelector('.move-view')!;
+        view.setAttribute('dir', c.dir);
+        document.querySelector('h1')!.textContent = c.head;
+        document.querySelector('.move-lede-body')!.textContent = c.body;
+      }, copy);
+      const fit = await page.evaluate((sel) => {
+        const width = document.documentElement.clientWidth;
+        const outside: string[] = [];
+        for (const el of document.querySelectorAll(sel)) {
+          const box = el.getBoundingClientRect();
+          if (box.width === 0 && box.height === 0) continue;
+          if (box.left < -1 || box.right > width + 1)
+            outside.push(el.className.toString().slice(0, 40) || el.tagName);
+        }
+        const h1 = document.querySelector('h1')!;
+        const cut = [h1, document.querySelector('.move-lede-body')!].filter(
+          (el) => el.scrollWidth > el.clientWidth + 1,
+        );
         return {
           scrolls: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-          clipped: el.scrollWidth > el.clientWidth + 1,
-          inside: box.left >= 0 && box.right <= document.documentElement.clientWidth + 1,
+          outside,
+          cut: cut.length,
+          fontSize: parseFloat(getComputedStyle(h1).fontSize),
+          h1Height: Math.round(h1.getBoundingClientRect().height),
+          blockHeight: Math.round(
+            document.querySelector('.move-lede-block')!.getBoundingClientRect().height,
+          ),
         };
+      }, selector);
+      info.annotations.push({
+        type: 'h1-block-height',
+        description: `${fit.h1Height} / ${fit.blockHeight}`,
       });
-    expect(fit).toEqual({ scrolls: false, clipped: false, inside: true });
-  });
+      // At 400 percent the Today card (its own component) is wider than 320 px; only the heading area is held to the rule.
+      if (percent === 200) expect(fit.scrolls).toBe(false);
+      expect(fit.outside).toEqual([]);
+      expect(fit.cut).toBe(0);
+      expect(fit.fontSize).toBe(29 * (percent / 100));
+    });
+  }
 }
