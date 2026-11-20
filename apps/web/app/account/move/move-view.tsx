@@ -457,7 +457,7 @@ export function MoveView({
         ) : null}
       </div>
 
-      <div className="move-grid" data-latest={latestShown || waiting.length > 0 ? 'true' : 'false'}>
+      <div className="move-grid">
         <section className="move-card" aria-labelledby="move-you">
           <h2 id="move-you">{say('move.you.heading')}</h2>
           <span
@@ -606,103 +606,111 @@ export function MoveView({
           )}
         </section>
 
-        {latestShown || waiting.length > 0 ? (
-          <div className="move-side">
-            {latestShown ? (
-              <section className="move-card" aria-labelledby="move-latest">
-                <h2 id="move-latest">{say('move.empty.latest')}</h2>
-                <Link prefetch={false} className="move-card-link" href={latestShown.href}>
-                  <span>{say('move.wait.open')}</span>
-                  <CorridraIcon name="arrow" />
-                </Link>
-                <div className="move-latest">
-                  {latestItem?.title ? (
-                    <p className="move-latest-title" dir="auto">
-                      {latestItem.title}
-                    </p>
-                  ) : null}
-                  <p className="move-latest-top">
-                    <span className="move-latest-sent">
-                      {latestItem?.journey ? `${journeyWords[latestItem.journey]} · ` : ''}
-                      {fill(say('move.received'), {
-                        date: day(latestShown.createdAt.slice(0, 10), locale),
-                      })}
-                    </span>
-                    {latestItem?.statusWords ? (
-                      <span className="move-badge" lang="en">
-                        {latestItem.statusWords}
-                      </span>
-                    ) : null}
+        <div className="move-side">
+          {latestShown ? (
+            <section className="move-card" aria-labelledby="move-latest">
+              <h2 id="move-latest">{say('move.empty.latest')}</h2>
+              <Link prefetch={false} className="move-card-link" href={latestShown.href}>
+                <span>{say('move.wait.open')}</span>
+                <CorridraIcon name="arrow" />
+              </Link>
+              <div className="move-latest">
+                {latestItem?.title ? (
+                  <p className="move-latest-title" dir="auto">
+                    {latestItem.title}
                   </p>
-                  {latestShown.status ? (
-                    <StageBar status={latestShown.status} labels={labels.road} named />
+                ) : null}
+                <p className="move-latest-top">
+                  <span className="move-latest-sent">
+                    {latestItem?.journey ? `${journeyWords[latestItem.journey]} · ` : ''}
+                    {fill(say('move.received'), {
+                      date: day(latestShown.createdAt.slice(0, 10), locale),
+                    })}
+                  </span>
+                  {latestItem?.statusWords ? (
+                    <span className="move-badge" lang="en">
+                      {latestItem.statusWords}
+                    </span>
                   ) : null}
-                </div>
-              </section>
-            ) : null}
-            {waiting.length > 0 ? (
-              <section className="move-card" aria-labelledby="move-others">
-                <h2 id="move-others">{say('move.others.heading')}</h2>
-                <span className="move-count">{waiting.length}</span>
-                <div className="move-lanes">
-                  {laneHolders
-                    .map((h) => ({ h, rows: waiting.filter((row) => row.holder === h) }))
-                    .filter((lane) => lane.rows.length > 0)
-                    .map(({ h, rows }) => (
-                      <section
-                        key={h}
-                        className="move-lane"
-                        data-holder={h}
-                        aria-labelledby={`${lanesId}-${h}`}
+                </p>
+                {latestShown.status ? (
+                  <StageBar status={latestShown.status} labels={labels.road} named />
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+          <section className="move-card" aria-labelledby="move-others">
+            <h2 id="move-others">{say('move.others.heading')}</h2>
+            <span className="move-count" lang={uncertain ? 'en' : undefined}>
+              {uncertain ? `${waiting.length} so far` : waiting.length}
+            </span>
+            <div className="move-lanes">
+              {laneHolders
+                .map((h) => ({ h, rows: waiting.filter((row) => row.holder === h) }))
+                .map(({ h, rows }) => (
+                  <section
+                    key={h}
+                    className="move-lane"
+                    data-holder={h}
+                    aria-labelledby={`${lanesId}-${h}`}
+                  >
+                    <h3 className="move-lane-head" id={`${lanesId}-${h}`}>
+                      <Explain
+                        name={labels.explain.holder[h].name}
+                        text={labels.explain.holder[h].text}
                       >
-                        <h3 className="move-lane-head" id={`${lanesId}-${h}`}>
-                          <Explain
-                            name={labels.explain.holder[h].name}
-                            text={labels.explain.holder[h].text}
-                          >
-                            <i className="mr-holder-shape" data-holder={h} aria-hidden="true" />
-                          </Explain>
-                        </h3>
-                        <RowList
-                          label={say('move.others.heading')}
-                          title="Request"
-                          columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
-                          lang="en"
-                        >
-                          {rows.map((row) => {
-                            const title =
-                              row.kind !== 'move' && row.title
-                                ? row.title
-                                : fill(say('move.received'), {
-                                    date: row.received ? day(row.received, locale) : '',
-                                  });
-                            return (
-                              <RowLink
-                                key={row.id}
-                                href={row.href}
-                                title={title}
-                                cells={[
-                                  {
-                                    name: 'Held by',
-                                    value: labels.holder[row.holder],
-                                  },
-                                  {
-                                    name: 'Where it stands',
-                                    value: waitingLine(row),
-                                    lang: row.kind === 'move' ? 'en' : undefined,
-                                  },
-                                ]}
-                              />
-                            );
-                          })}
-                        </RowList>
-                      </section>
-                    ))}
-                </div>
-              </section>
-            ) : null}
-          </div>
-        ) : null}
+                        <i className="mr-holder-shape" data-holder={h} aria-hidden="true" />
+                      </Explain>
+                      <span className="move-lane-count" lang="en">
+                        {rows.length > 0
+                          ? uncertain
+                            ? `${rows.length} so far`
+                            : rows.length
+                          : uncertain
+                            ? 'Not known yet'
+                            : '0, nothing waiting'}
+                      </span>
+                    </h3>
+                    {rows.length > 0 ? (
+                      <RowList
+                        label={say('move.others.heading')}
+                        title="Request"
+                        columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
+                        lang="en"
+                      >
+                        {rows.map((row) => {
+                          const title =
+                            row.kind !== 'move' && row.title
+                              ? row.title
+                              : fill(say('move.received'), {
+                                  date: row.received ? day(row.received, locale) : '',
+                                });
+                          return (
+                            <RowLink
+                              key={row.id}
+                              href={row.href}
+                              title={title}
+                              cells={[
+                                {
+                                  name: 'Held by',
+                                  value: labels.holder[row.holder],
+                                },
+                                {
+                                  name: 'Where it stands',
+                                  value: waitingLine(row),
+                                  lang: row.kind === 'move' ? 'en' : undefined,
+                                },
+                              ]}
+                            />
+                          );
+                        })}
+                      </RowList>
+                    ) : null}
+                  </section>
+                ))}
+            </div>
+          </section>
+        </div>
       </div>
 
       {cards.length > 0 || participant ? (

@@ -353,21 +353,23 @@ describe('Visual grammar PR 4: Move lanes', () => {
     }
   });
 
-  it('keeps model order inside a lane and leaves a holder with no rows undrawn', async () => {
+  it('keeps model order inside a lane and says a holder with nothing waiting holds 0', async () => {
     const { MoveView } = await load('app/account/move/move-view');
     const html = render(MoveView, {
       model: modelOf([row('a', 'team'), row('b', 'third'), row('c', 'team'), row('d', 'team')]),
       startHref: '/plan',
     });
     const lanes = lanesOf(html);
-    expect(lanes.map((l) => l.holder)).toEqual(['team', 'third']);
-    expect(html).not.toContain('data-holder="owner" aria-labelledby');
+    expect(lanes.map((l) => l.holder)).toEqual(['team', 'owner', 'third']);
+    expect(lanes[1].html).toContain('0, nothing waiting');
+    expect(lanes[1].html).not.toContain('ux-row');
+    expect(lanes[0].html).toContain('>3<');
     const team = lanes[0].html;
     expect(team.indexOf('/account/move/a')).toBeGreaterThan(-1);
     expect(team.indexOf('/account/move/a')).toBeLessThan(team.indexOf('/account/move/c'));
     expect(team.indexOf('/account/move/c')).toBeLessThan(team.indexOf('/account/move/d'));
     expect(team).not.toContain('/account/move/b');
-    expect(lanes[1].html).toContain('/account/move/b');
+    expect(lanes[2].html).toContain('/account/move/b');
     expect(html).toContain('id="move-others"');
   });
 });
@@ -394,5 +396,25 @@ describe('Your Move redesign: one honest h1', () => {
     expect(html).toContain('<h1 class="move-lede">Nothing sorted into selling needs you.</h1>');
     expect(html).toContain('Show All');
     expect(html).not.toMatch(/all caught up/i);
+  });
+});
+
+describe('Your Move redesign: who holds the rest', () => {
+  it('shows all three holders with word and count when the view is complete, even with nothing waiting', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan' });
+    expect(html).toContain('id="move-others"');
+    expect(html.match(/0, nothing waiting/g)).toHaveLength(3);
+    for (const word of ['Corridra team', 'Workspace owner or admin']) expect(html).toContain(word);
+  });
+
+  it('never says nothing is waiting when the view was cut short, unread or left workspaces out', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    for (const extra of [{ unreadable: true }, { partial: true }, { skippedWorkspaces: 2 }]) {
+      const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan', ...extra });
+      expect(html).not.toContain('nothing waiting');
+      expect(html.match(/Not known yet/g)?.length).toBeGreaterThanOrEqual(3);
+      expect(html).toContain('href="/account/move"');
+    }
   });
 });
