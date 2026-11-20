@@ -242,6 +242,11 @@ export function deskTotals(
   overdue: MissionPage,
   erasure: { rows: DeskErasureRow[]; atLeast: boolean } | null,
   rows: NeedsRow[],
+  /**
+   * True when this role reads the erasure queue and the read failed. That is not "no erasure requests": the total is
+   * then a lower bound, never exact, so the page cannot give a false all-clear.
+   */
+  erasureUnread = false,
 ): DeskTotals {
   const missions = needsCount(fresh, overdue, rows);
   const extra = erasure?.rows.length ?? 0;
@@ -249,13 +254,14 @@ export function deskTotals(
     count: missions.count + extra,
     late: overdue.total + extra,
     fresh: fresh.total,
-    exact: missions.exact && !erasure?.atLeast,
+    exact: missions.exact && !erasure?.atLeast && !erasureUnread,
   };
 }
 
 /** The one sentence under the heading. */
 export function deskSentence({ count, late, exact }: DeskTotals): string {
-  if (count === 0) return 'Nothing needs you now.';
+  if (count === 0)
+    return exact ? 'Nothing needs you now.' : 'Erasure requests could not be checked just now.';
   const lead = `${exact ? '' : 'At least '}${count} ${count === 1 ? 'thing needs' : 'things need'} you now.`;
   const tail =
     late === 0

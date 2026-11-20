@@ -80,6 +80,8 @@ type Today = {
   /** Null when the role may not see the queue, the module is not installed or the read failed: no tile, never zero. */
   problemReports: ProblemReportsTile | null;
   erasure: ErasureTile | null;
+  /** The role reads the erasure queue (so a null `erasure` means the read failed, not that it was not asked). */
+  erasureRead: boolean;
 };
 
 const week = 7 * 24 * 60 * 60 * 1000;
@@ -688,6 +690,11 @@ function DeskQueue({
           {total.count}. The full list is in Missions.
         </p>
       )}
+      {today.erasureRead && today.erasure === null && (
+        <p className="ux-today-more">
+          Erasure requests could not be checked just now, so overdue ones may be missing here.
+        </p>
+      )}
       {without > 0 && (
         <p className="ux-today-more ux-desk-place">
           Place not entered for {without} of {meetings.length} meetings.{' '}
@@ -737,17 +744,29 @@ function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void
   const services = team && !unread('serviceRequestsToQuote') ? team.serviceRequestsToQuote : null;
   // A short line beside the title only when every number behind it was read.
   const all = [quotes, services, reports?.count ?? null, erasure?.count ?? null];
+  // A failed read hides only its own numbers: the queues that were read stay visible (never a false zero).
+  const erasureFailed = today.erasureRead && erasure === null;
+  const hasTiles = team !== null || reports !== null || erasure !== null;
   const summary =
-    teamFailure === null && all.every((value) => value !== null) && !erasure?.atLeast
+    teamFailure === null &&
+    !erasureFailed &&
+    all.every((value) => value !== null) &&
+    !erasure?.atLeast
       ? `${all.reduce<number>((sum, value) => sum + (value ?? 0), 0)} waiting`
-      : teamFailure !== null
-        ? 'Not available'
+      : teamFailure !== null || erasureFailed
+        ? hasTiles
+          ? 'Partly not available'
+          : 'Not available'
         : null;
   return (
     <DeskFold title="Also waiting" summary={summary}>
       {teamFailure ? (
         <PartFailure part="Also waiting" kind={teamFailure} onRetry={onRetry} />
-      ) : (
+      ) : null}
+      {erasureFailed ? (
+        <PartFailure part="Erasure Requests" kind="unavailable" onRetry={onRetry} />
+      ) : null}
+      {hasTiles && (
         <ul className="ux-today-tiles" aria-label="Also waiting">
           {team && (
             <WaitingItem
@@ -895,6 +914,7 @@ export function TodayPanel({
           workFailure: 'failure' in meetingRead ? meetingRead.failure : null,
           problemReports: reportsTile,
           erasure,
+          erasureRead: reads.erasure,
           observedAt: new Date(now).toISOString(),
         });
         setFailure(null);
@@ -942,7 +962,11 @@ export function TodayPanel({
     const list = today
       ? deskRows(today.fresh, today.overdue, today.erasure?.rows ?? [], today.observedAt)
       : [];
-    const totals = today ? deskTotals(today.fresh, today.overdue, today.erasure, rows) : null;
+    // A role that reads the erasure queue and got nothing back could not check it: not the same as none waiting.
+    const erasureUnread = !!today && today.erasureRead && today.erasure === null;
+    const totals = today
+      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
+      : null;
     return (
       <section className="ux-today ux-desk" aria-labelledby="today-title">
         <header className="operator-today-heading">

@@ -106,7 +106,11 @@ describe('pinned queues', () => {
         label: 'Problem Reports',
         href: `/operator#${problemReportQueueFragment}`,
       },
-      { id: 'erasure', label: 'Erasure Requests', href: '/operator#workspace-settings' },
+      {
+        id: 'erasure',
+        label: 'Erasure Requests',
+        href: '/operator?tab=settings-erasure#workspace-settings',
+      },
     ]);
   });
   test('the addresses work from any team page and keep the chosen workspace', () => {
@@ -114,7 +118,16 @@ describe('pinned queues', () => {
     for (const urls of [false, true]) {
       const [reports, erasure] = teamPins('owner', true, urls, workspace);
       // Same address as the Settings link of the sidebar itself.
-      expect(erasure!.href).toBe(placeHref('workspace-settings', urls, workspace));
+      expect(erasure!.href).toContain(`workspace=${workspace}`);
+      // The Erasure requests sub-tab is chosen in the address (SubTabs reads ?tab=), before any # part.
+      expect(erasure!.href).toMatch(/[?&]tab=settings-erasure(#|$)/);
+      expect(erasure!.href.split('#')[0]).toBe(
+        placeHref('workspace-settings', urls, workspace).split('#')[0] +
+          (placeHref('workspace-settings', urls, workspace).split('#')[0]!.includes('?')
+            ? '&'
+            : '?') +
+          'tab=settings-erasure',
+      );
       expect(erasure!.href).toContain(`workspace=${workspace}`);
       // The workspace home, with the panel's own fragment: never a bare fragment.
       expect(reports!.href).toBe(`/operator?workspace=${workspace}#${problemReportQueueFragment}`);
@@ -294,5 +307,49 @@ describe('a part that could not be read', () => {
     expect(today).toContain('needsFilterFromSearch(window.location.search)');
     expect(today).toContain("addEventListener('popstate', read)");
     expect(today).toContain('The full list is in Missions.');
+  });
+});
+
+describe('a failed read is never a false all-clear', () => {
+  const empty = { missions: [], total: 0 };
+  test('an erasure read that failed makes the total inexact and the sentence says so', () => {
+    const totals = deskTotals(empty, empty, null, [], true);
+    expect(totals.exact).toBe(false);
+    expect(deskSentence(totals)).not.toBe('Nothing needs you now.');
+    expect(deskSentence(totals)).toBe('Erasure requests could not be checked just now.');
+    const some = deskTotals(
+      { missions: [mission('a', '2026-11-25T00:00:00Z')], total: 1 },
+      empty,
+      null,
+      [{ mission: mission('a', '2026-11-25T00:00:00Z'), fresh: true, overdue: false }],
+      true,
+    );
+    expect(deskSentence(some)).toBe('At least 1 thing needs you now. Nothing is late.');
+  });
+  test('a role that does not read the queue, or a read that worked, is still exact', () => {
+    expect(deskSentence(deskTotals(empty, empty, null, [], false))).toBe('Nothing needs you now.');
+    expect(deskSentence(deskTotals(empty, empty, { rows: [], atLeast: false }, [], false))).toBe(
+      'Nothing needs you now.',
+    );
+  });
+  test('Today tells a failed erasure read from one that was not asked', () => {
+    const today = read('app/operator/today.tsx');
+    expect(today).toContain('erasureRead: reads.erasure');
+    expect(today).toMatch(/today\.erasureRead && today\.erasure === null/);
+    expect(today).toContain(
+      'deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)',
+    );
+  });
+  test('Also waiting: a failed counts read hides only the counts, not the queues that were read', () => {
+    const today = read('app/operator/today.tsx');
+    const start = today.indexOf('function DeskAlsoWaiting');
+    const body = today.slice(start, today.indexOf('The first thing an operator sees'));
+    // The failure message no longer replaces the list: it is followed by the tiles, drawn whenever any exist.
+    expect(body).not.toMatch(/teamFailure \? \(\s*<PartFailure[^]*?\) : \(\s*<ul/);
+    expect(body).toMatch(/\{hasTiles && \(\s*<ul/);
+    expect(body).toContain("'Partly not available'");
+    expect(body).toMatch(/\{team && \(\s*<WaitingItem/);
+    expect(body).toMatch(/\{reports && \(/);
+    expect(body).toMatch(/\{erasure && \(/);
   });
 });

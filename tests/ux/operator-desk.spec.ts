@@ -237,10 +237,13 @@ test('one part failing names the part, keeps the rest and offers Try Again', asy
   await mount(page, 390, 'partfail');
   await expect(page.locator('.ux-desk-table')).toBeVisible();
   // Closed, each failed row already says so.
-  for (const title of ['Also waiting', 'This week'])
+  for (const [title, words] of [
+    ['Also waiting', 'Partly not available'],
+    ['This week', 'Not available'],
+  ] as const)
     await expect(
       page.locator('.ux-desk-fold', { hasText: title }).locator('.ux-desk-fold-summary'),
-    ).toHaveText('Not available');
+    ).toHaveText(words);
   await page.getByRole('button', { name: 'Show Also waiting' }).click();
   await page.getByRole('button', { name: 'Show This week' }).click();
   await expect(

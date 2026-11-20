@@ -124,10 +124,17 @@ export function mapFor(desk: boolean): readonly TeamItem[] {
   return desk ? deskMap : teamMap;
 }
 
+/** The address with the Settings sub-tab chosen (?tab=, kept before any # part), so a fresh visit lands on that tab. */
+function withSettingsTab(href: string, tab: string): string {
+  const [path = '', hash] = href.split('#') as [string, string | undefined];
+  const joined = path + (path.includes('?') ? '&' : '?') + 'tab=' + tab;
+  return hash === undefined ? joined : joined + '#' + hash;
+}
+
 /**
  * Pinned queues (operator desk only): a second labelled list under the groups, for the roles that triage. The
  * addresses are built like every other sidebar link, so they work from any team page and keep the chosen workspace:
- * Erasure Requests opens the Settings section, Problem Reports opens the workspace home at the panel's own fragment
+ * Erasure Requests opens the Settings section on its Erasure requests tab (?tab=settings-erasure), Problem Reports opens the workspace home at the panel's own fragment
  * (#problem-report-queue, which the workspace reads as inside Settings). Problem Reports is listed only where Report a
  * Problem is offered.
  */
@@ -153,7 +160,7 @@ export function teamPins(
     {
       id: 'erasure' as const,
       label: 'Erasure Requests',
-      href: placeHref('workspace-settings', urls, workspace),
+      href: withSettingsTab(placeHref('workspace-settings', urls, workspace), 'settings-erasure'),
     },
   ];
 }
