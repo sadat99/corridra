@@ -1066,6 +1066,16 @@
   gap: var(--space-4);
   margin-top: 0;
 }
+.move-hello,
+.move-lede-block,
+.move-lede-body {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+/* Your Move only: the global --text-h1 is left alone. */
+.move-view {
+  --move-h1: clamp(1.8125rem, 1.1875rem + 1.46vw, 2.5rem);
+}
 .move-lede-block {
   display: grid;
   gap: var(--space-2);
@@ -1074,10 +1084,15 @@
   margin: 0;
   color: var(--ink);
   font-family: var(--serif);
-  font-size: var(--text-h1);
+  /* One fluid size for this page only: 29 px on every phone (no easing below 390), about 30 at 768, 34 at 1024, 40 from 1440. */
+  font-size: var(--move-h1);
   font-weight: 500;
   line-height: 1.2;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   overflow-wrap: anywhere;
+  hyphens: auto;
+  text-wrap: balance;
 }
 .move-lede-body {
   margin: 0;
@@ -1223,9 +1238,9 @@
     padding-block: var(--space-3);
   }
   .move-hello {
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
   .move-lede-block {
-    gap: var(--space-1);
+    gap: 0;
   }
 }
