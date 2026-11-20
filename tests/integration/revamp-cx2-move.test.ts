@@ -263,6 +263,9 @@ describe('Home summary never claims more than the page could read (Codex review 
     expect(two).toContain('aria-label="Show work for"');
     expect(two).toContain('href="/account/move?journey=sell"');
     expect(two).toContain('href="/account/move?journey=source"');
+    // The counts are said in words, and a journey with nothing waiting says 0 rather than leaving it out.
+    expect(two).toContain('<em>0</em><span class="sr-only"> things need you</span>');
+    expect(two).toContain('<em>1</em><span class="sr-only"> thing needs you</span>');
     const shown = render(MoveView, {
       model: busy,
       startHref: '/plan',

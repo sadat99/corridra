@@ -163,15 +163,14 @@ const unreadWords = {
 } as const;
 
 /**
- * A switch link's count of things that need the person. A zero is not drawn (the sidebar journey rule, L16), so the
- * switch never shows 0 beside work that is waiting on others. The words are spoken: "Sourcing, 2 need you".
+ * A filter chip's count of things that need the person, said as words: "Selling, 0 things need you". A zero is said
+ * here because the chip is a count of this page's own work (the sidebar's rule L16 is about its journey links).
  */
 function NeedCount({ n }: { n: number }) {
-  if (n <= 0) return null;
   return (
     <>
       <span className="sr-only">,</span> <em>{n}</em>
-      <span className="sr-only">{n === 1 ? ' needs you' : ' need you'}</span>
+      <span className="sr-only">{n === 1 ? ' thing needs you' : ' things need you'}</span>
     </>
   );
 }
