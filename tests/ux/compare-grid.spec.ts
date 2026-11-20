@@ -357,7 +357,7 @@ test('two suppliers on a phone: each term is a band over the two values, still a
   expect(Math.round(wideCell.top)).toBe(Math.round(wide.top));
 });
 
-test('before it is measured nothing claims a scroll: the cue reserves its line and the fade waits', async ({
+test('the scroll cue follows the measured width: it speaks once measured and updates when the region widens', async ({
   page,
 }) => {
   await mount(page, 390, 10);
@@ -372,3 +372,68 @@ test('before it is measured nothing claims a scroll: the cue reserves its line a
   });
   await expect(page.locator('.compare-grid-cue')).toHaveText('You have seen all 10 suppliers.');
 });
+
+test('a column header is named by the supplier alone and described by its verdict', async ({
+  page,
+}) => {
+  await mount(page, 1440, 6);
+  // Comparable, then not comparable (a Chinese name, language kept), and an Arabic name.
+  await expect(
+    page.getByRole('columnheader', { name: 'Lantern Cutting Works', exact: true }),
+  ).toBeVisible();
+  const zh = page.getByRole('columnheader', {
+    name: '绿野机械有限公司（青岛）自动裁床事业部',
+    exact: true,
+  });
+  await expect(zh).toBeVisible();
+  await expect(zh).toHaveAccessibleDescription(/Not comparable yet/);
+  await expect(zh.locator('b')).toHaveAttribute('lang', 'zh');
+  const ar = page.getByRole('columnheader', { name: 'شركة الخليج للآلات الصناعية', exact: true });
+  await expect(ar).toBeVisible();
+  await expect(ar.locator('b')).toHaveAttribute('lang', 'ar');
+  await expect(page.getByRole('columnheader', { name: 'Terms', exact: true })).toHaveCount(1);
+  const ids = await page.$$eval('.compare-grid-head [id]', (els) => els.map((el) => el.id));
+  expect(new Set(ids).size).toBe(ids.length);
+});
+
+test('two suppliers on a phone: no divider between the two supplier columns, the outer border stays', async ({
+  page,
+}) => {
+  await mount(page, 390, 2);
+  const heads = page.locator('.compare-grid-head');
+  await expect(heads).toHaveCount(2);
+  const border = await heads.nth(1).evaluate((el) => getComputedStyle(el).borderInlineStartWidth);
+  expect(border).toBe('0px');
+  const table = await page
+    .locator('.compare-grid-table')
+    .evaluate((el) => getComputedStyle(el).borderInlineStartWidth);
+  expect(table).toBe('1px');
+  await mount(page, 390, 2, { locale: 'ar', dir: 'rtl' });
+  expect(
+    await page
+      .locator('.compare-grid-head')
+      .nth(1)
+      .evaluate((el) => getComputedStyle(el).borderInlineStartWidth),
+  ).toBe('0px');
+});
+
+for (const width of [320, 390])
+  for (const count of [3, 10])
+    test(`large text, ${count} suppliers at ${width}px: no page overflow, the label column stays under 40 percent, the head is not clipped`, async ({
+      page,
+    }) => {
+      await mount(page, width, count);
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = '200%';
+      });
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+      const region = await rect(page, '.compare-grid-scroll');
+      const label = await rect(page, '.compare-grid-label');
+      expect(label.width).toBeLessThanOrEqual(region.width * 0.4 + 1);
+      const clipped = await page.$$eval('.compare-grid-head', (els) =>
+        els.filter((el) => el.scrollHeight > el.clientHeight + 1).map((el) => el.textContent),
+      );
+      expect(clipped).toEqual([]);
+    });
