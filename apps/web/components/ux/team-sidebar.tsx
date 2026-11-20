@@ -124,7 +124,7 @@ export function TeamSidebar({
     );
   }
   const items = teamItemsFor(role, desk);
-  const pins = desk ? teamPins(role, problemReports) : [];
+  const pins = desk ? teamPins(role, problemReports, urls, tenant) : [];
   const daily = items.filter((item) => item.key !== 'admin');
   const adminItem = items.find((item) => item.key === 'admin');
   return (

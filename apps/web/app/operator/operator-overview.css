@@ -3430,10 +3430,19 @@
   vertical-align: middle;
   border-bottom: 1px solid var(--line);
 }
+.ux-desk-table th {
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
 .ux-desk-table thead th {
   color: var(--text-2);
   font-size: var(--text-sm);
   font-weight: 600;
+}
+.ux-desk-table tbody th {
+  color: var(--ink);
+  font-size: var(--text-base);
 }
 .ux-desk-table tbody tr {
   height: 3.5rem;

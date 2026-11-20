@@ -101,9 +101,36 @@ describe('pinned queues', () => {
   test('only the roles that triage, with the addresses Today already used', () => {
     for (const role of roles) expect(teamPins(role, true).length > 0).toBe(canTriage(role));
     expect(teamPins('owner', true)).toEqual([
-      { id: 'problem-reports', label: 'Problem Reports', href: `#${problemReportQueueFragment}` },
-      { id: 'erasure', label: 'Erasure Requests', href: '#workspace-settings' },
+      {
+        id: 'problem-reports',
+        label: 'Problem Reports',
+        href: `/operator#${problemReportQueueFragment}`,
+      },
+      { id: 'erasure', label: 'Erasure Requests', href: '/operator#workspace-settings' },
     ]);
+  });
+  test('the addresses work from any team page and keep the chosen workspace', () => {
+    const workspace = '123e4567-e89b-42d3-a456-426614174000';
+    for (const urls of [false, true]) {
+      const [reports, erasure] = teamPins('owner', true, urls, workspace);
+      // Same address as the Settings link of the sidebar itself.
+      expect(erasure!.href).toBe(placeHref('workspace-settings', urls, workspace));
+      expect(erasure!.href).toContain(`workspace=${workspace}`);
+      // The workspace home, with the panel's own fragment: never a bare fragment.
+      expect(reports!.href).toBe(`/operator?workspace=${workspace}#${problemReportQueueFragment}`);
+      expect(reports!.href.startsWith('#')).toBe(false);
+      expect(erasure!.href.startsWith('#')).toBe(false);
+    }
+    expect(read('components/ux/team-sidebar.tsx')).toContain(
+      'teamPins(role, problemReports, urls, tenant)',
+    );
+  });
+  test('a failed or repeated read leaves no stale number, and a failed part says so on its closed row', () => {
+    const today = read('app/operator/today.tsx');
+    expect(today).toMatch(/clearPinCounts\(\);\s*setFailure\(readFailureKind\(error\)\)/);
+    expect(today).toMatch(/const retry = \(\) => \{\s*clearPinCounts\(\);/);
+    expect(today).toContain("'Not available'");
+    expect(today).toMatch(/title="This week" summary=\{failed \? 'Not available' : null\}/);
   });
   test('Problem Reports is pinned only where Report a Problem is offered', () => {
     expect(teamPins('admin', false).map((pin) => pin.id)).toEqual(['erasure']);
@@ -113,7 +140,7 @@ describe('pinned queues', () => {
   test('the sidebar draws them as a second labelled list, with a count only from a successful read', () => {
     const sidebar = read('components/ux/team-sidebar.tsx');
     expect(sidebar).toContain('aria-label="Queues"');
-    expect(sidebar).toContain('teamPins(role, problemReports)');
+    expect(sidebar).toContain('teamPins(role, problemReports, urls, tenant)');
     expect(sidebar).toMatch(/count === null\s*\? null/);
     const counts = read('lib/ux/team-pin-counts.ts');
     expect(counts).toContain('problemReports: null, erasure: null');

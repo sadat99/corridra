@@ -87,7 +87,7 @@ export const teamMap: readonly TeamItem[] = [
 /**
  * The operator desk grouping (CORRIDRA_UX_OPERATOR_DESK, owner approved 20 Nov 2026): five groups instead of six.
  * Meetings, Reports and Network join Missions; Assistance joins Companies; Admin becomes "Settings and checks". The
- * same sixteen places, each with the address and the role gate it had; the item key `admin` is unchanged so the role
+ * same seventeen places (Today and the sixteen sections), each with the address and the role gate it had; the item key `admin` is unchanged so the role
  * rule (owner and admin only) is the same code. A test holds the union of places per role equal to the map above.
  */
 export const deskMap: readonly TeamItem[] = [
@@ -126,10 +126,18 @@ export function mapFor(desk: boolean): readonly TeamItem[] {
 
 /**
  * Pinned queues (operator desk only): a second labelled list under the groups, for the roles that triage. The
- * addresses are the ones Today already used for these two queues. Problem Reports is listed only where Report a Problem is offered.
+ * addresses are built like every other sidebar link, so they work from any team page and keep the chosen workspace:
+ * Erasure Requests opens the Settings section, Problem Reports opens the workspace home at the panel's own fragment
+ * (#problem-report-queue, which the workspace reads as inside Settings). Problem Reports is listed only where Report a
+ * Problem is offered.
  */
 export type TeamPin = { id: 'problem-reports' | 'erasure'; label: string; href: string };
-export function teamPins(role: string | null, problemReports: boolean): TeamPin[] {
+export function teamPins(
+  role: string | null,
+  problemReports: boolean,
+  urls = false,
+  workspace = '',
+): TeamPin[] {
   // Same rule as canTriage in lib/problem-report-queue.ts (a test holds them equal; that module is too heavy for the sidebar).
   if (role !== 'owner' && role !== 'admin') return [];
   return [
@@ -138,11 +146,15 @@ export function teamPins(role: string | null, problemReports: boolean): TeamPin[
           {
             id: 'problem-reports' as const,
             label: 'Problem Reports',
-            href: '#problem-report-queue',
+            href: teamSectionHref(undefined, urls, workspace) + '#problem-report-queue',
           },
         ]
       : []),
-    { id: 'erasure' as const, label: 'Erasure Requests', href: '#workspace-settings' },
+    {
+      id: 'erasure' as const,
+      label: 'Erasure Requests',
+      href: placeHref('workspace-settings', urls, workspace),
+    },
   ];
 }
 

@@ -568,7 +568,14 @@ function ThisWeek({
       )}
     </>
   );
-  if (desk) return <DeskFold title="This week">{body}</DeskFold>;
+  // A closed row says when a part could not be read, so the failure is visible without opening it: never blank, never zero.
+  const failed = today.workFailure !== null || (!repliesUnavailable && today.teamFailure !== null);
+  if (desk)
+    return (
+      <DeskFold title="This week" summary={failed ? 'Not available' : null}>
+        {body}
+      </DeskFold>
+    );
   return (
     <section className="ux-week" aria-labelledby="today-week-title">
       <h3 id="today-week-title">This week</h3>
@@ -692,12 +699,7 @@ function DeskQueue({
           >
             Why
           </button>
-          {why && (
-            <span role="note">
-              {' '}
-              A meeting can be saved without a place. Open Meetings to add one.
-            </span>
-          )}
+          {why && <span role="note"> No place was entered when the meeting was booked.</span>}
         </p>
       )}
     </section>
@@ -738,7 +740,9 @@ function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void
   const summary =
     teamFailure === null && all.every((value) => value !== null) && !erasure?.atLeast
       ? `${all.reduce<number>((sum, value) => sum + (value ?? 0), 0)} waiting`
-      : null;
+      : teamFailure !== null
+        ? 'Not available'
+        : null;
   return (
     <DeskFold title="Also waiting" summary={summary}>
       {teamFailure ? (
@@ -904,6 +908,8 @@ export function TodayPanel({
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
+        // A failed read leaves no number behind in the sidebar.
+        clearPinCounts();
         setFailure(readFailureKind(error));
       });
     return () => controller.abort();
@@ -911,6 +917,7 @@ export function TodayPanel({
   // Closing Today takes its numbers with it: a count is never kept after the page that read it.
   useEffect(() => clearPinCounts, []);
   const retry = () => {
+    clearPinCounts();
     setFailure(null);
     setToday(null);
     setAttempt((n) => n + 1);
