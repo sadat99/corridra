@@ -99,9 +99,15 @@
   scroll-behavior: auto;
   scroll-padding-inline-start: var(--compare-label-w);
 }
+/* The region's focus ring is drawn around the frame, outside the table, so neither the frozen column nor the end
+   fade can cover any of its four edges. */
 .compare-grid-scroll:focus-visible {
+  outline: none;
+}
+.compare-grid-frame:has(> .compare-grid-scroll:focus-visible) {
   outline: 3px solid var(--focus);
-  outline-offset: -3px;
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
 }
 /* A fade at the end edge while suppliers are still hidden there. It never takes a pointer or a click. */
 .compare-grid-frame::after {
@@ -139,13 +145,14 @@
   color: var(--ink);
 }
 .compare-grid-table :is(th, td) {
-  padding: var(--space-3) var(--space-3);
+  padding: var(--space-3) var(--space-2);
   text-align: start;
   vertical-align: top;
   border-block-end: 1px solid var(--line);
-  /* A word breaks only when it cannot fit its column, with a hyphen where the language allows. */
+  /* Lines wrap at spaces. The columns are sized so every term label and every word the comparison writes fits
+     (the label column floor holds "Commissioning"); only a single word longer than its whole column, such as an
+     unbroken supplier name, is broken as a last resort. */
   overflow-wrap: break-word;
-  hyphens: auto;
   font-family: inherit;
   letter-spacing: normal;
   text-transform: none;
@@ -216,6 +223,8 @@
 }
 .compare-grid-head > .guide-tag {
   display: inline-flex;
+  gap: var(--space-1);
+  padding-inline: var(--space-2);
   inline-size: fit-content;
   font-size: var(--text-sm);
   max-inline-size: 100%;
@@ -353,7 +362,7 @@
   .compare-grid-frame::after {
     display: none;
   }
-  .compare-grid-scroll:focus-visible {
+  .compare-grid-frame:has(> .compare-grid-scroll:focus-visible) {
     outline-color: Highlight;
   }
   .compare-grid-toggle[aria-pressed='true'] {
@@ -362,5 +371,52 @@
   }
   .compare-grid-seal {
     border-color: CanvasText;
+  }
+}
+
+/* Two suppliers in a narrow region (UI/UX.v4 row "Compare": two columns on phones, row by row): each term's label
+   is a band across both columns and the two values sit side by side under it, so nothing scrolls and no word
+   breaks. The table keeps its elements and explicit roles, so it is still read as a table. 24rem is the label
+   column floor (8rem, so "Commissioning" fits) plus two 8rem supplier columns: below it the side by side columns
+   cannot fit. */
+@container (width < 24rem) {
+  .compare-grid-table[data-cols='2'] {
+    display: block;
+    min-inline-size: 0;
+    border-inline-start: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .compare-grid-table[data-cols='2'] :is(thead, tbody) {
+    display: block;
+  }
+  .compare-grid-table[data-cols='2'] tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .compare-grid-table[data-cols='2'] .compare-grid-corner {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+  .compare-grid-table[data-cols='2'] .compare-grid-label,
+  .compare-grid-table[data-cols='2'] td[colspan] {
+    grid-column: 1 / -1;
+  }
+  .compare-grid-table[data-cols='2'] .compare-grid-label {
+    position: static;
+    inline-size: auto;
+    padding-block-end: 0;
+    border-inline: 0;
+    border-block-end: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .compare-grid-table[data-cols='2'] .compare-grid-head + .compare-grid-head {
+    border-inline-start: 1px solid var(--line);
   }
 }

@@ -43,6 +43,7 @@ const rows = [
   { label: 'Original unit price', same: false, cells: cells((c, i) => ({ value: c.currency + ' ' + (18400 + i * 125).toLocaleString('en') + '.00', money: true })) },
   { label: 'Original total', same: false, cells: cells((c, i) => (i === 2 ? { value: null } : { value: c.currency + ' ' + (36800 + i * 250).toLocaleString('en') + '.00', sub: 'For 2 unit', money: true })) },
   { label: 'Quoted specification', same: count > 1, cells: cells(() => ({ value: 'Auto cutter 2.5 m bed' })) },
+  { label: 'Commissioning', same: false, cells: cells((c, i) => ({ value: i % 2 ? null : 'Two engineers for five days' })) },
   { label: 'Minimum order quantity', same: false, cells: cells((c, i) => ({ value: i % 2 ? null : '1 set' })) },
   { label: 'Lead time', same: false, cells: cells((c, i) => ({ value: i % 2 ? null : 45 + i + ' days' })) },
   { label: 'Incoterm', same: count > 1, cells: cells(() => ({ value: 'FOB' })) },
@@ -137,10 +138,38 @@ for (const width of [320, 390, 768, 1440])
       const first = await rect(page, '.compare-grid-head');
       expect(first.right).toBeLessThanOrEqual(box.right + 1);
       expect(first.width).toBeGreaterThanOrEqual(8 * 16 - 1);
-      // Two suppliers fit side by side from 390; three or more scroll inside the region.
+      // Two suppliers always fit side by side, from 320 up (row by row on a phone); ten scroll inside the region.
       const overflow = await scroller(page).evaluate((el) => el.scrollWidth > el.clientWidth + 1);
-      if (count === 2 && width >= 390) expect(overflow).toBe(false);
+      if (count === 2) expect(overflow).toBe(false);
       if (count === 10) expect(overflow).toBe(true);
+      // No word the comparison writes is broken across two lines: labels, verdicts, trust labels, blanks and values
+      // wrap at spaces (or after a hyphen that is in the word). Supplier names are data and not checked here.
+      const broken = await page.$$eval(
+        '.compare-grid-label, .compare-grid-verdict, .compare-grid-head > .guide-tag, .compare-grid-blank, .compare-grid-value, .compare-grid-head > small',
+        (els) => {
+          const out: string[] = [];
+          for (const el of els) {
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+            let node: Node | null;
+            while ((node = walker.nextNode())) {
+              const text = node.textContent ?? '';
+              for (const match of text.matchAll(/[^\s-]+-?/g)) {
+                const range = document.createRange();
+                range.setStart(node, match.index!);
+                range.setEnd(node, match.index! + match[0].length);
+                const lines = new Set(
+                  Array.from(range.getClientRects())
+                    .filter((r) => r.width > 0)
+                    .map((r) => Math.round(r.top)),
+                );
+                if (lines.size > 1) out.push(match[0]);
+              }
+            }
+          }
+          return out;
+        },
+      );
+      expect(broken).toEqual([]);
       // Every control is a 44 px target.
       for (const name of ['Differences Only', 'Show Them']) {
         const b = (await page.getByRole('button', { name, exact: true }).boundingBox())!;
@@ -231,7 +260,13 @@ test('keyboard: Differences Only, Show Them, then the region, each with a visibl
   await page.keyboard.press('Tab');
   const region = page.getByRole('region', { name: 'Quotes side by side' });
   await expect(region).toBeFocused();
-  expect(await region.evaluate((el) => getComputedStyle(el).outlineWidth)).toBe('3px');
+  // The ring is drawn around the frame, outside the frozen column and the fade, on all four edges.
+  const frame = page.locator('.compare-grid-frame');
+  expect(await frame.evaluate((el) => getComputedStyle(el).outlineWidth)).toBe('3px');
+  expect(await frame.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe('solid');
+  expect(
+    Number.parseFloat(await frame.evaluate((el) => getComputedStyle(el).outlineOffset)),
+  ).toBeGreaterThan(0);
   await expect(region).toHaveAttribute('aria-describedby', /.+/);
   // The arrow keys scroll the region.
   await page.keyboard.press('ArrowRight');
@@ -301,4 +336,39 @@ test('reduced motion: nothing in the comparison moves or scrolls smoothly', asyn
       .map((el) => el.className),
   );
   expect(moving).toEqual([]);
+});
+
+test('two suppliers on a phone: each term is a band over the two values, still a table, and wide screens keep columns', async ({
+  page,
+}) => {
+  await mount(page, 320, 2);
+  const label = await rect(page, '.compare-grid-label');
+  const cell = await rect(page, '.compare-grid-table tbody td');
+  // The label band sits above the values and is as wide as the table.
+  expect(cell.top).toBeGreaterThanOrEqual(label.top + label.height - 1);
+  expect(label.width).toBeGreaterThan(250);
+  await expect(page.getByRole('table')).toHaveCount(1);
+  await expect(page.getByRole('rowheader', { name: 'Commissioning', exact: true })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Terms', exact: true })).toHaveCount(1);
+  if (shots) await page.screenshot({ path: `${shots}/compare-2-320-stacked-detail.png` });
+  await mount(page, 768, 2);
+  const wide = await rect(page, '.compare-grid-label');
+  const wideCell = await rect(page, '.compare-grid-table tbody td');
+  expect(Math.round(wideCell.top)).toBe(Math.round(wide.top));
+});
+
+test('before it is measured nothing claims a scroll: the cue reserves its line and the fade waits', async ({
+  page,
+}) => {
+  await mount(page, 390, 10);
+  // Once measured the cue speaks; the region was watched with a ResizeObserver, so a width change updates it.
+  await expect(page.locator('.compare-grid-cue')).toHaveText(
+    '10 suppliers. Scroll sideways to see them all.',
+  );
+  await page.setViewportSize({ width: 1920, height: 900 });
+  await page.evaluate(() => {
+    const main = document.querySelector('main') as HTMLElement;
+    main.style.inlineSize = '200rem';
+  });
+  await expect(page.locator('.compare-grid-cue')).toHaveText('You have seen all 10 suppliers.');
 });

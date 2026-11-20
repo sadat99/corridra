@@ -56,8 +56,16 @@ describe('the comparison table', () => {
   it('is one real table: a column head per supplier, a frozen row label per term and the word Terms in the corner', async () => {
     const html = await grid({ columns: two, rows: rowsTwo });
     expect(html.match(/<table/g)).toHaveLength(1);
-    expect(html.match(/<th scope="col" class="compare-grid-head"/g)).toHaveLength(2);
-    expect(html).toContain('<th scope="col" class="compare-grid-corner">Terms</th>');
+    // Explicit roles, so it stays a table when two suppliers on a phone are laid out row by row.
+    expect(html).toContain('role="table" data-cols="2"');
+    expect(
+      html.match(/<th scope="col" role="columnheader" class="compare-grid-head"/g),
+    ).toHaveLength(2);
+    expect(html).toContain(
+      '<th scope="col" role="columnheader" class="compare-grid-corner">Terms</th>',
+    );
+    expect(html.match(/<th scope="row" role="rowheader"/g)).toHaveLength(3);
+    expect(html.match(/<td role="cell"/g)).toHaveLength(6);
     expect(html).toContain('role="region" aria-label="Quotes side by side" tabindex="0"');
     expect(html).toContain('<b lang="zh" dir="auto">绿野机械有限公司</b>');
     // No phone card strip and no duplicated content: each supplier name appears once.
@@ -71,14 +79,16 @@ describe('the comparison table', () => {
     expect(html).toContain('Not comparable yet');
     expect(html).toContain('Missing: Lead time.');
     // The verdict sits in the column head, before the first body row.
-    expect(html.indexOf('Not comparable yet')).toBeLessThan(html.indexOf('<tbody>'));
+    expect(html.indexOf('<tbody')).toBeGreaterThan(0);
+    expect(html.indexOf('Not comparable yet')).toBeLessThan(html.indexOf('<tbody'));
   });
 
   it('shows the trust label once per supplier in the head, never repeated under each value', async () => {
     const html = await grid({ columns: two, rows: rowsTwo });
     expect(html.match(/Self-declared/g)).toHaveLength(1);
     expect(html.match(/Evidence available/g)).toHaveLength(1);
-    const body = html.slice(html.indexOf('<tbody>'));
+    expect(html.indexOf('<tbody')).toBeGreaterThan(0);
+    const body = html.slice(html.indexOf('<tbody'));
     expect(body).not.toMatch(/Self-declared|Evidence available|Verified|Derived|Outcome observed/);
   });
 
@@ -155,11 +165,12 @@ describe('the comparison table', () => {
   it('with three or more suppliers names them in a cue the scroll region points to, never a live region', async () => {
     const ten = Array.from({ length: 10 }, (_, i) => column(`s${i}`, `Supplier ${i + 1}`));
     const html = await grid({ columns: ten, rows: [] });
-    const id =
-      /<p id="([^"]+)" class="compare-grid-cue">10 suppliers\. Scroll sideways to see them all\.<\/p>/.exec(
-        html,
-      );
+    // Before the region is measured the cue line is there but says nothing, so it never claims a scroll that is not
+    // there; the browser spec checks the words once measured.
+    const id = /<p id="([^"]+)" class="compare-grid-cue"><\/p>/.exec(html);
     expect(id).not.toBeNull();
+    // Nothing claims an edge before the measure either: no fade, no frozen edge shadow.
+    expect(html).toContain('data-at-start="true" data-at-end="true" data-overflow="false"');
     expect(html).toContain(`aria-describedby="${id![1]}"`);
     expect(html).toContain('style="--cols:10"');
     // Two suppliers have no cue.

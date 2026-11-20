@@ -107,8 +107,14 @@ export function CompareGrid({
   const toggleRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const cueId = useId();
-  // Where the reader is in the sideways scroll. Before the first measure the table is assumed to overflow.
-  const [edge, setEdge] = useState({ atStart: true, atEnd: false, overflow: true });
+  // Where the reader is in the sideways scroll. Until the first measure nothing is claimed: no fade, no shadow and
+  // no cue words (the cue line keeps its height, so nothing moves when they arrive).
+  const [edge, setEdge] = useState({
+    atStart: true,
+    atEnd: true,
+    overflow: false,
+    measured: false,
+  });
 
   useEffect(() => {
     const scroller = scrollRef.current;
@@ -121,19 +127,26 @@ export function CompareGrid({
         atStart: from <= 1,
         atEnd: !overflow || from + scroller.clientWidth >= scroller.scrollWidth - 1,
         overflow,
+        measured: true,
       };
       setEdge((now) =>
-        now.atStart === next.atStart && now.atEnd === next.atEnd && now.overflow === next.overflow
+        now.measured &&
+        now.atStart === next.atStart &&
+        now.atEnd === next.atEnd &&
+        now.overflow === next.overflow
           ? now
           : next,
       );
     };
     measure();
     scroller.addEventListener('scroll', measure, { passive: true });
-    window.addEventListener('resize', measure, { passive: true });
+    // The region changes size with the window, a side panel or larger text: watch the region and its table.
+    const resized = new ResizeObserver(measure);
+    resized.observe(scroller);
+    if (scroller.firstElementChild) resized.observe(scroller.firstElementChild);
     return () => {
       scroller.removeEventListener('scroll', measure);
-      window.removeEventListener('resize', measure);
+      resized.disconnect();
     };
   }, [total, shown.length]);
 
@@ -169,11 +182,13 @@ export function CompareGrid({
                 { count: number(foldable.length), total: number(total) },
               );
   const cue =
-    total > 2
-      ? fill(say(edge.overflow && !edge.atEnd ? 'compare.cueScroll' : 'compare.cueSeen'), {
-          total: number(total),
-        })
-      : null;
+    total <= 2
+      ? null
+      : !edge.measured
+        ? ''
+        : fill(say(edge.overflow && !edge.atEnd ? 'compare.cueScroll' : 'compare.cueSeen'), {
+            total: number(total),
+          });
   const shipping =
     total > 1 && shippingExcluded > 0
       ? shippingExcluded === total
@@ -251,14 +266,21 @@ export function CompareGrid({
           aria-describedby={cue !== null ? cueId : undefined}
           tabIndex={0}
         >
-          <table className="compare-grid-table" style={{ '--cols': total } as CSSProperties}>
-            <thead>
-              <tr>
-                <th scope="col" className="compare-grid-corner" {...words}>
+          <table
+            className="compare-grid-table"
+            // Explicit roles keep the table a table for assistive technology when two suppliers on a narrow screen
+            // are laid out row by row (compare-grid.css).
+            role="table"
+            data-cols={total}
+            style={{ '--cols': total } as CSSProperties}
+          >
+            <thead role="rowgroup">
+              <tr role="row">
+                <th scope="col" role="columnheader" className="compare-grid-corner" {...words}>
                   {say('compare.terms')}
                 </th>
                 {columns.map((column) => (
-                  <th scope="col" key={column.id} className="compare-grid-head">
+                  <th scope="col" role="columnheader" key={column.id} className="compare-grid-head">
                     <b lang={column.supplierLang} dir="auto">
                       {column.supplier}
                     </b>
@@ -274,11 +296,13 @@ export function CompareGrid({
                           {say(column.comparable ? 'compare.comparable' : 'mr.quote.notComparable')}
                         </span>
                         {!column.comparable && column.reason ? (
-                          <small lang="en">{column.reason}</small>
+                          <small lang="en" dir="auto">
+                            {column.reason}
+                          </small>
                         ) : null}
                       </span>
                     </span>
-                    {column.place ? <small>{column.place}</small> : null}
+                    {column.place ? <small dir="auto">{column.place}</small> : null}
                     <small>
                       <span {...words}>{say('mr.quote.revision')}</span>{' '}
                       <span className="compare-grid-num" dir="auto">
@@ -289,9 +313,9 @@ export function CompareGrid({
                     {column.trust ? (
                       <FactLabel label={column.trust} />
                     ) : column.provenance ? (
-                      <small>{column.provenance}</small>
+                      <small dir="auto">{column.provenance}</small>
                     ) : null}
-                    {column.reference ? <small>{column.reference}</small> : null}
+                    {column.reference ? <small dir="auto">{column.reference}</small> : null}
                     {column.historical ? (
                       <small className="compare-grid-earlier" {...words}>
                         {say('compare.earlier')}
@@ -301,14 +325,14 @@ export function CompareGrid({
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               {shown.map((row) => (
-                <tr key={row.label}>
-                  <th scope="row" className="compare-grid-label">
+                <tr key={row.label} role="row">
+                  <th scope="row" role="rowheader" className="compare-grid-label">
                     {row.label}
                   </th>
                   {row.cells.map((cell, index) => (
-                    <td key={columns[index]!.id}>
+                    <td key={columns[index]!.id} role="cell">
                       {cell.excluded ? (
                         <span className="compare-grid-blank">
                           <span
@@ -352,11 +376,13 @@ export function CompareGrid({
                 </tr>
               ))}
               {note ? (
-                <tr className="compare-grid-note">
-                  <th scope="row" className="compare-grid-label">
+                <tr className="compare-grid-note" role="row">
+                  <th scope="row" role="rowheader" className="compare-grid-label">
                     {note.label}
                   </th>
-                  <td colSpan={total}>{note.text}</td>
+                  <td colSpan={total} role="cell">
+                    {note.text}
+                  </td>
                 </tr>
               ) : null}
             </tbody>
