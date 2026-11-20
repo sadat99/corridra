@@ -168,8 +168,8 @@ test('with nothing open there is no Today card and the empty state stays', async
 });
 
 // Unit 04 sizes in between (owner, 19 Nov 2026), measured in the real MoveView with the real stylesheets.
-// --text-h1 itself shrinks below 390 px (globals.css, clamp(1.625rem, 7.4vw, 1.8125rem)): 26 at 320 and 27 at 360.
-const h1At: Record<number, number> = { 320: 26, 360: 27, 390: 29, 768: 30, 1024: 34, 1440: 40 };
+// The Your Move h1 has its own clamp, so it is 29 on every phone (the global --text-h1 still eases below 390).
+const h1At: Record<number, number> = { 320: 29, 360: 29, 390: 29, 768: 30, 1024: 34, 1440: 40 };
 for (const width of [320, 360, 390, 768, 1024, 1440]) {
   test(`sizes in between at ${width}px`, async ({ page }) => {
     await open(page, width);
@@ -187,7 +187,7 @@ for (const width of [320, 360, 390, 768, 1024, 1440]) {
             ),
           property,
         );
-    expect(Math.abs((await px('h1', 'fontSize')) - h1At[width]!)).toBeLessThanOrEqual(1.5);
+    expect(Math.abs((await px('h1', 'fontSize')) - h1At[width]!)).toBeLessThanOrEqual(0.5);
     expect(await px('.today-move', 'fontSize')).toBe(24);
     expect(await px('.today-due', 'fontSize')).toBe(16);
     expect(await px('.move-lane-head', 'fontSize')).toBe(16);
@@ -200,5 +200,53 @@ for (const width of [320, 360, 390, 768, 1024, 1440]) {
         () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
       ),
     ).toBe(true);
+  });
+}
+
+test('the heading size never shrinks on a wider screen and is one size across phones', async ({
+  page,
+}) => {
+  const sizes: number[] = [];
+  for (const width of [320, 360, 390, 768, 1024, 1280, 1440]) {
+    await open(page, width);
+    sizes.push(
+      await page
+        .locator('h1')
+        .first()
+        .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+    );
+  }
+  if (baseline) return;
+  expect(sizes.slice(0, 3)).toEqual([29, 29, 29]);
+  for (let i = 1; i < sizes.length; i++) expect(sizes[i]!).toBeGreaterThanOrEqual(sizes[i - 1]!);
+});
+
+// Long words in the heading at 200 percent text on the narrowest phone: no sideways scroll, no clipping.
+const longHeadings: Record<string, string> = {
+  English: 'Internationalisation'.repeat(3),
+  Bangla: 'আন্তর্জাতিকীকরণপ্রক্রিয়া'.repeat(3),
+  Arabic: 'التوصيلاتالدولية'.repeat(4),
+};
+for (const [language, text] of Object.entries(longHeadings)) {
+  test(`a long ${language} heading word wraps at 200 percent text at 320px`, async ({ page }) => {
+    await open(page, 320);
+    if (baseline) return;
+    await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+    await page
+      .locator('h1')
+      .first()
+      .evaluate((el, t) => (el.textContent = t), text);
+    const fit = await page
+      .locator('h1')
+      .first()
+      .evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          scrolls: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+          clipped: el.scrollWidth > el.clientWidth + 1,
+          inside: box.left >= 0 && box.right <= document.documentElement.clientWidth + 1,
+        };
+      });
+    expect(fit).toEqual({ scrolls: false, clipped: false, inside: true });
   });
 }
