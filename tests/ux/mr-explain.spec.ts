@@ -182,7 +182,7 @@ test.describe('Explain with a mouse and a keyboard', () => {
     await later.dispatchEvent('pointercancel', { pointerType: 'touch', bubbles: true });
     await page.locator('#outside').focus();
     // The four holder shapes (PR 3) sit between the step shapes and the field.
-    for (const word of ['Supplier or Buyer', 'Workspace owner or admin', 'Corridra team', 'You']) {
+    for (const word of ['Supplier or Buyer', 'Workspace owner or admin', 'Corridra team', 'With you']) {
       await page.keyboard.press('Shift+Tab');
       await expect(page.getByRole('button', { name: word, exact: true })).toBeFocused();
     }
@@ -312,7 +312,7 @@ test.describe('Explain on a touch screen', () => {
 
 // Visual grammar PR 3: the holder shapes in the Road legend, at the four widths.
 const holderKeys = [
-  ['you', 'You', say('mr.explain.holder.you')],
+  ['you', 'With you', say('mr.explain.holder.you')],
   ['team', 'Corridra team', say('mr.explain.holder.team')],
   ['owner', 'Workspace owner or admin', say('mr.explain.holder.owner')],
   ['third', 'Supplier or Buyer', say('mr.explain.holder.third')],
