@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { neonAuth } from '../../lib/neon-auth';
 import { AccountSignout } from './signout';
+import { ThisDevice } from './this-device';
 import { CustomerMissions } from './customer-missions';
 import { SavedMissions } from './saved-missions';
 import { MemberReports } from './member-reports';
@@ -438,6 +439,7 @@ export default async function Page({
                 <ContrastRow label="Stronger Colours" variant="page" />
                 <LessMovementRow label="Less Movement" variant="page" />
                 <p>These choices are kept on this device only.</p>
+                <ThisDevice />
               </section>
             }
             workspaces={

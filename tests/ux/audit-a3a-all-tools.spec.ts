@@ -65,14 +65,14 @@ const toolLinks = (page: Page) => page.locator('.ux-tools-grid a');
 
 for (const width of [390, 768, 1440]) {
   test.describe(`${width} px`, () => {
-    test('all sixteen tools are reachable: on the page by default, and each by its own search', async ({
+    test('all seventeen tools are reachable: on the page by default, and each by its own search', async ({
       page,
     }) => {
       await open(page, width);
-      await expect(toolLinks(page)).toHaveCount(16);
+      await expect(toolLinks(page)).toHaveCount(17);
       const search = page.getByRole('searchbox', { name: 'Find a tool' });
       const labels = await toolLinks(page).locator('strong').allTextContents();
-      expect(labels).toHaveLength(16);
+      expect(labels).toHaveLength(17);
       for (const label of labels) {
         await search.fill(label);
         await expect(
@@ -81,7 +81,7 @@ for (const width of [390, 768, 1440]) {
       }
     });
 
-    test('typing narrows the list at once, says how many of sixteen are shown, and Clear Search brings them all back', async ({
+    test('typing narrows the list at once, says how many of seventeen are shown, and Clear Search brings them all back', async ({
       page,
     }) => {
       await open(page, width);
@@ -89,10 +89,10 @@ for (const width of [390, 768, 1440]) {
       await search.fill('billing');
       await expect(toolLinks(page)).toHaveCount(1);
       await expect(page.getByRole('link', { name: /See your plan and billing/ })).toBeVisible();
-      await expect(page.locator('.ux-tools-status')).toHaveText('Showing 1 of 16 tools.');
+      await expect(page.locator('.ux-tools-status')).toHaveText('Showing 1 of 17 tools.');
       expect(page.url()).toContain('q=billing');
       await page.getByRole('button', { name: 'Clear Search' }).click();
-      await expect(toolLinks(page)).toHaveCount(16);
+      await expect(toolLinks(page)).toHaveCount(17);
       await expect(search).toHaveValue('');
       expect(page.url()).not.toContain('q=');
     });
@@ -105,7 +105,7 @@ for (const width of [390, 768, 1440]) {
       await expect(toolLinks(page)).toHaveCount(0);
       await expect(page.locator('.ux-tools-status')).toContainText('No tool matches');
       await page.getByRole('button', { name: 'Clear Search' }).click();
-      await expect(toolLinks(page)).toHaveCount(16);
+      await expect(toolLinks(page)).toHaveCount(17);
     });
 
     test('the group chips work from the keyboard (arrow keys), one group at a time, with the customer word', async ({
@@ -121,10 +121,10 @@ for (const width of [390, 768, 1440]) {
       await expect(page.getByRole('radio', { name: /^Requests/ })).toBeChecked();
       await expect(toolLinks(page)).toHaveCount(4);
       await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Requests (4)']);
-      await expect(page.locator('.ux-tools-status')).toHaveText('Showing 4 of 16 tools.');
+      await expect(page.locator('.ux-tools-status')).toHaveText('Showing 4 of 17 tools.');
       expect(page.url()).toContain('group=missions');
       await page.getByRole('radio', { name: /^All/ }).check({ force: true });
-      await expect(toolLinks(page)).toHaveCount(16);
+      await expect(toolLinks(page)).toHaveCount(17);
     });
 
     test('a search and a group work together, and a group from the address opens ready', async ({
@@ -183,7 +183,7 @@ test('on a phone the groups fold, each one tap away, and a search or group opens
 }) => {
   await open(page, 390);
   await expect(page.locator('details.ux-tools-fold[open]')).toHaveCount(0);
-  await page.locator('details.ux-tools-fold > summary', { hasText: 'Start (3)' }).click();
+  await page.locator('details.ux-tools-fold > summary', { hasText: 'Start (4)' }).click();
   await expect(page.getByRole('link', { name: /Plan a mission/ })).toBeVisible();
   await page.getByRole('searchbox', { name: 'Find a tool' }).fill('plan');
   for (const link of await toolLinks(page).all()) await expect(link).toBeVisible();

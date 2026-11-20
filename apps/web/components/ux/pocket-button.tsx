@@ -6,7 +6,7 @@
 //
 // The list, in this order: the Next Move first and in the primary cobalt (lib/ux/next-move.ts: Review N Quotes, Finish
 // Your Draft or New Request), then Get Help (the whole existing help content, customerHelpGroups, the same rows the header
-// Help menu draws), Search, Meetings, Continue Draft (only when a draft exists and it is not already the Next Move) and
+// Help menu draws), Search, Meetings, Shortcuts, Continue Draft (only when a draft exists and it is not already the Next Move) and
 // New Request (only when it is not already the Next Move), so no row is ever drawn twice. The first row is the one
 // nearest the thumb, and the first in reading and Tab order.
 //
@@ -38,6 +38,12 @@ import { Entry, useCustomerHelpGroups, useListen } from './utility-menus';
 const slideThreshold = 14;
 /** Slack above and below a row while sliding, so a thumb between two rows still chooses the nearer one. */
 const hitSlack = 6;
+/** The Shortcuts panel: the three places the Move page used to offer as tiles. */
+const shortcuts = [
+  { label: 'Check a Request Receipt', href: '/plan#receipt-check' },
+  { label: 'Open a Shared Mission', href: '/account?view=results&tab=shared' },
+  { label: 'See All Requests', href: '/account?view=work' },
+] as const;
 const openSearchEvent = 'corridra:open-customer-search';
 
 type Row = {
@@ -111,7 +117,7 @@ function PocketView({
   const move = nextMove(read);
 
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<'list' | 'help'>('list');
+  const [view, setView] = useState<'list' | 'help' | 'shortcuts'>('list');
   const [hot, setHot] = useState(-1);
   const root = useRef<HTMLDivElement>(null);
   const plus = useRef<HTMLButtonElement>(null);
@@ -146,8 +152,9 @@ function PocketView({
       run: () => window.dispatchEvent(new Event(openSearchEvent)),
     },
     { key: 'meetings', label: 'Meetings', icon: 'calendar', href: '/account/meetings' },
+    { key: 'shortcuts', label: 'Shortcuts', icon: 'list', run: () => setView('shortcuts') },
     ...(read?.drafts.href && move.key !== 'draft'
-      ? [{ key: 'draft', label: 'Continue Draft', icon: 'draft', href: read.drafts.href }]
+      ? [{ key: 'draft', label: 'Continue Draft', icon: 'document', href: read.drafts.href }]
       : []),
     ...(move.key !== 'new'
       ? [
@@ -194,7 +201,7 @@ function PocketView({
   // Opened with the keyboard: focus goes to the first row. The help panel takes focus when it opens.
   useEffect(() => {
     if (!open) return;
-    if (view === 'help') {
+    if (view === 'help' || view === 'shortcuts') {
       help.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     } else if (focusFirst.current) {
       focusFirst.current = false;
@@ -373,7 +380,7 @@ function PocketView({
             id={listId}
             ref={help}
             role="menu"
-            aria-label="Get Help"
+            aria-label={view === 'shortcuts' ? 'Shortcuts' : 'Get Help'}
             onClick={(event) => {
               const target = event.target as HTMLElement;
               if (target.closest('a[href], [data-menu-close]')) close(false);
@@ -403,13 +410,27 @@ function PocketView({
               onClick={() => {
                 setView('list');
                 requestAnimationFrame(() =>
-                  list.current?.querySelector<HTMLElement>('[data-pocket-row="help"]')?.focus(),
+                  list.current?.querySelector<HTMLElement>(`[data-pocket-row="${view}"]`)?.focus(),
                 );
               }}
             >
               Back
             </button>
-            {helpGroups.map((group) => (
+            {view === 'shortcuts'
+              ? shortcuts.map((item) => (
+                  <Link
+                    key={item.href}
+                    prefetch={false}
+                    href={item.href}
+                    role="menuitem"
+                    tabIndex={-1}
+                    className="ux-menu-row"
+                  >
+                    {item.label}
+                  </Link>
+                ))
+              : null}
+            {(view === 'help' ? helpGroups : []).map((group) => (
               <div
                 key={group.label}
                 role="group"

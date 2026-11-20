@@ -282,6 +282,7 @@ export const en = {
   'move.empty.latest': 'Your most recent request',
   'move.start': 'Start a Request',
   'move.forget': 'Forget Which Replies I Have Read on This Device',
+  'move.forgotten': 'Done. This device has forgotten which replies you read.',
   'move.wait.owner': 'Workspace owner or admin',
   'move.capped':
     'Showing items from your first {count} workspaces. Open your missions for the rest.',
@@ -493,6 +494,7 @@ const bn: Catalog = {
   'move.empty.latest': 'আপনার সাম্প্রতিক অনুরোধ',
   'move.start': 'অনুরোধ শুরু করুন',
   'move.forget': 'এই ডিভাইসে কোন উত্তর পড়েছি তা ভুলে যান',
+  'move.forgotten': 'হয়েছে। এই ডিভাইস কোন উত্তর পড়েছেন তা ভুলে গেছে।',
   'move.wait.owner': 'ওয়ার্কস্পেসের মালিক বা অ্যাডমিন',
   'move.capped':
     'আপনার প্রথম {count}টি ওয়ার্কস্পেসের বিষয় দেখানো হচ্ছে। বাকিগুলোর জন্য আপনার মিশনগুলো খুলুন।',
@@ -696,6 +698,7 @@ const zh: Catalog = {
   'move.empty.latest': '您最近的需求',
   'move.start': '提交需求',
   'move.forget': '忘记此设备上已读的回复',
+  'move.forgotten': '已完成。此设备已忘记你读过哪些回复。',
   'move.wait.owner': '工作区所有者或管理员',
   'move.capped': '显示您前 {count} 个工作区的事项。其余请在您的任务中查看。',
   'move.partial': '您的部分列表太长，未能全部读取。请在您的任务中查看全部内容。',
@@ -895,6 +898,7 @@ const es: Catalog = {
   'move.empty.latest': 'Su solicitud más reciente',
   'move.start': 'Iniciar una solicitud',
   'move.forget': 'Olvidar qué respuestas he leído en este dispositivo',
+  'move.forgotten': 'Hecho. Este dispositivo ha olvidado qué respuestas has leído.',
   'move.wait.owner': 'Propietario o administrador del espacio',
   'move.capped':
     'Se muestran los elementos de sus primeros {count} espacios. Abra sus misiones para ver el resto.',
@@ -1102,6 +1106,7 @@ const ar: Catalog = {
   'move.empty.latest': 'أحدث طلب لك',
   'move.start': 'ابدأ طلبًا',
   'move.forget': 'انسَ الردود التي قرأتها على هذا الجهاز',
+  'move.forgotten': 'تم. نسي هذا الجهاز الردود التي قرأتها.',
   'move.wait.owner': 'مالك مساحة العمل أو مشرفها',
   'move.capped': 'تُعرض عناصر أول {count} مساحات عمل لديك. افتح مهامك لعرض الباقي.',
   'move.partial': 'بعض قوائمك أطول من أن تُقرأ كاملة. افتح مهامك لعرض كل شيء.',
@@ -1306,6 +1311,7 @@ const fr: Catalog = {
   'move.empty.latest': 'Votre demande la plus récente',
   'move.start': 'Lancer une demande',
   'move.forget': "Oublier les réponses que j'ai lues sur cet appareil",
+  'move.forgotten': "C'est fait. Cet appareil a oublié les réponses que vous avez lues.",
   'move.wait.owner': "Propriétaire ou administrateur de l'espace",
   'move.capped':
     'Affichage des éléments de vos {count} premiers espaces. Ouvrez vos missions pour voir le reste.',
@@ -1521,6 +1527,7 @@ const de: Catalog = {
   'move.empty.latest': 'Ihre letzte Anfrage',
   'move.start': 'Anfrage starten',
   'move.forget': 'Gelesene Antworten auf diesem Gerät vergessen',
+  'move.forgotten': 'Erledigt. Dieses Gerät hat vergessen, welche Antworten Sie gelesen haben.',
   'move.wait.owner': 'Eigentümer oder Administrator des Arbeitsbereichs',
   'move.capped':
     'Es werden Einträge aus Ihren ersten {count} Arbeitsbereichen angezeigt. Öffnen Sie Ihre Missionen für den Rest.',
