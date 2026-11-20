@@ -475,7 +475,7 @@
 .room[data-room='request'] .room-lens[data-count]::after {
   position: absolute;
   inset-block-start: var(--space-1);
-  inset-inline-end: var(--space-1);
+  inset-inline-start: calc(50% + var(--space-6));
 }
 @media (min-width: 48rem) {
   .room[data-room='request'] .room-lens {

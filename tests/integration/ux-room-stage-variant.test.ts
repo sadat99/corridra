@@ -11,13 +11,12 @@ const createElement = web('react').createElement as (
   ...children: unknown[]
 ) => unknown;
 const render = web('react-dom/server').renderToStaticMarkup as (element: unknown) => string;
-const load = async () =>
-  await import(/* @vite-ignore */ '../../apps/web/components/mr/stage-bar.tsx');
+const load = async (path: string) => await import(/* @vite-ignore */ `../../apps/web/${path}`);
 const text = (html: string) => html.replace(/<[^>]+>/g, '');
 
 describe('StageBar room variant', () => {
   it('draws the same markup as before when no variant is given', async () => {
-    const { StageBar } = await load();
+    const { StageBar } = await load('components/mr/stage-bar.tsx');
     const html = render(createElement(StageBar, { status: 'MEETINGS' }));
     expect(html).not.toContain('data-variant');
     expect(html).not.toContain('mr-stage-shape');
@@ -27,7 +26,7 @@ describe('StageBar room variant', () => {
   });
 
   it('adds the step heading and the Done, Later and Not tracked yet lines from the marker and records', async () => {
-    const { StageBar } = await load();
+    const { StageBar } = await load('components/mr/stage-bar.tsx');
     const html = render(
       createElement(StageBar, {
         status: 'ACTIVE',
@@ -46,7 +45,7 @@ describe('StageBar room variant', () => {
   });
 
   it('never shows an untracked stage as done or later, and omits an empty line', async () => {
-    const { StageBar } = await load();
+    const { StageBar } = await load('components/mr/stage-bar.tsx');
     const html = render(
       createElement(StageBar, {
         status: 'FOLLOW_UP',
@@ -60,7 +59,7 @@ describe('StageBar room variant', () => {
   });
 
   it('keeps the aside sentence and no step heading for a paused, cancelled or unknown request', async () => {
-    const { StageBar } = await load();
+    const { StageBar } = await load('components/mr/stage-bar.tsx');
     for (const status of ['ON_HOLD', 'CANCELLED', 'SOMETHING_NEW']) {
       const html = render(createElement(StageBar, { status, variant: 'room' }));
       expect(html).not.toContain('mr-stage-heading');
@@ -70,7 +69,7 @@ describe('StageBar room variant', () => {
   });
 
   it('marks the step words with the given language', async () => {
-    const { StageBar } = await load();
+    const { StageBar } = await load('components/mr/stage-bar.tsx');
     const html = render(
       createElement(StageBar, { status: 'ACTIVE', variant: 'room', stepLang: 'en' }),
     );

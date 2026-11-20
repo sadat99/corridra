@@ -2469,3 +2469,29 @@ test('Room sizes are identical at 320, 360 and 390, never shrink as the width gr
   expect(phones[0].buttonHeight).toBe(56);
   expect(desktop.buttonHeight).toBe(48);
 });
+
+test('in Arabic at 320 the Room reads right to left, keeps the new English words marked, and nothing overflows', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await open(page, { offered: 'en,ar' });
+  await page.evaluate(() => window.localStorage.setItem('corridra.language', 'ar'));
+  await page.reload();
+  await expect(page.locator('.room')).toHaveAttribute('dir', 'rtl');
+  await expect(page.locator('.mr-stage-heading span[lang="en"]')).toContainText('Step 4 of 6');
+  await expect(page.locator('.room-lenses')).toBeVisible();
+  const outside = await page.locator('.room-lenses button, .mr-stage-shape').evaluateAll(
+    (els) =>
+      els.filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.left < 0 || r.right > document.documentElement.clientWidth;
+      }).length,
+  );
+  expect(outside).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  // The six shapes keep one row and the lens tabs stay one row above 23rem and two by two below it.
+  const lensRows = await page
+    .locator('.room-lenses button')
+    .evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().y))).size);
+  expect(lensRows).toBe(2);
+});
