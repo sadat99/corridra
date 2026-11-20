@@ -67,6 +67,8 @@ type CustomerShellProps = {
   /** Shown only while the shells switch is off; the left-bar frame has no eyebrow. */
   eyebrow?: string;
   title: ReactNode;
+  /** The page draws its own h1; the title is then drawn as a quiet line above it (Your Move only). */
+  quietTitle?: boolean;
   /** What waits for the person, shown as a small count beside Home in the left bar. */
   count?: number;
   /**
@@ -79,7 +81,15 @@ type CustomerShellProps = {
   children: ReactNode;
 };
 
-function CustomerFrame({ tab, eyebrow, title, count, frame, children }: CustomerShellProps) {
+function CustomerFrame({
+  tab,
+  eyebrow,
+  title,
+  quietTitle,
+  count,
+  frame,
+  children,
+}: CustomerShellProps) {
   const slots = pageFrameSlots(frame);
   const plainNames = uxSwitchOn('CORRIDRA_UX_NAV');
   const move = uxSwitchOn('CORRIDRA_UX_MOVE');
@@ -90,6 +100,7 @@ function CustomerFrame({ tab, eyebrow, title, count, frame, children }: Customer
       <WorkspaceShell
         eyebrow={eyebrow}
         title={title}
+        quietTitle={quietTitle}
         above={slots.above}
         lead={slots.lead}
         notice={
@@ -193,6 +204,7 @@ function CustomerFrame({ tab, eyebrow, title, count, frame, children }: Customer
       </Suspense>
       <WorkspaceShell
         title={title}
+        quietTitle={quietTitle}
         customer
         above={slots.above}
         lead={slots.lead}

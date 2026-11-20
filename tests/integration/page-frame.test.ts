@@ -92,6 +92,24 @@ describe('WorkspaceShell slots', () => {
     expect(html.match(/primary-link/g)).toHaveLength(1);
   });
 
+  it('quietTitle draws the title as a quiet line and no h1 or eyebrow, and only when asked', async () => {
+    const { WorkspaceShell } = await loadWeb('components/workspace-shell');
+    const props = { eyebrow: 'YOUR MOVE', title: 'Good morning, Asha', customer: true };
+    const quiet = render(
+      createElement(
+        WorkspaceShell,
+        { ...props, quietTitle: true },
+        createElement('h1', null, 'Own'),
+      ),
+    );
+    expect(quiet).toContain('<p class="move-greeting">Good morning, Asha</p>');
+    expect(quiet).not.toContain('YOUR MOVE');
+    expect(quiet.match(/<h1/g)).toHaveLength(1);
+    const normal = render(createElement(WorkspaceShell, props, createElement('p', null, 'x')));
+    expect(normal).toContain('<h1>Good morning, Asha</h1>');
+    expect(normal.match(/<h1/g)).toHaveLength(1);
+  });
+
   it('draws nothing for an empty frame', async () => {
     const { pageFrameSlots, PageFrameAbove, PageFrameLead } = await loadWeb(
       'components/ux/page-frame',
