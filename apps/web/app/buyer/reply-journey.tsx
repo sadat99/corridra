@@ -69,6 +69,7 @@ export function ReplyJourney({
   token,
   language,
   beforeSend,
+  steps = false,
   ask,
   busy,
   pending,
@@ -84,6 +85,8 @@ export function ReplyJourney({
   language: ReplyLanguage;
   /** CORRIDRA_UX_BEFORE_SEND, read on the server: the Before Send block above Send and one clear message for a missing tick. */
   beforeSend: boolean;
+  /** CORRIDRA_UX_BUYER_STEPS, read on the server: the step line, choice rows and the consent step order. Off, nothing changes. */
+  steps?: boolean;
   ask: readonly ReplyTermKey[];
   busy: boolean;
   pending: ReplyDecision | null;
@@ -551,7 +554,13 @@ export function ReplyJourney({
   const lang = replyHtmlLang[language];
 
   return (
-    <div className="reply" lang={lang.lang} dir={lang.dir} data-phase={effective}>
+    <div
+      className="reply"
+      lang={lang.lang}
+      dir={lang.dir}
+      data-phase={effective}
+      data-steps={steps ? '' : undefined}
+    >
       {data.synthetic && (
         <p className="reply-sample" data-madeup-panel>
           {words.sampleOnly}

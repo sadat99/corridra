@@ -679,6 +679,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_BUYER_STEPS',
+    label: 'Buyer reply in steps',
+    line: 'On the reply page a recipient opens from a private link, each step names where they are and what comes next, the three answers become large full-word rows, the facts about the introduction sit under one question, and the last step gathers the shared details, the declaration, the Before Send block and Send in one place. It only changes how the page is laid out inside the reply page, so it needs the reply page to be on. Nothing is sent, shown or kept differently. Off by default. Turn it off by removing the setting in Vercel and redeploying.',
+    group: 'Delivery',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_NOTIFICATIONS_V2',
     label: 'Inbox and hand-off emails',
     line: 'Every hand-off writes an inbox item and sends an email when the person has chosen email. Needs the commercial readiness database module.',
