@@ -399,7 +399,7 @@ test('a column header is named by the supplier alone and described by its verdic
 test('two suppliers on a phone: no divider between the two supplier columns, the outer border stays', async ({
   page,
 }) => {
-  await mount(page, 390, 2);
+  await mount(page, 320, 2);
   const heads = page.locator('.compare-grid-head');
   await expect(heads).toHaveCount(2);
   const border = await heads.nth(1).evaluate((el) => getComputedStyle(el).borderInlineStartWidth);
@@ -408,7 +408,7 @@ test('two suppliers on a phone: no divider between the two supplier columns, the
     .locator('.compare-grid-table')
     .evaluate((el) => getComputedStyle(el).borderInlineStartWidth);
   expect(table).toBe('1px');
-  await mount(page, 390, 2, { locale: 'ar', dir: 'rtl' });
+  await mount(page, 320, 2, { locale: 'ar', dir: 'rtl' });
   expect(
     await page
       .locator('.compare-grid-head')
