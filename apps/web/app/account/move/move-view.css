@@ -1028,7 +1028,7 @@
 }
 
 /* What others hold, grouped by who holds it: one lane per holder (team, owner, third party), each with its
-   holder shape and word as the lane head. A holder with nothing waiting draws no lane. */
+   holder shape and word as the lane head. Every holder draws its lane, with a count that includes 0. */
 .move-lanes {
   display: grid;
   gap: var(--space-2);
@@ -1162,11 +1162,11 @@
   font-size: var(--text-base);
 }
 .move-lane-head .mr-holder-shape {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: var(--holder-lane-shape);
+  height: var(--holder-lane-shape);
 }
 .move-lane-head .mr-holder-shape[data-holder='third'] {
-  height: 0.625rem;
+  height: calc(var(--holder-lane-shape) / 2);
 }
 .move-lane-count {
   color: var(--text-2);
@@ -1214,7 +1214,7 @@
     padding-inline: var(--space-5);
   }
   .move-lane-count {
-    padding-inline-start: calc(1.25rem + var(--space-3));
+    padding-inline-start: calc(var(--holder-lane-shape) + var(--space-3));
   }
 }
 

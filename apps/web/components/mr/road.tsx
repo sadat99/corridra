@@ -3,7 +3,8 @@ import './scripts.css';
 import './holder-badge.css';
 import { Explain } from './explain';
 import { mrLabels } from './labels';
-import { holders } from './types';
+import { HolderBadge } from './holder-badge';
+import { holders, type Holder } from './types';
 import {
   roadSteps,
   roadStates,
@@ -39,6 +40,7 @@ export function Road({
   labels = mrLabels.road,
   showLegend = true,
   decorative = false,
+  holder,
 }: {
   /** The mission status a customer may read, exactly as returned (for example `MEETINGS`). */
   status: string;
@@ -50,6 +52,11 @@ export function Road({
    * shapes and words but renders no control, so nothing in the sample can be pressed or focused.
    */
   decorative?: boolean;
+  /**
+   * Who holds the Now step, from a real record. Only then does the Now step open into a card with the
+   * holder and the step's one sentence. With no holder the plain sentence stays: no holder is invented.
+   */
+  holder?: Holder;
 }) {
   const marker: RoadMarker = statusToRoadStep(status);
   const states = roadStates(marker, records);
@@ -75,9 +82,18 @@ export function Road({
                 {marks[state](index)}
               </span>
               <span className="mr-road-text">
-                <b>{labels.steps[step]}</b>
-                <span className="mr-road-state">{labels.states[state]}</span>
-                {detail ? <span className="mr-road-sub">{detail}</span> : null}
+                <span className="mr-road-line">
+                  <b>{labels.steps[step]}</b>
+                  <span className="mr-road-state">{labels.states[state]}</span>
+                </span>
+                {detail && holder ? (
+                  <span className="mr-road-now">
+                    <HolderBadge holder={holder} />
+                    <span className="mr-road-now-sentence">{detail}</span>
+                  </span>
+                ) : detail ? (
+                  <span className="mr-road-sub">{detail}</span>
+                ) : null}
               </span>
             </li>
           );

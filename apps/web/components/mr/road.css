@@ -1,5 +1,7 @@
-/* The Road. Vertical on a phone, six columns from 48rem. Shapes differ as well as colour. */
+/* The Road. Vertical in a narrow container, six columns from 64rem of container width. Shapes differ as
+   well as colour. Sizes come from --road-shape and --holder-badge-shape (globals.css). */
 .mr-road-wrap {
+  container-type: inline-size;
   display: grid;
   gap: var(--space-2);
 }
@@ -16,10 +18,10 @@
 .mr-road > li {
   position: relative;
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
+  grid-template-columns: var(--road-shape) minmax(0, 1fr);
   column-gap: var(--space-3);
   align-items: start;
-  padding-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
   color: var(--text-muted);
   font-size: var(--text-sm);
 }
@@ -29,10 +31,9 @@
 .mr-road > li::after {
   content: '';
   position: absolute;
-  top: 2.125rem;
-  left: calc(1rem - 1px);
-  bottom: 0.125rem;
-  width: 2px;
+  inset-block: calc(var(--road-shape) + var(--space-1)) var(--space-1);
+  inset-inline-start: calc(var(--road-shape) / 2 - 1px);
+  inline-size: 2px;
   background: var(--border-subtle);
 }
 .mr-road > li:last-child::after {
@@ -44,9 +45,9 @@
 .mr-road-dot {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
-  font-size: var(--text-sm);
+  inline-size: var(--road-shape);
+  block-size: var(--road-shape);
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-muted);
   background: var(--surface-raised);
@@ -72,8 +73,15 @@
 }
 .mr-road-text {
   display: grid;
-  gap: 2px;
+  gap: var(--space-1);
   min-width: 0;
+}
+/* The step name and its state word share a line; the word drops under the name only when it does not fit. */
+.mr-road-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
 }
 .mr-road-text b {
   font-weight: 600;
@@ -84,10 +92,25 @@
   font-weight: 600;
 }
 .mr-road-state {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+/* The Now step opens into a small card: who holds it and one sentence. Drawn only for a real holder. */
+.mr-road-now {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  margin-block-start: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.mr-road-now-sentence {
+  font-size: var(--text-base);
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
 }
 .mr-road-sub {
   font-size: var(--text-sm);
@@ -179,22 +202,64 @@
     outline-offset: 2px;
   }
 }
+@media (forced-colors: active) {
+  .mr-road > li::after,
+  .mr-road > li[data-state='done']::after {
+    background: CanvasText;
+  }
+  .mr-road-dot {
+    color: CanvasText;
+    border-color: CanvasText;
+    background: Canvas;
+  }
+  [data-state='done'] > .mr-road-dot {
+    color: Canvas;
+    background: CanvasText;
+    forced-color-adjust: none;
+  }
+  [data-state='now'] > .mr-road-dot {
+    color: Canvas;
+    background: CanvasText;
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
+    forced-color-adjust: none;
+  }
+  [data-state='later'] > .mr-road-dot {
+    background: Canvas;
+  }
+  [data-state='notTracked'] > .mr-road-dot {
+    border-style: dashed;
+  }
+  .mr-road-now {
+    border-color: CanvasText;
+  }
+}
 @media (min-width: 48rem) {
   .mr-road {
+    padding: var(--space-6);
+  }
+  .mr-road > li {
+    padding-block-end: var(--space-4);
+  }
+  .mr-road-now {
+    padding: var(--space-4);
+  }
+}
+@container (min-width: 64rem) {
+  .mr-road {
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    padding: var(--space-5) var(--space-6);
+    column-gap: 0;
   }
   .mr-road > li {
     grid-template-columns: minmax(0, 1fr);
     row-gap: var(--space-2);
-    padding: 0 var(--space-2) 0 0;
+    padding: 0;
+    padding-inline-end: var(--space-2);
   }
   .mr-road > li::after {
-    top: 1rem;
-    left: 2.5rem;
-    right: var(--space-2);
-    bottom: auto;
-    width: auto;
-    height: 2px;
+    inset-block: calc(var(--road-shape) / 2 - 1px) auto;
+    inset-inline: calc(var(--road-shape) + var(--space-2)) var(--space-2);
+    inline-size: auto;
+    block-size: 2px;
   }
 }

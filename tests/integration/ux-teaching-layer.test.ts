@@ -167,7 +167,7 @@ describe('the holder badge', () => {
   it('always shows the word and a fixed shape for each of the three holders', async () => {
     const { HolderBadge } = await load('holder-badge');
     for (const [holder, word] of [
-      ['you', 'You'],
+      ['you', 'With you'],
       ['team', 'Corridra team'],
       ['third', 'Supplier or Buyer'],
     ] as const) {

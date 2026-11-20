@@ -137,6 +137,8 @@ record is a plain grey segment. Measured with a BD-China sample: 1.00 desktop sc
 
 **Amendment to CX-06 (20 November 2026, forward; the row above is kept as written).** For the request Room only, the "no NOT TRACKED YET" rule is superseded by the owner's approval of the Room board on 20 November 2026 (Wave 2 unit 05). The Room shows "Not tracked yet" in sentence case, never mono capitals, as part of the locked shape set (dashed circle, see Visual grammar in `docs/agents/ui-direction.md`). The rest of CX-06 (no amber banner, no mono capitals for state, a help dock that never overlaps) and every other customer page (Home, Requests, Move) are unchanged.
 
+**Amendment to CX-06 for the Road and Move lanes (20 November 2026, forward; the CX-06 row and the Room amendment above are kept as written).** On the Road and the Move lanes, "Not tracked yet" in sentence case with a dashed circle is allowed, as on the Room. Never mono capitals. Owner basis: the approved Signed-in Review Board screen 07 and the midpoint size choice of 20 November 2026. The rest of CX-06 is unchanged.
+
 ## Order (S2)
 
 1. Shell: left bar, top bar and account menu (L-01 and CX-03).

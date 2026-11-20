@@ -109,3 +109,19 @@ Owner steps before `CORRIDRA_LANGUAGES_FORM` is set to any value, in the order o
 4. Name only languages that are also in `CORRIDRA_LANGUAGES_REVIEWED`, with `CORRIDRA_LANGUAGES_PREVIEW` unset on the public deployment, then set the value and redeploy. Done by the owner on 30 October 2026: `CORRIDRA_LANGUAGES_FORM` is set in production (value not read) with no `CORRIDRA_LANGUAGES_PREVIEW`, and the deployment of `031029e` serves the form in all six languages (live check 19:55Z, see the ledger).
 
 Notes for the reviewer: the German heading "Anfrage zu einer Mission prüfen." (English "Check a mission request.") was shortened so it fits at 200 percent text. `form.where.realOther` (English "Tell us what you need. Availability and scope for this direction must be agreed after review.") must keep "must be agreed after review" in every language; a translation that says it "will be agreed" promises more than the English. The es, fr, de, ar and bn drafts said "will be agreed"; the builder fixed them in `cc75d06` (30 October 2026), and each now says availability and scope must be agreed after review. The zh draft already did. The reviewer confirms that meaning in each language.
+
+## Draft addition, 20 November 2026: "With you"
+
+The holder word for the person themself changed from "You" to "With you" (owner direction, 20 November 2026; Road, Move lanes, Today card, legend and Explain). Key `mr.holder.you`. All non-English words below are drafts, pending native review; none is reviewed.
+
+| Language | Draft      | Replaces |
+| -------- | ---------- | -------- |
+| en       | With you   | You      |
+| es       | Con usted  | Usted    |
+| fr       | Avec vous  | Vous     |
+| de       | Bei Ihnen  | Sie      |
+| zh       | 在您这里   | 您       |
+| bn       | আপনার কাছে | আপনি     |
+| ar       | عندك       | أنت      |
+
+The reviewer confirms each reads as "this is with you to do" and stays short enough for a 14 px badge. `mr.explain.holder.you` ("You need to do the next thing.") is a sentence and is unchanged.
