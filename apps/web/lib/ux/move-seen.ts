@@ -75,7 +75,11 @@ export function useStorageBlocked(): boolean {
   return useSyncExternalStore(subscribe, storageBlocked, () => false);
 }
 
-export function markSeen(current: Record<string, string> | null, requestId: string, latestReplyAt: string) {
+export function markSeen(
+  current: Record<string, string> | null,
+  requestId: string,
+  latestReplyAt: string,
+) {
   commit({ ...(current ?? {}), [requestId]: latestReplyAt });
 }
 

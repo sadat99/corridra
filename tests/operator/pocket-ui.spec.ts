@@ -260,11 +260,21 @@ test.describe('phone width, switch on', () => {
       // The accessible name is words; the icon is decoration.
       await expect(plus(page)).toHaveAccessibleName('Open Quick Menu');
       const target = await box(plus(page));
+      // A pill: 56 px high, at least 56 px wide, with the visible word Quick beside the icon.
       expect(target.width).toBeGreaterThanOrEqual(55.9);
-      expect(target.width).toBeLessThanOrEqual(56.1);
       expect(target.height).toBeGreaterThanOrEqual(55.9);
       expect(target.height).toBeLessThanOrEqual(56.1);
-      expect(await plus(page).evaluate((el) => getComputedStyle(el).borderRadius)).toBe('50%');
+      await expect(plus(page)).toContainText('Quick');
+      await expect(plus(page).locator('.ux-pocket-word')).toBeVisible();
+      const parts = await plus(page).evaluate((el) => {
+        const icon = el.querySelector('svg')!.getBoundingClientRect();
+        const word = el.querySelector('.ux-pocket-word')!.getBoundingClientRect();
+        return { sameRow: Math.abs(icon.top + icon.height / 2 - (word.top + word.height / 2)) < 4 };
+      });
+      expect(parts.sameRow).toBe(true);
+      expect(
+        await plus(page).evaluate((el) => parseFloat(getComputedStyle(el).borderTopLeftRadius)),
+      ).toBeGreaterThanOrEqual(28);
       // The end corner (16 px in), 16 px above the bottom edge (no bottom bar, safe area 0 here), inside the window.
       expect(target.x + target.width).toBeGreaterThanOrEqual(width - 16.5);
       expect(target.x + target.width).toBeLessThanOrEqual(width - 15.5);
@@ -461,14 +471,22 @@ test.describe('the Next Move words, as the first row of the list', () => {
 
   // The fixed order, and no row is ever drawn twice.
   const orders: [string, string[]][] = [
-    ['none', ['New Request', 'Get Help', 'Search', 'Meetings']],
-    ['failed', ['New Request', 'Get Help', 'Search', 'Meetings']],
-    ['draft', ['Finish Your Draft', 'Get Help', 'Search', 'Meetings', 'New Request']],
-    ['quotes1', ['Review 1 Quote', 'Get Help', 'Search', 'Meetings', 'New Request']],
-    ['partial', ['Review 3+ Quotes', 'Get Help', 'Search', 'Meetings', 'New Request']],
+    ['none', ['New Request', 'Get Help', 'Search', 'Meetings', 'Shortcuts']],
+    ['failed', ['New Request', 'Get Help', 'Search', 'Meetings', 'Shortcuts']],
+    ['draft', ['Finish Your Draft', 'Get Help', 'Search', 'Meetings', 'Shortcuts', 'New Request']],
+    ['quotes1', ['Review 1 Quote', 'Get Help', 'Search', 'Meetings', 'Shortcuts', 'New Request']],
+    ['partial', ['Review 3+ Quotes', 'Get Help', 'Search', 'Meetings', 'Shortcuts', 'New Request']],
     [
       'quotes3',
-      ['Review 3 Quotes', 'Get Help', 'Search', 'Meetings', 'Continue Draft', 'New Request'],
+      [
+        'Review 3 Quotes',
+        'Get Help',
+        'Search',
+        'Meetings',
+        'Shortcuts',
+        'Continue Draft',
+        'New Request',
+      ],
     ],
   ];
   for (const [signals, expected] of orders)
@@ -699,7 +717,7 @@ test.describe('doing things with it', () => {
       .evaluateAll((els) =>
         els.map((el) => `${el.tagName.toLowerCase()}${el.getAttribute('href') ? ':href' : ''}`),
       );
-    expect(kinds).toEqual(['a:href', 'button', 'button', 'a:href', 'a:href', 'a:href']);
+    expect(kinds).toEqual(['a:href', 'button', 'button', 'a:href', 'button', 'a:href', 'a:href']);
     await page.locator('.ux-pocket-row', { hasText: 'Meetings' }).click();
     await expect(page).toHaveURL(/\/account\/meetings$/);
   });
@@ -773,7 +791,7 @@ test.describe('doing things with it', () => {
     await plus(page).focus();
     await page.keyboard.press('Enter');
     await expect(panel(page)).toBeVisible();
-    const keys = ['move', 'help', 'search', 'meetings', 'new'];
+    const keys = ['move', 'help', 'search', 'meetings', 'shortcuts', 'new'];
     await expect(page.locator(`[data-pocket-row="${keys[0]}"]`)).toBeFocused();
     for (const key of keys.slice(1)) {
       await page.keyboard.press('Tab');
@@ -1131,6 +1149,14 @@ test.describe('accessibility', () => {
     expect(await scan(page)).toEqual([]);
   });
 
+  test('axe is clean on the shortcuts panel', async ({ page }) => {
+    await page.setViewportSize(phone);
+    await mount(page, '/account', '?signals=quotes3');
+    await openList(page);
+    await page.locator('[data-pocket-row="shortcuts"]').click();
+    await expect(page.getByRole('menu', { name: 'Shortcuts' })).toBeVisible();
+    expect(await scan(page)).toEqual([]);
+  });
   test('axe is clean with the list open at 320 and with a draft count on the Next Move', async ({
     page,
   }) => {
@@ -1154,4 +1180,75 @@ test.describe('accessibility', () => {
     expect(css).not.toMatch(/\brgba?\(|\bhsla?\(/);
     expect(css).not.toMatch(/text-transform/);
   });
+});
+
+test.describe('Shortcuts (Quick)', () => {
+  const links = [
+    ['Check a Request Receipt', '/plan#receipt-check'],
+    ['Open a Shared Mission', '/account?view=results&tab=shared'],
+    ['See All Requests', '/account?view=work'],
+  ] as const;
+  const openShortcuts = async (page: Page) => {
+    await mount(page, '/account', '?signals=quotes3');
+    await openList(page);
+    await page.locator('[data-pocket-row="shortcuts"]').click();
+  };
+
+  test('the Shortcuts row follows Meetings, and the panel has Back and three links', async ({
+    page,
+  }) => {
+    await page.setViewportSize(phone);
+    await mount(page, '/account', '?signals=quotes3');
+    await openList(page);
+    const labels = (await rowLabels(page)).map((label) => label.trim());
+    expect(labels.indexOf('Shortcuts')).toBe(labels.indexOf('Meetings') + 1);
+    await page.locator('[data-pocket-row="shortcuts"]').click();
+    const menu = page.getByRole('menu', { name: 'Shortcuts' });
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('menuitem')).toHaveText(['Back', ...links.map(([name]) => name)]);
+    for (const [name, href] of links)
+      await expect(menu.getByRole('menuitem', { name })).toHaveAttribute('href', href);
+    await expect(menu.getByRole('menuitem', { name: 'Back' })).toBeFocused();
+    for (const item of await menu.getByRole('menuitem').all())
+      expect((await item.boundingBox())!.height).toBeGreaterThanOrEqual(43.9);
+  });
+
+  test('Back returns to the list with focus on Shortcuts; choosing a link closes the menu', async ({
+    page,
+  }) => {
+    await page.setViewportSize(phone);
+    await openShortcuts(page);
+    await page.getByRole('menuitem', { name: 'Back' }).click();
+    await expect(page.locator('[data-pocket-row="shortcuts"]')).toBeFocused();
+    await page.locator('[data-pocket-row="shortcuts"]').click();
+    await page.getByRole('menuitem', { name: 'See All Requests' }).click();
+    await expect(panel(page)).toHaveCount(0);
+    await expect(page).toHaveURL(/view=work/);
+  });
+
+  test('Escape closes the menu from the shortcuts panel and returns focus to the button', async ({
+    page,
+  }) => {
+    await page.setViewportSize(phone);
+    await openShortcuts(page);
+    await page.keyboard.press('Escape');
+    await expect(panel(page)).toHaveCount(0);
+    await expect(plus(page)).toBeFocused();
+  });
+
+  for (const [width, height] of [
+    [360, 640],
+    [320, 568],
+  ]) {
+    test(`at most seven top level rows and no scroll at ${width}x${height}`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await mount(page, '/account', '?signals=draft');
+      await openList(page);
+      expect(await page.locator('.ux-pocket-row').count()).toBeLessThanOrEqual(7);
+      const fits = await page
+        .locator('.ux-pocket-panel')
+        .evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+      expect(fits).toBe(true);
+    });
+  }
 });

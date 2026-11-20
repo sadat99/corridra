@@ -37,7 +37,13 @@ import {
 } from './journeys';
 import { JourneyCardView, ParticipantCard } from './journey-card';
 import type { JourneyFacts } from '../../../lib/home-journeys/load';
-import { markSeen, parseSeen, storageWords, useSeen, useStorageBlocked } from '../../../lib/ux/move-seen';
+import {
+  markSeen,
+  parseSeen,
+  storageWords,
+  useSeen,
+  useStorageBlocked,
+} from '../../../lib/ux/move-seen';
 import './move-view.css';
 
 const firstShown = 3;
