@@ -611,6 +611,7 @@ One scale, set as tokens in `apps/web/app/globals.css`. Do not add a raw size; p
 | `--text-sm`      | 14 px                   | Secondary text, hints, footer bottom row, table cells                     |
 | `--text-base`    | 16 px                   | Body, buttons, links, form controls and labels, navigation rows           |
 | `--text-lg`      | 18 px                   | Card and row titles (Geist 600) and lead paragraphs                       |
+| `--text-stage`   | 20 px                   | Stage heading on the Room ("Step 3 of 6: Quotes", Geist 600)              |
 | `--text-2xl`     | 24 px                   | Key figures and form step titles                                          |
 | `--text-h2`      | 22 px phone, 24 desktop | Section titles (Newsreader 500)                                           |
 | `--text-h1`      | 29 px phone, 40 desktop | Page title (Newsreader 500)                                               |

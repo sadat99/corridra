@@ -2134,6 +2134,8 @@ summary:hover {
   --text-lg: 1.125rem;
   /* Retired step: kept only so the stylesheets a later sweep still has to reach land on the card title size. */
   --text-xl: var(--text-lg);
+  /* Stage heading on the Room ("Step 3 of 6: Quotes"): 20 px, a fixed step between the card title and the figure. */
+  --text-stage: 1.25rem;
   --text-2xl: 1.5rem;
   --text-h2: clamp(1.375rem, 1rem + 1.1vw, 1.5rem);
   --text-h1: clamp(1.8125rem, 1rem + 1.8vw, 2.5rem);
