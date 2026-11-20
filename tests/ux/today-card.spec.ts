@@ -168,8 +168,8 @@ test('with nothing open there is no Today card and the empty state stays', async
 });
 
 // Unit 04 sizes in between (owner, 19 Nov 2026), measured in the real MoveView with the real stylesheets.
-// --text-h1 itself shrinks below 390 px (globals.css, clamp(1.625rem, 7.4vw, 1.8125rem)): 26 at 320 and 27 at 360.
-const h1At: Record<number, number> = { 320: 26, 360: 27, 390: 29, 768: 30, 1024: 34, 1440: 40 };
+// The Your Move h1 has its own clamp, so it is 29 on every phone (the global --text-h1 still eases below 390).
+const h1At: Record<number, number> = { 320: 29, 360: 29, 390: 29, 768: 30, 1024: 34, 1440: 40 };
 for (const width of [320, 360, 390, 768, 1024, 1440]) {
   test(`sizes in between at ${width}px`, async ({ page }) => {
     await open(page, width);
@@ -187,7 +187,7 @@ for (const width of [320, 360, 390, 768, 1024, 1440]) {
             ),
           property,
         );
-    expect(Math.abs((await px('h1', 'fontSize')) - h1At[width]!)).toBeLessThanOrEqual(1.5);
+    expect(Math.abs((await px('h1', 'fontSize')) - h1At[width]!)).toBeLessThanOrEqual(0.5);
     expect(await px('.today-move', 'fontSize')).toBe(24);
     expect(await px('.today-due', 'fontSize')).toBe(16);
     expect(await px('.move-lane-head', 'fontSize')).toBe(16);
@@ -201,4 +201,108 @@ for (const width of [320, 360, 390, 768, 1024, 1440]) {
       ),
     ).toBe(true);
   });
+}
+
+test('the heading size never shrinks on a wider screen and is one size across phones', async ({
+  page,
+}) => {
+  const sizes: number[] = [];
+  for (const width of [320, 360, 390, 768, 1024, 1280, 1440]) {
+    await open(page, width);
+    sizes.push(
+      await page
+        .locator('h1')
+        .first()
+        .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+    );
+  }
+  if (baseline) return;
+  expect(sizes.slice(0, 3)).toEqual([29, 29, 29]);
+  for (let i = 1; i < sizes.length; i++) expect(sizes[i]!).toBeGreaterThanOrEqual(sizes[i - 1]!);
+});
+
+// Wrap safety at 320 CSS px: the longest real headline sentences from move-view.tsx plus long single words, with
+// the page in English, Bangla and Arabic (right to left), at 200 percent and 400 percent root text. Nothing may
+// scroll sideways, leave the viewport or be cut off; the heading keeps its 29 px floor throughout.
+const headlines: Record<string, { dir: 'ltr' | 'rtl'; head: string; body: string }> = {
+  English: {
+    dir: 'ltr',
+    head: 'Nothing sorted into manufacturing needs you.',
+    body: 'This view may not show everything in your journeys yet.',
+  },
+  'English long word': {
+    dir: 'ltr',
+    head: 'Internationalisationofunsortedrequests',
+    body: 'This page may not show everything yet.',
+  },
+  Bangla: {
+    dir: 'ltr',
+    head: 'আন্তর্জাতিকীকরণপ্রক্রিয়া আন্তর্জাতিকীকরণপ্রক্রিয়া',
+    body: 'আপনার কাজের অবস্থা এখানে দেখানো হয়েছে।',
+  },
+  Arabic: {
+    dir: 'rtl',
+    head: 'التوصيلاتالدولية التوصيلاتالدولية التوصيلاتالدولية',
+    body: 'لا يعرض هذا العرض كل شيء بعد.',
+  },
+};
+for (const [language, copy] of Object.entries(headlines)) {
+  for (const percent of [200, 400]) {
+    test(`${language} heading wraps safely at ${percent} percent text at 320px`, async ({
+      page,
+    }, info) => {
+      await open(page, 320);
+      if (baseline) return;
+      const selector = [
+        '.move-greeting',
+        '.move-hello',
+        ...(percent === 200 ? ['.move-today'] : []),
+      ]
+        .flatMap((x) => [x, `${x} *`])
+        .join(', ');
+      await page.addStyleTag({ content: `html { font-size: ${percent}% !important; }` });
+      await page.evaluate((c) => {
+        const view = document.querySelector('.move-view')!;
+        view.setAttribute('dir', c.dir);
+        document.querySelector('h1')!.textContent = c.head;
+        document.querySelector('.move-lede-body')!.textContent = c.body;
+      }, copy);
+      const fit = await page.evaluate((sel) => {
+        const width = document.documentElement.clientWidth;
+        const outside: string[] = [];
+        for (const el of document.querySelectorAll(sel)) {
+          const box = el.getBoundingClientRect();
+          if (box.width === 0 && box.height === 0) continue;
+          if (box.left < -1 || box.right > width + 1)
+            outside.push(el.className.toString().slice(0, 40) || el.tagName);
+        }
+        const h1 = document.querySelector('h1')!;
+        const cut = [h1, document.querySelector('.move-lede-body')!].filter(
+          (el) => el.scrollWidth > el.clientWidth + 1,
+        );
+        return {
+          scrolls: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+          outside,
+          cut: cut.length,
+          clippedTall: h1.scrollHeight > h1.clientHeight,
+          fontSize: parseFloat(getComputedStyle(h1).fontSize),
+          h1Height: Math.round(h1.getBoundingClientRect().height),
+          blockHeight: Math.round(
+            document.querySelector('.move-lede-block')!.getBoundingClientRect().height,
+          ),
+        };
+      }, selector);
+      info.annotations.push({
+        type: 'h1-block-height',
+        description: `${fit.h1Height} / ${fit.blockHeight}`,
+      });
+      // At 400 percent the Today card (its own component) is wider than 320 px; only the heading area is held to the rule.
+      if (percent === 200) expect(fit.scrolls).toBe(false);
+      expect(fit.outside).toEqual([]);
+      expect(fit.cut).toBe(0);
+      // Bangla and Arabic marks above and below the line are not clipped by the line box.
+      expect(fit.clippedTall).toBe(false);
+      expect(fit.fontSize).toBe(29 * (percent / 100));
+    });
+  }
 }
