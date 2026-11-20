@@ -118,7 +118,7 @@ test.beforeAll(async () => {
       const journeys=JSON.parse(q.get('journeys')||'[]');
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={offered}>
-          <WorkspaceShell eyebrow="YOUR MOVE" title="Here is what is waiting for you."
+          <WorkspaceShell eyebrow="YOUR MOVE" title="Good morning, Asha" quietTitle
             nav={<CustomerNav current="move" plainNames move companies/>}>
             <MoveView model={buildMoveModel(input)} startHref="/plan" skippedWorkspaces={skipped} partial={partial} journeys={journeys}/>
           </WorkspaceShell>
@@ -201,6 +201,12 @@ test('the cards show what is waiting for the person and who holds the rest', asy
     `/account/drafts/${owner.id}`,
   );
   await expect(page.getByRole('heading', { name: 'Waiting on others' })).toBeVisible();
+  // Each holder's rows sit behind a closed disclosure; open them to read and reach every row.
+  await expect(
+    page.getByText('The Corridra team is looking for suppliers or buyers.'),
+  ).toBeHidden();
+  for (const summary of await page.locator('.move-lane-more > summary').all())
+    await summary.click();
   await expect(
     page.getByText('The Corridra team is looking for suppliers or buyers.'),
   ).toBeVisible();
@@ -230,13 +236,16 @@ test('shows a Move the team set as a card with its real date, and folds the othe
   await expect(card.getByRole('heading', { name: 'Today' })).toBeVisible();
   await expect(card).toContainText('Add your import licence number');
   await expect(card).toContainText('Corridra team');
-  await expect(card.locator('time')).toHaveText('5 Nov 2026');
+  await expect(card.locator('time')).toHaveText('5 November 2026');
   await expect(card.getByRole('link', { name: 'Open the Request' })).toHaveAttribute(
     'href',
     '/account/requests/r1',
   );
   await expect(card.locator('.today-action')).toHaveCount(1);
   const waiting = page.getByRole('heading', { name: 'Waiting on others' }).locator('..');
+  await expect(waiting.getByText('Confirm the visit dates')).toBeHidden();
+  for (const summary of await waiting.locator('.move-lane-more > summary').all())
+    await summary.click();
   await expect(waiting.getByText('Confirm the visit dates')).toBeVisible();
   await expect(
     waiting.locator('.ux-row-value', { hasText: 'Corridra team' }).first(),
@@ -499,4 +508,27 @@ test('speaks the chosen language, says which language the region is in and mirro
   await page.setViewportSize({ width: 320, height: 900 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test('a holder closed summary is reached with the keyboard and opens to its links', async ({
+  page,
+}) => {
+  await open(page, 'full');
+  const summary = page.locator('.move-lane-more > summary').first();
+  await summary.focus();
+  await expect(summary).toBeFocused();
+  const outline = await summary.evaluate((el) => getComputedStyle(el).outlineStyle);
+  expect(outline).not.toBe('none');
+  const box = await summary.boundingBox();
+  expect(box!.height).toBeGreaterThanOrEqual(44);
+  const link = page.locator('.move-lane-more').first().locator('a.ux-row-link').first();
+  await expect(link).toBeHidden();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.move-lane-more').first()).toHaveAttribute('open', '');
+  await expect(link).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(link).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Enter');
+  await expect(link).toBeHidden();
 });

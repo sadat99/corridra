@@ -41,7 +41,7 @@ test.beforeAll(async () => {
           ],
         }, { rooms: true });
         createRoot(document.getElementById('app')).render(
-          <main id="main" tabIndex={-1}><h1>Your Move</h1><MoveView model={model} startHref="/plan" /></main>,
+          <main id="main" tabIndex={-1}><MoveView model={model} startHref="/plan" /></main>,
         );`,
       loader: 'tsx',
       resolveDir: webRoot,
@@ -102,12 +102,14 @@ test.beforeAll(async () => {
 });
 
 async function open(page: Page, width: number, query = '') {
+  const lede = query.includes('empty') ? 'You are all caught up.' : '4 things need you.';
   await page.route('**' + fixturePath + '*', (route) =>
     route.fulfill({ contentType: 'text/html', body: html }),
   );
   await page.setViewportSize({ width, height: 400 });
   await page.goto(fixturePath + query);
-  await expect(page.locator('h1')).toHaveText('Your Move');
+  await expect(page.locator('h1')).toHaveCount(1);
+  await expect(page.locator('h1')).toHaveText(lede);
 }
 
 for (const width of [320, 390, 1440]) {
@@ -131,7 +133,7 @@ for (const width of [320, 390, 1440]) {
       await expect(card).toHaveCount(1);
       await expect(card.locator('.primary-link')).toHaveCount(1);
       await expect(card).toContainText('Answer the sample size');
-      await expect(card).toContainText('20 Nov 2026');
+      await expect(card).toContainText('Due 20 November 2026');
       // Before the card the page had 1 start link, 4 cards' actions (3 moves + draft), 1 latest link? Counted from
       // the model: every card and every waiting row stays reachable.
       for (const href of ['/account/rooms/r2', '/account/rooms/r1', '/account/drafts/w1', '/plan'])
@@ -164,3 +166,39 @@ test('with nothing open there is no Today card and the empty state stays', async
   await expect(page.getByTestId('today-card')).toHaveCount(0);
   await expect(page.locator('.move-empty')).toHaveCount(1);
 });
+
+// Unit 04 sizes in between (owner, 19 Nov 2026), measured in the real MoveView with the real stylesheets.
+// --text-h1 itself shrinks below 390 px (globals.css, clamp(1.625rem, 7.4vw, 1.8125rem)): 26 at 320 and 27 at 360.
+const h1At: Record<number, number> = { 320: 26, 360: 27, 390: 29, 768: 30, 1024: 34, 1440: 40 };
+for (const width of [320, 360, 390, 768, 1024, 1440]) {
+  test(`sizes in between at ${width}px`, async ({ page }) => {
+    await open(page, width);
+    if (baseline) return;
+    const px = (selector: string, property: 'fontSize' | 'height' | 'width') =>
+      page
+        .locator(selector)
+        .first()
+        .evaluate(
+          (el, prop) =>
+            parseFloat(
+              prop === 'fontSize'
+                ? getComputedStyle(el).fontSize
+                : String(el.getBoundingClientRect()[prop as 'height' | 'width']),
+            ),
+          property,
+        );
+    expect(Math.abs((await px('h1', 'fontSize')) - h1At[width]!)).toBeLessThanOrEqual(1.5);
+    expect(await px('.today-move', 'fontSize')).toBe(24);
+    expect(await px('.today-due', 'fontSize')).toBe(16);
+    expect(await px('.move-lane-head', 'fontSize')).toBe(16);
+    expect(await px('.move-lane-head .mr-holder-shape', 'width')).toBe(20);
+    // The Waiting for you header link never wraps: it is one 44 px line, beside the heading or under it.
+    expect(await px('.move-card > .move-card-link', 'height')).toBeLessThanOrEqual(48);
+    expect(await px('.today-action', 'height')).toBeGreaterThanOrEqual(width >= 768 ? 48 : 56);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+  });
+}

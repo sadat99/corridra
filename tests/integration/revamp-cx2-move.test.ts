@@ -187,7 +187,10 @@ describe('Home summary never claims more than the page could read (Codex review 
     for (const extra of [{ unreadable: true }, { partial: true }, { skippedWorkspaces: 2 }]) {
       const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan', ...extra });
       expect(html).not.toContain('all caught up');
-      expect(html).toContain('This page may not show everything that needs you yet.');
+      expect(html).toContain('We cannot say yet what needs you.');
+      expect(html).toContain('This page may not show everything yet.');
+      expect(html).toContain('href="/account/move"');
+      expect(html).not.toMatch(/>0<|nothing waiting/);
     }
   });
 
@@ -195,13 +198,17 @@ describe('Home summary never claims more than the page could read (Codex review 
     const { MoveView } = await load('app/account/move/move-view');
     const html = render(MoveView, { model: busy, startHref: '/plan', partial: true });
     expect(html).not.toContain('Everything else is moving');
-    expect(html).toContain('so far. This page may not show everything yet.');
+    expect(html).toContain('One thing needs you so far.');
+    expect(html).toContain('This page may not show everything yet.');
   });
 
   // Codex review of PR 310: a journey view shows only the tasks the work list could sort into a journey.
   it('never says nothing needs you in a journey while tasks are unsorted or the work list was cut short', async () => {
     const { MoveView } = await load('app/account/move/move-view');
-    const allSell = Object.fromEntries(busy.cards.map((card) => [card.id, 'sell']));
+    // Every task and every waiting row is sorted: only then may a journey say that nothing needs the person.
+    const allSell = Object.fromEntries(
+      [...busy.cards, ...busy.waiting].map((entry) => [entry.id, 'sell']),
+    );
     const unsorted = render(MoveView, { model: busy, startHref: '/plan', journey: 'source' });
     expect(unsorted).not.toContain('Nothing in this journey needs you right now.');
     expect(unsorted).not.toContain('all caught up');
@@ -259,14 +266,17 @@ describe('Home summary never claims more than the page could read (Codex review 
     expect(two).toContain('aria-label="Show work for"');
     expect(two).toContain('href="/account/move?journey=sell"');
     expect(two).toContain('href="/account/move?journey=source"');
+    // The counts are said in words, and a journey with nothing waiting says 0 rather than leaving it out.
+    expect(two).toContain('<em>0</em><span class="sr-only"> things need you</span>');
+    expect(two).toContain('<em>1</em><span class="sr-only"> thing needs you</span>');
     const shown = render(MoveView, {
       model: busy,
       startHref: '/plan',
       journey: 'sell',
       taskJourneys: Object.fromEntries(ids.map((id) => [id, 'sell'])),
     });
-    expect(shown).toContain('aria-label="Show work for"');
-    expect(shown).toContain('href="/account/move"');
+    // One kind of work: no row to switch between, even while a journey is asked for.
+    expect(shown).not.toContain('aria-label="Show work for"');
   });
 
   it('remembers the last journey in this browser only, and an address with ?journey= wins', async () => {
@@ -346,21 +356,160 @@ describe('Visual grammar PR 4: Move lanes', () => {
     }
   });
 
-  it('keeps model order inside a lane and leaves a holder with no rows undrawn', async () => {
+  it('keeps model order inside a lane and says a holder with nothing waiting holds 0', async () => {
     const { MoveView } = await load('app/account/move/move-view');
     const html = render(MoveView, {
       model: modelOf([row('a', 'team'), row('b', 'third'), row('c', 'team'), row('d', 'team')]),
       startHref: '/plan',
     });
     const lanes = lanesOf(html);
-    expect(lanes.map((l) => l.holder)).toEqual(['team', 'third']);
-    expect(html).not.toContain('data-holder="owner" aria-labelledby');
+    expect(lanes.map((l) => l.holder)).toEqual(['team', 'owner', 'third']);
+    expect(lanes[1].html).toContain('0, nothing waiting');
+    expect(lanes[1].html).not.toContain('ux-row');
+    expect(lanes[0].html).toContain('>3<');
     const team = lanes[0].html;
     expect(team.indexOf('/account/move/a')).toBeGreaterThan(-1);
     expect(team.indexOf('/account/move/a')).toBeLessThan(team.indexOf('/account/move/c'));
     expect(team.indexOf('/account/move/c')).toBeLessThan(team.indexOf('/account/move/d'));
     expect(team).not.toContain('/account/move/b');
-    expect(lanes[1].html).toContain('/account/move/b');
+    expect(lanes[2].html).toContain('/account/move/b');
     expect(html).toContain('id="move-others"');
+  });
+});
+
+describe('Your Move redesign: one honest h1', () => {
+  it('draws exactly one h1, the honest lede, with its sentence under it and every landmark kept', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: busy, startHref: '/plan' });
+    expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html).toContain('<h1 class="move-lede">One thing needs you.</h1>');
+    expect(html).toContain('Everything else is moving.');
+    for (const id of ['move-you', 'move-latest', 'move-others'])
+      expect(html).toContain(`aria-labelledby="${id}"`);
+  });
+
+  it('keeps the filter sentence visible under the h1 when a journey has nothing sorted into it', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, {
+      model: busy,
+      startHref: '/plan',
+      journey: 'sell',
+      sortIncomplete: true,
+    });
+    expect(html).toContain('<h1 class="move-lede">Nothing sorted into selling needs you.</h1>');
+    expect(html).toContain('Show All');
+    expect(html).not.toMatch(/all caught up/i);
+  });
+});
+
+describe('Your Move redesign: who holds the rest', () => {
+  it('shows all three holders with word and count when the view is complete, even with nothing waiting', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan' });
+    expect(html).toContain('id="move-others"');
+    expect(html.match(/0, nothing waiting/g)).toHaveLength(3);
+    for (const word of ['Corridra team', 'Workspace owner or admin']) expect(html).toContain(word);
+  });
+
+  it('never says nothing is waiting when the view was cut short, unread or left workspaces out', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    for (const extra of [{ unreadable: true }, { partial: true }, { skippedWorkspaces: 2 }]) {
+      const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan', ...extra });
+      expect(html).not.toContain('nothing waiting');
+      expect(html.match(/Not known yet/g)?.length).toBeGreaterThanOrEqual(3);
+      expect(html).toContain('href="/account/move"');
+    }
+  });
+});
+
+describe('Your Move redesign: the journeys heading', () => {
+  it('says Your Journeys with the real number of cards and never calls them open', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const card = {
+      journey: 'source',
+      id: 'r1',
+      workspaceId: owner.id,
+      count: '1',
+      title: 'Spinning frames',
+      kind: 'request',
+      status: 'OUTREACH',
+      statusWords: 'Finding companies',
+      dateWords: '2 Oct 2026',
+      at: '2026-10-02T00:00:00Z',
+      href: '/account/rooms/r1',
+    };
+    const html = render(MoveView, { model: busy, startHref: '/plan', journeys: [card] });
+    expect(html).toContain('Your Journeys: 1</h2>');
+    expect(html).not.toMatch(/Your Journeys: \d+ open/i);
+  });
+});
+
+describe('Your Move redesign: English islands stay left to right', () => {
+  it('draws the lede and the holder counts as left to right English islands inside any page direction', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan' });
+    expect(html).toContain('<div class="move-lede-block" lang="en" dir="ltr">');
+    expect(html).toContain('class="move-lane-count" lang="en" dir="ltr"');
+  });
+});
+
+describe('Your Move redesign: holder rows behind a disclosure', () => {
+  it('keeps each holder with rows in a closed details, every link in the page, and no disclosure for an empty holder', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: busy, startHref: '/plan' });
+    const lanes = html.split('<section class="move-lane"').slice(1);
+    expect(lanes).toHaveLength(3);
+    const withRows = lanes.filter((lane) => lane.includes('ux-row-link'));
+    expect(withRows.length).toBeGreaterThan(0);
+    for (const lane of withRows) {
+      expect(lane).toMatch(
+        /<details class="move-lane-more move-more"><summary lang="en" dir="ltr">Show \d+ Requests?<\/summary>/,
+      );
+      expect(lane).not.toContain('<details open');
+    }
+    for (const row of busy.waiting) expect(html).toContain(`href="${row.href}"`);
+    const empty = lanes.find((lane) => lane.includes('0, nothing waiting'));
+    expect(empty).toBeDefined();
+    expect(empty).not.toContain('<details');
+  });
+});
+
+describe('Your Move redesign: a journey filter never turns a hidden waiting row into a zero', () => {
+  const waitingRow = {
+    id: 'w-none',
+    holder: 'owner' as const,
+    kind: 'move' as const,
+    title: 'Row without a journey',
+    status: null,
+    received: null,
+    href: '/account/move/w-none',
+  };
+  const model = { cards: [], waiting: [waitingRow], replyCandidates: [], latest: null };
+
+  it('says Not known yet, never 0, nothing waiting, when the filter hides a waiting row with no journey', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model, startHref: '/plan', journey: 'sell' });
+    expect(html).not.toContain('nothing waiting');
+    expect(html).toContain('Not known yet');
+    expect(html).toContain('This view may not show everything in selling yet.');
+  });
+
+  it('offers Show All in the sentence under the h1 whenever the filter may hide work, with one kind of work', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model, startHref: '/plan', journey: 'sell' });
+    expect(html).not.toContain('aria-label="Show work for"');
+    const body = html.slice(html.indexOf('move-lede-body'), html.indexOf('move-grid'));
+    expect(body).toMatch(/<a [^>]*href="\/account\/move"[^>]*>Show All<\/a>/);
+  });
+
+  it('keeps zero, nothing waiting for a complete, fully sorted filtered view', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, {
+      model,
+      startHref: '/plan',
+      journey: 'sell',
+      taskJourneys: { 'w-none': 'sell' },
+    });
+    expect(html).toContain('0, nothing waiting');
   });
 });

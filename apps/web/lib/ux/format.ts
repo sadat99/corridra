@@ -160,6 +160,21 @@ export function formatUtcDay(value: DateInput, locale?: string): string {
 }
 
 /**
+ * A due day in words, "20 November 2026", with no weekday and no abbreviated month, for the Today card (UI/UX.v4).
+ * The stored day is read in UTC so it never shifts.
+ */
+export function formatLongUtcDay(value: DateInput, locale?: string): string {
+  const date = toDate(value);
+  if (!date) return '';
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}
+
+/**
  * A customer-facing moment, "9 Nov 2026, 10:00 (Dhaka, UTC+6)", for an instant where the time itself
  * matters (a meeting, the moment access ends). The zone is the one the record names, never the viewer's.
  */

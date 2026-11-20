@@ -12,6 +12,7 @@ export function WorkspaceShell({
   customer = false,
   above,
   lead,
+  quietTitle = false,
 }: {
   className?: string;
   /** A small label above the title. Customer pages show none (customer experience spec). */
@@ -29,6 +30,8 @@ export function WorkspaceShell({
   above?: ReactNode;
   /** Frame content under the title (the helper line and the one primary action). Nothing is drawn when left out. */
   lead?: ReactNode;
+  /** The page draws its own h1 (Your Move's honest lede), so the shell draws the title as a quiet line instead. */
+  quietTitle?: boolean;
 }) {
   return (
     <main
@@ -40,8 +43,14 @@ export function WorkspaceShell({
     >
       <header className="ux-page-heading">
         {above}
-        {eyebrow ? <p className="label">{eyebrow}</p> : null}
-        <h1>{title}</h1>
+        {quietTitle ? (
+          <p className="move-greeting">{title}</p>
+        ) : (
+          <>
+            {eyebrow ? <p className="label">{eyebrow}</p> : null}
+            <h1>{title}</h1>
+          </>
+        )}
         {lead}
       </header>
       {notice}
