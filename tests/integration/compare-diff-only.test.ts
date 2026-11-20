@@ -120,44 +120,42 @@ const cards = quoteCardsFrom({
   verdicts,
   shortlist: shortlist as never,
 });
-const rows = (html: string) => [...html.matchAll(/<dt>(.*?)<\/dt>/g)].map((m) => m[1]);
-const strip = (html: string) =>
-  html.replace(/<dl[\s\S]*?<\/dl>/g, '').replace(/[\u00a0\u202f]/g, ' ');
+const rows = (html: string) =>
+  [...html.matchAll(/<th scope="row" class="compare-grid-label">(.*?)<\/th>/g)].map((m) => m[1]);
+const plain = (html: string) => html.replace(/[\u00a0\u202f]/g, ' ');
 
+// UI/UX.v4 row "Compare" (20 Nov 2026): the lens's "Side by Side" view is the shared table; the fold rule is the
+// same termDiff, now over the price rows too, and the words name both quotes or all of them.
 describe('Compare lens, differences only', () => {
   it('hides identical rows, keeps differing rows, states the count, and leaves the verdicts alone', async () => {
-    const { CompareLens } = await loadWeb('components/compare-lens');
-    const { QuoteCard } = await loadWeb('components/mr/quote-card');
-    const folded = render(ce(CompareLens, { cards, matrix: ce('table') }));
-    const unfolded = cards.map((c) => render(ce(QuoteCard, { ...c, labels: undefined }))).join('');
-    const diff = termDiff(cards);
+    const { CompareLens, sideBySide } = await loadWeb('components/compare-lens');
+    const folded = plain(render(ce(CompareLens, { cards, matrix: ce('table') })));
+    const grid = sideBySide(cards) as { rows: { label: string; same: boolean }[] };
     const shown = rows(folded);
     // Lead time and payment (Not stated in one offer) stay; shipping (excluded) stays; incoterm folds.
     expect(shown).toContain('Lead time');
     expect(shown).toContain('Payment terms');
     expect(shown).toContain('Shipping scope');
     expect(shown).not.toContain('Incoterm');
-    expect(diff.same).toContain('Incoterm');
-    expect(folded).toContain(`${diff.same.length} terms are the same in every offer`);
+    expect(termDiff(cards).same).toContain('Incoterm');
+    // The count is exactly the rows left out, and every row is either shown or counted.
+    const same = grid.rows.filter((row) => row.same).map((row) => row.label);
+    expect(same.length).toBeGreaterThan(1);
+    expect(folded).toContain(`${same.length} terms are the same in both.`);
+    expect(grid.rows.map((row) => row.label).filter((label) => !shown.includes(label))).toEqual(
+      same,
+    );
     expect(folded).toContain('Differences Only');
     expect(folded).toContain('aria-pressed="true"');
-    // Nothing leaves the accessible content without the count line.
-    const hidden = rows(unfolded).filter((l, i, a) => a.indexOf(l) === i && !shown.includes(l));
-    expect(hidden.length).toBe(diff.same.length);
     expect(folded).toContain('role="status"');
-    // Verdict, seal, engine reason and currency are byte-identical outside the term list.
-    const verdictParts = (html: string) =>
-      strip(html).match(/<p class="mr-quote-verdict">[\s\S]*?<\/p>/g);
-    // Not vacuous: one verdict per card is found, and the money strings carry real non-breaking spaces to normalise.
-    expect(verdictParts(folded)).toHaveLength(2);
-    expect(verdictParts(folded)).toEqual(verdictParts(unfolded));
+    // The verdicts and the engine reason are as the engine gave them, in the column heads.
     expect(folded).toContain('Missing: Lead time, Payment terms.');
-    expect(folded).toContain('Comparable on supplied terms');
+    expect(folded).toContain('Comparable');
     expect(folded).toContain('Not comparable yet');
     expect(folded.match(/USD/g)?.length).toBeGreaterThan(0);
   });
   it('says every term is the same when nothing differs, built from quoteCardsFrom output', async () => {
-    const { CompareLens } = await loadWeb('components/compare-lens');
+    const { CompareLens, sideBySide } = await loadWeb('components/compare-lens');
     const stated = {
       ...full,
       moq: '1',
@@ -181,18 +179,17 @@ describe('Compare lens, differences only', () => {
       ),
       shortlist: shortlist as never,
     });
-    const diff = termDiff(same);
+    const grid = sideBySide(same) as { rows: { same: boolean }[] };
     // Shipping is excluded in the sample, so that one row always shows; the rest are identical.
-    expect(diff.same.length).toBe(diff.total - 1);
+    expect(grid.rows.filter((row) => !row.same)).toHaveLength(1);
     const html = render(ce(CompareLens, { cards: same, matrix: ce('table') }));
-    expect(html).toContain(`${diff.same.length} terms are the same in every offer`);
+    expect(html).toContain(`${grid.rows.length - 1} terms are the same in both.`);
     const allSame = same.map((c) => ({
       ...c,
       terms: c.terms.filter((x) => x.state !== 'excluded'),
     }));
     const every = render(ce(CompareLens, { cards: allSame, matrix: ce('table') }));
-    expect(every).toContain('terms are the same in every offer');
-    expect(every).toContain('Every term is the same in all offers');
+    expect(every).toContain('Every term is the same in both quotes.');
   });
   it('keeps one live status region and counts in the locale digits', async () => {
     const { CompareLens } = await loadWeb('components/compare-lens');
@@ -200,21 +197,37 @@ describe('Compare lens, differences only', () => {
     expect(html.match(/role="status"/g)).toHaveLength(1);
     expect(new Intl.NumberFormat('bn').format(7)).toBe('৭');
   });
-  it('shows no control for a single offer', async () => {
+  it('shows no control for a single offer, and says there is nothing to compare yet', async () => {
     const { CompareLens } = await loadWeb('components/compare-lens');
     const html = render(ce(CompareLens, { cards: cards.slice(0, 1), matrix: ce('table') }));
     expect(html).not.toContain('Differences Only');
     expect(rows(html)).toContain('Incoterm');
+    expect(html).toContain('There is only one quote so far, so there is nothing to compare yet.');
   });
-  it('carries the five keys in all seven catalogues', () => {
+  it('names the view Side by Side and keeps the Table view', async () => {
+    const { CompareLens } = await loadWeb('components/compare-lens');
+    const html = render(ce(CompareLens, { cards, matrix: ce('table', { id: 'matrix' }) }));
+    expect(html).toContain('>Side by Side</button>');
+    expect(html).toContain('>Table</button>');
+    expect(html).not.toContain('>Cards</button>');
+  });
+  it('carries the comparison keys in all seven catalogues', () => {
     for (const cat of Object.values(catalogs))
       for (const k of [
+        'compare.sideBySide',
         'compare.diffOnly',
-        'compare.sameHidden',
-        'compare.sameHiddenOne',
+        'compare.sameBoth',
+        'compare.sameBothOne',
+        'compare.sameAll',
+        'compare.sameAllOne',
+        'compare.allSameBoth',
+        'compare.allSameAll',
+        'compare.onlyOne',
         'compare.showAll',
-        'compare.allSame',
         'compare.shownAll',
+        'compare.money',
+        'compare.notStatedLine',
+        'compare.ask',
       ] as const)
         expect((cat as Record<string, string>)[k]).toBeTruthy();
   });
