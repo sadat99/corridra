@@ -96,7 +96,7 @@ describe('with the switch off the reply journey draws what it drew on main', () 
           expect(html).not.toContain('data-steps');
           expect(html).not.toContain('ux-choice');
           const file = resolve(
-            `tests/integration/fixtures/buyer-steps-off/${name}-${language}.html`,
+            `tests/integration/fixtures/buyer-steps-off/${name}-${language}.markup`,
           );
           if (process.env.UPDATE_GOLDEN === '1' && flag === 'omitted') writeFileSync(file, html);
           expect(existsSync(file)).toBe(true);
