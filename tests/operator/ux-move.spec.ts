@@ -230,7 +230,7 @@ test('shows a Move the team set as a card with its real date, and folds the othe
   await expect(card.getByRole('heading', { name: 'Today' })).toBeVisible();
   await expect(card).toContainText('Add your import licence number');
   await expect(card).toContainText('Corridra team');
-  await expect(card.locator('time')).toHaveText('5 Nov 2026');
+  await expect(card.locator('time')).toHaveText('5 November 2026');
   await expect(card.getByRole('link', { name: 'Open the Request' })).toHaveAttribute(
     'href',
     '/account/requests/r1',

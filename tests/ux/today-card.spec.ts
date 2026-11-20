@@ -166,3 +166,37 @@ test('with nothing open there is no Today card and the empty state stays', async
   await expect(page.getByTestId('today-card')).toHaveCount(0);
   await expect(page.locator('.move-empty')).toHaveCount(1);
 });
+
+// Unit 04 sizes in between (owner, 19 Nov 2026), measured in the real MoveView with the real stylesheets.
+// --text-h1 itself shrinks below 390 px (globals.css, clamp(1.625rem, 7.4vw, 1.8125rem)): 26 at 320 and 27 at 360.
+const h1At: Record<number, number> = { 320: 26, 360: 27, 390: 29, 768: 30, 1024: 34, 1440: 40 };
+for (const width of [320, 360, 390, 768, 1024, 1440]) {
+  test(`sizes in between at ${width}px`, async ({ page }) => {
+    await open(page, width);
+    if (baseline) return;
+    const px = (selector: string, property: 'fontSize' | 'height' | 'width') =>
+      page
+        .locator(selector)
+        .first()
+        .evaluate(
+          (el, prop) =>
+            parseFloat(
+              prop === 'fontSize'
+                ? getComputedStyle(el).fontSize
+                : String(el.getBoundingClientRect()[prop as 'height' | 'width']),
+            ),
+          property,
+        );
+    expect(Math.abs((await px('h1', 'fontSize')) - h1At[width]!)).toBeLessThanOrEqual(1.5);
+    expect(await px('.today-move', 'fontSize')).toBe(24);
+    expect(await px('.today-due', 'fontSize')).toBe(16);
+    expect(await px('.move-lane-head', 'fontSize')).toBe(16);
+    expect(await px('.move-lane-head .mr-holder-shape', 'width')).toBeGreaterThanOrEqual(19);
+    expect(await px('.today-action', 'height')).toBeGreaterThanOrEqual(width >= 768 ? 48 : 56);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+  });
+}
