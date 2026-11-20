@@ -308,6 +308,22 @@ describe('the notice above the comparison', () => {
       missingFrom: [{ supplier: '绿野机械有限公司', lang: 'zh' }],
     });
   });
+  it('points the action only at the suppliers the notice names: the set-up one, not another short quote', () => {
+    const view = missingTermNotice(
+      experience([
+        offer('qa', 't1', {
+          ...terms,
+          commissioning: 'Two engineers for five days',
+          leadTime: undefined,
+        }),
+        offer('qb', 't2', terms),
+      ]),
+      at,
+    )!;
+    expect(view.title).toBe('One quote leaves out the machine set-up');
+    // Lantern also leaves out its lead time, but the notice is about the set-up, so only 绿野 is named.
+    expect(view.missingFrom).toEqual([{ supplier: '绿野机械有限公司', lang: 'zh' }]);
+  });
   it('never calls prices equal across currencies or different minor units, and never converts', () => {
     const differ = (b: Record<string, unknown>, over = {}) =>
       missingTermNotice(

@@ -69,6 +69,8 @@ export function SourceLedger({
       <CompareGrid
         locale={locale}
         markLang={locale !== 'en'}
+        // The Room's other parts are h3 under its h2 lens area, so the comparison heading is one of them.
+        headingLevel={3}
         columns={ledger.columns}
         rows={rowsShown}
         note={

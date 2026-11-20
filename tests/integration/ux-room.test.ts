@@ -445,6 +445,19 @@ describe('the comparison action in the Room', () => {
       'Supplier B',
       'Supplier C',
     ]);
+    // Two suppliers not on the shortlist are still two, never collapsed into one "One supplier".
+    const unnamed = experience([
+      quote('a', 't1'),
+      quote('b', 'gone-1', { leadTime: undefined }),
+      quote('c', 'gone-2', { paymentTerms: undefined }),
+    ]);
+    expect(missingTermNotice(unnamed)!.missingFrom).toEqual([
+      { supplier: 'One supplier' },
+      { supplier: 'One supplier' },
+    ]);
+    // The single supplier is wrapped in its own direction and language in the sentence.
+    expect(notice).toContain("fillNodes(say('compare.askOne')");
+    expect(notice).toMatch(/<span\s+dir="auto"\s+lang=\{view\.missingFrom\[0\]!\.lang\}/);
     expect(notice).toContain('view.missingFrom.length === 1');
     expect(notice).toContain("say('compare.askOne')");
     expect(notice).toContain("say('compare.askMany')");

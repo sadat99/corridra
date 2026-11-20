@@ -2010,7 +2010,12 @@ for (const width of [1440, 390])
     );
     await expect(notice).toContainText('Lantern Cutting Works quotes Two engineers for five days.');
     await expect(notice).toContainText('Both quotes are USD 18,400.00 a unit.');
-    await expect(notice.locator('[lang="zh"]')).toHaveText('绿野机械有限公司');
+    // The name is marked as Chinese in the notice line and again, isolated, in the action's sentence.
+    await expect(notice.locator('[lang="zh"]')).toHaveText([
+      '绿野机械有限公司',
+      '绿野机械有限公司',
+    ]);
+    await expect(notice.locator('.compare-grid-assure span[dir="auto"][lang="zh"]')).toHaveCount(1);
     // UI/UX.v4 row "Compare": the one action, relabelled; the same address and the same switch.
     const ask = notice.getByRole('link', { name: 'Ask About Missing Terms' });
     await expect(ask).toHaveAttribute(

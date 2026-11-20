@@ -342,10 +342,14 @@ export function missingTermNotice(
     a.offer.terms.unitPriceMinor === b.offer.terms.unitPriceMinor
       ? `Both quotes are ${displayMoney(a.offer.terms.unitPriceMinor, a.offer.currency)} a unit.`
       : null;
+  // Exactly the suppliers the notice says leave something out, once per supplier (by its shortlist entry, not its
+  // display name, so two unnamed suppliers stay two), so the action never names one the notice did not.
   const missingFrom: MissingTermNoticeView['missingFrom'] = [];
-  for (const { offer } of short) {
-    const who = name(offer);
-    if (!missingFrom.some((m) => m.supplier === who.supplier)) missingFrom.push(who);
+  const seen = new Set<string>();
+  for (const { offer } of leaveOut.length ? leaveOut : short) {
+    if (seen.has(offer.targetId)) continue;
+    seen.add(offer.targetId);
+    missingFrom.push(name(offer));
   }
   return { title, lines, samePrice, missingFrom };
 }

@@ -14,7 +14,7 @@ import { ModeLabel, StageBar, mrLabelsFor } from '../../../../components/mr';
 import { SourceLedger } from '../../../../components/source-ledger';
 import { SellBoard } from '../../../../components/sell-board';
 import { sellFacts } from '../../../../lib/home-journeys/facts';
-import { fill } from '../../../../lib/i18n/fill';
+import { fill, fillNodes } from '../../../../lib/i18n/fill';
 import { localeMeta } from '../../../../lib/i18n/locales';
 import { translate, type MessageKey } from '../../../../lib/i18n/messages';
 import { afterSaveHref, roadRecords, type RoomLink, type RoomTask } from '../../../../lib/room';
@@ -587,8 +587,14 @@ export function RoomView({
                                       dir={wordsLang.dir}
                                     >
                                       {view.missingFrom.length === 1
-                                        ? fill(say('compare.askOne'), {
-                                            supplier: view.missingFrom[0]!.supplier,
+                                        ? fillNodes(say('compare.askOne'), {
+                                            // The name keeps its own direction and language, so no character in
+                                            // it can reorder the words around it.
+                                            supplier: (
+                                              <span dir="auto" lang={view.missingFrom[0]!.lang}>
+                                                {view.missingFrom[0]!.supplier}
+                                              </span>
+                                            ),
                                           })
                                         : say('compare.askMany')}
                                     </p>
