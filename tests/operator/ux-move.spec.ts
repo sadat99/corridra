@@ -509,3 +509,26 @@ test('speaks the chosen language, says which language the region is in and mirro
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
+
+test('a holder closed summary is reached with the keyboard and opens to its links', async ({
+  page,
+}) => {
+  await open(page, 'full');
+  const summary = page.locator('.move-lane-more > summary').first();
+  await summary.focus();
+  await expect(summary).toBeFocused();
+  const outline = await summary.evaluate((el) => getComputedStyle(el).outlineStyle);
+  expect(outline).not.toBe('none');
+  const box = await summary.boundingBox();
+  expect(box!.height).toBeGreaterThanOrEqual(44);
+  const link = page.locator('.move-lane-more').first().locator('a.ux-row-link').first();
+  await expect(link).toBeHidden();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.move-lane-more').first()).toHaveAttribute('open', '');
+  await expect(link).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(link).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Enter');
+  await expect(link).toBeHidden();
+});

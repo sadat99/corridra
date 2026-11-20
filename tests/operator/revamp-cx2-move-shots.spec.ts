@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -55,11 +55,15 @@ test.beforeAll(async () => {
       import{WorkspaceShell}from ${at('apps/web/components/workspace-shell.tsx')};
       import{MoveView}from ${at('apps/web/app/account/move/move-view.tsx')};
       import{buildMoveModel}from ${at('apps/web/lib/move-cards.ts')};
-      const input=JSON.parse(new URLSearchParams(location.search).get('input'));
+      const params=new URLSearchParams(location.search);
+      const input=JSON.parse(params.get('input'));
+      const extra=JSON.parse(params.get('props')||'{}');
+      const model=buildMoveModel(input);
+      const taskJourneys=extra.allSell?Object.fromEntries([...model.cards,...model.waiting].map((e)=>[e.id,'sell'])):undefined;
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={[{code:'en',draft:false},{code:'ar',draft:false}]}>
           <WorkspaceShell title="Good morning, Asha" quietTitle customer>
-            <MoveView model={buildMoveModel(input)} startHref="/plan"/>
+            <MoveView model={model} startHref="/plan" taskJourneys={taskJourneys} {...extra}/>
           </WorkspaceShell>
         </LanguageProvider>);`,
       loader: 'tsx',
@@ -145,4 +149,127 @@ test('CX-07 Move full in Arabic at 320', async ({ page }) => {
   await page.goto(`${origin}/?input=${encodeURIComponent(JSON.stringify(cases.full))}`);
   await page.waitForSelector('.move-view');
   await page.screenshot({ path: resolve(out!, 'move-full-ar-320.png'), fullPage: true });
+});
+
+// Review round 1 evidence on the real MoveView with the real stylesheets: the Today card with its due day and Mark As
+// Read, the partial state, the filter row with two kinds, the no-match state and the blocked-storage line.
+const sourceCard = {
+  journey: 'source',
+  id: 'r1',
+  workspaceId: owner.id,
+  count: '1',
+  title: 'Spinning frames',
+  kind: 'request',
+  status: 'OUTREACH',
+  statusWords: 'Finding companies',
+  dateWords: '2 Oct 2026',
+  at: '2026-10-02T00:00:00Z',
+  href: '/account/rooms/r1',
+};
+const dueMove = {
+  workspaces: [owner],
+  drafts: [],
+  quotes: [],
+  companyLinks: [],
+  requests: [request('r1', 'ACTIVE')],
+  moves: [
+    {
+      requestId: 'r1',
+      moves: [
+        {
+          id: 'm1',
+          verb: 'Answer',
+          object: 'the sample size',
+          holder: 'customer',
+          dueOn: '2026-11-20',
+        },
+      ],
+    },
+  ],
+};
+const withReply = {
+  ...dueMove,
+  moves: [],
+  requests: [
+    {
+      ...request('r1', 'ACTIVE'),
+      progress: {
+        status: 'ACTIVE',
+        receivedAt: '2026-10-02T09:00:00Z',
+        replies: [{ createdAt: '2026-11-10T09:00:00Z' }],
+      },
+    },
+  ],
+};
+const extraShots = {
+  'today-due': { input: dueMove, props: {} },
+  'today-reply': { input: withReply, props: {} },
+  partial: { input: cases.full, props: { partial: true } },
+  'filter-two-kinds': { input: dueMove, props: { allSell: true, journeys: [sourceCard] } },
+  'no-match': {
+    input: dueMove,
+    props: { allSell: true, journeys: [sourceCard], journey: 'source' },
+  },
+} as const;
+
+for (const [name, { input, props }] of Object.entries(extraShots))
+  for (const [width, height] of [
+    [320, 640],
+    [390, 844],
+  ] as const)
+    test(`CX-07 Move ${name} at ${width}`, async ({ page }) => {
+      test.skip(!out, 'Set CX_SHOTS_DIR to take the Move pictures.');
+      mkdirSync(out!, { recursive: true });
+      await page.setViewportSize({ width, height });
+      await page.goto(
+        `${origin}/?input=${encodeURIComponent(JSON.stringify(input))}&props=${encodeURIComponent(JSON.stringify(props))}`,
+      );
+      await page.waitForSelector('.move-view');
+      if (name === 'today-due') {
+        await expect(page.locator('.today-due')).toContainText('Due 20 November 2026');
+      }
+      if (name === 'today-reply') {
+        await expect(page.getByRole('button', { name: 'Mark As Read' })).toBeVisible();
+      }
+      if (name === 'partial') {
+        await expect(page.getByText('This page may not show everything yet.')).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Try Again' }).first()).toBeVisible();
+      }
+      if (name === 'filter-two-kinds') {
+        const chips = page.getByRole('navigation', { name: 'Show work for' }).getByRole('link');
+        await expect(chips).toHaveCount(3);
+        await expect(chips.first()).toHaveAttribute('aria-current', 'page');
+        for (const chip of await chips.all()) {
+          const style = await chip.evaluate((el) => {
+            const css = getComputedStyle(el);
+            return { height: el.getBoundingClientRect().height, size: css.fontSize };
+          });
+          expect(style.height).toBeGreaterThanOrEqual(44);
+          expect(style.size).toBe('16px');
+        }
+        const snap = await page
+          .getByRole('navigation', { name: 'Show work for' })
+          .evaluate((el) => getComputedStyle(el).scrollSnapType);
+        expect(snap).not.toBe('none');
+      }
+      if (name === 'no-match') {
+        await expect(page.getByRole('link', { name: 'Show All' }).first()).toBeVisible();
+        await expect(page.getByText(/all caught up/i)).toHaveCount(0);
+      }
+      await page.screenshot({ path: resolve(out!, `move-${name}-${width}.png`), fullPage: true });
+    });
+
+test('CX-07 Move Today with blocked storage says so quietly', async ({ page }) => {
+  test.skip(!out, 'Set CX_SHOTS_DIR to take the Move pictures.');
+  mkdirSync(out!, { recursive: true });
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => {
+      throw new Error('blocked');
+    };
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${origin}/?input=${encodeURIComponent(JSON.stringify(withReply))}&props=%7B%7D`);
+  await page.waitForSelector('.move-view');
+  await expect(page.getByText('This device cannot remember what you have read.')).toBeVisible();
+  await page.screenshot({ path: resolve(out!, 'move-storage-blocked-390.png'), fullPage: true });
 });

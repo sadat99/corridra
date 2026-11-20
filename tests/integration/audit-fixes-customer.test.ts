@@ -115,7 +115,7 @@ describe('25: the Move switch counts', () => {
     href: `/account/rooms/${id}`,
   });
 
-  it('draws no zero when nothing needs the person, while work waits on others', async () => {
+  it('says a zero in words, never a bare zero, when nothing needs the person while work waits on others', async () => {
     const { MoveView } = await load('app/account/move/move-view');
     const html = render(MoveView, {
       model,
@@ -125,8 +125,13 @@ describe('25: the Move switch counts', () => {
     expect(model.waiting.length).toBeGreaterThan(0);
     expect(html).toContain('aria-label="Show work for"');
     const nav = html.slice(html.indexOf('aria-label="Show work for"'), html.indexOf('</nav>'));
-    expect(nav).not.toContain('<em>0</em>');
-    expect(nav).not.toContain('need you');
+    // The owner's design (19 Nov 2026): "Selling 0" is said, in words, so no zero is drawn without its words.
+    const zeros = nav.match(/<em>0<\/em>/g) ?? [];
+    expect(zeros.length).toBeGreaterThan(0);
+    expect(nav.match(/<em>0<\/em><span class="sr-only"> things need you<\/span>/g)).toHaveLength(
+      zeros.length,
+    );
+    expect(nav).not.toMatch(/<em>0<\/em>(?!<span class="sr-only"> things need you<\/span>)/);
   });
 
   it('shows a count that is not zero, and says it in words', async () => {
@@ -145,10 +150,14 @@ describe('25: the Move switch counts', () => {
     });
     const nav = html.slice(html.indexOf('aria-label="Show work for"'), html.indexOf('</nav>'));
     expect(nav).toContain('<em>2</em>');
-    expect(nav).toContain('<span class="sr-only"> need you</span>');
-    // Sell has nothing that needs the person, so it has no number.
+    expect(nav).toContain('<em>2</em><span class="sr-only"> things need you</span>');
+    // Sell has nothing that needs the person: it says 0 in words, and its accessible name reads "Selling, 0 things need you".
     const sell = nav.slice(nav.indexOf('journey=sell'));
-    expect(sell.slice(0, sell.indexOf('</a>'))).not.toContain('<em>');
+    const sellLink = sell.slice(0, sell.indexOf('</a>'));
+    expect(sellLink).toContain('<em>0</em><span class="sr-only"> things need you</span>');
+    expect(sellLink.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ')).toContain(
+      'Selling, 0 things need you',
+    );
   });
 
   it('keeps the count out of a capsule: the switch count has no pill radius', () => {

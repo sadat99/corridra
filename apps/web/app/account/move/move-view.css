@@ -1190,7 +1190,8 @@
 @media (max-width: 23.99rem) {
   /* At 320 the header link drops under the heading rather than wrapping, and a stacked holder count lines up with
      its word (the shape and the gaps in front of the word). */
-  .move-card > .move-card-link {
+  .move-card > .move-card-link,
+  .move-card:has(> .move-head-key) > .move-card-link {
     grid-column: 1 / -1;
     justify-self: start;
     min-height: 44px;
@@ -1199,5 +1200,32 @@
   }
   .move-lane-count {
     padding-inline-start: calc(1.25rem + var(--space-3));
+  }
+}
+
+/* The frame draws a status line as a tinted box; the sentence under the h1 and the quiet device line stay plain text. */
+.ux-customer .move-lede-body[role='status'],
+.ux-customer .today-note[role='status'] {
+  padding: 0;
+  background: none;
+  color: var(--text-2);
+}
+.ux-customer .today-note[role='status'] {
+  color: color-mix(in srgb, var(--on-brand) 82%, transparent);
+}
+
+@media (max-width: 23.99rem) {
+  /* The narrowest phones: the Today head lines sit closer and the card padding is one step smaller. */
+  .move-view .today-head {
+    row-gap: var(--space-1);
+  }
+  .move-view .today-card {
+    padding-block: var(--space-3);
+  }
+  .move-hello {
+    gap: var(--space-3);
+  }
+  .move-lede-block {
+    gap: var(--space-1);
   }
 }

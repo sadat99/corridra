@@ -539,6 +539,21 @@ describe('Your Move: the Today card on its navy surface (UI/UX.v4)', () => {
       ).toBeGreaterThanOrEqual(4.5);
     }
   });
+  test('every secondary line on the navy card (due day, context, holder line, device note) uses that same 82 percent mix', () => {
+    const today = stripComments(read('components/today-card.css'));
+    const move = stripComments(read('app/account/move/move-view.css'));
+    for (const selector of ['.today-head', '.today-context'])
+      expect(today).toMatch(
+        new RegExp(
+          `\\${selector}\\s*\\{[^}]*color-mix\\(in srgb, var\\(--on-brand\\) 82%, transparent\\)`,
+        ),
+      );
+    expect(move).toMatch(
+      /\.today-note\s*\{[^}]*color-mix\(in srgb, var\(--on-brand\) 82%, transparent\)/,
+    );
+    for (const env of [defaultTokens, modeTokens])
+      expect(ratio(valueOf(quiet, env), valueOf('--brand-deep', env))).toBeGreaterThanOrEqual(4.5);
+  });
   test('the card never sets cobalt on navy (2.41 to 1 is banned)', () => {
     const css = stripComments(
       read('components/today-card.css') + read('app/account/move/move-view.css'),
