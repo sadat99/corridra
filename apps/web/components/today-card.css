@@ -13,38 +13,43 @@
   align-items: center;
   gap: var(--space-2) var(--space-4);
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   color: color-mix(in srgb, var(--on-brand) 82%, transparent);
 }
 .move-view .today-card .today-heading {
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--on-brand);
 }
 .today-move {
   margin: 0;
   font-family: var(--serif);
-  font-size: var(--text-h2);
+  font-size: var(--text-2xl);
   font-weight: 500;
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
 .today-context {
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   color: color-mix(in srgb, var(--on-brand) 82%, transparent);
 }
 /* The one filled action: light on the navy card, as the next-step card has always had. */
 .move-view .today-card .today-action {
-  min-height: 44px;
+  min-height: var(--guided-touch-large);
   justify-content: center;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-5);
   border-radius: var(--radius-control);
   background: var(--on-brand);
   color: var(--brand-deep);
   font-size: var(--text-base);
   font-weight: 600;
+}
+@media (min-width: 48rem) {
+  .move-view .today-card .today-action {
+    min-height: var(--guided-touch);
+  }
 }
 .move-view .today-card .today-action:hover {
   background: var(--selected-surface);

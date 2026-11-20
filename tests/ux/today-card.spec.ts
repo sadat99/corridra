@@ -41,7 +41,7 @@ test.beforeAll(async () => {
           ],
         }, { rooms: true });
         createRoot(document.getElementById('app')).render(
-          <main id="main" tabIndex={-1}><h1>Your Move</h1><MoveView model={model} startHref="/plan" /></main>,
+          <main id="main" tabIndex={-1}><MoveView model={model} startHref="/plan" /></main>,
         );`,
       loader: 'tsx',
       resolveDir: webRoot,
@@ -102,12 +102,14 @@ test.beforeAll(async () => {
 });
 
 async function open(page: Page, width: number, query = '') {
+  const lede = query.includes('empty') ? 'You are all caught up.' : '4 things need you.';
   await page.route('**' + fixturePath + '*', (route) =>
     route.fulfill({ contentType: 'text/html', body: html }),
   );
   await page.setViewportSize({ width, height: 400 });
   await page.goto(fixturePath + query);
-  await expect(page.locator('h1')).toHaveText('Your Move');
+  await expect(page.locator('h1')).toHaveCount(1);
+  await expect(page.locator('h1')).toHaveText(lede);
 }
 
 for (const width of [320, 390, 1440]) {
@@ -131,7 +133,7 @@ for (const width of [320, 390, 1440]) {
       await expect(card).toHaveCount(1);
       await expect(card.locator('.primary-link')).toHaveCount(1);
       await expect(card).toContainText('Answer the sample size');
-      await expect(card).toContainText('20 Nov 2026');
+      await expect(card).toContainText('Due 20 November 2026');
       // Before the card the page had 1 start link, 4 cards' actions (3 moves + draft), 1 latest link? Counted from
       // the model: every card and every waiting row stays reachable.
       for (const href of ['/account/rooms/r2', '/account/rooms/r1', '/account/drafts/w1', '/plan'])

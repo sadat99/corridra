@@ -21,7 +21,7 @@
   align-items: start;
 }
 @media (min-width: 64rem) {
-  .move-grid[data-latest='true'] {
+  .move-grid {
     grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     align-items: stretch;
   }
@@ -671,7 +671,7 @@
   align-content: start;
   min-width: 0;
 }
-.move-grid[data-latest='true'] {
+.move-grid {
   align-items: start;
 }
 /* The numbers take the card's small type, so a label never truncates. */
@@ -1112,4 +1112,48 @@
   margin: 0;
   color: color-mix(in srgb, var(--on-brand) 82%, transparent);
   font-size: var(--text-sm);
+}
+
+/* Sizes in between (owner, 19 Nov 2026), tokens only: block spacing 24 on a phone and 32 from 768; the filter is one
+   segmented row of 44 pixel chips at 16 that scrolls inside itself; holders show a 20 pixel shape with 16 pixel words. */
+.move-view,
+.move-grid {
+  gap: var(--space-6);
+}
+@media (min-width: 48rem) {
+  .move-view,
+  .move-grid {
+    gap: var(--space-8);
+  }
+}
+.move-view .move-seg {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+}
+.move-view .move-seg a {
+  min-height: 44px;
+  font-size: var(--text-base);
+  scroll-snap-align: start;
+}
+.move-view .move-seg em {
+  font-size: var(--text-base);
+}
+.move-view .move-lanes .move-lane > .move-lane-head {
+  font-size: var(--text-base);
+}
+.move-view .move-lane-head .mr-explain-trigger {
+  font-size: var(--text-base);
+}
+.move-lane-head .mr-holder-shape {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.move-lane-head .mr-holder-shape[data-holder='third'] {
+  height: 0.625rem;
+}
+.move-lane-count {
+  color: var(--text-2);
+  font-weight: 500;
 }

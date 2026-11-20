@@ -518,3 +518,32 @@ describe('colours that components take straight from the palette', () => {
     expect(read('components/ux/ux-kit.css')).not.toMatch(/var\(--ac-(?:critical|cobalt)\)/);
   });
 });
+
+describe('Your Move: the Today card on its navy surface (UI/UX.v4)', () => {
+  const quiet = 'color-mix(in srgb, var(--on-brand) 82%, transparent)';
+  test('the due day, context and holder line at 82 percent on navy keep 4.5 to 1 as default and 7 to 1 with Stronger Colours', () => {
+    expect(
+      ratio(valueOf(quiet, defaultTokens), valueOf('--brand-deep', defaultTokens)),
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      ratio(valueOf(quiet, modeTokens), valueOf('--brand-deep', modeTokens)),
+    ).toBeGreaterThanOrEqual(7);
+  });
+  test('the white button label (navy on white) and the Mark As Read label (white on navy) keep 4.5 to 1', () => {
+    for (const env of [defaultTokens, modeTokens]) {
+      expect(
+        ratio(valueOf('--brand-deep', env), valueOf('--on-brand', env)),
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(
+        ratio(valueOf('--on-brand', env), valueOf('--brand-deep', env)),
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+  test('the card never sets cobalt on navy (2.41 to 1 is banned)', () => {
+    const css = stripComments(
+      read('components/today-card.css') + read('app/account/move/move-view.css'),
+    );
+    const todayRules = css.split('}').filter((rule) => /today-|move-today/.test(rule));
+    for (const rule of todayRules) expect(rule).not.toMatch(/var\(--(action|accent|ac-cobalt)\)/);
+  });
+});
