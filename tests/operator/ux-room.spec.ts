@@ -617,25 +617,18 @@ for (const width of [1440, 390]) {
     ];
     await open(page, {}, {}, { body });
     await lens(page, 'Compare').click();
-    if (width >= 768) {
-      const ledger = page.locator('.ledger-table');
-      await expect(ledger.getByRole('row', { name: /^Commissioning/ })).toContainText(
-        'Two engineers for five days',
-      );
-      await expect(ledger.getByRole('row', { name: /^Commissioning/ })).toContainText('Not stated');
-      await expect(ledger).toContainText('Quoted Oct 7, 2026 · Source ref 3f9a2c1d');
-      await expect(ledger).toContainText('Source ref 9b8e7d6c');
-      await expect(ledger.getByRole('row', { name: /^Can be compared/ })).toContainText(
-        'Missing: Commissioning',
-      );
-    } else {
-      const cards = page.locator('.ledger-card');
-      await expect(cards.nth(0)).toContainText('Two engineers for five days');
-      await expect(cards.nth(0)).toContainText('Quoted Oct 7, 2026 · Source ref 3f9a2c1d');
-      await expect(cards.nth(1)).toContainText('Commissioning');
-      await expect(cards.nth(1)).toContainText('Source ref 9b8e7d6c');
-      await expect(cards.nth(1)).toContainText('Missing: Commissioning');
-    }
+    // One table at every width (UI/UX.v4 row "Compare"): the phone shows the two suppliers row by row.
+    const ledger = page.locator('.ledger .compare-grid-table');
+    await expect(ledger.getByRole('row', { name: /^Commissioning/ })).toContainText(
+      'Two engineers for five days',
+    );
+    await expect(ledger.getByRole('row', { name: /^Commissioning/ })).toContainText('Not stated');
+    await expect(ledger).toContainText('Quoted Oct 7, 2026 · Source ref 3f9a2c1d');
+    await expect(ledger).toContainText('Source ref 9b8e7d6c');
+    // The verdict sits on top of each supplier's column.
+    await expect(ledger.locator('thead th.compare-grid-head').nth(1)).toContainText(
+      'Missing: Commissioning',
+    );
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       width,
     );
@@ -648,20 +641,22 @@ for (const width of [1440, 390]) {
   });
 }
 
-test('the Compare lens puts the suppliers side by side with the verdict, the cards and table one tap away', async ({
+test('the Compare lens puts the suppliers side by side with the verdict, Side by Side and the table one tap away', async ({
   page,
 }) => {
   await open(page);
   await lens(page, 'Compare').click();
-  // The side-by-side comparison first: one column per supplier, original currency, missing terms said.
-  const ledger = page.locator('.ledger-table');
-  await expect(ledger.getByRole('columnheader')).toHaveCount(2);
+  // The side-by-side comparison first: one column per supplier with its verdict on top, original currency,
+  // missing terms said (UI/UX.v4 row "Compare").
+  const ledger = page.locator('.ledger .compare-grid-table');
+  await expect(ledger.locator('thead th.compare-grid-head')).toHaveCount(2);
+  await expect(ledger.getByRole('columnheader', { name: 'Terms', exact: true })).toBeVisible();
   await expect(ledger.locator('thead b[lang="zh"]')).toHaveText('绿野机械有限公司');
-  await expect(ledger.getByRole('row', { name: /^Can be compared/ })).toContainText(
+  await expect(ledger.locator('thead th.compare-grid-head').nth(1)).toContainText(
     'Missing: Lead time, Payment terms.',
   );
-  await expect(ledger.locator('.ledger-badge[data-ok="true"]')).toHaveCount(1);
-  await expect(ledger.locator('.ledger-badge[data-ok="false"]')).toHaveCount(1);
+  await expect(ledger.locator('.compare-grid-verdict[data-ok="true"]')).toHaveCount(1);
+  await expect(ledger.locator('.compare-grid-verdict[data-ok="false"]')).toHaveCount(1);
   await expect(ledger).toContainText('USD');
   await expect(ledger).toContainText('Self-declared');
   await expect(ledger.getByText('Not stated').first()).toBeVisible();
@@ -669,21 +664,25 @@ test('the Compare lens puts the suppliers side by side with the verdict, the car
   await page
     .getByRole('button', { name: 'Show the Requirement, Shortlist and Every Offer' })
     .click();
-  const cards = page.locator('.mr-quote');
-  await expect(cards).toHaveCount(2);
-  await expect(cards.nth(0)).toContainText('Comparable on supplied terms');
-  await expect(cards.nth(1)).toContainText('Not comparable yet');
-  await expect(cards.nth(1)).toContainText('Missing: Lead time, Payment terms.');
-  await expect(cards.nth(1).getByText('Not stated').first()).toBeVisible();
-  await expect(cards.nth(0)).toContainText('USD');
-  await expect(cards.nth(0)).toContainText('Self-declared');
-  await expect(page.locator('.mr-quote h3[lang="zh"]')).toHaveText('绿野机械有限公司');
+  // The report's own Compare lens opens on Side by Side, the same shared table.
+  const sideBySide = page.locator('.compare-lens .compare-grid-table');
+  await expect(sideBySide).toHaveCount(1);
+  await expect(sideBySide.locator('thead th.compare-grid-head').nth(0)).toContainText('Comparable');
+  await expect(sideBySide.locator('thead th.compare-grid-head').nth(1)).toContainText(
+    'Not comparable yet',
+  );
+  await expect(sideBySide).toContainText('Missing: Lead time, Payment terms.');
+  await expect(sideBySide.getByText('Not stated').first()).toBeVisible();
+  await expect(sideBySide).toContainText('USD');
+  await expect(sideBySide).toContainText('Self-declared');
+  await expect(sideBySide.locator('thead b[lang="zh"]')).toHaveText('绿野机械有限公司');
+  await expect(page.locator('.mr-quote')).toHaveCount(0);
   await expect(page.locator('table.ux-comparison-matrix')).toHaveCount(0);
   await page.getByRole('button', { name: 'Table' }).click();
   await expect(page.locator('table.ux-comparison-matrix')).toBeVisible();
-  await expect(page.locator('.mr-quote')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Cards' }).click();
-  await expect(page.locator('.mr-quote')).toHaveCount(2);
+  await expect(sideBySide).toHaveCount(0);
+  await page.getByRole('button', { name: 'Side by Side' }).click();
+  await expect(sideBySide).toHaveCount(1);
 });
 
 test('the table keeps every original commercial term and names missing obligations', async ({
@@ -746,16 +745,19 @@ for (const [name, firstTerms, secondTerms] of [
     );
     await page.reload();
     await lens(page, 'Compare').click();
-    // The comparison says so first, for both suppliers, and the cards agree.
-    await expect(page.locator('.ledger-table .ledger-badge[data-ok="false"]')).toHaveCount(2);
-    await expect(page.locator('.ledger-table .ledger-badge[data-ok="true"]')).toHaveCount(0);
+    // The comparison says so first, for both suppliers, and the report's Side by Side view agrees.
+    await expect(page.locator('.ledger .compare-grid-verdict[data-ok="false"]')).toHaveCount(2);
+    await expect(page.locator('.ledger .compare-grid-verdict[data-ok="true"]')).toHaveCount(0);
     await page
       .getByRole('button', { name: 'Show the Requirement, Shortlist and Every Offer' })
       .click();
-    const cards = page.locator('.mr-quote');
-    await expect(cards).toHaveCount(2);
-    for (const card of await cards.all()) await expect(card).toContainText('Not comparable yet');
-    await expect(cards.getByText('Comparable on supplied terms', { exact: true })).toHaveCount(0);
+    const verdicts = page.locator('.compare-lens .compare-grid-verdict');
+    await expect(verdicts).toHaveCount(2);
+    for (const verdict of await verdicts.all())
+      await expect(verdict).toContainText('Not comparable yet');
+    await expect(page.locator('.compare-lens .compare-grid-verdict[data-ok="true"]')).toHaveCount(
+      0,
+    );
   });
 }
 
@@ -811,13 +813,15 @@ test('speaks Bangla and says which language the region is in', async ({ page }) 
   await expect(page.getByRole('heading', { name: 'Corridra টিমের উত্তর' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'সংরক্ষিত অনুরোধ খুলুন' })).toBeVisible();
   await lens(page, 'তুলনা').click();
-  await expect(page.locator('.ledger-table')).toBeVisible();
-  // The report itself is English, so its region says so: the comparison and the cards below it.
-  await expect(page.locator('div[lang="en"] .ledger-table')).toBeVisible();
+  await expect(page.locator('.ledger .compare-grid-table')).toBeVisible();
+  // The report itself is English, so its region says so: the comparison and the Side by Side view below it.
+  await expect(page.locator('div[lang="en"] .ledger .compare-grid-table')).toBeVisible();
+  // The comparison's own words are Bangla, and say so on themselves.
+  await expect(page.locator('.ledger .compare-grid-title')).toHaveAttribute('lang', 'bn');
   await page
     .getByRole('button', { name: 'Show the Requirement, Shortlist and Every Offer' })
     .click();
-  await expect(page.locator('div[lang="en"] .mr-quote').first()).toBeVisible();
+  await expect(page.locator('div[lang="en"] .compare-lens .compare-grid-table')).toBeVisible();
 });
 
 for (const width of [320, 390, 768, 1440]) {
@@ -829,7 +833,7 @@ for (const width of [320, 390, 768, 1440]) {
     for (const [name, view] of [
       ['Overview', null],
       ['Compare', null],
-      ['Compare', 'Cards'],
+      ['Compare', 'Side by Side'],
       ['Compare', 'Table'],
       ['Evidence', null],
     ] as const) {
@@ -846,12 +850,12 @@ for (const width of [320, 390, 768, 1440]) {
         const out: string[] = [];
         for (const el of Array.from(document.querySelectorAll('main *'))) {
           const r = el.getBoundingClientRect();
-          // The comparison table, and on a phone the supplier cards, scroll inside their own labelled, focusable
-          // region by design; nothing else may be wider than the screen.
+          // The comparison tables scroll sideways inside their own labelled, focusable region by design (the
+          // row labels stay frozen); nothing else may be wider than the screen.
           if (
             r.width > 0 &&
             r.right > limit + 1 &&
-            !el.closest('.ux-comparison-scroll, .ledger-scroll, .ledger-cards-scroll')
+            !el.closest('.ux-comparison-scroll, .compare-grid-scroll')
           )
             out.push(
               `${el.tagName.toLowerCase()}.${(el as HTMLElement).className} ${Math.round(r.right)}`,
@@ -1387,7 +1391,7 @@ test('shows nothing but the meetings: no money, offers, contacts, outcomes, evid
   ).toHaveCount(0);
   // The other parts of the report are still where they were in the other lenses.
   await lens(page, 'Compare').click();
-  await expect(page.locator('.ledger-table')).toBeVisible();
+  await expect(page.locator('.ledger .compare-grid-table')).toBeVisible();
   await lens(page, 'Evidence').click();
   await expect(page.getByRole('heading', { name: 'Import licence number' })).toBeVisible();
 });
@@ -1400,7 +1404,7 @@ test('switching between lenses asks for the report once', async ({ page }) => {
   });
   await open(page, { trip: true });
   await lens(page, 'Compare').click();
-  await expect(page.locator('.ledger-table')).toBeVisible();
+  await expect(page.locator('.ledger .compare-grid-table')).toBeVisible();
   await lens(page, 'Trip').click();
   await expect(page.getByRole('heading', { name: 'Your meetings and visits' })).toBeVisible();
   await lens(page, 'Evidence').click();
@@ -1755,7 +1759,7 @@ test('handoff: an unsaved report is saved in the Room, unchecked first, and the 
   await box.check();
   await card.getByRole('button', { name: 'Save and Open Approved Report' }).click();
   await expect(lens(page, 'Compare')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.ledger-table')).toBeVisible();
+  await expect(page.locator('.ledger .compare-grid-table')).toBeVisible();
   expect(posts).toHaveLength(1);
   expect(posts[0]).toEqual({
     commandId: expect.stringMatching(/^[0-9a-f-]{36}$/),
@@ -1792,7 +1796,7 @@ test('handoff: with no current quotes the save opens the Overview and says so ho
     page.getByRole('link', { name: 'Open the Saved Report', exact: true }),
   ).toHaveAttribute('href', `/account/missions/${resourceId}`);
   await expect(lens(page, 'Overview')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.ledger-table')).toHaveCount(0);
+  await expect(page.locator('.ledger .compare-grid-table')).toHaveCount(0);
 });
 
 test('handoff: a double click sends one save', async ({ page }) => {
@@ -1994,7 +1998,7 @@ const machineryBody = (secondUnitMinor = '1840000') => {
 };
 
 for (const width of [1440, 390])
-  test(`handoff: the comparison names the missing machine set-up beside Ask a Question at ${width}`, async ({
+  test(`handoff: the comparison names the missing machine set-up beside Ask About Missing Terms at ${width}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -2007,19 +2011,24 @@ for (const width of [1440, 390])
     await expect(notice).toContainText('Lantern Cutting Works quotes Two engineers for five days.');
     await expect(notice).toContainText('Both quotes are USD 18,400.00 a unit.');
     await expect(notice.locator('[lang="zh"]')).toHaveText('绿野机械有限公司');
-    await expect(notice.getByRole('link', { name: 'Ask a Question' })).toHaveAttribute(
+    // UI/UX.v4 row "Compare": the one action, relabelled; the same address and the same switch.
+    const ask = notice.getByRole('link', { name: 'Ask About Missing Terms' });
+    await expect(ask).toHaveAttribute(
       'href',
       `/account/service-requests/new?kind=request&ref=${requestId}`,
     );
+    await expect(ask).toHaveClass(/button-primary/);
+    expect((await ask.boundingBox())!.height).toBeGreaterThanOrEqual(width >= 768 ? 47.5 : 55.5);
+    await expect(notice).toContainText(
+      'You ask the Corridra team. They can then ask 绿野机械有限公司 for you.',
+    );
     for (const word of ['cheaper', 'recommended', 'best'])
       await expect(notice).not.toContainText(word, { ignoreCase: true });
-    // The full comparison is still there, unchanged, below the notice.
-    if (width >= 768) {
-      await expect(page.locator('.ledger-table')).toBeVisible();
-      await expect(
-        page.locator('.ledger-table').getByRole('row', { name: /^Commissioning/ }),
-      ).toContainText('Not stated');
-    } else await expect(page.locator('.ledger-card')).toHaveCount(2);
+    // The full comparison is there at every width, and the notice sits under it.
+    const table = page.locator('.ledger .compare-grid-table');
+    await expect(table).toBeVisible();
+    await expect(table.getByRole('row', { name: /^Commissioning/ })).toContainText('Not stated');
+    expect((await table.boundingBox())!.y).toBeLessThan((await notice.boundingBox())!.y);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       width,
     );
@@ -2335,14 +2344,16 @@ test.describe('terms no quote states, in one row', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await open(page, {}, {}, quotes({}));
     await lens(page, 'Compare').click();
-    const folded = page.locator('.ledger-table .ledger-unstated');
+    const folded = page.locator('.ledger .compare-grid-note');
     await expect(folded).toHaveCount(1);
     await expect(folded.getByRole('rowheader')).toHaveText('Not stated yet');
     await expect(folded).toContainText('Installation, Warranty, Training, Spares');
     // No separate row for any of those terms.
     for (const term of ['Installation', 'Warranty', 'Training', 'Spares'])
       await expect(
-        page.locator('.ledger-table tbody th[scope="row"]', { hasText: new RegExp(`^${term}$`) }),
+        page.locator('.ledger .compare-grid-table tbody th[scope="row"]', {
+          hasText: new RegExp(`^${term}$`),
+        }),
       ).toHaveCount(0);
     // "See All Terms" still shows every term as before.
     await page.getByRole('button', { name: /^See All \d+ Terms$/ }).click();
@@ -2355,11 +2366,11 @@ test.describe('terms no quote states, in one row', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await open(page, {}, {}, quotes({ warranty: 'One year' }));
     await lens(page, 'Compare').click();
-    const warranty = page.locator('.ledger-table tbody tr', {
+    const warranty = page.locator('.ledger .compare-grid-table tbody tr', {
       has: page.getByRole('rowheader', { name: 'Warranty', exact: true }),
     });
     await expect(warranty).toContainText('One year');
-    const folded = page.locator('.ledger-table .ledger-unstated');
+    const folded = page.locator('.ledger .compare-grid-note');
     await expect(folded).toContainText('Installation, Training, Spares');
     await expect(folded).not.toContainText('Warranty');
   });
@@ -2375,9 +2386,9 @@ test.describe('terms no quote states, in one row', () => {
       quotes({ warranty: 'One year', installation: 'Included', training: 'Two days' }),
     );
     await lens(page, 'Compare').click();
-    await expect(page.locator('.ledger-table .ledger-unstated')).toHaveCount(0);
+    await expect(page.locator('.ledger .compare-grid-note')).toHaveCount(0);
     await expect(
-      page.locator('.ledger-table tbody tr', {
+      page.locator('.ledger .compare-grid-table tbody tr', {
         has: page.getByRole('rowheader', { name: 'Spares', exact: true }),
       }),
     ).toContainText('Not stated');
