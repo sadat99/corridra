@@ -21,6 +21,7 @@ export function TodayCard({
   due,
   href,
   action,
+  children,
 }: {
   heading: string;
   /** The journey the Move belongs to, shown before the title as the list row shows it. */
@@ -33,17 +34,19 @@ export function TodayCard({
   holderLabel?: string;
   holderWords?: Record<Holder, string>;
   dueLabel?: string;
-  /** An already formatted real date, never a relative word. */
+  /** An already formatted real date in words ("20 November 2026"), never a relative word. */
   due?: string | null;
   href: string;
   action: string;
+  /** A quiet extra inside the card, below the action (Mark As Read for a reply). */
+  children?: ReactNode;
 }) {
   return (
     <section className="today-card" aria-labelledby="today-title" data-testid="today-card">
       <div className="today-head">
-        <h3 id="today-title" className="today-heading">
+        <h2 id="today-title" className="today-heading">
           {heading}
-        </h3>
+        </h2>
         {holder ? (
           <span className="today-holder">
             {holderLabel ? `${holderLabel} ` : null}
@@ -64,6 +67,7 @@ export function TodayCard({
       <Link prefetch={false} className="primary-link today-action" href={href}>
         {action}
       </Link>
+      {children}
     </section>
   );
 }

@@ -898,96 +898,6 @@
   margin-top: calc(-1 * var(--space-4));
 }
 
-/* Locked AC/1 look (owner-approved mockups, revision 2). Presentation only: the same tasks, cards, links and words.
-   The next-step card: the first task is the one navy card on the page, with one light button. Every other task
-   stays a white row. */
-.move-items > .move-list:first-of-type > li:first-child {
-  margin: var(--space-2);
-  border-radius: var(--radius-lg);
-  background: var(--brand-deep);
-  box-shadow: var(--shadow-2);
-  color: var(--on-brand);
-}
-.move-items > .move-list:first-of-type > li:first-child > .mr-move {
-  gap: var(--space-3);
-  padding-block: var(--space-4);
-  color: var(--on-brand);
-}
-.move-view .move-items > .move-list:first-of-type > li:first-child .mr-move h3 {
-  color: var(--on-brand);
-  font-family: var(--serif);
-  font-size: var(--text-h2);
-  font-weight: 500;
-  line-height: 1.25;
-  white-space: normal;
-}
-.move-view
-  .move-items
-  > .move-list:first-of-type
-  > li:first-child
-  .mr-move
-  :is(.mr-move-context, .mr-move-meta) {
-  color: color-mix(in srgb, var(--on-brand) 82%, transparent);
-}
-.move-items > .move-list:first-of-type > li:first-child > .mr-move::before {
-  background: var(--nav-hover);
-}
-.move-items > .move-list:first-of-type > li:first-child > .mr-move::after {
-  background: var(--on-brand);
-}
-/* The one light button: below the words on the content's left edge up to 64rem, and at the end of the row from
-   64rem, as every other task's action is, so a busy Home stays within one desktop screen. */
-@media (max-width: 63.99rem) {
-  .move-items > .move-list:first-of-type > li:first-child > .mr-move {
-    flex-wrap: wrap;
-  }
-  .move-items > .move-list:first-of-type > li:first-child .mr-move-body {
-    flex: 1 1 100%;
-  }
-}
-.move-view
-  .move-items
-  > .move-list:first-of-type
-  > li:first-child
-  .mr-move
-  > .mr-move-action.button.button-secondary {
-  flex: none;
-  width: auto;
-  min-height: 44px;
-  padding-inline: var(--space-4);
-  border-color: var(--on-brand);
-  background: var(--on-brand);
-  color: var(--brand-deep);
-  font-size: var(--text-base);
-  font-weight: 600;
-}
-.move-view
-  .move-items
-  > .move-list:first-of-type
-  > li:first-child
-  .mr-move
-  > .mr-move-action.button.button-secondary:hover {
-  background: var(--selected-surface);
-  color: var(--brand-deep);
-}
-.move-view .move-items > .move-list:first-of-type > li:first-child .mr-move-action:focus-visible,
-.move-view .move-items > .move-list:first-of-type > li:first-child > .button:focus-visible {
-  outline: 3px solid var(--on-brand);
-  outline-offset: 2px;
-}
-/* A reply that is the next step keeps its quiet Mark As Read under the card, outlined in light. */
-.move-view .move-items > .move-list:first-of-type > li.move-reply:first-child > .button {
-  border-color: color-mix(in srgb, var(--on-brand) 60%, transparent);
-  background: transparent;
-  color: var(--on-brand);
-}
-.move-view .move-items > .move-list:first-of-type > li.move-reply:first-child > .button:hover {
-  background: var(--nav-hover);
-}
-.move-items > .move-list:first-of-type > li:first-child + li {
-  border-top: 0;
-}
-
 /* Your journeys: three cards of unequal width on a wide screen, the lead (most recent activity) widest. The
    four-card sideways row and the phone row are the rules above, unchanged. */
 @media (min-width: 64rem) {
@@ -1173,4 +1083,33 @@
   margin: 0;
   color: var(--text-2);
   font-size: var(--text-base);
+}
+
+/* The Today card stands alone above the lists: one navy card, one white button, Mark As Read inside it. */
+.move-today {
+  min-width: 0;
+}
+.move-today .today-card {
+  border-radius: var(--radius-lg);
+  background: var(--brand-deep);
+  box-shadow: var(--shadow-2);
+}
+.move-view .today-card .today-mark {
+  min-height: 44px;
+  border-color: color-mix(in srgb, var(--on-brand) 60%, transparent);
+  background: transparent;
+  color: var(--on-brand);
+  transition: background 160ms ease;
+}
+.move-view .today-card .today-mark:hover {
+  background: var(--nav-hover);
+}
+.move-view .today-card .today-mark:focus-visible {
+  outline: 3px solid var(--on-brand);
+  outline-offset: 2px;
+}
+.today-note {
+  margin: 0;
+  color: color-mix(in srgb, var(--on-brand) 82%, transparent);
+  font-size: var(--text-sm);
 }

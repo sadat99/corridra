@@ -18,7 +18,7 @@ import { fill } from '../../../lib/i18n/fill';
 import { localeMeta } from '../../../lib/i18n/locales';
 import { translate, type MessageKey } from '../../../lib/i18n/messages';
 import { moveWorkspaceCap } from '../../../lib/move-constants';
-import { formatDate } from '../../../lib/ux/format';
+import { formatDate, formatLongUtcDay } from '../../../lib/ux/format';
 import {
   pickTodayMove,
   unreadReplies,
@@ -78,12 +78,15 @@ function subscribe(listener: () => void) {
     window.removeEventListener('storage', onStorage);
   };
 }
+// True once this browser refused to keep a mark, so the Today card can say so quietly.
+let blocked = false;
 function commit(value: Record<string, string>) {
   memory = JSON.stringify(value);
   try {
     window.localStorage.setItem(seenKey, memory);
   } catch {
     /* The mark still applies to this visit. */
+    blocked = true;
   }
   listeners.forEach((listener) => listener());
 }
@@ -152,6 +155,13 @@ function day(value: string, locale: string) {
   // D11: one date style ("24 Oct 2026"), never a US numeric date or a raw ISO string.
   return formatDate(`${value}T00:00:00Z`, { timeZone: 'UTC', locale }) || value;
 }
+
+/** The Today card's due day in words ("20 November 2026"), from the stored date, with no weekday. */
+function longDay(value: string, locale: string) {
+  return formatLongUtcDay(`${value}T00:00:00Z`, locale) || value;
+}
+
+const storageWords = 'This device cannot remember what you have read.';
 
 // Launch language is English only (owner, 4 Nov 2026), so these lines are not in the catalogues and
 // carry lang="en" in every locale: no screen claims a translation nobody reviewed.
@@ -225,6 +235,11 @@ export function MoveView({
   const { html, dir } = localeMeta[locale];
   // Null on the server and on the first paint, so a reply is never shown as new before the device has been asked.
   const raw = useSyncExternalStore(subscribe, snapshot, () => null);
+  const storageBlocked = useSyncExternalStore(
+    subscribe,
+    () => blocked,
+    () => false,
+  );
   const seen = useMemo(() => (raw === null ? null : parse(raw)), [raw]);
 
   const unread = seen ? unreadReplies(model.replyCandidates, seen) : [];
@@ -457,6 +472,69 @@ export function MoveView({
         ) : null}
       </div>
 
+      {today ? (
+        <div className="move-today" data-kind={today.reply ? 'reply' : 'today'}>
+          <TodayCard
+            heading={say('today.heading')}
+            tag={tag(today.id)}
+            title={
+              today.reply
+                ? movePhrase(
+                    labels.move.phrase,
+                    labels.move.verbs.Read,
+                    say('move.card.reply.object'),
+                  )
+                : (today.title ??
+                  movePhrase(
+                    labels.move.phrase,
+                    labels.move.verbs[verbOf[todayCard!.kind as keyof typeof verbOf]],
+                    say(objectKey[todayCard!.kind as keyof typeof objectKey]),
+                  ))
+            }
+            titleLang={today.title ? 'en' : undefined}
+            context={
+              today.reply
+                ? fill(say('move.received'), { date: day(today.reply.received, locale) })
+                : todayCard!.kind === 'report'
+                  ? `${say('wsb.move.report.title')}: ${todayCard!.context ?? ''}`
+                  : todayCard!.kind === 'draft'
+                    ? [todayCard!.context, labels.road.draftSubline].filter(Boolean).join(' · ')
+                    : todayCard!.context
+            }
+            holder={today.holder}
+            holderLabel={say('today.holds')}
+            holderWords={labels.holder}
+            dueLabel={labels.move.due}
+            due={today.dueOn ? longDay(today.dueOn, locale) : null}
+            href={today.href}
+            action={
+              today.reply
+                ? say('move.card.reply.action')
+                : todayCard!.kind === 'draft'
+                  ? say('wsb.move.draft.action')
+                  : say(actionKey[todayCard!.kind])
+            }
+          >
+            {today.reply ? (
+              <>
+                <button
+                  type="button"
+                  className="button button-secondary today-mark"
+                  onClick={() => mark(today.reply!.requestId, today.reply!.latestReplyAt)}
+                >
+                  {say('move.card.reply.read')}
+                </button>
+                {storageBlocked ? (
+                  <p className="today-note" role="status" lang="en">
+                    {storageWords}
+                  </p>
+                ) : null}
+              </>
+            ) : null}
+          </TodayCard>
+        </div>
+      ) : null}
+
       <div className="move-grid">
         <section className="move-card" aria-labelledby="move-you">
           <h2 id="move-you">{say('move.you.heading')}</h2>
@@ -531,71 +609,9 @@ export function MoveView({
                 </Link>
               </div>
             </div>
-          ) : (
+          ) : rest.length === 0 ? null : (
             <div className="move-items">
-              <ul className="move-list">
-                {today ? (
-                  <li
-                    key="today"
-                    data-kind={today.reply ? 'reply' : 'today'}
-                    className={today.reply ? 'move-reply' : undefined}
-                  >
-                    <TodayCard
-                      heading={say('today.heading')}
-                      tag={tag(today.id)}
-                      title={
-                        today.reply
-                          ? movePhrase(
-                              labels.move.phrase,
-                              labels.move.verbs.Read,
-                              say('move.card.reply.object'),
-                            )
-                          : (today.title ??
-                            movePhrase(
-                              labels.move.phrase,
-                              labels.move.verbs[verbOf[todayCard!.kind as keyof typeof verbOf]],
-                              say(objectKey[todayCard!.kind as keyof typeof objectKey]),
-                            ))
-                      }
-                      titleLang={today.title ? 'en' : undefined}
-                      context={
-                        today.reply
-                          ? fill(say('move.received'), { date: day(today.reply.received, locale) })
-                          : todayCard!.kind === 'report'
-                            ? `${say('wsb.move.report.title')}: ${todayCard!.context ?? ''}`
-                            : todayCard!.kind === 'draft'
-                              ? [todayCard!.context, labels.road.draftSubline]
-                                  .filter(Boolean)
-                                  .join(' · ')
-                              : todayCard!.context
-                      }
-                      holder={today.holder}
-                      holderLabel={say('today.holds')}
-                      holderWords={labels.holder}
-                      dueLabel={labels.move.due}
-                      due={today.dueOn ? day(today.dueOn, locale) : null}
-                      href={today.href}
-                      action={
-                        today.reply
-                          ? say('move.card.reply.action')
-                          : todayCard!.kind === 'draft'
-                            ? say('wsb.move.draft.action')
-                            : say(actionKey[todayCard!.kind])
-                      }
-                    />
-                    {today.reply ? (
-                      <button
-                        type="button"
-                        className="button button-secondary"
-                        onClick={() => mark(today.reply!.requestId, today.reply!.latestReplyAt)}
-                      >
-                        {say('move.card.reply.read')}
-                      </button>
-                    ) : null}
-                  </li>
-                ) : null}
-                {rest.slice(0, rowsShown)}
-              </ul>
+              <ul className="move-list">{rest.slice(0, rowsShown)}</ul>
               {rest.length > rowsShown ? (
                 <details className="move-more">
                   <summary>{fill(say('move.more'), { count: rest.length - rowsShown })}</summary>

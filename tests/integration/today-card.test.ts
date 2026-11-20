@@ -211,8 +211,19 @@ describe('Your Move with the Today card', () => {
     expect(html.match(/primary-link/g)).toHaveLength(1);
     const card = html.slice(html.indexOf('data-testid="today-card"'));
     expect(card.slice(0, card.indexOf('</section>'))).toContain('Answer question c');
-    expect(card.slice(0, card.indexOf('</section>'))).toContain('20 Nov 2026');
+    expect(card.slice(0, card.indexOf('</section>'))).toContain('20 November 2026');
     expect(card.slice(0, card.indexOf('</section>'))).toContain('Corridra team');
+  });
+  it('stands alone as a level two heading before the lists, with the due day in words and no weekday', async () => {
+    const html = await view(busy);
+    expect(html.indexOf('data-testid="today-card"')).toBeLessThan(html.indexOf('id="move-you"'));
+    expect(html).toContain('<h2 id="today-title" class="today-heading">Today</h2>');
+    const card = html.slice(html.indexOf('data-testid="today-card"'));
+    const inside = card.slice(0, card.indexOf('</section>'));
+    expect(inside).toMatch(/Due <time>20 November 2026<\/time>/);
+    expect(inside).not.toMatch(/Mon|Tue|Wed|Thu|Fri|Sat|Sun/);
+    // Nothing quiet about storage is said before a mark has failed.
+    expect(html).not.toContain('This device cannot remember');
   });
   it('keeps every link the page had: each card, each waiting row and the way to start', async () => {
     const html = await view(busy);
