@@ -2124,6 +2124,11 @@ summary:hover {
   --journey-organise-surface: var(--positive-surface);
   --journey-organise-text: var(--positive);
   /* audit-fixes-1 (AF-1) end */
+  /* Road, holder badge and lane sizes (UI/UX.v4, owner 20 Nov 2026): fluid, floor at the phone value,
+     ceiling at the desktop value. */
+  --road-shape: clamp(2.125rem, 2rem + 0.5vw, 2.25rem);
+  --holder-badge-shape: clamp(0.8125rem, 0.77rem + 0.22vw, 0.875rem);
+  --holder-lane-shape: 1.25rem;
   /* Type scale (UI/UX.v3, owner "full approved" 13 Nov 2026). Label 12, secondary 14, body and controls 16,
      card or row title 18, section title and key figure 24 (22 on a phone), page title 40 (29 on a phone),
      home display 56. Weights 400, 500 and 600 only. Every font size in a stylesheet is one of these tokens. */
