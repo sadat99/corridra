@@ -67,7 +67,7 @@ describe('the comparison table', () => {
     expect(html.match(/<th scope="row" role="rowheader"/g)).toHaveLength(3);
     expect(html.match(/<td role="cell"/g)).toHaveLength(6);
     expect(html).toContain('role="region" aria-label="Quotes side by side" tabindex="0"');
-    expect(html).toContain('<b lang="zh" dir="auto">绿野机械有限公司</b>');
+    expect(html).toMatch(/<b id="[^"]+" lang="zh" dir="auto">绿野机械有限公司<\/b>/);
     // No phone card strip and no duplicated content: each supplier name appears once.
     expect(html.match(/Lantern Cutting Works/g)).toHaveLength(1);
     expect(html).not.toContain('one card per supplier');
@@ -104,17 +104,55 @@ describe('the comparison table', () => {
     expect(html.match(/role="status"/g)).toHaveLength(1);
   });
 
-  it('counts for three or more quotes, and says when every term is the same', async () => {
+  it('counts for three or more quotes', async () => {
     const three = [...two, column('c', 'Changzhou Spintech')];
     const rows = [
       row('Incoterm', true, v('FOB'), v('FOB'), v('FOB')),
       row('Lead time', false, v('45 days'), v('60 days'), v('45 days')),
     ];
     expect(await grid({ columns: three, rows })).toContain('1 term is the same in all 3 quotes.');
-    const same = await grid({ columns: three, rows: rows.slice(0, 1) });
-    expect(same).toContain('Every term is the same in all 3 quotes.');
-    const pair = await grid({ columns: two, rows: [rowsTwo[1]] });
-    expect(pair).toContain('Every term is the same in both quotes.');
+  });
+
+  it('names each column head by the supplier alone and describes it by the verdict', async () => {
+    const arabic = column('c', 'شركة الخليج للآلات الصناعية', { supplierLang: 'ar' });
+    const html = await grid({
+      columns: [...two, arabic],
+      rows: [row('Incoterm', false, v('FOB'), v('CIF'), v('FOB'))],
+    });
+    const heads = [...html.matchAll(/<th scope="col"[^>]*class="compare-grid-head"[^>]*>/g)].map(
+      (m) => m[0],
+    );
+    expect(heads).toHaveLength(3);
+    const ids = new Set<string>();
+    for (const head of heads) {
+      expect(head).not.toContain('aria-label=');
+      const name = /aria-labelledby="([^"]+)"/.exec(head)![1]!;
+      const verdict = /aria-describedby="([^"]+)"/.exec(head)![1]!;
+      expect(name).not.toBe(verdict);
+      ids.add(name);
+      ids.add(verdict);
+      expect(html).toContain(`id="${name}"`);
+      expect(html).toContain(`id="${verdict}"`);
+    }
+    expect(ids.size).toBe(6);
+    const nameOf = (supplier: string) => {
+      const id = new RegExp(`<b id="([^"]+)"[^>]*>${supplier}</b>`).exec(html)![1]!;
+      return id;
+    };
+    // The name element holds the supplier only; the verdict element holds the words and the reason.
+    expect(html).toMatch(/<b id="[^"]+" lang="zh" dir="auto">绿野机械有限公司<\/b>/);
+    expect(html).toMatch(/<b id="[^"]+" lang="ar" dir="auto">شركة الخليج للآلات الصناعية<\/b>/);
+    expect(heads.some((head) => head.includes(nameOf('绿野机械有限公司')))).toBe(true);
+    const verdictOf = (id: string) =>
+      new RegExp(`id="${id}" class="compare-grid-verdict"[^>]*>(.*?)</span></span></span>`).exec(
+        html,
+      );
+    const zhVerdict = /aria-describedby="([^"]+)"/.exec(
+      heads.find((head) => head.includes(nameOf('绿野机械有限公司')))!,
+    )![1]!;
+    expect(verdictOf(zhVerdict)![1]).toContain('Not comparable yet');
+    expect(verdictOf(zhVerdict)![1]).toContain('Missing: Lead time.');
+    expect(html).toContain('>Terms</th>');
   });
 
   it('draws a blank as the 30 px hatched square with its words, and an exclusion as the striped one', async () => {

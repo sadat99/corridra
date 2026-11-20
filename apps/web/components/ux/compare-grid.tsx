@@ -107,6 +107,7 @@ export function CompareGrid({
   const toggleRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const cueId = useId();
+  const headId = useId();
   // Where the reader is in the sideways scroll. Until the first measure nothing is claimed: no fade, no shadow and
   // no cue words (the cue line keeps its height, so nothing moves when they arrive).
   const [edge, setEdge] = useState({
@@ -157,7 +158,6 @@ export function CompareGrid({
     notComparable: number(total - comparable),
   });
   const two = total === 2;
-  const allSame = foldable.length === rows.length && !note;
   const statusText =
     total === 1
       ? say('compare.onlyOne')
@@ -165,22 +165,18 @@ export function CompareGrid({
         ? ''
         : !folding
           ? say('compare.shownAll')
-          : allSame
-            ? fill(say(two ? 'compare.allSameBoth' : 'compare.allSameAll'), {
-                total: number(total),
-              })
-            : fill(
-                say(
-                  foldable.length === 1
-                    ? two
-                      ? 'compare.sameBothOne'
-                      : 'compare.sameAllOne'
-                    : two
-                      ? 'compare.sameBoth'
-                      : 'compare.sameAll',
-                ),
-                { count: number(foldable.length), total: number(total) },
-              );
+          : fill(
+              say(
+                foldable.length === 1
+                  ? two
+                    ? 'compare.sameBothOne'
+                    : 'compare.sameAllOne'
+                  : two
+                    ? 'compare.sameBoth'
+                    : 'compare.sameAll',
+              ),
+              { count: number(foldable.length), total: number(total) },
+            );
   const cue =
     total <= 2
       ? null
@@ -280,11 +276,20 @@ export function CompareGrid({
                   {say('compare.terms')}
                 </th>
                 {columns.map((column) => (
-                  <th scope="col" role="columnheader" key={column.id} className="compare-grid-head">
-                    <b lang={column.supplierLang} dir="auto">
+                  <th
+                    scope="col"
+                    role="columnheader"
+                    key={column.id}
+                    className="compare-grid-head"
+                    // The name is the supplier alone; the verdict and its reason are the description.
+                    aria-labelledby={`${headId}-n-${column.id}`}
+                    aria-describedby={`${headId}-v-${column.id}`}
+                  >
+                    <b id={`${headId}-n-${column.id}`} lang={column.supplierLang} dir="auto">
                       {column.supplier}
                     </b>
                     <span
+                      id={`${headId}-v-${column.id}`}
                       className="compare-grid-verdict"
                       data-ok={column.comparable ? 'true' : 'false'}
                     >

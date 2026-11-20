@@ -161,7 +161,9 @@ describe('Compare lens, differences only', () => {
         }),
       ),
     );
-    const heads = (html: string) => html.slice(html.indexOf('<thead'), html.indexOf('</thead>'));
+    // useId differs between two renders; the ids only pair a head with its name and verdict.
+    const heads = (html: string) =>
+      html.slice(html.indexOf('<thead'), html.indexOf('</thead>')).replace(/_R_[^"]*?_/g, '_R_');
     expect(heads(folded).length).toBeGreaterThan(200);
     expect(heads(folded)).toEqual(heads(unfolded));
     expect(rows(unfolded)).toEqual(grid.rows.map((row) => row.label));
@@ -264,6 +266,10 @@ describe('Compare lens, differences only', () => {
     expect(html).toContain('>Table</button>');
     expect(html).not.toContain('>Cards</button>');
   });
+  it('keeps no "every term is the same" message: both callers always show the two price rows, which never fold', () => {
+    for (const cat of Object.values(catalogs))
+      expect(Object.keys(cat).filter((k) => k.startsWith('compare.allSame'))).toEqual([]);
+  });
   it('carries the comparison keys in all seven catalogues', () => {
     for (const cat of Object.values(catalogs))
       for (const k of [
@@ -273,8 +279,6 @@ describe('Compare lens, differences only', () => {
         'compare.sameBothOne',
         'compare.sameAll',
         'compare.sameAllOne',
-        'compare.allSameBoth',
-        'compare.allSameAll',
         'compare.onlyOne',
         'compare.showAll',
         'compare.shownAll',

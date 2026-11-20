@@ -4726,3 +4726,23 @@ Preserved: closed real-world gates; owner-only installs, variables and switches;
 Next action: Connect AI PR 2 (screen), owner approval at the customer-modules-install gate; fix the D1 text; owner deletes the stale branches.
 
 Tested head: 7eaf3f4 (main); this records commit on claude/records-583, not pushed.
+
+### 20 November 2026: PR 585 Compare follow-ups and Wave 3 approval, Corridra scribe
+
+Request: record PR 585, the owner's "accept" of the Signed-in Review Board, and main ef02e0d state.
+
+Changed (PR 585, builder; scribe records only): Compare named column heads via aria-labelledby/describedby; label cap min(max(40cqi,128px),clamp); no divider in the 2-supplier phone layout; unreachable allSame branch and the compare.allSame* keys removed from 7 catalogs; test renamed. Reviewer: no blocking findings.
+
+Verification (reported by the run, not re-run by the scribe): typecheck, lint, vitest subsets (compare-grid, compare-diff-only, source-ledger, ux-room, i18n), design-system tests, authority check: pass. NOT run: Playwright and screenshots (container Chromium 1243 vs 1254); CI to run. Receipts: none beyond the session report.
+
+Owner, 20 Nov 2026, first hand in chat: attached the Signed-in Review Board and wrote "accept". Recorded as build approval for Wave 3 (08 Buyer reply Class A, 09 Before Send privacy label Class A, 11 Operator desk Class B) with all 7 recommended choices. Open: (a) draft label vs the 19 Nov ruling (asked, awaiting answer); (b) operator group names and pinned items (proposed, unconfirmed); (c) 08 answer buttons 64px phone to 76px desktop (proposed).
+
+Main ef02e0d (PR 584, docs): Vercel success, live sw.js has ef02e0d; operator 4/6 and verification still running at 13:47Z, NOT claimed green. Ledger header corrected from 7eaf3f4.
+
+Omissions: label column at 200% text with 3+ suppliers (un-freeze or band) not done. PLAN_STATUS 0089 left UNRESOLVED; no ADRs, code or tests touched.
+
+Preserved: closed real-world gates; owner-only installs, variables and switches.
+
+Next action: owner answers (a) to (c); build Wave 3; merge 585 after the Gate.
+
+Tested head: 5eb6e0d (PR 585).
