@@ -11,7 +11,6 @@ import { privacyReaders } from '../../apps/web/lib/privacy-label';
 import { catalogs, en, translate } from '../../apps/web/lib/i18n/messages';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
 import { uxSwitchNames, uxSwitchOn } from '../../apps/web/lib/ux-switches';
-import { iconPaths } from '../../apps/web/components/corridra-icon';
 
 // Wave 3 unit 09 (owner approved 20 November 2026): the Before Send block above each Send. Presentation only: every
 // row and sentence has a code fact behind it, the switch is off by default and, off, the pages are what they were.
@@ -124,7 +123,10 @@ describe('the block as drawn', () => {
 });
 
 describe('the alert icon and the switch', () => {
-  it('adds an alert icon that is a circle with an exclamation, not a triangle', () => {
+  it('adds an alert icon that is a circle with an exclamation, not a triangle', async () => {
+    const { iconPaths } = (await loadWeb('components/corridra-icon')) as {
+      iconPaths: Record<string, string>;
+    };
     expect(iconPaths.alert).toMatch(/^M10 3\.5a6\.5 6\.5 0 1 0 0 13/);
     expect(iconPaths.alert).not.toMatch(/L|l\d+ -?\d+l/);
   });

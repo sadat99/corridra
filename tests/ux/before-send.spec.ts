@@ -284,10 +284,15 @@ test.describe('the evidence reply says what Send response will do, above each Se
           return [style.fontSize, style.fontWeight];
         });
       expect(title).toEqual(['18px', '600']);
+      await page
+        .locator('form.operator-form')
+        .first()
+        .getByLabel('Response', { exact: true })
+        .fill(typed);
       await page.locator('form.operator-form').first().getByRole('button').click();
       await expect(page.locator('.field-error')).toHaveCount(1);
       const found = (
-        await new AxeBuilder({ page }).include('#bs-fixture').analyze()
+        await new AxeBuilder({ page }).include('form.operator-form').analyze()
       ).violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`);
       expect(found).toEqual([]);
       await shot(page, `evidence-${width}`);
@@ -296,7 +301,14 @@ test.describe('the evidence reply says what Send response will do, above each Se
   test('forced colours keep the block border and the 2 px error edge', async ({ page }) => {
     await mount(page, 390);
     await page.emulateMedia({ forcedColors: 'active' });
+    await expect(page.locator('form.operator-form').first()).toBeVisible();
+    await page
+      .locator('form.operator-form')
+      .first()
+      .getByLabel('Response', { exact: true })
+      .fill(typed);
     await page.locator('form.operator-form').first().getByRole('button').click();
+    await expect(page.locator('.field-error')).toHaveCount(1);
     const edges = await page.evaluate(() => {
       const width = (selector: string, side: 'borderTopWidth' | 'borderInlineStartWidth') =>
         getComputedStyle(document.querySelector(selector)!)[side];
@@ -390,7 +402,7 @@ test.describe('other scripts and directions at 320px', () => {
     test(`${locale} reads in its own direction, inside the width, axe clean`, async ({ page }) => {
       await mount(page, 320, locale);
       const block = page.locator('.before-send');
-      await expect(block).toHaveAttribute('lang', locale);
+      await expect(block).toHaveAttribute('lang', locale === 'zh' ? 'zh-Hans' : locale);
       await expect(block).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
       await expect(block).toContainText(translate(locale, 'consequence.oneResponse'));
       await expect(block).toContainText(translate(locale, 'consequence.until'));

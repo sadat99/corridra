@@ -39,7 +39,7 @@
   inline-size: var(--space-6);
   block-size: var(--space-6);
 }
-.before-send-question {
+.before-send .before-send-row .before-send-question {
   font-size: var(--text-lg);
   font-weight: 600;
 }
@@ -62,13 +62,13 @@
     padding: var(--space-6);
   }
 }
-/* The Send under the block: 56 px on a phone, 48 px from 768 px, never below a 44 px target. */
-.before-send + button,
+/* The Send under the block (the :not keeps it above the 44 px rule of .delivery-view button): 56 px on a phone, 48 px from 768 px, never below a 44 px target. */
+.before-send + button:not([type='button']),
 .before-send + .reply-actions > button:not([type='button']) {
   min-block-size: 3.5rem;
 }
 @media (min-width: 768px) {
-  .before-send + button,
+  .before-send + button:not([type='button']),
   .before-send + .reply-actions > button:not([type='button']) {
     min-block-size: 3rem;
   }
