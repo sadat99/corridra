@@ -136,7 +136,11 @@
   block-size: 1.875rem;
 }
 @media (forced-colors: active) {
+  /* Forced colours drop gradient backgrounds, so the fill keeps its own system colours: the hatch and stripe
+     stay drawn, in CanvasText on Canvas. */
   .mr-quote-fill {
+    forced-color-adjust: none;
+    background-color: Canvas;
     border-color: CanvasText;
   }
   .mr-quote-fill[data-fill='hatched'] {

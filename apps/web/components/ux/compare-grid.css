@@ -92,10 +92,6 @@
   position: relative;
   container-type: inline-size;
   min-inline-size: 0;
-  background: var(--surface-1);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  overflow: hidden;
 }
 .compare-grid-scroll {
   overflow-x: auto;
@@ -132,6 +128,12 @@
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
+  /* The table carries the box, so with few suppliers on a wide screen the box ends where the last column ends. */
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  /* The start edge is drawn by the frozen column itself, so it does not move by a pixel once it sticks. */
+  border-inline-start: 0;
+  border-radius: var(--radius-md);
   font-size: var(--text-base);
   line-height: var(--leading-title);
   color: var(--ink);
@@ -141,13 +143,18 @@
   text-align: start;
   vertical-align: top;
   border-block-end: 1px solid var(--line);
-  overflow-wrap: anywhere;
+  /* A word breaks only when it cannot fit its column, with a hyphen where the language allows. */
+  overflow-wrap: break-word;
+  hyphens: auto;
   font-family: inherit;
   letter-spacing: normal;
   text-transform: none;
 }
 .compare-grid-table tbody tr:last-child :is(th, td) {
   border-block-end: 0;
+}
+.compare-grid-table tbody tr:last-child .compare-grid-label {
+  border-end-start-radius: var(--radius-md);
 }
 
 /* The frozen row label column and the corner above it: opaque, with a real edge line for forced colours. */
@@ -158,10 +165,12 @@
   z-index: 1;
   inline-size: var(--compare-label-w);
   background: var(--surface-1);
+  border-inline-start: 1px solid var(--line);
   border-inline-end: 1px solid var(--line);
 }
 .compare-grid-corner {
   z-index: 2;
+  border-start-start-radius: var(--radius-md);
   vertical-align: bottom;
   font-size: var(--text-sm);
   font-weight: 600;
@@ -183,8 +192,11 @@
 
 /* One supplier per column head: name, verdict on top of the column, version and currency, trust label. */
 .compare-grid-head {
-  background: var(--surface-2);
   font-weight: 400;
+  background: var(--surface-2);
+}
+.compare-grid-head:last-child {
+  border-start-end-radius: var(--radius-md);
 }
 .compare-grid-head > * {
   display: block;
@@ -203,7 +215,9 @@
   color: var(--text-2);
 }
 .compare-grid-head > .guide-tag {
+  display: inline-flex;
   inline-size: fit-content;
+  font-size: var(--text-sm);
   max-inline-size: 100%;
   margin-block-start: var(--space-2);
   /* The trust label wraps inside a narrow column instead of pushing the table wider. */
@@ -214,6 +228,7 @@
 }
 .compare-grid-verdict {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-2);
   margin-block: var(--space-2);
@@ -230,6 +245,11 @@
 }
 .compare-grid-verdict small {
   font-weight: 400;
+}
+/* In a narrow column the words go under the seal rather than break inside a word. */
+.compare-grid-verdict > span:last-child {
+  flex: 1 1 6rem;
+  min-inline-size: 0;
 }
 .compare-grid-seal {
   flex: none;
@@ -262,8 +282,14 @@
 }
 .compare-grid-blank {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-2);
+}
+/* In a narrow column the words go under the square rather than break inside a word. */
+.compare-grid-blank > span:last-child {
+  flex: 1 1 5rem;
+  min-inline-size: 0;
 }
 .compare-grid-blank b {
   display: block;
@@ -318,6 +344,7 @@
   .compare-grid-corner,
   .compare-grid-label {
     background: Canvas;
+    border-inline-start: 1px solid CanvasText;
     border-inline-end: 1px solid CanvasText;
   }
   .compare-grid[data-at-start='false'] :is(.compare-grid-corner, .compare-grid-label) {

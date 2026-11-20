@@ -272,6 +272,12 @@ test('forced colours: the frozen column keeps an opaque system background and a 
       .locator('.compare-grid-frame')
       .evaluate((el) => getComputedStyle(el, '::after').display),
   ).toBe('none');
+  // The hatched and striped squares stay drawn in system colours.
+  const fills = await page.$$eval('.mr-quote-fill', (els) =>
+    els.map((el) => getComputedStyle(el).backgroundImage),
+  );
+  expect(fills.length).toBeGreaterThan(0);
+  for (const image of fills) expect(image).toContain('gradient');
   await scroller(page).evaluate((el) => el.scrollTo({ left: 400 }));
   await expect(page.locator('.compare-grid')).toHaveAttribute('data-at-start', 'false');
   expect(await label.evaluate((el) => getComputedStyle(el).boxShadow)).toBe('none');
