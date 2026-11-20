@@ -62,7 +62,7 @@ export function StageBar({
       roadSteps
         .filter((step) => states[step] === state)
         .map((step) => labels.steps[step])
-        .join(', ');
+        .join(labels.join);
     const lines: { state: RoadStepState; words: string }[] = (
       ['done', 'later', 'notTracked'] as const
     )
@@ -72,26 +72,26 @@ export function StageBar({
       <div className="mr-stage-wrap" data-variant="room">
         {marker.kind === 'marker' ? (
           <h3 className="mr-stage-heading">
-            <span lang={stepLang}>
+            <bdi lang={stepLang} dir={stepLang ? 'ltr' : undefined}>
               {fill(labels.stepOf, {
                 n: String(roadSteps.indexOf(marker.step) + 1),
                 total: String(roadSteps.length),
               })}
               :
-            </span>{' '}
+            </bdi>{' '}
             {labels.steps[marker.step]}
           </h3>
         ) : null}
         <ol className="mr-stage" aria-label={name ?? labels.title}>
           {names('done') ? (
             <li className="mr-stage-fold" aria-hidden="true">
-              {labels.states.done}: {names('done')}
+              {labels.states.done}: <b>{names('done')}</b>
             </li>
           ) : null}
           {roadSteps.map((step: RoadStep) => {
             const state = states[step];
             const shown = state === 'notTracked' ? 'grey' : state;
-            const spoken = state === 'done' || state === 'now' ? `, ${labels.states[state]}` : '';
+            const spoken = `, ${labels.states[state]}`;
             return (
               <li
                 key={step}

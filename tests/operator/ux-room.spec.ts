@@ -2470,6 +2470,38 @@ test('Room sizes are identical at 320, 360 and 390, never shrink as the width gr
   expect(desktop.buttonHeight).toBe(48);
 });
 
+// The count pill is tied to its icon: inside its own tab and clear of the word.
+async function pillProblems(page: Page) {
+  return await page.locator('.room-lens').evaluateAll((tabs) => {
+    const problems: string[] = [];
+    for (const tab of tabs) {
+      const icon = tab.querySelector('.room-lens-icon[data-count]');
+      if (!icon) continue;
+      const pill = getComputedStyle(icon, '::after');
+      const at = icon.getBoundingClientRect();
+      const left = at.left + parseFloat(pill.left);
+      const top = at.top + parseFloat(pill.top);
+      const box = {
+        left,
+        right: left + parseFloat(pill.width),
+        top,
+        bottom: top + parseFloat(pill.height),
+      };
+      const cell = tab.getBoundingClientRect();
+      const word = tab.querySelector('span:not(.room-lens-icon)')!.getBoundingClientRect();
+      if (box.left < cell.left || box.right > cell.right || box.top < cell.top)
+        problems.push('leaves its tab');
+      const overlaps =
+        box.left < word.right &&
+        box.right > word.left &&
+        box.top < word.bottom &&
+        box.bottom > word.top;
+      if (overlaps) problems.push('overlaps the word');
+    }
+    return problems;
+  });
+}
+
 test('in Arabic at 320 the Room reads right to left, keeps the new English words marked, and nothing overflows', async ({
   page,
 }) => {
@@ -2478,7 +2510,7 @@ test('in Arabic at 320 the Room reads right to left, keeps the new English words
   await page.evaluate(() => window.localStorage.setItem('corridra.language', 'ar'));
   await page.reload();
   await expect(page.locator('.room')).toHaveAttribute('dir', 'rtl');
-  await expect(page.locator('.mr-stage-heading span[lang="en"]')).toContainText('Step 4 of 6');
+  await expect(page.locator('.mr-stage-heading bdi[lang="en"]')).toContainText('Step 4 of 6');
   await expect(page.locator('.room-lenses')).toBeVisible();
   const outside = await page.locator('.room-lenses button, .mr-stage-shape').evaluateAll(
     (els) =>
@@ -2489,9 +2521,63 @@ test('in Arabic at 320 the Room reads right to left, keeps the new English words
   );
   expect(outside).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  // The colon stays with the English run, and the Done line joins names with the Arabic comma.
+  await expect(page.locator('.mr-stage-heading bdi[lang="en"]')).toHaveAttribute('dir', 'ltr');
+  await expect(page.locator('.mr-stage-heading bdi[lang="en"]')).toHaveText(/^Step 4 of 6:$/);
+  await expect(page.locator('.mr-stage-lines p').first()).toContainText('،');
+  expect(await pillProblems(page)).toEqual([]);
   // The six shapes keep one row and the lens tabs stay one row above 23rem and two by two below it.
   const lensRows = await page
     .locator('.room-lenses button')
     .evaluateAll((els) => new Set(els.map((el) => Math.round(el.getBoundingClientRect().y))).size);
   expect(lensRows).toBe(2);
+});
+
+test('the pill stays tied to its icon on phones, and the odd third tab spans the 2 by 2 grid at 320', async ({
+  page,
+}) => {
+  await open(page);
+  for (const width of [320, 390, 768]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator('.room-lens-icon[data-count]').first()).toBeVisible();
+    expect(await pillProblems(page), `pill at ${width}`).toEqual([]);
+  }
+  await page.setViewportSize({ width: 320, height: 900 });
+  const tabs = await page
+    .locator('.room-lens')
+    .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().width)));
+  expect(tabs[2]).toBe(tabs[0] + tabs[1]);
+  const label = await page.locator('.room-next-words small').boundingBox();
+  const sentence = await page.locator('.room-next-words b').boundingBox();
+  expect(sentence!.y).toBeGreaterThan(label!.y + label!.height - 1);
+});
+
+test('the done ticks are whole once the draw animation has finished, at 320, 768 and 1440', async ({
+  page,
+}) => {
+  await open(page);
+  for (const width of [320, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForFunction(() =>
+      document.getAnimations().every((animation) => animation.playState !== 'running'),
+    );
+    const ticks = await page
+      .locator('[data-shape="done"] .corridra-icon path')
+      .evaluateAll((paths) =>
+        paths.map((path) => {
+          const style = getComputedStyle(path);
+          const total = (path as SVGPathElement).getTotalLength();
+          return {
+            offset: parseFloat(style.strokeDashoffset),
+            dash: parseFloat(style.strokeDasharray),
+            total,
+          };
+        }),
+      );
+    expect(ticks.length).toBe(3);
+    for (const tick of ticks) {
+      expect(tick.offset).toBe(0);
+      expect(tick.dash).toBeGreaterThanOrEqual(tick.total);
+    }
+  }
 });

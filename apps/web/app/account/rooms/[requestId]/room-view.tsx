@@ -511,7 +511,9 @@ export function RoomView({
                     setLens(item);
                   }}
                 >
-                  <CorridraIcon name={lensIcon[item]} />
+                  <span className="room-lens-icon" data-count={lensCount(item)}>
+                    <CorridraIcon name={lensIcon[item]} />
+                  </span>
                   {/* An English word until native review (D16), marked so it is read as English. */}
                   <span lang={lensLang(item)}>{lensWords(item)}</span>
                 </button>

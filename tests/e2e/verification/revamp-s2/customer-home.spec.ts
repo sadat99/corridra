@@ -1,7 +1,7 @@
 import { test, expect, signInCustomer } from '../fixtures';
 
 // CX PR 2a, Home on a production build with the test-only customer sign-in. Case ids: CX-02 (every destination
-// and name Home had before is still reachable), CX-06 (no mono-capital label, no "not tracked yet"), and the one
+// and name Home had before is still reachable), CX-06 (no mono-capital label, no "not tracked yet" on Home; the Room alone shows it, per the 20 Nov 2026 amendment), and the one
 // filled action: New Request, in the sidebar from 1024 px, is the only filled button on the page. The verification server has no
 // workspaces switched on, so Active work (which needs them) is covered by tests/integration/revamp-cx2-home.test.ts.
 test.beforeEach(async ({ context }) => {

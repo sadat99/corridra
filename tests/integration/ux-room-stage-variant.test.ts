@@ -42,6 +42,8 @@ describe('StageBar room variant', () => {
     expect(html.match(/aria-current="step"/g)).toHaveLength(1);
     expect(html).toContain('Find, Now');
     expect(html).toContain('Define, Done');
+    expect(html).toContain('Follow through, Later');
+    expect(html).toContain('Compare, Not tracked yet');
   });
 
   it('never shows an untracked stage as done or later, and omits an empty line', async () => {
@@ -73,6 +75,6 @@ describe('StageBar room variant', () => {
     const html = render(
       createElement(StageBar, { status: 'ACTIVE', variant: 'room', stepLang: 'en' }),
     );
-    expect(html).toContain('<span lang="en">Step 2 of 6:</span>');
+    expect(html).toContain('<bdi lang="en" dir="ltr">Step 2 of 6:</bdi>');
   });
 });

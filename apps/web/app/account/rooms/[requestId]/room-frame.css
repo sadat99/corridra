@@ -473,9 +473,44 @@
   font-weight: 600;
 }
 .room[data-room='request'] .room-lens[data-count]::after {
+  content: none;
+}
+/* The count is a small pill tied to the icon, at its inline end, so it never wanders from it or into the word. */
+.room[data-room='request'] .room-lens-icon {
+  position: relative;
+  display: inline-grid;
+}
+.room[data-room='request'] .room-lens-icon[data-count]::after {
+  content: attr(data-count);
   position: absolute;
-  inset-block-start: var(--space-1);
-  inset-inline-start: calc(50% + var(--space-6));
+  inset-block-start: calc(var(--space-1) * -1);
+  inset-inline-start: calc(100% - var(--space-1));
+  display: grid;
+  place-items: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding-inline: var(--space-1);
+  border-radius: 999px;
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1;
+}
+.room[data-room='request'] .room-lens[aria-pressed='true'] .room-lens-icon[data-count]::after {
+  background: var(--brand);
+  box-shadow: none;
+  color: var(--paper);
+}
+.room[data-room='request'] .room-next .text-link {
+  text-decoration-color: var(--on-brand);
+}
+.room[data-room='request'] .room-next-actions .text-link:hover {
+  text-decoration-color: var(--on-brand);
+}
+.room[data-room='request'] .mr-stage-wrap .mr-stage-state {
+  font-weight: 400;
 }
 @media (min-width: 48rem) {
   .room[data-room='request'] .room-lens {
@@ -486,6 +521,15 @@
   .room[data-room='request'] .room-lenses {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* The odd last tab takes the whole row. */
+  .room[data-room='request'] .room-lens:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  /* The label stands above the sentence on the smallest phones. */
+  .room[data-room='request'] .room-next-words {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 @media (forced-colors: active) {
