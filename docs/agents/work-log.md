@@ -4690,3 +4690,21 @@ Preserved: closed real-operation gates; owner-only installs and switches; the ow
 Next action: merge 574 after the Gate; restart the branch from main and build Wave 2 unit 04 in nine small commits with the combined sizes table shown to the owner before any Wave 2 merge; merge 575 after the Gate and its checks (install is the owner's); then units 05, 06, 07; U5 install and member_notice_deliver need the owner's word.
 
 Tested head: 4ed3102 base (documentation only, uncommitted in the working tree).
+
+### 20 November 2026: Wave 2 unit 04 Your Move rebuild (PR 578), Corridra scribe
+
+Request: record unit 04 (docs only) and add its Shared components rows.
+
+Changed: `/account/move` rebuilt presentation-only per UI/UX.v4 (builder commits up to 0be52b5). `quietTitle` is an additive shell prop. One h1 lede. The filter row shows only when there are several kinds, with counts in words. Holders show shape, word and count with closed disclosure rows (the page-length remedy). The Today card is standalone. Page heights 1187/1039/550 against budgets 1188/1062/599 at 320/390/1440; budget unchanged. The h1 is 26 at 320 and 360 because the `--text-h1` token shrinks below 390 (designer: acceptable). `docs/agents/ui-direction.md`: Shared components rows Quiet greeting title, Holder line and the new Today card set to In review (PR 578).
+
+Deferred to a shell unit: the Quick pill, the D2 Shortcuts row and the D3 "This device" control, although the Shared components table lists them under W2-04; their rows stay Planned.
+
+Also recorded: U5 member_access install VERIFIED 20 Nov (run 44642528307 success, "member_access_migrations: 2 applied"; CORRIDRA_MEMBER_ACCESS unchanged). The `APP_ORIGIN` repository variable was reported present by the owner (not verified by the scribe).
+
+Omissions / NOT verified: any signed-in journey; native Arabic review. CORRIDRA_UX_MOVE production value unknown, not touched. The ledger is not updated (not the last PR of the run). No code, tests or ADRs touched.
+
+Preserved: owner-only switches and installs; budgets; the owner's decisions.
+
+Next action: merge 578 after the Gate; a shell unit for Quick, Shortcuts and "This device".
+
+Tested head: 0be52b5 (PR 578).
