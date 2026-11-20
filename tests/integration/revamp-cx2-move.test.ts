@@ -301,6 +301,8 @@ describe('Home summary never claims more than the page could read (Codex review 
   // invitation input lives, not the first Reports tab. The Home tiles are gone (owner handoff, 20 Nov 2026): the
   // shortcut lives in the Quick menu and in All tools, and Home no longer draws it.
   it('sends the Open a Shared Mission shortcut to the Shared With Me tab, from Quick and All tools, not Home', async () => {
+    const { readFileSync } = await import('node:fs');
+    const read = (path: string) => readFileSync(resolve(path), 'utf8');
     const { MoveView } = await load('app/account/move/move-view');
     const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan' });
     expect(html).not.toContain('Open a Shared Mission');
