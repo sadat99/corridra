@@ -362,7 +362,9 @@ describe('the comparison action in the Room', () => {
     expect((view.match(/Ask a Question/g) ?? []).length).toBeGreaterThan(0);
   });
   it('says the person asks the Corridra team, who can then ask the supplier, naming one supplier or saying those suppliers', async () => {
-    const { MissingTermNotice } = await import('../../apps/web/components/missing-term-notice');
+    const { MissingTermNotice } = await import(
+      /* @vite-ignore */ `../../apps/web/${'components/missing-term-notice'}`
+    );
     const web = createRequire(resolve('apps/web/package.json'));
     const ce = web('react').createElement as (t: unknown, p?: unknown) => unknown;
     const renderToStaticMarkup = web('react-dom/server').renderToStaticMarkup as (
