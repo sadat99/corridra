@@ -320,6 +320,7 @@ export function RoomView({
   return (
     <div
       className="room"
+      data-room="request"
       lang={html}
       dir={dir}
       data-journey={journey ? journeyKey[journey] : undefined}
@@ -373,7 +374,8 @@ export function RoomView({
                 records={roadRecords(link)}
                 labels={labels.road}
                 name={title}
-                named
+                variant="room"
+                stepLang={locale !== 'en' ? 'en' : undefined}
               />
             </div>
           </header>

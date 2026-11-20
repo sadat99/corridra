@@ -305,12 +305,14 @@ test('shows who and what the request is, where it stands and what the team said'
   ).toBeVisible();
   await expect(page.getByText('China · Received')).toBeVisible();
   // MEETINGS is Visit. A delivered report lights Compare; no decision is ever claimed, and a stage with no
-  // record is a plain grey segment, never "Not tracked yet" (CX-06).
+  // record says "Not tracked yet", never Done or Later.
   const stage = page.locator('.room-stage .mr-stage');
   await expect(stage.locator('[aria-current="step"]')).toContainText('Visit');
-  await expect(stage.locator('li')).toHaveCount(6);
-  await expect(page.locator('.room-stage').getByText('Stage 4 of 6:')).toBeVisible();
-  await expect(page.getByText('Not tracked yet')).toHaveCount(0);
+  await expect(stage.locator('li[data-shape]')).toHaveCount(6);
+  await expect(page.locator('.room-stage').getByText('Step 4 of 6:')).toBeVisible();
+  await expect(page.locator('.mr-stage-lines')).toContainText('Done: Define, Find, Compare');
+  await expect(page.locator('.mr-stage-lines')).toContainText('Later: Follow through');
+  await expect(page.locator('.mr-stage-lines')).toContainText('Not tracked yet: Decide');
   await expect(page.getByText('Meetings are being arranged for November.')).toBeVisible();
   await expect(page.getByText('We have shortlisted three suppliers.')).toHaveCount(0);
   await page.getByRole('button', { name: /Read Every Reply/ }).click();
@@ -568,7 +570,8 @@ test('without lenses there is no lens control, and without a report the Road doe
   // Without a report Compare is not lit: only Define and Find, the stages before Visit, are done.
   const stage = page.locator('.room-stage .mr-stage');
   await expect(stage.locator('li[data-state="done"]')).toHaveCount(2);
-  await expect(page.getByText('Not tracked yet')).toHaveCount(0);
+  await expect(page.locator('.mr-stage-lines')).toContainText('Not tracked yet: Compare, Decide');
+  await expect(page.locator('.mr-stage-lines')).not.toContainText('Done: Define, Find, Compare');
 });
 
 // Source follow-ups 1 and 3 (S63): a machinery mission says which offer leaves out commissioning, and each quote carries the date it
@@ -2189,29 +2192,36 @@ test('AC/1: the next-step card is navy, its muted text reads at 4.5:1 and it has
   await expect(buttons).toHaveCSS('outline-style', 'solid');
 });
 
-test('AC/1: the stage timeline is vertical from tablet width, in order, and the card stays first on a phone', async ({
+test('AC/1: the stage timeline is vertical on a desktop, folds the finished stages, and the card stays first on a phone', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page);
-  const items = page.locator('.room-stage .mr-stage li');
+  const items = page.locator('.room-stage .mr-stage li[data-shape]');
   await expect(items).toHaveCount(6);
-  const boxes = await items.evaluateAll((els) =>
-    els.map((el) => {
-      const r = el.getBoundingClientRect();
-      return { x: Math.round(r.x), y: r.y };
-    }),
-  );
-  expect(new Set(boxes.map((b) => b.x)).size).toBe(1);
-  expect(boxes.map((b) => b.y)).toEqual([...boxes.map((b) => b.y)].sort((a, b) => a - b));
-  const words = await page.locator('.room-stage .mr-stage-name').allTextContents();
-  expect(words).toEqual(['Define', 'Find', 'Compare', 'Visit', 'Decide', 'Follow through']);
+  // One folded Done row, then the current stage, each later stage, then what is not tracked yet.
+  const rows = await page
+    .locator('.room-stage .mr-stage > li:not([data-shape="done"])')
+    .evaluateAll((els) =>
+      els
+        .map((el) => ({ y: el.getBoundingClientRect().y, text: el.textContent ?? '' }))
+        .sort((a, b) => a.y - b.y)
+        .map((row) => row.text),
+    );
+  expect(rows).toEqual([
+    'Done: Define, Find, Compare',
+    expect.stringMatching(/^VisitNow/),
+    expect.stringMatching(/^Follow throughLater/),
+    expect.stringMatching(/^DecideNot tracked yet/),
+  ]);
   await expect(page.locator('.room-stage .mr-stage [aria-current="step"]')).toContainText('Visit');
+  await expect(page.locator('.room-stage .mr-stage-heading')).toContainText('Step 4 of 6: Visit');
   await page.setViewportSize({ width: 390, height: 844 });
   const phone = await items.evaluateAll((els) =>
     els.map((el) => Math.round(el.getBoundingClientRect().y)),
   );
   expect(new Set(phone).size).toBe(1);
+  await expect(page.locator('.room-stage .mr-stage-lines')).toBeVisible();
   const card = await page.locator('.room-next').boundingBox();
   expect(card!.y + card!.height).toBeLessThan(844);
 });

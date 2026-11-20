@@ -60,3 +60,13 @@
     margin-top: 0;
   }
 }
+
+/* The request Room's stage (variant="room"): the timeline's rows sit close so the page keeps its one screen. */
+@media (min-width: 64rem) {
+  .room[data-room='request'] .mr-stage-wrap[data-variant='room'] {
+    gap: var(--space-2);
+  }
+  .room[data-room='request'] .mr-stage-wrap[data-variant='room'] .mr-stage {
+    gap: var(--space-2);
+  }
+}

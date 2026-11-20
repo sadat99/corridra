@@ -206,3 +206,14 @@ test('the organiser programme room keeps its slim horizontal stage bar on a phon
   expect(new Set(boxes.map((b) => b.y)).size).toBe(1);
   expect(new Set(boxes.map((b) => b.x)).size).toBe(6);
 });
+
+test('the organiser programme room does not take the request Room stage variant', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, 'room=1&proj=1', none);
+  await expect(page.locator('.programme-room[data-room]')).toHaveCount(0);
+  await expect(page.locator('.mr-stage-wrap[data-variant]')).toHaveCount(0);
+  await expect(page.locator('.mr-stage-heading')).toHaveCount(0);
+  await expect(page.locator('.room-next-mark').first()).toBeAttached();
+});
