@@ -78,15 +78,24 @@ function subscribe(listener: () => void) {
     window.removeEventListener('storage', onStorage);
   };
 }
-// True once this browser refused to keep a mark, so the Today card can say so quietly.
-let blocked = false;
+// Whether this browser refuses to keep anything, asked afresh each time (a probe write that is removed at once), so
+// the Today card can say so quietly as soon as the page opens and stops saying it once storage works again.
+function storageBlocked(): boolean {
+  try {
+    const probe = `${seenKey}.probe`;
+    window.localStorage.setItem(probe, '1');
+    window.localStorage.removeItem(probe);
+    return false;
+  } catch {
+    return true;
+  }
+}
 function commit(value: Record<string, string>) {
   memory = JSON.stringify(value);
   try {
     window.localStorage.setItem(seenKey, memory);
   } catch {
     /* The mark still applies to this visit. */
-    blocked = true;
   }
   listeners.forEach((listener) => listener());
 }
@@ -235,11 +244,7 @@ export function MoveView({
   const { html, dir } = localeMeta[locale];
   // Null on the server and on the first paint, so a reply is never shown as new before the device has been asked.
   const raw = useSyncExternalStore(subscribe, snapshot, () => null);
-  const storageBlocked = useSyncExternalStore(
-    subscribe,
-    () => blocked,
-    () => false,
-  );
+  const noStorage = useSyncExternalStore(subscribe, storageBlocked, () => false);
   const seen = useMemo(() => (raw === null ? null : parse(raw)), [raw]);
 
   const unread = seen ? unreadReplies(model.replyCandidates, seen) : [];
@@ -402,7 +407,9 @@ export function MoveView({
     unsorted === 1
       ? 'One more thing needs you under All.'
       : `${unsorted} more things need you under All.`;
-  const filterGap = !!journey && (unsorted > 0 || sortIncomplete);
+  // A waiting row with no journey is hidden by a journey filter too, so a lane must not say nothing waits.
+  const unsortedWaiting = model.waiting.filter((row) => !taskJourneys[row.id]).length;
+  const filterGap = !!journey && (unsorted > 0 || unsortedWaiting > 0 || sortIncomplete);
   // A zero is only said when the view is complete: a cut-short, unread or unsorted view says "not known yet".
   const uncertain = incomplete || filterGap;
   const lede = filterGap
@@ -435,6 +442,19 @@ export function MoveView({
           <h1 className="move-lede">{lede.head}</h1>
           <p className="move-lede-body" role={incomplete || filterGap ? 'status' : undefined}>
             {lede.body}
+            {filterGap ? (
+              <>
+                {' '}
+                <Link
+                  prefetch={false}
+                  className="text-link"
+                  href="/account/move"
+                  onClick={() => remember('all')}
+                >
+                  Show All
+                </Link>
+              </>
+            ) : null}
             {incomplete ? (
               <>
                 {' '}
@@ -526,8 +546,8 @@ export function MoveView({
                     >
                       {say('move.card.reply.read')}
                     </button>
-                    {storageBlocked ? (
-                      <p className="today-note" role="status" lang="en">
+                    {noStorage ? (
+                      <p className="today-note" role="status" lang="en" dir="ltr">
                         {storageWords}
                       </p>
                     ) : null}
@@ -696,7 +716,7 @@ export function MoveView({
                     </h3>
                     {rows.length > 0 ? (
                       <details className="move-lane-more move-more">
-                        <summary lang="en">
+                        <summary lang="en" dir="ltr">
                           {rows.length === 1 ? 'Show 1 Request' : `Show ${rows.length} Requests`}
                         </summary>
                         <RowList
