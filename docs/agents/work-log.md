@@ -4708,3 +4708,21 @@ Preserved: owner-only switches and installs; budgets; the owner's decisions.
 Next action: merge 578 after the Gate; a shell unit for Quick, Shortcuts and "This device".
 
 Tested head: 0be52b5 (PR 578).
+
+### 20 November 2026: records for PRs 574 to 583 and the recent installs, Corridra scribe
+
+Request: one records set (docs only) for PRs 574 to 583 and the installs since run 113.
+
+Why: the ledger still said main 704144e with 574 and 575 as open drafts.
+
+Changed: `docs/V3_LEDGER.md` (resume text: main 7eaf3f4; PR list with merge SHAs from GitHub REST; installs; D1 SUPERSEDED; NOT VERIFIED list; PR 582 follow-ups; owner branch items), exact prior ledger in `docs/v3/history/ledger-before-pr583-records-2026-11-20.md` (10534 bytes, sha256 3d09f8e3...fecec) registered in `docs/v3/history/manifest.json`; `docs/PLAN_STATUS.md` (ADR-087 row: U4 installed 19 Nov, U5 built in PR 561 and installed 20 Nov; new rows ADR-088 CURRENT and ADR-089 UNRESOLVED, owner judgement: its Status says Proposed, no owner Accepted found, yet PR 575 and the ai_model_policy_real install exist). The ADR index already had an ADR-089 row (Proposed), so none was added.
+
+Verified from GitHub job logs: run 44599063142 (head 3b6d699, success) "ai_model_policy_real_migrations: 1 applied"; run 44642528307 (head b5c08da, success) "member_access_migrations: 2 applied", member_notice 1 applied, profile_picture 1 applied (actions unchanged). Merge SHAs and titles from `gh api repos/.../pulls/N`. Main CI, Vercel and live sw.js on 7eaf3f4 are the caller's report of 20 Nov, not re-run here.
+
+Omissions / NOT verified: signed-in Account, Move and Quick journeys; screen reader; Safari and Firefox; a real device; CORRIDRA_UX_MOVE and CORRIDRA_MEMBER_ACCESS production values; who dispatched the installs; native review of draft strings; CI and deploy of 578 to 581. Contradiction found: the brief said ADR-088 is not installed, but the job log shows its module applied, so the register says applied. `docs/agents/ui-direction.md` line 92 still holds the old D1 text (not a scribe file; flagged for the next UI PR). No code, tests or ADRs touched.
+
+Preserved: closed real-world gates; owner-only installs, variables and switches; no signed-in pass claimed.
+
+Next action: Connect AI PR 2 (screen), owner approval at the customer-modules-install gate; fix the D1 text; owner deletes the stale branches.
+
+Tested head: 7eaf3f4 (main); this records commit on claude/records-583, not pushed.
