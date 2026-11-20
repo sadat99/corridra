@@ -182,7 +182,12 @@ test.describe('Explain with a mouse and a keyboard', () => {
     await later.dispatchEvent('pointercancel', { pointerType: 'touch', bubbles: true });
     await page.locator('#outside').focus();
     // The four holder shapes (PR 3) sit between the step shapes and the field.
-    for (const word of ['Supplier or Buyer', 'Workspace owner or admin', 'Corridra team', 'With you']) {
+    for (const word of [
+      'Supplier or Buyer',
+      'Workspace owner or admin',
+      'Corridra team',
+      'With you',
+    ]) {
       await page.keyboard.press('Shift+Tab');
       await expect(page.getByRole('button', { name: word, exact: true })).toBeFocused();
     }
