@@ -37,68 +37,10 @@ import {
 } from './journeys';
 import { JourneyCardView, ParticipantCard } from './journey-card';
 import type { JourneyFacts } from '../../../lib/home-journeys/load';
+import { markSeen, parseSeen, storageWords, useSeen, useStorageBlocked } from '../../../lib/ux/move-seen';
 import './move-view.css';
 
-// The last reply a person marked as read, per request. It lives in this browser only (the same
-// idea as the language choice): the server never learns what was read, and "forget" clears it.
-const seenKey = 'corridra.move.seen';
 const firstShown = 3;
-
-function parse(text: string): Record<string, string> {
-  try {
-    const value: unknown = JSON.parse(text);
-    return value && typeof value === 'object' && !Array.isArray(value)
-      ? (value as Record<string, string>)
-      : {};
-  } catch {
-    return {};
-  }
-}
-
-// Where storage is blocked the mark is kept for this visit only (the same rule as the language choice).
-let memory: string | null = null;
-const listeners = new Set<() => void>();
-function snapshot(): string {
-  if (memory !== null) return memory;
-  try {
-    return window.localStorage.getItem(seenKey) ?? '{}';
-  } catch {
-    return '{}';
-  }
-}
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === null || event.key === seenKey) memory = null;
-    listener();
-  };
-  window.addEventListener('storage', onStorage);
-  return () => {
-    listeners.delete(listener);
-    window.removeEventListener('storage', onStorage);
-  };
-}
-// Whether this browser refuses to keep anything, asked afresh each time (a probe write that is removed at once), so
-// the Today card can say so quietly as soon as the page opens and stops saying it once storage works again.
-function storageBlocked(): boolean {
-  try {
-    const probe = `${seenKey}.probe`;
-    window.localStorage.setItem(probe, '1');
-    window.localStorage.removeItem(probe);
-    return false;
-  } catch {
-    return true;
-  }
-}
-function commit(value: Record<string, string>) {
-  memory = JSON.stringify(value);
-  try {
-    window.localStorage.setItem(seenKey, memory);
-  } catch {
-    /* The mark still applies to this visit. */
-  }
-  listeners.forEach((listener) => listener());
-}
 
 // The journey the person last chose on Home ("all" for All), in this browser only and per signed-in person, so Home
 // opens where they left it (owner, 5 Nov 2026: one Home with the switch, auto-hidden for single-journey users and
@@ -169,8 +111,6 @@ function day(value: string, locale: string) {
 function longDay(value: string, locale: string) {
   return formatLongUtcDay(`${value}T00:00:00Z`, locale) || value;
 }
-
-const storageWords = 'This device cannot remember what you have read.';
 
 // Launch language is English only (owner, 4 Nov 2026), so these lines are not in the catalogues and
 // carry lang="en" in every locale: no screen claims a translation nobody reviewed.
@@ -243,14 +183,13 @@ export function MoveView({
   const labels = useMemo(() => mrLabelsFor(locale), [locale]);
   const { html, dir } = localeMeta[locale];
   // Null on the server and on the first paint, so a reply is never shown as new before the device has been asked.
-  const raw = useSyncExternalStore(subscribe, snapshot, () => null);
-  const noStorage = useSyncExternalStore(subscribe, storageBlocked, () => false);
-  const seen = useMemo(() => (raw === null ? null : parse(raw)), [raw]);
+  const raw = useSeen();
+  const noStorage = useStorageBlocked();
+  const seen = useMemo(() => (raw === null ? null : parseSeen(raw)), [raw]);
 
   const unread = seen ? unreadReplies(model.replyCandidates, seen) : [];
   const mark = (requestId: string, latestReplyAt: string) =>
-    commit({ ...(seen ?? {}), [requestId]: latestReplyAt });
-  const forget = () => commit({});
+    markSeen(seen, requestId, latestReplyAt);
 
   // The switch counts what needs the person in each journey; it appears once the person has two journeys (a
   // single-journey Home has nothing to switch between), or while a journey is being shown, so All is one tap away.
@@ -797,48 +736,6 @@ export function MoveView({
         <p className="move-explainer" role="note">
           {say('move.partial')}
         </p>
-      ) : null}
-
-      {/* The shortcuts guide an empty Home. With work on the page, New Request is in the header and the
-          other two are in All tools, so the busy Home stays within one screen (owner rule). */}
-      {nothing ? (
-        <nav className="move-shortcuts" aria-label="Shortcuts" lang="en">
-          <Link prefetch={false} className="move-tile" href="/plan#receipt-check">
-            <span className="move-tile-mark" aria-hidden="true">
-              <CorridraIcon name="search" />
-            </span>
-            <span className="move-tile-words">
-              <b>Check a Request Receipt</b>
-              <small>See progress and replies on a request you sent.</small>
-            </span>
-          </Link>
-          <Link prefetch={false} className="move-tile" href="/account?view=results&tab=shared">
-            <span className="move-tile-mark" aria-hidden="true">
-              <CorridraIcon name="open" />
-            </span>
-            <span className="move-tile-words">
-              <b>Open a Shared Mission</b>
-              <small>Paste the private link you were sent.</small>
-            </span>
-          </Link>
-          <Link prefetch={false} className="move-tile" href="/account?view=work">
-            <span className="move-tile-mark" aria-hidden="true">
-              <CorridraIcon name="work" />
-            </span>
-            <span className="move-tile-words">
-              <b>See All Requests</b>
-              <small>Every request in your workspaces.</small>
-            </span>
-          </Link>
-        </nav>
-      ) : null}
-
-      {seen && Object.keys(seen).length > 0 ? (
-        <div className="move-foot">
-          <button type="button" className="button button-secondary" onClick={forget}>
-            {say('move.forget')}
-          </button>
-        </div>
       ) : null}
     </div>
   );

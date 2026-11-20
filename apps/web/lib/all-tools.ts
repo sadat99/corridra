@@ -57,6 +57,13 @@ export const tools: readonly Tool[] = [
     group: 'Start',
   },
   {
+    route: '/account',
+    href: '/account?view=results&tab=shared',
+    label: 'Open a shared mission',
+    line: 'Paste the private link you were sent.',
+    group: 'Start',
+  },
+  {
     route: '/workspace',
     href: '/workspace',
     label: 'Open the start page',
