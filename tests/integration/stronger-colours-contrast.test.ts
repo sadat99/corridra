@@ -562,3 +562,27 @@ describe('Your Move: the Today card on its navy surface (UI/UX.v4)', () => {
     for (const rule of todayRules) expect(rule).not.toMatch(/var\(--(action|accent|ac-cobalt)\)/);
   });
 });
+
+// UI/UX.v4 row "Compare" (20 Nov 2026): the one comparison action is cobalt on the white page. Cobalt on navy fails AA,
+// so a button that ever sits on a navy card is white, and the comparison's own stylesheets keep navy out from under it.
+describe('the comparison action is never cobalt on navy', () => {
+  test('white on navy reaches 4.5 to 1, so a button on a navy card would be white', () => {
+    expect(ratioOf({ fg: '--on-brand', bg: '--ac-navy', min: 4.5 }, false)).toBeGreaterThanOrEqual(
+      4.5,
+    );
+  });
+
+  test('cobalt on navy is about 2.41 to 1, below AA, which is why it is never used', () => {
+    const cobaltOnNavy = ratioOf({ fg: '--action', bg: '--ac-navy', min: 0 }, false);
+    expect(cobaltOnNavy).toBeLessThan(4.5);
+    expect(cobaltOnNavy).toBeCloseTo(2.41, 1);
+  });
+
+  test('the comparison stylesheets put no navy surface anywhere, so the cobalt action never sits on one', () => {
+    const navy = /background(?:-color)?\s*:[^;]*var\(--(?:brand-deep|ac-navy|ac-surface-navy)\)/;
+    for (const file of ['components/ux/compare-grid.css', 'components/missing-term-notice.css'])
+      expect(stripComments(read(file)), file).not.toMatch(navy);
+    // The guard can fail: a planted navy fill is found.
+    expect('.x { background: var(--brand-deep); }').toMatch(navy);
+  });
+});

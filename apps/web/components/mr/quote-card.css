@@ -129,8 +129,18 @@
 .mr-quote-terms dd .mr-explain-trigger {
   color: var(--text-strong);
 }
+/* The comparison table's size (UI/UX.v4 row "Compare"): a 30 px square beside the word and its line. */
+.mr-quote-fill[data-size='30'] {
+  flex: none;
+  inline-size: 1.875rem;
+  block-size: 1.875rem;
+}
 @media (forced-colors: active) {
+  /* Forced colours drop gradient backgrounds, so the fill keeps its own system colours: the hatch and stripe
+     stay drawn, in CanvasText on Canvas. */
   .mr-quote-fill {
+    forced-color-adjust: none;
+    background-color: Canvas;
     border-color: CanvasText;
   }
   .mr-quote-fill[data-fill='hatched'] {

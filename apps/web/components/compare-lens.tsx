@@ -1,59 +1,83 @@
 'use client';
 
-import { useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { QuoteCard } from './mr/quote-card';
-import { useMrLabels } from './mr/use-labels';
+import { useId, useMemo, useState, type ReactNode } from 'react';
+import { CompareGrid, type CompareGridRow } from './ux/compare-grid';
 import { useLanguage } from './language-provider';
-import { translate } from '../lib/i18n/messages';
+import { translate, type MessageKey } from '../lib/i18n/messages';
 import type { QuoteCardView } from '../lib/quote-cards';
 import { termDiff } from '../lib/term-diff';
+import type { QuoteTerm } from './mr/types';
 import './compare-lens.css';
 
+/** The report's table has its own region name, so it differs from the Room's table above it. */
+const reportRegion: MessageKey = 'compare.regionReport';
+
+/** The prices first, in the engine's own words, then every term of every quote in the order the quotes list them. */
+function termsOf(card: QuoteCardView): QuoteTerm[] {
+  return [
+    { label: 'Original unit price', value: card.unitPrice, money: true },
+    { label: 'Original total', value: card.total, money: true },
+    ...card.terms,
+  ];
+}
+
+/** The quotes as the shared comparison table: one column per quote, one row per term, folded by `termDiff`. */
+export function sideBySide(cards: QuoteCardView[]): {
+  rows: CompareGridRow[];
+  shippingExcluded: number;
+} {
+  const offers = cards.map((card) => ({ currency: card.currency, terms: termsOf(card) }));
+  // The fold rule runs on the terms only: the prices never fold, because two equal amounts can be per a different
+  // unit or on different delivery terms (the notice in lib/room.ts refuses to call those the same price).
+  const diff = termDiff(cards);
+  const labels: string[] = [];
+  for (const offer of offers)
+    for (const term of offer.terms) if (!labels.includes(term.label)) labels.push(term.label);
+  const rows = labels.map((label) => ({
+    label,
+    same: diff.same.includes(label),
+    cells: offers.map((offer) => {
+      const term = offer.terms.find((t) => t.label === label);
+      // A term a quote does not list is not stated by that quote: shown as Not stated, never as zero.
+      return {
+        value: term?.value ?? null,
+        ...(term?.state === 'excluded' ? { excluded: true } : {}),
+        ...(term?.money ? { money: true } : {}),
+      };
+    }),
+  }));
+  const shippingExcluded = cards.filter((card) =>
+    card.terms.some((term) => term.state === 'excluded'),
+  ).length;
+  return { rows, shippingExcluded };
+}
+
 /**
- * The Compare lens: the offers as cards with the verdict first, and the original table one tap away.
- * Both views show the same approved offers and the same engine verdicts; the lens adds none. The
- * table is the component that has always been there, passed in as `matrix`.
+ * The Compare lens: the offers side by side with the verdict on top of each column, and the original table one tap
+ * away. Both views show the same approved offers and the same engine verdicts; the lens adds none. The table is the
+ * component that has always been there, passed in as `matrix`.
  */
-export function CompareLens({ cards, matrix }: { cards: QuoteCardView[]; matrix: ReactNode }) {
-  const [view, setView] = useState<'cards' | 'table'>('cards');
-  const labels = useMrLabels();
+export function CompareLens({
+  cards,
+  matrix,
+  headingLevel = 4,
+}: {
+  cards: QuoteCardView[];
+  matrix: ReactNode;
+  /** The level of the comparison's heading, one below the section it sits in. */
+  headingLevel?: 2 | 3 | 4;
+}) {
+  const [view, setView] = useState<'sideBySide' | 'table'>('sideBySide');
   const { locale } = useLanguage();
-  const [diffOnly, setDiffOnly] = useState(true);
-  const say = (
-    key:
-      | 'compare.cards'
-      | 'compare.table'
-      | 'compare.note'
-      | 'compare.diffOnly'
-      | 'compare.sameHidden'
-      | 'compare.sameHiddenOne'
-      | 'compare.showAll'
-      | 'compare.allSame'
-      | 'compare.shownAll',
-  ) => translate(locale, key);
+  const say = (key: MessageKey) => translate(locale, key);
   const noteId = useId();
-  const diff = useMemo(() => termDiff(cards), [cards]);
-  // The control exists only when there is something to fold: two or more offers with a term they all state the same.
-  const canFold = diff.same.length > 0;
-  const folding = canFold && diffOnly;
-  const toggleRef = useRef<HTMLButtonElement>(null);
-  // Counted in the reader's own digits, so a Bengali sentence does not mix digit sets.
-  const sameCount = new Intl.NumberFormat(locale).format(diff.same.length);
-  const foldedText = (
-    diff.same.length === 1 ? say('compare.sameHiddenOne') : say('compare.sameHidden')
-  ).replace('{count}', sameCount);
-  // One persistent live region: only its words change, so a screen reader hears both the fold and the unfold.
-  const statusText = !folding
-    ? say('compare.shownAll')
-    : diff.allSame
-      ? `${foldedText} ${say('compare.allSame')}`
-      : foldedText;
+  const grid = useMemo(() => sideBySide(cards), [cards]);
   if (!cards.length) return <>{matrix}</>;
   return (
     <div className="compare-lens">
       <div className="compare-lens-bar">
         <div role="group" aria-label={say('compare.note')} aria-describedby={noteId}>
-          {(['cards', 'table'] as const).map((item) => (
+          {(['sideBySide', 'table'] as const).map((item) => (
             <button
               key={item}
               type="button"
@@ -61,69 +85,22 @@ export function CompareLens({ cards, matrix }: { cards: QuoteCardView[]; matrix:
               aria-pressed={view === item}
               onClick={() => setView(item)}
             >
-              {say(item === 'cards' ? 'compare.cards' : 'compare.table')}
+              {say(item === 'sideBySide' ? 'compare.sideBySide' : 'compare.table')}
             </button>
           ))}
         </div>
         <p id={noteId}>{say('compare.note')}</p>
       </div>
-      {view === 'cards' ? (
-        <>
-          {canFold ? (
-            <div className="compare-lens-diff">
-              <button
-                ref={toggleRef}
-                type="button"
-                className="compare-lens-diff-toggle"
-                aria-pressed={diffOnly}
-                onClick={() => setDiffOnly((value) => !value)}
-              >
-                {say('compare.diffOnly')}
-              </button>
-              <p role="status" className="compare-lens-diff-count">
-                {statusText}
-              </p>
-              {folding ? (
-                <button
-                  type="button"
-                  className="compare-lens-diff-show"
-                  onClick={() => {
-                    setDiffOnly(false);
-                    // The button leaves with the fold: keep the keyboard place on the control that undoes it.
-                    toggleRef.current?.focus();
-                  }}
-                >
-                  {say('compare.showAll')}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-          <div className="compare-lens-cards">
-            {cards.map((card) => (
-              <QuoteCard
-                key={card.id}
-                supplier={card.supplier}
-                supplierLang={card.supplierLang}
-                place={card.place}
-                revision={card.revision}
-                currency={card.currency}
-                unitPrice={card.unitPrice}
-                total={card.total}
-                comparable={card.comparable}
-                reason={card.reason}
-                terms={
-                  folding
-                    ? card.terms.filter((term) => !diff.same.includes(term.label))
-                    : card.terms
-                }
-                trust={card.trust}
-                provenance={card.provenance}
-                reference={card.reference}
-                labels={labels.quote}
-              />
-            ))}
-          </div>
-        </>
+      {view === 'sideBySide' ? (
+        <CompareGrid
+          locale={locale}
+          markLang={locale !== 'en'}
+          headingLevel={headingLevel}
+          columns={cards}
+          rows={grid.rows}
+          shippingExcluded={grid.shippingExcluded}
+          regionLabel={reportRegion}
+        />
       ) : (
         matrix
       )}

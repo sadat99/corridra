@@ -4,7 +4,7 @@
 // never converts, ranks or recommends.
 import type { ReactNode } from 'react';
 import type { MissionExperience } from '@corridra/delivery/report';
-import { missingTermNotice } from '../lib/room';
+import { missingTermNotice, type MissingTermNoticeView } from '../lib/room';
 import './missing-term-notice.css';
 
 export function MissingTermNotice({
@@ -12,8 +12,11 @@ export function MissingTermNotice({
   action,
 }: {
   experience: MissionExperience;
-  /** The existing question action, placed beside the notice by the caller only where it is allowed. */
-  action?: ReactNode;
+  /**
+   * The existing question action, placed beside the notice by the caller only where it is allowed. A function is
+   * given the notice, so the action can name the suppliers it concerns.
+   */
+  action?: ReactNode | ((view: MissingTermNoticeView) => ReactNode);
 }) {
   const view = missingTermNotice(experience);
   if (!view) return null;
@@ -31,7 +34,11 @@ export function MissingTermNotice({
         ))}
         {view.samePrice ? <p>{view.samePrice}</p> : null}
       </div>
-      {action ? <div className="missing-term-notice-action">{action}</div> : null}
+      {action ? (
+        <div className="missing-term-notice-action">
+          {typeof action === 'function' ? action(view) : action}
+        </div>
+      ) : null}
     </section>
   );
 }

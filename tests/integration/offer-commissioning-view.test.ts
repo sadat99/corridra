@@ -151,14 +151,15 @@ describe('the quote reference', () => {
     expect(referenceLine({ sourceId, observedAt })).not.toMatch(/https?:|\/|\\/);
   });
 
-  it('is on the ledger column and the phone card, and absent when the approved detail has no reference', async () => {
+  it('is on the ledger column head, and absent when the approved detail has no reference', async () => {
     const { SourceLedger } = await loadWeb('components/source-ledger');
     const withRef = plain(
       render(
         ce(SourceLedger, { experience: experience(machinery, [offer('q1')]), language: 'en' }),
       ),
     );
-    expect(withRef.match(/Quoted Nov 10, 2026 · Source ref 3f9a2c1d/g)).toHaveLength(2);
+    // One table at every width (UI/UX.v4 row "Compare"), so the reference is shown once.
+    expect(withRef.match(/Quoted Nov 10, 2026 · Source ref 3f9a2c1d/g)).toHaveLength(1);
     const without = plain(
       render(
         ce(SourceLedger, {
@@ -226,6 +227,30 @@ describe('shipping scope in the source ledger (visual grammar PR 2)', () => {
     expect(ledgerRow('EXCLUDED', 'NOT_SUPPLIED').differs).toBe(true);
     expect(ledgerRow('EXCLUDED', 'INCLUDED').differs).toBe(true);
     expect(ledgerRow('EXCLUDED', 'EXCLUDED').differs).toBe(false);
+  });
+  it('marks EXCLUDED as excluded, never folds it, and says so under the table, never with the stored word', async () => {
+    const row = ledgerRow('EXCLUDED', 'EXCLUDED');
+    expect(row.cells.map((c) => c.excluded)).toEqual([true, true]);
+    expect(row.same).toBe(false);
+    expect(ledgerRow('INCLUDED', 'INCLUDED').same).toBe(true);
+    const { SourceLedger } = await loadWeb('components/source-ledger');
+    const html = plain(
+      render(
+        ce(SourceLedger, {
+          experience: experience(
+            machinery,
+            ['q1', 'q2'].map((id) =>
+              offer(id, { terms: { ...baseTerms, shipping: 'EXCLUDED' } as never }),
+            ),
+          ),
+          language: 'en',
+        }),
+      ),
+    );
+    // Shipping scope is behind See All Terms; the line under the table says it while the row is not shown.
+    expect(html).not.toContain('>Shipping scope</th>');
+    expect(html).toContain('Shipping: Excluded in both. Not part of the price.');
+    expect(html).not.toContain('EXCLUDED');
   });
 });
 

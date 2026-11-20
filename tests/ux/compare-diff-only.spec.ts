@@ -3,8 +3,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { resolve } from 'node:path';
 
-// CMP1 (17 November 2026), V3-04-077: the Compare cards' differences-only control. Own esbuild fixture, as
-// mr-quote-terms.spec.ts, with the two sample offers (Lantern; 绿野 with lead time and payment not stated).
+// CMP1 (17 November 2026), V3-04-077: the Compare lens differences-only control, on the shared comparison table since
+// UI/UX.v4 row "Compare" (20 November 2026). Own esbuild fixture, as mr-quote-terms.spec.ts, with the two sample
+// offers (Lantern; 绿野 with lead time and payment not stated). The prices never fold, so 7 rows fold.
 let script = '';
 let styles = '';
 
@@ -42,6 +43,7 @@ createRoot(document.getElementById('mount')).render(
   <main id="cmp-fixture" lang="en" className="ux-workspace ux-customer">
     <h1>Compare fixture</h1>
     <h2>Offers</h2>
+    <h3>Original quotations and comparison</h3>
     <CompareLens cards={cards} matrix={<table><caption>Table</caption></table>} />
   </main>,
 );
@@ -82,28 +84,27 @@ async function mount(page: Page, width: number) {
   );
   await page.addScriptTag({ content: 'window.process = { env: { NODE_ENV: "production" } };' });
   await page.addScriptTag({ content: script, type: 'module' });
-  await page.waitForSelector('#cmp-fixture .compare-lens-cards');
+  await page.waitForSelector('#cmp-fixture .compare-grid-table');
 }
 
 const height = (page: Page) => page.evaluate(() => document.documentElement.scrollHeight);
-const labels = (page: Page) => page.locator('.mr-quote-terms dt').allTextContents();
+const labels = (page: Page) => page.locator('.compare-grid-label').allTextContents();
 
 for (const width of [320, 390]) {
   test(`differences-only is on, counted, 44 px and axe clean at ${width}px`, async ({ page }) => {
     await mount(page, width);
     const toggle = page.getByRole('button', { name: 'Differences Only', exact: true });
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.compare-lens-diff-count')).toContainText(
-      '7 terms are the same in every offer',
-    );
+    await expect(page.locator('.compare-grid-status')).toHaveText('7 terms are the same in both.');
     const box = (await toggle.boundingBox())!;
     expect(box.height).toBeGreaterThanOrEqual(44);
     expect(box.width).toBeGreaterThanOrEqual(44);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
-    // The verdict, seal and engine reason stay visible.
-    await expect(page.getByText('Comparable on supplied terms')).toBeVisible();
+    // The verdict, seal and engine reason stay visible, on top of each column.
+    await expect(page.getByText('Comparable', { exact: true })).toBeVisible();
+    await expect(page.getByText('Not comparable yet', { exact: true })).toBeVisible();
     await expect(page.getByText('Missing: Lead time, Payment terms.')).toBeVisible();
     const axe = await new AxeBuilder({ page }).include('#cmp-fixture').analyze();
     expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
@@ -121,12 +122,14 @@ test('keyboard toggle folds and restores every row in the original order', async
     'aria-pressed',
     'false',
   );
-  await expect(page.locator('[role="status"].compare-lens-diff-count')).toHaveText(
+  await expect(page.locator('[role="status"].compare-grid-status')).toHaveText(
     'Showing every term',
   );
   await expect(page.getByRole('button', { name: 'Show Them' })).toHaveCount(0);
-  const all = (await labels(page)).slice(0, 11);
+  const all = await labels(page);
   expect(all).toEqual([
+    'Original unit price',
+    'Original total',
     'Quoted specification',
     'Quantity',
     'Lead time',
@@ -140,7 +143,7 @@ test('keyboard toggle folds and restores every row in the original order', async
     'Warranty',
   ]);
   await page.keyboard.press('Space');
-  await expect(page.locator('.compare-lens-diff-count')).toContainText('7 terms');
+  await expect(page.locator('.compare-grid-status')).toContainText('7 terms');
   // The show control in the count line restores them too.
   await page.getByRole('button', { name: 'Show Them', exact: true }).focus();
   await page.keyboard.press('Enter');
@@ -159,11 +162,11 @@ test('no row leaves the content without the count line, and the page gets shorte
     await mount(page, width);
     const foldedHeight = await height(page);
     const foldedRows = (await labels(page)).length;
-    await expect(page.locator('.compare-lens-diff-count')).toContainText('7 terms');
+    await expect(page.locator('.compare-grid-status')).toContainText('7 terms');
     await page.getByRole('button', { name: 'Differences Only', exact: true }).click();
     const fullHeight = await height(page);
     const fullRows = (await labels(page)).length;
-    expect(fullRows - foldedRows).toBe(14); // 7 rows on each of the two cards
+    expect(fullRows - foldedRows).toBe(7); // one table: the 7 rows the count names
     expect(foldedHeight).toBeLessThan(fullHeight);
     lengths[width] = [fullHeight, foldedHeight];
   }

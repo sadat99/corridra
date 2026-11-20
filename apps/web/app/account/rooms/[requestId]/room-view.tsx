@@ -14,7 +14,7 @@ import { ModeLabel, StageBar, mrLabelsFor } from '../../../../components/mr';
 import { SourceLedger } from '../../../../components/source-ledger';
 import { SellBoard } from '../../../../components/sell-board';
 import { sellFacts } from '../../../../lib/home-journeys/facts';
-import { fill } from '../../../../lib/i18n/fill';
+import { fill, fillNodes } from '../../../../lib/i18n/fill';
 import { localeMeta } from '../../../../lib/i18n/locales';
 import { translate, type MessageKey } from '../../../../lib/i18n/messages';
 import { afterSaveHref, roadRecords, type RoomLink, type RoomTask } from '../../../../lib/room';
@@ -117,6 +117,8 @@ export function RoomView({
   const say = (key: MessageKey) => translate(locale, key);
   const labels = useMemo(() => mrLabelsFor(locale), [locale]);
   const { html, dir } = localeMeta[locale];
+  // The comparison sits in an English region; its translated words carry their own language and direction.
+  const wordsLang = locale === 'en' ? { lang: undefined, dir: undefined } : { lang: html, dir };
   const { detail, state, retry } = useRoomDetail(requestId, subject, issuer);
   // One read of the saved report serves every view: the report component tells the Room what it read.
   const [report, setReport] = useState<{ data: DeliveryReport | null; status: string }>({
@@ -556,19 +558,53 @@ export function RoomView({
                       more={fullToggle}
                     />
                   ) : (
-                    <>
-                      <MissingTermNotice
-                        experience={experience}
-                        action={
-                          serviceRequestsEnabled ? (
-                            <Link prefetch={false} className="text-link" href={helpHref}>
-                              Ask a Question
-                            </Link>
-                          ) : null
-                        }
-                      />
-                      <SourceLedger experience={experience} language={locale} more={fullToggle} />
-                    </>
+                    <SourceLedger
+                      experience={experience}
+                      language={locale}
+                      more={fullToggle}
+                      notice={
+                        <MissingTermNotice
+                          experience={experience}
+                          action={
+                            serviceRequestsEnabled
+                              ? (view) => (
+                                  <>
+                                    <Link
+                                      prefetch={false}
+                                      className="button button-primary compare-grid-action"
+                                      href={helpHref}
+                                      lang={wordsLang.lang}
+                                      dir={wordsLang.dir}
+                                    >
+                                      {say('compare.ask')}
+                                    </Link>
+                                    {/* What the action does, as the service request flow does it: the person asks
+                                        the Corridra team, who may then ask the supplier. No message goes to a
+                                        supplier from here. */}
+                                    <p
+                                      className="compare-grid-assure"
+                                      lang={wordsLang.lang}
+                                      dir={wordsLang.dir}
+                                    >
+                                      {view.missingFrom.length === 1
+                                        ? fillNodes(say('compare.askOne'), {
+                                            // The name keeps its own direction and language, so no character in
+                                            // it can reorder the words around it.
+                                            supplier: (
+                                              <span dir="auto" lang={view.missingFrom[0]!.lang}>
+                                                {view.missingFrom[0]!.supplier}
+                                              </span>
+                                            ),
+                                          })
+                                        : say('compare.askMany')}
+                                    </p>
+                                  </>
+                                )
+                              : null
+                          }
+                        />
+                      }
+                    />
                   )
                 ) : (
                   <>

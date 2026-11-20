@@ -1,52 +1,40 @@
 'use client';
 
-// The Source room's quote comparison (approved work rooms, 5 Nov 2026). One column per supplier on a wide
-// screen, one card per supplier on a phone; the key machinery terms first and every other term one tap away.
-// The model is lib/source-ledger.ts: it adds no verdict, converts no currency and keeps a missing term missing.
+// The Source room's quote comparison (approved work rooms, 5 Nov 2026; UI/UX.v4 row "Compare", 20 Nov 2026). One
+// shared table (`CompareGrid`): a column per supplier, the row labels frozen while the suppliers scroll sideways,
+// the key machinery terms first and every other term one tap away. The model is lib/source-ledger.ts: it adds no
+// verdict, converts no currency and keeps a missing term missing.
 import type { MissionExperience } from '@corridra/delivery/report';
-import { useId, useMemo, useState, type ReactNode } from 'react';
-import { sourceLedger, type LedgerCell } from '../lib/source-ledger';
-import { FactLabel } from './fact-label';
-import { CorridraIcon } from './corridra-icon';
+import { useMemo, useState, type ReactNode } from 'react';
+import { sourceLedger, type LedgerRow } from '../lib/source-ledger';
+import { CompareGrid } from './ux/compare-grid';
 import { useLanguage } from './language-provider';
 import { translate } from '../lib/i18n/messages';
 import './source-ledger.css';
 
-function Cell({ cell }: { cell: LedgerCell }) {
-  if (cell.value === null || cell.value === undefined)
-    return <span className="ledger-missing">Not stated</span>;
-  return (
-    <>
-      <span dir="auto">{cell.value}</span>
-      {cell.sub ? <small>{cell.sub}</small> : null}
-    </>
-  );
-}
-
 export function SourceLedger({
   experience,
   language = 'en',
+  notice,
   more,
 }: {
   experience: MissionExperience;
   language?: string;
+  /** The missing terms notice with its one action, placed under the table and the money line. */
+  notice?: ReactNode;
   /** One more action for the foot of the comparison (the Room's "Show the requirement..." control). */
   more?: ReactNode;
 }) {
-  const [differencesOnly, setDifferencesOnly] = useState(false);
   const [allTerms, setAllTerms] = useState(false);
   const [includeEarlier, setIncludeEarlier] = useState(false);
-  const toggleId = useId();
   const { locale } = useLanguage();
-  // The words the quote cards already use for a supplier's quote version, in the reader's language.
-  const versionLabel = translate(locale, 'mr.quote.revision');
   const ledger = useMemo(
     () => sourceLedger(experience, { includeEarlier, language }),
     [experience, includeEarlier, language],
   );
   if (ledger.columns.length === 0)
     return (
-      <section className="ledger" aria-label="Compare quotes">
+      <section className="ledger" aria-label={translate(locale, 'compare.heading')}>
         <p className="ledger-empty" role="status">
           No quotes on the current request yet.
           {ledger.earlier > 0
@@ -67,181 +55,63 @@ export function SourceLedger({
       </section>
     );
   const keyRows = ledger.rows.filter((row) => row.key);
-  const shown = ledger.rows.filter(
-    (row) => (allTerms || row.key) && (!differencesOnly || row.differs),
-  );
+  const shown = ledger.rows.filter((row) => allTerms || row.key);
   const hiddenTerms = ledger.rows.length - keyRows.length;
-  const count = ledger.columns.length;
   // Terms no quote states are one row that still names every term, so a short comparison is not a column of
   // "Not stated". It is data driven: a term that any quote states is its own row again. One such term stays a row.
-  const missingEverywhere = (row: (typeof shown)[number]) =>
-    row.cells.every((cell) => cell.value === null || cell.value === undefined);
+  const missingEverywhere = (row: LedgerRow) =>
+    row.cells.every((cell) => !cell.excluded && (cell.value === null || cell.value === undefined));
   const unstated = shown.filter(missingEverywhere);
   const folded = unstated.length >= 2;
   const rowsShown = folded ? shown.filter((row) => !missingEverywhere(row)) : shown;
-  const unstatedTerms = unstated.map((row) => row.label).join(', ');
   return (
-    <section className="ledger" aria-label="Compare quotes">
-      <div className="ledger-scroll" role="region" aria-label="Quotes side by side" tabIndex={0}>
-        <table className="ledger-table">
-          <thead>
-            <tr>
-              <td className="ledger-corner">
-                <CorridraIcon name="shield" />
-                Prices as each supplier quoted, never converted.
-              </td>
-              {ledger.columns.map((column) => (
-                <th scope="col" key={column.id}>
-                  <b lang={column.supplierLang}>{column.supplier}</b>
-                  {column.place ? <small>{column.place}</small> : null}
-                  <small>
-                    {versionLabel} <span className="ledger-num">{column.revision}</span> ·{' '}
-                    {column.currency}
-                  </small>
-                  {column.trust ? (
-                    <FactLabel label={column.trust} />
-                  ) : (
-                    <small>{column.provenance}</small>
-                  )}
-                  {column.reference ? <small>{column.reference}</small> : null}
-                  {column.historical ? (
-                    <small className="ledger-earlier">Earlier quote</small>
-                  ) : null}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rowsShown.map((row) => (
-              <tr key={row.label}>
-                <th scope="row">{row.label}</th>
-                {row.cells.map((cell, index) => (
-                  <td key={ledger.columns[index]!.id}>
-                    <Cell cell={cell} />
-                  </td>
-                ))}
-              </tr>
-            ))}
-            {folded ? (
-              <tr className="ledger-unstated">
-                <th scope="row">Not stated yet</th>
-                <td colSpan={count}>
-                  <span className="ledger-unstated-terms">{unstatedTerms}</span>
-                </td>
-              </tr>
-            ) : null}
-            <tr className="ledger-verdict">
-              <th scope="row">Can be compared</th>
-              {ledger.columns.map((column) => (
-                <td key={column.id}>
-                  <span className="ledger-badge" data-ok={column.comparable ? 'true' : 'false'}>
-                    {column.comparable ? 'Comparable' : 'Not comparable'}
-                  </span>
-                  {column.reason ? <small>{column.reason}</small> : null}
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div
-        className="ledger-cards-scroll"
-        role="region"
-        aria-label="Quotes, one card per supplier"
-        tabIndex={0}
-      >
-        <ul className="ledger-cards" aria-label="Quotes">
-          {ledger.columns.map((column, index) => (
-            <li key={column.id}>
-              <article className="ledger-card" aria-label={column.supplier}>
-                <header>
-                  <b lang={column.supplierLang}>{column.supplier}</b>
-                  {column.place ? <small>{column.place}</small> : null}
-                  <small>
-                    {versionLabel} <span className="ledger-num">{column.revision}</span> ·{' '}
-                    {column.currency}
-                  </small>
-                  {column.trust ? (
-                    <FactLabel label={column.trust} />
-                  ) : (
-                    <small>{column.provenance}</small>
-                  )}
-                  {column.reference ? <small>{column.reference}</small> : null}
-                  {column.historical ? (
-                    <small className="ledger-earlier">Earlier quote</small>
-                  ) : null}
-                </header>
-                <dl>
-                  {rowsShown.map((row) => (
-                    <div key={row.label}>
-                      <dt>{row.label}</dt>
-                      <dd>
-                        <Cell cell={row.cells[index]!} />
-                      </dd>
-                    </div>
-                  ))}
-                  {folded ? (
-                    <div>
-                      <dt>Not stated yet</dt>
-                      <dd>
-                        <span className="ledger-unstated-terms">{unstatedTerms}</span>
-                      </dd>
-                    </div>
-                  ) : null}
-                </dl>
-                <footer>
-                  <span className="ledger-badge" data-ok={column.comparable ? 'true' : 'false'}>
-                    {column.comparable ? 'Comparable' : 'Not comparable'}
-                  </span>
-                  {column.reason ? <small>{column.reason}</small> : null}
-                </footer>
-              </article>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="ledger-foot">
-        <p className="ledger-sum">
-          <b>
-            {count} {count === 1 ? 'quote' : 'quotes'}
-          </b>{' '}
-          · {ledger.comparable} comparable · {ledger.notComparable} not comparable
-        </p>
-        <span className="ledger-foot-actions">
-          <label className="ledger-toggle" htmlFor={toggleId}>
-            <input
-              id={toggleId}
-              type="checkbox"
-              checked={differencesOnly}
-              onChange={(event) => setDifferencesOnly(event.target.checked)}
-            />
-            Show Only Differences
-          </label>
-          {ledger.earlier > 0 || includeEarlier ? (
-            <button
-              type="button"
-              className="text-link"
-              aria-pressed={includeEarlier}
-              onClick={() => setIncludeEarlier((v) => !v)}
-            >
-              {includeEarlier ? 'Hide Earlier Quotes' : `Show Earlier Quotes (${ledger.earlier})`}
-            </button>
-          ) : null}
-          {hiddenTerms > 0 ? (
-            <button
-              type="button"
-              className="text-link"
-              aria-pressed={allTerms}
-              onClick={() => setAllTerms((v) => !v)}
-            >
-              {allTerms ? 'Show Key Terms' : `See All ${ledger.rows.length} Terms`}
-            </button>
-          ) : null}
-          {more}
-        </span>
-      </div>
+    <section className="ledger" aria-label={translate(locale, 'compare.heading')}>
+      <CompareGrid
+        locale={locale}
+        markLang={locale !== 'en'}
+        // The Room's other parts are h3 under its h2 lens area, so the comparison heading is one of them.
+        headingLevel={3}
+        columns={ledger.columns}
+        rows={rowsShown}
+        note={
+          folded
+            ? { label: 'Not stated yet', text: unstated.map((row) => row.label).join(', ') }
+            : undefined
+        }
+        shippingExcluded={ledger.shippingExcluded}
+        foot={
+          <>
+            {notice}
+            <div className="ledger-foot">
+              <span className="ledger-foot-actions">
+                {ledger.earlier > 0 || includeEarlier ? (
+                  <button
+                    type="button"
+                    className="text-link"
+                    aria-pressed={includeEarlier}
+                    onClick={() => setIncludeEarlier((v) => !v)}
+                  >
+                    {includeEarlier
+                      ? 'Hide Earlier Quotes'
+                      : `Show Earlier Quotes (${ledger.earlier})`}
+                  </button>
+                ) : null}
+                {hiddenTerms > 0 ? (
+                  <button
+                    type="button"
+                    className="text-link"
+                    aria-pressed={allTerms}
+                    onClick={() => setAllTerms((v) => !v)}
+                  >
+                    {allTerms ? 'Show Key Terms' : `See All ${ledger.rows.length} Terms`}
+                  </button>
+                ) : null}
+                {more}
+              </span>
+            </div>
+          </>
+        }
+      />
     </section>
   );
 }
