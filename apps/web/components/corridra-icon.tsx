@@ -55,6 +55,8 @@ export const iconPaths = {
   arrow: 'M3.5 10h13M12 5.5l4.5 4.5-4.5 4.5',
   open: 'M6 14 14 6M7.5 6H14v6.5',
   chevron: 'M8 5l5 5-5 5',
+  // A problem the person can fix: a circle with an exclamation mark. The triangle is reserved for Blocked.
+  alert: 'M10 3.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 1 0 0-13M10 6.5v4.5M10 13.5v.5',
 } as const;
 
 export type IconName = keyof typeof iconPaths;

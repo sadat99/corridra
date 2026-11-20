@@ -8,7 +8,10 @@ import {
   ParticipantRequestError,
 } from '../../components/private-capability';
 import { ParticipantScope } from '../../components/participant-scope';
-import { PrivacyLabel } from '../../components/privacy-label';
+import { PrivacyLabel, PrivacyLabelScope } from '../../components/privacy-label';
+import { BeforeSend } from '../../components/before-send';
+import { FieldError } from '../../components/field-error';
+import { translate } from '../../lib/i18n/messages';
 import {
   buildReplyTerms,
   incoterms,
@@ -65,6 +68,7 @@ export function ReplyJourney({
   data,
   token,
   language,
+  beforeSend,
   ask,
   busy,
   pending,
@@ -78,6 +82,8 @@ export function ReplyJourney({
   data: ReplyData;
   token: string;
   language: ReplyLanguage;
+  /** CORRIDRA_UX_BEFORE_SEND, read on the server: the Before Send block above Send and one clear message for a missing tick. */
+  beforeSend: boolean;
   ask: readonly ReplyTermKey[];
   busy: boolean;
   pending: ReplyDecision | null;
@@ -111,6 +117,7 @@ export function ReplyJourney({
   const [canRevise, setCanRevise] = useState<boolean | null>(null);
   const [latest, setLatest] = useState<{ reply: RecordedReply; version: number } | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const acknowledgeBox = useRef<HTMLInputElement>(null);
   const responseId = useRef('');
   const inFlight = useRef(false);
   // True from the moment a correction is started until it is sent, cancelled or replaced, so a late read of the stored answer never changes the version under an editor that began from an older text.
@@ -271,7 +278,10 @@ export function ReplyJourney({
     event?.preventDefault();
     if (inFlight.current) return;
     if (!acknowledged) {
-      setErrors({ acknowledged: words.notAcknowledged });
+      setErrors({
+        acknowledged: beforeSend ? translate(language, 'beforeSend.tick') : words.notAcknowledged,
+      });
+      acknowledgeBox.current?.focus();
       return;
     }
     if (quote && !Object.hasOwn(currencies, currency)) {
@@ -768,85 +778,107 @@ export function ReplyJourney({
       )}
 
       {effective === 'check' && (
-        <form onSubmit={(event) => void send(event)} noValidate aria-labelledby="reply-h">
-          <h2 id="reply-h" ref={heading} tabIndex={-1}>
-            {words.stepCheck}
-          </h2>
-          <p>{words.checkIntro}</p>
-          <PrivacyLabel surface="recipientReply" locale={language} />
-          <h3>{words.checkYourAnswer}</h3>
-          <p className="reply-typed">{body}</p>
-          {meeting && <p>{words.checkMeeting}</p>}
-          {quote && built?.ok ? (
-            <>
-              <h3>
-                {words.checkQuote} ({currency || words.notStated})
-              </h3>
-              <dl className="reply-summary">
-                {replyFields.map((spec) => (
-                  <div key={spec.key}>
-                    <dt>{words.fields[spec.key]}</dt>
-                    <dd data-state={built.terms[spec.key] === undefined ? 'blank' : 'given'}>
-                      {termValue(spec.key, built.terms[spec.key], currency, words)}
-                    </dd>
+        // With Before Send on, the block above Send says who can see it, so the label is left out here.
+        <PrivacyLabelScope.Provider value={{ memberAccess: false, omitted: beforeSend }}>
+          <form onSubmit={(event) => void send(event)} noValidate aria-labelledby="reply-h">
+            <h2 id="reply-h" ref={heading} tabIndex={-1}>
+              {words.stepCheck}
+            </h2>
+            <p>{words.checkIntro}</p>
+            <PrivacyLabel surface="recipientReply" locale={language} />
+            <h3>{words.checkYourAnswer}</h3>
+            <p className="reply-typed">{body}</p>
+            {meeting && <p>{words.checkMeeting}</p>}
+            {quote && built?.ok ? (
+              <>
+                <h3>
+                  {words.checkQuote} ({currency || words.notStated})
+                </h3>
+                <dl className="reply-summary">
+                  {replyFields.map((spec) => (
+                    <div key={spec.key}>
+                      <dt>{words.fields[spec.key]}</dt>
+                      <dd data-state={built.terms[spec.key] === undefined ? 'blank' : 'given'}>
+                        {termValue(spec.key, built.terms[spec.key], currency, words)}
+                      </dd>
+                    </div>
+                  ))}
+                  <div>
+                    <dt>{words.uncertainties}</dt>
+                    <dd className="reply-typed">{uncertainties}</dd>
                   </div>
-                ))}
-                <div>
-                  <dt>{words.uncertainties}</dt>
-                  <dd className="reply-typed">{uncertainties}</dd>
-                </div>
-              </dl>
-            </>
-          ) : (
-            <p>{words.checkNoQuote}</p>
-          )}
-          <label className="check-field">
-            <input
-              type="checkbox"
-              checked={acknowledged}
-              onChange={(e) => setAcknowledged(e.target.checked)}
-            />
-            {words.acknowledge}
-          </label>
-          {errors.acknowledged && (
-            <p className="reply-error" role="alert">
-              {errors.acknowledged}
-            </p>
-          )}
-          {problem && (
-            <p className="reply-error" role="alert">
-              {problem}
-            </p>
-          )}
-          {latest && (
-            <div role="alert" lang="en" dir="ltr">
-              <p>{staleWords} It now reads:</p>
-              <p className="reply-typed">{latest.reply.body}</p>
-              <p>
-                Your text is still in the form.{' '}
-                <button type="button" className="text-link" onClick={keepMine}>
-                  Keep Mine
-                </button>{' '}
-                <button type="button" className="text-link" onClick={useTheirs}>
-                  Use Theirs
-                </button>
+                </dl>
+              </>
+            ) : (
+              <p>{words.checkNoQuote}</p>
+            )}
+            <label className="check-field">
+              <input
+                ref={acknowledgeBox}
+                type="checkbox"
+                checked={acknowledged}
+                aria-invalid={beforeSend && errors.acknowledged ? true : undefined}
+                aria-describedby={
+                  beforeSend && errors.acknowledged ? 'reply-acknowledged-error' : undefined
+                }
+                onChange={(e) => {
+                  setAcknowledged(e.target.checked);
+                  if (beforeSend && e.target.checked) setErrors({});
+                }}
+              />
+              {words.acknowledge}
+            </label>
+            {errors.acknowledged &&
+              (beforeSend ? (
+                <FieldError id="reply-acknowledged-error">{errors.acknowledged}</FieldError>
+              ) : (
+                <p className="reply-error" role="alert">
+                  {errors.acknowledged}
+                </p>
+              ))}
+            {problem && (
+              <p className="reply-error" role="alert">
+                {problem}
               </p>
+            )}
+            {latest && (
+              <div role="alert" lang="en" dir="ltr">
+                <p>{staleWords} It now reads:</p>
+                <p className="reply-typed">{latest.reply.body}</p>
+                <p>
+                  Your text is still in the form.{' '}
+                  <button type="button" className="text-link" onClick={keepMine}>
+                    Keep Mine
+                  </button>{' '}
+                  <button type="button" className="text-link" onClick={useTheirs}>
+                    Use Theirs
+                  </button>
+                </p>
+              </div>
+            )}
+            {beforeSend && (
+              <BeforeSend
+                surface="recipientReply"
+                locale={language}
+                sent={words.receiptSource}
+                until={expiryLine(words, data.expiresAt)}
+              />
+            )}
+            <div className="reply-actions">
+              <button
+                type="button"
+                className="secondary-link"
+                disabled={sending || !!command}
+                onClick={() => leave('check', quote ? 'included' : 'message')}
+              >
+                {words.back}
+              </button>
+              <button className="primary-link" disabled={sending || !!latest}>
+                {sending ? words.sending : command ? words.retrySame : words.send}
+              </button>
             </div>
-          )}
-          <div className="reply-actions">
-            <button
-              type="button"
-              className="secondary-link"
-              disabled={sending || !!command}
-              onClick={() => leave('check', quote ? 'included' : 'message')}
-            >
-              {words.back}
-            </button>
-            <button className="primary-link" disabled={sending || !!latest}>
-              {sending ? words.sending : command ? words.retrySame : words.send}
-            </button>
-          </div>
-        </form>
+          </form>
+        </PrivacyLabelScope.Provider>
       )}
 
       {effective === 'receipt' && (

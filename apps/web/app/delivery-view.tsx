@@ -14,6 +14,9 @@ import { ParticipantScope } from '../components/participant-scope';
 import { OperatorWorkbench } from '../components/operator-workbench';
 import { MissionPassport } from '../components/mission-passport';
 import { ConsequencePreview } from '../components/consequence-preview';
+import { BeforeSend } from '../components/before-send';
+import { FieldError } from '../components/field-error';
+import { translate } from '../lib/i18n/messages';
 import { MissionExperienceView, AgendaView } from './mission-experience-view';
 /** CQ-42: one plain line for a link that no longer opens (expired, replaced or withdrawn). */
 export const linkGone =
@@ -23,12 +26,15 @@ export function DeliveryView({
   capability,
   endpoint = '/api/delivery',
   reload = 0,
+  beforeSend = false,
 }: {
   audience: DeliveryReport['audience'];
   capability?: string;
   endpoint?: string;
   /** Raised by a Refresh outside this view: read the report again in place, keeping typed and retained responses. */
   reload?: number;
+  /** CORRIDRA_UX_BEFORE_SEND, read on the server: the Before Send block above each Send and one clear message for a missing tick. */
+  beforeSend?: boolean;
 }) {
   const scope = usePrivateCapability(capability);
   return (
@@ -38,6 +44,7 @@ export function DeliveryView({
       capability={scope}
       endpoint={endpoint}
       reload={reload}
+      beforeSend={beforeSend}
     />
   );
 }
@@ -46,18 +53,21 @@ function ScopedDeliveryView({
   capability,
   endpoint,
   reload,
+  beforeSend,
 }: {
   audience: DeliveryReport['audience'];
   capability: string;
   endpoint: string;
   reload: number;
+  beforeSend: boolean;
 }) {
   const [report, setReport] = useState<DeliveryReport | null>(null),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(''),
     [readInterrupted, setReadInterrupted] = useState(false),
-    [failureKind, setFailureKind] = useState<'denied' | 'unavailable'>('unavailable');
+    [failureKind, setFailureKind] = useState<'denied' | 'unavailable'>('unavailable'),
+    [untickedRequest, setUntickedRequest] = useState('');
   const [pendingResponse, setPendingResponse] = useState<{
     requestId: string;
     body: string;
@@ -178,6 +188,14 @@ function ScopedDeliveryView({
       (pendingResponse && pendingResponse.requestId !== requestId)
     )
       return;
+    // Before Send: a missing declaration tick shows one message beside the box and sends nothing. A retry of a
+    // response that was already sent carries its own tick (its box is disabled and not part of the form data).
+    if (beforeSend && !pendingResponse && data.get('acknowledged') !== 'on') {
+      setUntickedRequest(requestId);
+      const box = form.elements.namedItem('acknowledged');
+      if (box instanceof HTMLInputElement) box.focus();
+      return;
+    }
     inFlight.current = true;
     setBusy(true);
     setError('');
@@ -292,9 +310,10 @@ function ScopedDeliveryView({
     { held: 0, qualified: 0, proposals: 0, contracts: 0 },
   );
   // One preview for the whole page, above the first mission that has a request still open to answer.
-  const firstOpenMission = report.missions.findIndex((m) =>
-    m.requests?.some((r) => r.status === 'OPEN'),
-  );
+  // With Before Send on, each form carries its own block, so the page-level preview is not drawn.
+  const firstOpenMission = beforeSend
+    ? -1
+    : report.missions.findIndex((m) => m.requests?.some((r) => r.status === 'OPEN'));
   return (
     <div className="delivery-view ux-delivery" data-operator-workbench>
       {error && (
@@ -524,12 +543,32 @@ function ScopedDeliveryView({
                           Response
                           <textarea name="body" minLength={3} maxLength={2000} required />
                         </label>
-                        <label>
-                          <input type="checkbox" name="acknowledged" required /> This response is my
-                          declaration. Supporting documents follow the Corridra team&apos;s
-                          controlled collection and review process.
+                        <label className={beforeSend ? 'before-send-check' : undefined}>
+                          <input
+                            type="checkbox"
+                            name="acknowledged"
+                            required={!beforeSend}
+                            aria-invalid={untickedRequest === r.id ? true : undefined}
+                            aria-describedby={
+                              untickedRequest === r.id ? `acknowledged-error-${r.id}` : undefined
+                            }
+                            onChange={() => setUntickedRequest('')}
+                          />{' '}
+                          This response is my declaration. Supporting documents follow the Corridra
+                          team&apos;s controlled collection and review process.
                         </label>
+                        {untickedRequest === r.id && (
+                          <FieldError id={`acknowledged-error-${r.id}`}>
+                            {translate('en', 'beforeSend.tick')}
+                          </FieldError>
+                        )}
                       </fieldset>
+                      {beforeSend && (
+                        <BeforeSend
+                          surface="evidenceReply"
+                          expires={formatMoment(report.expiresAt)}
+                        />
+                      )}
                       <button
                         disabled={
                           busy ||

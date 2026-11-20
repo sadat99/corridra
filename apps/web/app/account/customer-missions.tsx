@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { DeliveryView } from '../delivery-view';
 import { InvitationSlot, useInvitationDialog } from './invitation-dialog';
 import { RefreshButton } from './refresh-button';
-export function CustomerMissions() {
+export function CustomerMissions({ beforeSend = false }: { beforeSend?: boolean }) {
   const [missions, setMissions] = useState<{ token: string; label: string }[]>([]),
     [error, setError] = useState(''),
     // Bumped by Refresh: every open mission view reads its mission again in place, keeping any typed response.
@@ -81,6 +81,7 @@ export function CustomerMissions() {
             audience="CLIENT_PROGRESS"
             capability={m.token}
             endpoint="/api/customer-missions"
+            beforeSend={beforeSend}
           />
           <button onClick={() => setMissions((v) => v.filter((x) => x.token !== m.token))}>
             Close This Mission View

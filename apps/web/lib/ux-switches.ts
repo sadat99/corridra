@@ -30,6 +30,8 @@ export const uxSwitchNames = [
   'CORRIDRA_UX_MISSIONS_V2',
   // Operator desk (owner approved 20 Nov 2026): the five-group team sidebar with pinned queues and the table Today. Presentation only.
   'CORRIDRA_UX_OPERATOR_DESK',
+  // Before Send (owner approved 20 Nov 2026): one block of three facts above each Send on the evidence reply and the recipient reply check step. Presentation only.
+  'CORRIDRA_UX_BEFORE_SEND',
   'CORRIDRA_NOTIFICATIONS_V2',
   'CORRIDRA_TEAM_INVITES',
   'CORRIDRA_ROUTE_PACK_FORM',

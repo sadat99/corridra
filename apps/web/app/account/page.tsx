@@ -329,7 +329,10 @@ export default async function Page({
                 }
                 shared={
                   <>
-                    <CustomerMissions key={data.user.id} />
+                    <CustomerMissions
+                      key={data.user.id}
+                      beforeSend={uxSwitchOn('CORRIDRA_UX_BEFORE_SEND')}
+                    />
                     {customerCompaniesEnabled() && (
                       <p>
                         <Link
