@@ -201,6 +201,12 @@ test('the cards show what is waiting for the person and who holds the rest', asy
     `/account/drafts/${owner.id}`,
   );
   await expect(page.getByRole('heading', { name: 'Waiting on others' })).toBeVisible();
+  // Each holder's rows sit behind a closed disclosure; open them to read and reach every row.
+  await expect(
+    page.getByText('The Corridra team is looking for suppliers or buyers.'),
+  ).toBeHidden();
+  for (const summary of await page.locator('.move-lane-more > summary').all())
+    await summary.click();
   await expect(
     page.getByText('The Corridra team is looking for suppliers or buyers.'),
   ).toBeVisible();
@@ -237,6 +243,9 @@ test('shows a Move the team set as a card with its real date, and folds the othe
   );
   await expect(card.locator('.today-action')).toHaveCount(1);
   const waiting = page.getByRole('heading', { name: 'Waiting on others' }).locator('..');
+  await expect(waiting.getByText('Confirm the visit dates')).toBeHidden();
+  for (const summary of await waiting.locator('.move-lane-more > summary').all())
+    await summary.click();
   await expect(waiting.getByText('Confirm the visit dates')).toBeVisible();
   await expect(
     waiting.locator('.ux-row-value', { hasText: 'Corridra team' }).first(),

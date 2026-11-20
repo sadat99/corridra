@@ -449,3 +449,24 @@ describe('Your Move redesign: English islands stay left to right', () => {
     expect(html).toContain('class="move-lane-count" lang="en" dir="ltr"');
   });
 });
+
+describe('Your Move redesign: holder rows behind a disclosure', () => {
+  it('keeps each holder with rows in a closed details, every link in the page, and no disclosure for an empty holder', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: busy, startHref: '/plan' });
+    const lanes = html.split('<section class="move-lane"').slice(1);
+    expect(lanes).toHaveLength(3);
+    const withRows = lanes.filter((lane) => lane.includes('ux-row-link'));
+    expect(withRows.length).toBeGreaterThan(0);
+    for (const lane of withRows) {
+      expect(lane).toMatch(
+        /<details class="move-lane-more move-more"><summary lang="en">Show \d+ Requests?<\/summary>/,
+      );
+      expect(lane).not.toContain('<details open');
+    }
+    for (const row of busy.waiting) expect(html).toContain(`href="${row.href}"`);
+    const empty = lanes.find((lane) => lane.includes('0, nothing waiting'));
+    expect(empty).toBeDefined();
+    expect(empty).not.toContain('<details');
+  });
+});

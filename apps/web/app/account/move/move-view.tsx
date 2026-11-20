@@ -695,39 +695,44 @@ export function MoveView({
                       </span>
                     </h3>
                     {rows.length > 0 ? (
-                      <RowList
-                        label={say('move.others.heading')}
-                        title="Request"
-                        columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
-                        lang="en"
-                      >
-                        {rows.map((row) => {
-                          const title =
-                            row.kind !== 'move' && row.title
-                              ? row.title
-                              : fill(say('move.received'), {
-                                  date: row.received ? day(row.received, locale) : '',
-                                });
-                          return (
-                            <RowLink
-                              key={row.id}
-                              href={row.href}
-                              title={title}
-                              cells={[
-                                {
-                                  name: 'Held by',
-                                  value: labels.holder[row.holder],
-                                },
-                                {
-                                  name: 'Where it stands',
-                                  value: waitingLine(row),
-                                  lang: row.kind === 'move' ? 'en' : undefined,
-                                },
-                              ]}
-                            />
-                          );
-                        })}
-                      </RowList>
+                      <details className="move-lane-more move-more">
+                        <summary lang="en">
+                          {rows.length === 1 ? 'Show 1 Request' : `Show ${rows.length} Requests`}
+                        </summary>
+                        <RowList
+                          label={say('move.others.heading')}
+                          title="Request"
+                          columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
+                          lang="en"
+                        >
+                          {rows.map((row) => {
+                            const title =
+                              row.kind !== 'move' && row.title
+                                ? row.title
+                                : fill(say('move.received'), {
+                                    date: row.received ? day(row.received, locale) : '',
+                                  });
+                            return (
+                              <RowLink
+                                key={row.id}
+                                href={row.href}
+                                title={title}
+                                cells={[
+                                  {
+                                    name: 'Held by',
+                                    value: labels.holder[row.holder],
+                                  },
+                                  {
+                                    name: 'Where it stands',
+                                    value: waitingLine(row),
+                                    lang: row.kind === 'move' ? 'en' : undefined,
+                                  },
+                                ]}
+                              />
+                            );
+                          })}
+                        </RowList>
+                      </details>
                     ) : null}
                   </section>
                 ))}
