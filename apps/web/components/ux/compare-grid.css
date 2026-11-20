@@ -204,7 +204,10 @@
 }
 .compare-grid-head > .guide-tag {
   inline-size: fit-content;
+  max-inline-size: 100%;
   margin-block-start: var(--space-2);
+  /* The trust label wraps inside a narrow column instead of pushing the table wider. */
+  white-space: normal;
 }
 .compare-grid-head .compare-grid-earlier {
   color: var(--caution-text);
@@ -297,8 +300,10 @@
   font-size: var(--text-sm);
   color: var(--text-2);
 }
-/* The one action of the comparison: cobalt on the white page, never on navy. */
-.compare-grid-action {
+/* The one action of the comparison: cobalt on the white page, never on navy. It sits in the notice's action slot,
+   whose 44 px floor it raises. */
+.compare-grid-action,
+.missing-term-notice-action > .compare-grid-action {
   display: inline-flex;
   align-items: center;
   min-block-size: var(--compare-action-h);

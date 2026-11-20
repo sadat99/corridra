@@ -74,6 +74,7 @@ export function CompareGrid({
   headingLevel = 2,
   shippingExcluded = 0,
   foot,
+  regionLabel = 'compare.region',
 }: {
   locale: Locale;
   /**
@@ -91,6 +92,8 @@ export function CompareGrid({
   shippingExcluded?: number;
   /** Under the table and the money line: the missing terms notice, its one action, and the existing links. */
   foot?: ReactNode;
+  /** The name of the scrolling region, unique on the page (the Room can show the report's table below its own). */
+  regionLabel?: MessageKey;
 }) {
   const say = (key: MessageKey) => translate(locale, key);
   const number = (n: number) => new Intl.NumberFormat(locale).format(n);
@@ -244,7 +247,7 @@ export function CompareGrid({
           ref={scrollRef}
           className="compare-grid-scroll"
           role="region"
-          aria-label={say('compare.region')}
+          aria-label={say(regionLabel)}
           aria-describedby={cue !== null ? cueId : undefined}
           tabIndex={0}
         >

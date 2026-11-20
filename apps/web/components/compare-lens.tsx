@@ -9,6 +9,9 @@ import { termDiff } from '../lib/term-diff';
 import type { QuoteTerm } from './mr/types';
 import './compare-lens.css';
 
+/** The report's table has its own region name, so it differs from the Room's table above it. */
+const reportRegion: MessageKey = 'compare.regionReport';
+
 /** The prices first, in the engine's own words, then every term of every quote in the order the quotes list them. */
 function termsOf(card: QuoteCardView): QuoteTerm[] {
   return [
@@ -94,6 +97,7 @@ export function CompareLens({
           columns={cards}
           rows={grid.rows}
           shippingExcluded={grid.shippingExcluded}
+          regionLabel={reportRegion}
         />
       ) : (
         matrix
