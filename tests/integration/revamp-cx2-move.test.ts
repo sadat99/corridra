@@ -298,12 +298,18 @@ describe('Home summary never claims more than the page could read (Codex review 
   });
 
   // Reports became tabs (PR 313): the shortcut for a pasted private link opens Shared With Me, where the
-  // invitation input lives, not the first Reports tab.
-  it('sends the Open a Shared Mission shortcut to the Shared With Me tab', async () => {
+  // invitation input lives, not the first Reports tab. The Home tiles are gone (owner handoff, 20 Nov 2026): the
+  // shortcut lives in the Quick menu and in All tools, and Home no longer draws it.
+  it('sends the Open a Shared Mission shortcut to the Shared With Me tab, from Quick and All tools, not Home', async () => {
     const { MoveView } = await load('app/account/move/move-view');
     const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan' });
-    expect(html).toContain('Open a Shared Mission');
-    expect(html).toContain('href="/account?view=results&amp;tab=shared"');
+    expect(html).not.toContain('Open a Shared Mission');
+    expect(html).not.toContain('move-tile');
+    expect(html).not.toContain('move-shortcuts');
+    expect(read('apps/web/components/ux/pocket-button.tsx')).toContain(
+      "href: '/account?view=results&tab=shared'",
+    );
+    expect(read('apps/web/lib/all-tools.ts')).toContain("href: '/account?view=results&tab=shared'");
   });
 });
 

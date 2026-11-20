@@ -270,11 +270,24 @@ test('a new reply is kept on this device only, and can be marked read and forgot
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Waiting for you', exact: true })).toBeVisible();
   await expect(page.getByText('Read the new reply from the Corridra team')).toHaveCount(0);
-  await page
-    .getByRole('button', { name: 'Forget which replies I have read on this device' })
-    .click();
+  // Forgetting moved to Account, This device (tests/operator/this-device.spec.ts); Home has no such button.
+  await expect(page.getByRole('button', { name: /Forget/i })).toHaveCount(0);
+  await page.evaluate(() => window.localStorage.setItem('corridra.move.seen', '{}'));
+  await page.reload();
   await expect(page.getByText('Read the new reply from the Corridra team')).toBeVisible();
-  expect(await page.evaluate(() => window.localStorage.getItem('corridra.move.seen'))).toBe('{}');
+});
+
+test('Home has no shortcut tiles and no Forget button, empty or with work', async ({ page }) => {
+  for (const name of ['nothing', 'full'] as const) {
+    await open(page, name);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Shortcuts' })).toHaveCount(0);
+    await expect(page.locator('.move-tile, .move-shortcuts, .move-foot')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Check a Request Receipt' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Open a Shared Mission' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'See All Requests' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Forget/i })).toHaveCount(0);
+  }
 });
 
 const journeyCard = (journey: 'source' | 'sell', id: string) => ({
