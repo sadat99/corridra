@@ -1,16 +1,19 @@
-/* The shared field error: an alert icon and words behind a 2 px critical edge. Tokens only. */
-.field-error {
+/* The shared field error (scoped to .ux-field-error so the older .field-error rules elsewhere are untouched): an alert icon and words behind a 2 px critical edge. Tokens only. */
+/* The doubled class keeps this above the app's boxed [role=alert] style; the edge, not a box, carries it here. */
+p.ux-field-error.ux-field-error {
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
   margin: var(--space-2) 0 0;
   padding: var(--space-2) var(--space-3);
+  background: none;
+  border: 0;
   border-inline-start: 2px solid var(--critical);
   color: var(--critical);
   font-size: var(--text-base);
   overflow-wrap: anywhere;
 }
-.field-error .corridra-icon {
+p.ux-field-error .corridra-icon {
   inline-size: var(--space-6);
   block-size: var(--space-6);
 }

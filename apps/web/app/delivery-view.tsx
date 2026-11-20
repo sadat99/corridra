@@ -67,7 +67,9 @@ function ScopedDeliveryView({
     [notice, setNotice] = useState(''),
     [readInterrupted, setReadInterrupted] = useState(false),
     [failureKind, setFailureKind] = useState<'denied' | 'unavailable'>('unavailable'),
-    [untickedRequest, setUntickedRequest] = useState('');
+    [untickedRequest, setUntickedRequest] = useState(''),
+    [untickedTick, setUntickedTick] = useState(0),
+    untickedBox = useRef<HTMLInputElement | null>(null);
   const [pendingResponse, setPendingResponse] = useState<{
     requestId: string;
     body: string;
@@ -78,6 +80,9 @@ function ScopedDeliveryView({
   // The first load's request: a reread ends it, so a slow first answer never overwrites a newer one.
   const firstLoad = useRef<AbortController | null>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (untickedTick) untickedBox.current?.focus();
+  }, [untickedTick]);
   useEffect(() => {
     if (error) feedback.current?.focus();
   }, [error]);
@@ -193,7 +198,9 @@ function ScopedDeliveryView({
     if (beforeSend && !pendingResponse && data.get('acknowledged') !== 'on') {
       setUntickedRequest(requestId);
       const box = form.elements.namedItem('acknowledged');
-      if (box instanceof HTMLInputElement) box.focus();
+      // Focus waits for the render, so the box already carries aria-invalid and aria-describedby when it is read out.
+      untickedBox.current = box instanceof HTMLInputElement ? box : null;
+      setUntickedTick((tick) => tick + 1);
       return;
     }
     inFlight.current = true;

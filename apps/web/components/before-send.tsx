@@ -54,7 +54,13 @@ export function BeforeSend(props: BeforeSendProps) {
     );
   };
   return (
-    <div className="before-send" lang={html} dir={dir}>
+    <div
+      className="before-send"
+      role="group"
+      aria-label={say('consequence.heading')}
+      lang={html}
+      dir={dir}
+    >
       <ul className="before-send-rows">
         {beforeSendRows[surface].map((row) => (
           <li key={row.id} className="before-send-row">

@@ -118,6 +118,11 @@ export function ReplyJourney({
   const [latest, setLatest] = useState<{ reply: RecordedReply; version: number } | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const acknowledgeBox = useRef<HTMLInputElement>(null);
+  const [ackTick, setAckTick] = useState(0);
+  // Before Send: focus moves to the box after the render, so its error is already attached when it is read out.
+  useEffect(() => {
+    if (ackTick) acknowledgeBox.current?.focus();
+  }, [ackTick]);
   const responseId = useRef('');
   const inFlight = useRef(false);
   // True from the moment a correction is started until it is sent, cancelled or replaced, so a late read of the stored answer never changes the version under an editor that began from an older text.
@@ -281,7 +286,7 @@ export function ReplyJourney({
       setErrors({
         acknowledged: beforeSend ? translate(language, 'beforeSend.tick') : words.notAcknowledged,
       });
-      acknowledgeBox.current?.focus();
+      if (beforeSend) setAckTick((tick) => tick + 1);
       return;
     }
     if (quote && !Object.hasOwn(currencies, currency)) {

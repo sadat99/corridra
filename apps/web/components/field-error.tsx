@@ -7,7 +7,7 @@ import './field-error.css';
 
 export function FieldError({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <p id={id} className="field-error">
+    <p id={id} className="field-error ux-field-error" role="alert">
       <CorridraIcon name="alert" />
       <span>{children}</span>
     </p>

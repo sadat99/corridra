@@ -1,11 +1,11 @@
 /* Before Send: one quiet read-only block above a Send. Three rows of icon, bold question and one fact, then (evidence
    only) the one-response sentence with a lock. Tokens only. Phone value is the floor, the desktop value the ceiling,
-   and the steps happen at 768 px. */
+   spacing scales fluidly between them, and only the Send height steps at 768 px. */
 .before-send {
   display: grid;
-  gap: var(--space-6);
+  gap: clamp(var(--space-6), calc(var(--space-6) + (100vw - 320px) * 0.00715), var(--space-8));
   margin-block: var(--space-6);
-  padding: var(--space-4);
+  padding: clamp(var(--space-4), calc(var(--space-4) + (100vw - 320px) * 0.00715), var(--space-6));
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
@@ -16,7 +16,7 @@
 }
 .before-send-rows {
   display: grid;
-  gap: var(--space-6);
+  gap: clamp(var(--space-6), calc(var(--space-6) + (100vw - 320px) * 0.00715), var(--space-8));
   margin: 0;
   padding: 0;
   list-style: none;
@@ -52,15 +52,6 @@
 }
 .before-send-status {
   font-weight: 500;
-}
-@media (min-width: 768px) {
-  .before-send,
-  .before-send-rows {
-    gap: var(--space-8);
-  }
-  .before-send {
-    padding: var(--space-6);
-  }
 }
 /* The Send under the block (the :not keeps it above the 44 px rule of .delivery-view button): 56 px on a phone, 48 px from 768 px, never below a 44 px target. */
 .before-send + button:not([type='button']),

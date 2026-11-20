@@ -52,18 +52,18 @@ if (hash in locales)
       <BeforeSend surface="evidenceReply" locale={hash} expires="17 Dec 2026, 09:00" />
     </main>,
   );
-else if (hash === 'reply' || hash === 'replyzh')
+else if (hash === 'reply' || hash === 'replyzh' || hash === 'replyoff')
   createRoot(mount).render(
     <main id="bs-fixture" lang="en" className="ux-workspace ux-customer">
       <h1>Example: reply</h1>
-      <ReplyJourney data={reply} token=${JSON.stringify(token)} language={hash === 'replyzh' ? 'zh' : 'en'} beforeSend ask={[]} busy={false} pending={null} declined={false} optOut={false} onOptOut={() => {}} onRespond={() => {}} onStop={() => {}} onAccessDenied={() => {}} />
+      <ReplyJourney data={reply} token=${JSON.stringify(token)} language={hash === 'replyzh' ? 'zh' : 'en'} beforeSend={hash !== 'replyoff'} ask={[]} busy={false} pending={null} declined={false} optOut={false} onOptOut={() => {}} onRespond={() => {}} onStop={() => {}} onAccessDenied={() => {}} />
     </main>,
   );
 else
   createRoot(mount).render(
     <main id="bs-fixture" lang="en" className="ux-workspace ux-customer">
       <h1>Example: your next commercial step</h1>
-      <DeliveryView audience="CLIENT_PROGRESS" capability=${JSON.stringify(token)} endpoint="/api/delivery" beforeSend />
+      <DeliveryView audience="CLIENT_PROGRESS" capability=${JSON.stringify(token)} endpoint="/api/delivery" beforeSend={hash !== 'evidenceoff'} />
     </main>,
   );
 `;
@@ -201,7 +201,7 @@ test.describe('the evidence reply says what Send response will do, above each Se
     await expect(page.locator('form.operator-form')).toHaveCount(2);
     await expect(page.locator('.before-send')).toHaveCount(2);
     // The older single preview is not drawn while the block is on.
-    await expect(page.getByRole('group', { name: say('consequence.heading') })).toHaveCount(0);
+    await expect(page.getByRole('group', { name: say('consequence.heading') })).toHaveCount(2);
     for (const form of await page.locator('form.operator-form').all()) {
       const block = form.locator('.before-send');
       await expect(block.locator('.before-send-row')).toHaveCount(3);
@@ -411,4 +411,33 @@ test.describe('other scripts and directions at 320px', () => {
       expect(found.map((v) => v.id)).toEqual([]);
       if (locale === 'ar') await shot(page, 'evidence-ar-320');
     });
+});
+
+test.describe('with the switch off both pages keep what they had', () => {
+  test('the evidence reply draws no block, keeps the native required box and the old preview', async ({
+    page,
+  }) => {
+    await mount(page, 390, 'evidenceoff');
+    await expect(page.locator('form.operator-form').first()).toBeVisible();
+    await expect(page.locator('.before-send')).toHaveCount(0);
+    const form = page.locator('form.operator-form').first();
+    await expect(form.getByRole('checkbox')).toHaveAttribute('required', '');
+    await expect(form.getByRole('checkbox')).not.toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('.field-error')).toHaveCount(0);
+  });
+
+  test('the recipient reply keeps its privacy label, its alert and focus on Send', async ({
+    page,
+  }) => {
+    await mount(page, 390, 'replyoff');
+    await reachCheck(page);
+    await expect(page.locator('.before-send')).toHaveCount(0);
+    await expect(page.locator('.privacy-label')).toHaveCount(1);
+    const send = page.getByRole('button', { name: 'Send', exact: true });
+    await send.click();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Tick the box to confirm.' }),
+    ).toBeVisible();
+    await expect(page.getByRole('checkbox').last()).not.toBeFocused();
+  });
 });
