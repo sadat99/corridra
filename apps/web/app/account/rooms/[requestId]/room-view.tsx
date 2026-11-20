@@ -118,7 +118,7 @@ export function RoomView({
   const labels = useMemo(() => mrLabelsFor(locale), [locale]);
   const { html, dir } = localeMeta[locale];
   // The comparison sits in an English region; its translated words carry their own language and direction.
-  const wordsLang = locale === 'en' ? {} : { lang: html, dir };
+  const wordsLang = locale === 'en' ? { lang: undefined, dir: undefined } : { lang: html, dir };
   const { detail, state, retry } = useRoomDetail(requestId, subject, issuer);
   // One read of the saved report serves every view: the report component tells the Room what it read.
   const [report, setReport] = useState<{ data: DeliveryReport | null; status: string }>({
@@ -573,14 +573,19 @@ export function RoomView({
                                       prefetch={false}
                                       className="button button-primary compare-grid-action"
                                       href={helpHref}
-                                      {...wordsLang}
+                                      lang={wordsLang.lang}
+                                      dir={wordsLang.dir}
                                     >
                                       {say('compare.ask')}
                                     </Link>
                                     {/* What the action does, as the service request flow does it: the person asks
                                         the Corridra team, who may then ask the supplier. No message goes to a
                                         supplier from here. */}
-                                    <p className="compare-grid-assure" {...wordsLang}>
+                                    <p
+                                      className="compare-grid-assure"
+                                      lang={wordsLang.lang}
+                                      dir={wordsLang.dir}
+                                    >
                                       {view.missingFrom.length === 1
                                         ? fill(say('compare.askOne'), {
                                             supplier: view.missingFrom[0]!.supplier,

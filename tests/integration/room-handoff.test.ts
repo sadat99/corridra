@@ -304,6 +304,8 @@ describe('the notice above the comparison', () => {
         },
       ],
       samePrice: 'Both quotes are USD 18,400.00 a unit.',
+      // The suppliers the one action concerns (UI/UX.v4 row "Compare"): only the one that leaves a term out.
+      missingFrom: [{ supplier: '绿野机械有限公司', lang: 'zh' }],
     });
   });
   it('never calls prices equal across currencies or different minor units, and never converts', () => {
