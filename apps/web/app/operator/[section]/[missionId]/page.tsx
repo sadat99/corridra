@@ -71,7 +71,11 @@ export default async function Page({
     <WorkspaceShell eyebrow="MISSION" title="Mission" className="ux-operator-home">
       <TeamContextPublisher tenant={tenant} role={chosen.role} />
       {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
-        <TeamSecondLevel urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')} ownerPage={false} />
+        <TeamSecondLevel
+          urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
+          ownerPage={false}
+          desk={uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
+        />
       ) : null}
       <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
         <MissionPage

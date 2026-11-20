@@ -95,7 +95,11 @@ export default async function Page({
     <WorkspaceShell eyebrow="OWNER PAGE" title="What is on and off." className="ux-owner">
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
       {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
-        <TeamSecondLevel urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')} ownerPage />
+        <TeamSecondLevel
+          urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
+          ownerPage
+          desk={uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
+        />
       ) : null}
       {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && (
         <FrontDoor label="Founder areas" items={withWorkspace(founderDoor, tenant.id)} />

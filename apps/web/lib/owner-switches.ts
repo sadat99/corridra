@@ -665,6 +665,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_OPERATOR_DESK',
+    label: 'Operator desk',
+    line: 'The team sidebar groups the same places under Today, Missions, Companies, Money and Settings and checks, with Problem Reports and Erasure Requests pinned for owners and admins, and Today becomes one table of what needs a person now. No place, address or permission changes. Off by default. Needs the app frame per role switch to be on. Turn it off by removing the setting in Vercel and redeploying.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_NOTIFICATIONS_V2',
     label: 'Inbox and hand-off emails',
     line: 'Every hand-off writes an inbox item and sends an email when the person has chosen email. Needs the commercial readiness database module.',

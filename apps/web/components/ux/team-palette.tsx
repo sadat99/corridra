@@ -234,7 +234,15 @@ function PaletteRow({
 
 const groupOrder: Group[] = ['Search', 'Recent', 'Missions', 'Companies', 'Actions'];
 
-export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boolean }) {
+export function TeamPalette({
+  urls,
+  ownerPage,
+  desk = false,
+}: {
+  urls: boolean;
+  ownerPage: boolean;
+  desk?: boolean;
+}) {
   const { tenant, role } = useSyncExternalStore(
     subscribeTeamContext,
     readTeamContext,
@@ -427,7 +435,7 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   const outcome = searchable ? currentOutcome(answer, key) : null;
   const found = outcome?.kind === 'ok' ? outcome.found : null;
 
-  const actions = paletteActions(role, urls, tenant, ownerPage);
+  const actions = paletteActions(role, urls, tenant, ownerPage, desk);
   const sectionHref = placeHref('workspace-missions', urls, tenant);
   const companiesHref = placeHref('workspace-research', urls, tenant);
   const opensMissions = missionPages ? '' : 'Opens Missions';

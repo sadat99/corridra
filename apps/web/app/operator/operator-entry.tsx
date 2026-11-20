@@ -88,7 +88,11 @@ export async function OperatorEntry({
       className={heading === 'Today' ? 'ux-operator-home ux-titled-today' : 'ux-operator-home'}
     >
       {shellsV2 ? (
-        <TeamSecondLevel urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')} ownerPage={ownerPage} />
+        <TeamSecondLevel
+          urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
+          ownerPage={ownerPage}
+          desk={uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
+        />
       ) : null}
       <OperatorFlags
         replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
@@ -101,6 +105,7 @@ export async function OperatorEntry({
           ownerPage={ownerPage}
           moveRecords={customerMovesEnabled()}
           shellsV2={shellsV2}
+          desk={shellsV2 && uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
           problemReports={await problemReportsOffered()}
           programmeApplications={await programmeApplicationsOffered()}
         />

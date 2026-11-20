@@ -197,7 +197,7 @@ describe('the five Admin pages read as links, not expanders', () => {
     expect(sidebar).toMatch(/entry\.label,\s*null,\s*placeHref\(entry\.id, urls, tenant\)/);
     expect(sidebar).not.toContain("'chevron',");
     expect(sidebar).toContain('id="workspace-navigation"');
-    expect(sidebar).toContain('teamItemsFor(role)');
+    expect(sidebar).toContain('teamItemsFor(role, desk)');
     expect(sidebar).toContain('{adminItem ? (');
     expect(sidebar).toContain('className="ux-team-caption" aria-hidden="true"');
     expect(sidebar).toContain('<span>{label(adminItem)}</span>');

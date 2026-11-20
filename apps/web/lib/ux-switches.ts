@@ -28,6 +28,8 @@ export const uxSwitchNames = [
   // Commercial readiness program (31 Oct 2026, section 5.4). Off in production until the owner sets them.
   'CORRIDRA_UX_SHELLS_V2',
   'CORRIDRA_UX_MISSIONS_V2',
+  // Operator desk (owner approved 20 Nov 2026): the five-group team sidebar with pinned queues and the table Today. Presentation only.
+  'CORRIDRA_UX_OPERATOR_DESK',
   'CORRIDRA_NOTIFICATIONS_V2',
   'CORRIDRA_TEAM_INVITES',
   'CORRIDRA_ROUTE_PACK_FORM',

@@ -49,6 +49,7 @@ export function paletteActions(
   urls: boolean,
   tenant: string,
   ownerPage: boolean,
+  desk = false,
 ): PaletteEntry[] {
   const seen = new Set<string>();
   const entries: PaletteEntry[] = [];
@@ -64,7 +65,7 @@ export function paletteActions(
       href: placeHref(place.id, urls, tenant),
     });
   };
-  for (const item of teamItemsFor(role))
+  for (const item of teamItemsFor(role, desk))
     for (const place of teamPlacesFor(item, role)) add(place, item.label);
   for (const place of settingsLevel(role)) add(place, 'Settings');
   for (const place of teamAccountPlaces(role)) add(place, 'Account');
