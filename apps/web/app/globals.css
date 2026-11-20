@@ -2184,6 +2184,16 @@ summary:hover {
   --icon-stroke: 1.5px;
   --radius-panel: var(--radius-md);
   --radius-control: var(--radius-sm);
+  /* Compare (UI/UX.v4 row "Compare", owner 20 Nov 2026), on the SIZE RULE: the frozen row label column, the
+     "Compare quotes" heading (24 to 28 px) and the one action, 56 px on a phone and 48 px from 768 px. */
+  --compare-label-w: clamp(5.5rem, 24cqi, min(38cqi, 12rem));
+  --text-compare-h: clamp(1.5rem, 1.35rem + 0.65vw, 1.75rem);
+  --compare-action-h: 3.5rem;
+}
+@media (min-width: 48rem) {
+  :root {
+    --compare-action-h: 3rem;
+  }
 }
 html {
   scroll-padding-top: 104px;

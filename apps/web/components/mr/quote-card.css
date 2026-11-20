@@ -129,6 +129,12 @@
 .mr-quote-terms dd .mr-explain-trigger {
   color: var(--text-strong);
 }
+/* The comparison table's size (UI/UX.v4 row "Compare"): a 30 px square beside the word and its line. */
+.mr-quote-fill[data-size='30'] {
+  flex: none;
+  inline-size: 1.875rem;
+  block-size: 1.875rem;
+}
 @media (forced-colors: active) {
   .mr-quote-fill {
     border-color: CanvasText;
