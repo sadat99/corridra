@@ -92,6 +92,7 @@ export default async function Page({
       tab="move"
       eyebrow="YOUR MOVE"
       title={<Greeting name={session.name} />}
+      quietTitle
       count={model.cards.length}
     >
       <AccountHashRedirect view="move" />

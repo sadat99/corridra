@@ -187,7 +187,10 @@ describe('Home summary never claims more than the page could read (Codex review 
     for (const extra of [{ unreadable: true }, { partial: true }, { skippedWorkspaces: 2 }]) {
       const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan', ...extra });
       expect(html).not.toContain('all caught up');
-      expect(html).toContain('This page may not show everything that needs you yet.');
+      expect(html).toContain('We cannot say yet what needs you.');
+      expect(html).toContain('This page may not show everything yet.');
+      expect(html).toContain('href="/account/move"');
+      expect(html).not.toMatch(/>0<|nothing waiting/);
     }
   });
 
@@ -195,7 +198,8 @@ describe('Home summary never claims more than the page could read (Codex review 
     const { MoveView } = await load('app/account/move/move-view');
     const html = render(MoveView, { model: busy, startHref: '/plan', partial: true });
     expect(html).not.toContain('Everything else is moving');
-    expect(html).toContain('so far. This page may not show everything yet.');
+    expect(html).toContain('One thing needs you so far.');
+    expect(html).toContain('This page may not show everything yet.');
   });
 
   // Codex review of PR 310: a journey view shows only the tasks the work list could sort into a journey.
@@ -265,8 +269,8 @@ describe('Home summary never claims more than the page could read (Codex review 
       journey: 'sell',
       taskJourneys: Object.fromEntries(ids.map((id) => [id, 'sell'])),
     });
-    expect(shown).toContain('aria-label="Show work for"');
-    expect(shown).toContain('href="/account/move"');
+    // One kind of work: no row to switch between, even while a journey is asked for.
+    expect(shown).not.toContain('aria-label="Show work for"');
   });
 
   it('remembers the last journey in this browser only, and an address with ?journey= wins', async () => {
@@ -362,5 +366,30 @@ describe('Visual grammar PR 4: Move lanes', () => {
     expect(team).not.toContain('/account/move/b');
     expect(lanes[1].html).toContain('/account/move/b');
     expect(html).toContain('id="move-others"');
+  });
+});
+
+describe('Your Move redesign: one honest h1', () => {
+  it('draws exactly one h1, the honest lede, with its sentence under it and every landmark kept', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: busy, startHref: '/plan' });
+    expect(html.match(/<h1/g)).toHaveLength(1);
+    expect(html).toContain('<h1 class="move-lede">One thing needs you.</h1>');
+    expect(html).toContain('Everything else is moving.');
+    for (const id of ['move-you', 'move-latest', 'move-others'])
+      expect(html).toContain(`aria-labelledby="${id}"`);
+  });
+
+  it('keeps the filter sentence visible under the h1 when a journey has nothing sorted into it', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, {
+      model: busy,
+      startHref: '/plan',
+      journey: 'sell',
+      sortIncomplete: true,
+    });
+    expect(html).toContain('<h1 class="move-lede">Nothing sorted into selling needs you.</h1>');
+    expect(html).toContain('Show All');
+    expect(html).not.toMatch(/all caught up/i);
   });
 });

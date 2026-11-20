@@ -159,7 +159,7 @@ const unreadWords = {
   title: 'We could not check everything just now.',
   text: 'Something may be waiting for you that this page could not read. Your work is safe.',
   some: 'Some of your work could not be read just now, so this list may not show everything.',
-  retry: 'Try again',
+  retry: 'Try Again',
 } as const;
 
 /**
@@ -389,29 +389,49 @@ export function MoveView({
       ? 'One more thing needs you under All.'
       : `${unsorted} more things need you under All.`;
   const filterGap = !!journey && (unsorted > 0 || sortIncomplete);
+  // A zero is only said when the view is complete: a cut-short, unread or unsorted view says "not known yet".
+  const uncertain = incomplete || filterGap;
   const lede = filterGap
     ? nothing
-      ? unsorted > 0
-        ? `Nothing sorted into ${journeyWords[journey!].toLowerCase()} needs you. ${unsortedWords}`
-        : `This view may not show everything${where} yet.`
-      : `${needs} so far. ${unsorted > 0 ? unsortedWords : 'This view may not show everything yet.'}`
+      ? {
+          head: `Nothing sorted into ${journeyWords[journey!].toLowerCase()} needs you.`,
+          body: unsorted > 0 ? unsortedWords : `This view may not show everything${where} yet.`,
+        }
+      : {
+          head: `${needs} so far.`,
+          body: unsorted > 0 ? unsortedWords : 'This view may not show everything yet.',
+        }
     : incomplete
       ? nothing
-        ? 'This page may not show everything that needs you yet.'
-        : `${needs} so far. This page may not show everything yet.`
+        ? {
+            head: 'We cannot say yet what needs you.',
+            body: 'This page may not show everything yet.',
+          }
+        : { head: `${needs} so far.`, body: 'This page may not show everything yet.' }
       : nothing
         ? journey
-          ? `Nothing needs you${where} right now. Here is where it stands.`
-          : 'You are all caught up. Here is where your work stands.'
-        : `${needs}. Everything else is moving.`;
+          ? { head: `Nothing needs you${where} right now.`, body: 'Here is where it stands.' }
+          : { head: 'You are all caught up.', body: 'Here is where your work stands.' }
+        : { head: `${needs}.`, body: 'Everything else is moving.' };
 
   return (
     <div className="move-view" lang={html} dir={dir}>
       <div className="move-hello">
-        <p className="move-lede" lang="en">
-          {lede}
-        </p>
-        {present.length > 1 || journey ? (
+        <div className="move-lede-block" lang="en">
+          <h1 className="move-lede">{lede.head}</h1>
+          <p className="move-lede-body" role={incomplete || filterGap ? 'status' : undefined}>
+            {lede.body}
+            {incomplete ? (
+              <>
+                {' '}
+                <a className="text-link" href="/account/move">
+                  {unreadWords.retry}
+                </a>
+              </>
+            ) : null}
+          </p>
+        </div>
+        {present.length > 1 ? (
           <nav className="move-seg" aria-label="Show work for" lang="en">
             <Link
               prefetch={false}
@@ -441,9 +461,13 @@ export function MoveView({
       <div className="move-grid" data-latest={latestShown || waiting.length > 0 ? 'true' : 'false'}>
         <section className="move-card" aria-labelledby="move-you">
           <h2 id="move-you">{say('move.you.heading')}</h2>
-          <span className="move-count" data-hot={nothing ? 'false' : 'true'}>
+          <span
+            className="move-count"
+            data-hot={nothing ? 'false' : 'true'}
+            lang={nothing && uncertain ? 'en' : undefined}
+          >
             <span className="sr-only">: </span>
-            {count}
+            {nothing && uncertain ? 'Not known yet' : count}
           </span>
           <Explain
             className="move-head-key"

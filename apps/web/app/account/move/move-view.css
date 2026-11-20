@@ -1143,3 +1143,34 @@
   font-weight: 600;
   line-height: 1.3;
 }
+
+/* Your Move redesign (UI/UX.v4, owner 19 and 20 Nov 2026): the honest lede is the page's one h1, with the
+   greeting as a quiet line above it. Tokens only. */
+.move-greeting {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-base);
+}
+.move-hello {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: 0;
+}
+.move-lede-block {
+  display: grid;
+  gap: var(--space-2);
+}
+.move-view .move-lede {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: var(--text-h1);
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.move-lede-body {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-base);
+}
