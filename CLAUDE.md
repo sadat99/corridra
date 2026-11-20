@@ -14,7 +14,7 @@ Visible change: obey binding UI/UX.v4, [ui-direction.md](docs/agents/ui-directio
 
 Token discipline: classify the task, then read by `node scripts/v3-context.mjs budget|outline|section` and run long checks through `node scripts/gate.mjs`, as in the [token playbook](docs/v3/CONTEXT.md). Never load the work log, documentation map, archives or requirement register whole. Before debugging CI read [known issues](docs/v3/KNOWN_ISSUES.md).
 
-Rotation: see [session rotation](docs/agents/session-rotation.md); at 250k tokens, or 150k after finished work.
+Rotation: see [session rotation](docs/agents/session-rotation.md); at ~100k tokens or a clean boundary (efficiency rules in that file).
 
 Agent squad: for build, fix, review or record work use `corridra-squad`. Every run starts with `corridra-authority` and carries its stamped brief; act only on plans the brief lists under FOLLOW. **Codex follows the owner's later lean-work exception in `AGENTS.md`: no subagents unless explicitly requested.**
 

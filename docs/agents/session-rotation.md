@@ -6,6 +6,21 @@ Owner, 9 November 2026 (relayed by the previous conductor session): "I want to w
 
 Owner, 13 November 2026: the standing "Parallel work operating rules" (sections 0 to 11, [operating rules](operating-rules.md), summarised in [AGENTS.md](../../AGENTS.md)) restate and extend this rule: "Rotate any session at 250k tokens of context, or at 150k after a finished unit, using a one-page handover note. The orchestrator obeys this too." They also set at most 4 builder sessions at once, one session per PR, and the cost stops ("any builder passes $30, or the orchestrator passes $60"). Read that section with this file.
 
+## Session efficiency rules
+
+Owner, 20 November 2026 (chat). Where these differ from the older sections below, these win.
+
+1. Rotate at ~100K context or at a clean boundary (PR merged, no code in flight). Do not /compact when most of the context is tool announcements or notification boilerplate. Start fresh from one handoff file.
+2. Handoff packet: write it once to a single file. Never duplicate it into create_session or messages. The packet carries state only. Standing owner rules live in this file.
+3. Never skip the startup reads (CLAUDE.md, AGENTS.md, START_HERE). They cost about 1K tokens.
+4. Before delegating a read or build to a subagent, confirm the input exists (link, file, SHA). If it is missing, ask the owner in one line first.
+5. Read a single known file directly. Do not spawn an agent for it.
+6. PR and wake events: act only on check_suite for the current head SHA, a failing check, or a review comment needing action. Ignore subscription boilerplate and old-head events.
+7. Use gh REST. Keep unused MCP servers (Vercel, Drive, Docs, GitHub MCP) disabled unless the task needs them.
+8. Read file ranges, not whole files. Cap command output with head, tail or --json field selection.
+9. After a depth-limit block, stop. Do not retry create_session or send_later.
+10. Thinking effort: low for routing and waiting, high only for builders and reviewers.
+
 ## When a session rotates
 
 A session hands over to a new one, with the next free number (S5, S6, S7 and so on, never reused), when any of these holds:
