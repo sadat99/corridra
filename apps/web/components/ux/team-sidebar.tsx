@@ -19,6 +19,7 @@ import {
   itemForPlace,
   placeHref,
   teamItemsFor,
+  teamPins,
   teamPlacesFor,
   type TeamItem,
   type TeamPlaceId,
@@ -28,6 +29,11 @@ import {
   readTeamContext,
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
+import {
+  readPinCounts,
+  readServerPinCounts,
+  subscribePinCounts,
+} from '../../lib/ux/team-pin-counts';
 
 const translated: Partial<
   Record<TeamItem['key'], Parameters<ReturnType<typeof useLanguage>['t']>[0]>
@@ -38,7 +44,18 @@ const translated: Partial<
   meetings: 'wse.team.meetings',
 };
 
-export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
+export function TeamSidebar({
+  urls,
+  desk = false,
+  problemReports = false,
+}: {
+  urls: boolean;
+  ownerPage?: boolean;
+  /** CORRIDRA_UX_OPERATOR_DESK: five groups, Settings and checks, and the pinned queues. */
+  desk?: boolean;
+  /** Report a Problem is offered: only then is its queue pinned. */
+  problemReports?: boolean;
+}) {
   const { t, locale } = useLanguage();
   const pathname = usePathname() ?? '/operator';
   const hash = useSyncExternalStore(
@@ -51,9 +68,10 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
     readTeamContext,
     readServerTeamContext,
   );
+  const counts = useSyncExternalStore(subscribePinCounts, readPinCounts, readServerPinCounts);
   const section = currentTeamSection(pathname, hash, sectionForSlug);
   const place = (section || 'home') as TeamPlaceId;
-  const current = itemForPlace(place, role);
+  const current = itemForPlace(place, role, desk);
   const adminNote = useId();
   const admin = useRef<HTMLDetailsElement | null>(null);
   // The Admin group opens by itself on one of its pages, so a deep link lands visibly.
@@ -105,7 +123,8 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
       </Link>
     );
   }
-  const items = teamItemsFor(role);
+  const items = teamItemsFor(role, desk);
+  const pins = desk ? teamPins(role, problemReports, urls, tenant) : [];
   const daily = items.filter((item) => item.key !== 'admin');
   const adminItem = items.find((item) => item.key === 'admin');
   return (
@@ -113,6 +132,7 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
       id="workspace-navigation"
       tabIndex={-1}
       className="ux-team-sidebar"
+      data-desk={desk ? 'true' : undefined}
       aria-label={t('wse.team.nav')}
     >
       <ul>
@@ -167,6 +187,27 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
             ))}
           </ul>
         </details>
+      ) : null}
+      {pins.length > 0 ? (
+        <ul className="ux-team-pins" aria-label="Queues">
+          {pins.map((pin) => {
+            const count = pin.id === 'problem-reports' ? counts.problemReports : counts.erasure;
+            const text =
+              count === null
+                ? null
+                : pin.id === 'erasure' && counts.erasureAtLeast
+                  ? `${count}+`
+                  : count;
+            return (
+              <li key={pin.id}>
+                <a href={pin.href} title={pin.label}>
+                  <span>{english(pin.label)}</span>
+                  {text !== null ? <span className="ux-team-pin-count">{text}</span> : null}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
       ) : null}
     </nav>
   );

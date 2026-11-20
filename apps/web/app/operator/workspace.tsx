@@ -65,6 +65,7 @@ export function Workspace({
   moveRecords = false,
   initialSection = '',
   shellsV2 = false,
+  desk = false,
   problemReports = false,
   programmeApplications = false,
 }: {
@@ -79,6 +80,8 @@ export function Workspace({
    * and only the section in view is rendered. Off, every panel stays mounted as before.
    */
   shellsV2?: boolean;
+  /** `CORRIDRA_UX_OPERATOR_DESK`: Today as one table of what needs a person now. Off, Today is as it was. */
+  desk?: boolean;
   /**
    * Whether Report a Problem is offered, as the server decided it (both probes hold). Fail closed: missing means not
    * offered, and then nothing is added to Settings and its address is an unknown fragment.
@@ -107,6 +110,7 @@ export function Workspace({
       moveRecords={moveRecords}
       initialSection={initialSection}
       shellsV2={shellsV2}
+      desk={desk}
       problemReports={problemReports}
       programmeApplications={programmeApplications}
     />
@@ -120,6 +124,7 @@ function TenantWorkspace({
   moveRecords,
   initialSection,
   shellsV2,
+  desk,
   problemReports,
   programmeApplications,
 }: {
@@ -130,6 +135,7 @@ function TenantWorkspace({
   moveRecords: boolean;
   initialSection: string;
   shellsV2: boolean;
+  desk: boolean;
   problemReports: boolean;
   programmeApplications: boolean;
 }) {
@@ -508,6 +514,7 @@ function TenantWorkspace({
                 revision={missionRevision}
                 role={data.role}
                 problemReports={problemReports}
+                desk={desk}
                 start={
                   <section
                     className="workspace-panel workspace-start"

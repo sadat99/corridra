@@ -1655,6 +1655,185 @@
   margin: 0;
 }
 
+/* Operator desk Today (CORRIDRA_UX_OPERATOR_DESK, owner approved 20 Nov 2026). One sentence, one table, two collapsed
+   rows. Sizes: sentence 22 px on a phone to 24 px (--text-h2), queue rows at least 56 px, the Late chip 14 px at 600 and
+   28 px tall, Open and the Show buttons 44 px tall, blocks 24 px apart on a phone and 32 px from 768 px. */
+.ux-operator-home .ux-desk {
+  display: grid;
+  gap: var(--space-6);
+}
+.ux-operator-home .ux-desk .ux-desk-sentence {
+  margin: 0;
+  color: var(--ink);
+  font: 400 var(--text-h2) / 1.3 var(--font-ui);
+}
+.ux-operator-home .ux-desk .text-link.ux-desk-toggle {
+  min-height: 44px;
+  font-size: var(--text-base);
+}
+.ux-operator-home .ux-desk .ux-desk-open-missions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-desk-scroll {
+  overflow-x: auto;
+}
+.ux-desk-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 1px solid var(--line);
+}
+.ux-desk-table th,
+.ux-desk-table td {
+  padding: var(--space-2) var(--space-4);
+  text-align: start;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--line);
+}
+.ux-desk-table th {
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ux-desk-table thead th {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.ux-desk-table tbody th {
+  color: var(--ink);
+  font-size: var(--text-base);
+}
+.ux-desk-table tbody tr {
+  height: 3.5rem;
+}
+.ux-desk-table tbody tr[hidden] {
+  display: none;
+}
+.ux-desk-table tbody tr:hover {
+  background: var(--selected-surface);
+}
+.ux-desk-table .ux-desk-what {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ux-desk-table .ux-desk-mission-inline {
+  display: none;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+.ux-desk-table .ux-desk-due {
+  white-space: nowrap;
+}
+.ux-desk-table .ux-desk-due time {
+  display: block;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-desk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 1.75rem;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: 600 var(--text-sm) / 1.2 var(--font-ui);
+}
+.ux-desk-chip[data-tone='late'] {
+  border-color: var(--critical);
+  background: var(--critical-surface);
+  color: var(--critical);
+}
+.ux-desk-chip .operator-icon {
+  width: 1rem;
+  height: 1rem;
+}
+.ux-operator-home .ux-desk-table a.ux-desk-open {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  font-size: var(--text-base);
+}
+.ux-desk-fold {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ux-desk-fold-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-height: 3.5rem;
+  padding: 0 var(--space-4);
+}
+.ux-operator-home .ux-desk-fold-head h3 {
+  margin: 0;
+  font: 600 var(--text-base) / 1.3 var(--font-ui);
+}
+.ux-desk-fold-summary {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-desk-fold-head .ux-desk-toggle {
+  margin-inline-start: auto;
+}
+.ux-desk-fold-body {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) var(--space-4);
+}
+.ux-desk-fold-body[hidden] {
+  display: none;
+}
+.ux-desk-part-failure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.ux-desk-part-failure p {
+  margin: 0;
+}
+.ux-desk-queue .ux-desk-place {
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 767.98px) {
+  .ux-desk-table .ux-desk-col-mission {
+    display: none;
+  }
+  .ux-desk-table .ux-desk-mission-inline {
+    display: block;
+  }
+  .ux-desk-table th,
+  .ux-desk-table td {
+    padding-inline: var(--space-2);
+  }
+}
+@media (min-width: 768px) {
+  .ux-operator-home .ux-desk {
+    gap: var(--space-8);
+  }
+}
+@media (forced-colors: active) {
+  .ux-desk-chip,
+  .ux-desk-fold,
+  .ux-desk-table th,
+  .ux-desk-table td {
+    border-color: CanvasText;
+  }
+  .ux-desk-chip[data-tone='late'] {
+    border-width: 2px;
+  }
+}
+
 /* Signal Desk density (AC/1): the Delivery list reads as a dense table with a quiet header fill, exceptions stay in the
    columns they already have. Scoped to the workspace body; column order, headers and row actions are unchanged. */
 /* Staff page budget (L21, owner 13 November 2026: desktop at most one screen, phone at most two, disclosures closed).

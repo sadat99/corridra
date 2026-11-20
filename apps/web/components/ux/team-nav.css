@@ -783,3 +783,41 @@ nav.ux-team-sidebar .ux-team-group > summary > .ux-team-caption {
 body:has(.ux-team-header) .corner-dock:not(.header-help) {
   display: none;
 }
+
+/* Operator desk (CORRIDRA_UX_OPERATOR_DESK): five groups at 48 px rows and a second labelled list of pinned queues at
+   44 px rows, under a quiet rule. Presentation only; every link keeps its address. */
+nav.ux-team-sidebar[data-desk='true'] > ul > li > a,
+nav.ux-team-sidebar[data-desk='true'] .ux-team-group > summary {
+  min-height: 48px;
+}
+nav.ux-team-sidebar[data-desk='true'] .ux-team-pins {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2) 0 0;
+  list-style: none;
+  border-top: 1px solid var(--ac-surface-navy-hover);
+}
+nav.ux-team-sidebar[data-desk='true'] .ux-team-pins a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+nav.ux-team-sidebar[data-desk='true'] .ux-team-pin-count {
+  min-width: 1.5rem;
+  padding-inline: var(--space-2);
+  border: 1px solid var(--ac-paper);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 1024px) {
+  .ux-leftnav-frame[data-collapsed='true'] nav.ux-team-sidebar[data-desk='true'] .ux-team-pins {
+    display: none;
+  }
+}

@@ -85,6 +85,87 @@ export const teamMap: readonly TeamItem[] = [
 ];
 
 /**
+ * The operator desk grouping (CORRIDRA_UX_OPERATOR_DESK, owner approved 20 Nov 2026): five groups instead of six.
+ * Meetings, Reports and Network join Missions; Assistance joins Companies; Admin becomes "Settings and checks". The
+ * same seventeen places (Today and the sixteen sections), each with the address and the role gate it had; the item key `admin` is unchanged so the role
+ * rule (owner and admin only) is the same code. A test holds the union of places per role equal to the map above.
+ */
+export const deskMap: readonly TeamItem[] = [
+  teamMap[0]!,
+  {
+    key: 'missions',
+    label: 'Missions',
+    icon: 'mission',
+    places: [
+      { id: 'workspace-missions', label: 'Missions' },
+      { id: 'workspace-meetings', label: 'Meetings' },
+      { id: 'workspace-operations', label: 'Operations' },
+      { id: 'workspace-delivery', label: 'Reports' },
+      { id: 'workspace-network', label: 'Network' },
+    ],
+  },
+  {
+    key: 'companies',
+    label: 'Companies',
+    icon: 'company',
+    places: [
+      { id: 'workspace-research', label: 'Companies' },
+      { id: 'workspace-sources', label: 'Sources and claims' },
+      { id: 'workspace-evidence', label: 'Evidence review' },
+      { id: 'workspace-ai', label: 'Assistance' },
+    ],
+  },
+  teamMap[4]!,
+  { ...teamMap[5]!, label: 'Settings and checks' },
+];
+
+/** The map in force: the operator desk grouping when its switch is on, otherwise Navigation v1 as it was. */
+export function mapFor(desk: boolean): readonly TeamItem[] {
+  return desk ? deskMap : teamMap;
+}
+
+/** The address with the Settings sub-tab chosen (?tab=, kept before any # part), so a fresh visit lands on that tab. */
+function withSettingsTab(href: string, tab: string): string {
+  const [path = '', hash] = href.split('#') as [string, string | undefined];
+  const joined = path + (path.includes('?') ? '&' : '?') + 'tab=' + tab;
+  return hash === undefined ? joined : joined + '#' + hash;
+}
+
+/**
+ * Pinned queues (operator desk only): a second labelled list under the groups, for the roles that triage. The
+ * addresses are built like every other sidebar link, so they work from any team page and keep the chosen workspace:
+ * Erasure Requests opens the Settings section on its Erasure requests tab (?tab=settings-erasure), Problem Reports opens the workspace home at the panel's own fragment
+ * (#problem-report-queue, which the workspace reads as inside Settings). Problem Reports is listed only where Report a
+ * Problem is offered.
+ */
+export type TeamPin = { id: 'problem-reports' | 'erasure'; label: string; href: string };
+export function teamPins(
+  role: string | null,
+  problemReports: boolean,
+  urls = false,
+  workspace = '',
+): TeamPin[] {
+  // Same rule as canTriage in lib/problem-report-queue.ts (a test holds them equal; that module is too heavy for the sidebar).
+  if (role !== 'owner' && role !== 'admin') return [];
+  return [
+    ...(problemReports
+      ? [
+          {
+            id: 'problem-reports' as const,
+            label: 'Problem Reports',
+            href: teamSectionHref(undefined, urls, workspace) + '#problem-report-queue',
+          },
+        ]
+      : []),
+    {
+      id: 'erasure' as const,
+      label: 'Erasure Requests',
+      href: withSettingsTab(placeHref('workspace-settings', urls, workspace), 'settings-erasure'),
+    },
+  ];
+}
+
+/**
  * Places that are not a first-level entry of their own: they sit in the second level of the item
  * that leads to them. Control Center and the owner page live under Settings.
  */
@@ -101,9 +182,9 @@ export function placeAllowed(id: TeamPlaceId, role: string | null): boolean {
 }
 
 /** The items a role sees. With the role unknown only what every role may open is listed. */
-export function teamItemsFor(role: string | null): TeamItem[] {
+export function teamItemsFor(role: string | null, desk = false): TeamItem[] {
   const admin = role === 'owner' || role === 'admin';
-  return teamMap
+  return mapFor(desk)
     .filter((item) => !item.adminOnly || admin)
     .filter((item) => item.places.some((place) => placeAllowedStrict(place.id, role)));
 }
@@ -128,8 +209,13 @@ export function settingsLevel(role: string | null): TeamPlace[] {
 }
 
 /** The item that holds a place for a role. Admin wins for the places it lists, for owner and admin. */
-export function itemForPlace(id: TeamPlaceId, role: string | null): TeamItem['key'] | 'none' {
+export function itemForPlace(
+  id: TeamPlaceId,
+  role: string | null,
+  desk = false,
+): TeamItem['key'] | 'none' {
   const admin = role === 'owner' || role === 'admin';
+  const teamMap = mapFor(desk);
   if (admin && teamMap.find((i) => i.key === 'admin')?.places.some((p) => p.id === id))
     return 'admin';
   if (id === 'ops-center' || id === 'owner') return 'admin';

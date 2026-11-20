@@ -26,7 +26,15 @@ import {
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
 
-export function TeamSecondLevel({ urls, ownerPage }: { urls: boolean; ownerPage: boolean }) {
+export function TeamSecondLevel({
+  urls,
+  ownerPage,
+  desk = false,
+}: {
+  urls: boolean;
+  ownerPage: boolean;
+  desk?: boolean;
+}) {
   const { locale } = useLanguage();
   const pathname = usePathname() ?? '/operator';
   const hash = useSyncExternalStore(
@@ -42,8 +50,8 @@ export function TeamSecondLevel({ urls, ownerPage }: { urls: boolean; ownerPage:
   const section = currentTeamSection(pathname, hash, sectionForSlug);
   const place = (section || 'home') as TeamPlaceId;
   const settings = place === 'workspace-settings' || place === 'ops-center' || place === 'owner';
-  const key = itemForPlace(place, role);
-  const item = teamItemsFor(role).find((entry) => entry.key === key);
+  const key = itemForPlace(place, role, desk);
+  const item = teamItemsFor(role, desk).find((entry) => entry.key === key);
   const places: TeamPlace[] = settings
     ? settingsLevel(role).filter((entry) => entry.id !== 'owner' || ownerPage)
     : item

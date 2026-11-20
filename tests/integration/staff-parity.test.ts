@@ -186,7 +186,7 @@ describe('the gates that decide access stay where they are', () => {
     const frame = read('components/ux/team-frame.tsx');
     expect(frame).toContain('StepUpDialog');
     expect(frame).toContain('TeamSidebar');
-    expect(read('components/ux/team-sidebar.tsx')).toContain('teamItemsFor(role)');
+    expect(read('components/ux/team-sidebar.tsx')).toContain('teamItemsFor(role, desk)');
     expect(read('lib/ux/team-map.ts')).toContain('sectionAllowedFor');
   });
 });

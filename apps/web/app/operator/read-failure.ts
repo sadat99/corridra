@@ -16,3 +16,17 @@ export function readFailureWords(kind: ReadFailureKind): string {
       ? 'There have been too many requests. Try again later.'
       : 'Check your connection and try again.';
 }
+
+/**
+ * The words for one part of a screen that could not be read while the rest worked (operator desk). The part is named
+ * as the person sees it. An unavailable read says so and that their work is safe; a refusal keeps the role words (and
+ * no retry is offered, since asking again cannot change it); too many requests keeps its words and may be retried.
+ */
+export function partFailureWords(part: string, kind: ReadFailureKind): string {
+  return kind === 'unavailable'
+    ? `${part} is not available. It could not be read just now. Your work is safe.`
+    : `${part} is not available. ${readFailureWords(kind)}`;
+}
+
+/** Try Again is shown for an unavailable read and for "later"; never for a refusal. */
+export const readFailureCanRetry = (kind: ReadFailureKind) => kind !== 'denied';

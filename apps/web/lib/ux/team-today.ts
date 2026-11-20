@@ -153,3 +153,130 @@ export function needsSummary(
   ].filter((part): part is string => part !== null);
   return { lead, detail: `${parts.join(' and ')}.` };
 }
+
+// Operator desk (CORRIDRA_UX_OPERATOR_DESK): Today as one table. The set is new requests, late missions and overdue
+// erasure requests, each once. The sentence and the filter counts are worked out from the same set as the rows, so
+// the number said is the number listed. A count that rests on an unfinished read says "At least".
+
+export type DeskRow = {
+  /** Unique in the table: the mission id, or `erasure:` and the request id. */
+  key: string;
+  kind: 'mission' | 'erasure';
+  /** The mission read, for a mission row. */
+  mission: TodayMission | null;
+  /** The erasure reference, for an erasure row. */
+  reference: string | null;
+  dueAt: string;
+  fresh: boolean;
+  late: boolean;
+  /** Whole days late for an erasure row (the server counted them); a mission row counts from the moment read. */
+  erasureDaysLate: number | null;
+};
+export type DeskErasureRow = { id: string; reference: string; daysOverdue: number; dueAt: string };
+
+/** The chip words. Late always names its days; the browser's clock disagreeing leaves the plain word. */
+export function deskChip(row: DeskRow, observedAt: string): string {
+  if (!row.late) return 'New';
+  const days =
+    row.kind === 'erasure'
+      ? (row.erasureDaysLate ?? 0)
+      : Date.parse(observedAt) <= Date.parse(row.dueAt)
+        ? null
+        : daysLate(row.dueAt, observedAt);
+  if (days === null) return 'Late';
+  if (days === 0) return 'Late, due today';
+  return days === 1 ? 'Late, 1 day' : `Late, ${days} days`;
+}
+
+function lateDays(row: DeskRow, observedAt: string): number {
+  if (!row.late) return -1;
+  if (row.kind === 'erasure') return row.erasureDaysLate ?? 0;
+  return Date.parse(observedAt) <= Date.parse(row.dueAt) ? 0 : daysLate(row.dueAt, observedAt);
+}
+
+/** The table rows: most days late first, then the soonest due; a stable order by key breaks every tie. */
+export function deskRows(
+  fresh: MissionPage,
+  overdue: MissionPage,
+  erasure: DeskErasureRow[],
+  observedAt: string,
+): DeskRow[] {
+  const rows: DeskRow[] = needsYouNow(fresh, overdue).map((row) => ({
+    key: row.mission.id,
+    kind: 'mission',
+    mission: row.mission,
+    reference: null,
+    dueAt: row.mission.due_at,
+    fresh: row.fresh,
+    late: row.overdue,
+    erasureDaysLate: null,
+  }));
+  for (const item of erasure)
+    rows.push({
+      key: `erasure:${item.id}`,
+      kind: 'erasure',
+      mission: null,
+      reference: item.reference,
+      dueAt: item.dueAt,
+      fresh: false,
+      late: true,
+      erasureDaysLate: item.daysOverdue,
+    });
+  return rows.sort((a, b) => {
+    const days = lateDays(b, observedAt) - lateDays(a, observedAt);
+    if (days !== 0) return days;
+    const due = Date.parse(a.dueAt) - Date.parse(b.dueAt);
+    if (due !== 0) return due;
+    return a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+  });
+}
+
+export type DeskTotals = { count: number; late: number; fresh: number; exact: boolean };
+/**
+ * How many things need a person, how many of them are late and how many are new. Exact only when both mission reads
+ * and the erasure read were whole; otherwise the smallest number the totals prove. `erasure` is null when the role
+ * does not read that queue or the read failed: nothing is added for it.
+ */
+export function deskTotals(
+  fresh: MissionPage,
+  overdue: MissionPage,
+  erasure: { rows: DeskErasureRow[]; atLeast: boolean } | null,
+  rows: NeedsRow[],
+  /**
+   * True when this role reads the erasure queue and the read failed. That is not "no erasure requests": the total is
+   * then a lower bound, never exact, so the page cannot give a false all-clear.
+   */
+  erasureUnread = false,
+): DeskTotals {
+  const missions = needsCount(fresh, overdue, rows);
+  const extra = erasure?.rows.length ?? 0;
+  return {
+    count: missions.count + extra,
+    late: overdue.total + extra,
+    fresh: fresh.total,
+    exact: missions.exact && !erasure?.atLeast && !erasureUnread,
+  };
+}
+
+/** The one sentence under the heading. */
+export function deskSentence({ count, late, exact }: DeskTotals): string {
+  if (count === 0)
+    return exact ? 'Nothing needs you now.' : 'Erasure requests could not be checked just now.';
+  const lead = `${exact ? '' : 'At least '}${count} ${count === 1 ? 'thing needs' : 'things need'} you now.`;
+  const tail =
+    late === 0
+      ? 'Nothing is late.'
+      : count === 1
+        ? 'It is late.'
+        : late === 1
+          ? '1 is late.'
+          : `${late} are late.`;
+  return `${lead} ${tail}`;
+}
+
+/** Rows for a filter: New is new requests, Past due is everything late (missions and erasure requests). */
+export function deskFilter(rows: DeskRow[], filter: NeedsFilter): DeskRow[] {
+  if (filter === 'new') return rows.filter((row) => row.fresh);
+  if (filter === 'overdue') return rows.filter((row) => row.late);
+  return rows;
+}

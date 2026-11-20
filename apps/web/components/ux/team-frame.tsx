@@ -23,12 +23,15 @@ export function TeamFrame({
   urls,
   ownerPage,
   problemReports,
+  desk = false,
 }: {
   children: ReactNode;
   urls: boolean;
   ownerPage: boolean;
   /** Report a Problem is installed with the customer's own word removal: the header menus link it. */
   problemReports: boolean;
+  /** CORRIDRA_UX_OPERATOR_DESK: five groups and pinned queues. Off, the sidebar is Navigation v1 as it was. */
+  desk?: boolean;
 }) {
   const pathname = usePathname();
   const { locale, t } = useLanguage();
@@ -62,11 +65,18 @@ export function TeamFrame({
           collapseLabel: word('wse.shell.collapseMenu'),
           expandLabel: word('wse.shell.expandMenu'),
         }}
-        nav={<TeamSidebar urls={urls} ownerPage={ownerPage} />}
+        nav={
+          <TeamSidebar
+            urls={urls}
+            ownerPage={ownerPage}
+            desk={desk}
+            problemReports={problemReports}
+          />
+        }
       >
         {children}
       </LeftNavFrame>
-      <TeamPalette urls={urls} ownerPage={ownerPage} />
+      <TeamPalette urls={urls} ownerPage={ownerPage} desk={desk} />
       <StepUpDialog />
     </>
   );

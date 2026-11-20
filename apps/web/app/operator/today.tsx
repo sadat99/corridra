@@ -11,8 +11,13 @@ import {
   lateLabel,
   needsSummary,
   needsYouNow,
+  deskFilter,
+  deskRows,
+  deskSentence,
+  deskTotals,
   type MissionPage,
   type NeedsFilter,
+  type DeskRow,
   type NeedsRow,
 } from '../../lib/ux/team-today';
 import {
@@ -26,6 +31,8 @@ import {
 } from '../../lib/ux/also-waiting';
 import { ageWords } from '../../lib/problem-report-queue';
 import { readFailureKind, readFailureWords, type ReadFailureKind } from './read-failure';
+import { clearPinCounts, publishPinCounts } from '../../lib/ux/team-pin-counts';
+import { DeskFold, DeskTable, PartFailure, type DeskRowView } from './today-desk-parts';
 import { missionHref, stageLabel } from './[section]/[missionId]/mission-labels';
 
 type Meeting = {
@@ -73,6 +80,8 @@ type Today = {
   /** Null when the role may not see the queue, the module is not installed or the read failed: no tile, never zero. */
   problemReports: ProblemReportsTile | null;
   erasure: ErasureTile | null;
+  /** The role reads the erasure queue (so a null `erasure` means the read failed, not that it was not asked). */
+  erasureRead: boolean;
 };
 
 const week = 7 * 24 * 60 * 60 * 1000;
@@ -138,7 +147,7 @@ async function readErasure(tenant: string, signal: AbortSignal) {
   }
 }
 
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
+const plural = (n: number | null, one: string, many: string) => (n === 1 ? one : many);
 
 function Item({ lead, detail, when }: { lead: string; detail: string; when: ReactNode }) {
   return (
@@ -227,20 +236,11 @@ function ErasureRows({ erasure }: { erasure: ErasureTile }) {
   );
 }
 
-/** "Needs you now": new requests and late missions as one list, with a filter and "Show N More". */
-function NeedsYouNow({
-  today,
-  rows,
-  tenant,
-  nothing,
-}: {
-  today: Today;
-  rows: NeedsRow[];
-  tenant: string;
-  nothing: boolean;
-}) {
-  // The list opens on All; the chosen filter lives in the address (?needs=new|overdue) so reload and
-  // back keep it. It is read after mount, so the server render and the first client render agree.
+/**
+ * The list opens on All; the chosen filter lives in the address (?needs=new|overdue) so reload and back keep it. It is
+ * read after mount, so the server render and the first client render agree.
+ */
+function useNeedsFilter() {
   const [filter, setFilter] = useState<NeedsFilter>('all');
   const [all, setAll] = useState(false);
   useEffect(() => {
@@ -264,8 +264,13 @@ function NeedsYouNow({
       );
     }
   };
-  // Mission pages exist only while CORRIDRA_UX_MISSIONS_V2 is on (the page answers 404 otherwise), so rows
-  // open the mission list until the same flag read the Missions panel uses says they are on.
+  return { filter, setFilter, all, setAll, choose };
+}
+/**
+ * Mission pages exist only while CORRIDRA_UX_MISSIONS_V2 is on (the page answers 404 otherwise), so rows open the
+ * mission list until the same flag read the Missions panel uses says they are on.
+ */
+function useMissionPages() {
   const [missionPages, setMissionPages] = useState(false);
   useEffect(() => {
     let active = true;
@@ -279,6 +284,23 @@ function NeedsYouNow({
       active = false;
     };
   }, []);
+  return missionPages;
+}
+
+/** "Needs you now": new requests and late missions as one list, with a filter and "Show N More". */
+function NeedsYouNow({
+  today,
+  rows,
+  tenant,
+  nothing,
+}: {
+  today: Today;
+  rows: NeedsRow[];
+  tenant: string;
+  nothing: boolean;
+}) {
+  const { filter, all, setAll, choose } = useNeedsFilter();
+  const missionPages = useMissionPages();
   const listId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-needs`;
   const shown = filterRows(rows, filter);
   const total = filterTotal(filter, today.fresh, today.overdue, rows);
@@ -439,12 +461,20 @@ function AlsoWaiting({ today }: { today: Today }) {
   );
 }
 
-function ThisWeek({ today }: { today: Today }) {
+function ThisWeek({
+  today,
+  desk = false,
+  onRetry,
+}: {
+  today: Today;
+  /** Operator desk: the parts that could not be read name "This week" and offer Try Again where it can help. */
+  desk?: boolean;
+  onRetry?: () => void;
+}) {
   const { work, team } = today;
   const repliesUnavailable = team?.unavailable?.includes('repliesToReview') ?? false;
-  return (
-    <section className="ux-week" aria-labelledby="today-week-title">
-      <h3 id="today-week-title">This week</h3>
+  const body = (
+    <>
       {work ? (
         <>
           <WeekGroup
@@ -510,6 +540,8 @@ function ThisWeek({ today }: { today: Today }) {
             </p>
           )}
         </>
+      ) : desk && today.workFailure && onRetry ? (
+        <PartFailure part="This week" kind={today.workFailure} onRetry={onRetry} />
       ) : (
         <p className="ux-week-unread">
           {today.workFailure === 'denied'
@@ -525,6 +557,8 @@ function ThisWeek({ today }: { today: Today }) {
           href="#workspace-delivery"
           link="Open Replies"
         />
+      ) : desk && !repliesUnavailable && today.teamFailure && !today.workFailure && onRetry ? (
+        <PartFailure part="This week" kind={today.teamFailure} onRetry={onRetry} />
       ) : (
         <p className="ux-week-unread">
           {repliesUnavailable
@@ -534,7 +568,264 @@ function ThisWeek({ today }: { today: Today }) {
               : 'Replies could not be read right now.'}
         </p>
       )}
+    </>
+  );
+  // A closed row says when a part could not be read, so the failure is visible without opening it: never blank, never zero.
+  const failed = today.workFailure !== null || (!repliesUnavailable && today.teamFailure !== null);
+  if (desk)
+    return (
+      <DeskFold title="This week" summary={failed ? 'Not available' : null}>
+        {body}
+      </DeskFold>
+    );
+  return (
+    <section className="ux-week" aria-labelledby="today-week-title">
+      <h3 id="today-week-title">This week</h3>
+      {body}
     </section>
+  );
+}
+
+/** Today as one table (operator desk): the queue, its filter, Show More and the place line. */
+function DeskQueue({
+  today,
+  list,
+  totals,
+  tenant,
+  openCount,
+}: {
+  today: Today;
+  list: DeskRow[];
+  totals: ReturnType<typeof deskTotals>;
+  tenant: string;
+  openCount: number;
+}) {
+  const { filter, all, setAll, choose } = useNeedsFilter();
+  const missionPages = useMissionPages();
+  const [why, setWhy] = useState(false);
+  const tableId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-queue`;
+  const rows = list;
+  const views: DeskRowView[] = deskFilter(list, filter).map((row) => {
+    if (row.mission)
+      return {
+        row,
+        what: `${row.mission.brief.objective} · ${row.mission.brief.market}`,
+        group: row.mission.brief.company,
+        href: missionPages ? missionHref(row.mission.id, tenant) : '#workspace-missions',
+      };
+    return {
+      row,
+      what: `Erasure request ${row.reference ?? ''}`.trim(),
+      group: 'Erasure Requests',
+      href: '#workspace-settings',
+    };
+  });
+  const shown = views;
+  const extra = today.erasure?.rows.length ?? 0;
+  const counts: Record<NeedsFilter, { count: number; exact: boolean }> = {
+    all: { count: totals.count, exact: totals.exact },
+    new: { count: today.fresh.total, exact: true },
+    overdue: { count: today.overdue.total + extra, exact: true },
+  };
+  const label = (option: NeedsFilter) =>
+    counts[option].exact ? counts[option].count : `${counts[option].count}+`;
+  const total = counts[filter];
+  const empty =
+    filter === 'new'
+      ? 'No new requests to review.'
+      : filter === 'overdue'
+        ? 'No missions past their due date.'
+        : 'No new requests and no missions past their due date.';
+  // The place line: only when an upcoming meeting has no place entered.
+  const meetings = today.work?.upcoming ?? [];
+  const without = meetings.filter((m) => !m.location || m.location.trim() === '').length;
+  return (
+    <section className="ux-needs ux-desk-queue" aria-labelledby="today-needs-title">
+      <header className="ux-needs-heading">
+        <h3 id="today-needs-title">Needs you now</h3>
+        <span className="ux-desk-open-missions">
+          <a className="text-link" href="#workspace-missions">
+            Open Missions
+          </a>
+          <span>{openCount} open</span>
+        </span>
+      </header>
+      {rows.length > 0 && (
+        <SegmentedFilter<NeedsFilter>
+          label="Show"
+          value={filter}
+          onChange={choose}
+          options={[
+            { value: 'all', label: 'All', count: label('all') },
+            { value: 'new', label: 'New', count: label('new') },
+            { value: 'overdue', label: 'Past due', count: label('overdue') },
+          ]}
+        />
+      )}
+      {shown.length === 0 ? (
+        <p className="ux-needs-empty">{empty}</p>
+      ) : (
+        <DeskTable
+          views={shown}
+          observedAt={today.observedAt}
+          firstRows={firstRows}
+          all={all}
+          tableId={tableId}
+        />
+      )}
+      {shown.length > firstRows && (
+        <button
+          type="button"
+          className="text-link ux-desk-toggle ux-needs-more"
+          aria-expanded={all}
+          aria-controls={tableId}
+          onClick={() => setAll((value) => !value)}
+        >
+          {all ? 'Show Fewer' : `Show ${shown.length - firstRows} More`}
+        </button>
+      )}
+      {shown.length < total.count && (
+        <p className="ux-today-more">
+          Showing {shown.length} of {total.exact ? '' : 'at least '}
+          {total.count}. The full list is in Missions.
+        </p>
+      )}
+      {today.erasureRead && today.erasure === null && (
+        <p className="ux-today-more">
+          Erasure requests could not be checked just now, so overdue ones may be missing here.
+        </p>
+      )}
+      {without > 0 && (
+        <p className="ux-today-more ux-desk-place">
+          Place not entered for {without} of {meetings.length} meetings.{' '}
+          <button
+            type="button"
+            className="text-link ux-desk-toggle"
+            aria-expanded={why}
+            onClick={() => setWhy((value) => !value)}
+          >
+            Why
+          </button>
+          {why && <span role="note"> No place was entered when the meeting was booked.</span>}
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** One tile row of "Also waiting" (operator desk): a number and its words, linking to where it is handled. */
+function WaitingItem({
+  href,
+  value,
+  words,
+  tone,
+}: {
+  href: string;
+  value: ReactNode;
+  words: ReactNode;
+  tone?: string;
+}) {
+  return (
+    <li data-tone={tone}>
+      <a href={href}>
+        <strong>{value}</strong>
+        <span>{words}</span>
+      </a>
+    </li>
+  );
+}
+
+/** "Also waiting" collapsed row (operator desk). Accepted quotes and paid-service requests join the two queues. */
+function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void }) {
+  const { team, teamFailure, problemReports: reports, erasure } = today;
+  const unread = (name: 'acceptedQuotesNotStarted' | 'serviceRequestsToQuote') =>
+    team?.unavailable?.includes(name) ?? false;
+  const quotes = team && !unread('acceptedQuotesNotStarted') ? team.acceptedQuotesNotStarted : null;
+  const services = team && !unread('serviceRequestsToQuote') ? team.serviceRequestsToQuote : null;
+  // A short line beside the title only when every number behind it was read.
+  const all = [quotes, services, reports?.count ?? null, erasure?.count ?? null];
+  // A failed read hides only its own numbers: the queues that were read stay visible (never a false zero).
+  const erasureFailed = today.erasureRead && erasure === null;
+  const hasTiles = team !== null || reports !== null || erasure !== null;
+  const summary =
+    teamFailure === null &&
+    !erasureFailed &&
+    all.every((value) => value !== null) &&
+    !erasure?.atLeast
+      ? `${all.reduce<number>((sum, value) => sum + (value ?? 0), 0)} waiting`
+      : teamFailure !== null || erasureFailed
+        ? hasTiles
+          ? 'Partly not available'
+          : 'Not available'
+        : null;
+  return (
+    <DeskFold title="Also waiting" summary={summary}>
+      {teamFailure ? (
+        <PartFailure part="Also waiting" kind={teamFailure} onRetry={onRetry} />
+      ) : null}
+      {erasureFailed ? (
+        <PartFailure part="Erasure Requests" kind="unavailable" onRetry={onRetry} />
+      ) : null}
+      {hasTiles && (
+        <ul className="ux-today-tiles" aria-label="Also waiting">
+          {team && (
+            <WaitingItem
+              href="#workspace-commercial"
+              value={quotes ?? 'Not available'}
+              tone={quotes === 0 ? 'zero' : quotes === null ? 'unavailable' : undefined}
+              words={plural(quotes, 'accepted quote not started', 'accepted quotes not started')}
+            />
+          )}
+          {team && (
+            <WaitingItem
+              /* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */
+              href="#billing-services"
+              value={services ?? 'Not available'}
+              tone={services === 0 ? 'zero' : services === null ? 'unavailable' : undefined}
+              words={plural(
+                services,
+                'paid-service request to quote',
+                'paid-service requests to quote',
+              )}
+            />
+          )}
+          {reports && (
+            <WaitingItem
+              href="#problem-report-queue"
+              value={reports.count}
+              tone={reports.count === 0 ? 'zero' : undefined}
+              words={
+                plural(reports.count, 'problem report open', 'problem reports open') +
+                (reports.oldestDays !== null && reports.count > 0
+                  ? `, oldest waiting ${ageWords(reports.oldestDays).replace(' ago', '')}`
+                  : '')
+              }
+            />
+          )}
+          {erasure && (
+            <WaitingItem
+              href="#workspace-settings"
+              value={erasure.atLeast ? `${erasure.count}+` : erasure.count}
+              tone={erasure.count === 0 ? 'zero' : erasure.overdue > 0 ? 'late' : undefined}
+              words={
+                <>
+                  {plural(erasure.count, 'erasure request open', 'erasure requests open')}
+                  {erasure.overdue > 0 ? `, ${erasure.overdue} overdue` : ''}
+                  {erasure.nearestDueAt ? (
+                    <>
+                      , nearest due{' '}
+                      <time dateTime={erasure.nearestDueAt}>
+                        {formatDate(erasure.nearestDueAt)}
+                      </time>
+                    </>
+                  ) : null}
+                </>
+              }
+            />
+          )}
+        </ul>
+      )}
+    </DeskFold>
   );
 }
 
@@ -549,6 +840,7 @@ export function TodayPanel({
   start,
   role,
   problemReports = false,
+  desk = false,
 }: {
   tenant: string;
   revision: number;
@@ -557,6 +849,8 @@ export function TodayPanel({
   role?: string;
   /** Whether Report a Problem is installed and offered. */
   problemReports?: boolean;
+  /** CORRIDRA_UX_OPERATOR_DESK: Today as one table with Also waiting and This week as collapsed rows. */
+  desk?: boolean;
 }) {
   const [today, setToday] = useState<Today | null>(null);
   // Why the list could not be read: the person's role, too many requests, or anything else (an
@@ -620,16 +914,34 @@ export function TodayPanel({
           workFailure: 'failure' in meetingRead ? meetingRead.failure : null,
           problemReports: reportsTile,
           erasure,
+          erasureRead: reads.erasure,
           observedAt: new Date(now).toISOString(),
         });
         setFailure(null);
+        // The pinned queues in the sidebar show a number only when its read succeeded (null: no number).
+        if (desk)
+          publishPinCounts({
+            problemReports: reportsTile?.count ?? null,
+            erasure: erasure?.count ?? null,
+            erasureAtLeast: erasure?.atLeast ?? false,
+          });
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
+        // A failed read leaves no number behind in the sidebar.
+        clearPinCounts();
         setFailure(readFailureKind(error));
       });
     return () => controller.abort();
-  }, [tenant, revision, attempt, role, problemReports]);
+  }, [tenant, revision, attempt, role, problemReports, desk]);
+  // Closing Today takes its numbers with it: a count is never kept after the page that read it.
+  useEffect(() => clearPinCounts, []);
+  const retry = () => {
+    clearPinCounts();
+    setFailure(null);
+    setToday(null);
+    setAttempt((n) => n + 1);
+  };
   const work = today?.work ?? null;
   const rows = today ? needsYouNow(today.fresh, today.overdue) : [];
   const summary = today ? needsSummary(today.fresh, today.overdue, rows) : null;
@@ -646,6 +958,53 @@ export function TodayPanel({
       (work.upcoming.length === 0 &&
         work.reschedule.length === 0 &&
         work.lateFollowUps.length === 0));
+  if (desk) {
+    const list = today
+      ? deskRows(today.fresh, today.overdue, today.erasure?.rows ?? [], today.observedAt)
+      : [];
+    // A role that reads the erasure queue and got nothing back could not check it: not the same as none waiting.
+    const erasureUnread = !!today && today.erasureRead && today.erasure === null;
+    const totals = today
+      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
+      : null;
+    return (
+      <section className="ux-today ux-desk" aria-labelledby="today-title">
+        <header className="operator-today-heading">
+          <h2 id="today-title">Today</h2>
+          {today && !failure && totals && (
+            <p className="ux-desk-sentence">{deskSentence(totals)}</p>
+          )}
+        </header>
+        {failure ? (
+          <div role="status" className="ux-today-state">
+            <p>Today&apos;s list could not be loaded. {readFailureWords(failure)}</p>
+            {failure !== 'denied' && (
+              <button type="button" className="text-link ux-desk-toggle" onClick={retry}>
+                Try Again
+              </button>
+            )}
+          </div>
+        ) : !today || !totals ? (
+          <p role="status" aria-live="polite" className="ux-today-state">
+            Loading today&apos;s list.
+          </p>
+        ) : (
+          <>
+            <DeskQueue
+              today={today}
+              list={list}
+              totals={totals}
+              tenant={tenant}
+              openCount={today.open.total}
+            />
+            <DeskAlsoWaiting today={today} onRetry={retry} />
+            <ThisWeek today={today} desk onRetry={retry} />
+          </>
+        )}
+        {start}
+      </section>
+    );
+  }
   return (
     <section className="ux-today" aria-labelledby="today-title">
       <header className="operator-today-heading">
