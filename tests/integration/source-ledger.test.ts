@@ -119,10 +119,14 @@ describe('the Source room comparison', () => {
 
   it('keeps each price in the currency quoted and a missing term missing', () => {
     const ledger = sourceLedger(e, { at });
-    const price = ledger.rows.find((r) => r.label === 'Original price')!;
-    expect(price.cells[0]!.value).toMatch(/^USD/);
-    expect(price.cells[1]!.value).toMatch(/^CNY/);
-    expect(price.cells[1]!.sub).toMatch(/^CNY\s.* for 2 sets$/);
+    // UI/UX.v4 row "Compare" (20 Nov 2026): the unit price and the total are two rows of the same stated fields.
+    const unit = ledger.rows.find((r) => r.label === 'Original unit price')!;
+    expect(unit.cells[0]!.value).toMatch(/^USD/);
+    expect(unit.cells[1]!.value).toMatch(/^CNY/);
+    const total = ledger.rows.find((r) => r.label === 'Original total')!;
+    expect(total.cells[1]!.value).toMatch(/^CNY\s704,000\.00$/);
+    expect(total.cells[1]!.sub).toBe('For 2 sets');
+    expect(unit.cells.every((c) => c.money) && total.cells.every((c) => c.money)).toBe(true);
     const warranty = ledger.rows.find((r) => r.label === 'Warranty')!;
     expect(warranty.cells.map((c) => c.value)).toEqual(['12 months', '12 months', null]);
     expect(warranty.differs).toBe(true);
@@ -131,7 +135,8 @@ describe('the Source room comparison', () => {
   it('shows the price and the machinery obligations first, and every other term after them', () => {
     const ledger = sourceLedger(e, { at });
     expect(ledger.rows.filter((r) => r.key).map((r) => r.label)).toEqual([
-      'Original price',
+      'Original unit price',
+      'Original total',
       'Incoterm',
       'Lead time',
       'Installation',
@@ -178,10 +183,42 @@ describe('the Source room comparison', () => {
       ]),
       { at },
     );
-    const price = ledger.rows.find((r) => r.label === 'Original price')!;
-    expect(price.cells[0]!.value).toMatch(/^USD\s97,000\.00$/);
-    expect(price.cells[0]!.sub).toBe('Total for 2 sets; no unit price stated');
-    expect(price.cells[1]!.value).toBeNull();
+    const unit = ledger.rows.find((r) => r.label === 'Original unit price')!;
+    const total = ledger.rows.find((r) => r.label === 'Original total')!;
+    expect(unit.cells.map((c) => c.value)).toEqual([null, null]);
+    expect(total.cells[0]!.value).toMatch(/^USD\s97,000\.00$/);
+    expect(total.cells[0]!.sub).toBe('For 2 sets');
+    expect(total.cells[1]!.value).toBeNull();
+  });
+
+  // UI/UX.v4 row "Compare": Differences Only folds a row only when every quote states it the same way.
+  it('lets Differences Only fold a row only when every quote states it identically', () => {
+    const ledger = sourceLedger(e, { at });
+    const row = (label: string) => ledger.rows.find((r) => r.label === label)!;
+    expect(row('Lead time').same).toBe(true);
+    expect(row('Incoterm').same).toBe(true);
+    // One quote leaves it Not stated.
+    expect(row('Warranty').same).toBe(false);
+    // Excluded in every quote is shown, never folded.
+    expect(row('Shipping scope').cells.every((c) => c.excluded)).toBe(true);
+    expect(row('Shipping scope').same).toBe(false);
+    expect(ledger.shippingExcluded).toBe(3);
+    // Amounts in two currencies are never called the same, even an explicit zero.
+    expect(row('Tooling').cells.map((c) => c.money)).toEqual([true, true, true]);
+    expect(row('Tooling').same).toBe(false);
+    // Missing in every quote is shown, never folded.
+    const blank = sourceLedger(
+      experience([
+        offer('qa', 't1', { terms: machine({ warranty: undefined }) }),
+        offer('qc', 't3', { terms: machine({ warranty: undefined }) }),
+      ]),
+      { at },
+    );
+    expect(blank.rows.find((r) => r.label === 'Warranty')!.same).toBe(false);
+    expect(blank.rows.find((r) => r.label === 'Tooling')!.same).toBe(true);
+    // A single quote has nothing to fold against.
+    const one = sourceLedger(experience([offer('qa', 't1')]), { at });
+    expect(one.rows.some((r) => r.same)).toBe(false);
   });
 
   it('shows nothing when no offer is current, and says how many earlier ones are kept', () => {

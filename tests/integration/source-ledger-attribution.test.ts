@@ -111,15 +111,20 @@ describe('each comparison column keeps its quote version, currency and source', 
     expect(ledger.columns[1]!.provenance).toBe('operator_transcription · unreviewed');
   });
 
-  it('shows the version, currency and source in every column heading and on every phone card', async () => {
+  it('shows the version, currency and source once in every column heading', async () => {
     const { SourceLedger } = await loadWeb('components/source-ledger');
     const html = plain(render(ce(SourceLedger, { experience, language: 'en' })));
-    // Once in the wide table and once on the phone card, for each of the two current quotes.
-    expect(html.match(/Offer revision <span class="ledger-num">2<\/span> · USD/g)).toHaveLength(2);
-    expect(html.match(/Offer revision <span class="ledger-num">3<\/span> · CNY/g)).toHaveLength(2);
+    // UI/UX.v4 row "Compare" (20 Nov 2026): one table at every width, so each appears once per current quote.
+    const head = (revision: number, currency: string) =>
+      new RegExp(
+        `<span>Offer revision</span> <span class="compare-grid-num" dir="auto">${revision}</span> · <span dir="auto">${currency}</span>`,
+        'g',
+      );
+    expect(html.match(head(2, 'USD'))).toHaveLength(1);
+    expect(html.match(head(3, 'CNY'))).toHaveLength(1);
     // A fact name where the product has one; otherwise the source as written, never nothing.
-    expect(html.match(/Self-declared/g)!.length).toBeGreaterThanOrEqual(2);
-    expect(html.match(/operator_transcription · unreviewed/g)).toHaveLength(2);
+    expect(html.match(/Self-declared/g)).toHaveLength(1);
+    expect(html.match(/operator_transcription · unreviewed/g)).toHaveLength(1);
     // Nothing about the comparison itself moved: no conversion, no ranking word, prices as quoted.
     expect(html).toContain('USD 47,000.00');
     expect(html).toContain('CNY 352,000.00');

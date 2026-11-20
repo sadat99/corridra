@@ -25,7 +25,14 @@ export type LedgerColumn = {
   /** "Quoted 11 Nov 2026 · Source ref 3f9a2c1d", or absent when the approved detail does not carry it. */
   reference?: string;
 };
-export type LedgerCell = { value: string | null; sub?: string };
+export type LedgerCell = {
+  value: string | null;
+  sub?: string;
+  /** Shipping the price leaves out: the value keeps the stored word, the comparison draws the striped fill. */
+  excluded?: true;
+  /** An amount in the offer's own currency. */
+  money?: true;
+};
 export type LedgerRow = {
   label: string;
   cells: LedgerCell[];
@@ -33,6 +40,11 @@ export type LedgerRow = {
   key: boolean;
   /** The suppliers do not all say the same thing here. */
   differs: boolean;
+  /**
+   * Differences Only may fold this row: every quote states it, none leaves it Not stated or excluded, every value
+   * reads the same, and an amount is never called the same across different currencies.
+   */
+  same: boolean;
 };
 export type Ledger = {
   columns: LedgerColumn[];
@@ -41,6 +53,8 @@ export type Ledger = {
   notComparable: number;
   /** Offers left out because they are earlier or no longer current. */
   earlier: number;
+  /** How many of the shown quotes say shipping is excluded from the price. */
+  shippingExcluded: number;
 };
 
 /** The rows a buyer reads first, after the price. Machinery obligations are always among them. */
@@ -83,34 +97,50 @@ export function sourceLedger(
     reference: card.reference,
   }));
 
+  const term = (cardIndex: number, label: string) =>
+    cards[cardIndex]!.terms.find((t) => t.label === label);
   const value = (cardIndex: number, label: string) => {
-    const term = cards[cardIndex]!.terms.find((t) => t.label === label);
+    const found = term(cardIndex, label);
     // Shipping the price leaves out keeps the stored word here, so it is neither "not stated" nor equal to it.
-    return term?.state === 'excluded' ? 'EXCLUDED' : (term?.value ?? null);
+    return found?.state === 'excluded' ? 'EXCLUDED' : (found?.value ?? null);
+  };
+  const cellFor = (cardIndex: number, label: string): LedgerCell => {
+    const found = term(cardIndex, label);
+    return {
+      value: value(cardIndex, label),
+      ...(found?.state === 'excluded' ? { excluded: true as const } : {}),
+      ...(found?.money ? { money: true as const } : {}),
+    };
   };
   const differs = (cells: LedgerCell[]) =>
     cells.length > 1 && new Set(cells.map((c) => `${c.value ?? ''}|${c.sub ?? ''}`)).size > 1;
+  const sameCurrency = columns.every((column) => column.currency === columns[0]?.currency);
+  // The fold rule of lib/term-diff.ts, applied to the ledger's cells.
+  const same = (cells: LedgerCell[]) =>
+    cells.length > 1 &&
+    cells.every(
+      (c) => !c.excluded && c.value !== null && c.value !== undefined && c.value !== '',
+    ) &&
+    (sameCurrency || !cells.some((c) => c.money)) &&
+    !differs(cells);
 
   const rows: LedgerRow[] = [];
-  // Every amount exactly as the supplier stated it: the unit price with its total under it, or, where only a
-  // total was stated, the total itself (guardian review of PR 314). Only a quote with neither says Not stated.
-  const quantity = (i: number) => value(i, 'Quantity') ?? 'the quoted quantity';
-  const priceCells = cards.map((card, i) =>
-    card.unitPrice !== null
-      ? {
-          value: card.unitPrice,
-          sub: card.total !== null ? `${card.total} for ${quantity(i)}` : undefined,
-        }
-      : card.total !== null
-        ? { value: card.total, sub: `Total for ${quantity(i)}; no unit price stated` }
-        : { value: null },
+  // Every amount exactly as the supplier stated it, in two rows (UI/UX.v4 row "Compare"): the unit price, and the
+  // total with the quantity it is for. A total stated without a unit price is still shown in its own row (guardian
+  // review of PR 314); only the part a supplier did not state says Not stated.
+  const unitCells: LedgerCell[] = cards.map((card) =>
+    card.unitPrice !== null ? { value: card.unitPrice, money: true } : { value: null },
   );
-  rows.push({
-    label: 'Original price',
-    cells: priceCells,
-    key: true,
-    differs: differs(priceCells),
+  const totalCells: LedgerCell[] = cards.map((card, i) => {
+    if (card.total === null) return { value: null };
+    const quantity = value(i, 'Quantity');
+    return { value: card.total, money: true, ...(quantity ? { sub: `For ${quantity}` } : {}) };
   });
+  for (const [label, cells] of [
+    ['Original unit price', unitCells],
+    ['Original total', totalCells],
+  ] as const)
+    rows.push({ label, cells, key: true, differs: differs(cells), same: same(cells) });
   const labels: string[] = [];
   for (const card of cards)
     for (const term of card.terms) if (!labels.includes(term.label)) labels.push(term.label);
@@ -119,8 +149,14 @@ export function sourceLedger(
     ...labels.filter((l) => !keyLabels.includes(l)),
   ];
   for (const label of ordered) {
-    const cells = cards.map((_, i) => ({ value: value(i, label) }));
-    rows.push({ label, cells, key: keyLabels.includes(label), differs: differs(cells) });
+    const cells = cards.map((_, i) => cellFor(i, label));
+    rows.push({
+      label,
+      cells,
+      key: keyLabels.includes(label),
+      differs: differs(cells),
+      same: same(cells),
+    });
   }
   const comparable = columns.filter((c) => c.comparable).length;
   return {
@@ -129,5 +165,6 @@ export function sourceLedger(
     comparable,
     notComparable: columns.length - comparable,
     earlier: options.includeEarlier ? 0 : e.quotations.length - chosen.length,
+    shippingExcluded: cards.filter((card) => card.terms.some((t) => t.state === 'excluded')).length,
   };
 }

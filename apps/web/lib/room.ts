@@ -261,7 +261,13 @@ export function afterSaveHref(requestId: string, assignmentId: string, count: nu
 // never converts, ranks or recommends.
 type Offer = MissionExperience['quotations'][number];
 type Line = { key: string; supplier: string; lang?: string; words: string };
-export type MissingTermNoticeView = { title: string; lines: Line[]; samePrice: string | null };
+export type MissingTermNoticeView = {
+  title: string;
+  lines: Line[];
+  samePrice: string | null;
+  /** Each supplier whose current quote leaves out a term the engine needs, once, in the order of the quotes. */
+  missingFrom: { supplier: string; lang?: string }[];
+};
 
 const han = /\p{Script=Han}/u;
 const stated = (value: unknown) =>
@@ -336,5 +342,10 @@ export function missingTermNotice(
     a.offer.terms.unitPriceMinor === b.offer.terms.unitPriceMinor
       ? `Both quotes are ${displayMoney(a.offer.terms.unitPriceMinor, a.offer.currency)} a unit.`
       : null;
-  return { title, lines, samePrice };
+  const missingFrom: MissingTermNoticeView['missingFrom'] = [];
+  for (const { offer } of short) {
+    const who = name(offer);
+    if (!missingFrom.some((m) => m.supplier === who.supplier)) missingFrom.push(who);
+  }
+  return { title, lines, samePrice, missingFrom };
 }

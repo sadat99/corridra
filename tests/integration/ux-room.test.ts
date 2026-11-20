@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { compareOffers } from '../../packages/domain/src/commercial-missions';
@@ -330,5 +331,120 @@ describe('following every page of assignments', () => {
         : { assignments: [{ requestId: request, available: true }], nextAfter: null };
     });
     expect(link.reportAvailable).toBe(true);
+  });
+});
+
+// UI/UX.v4 row "Compare" (20 Nov 2026): the comparison's one action is the existing service request link, relabelled,
+// with the same address and the same switch; no new way to send anything.
+describe('the comparison action in the Room', () => {
+  const view = read('apps/web/app/account/rooms/[requestId]/room-view.tsx');
+  const notice = view.slice(
+    view.indexOf('<SourceLedger'),
+    view.indexOf("{lenses && lens === 'evidence'"),
+  );
+  it('says Ask About Missing Terms, goes to the existing service request address, and is cobalt', () => {
+    expect(notice).toContain("say('compare.ask')");
+    expect(notice).toContain('href={helpHref}');
+    expect(notice).toContain('className="button button-primary compare-grid-action"');
+    expect(view).toContain(
+      'const helpHref = `/account/service-requests/new?kind=request&ref=${encodeURIComponent(requestId)}`;',
+    );
+    expect(notice).not.toContain('Ask a Question');
+  });
+  it('is drawn only while the service request switch is on, which is off by default', () => {
+    expect(notice).toMatch(/action=\{\s*serviceRequestsEnabled\s*\?/);
+    expect(notice).toMatch(/:\s*null\s*\}/);
+    expect(view).toContain('serviceRequestsEnabled = false,');
+    // The notice now sits under the table, inside the comparison, not above it.
+    expect(view.indexOf('<SourceLedger')).toBeLessThan(view.indexOf('<MissingTermNotice'));
+  });
+  it('the other Ask a Question links in the Room keep their words', () => {
+    expect((view.match(/Ask a Question/g) ?? []).length).toBeGreaterThan(0);
+  });
+  it('says the person asks the Corridra team, who can then ask the supplier, naming one supplier or saying those suppliers', async () => {
+    const { MissingTermNotice } = await import('../../apps/web/components/missing-term-notice');
+    const web = createRequire(resolve('apps/web/package.json'));
+    const ce = web('react').createElement as (t: unknown, p?: unknown) => unknown;
+    const renderToStaticMarkup = web('react-dom/server').renderToStaticMarkup as (
+      e: unknown,
+    ) => string;
+    const { missingTermNotice } = await import('../../apps/web/lib/room');
+    const terms = {
+      specification: 'Auto cutter',
+      quantity: '2',
+      unit: 'unit',
+      unitPriceMinor: '1840000',
+      totalPriceMinor: '3680000',
+      leadTime: '45 days',
+      validUntil: '2099-01-01T00:00:00Z',
+      incoterm: 'FOB',
+      shipping: 'EXCLUDED',
+      paymentTerms: '30% deposit',
+      toolingMinor: '0',
+      setupMinor: '0',
+      packagingMinor: '0',
+    };
+    const quote = (id: string, targetId: string, over: Record<string, unknown> = {}) => ({
+      id,
+      targetId,
+      currency: 'USD',
+      terms: { ...terms, ...over },
+      revision: 1,
+      uncertainties: 'None',
+      sourceKind: 'self_declaration',
+      claimStatus: 'self_declared',
+      superseded: false,
+      assignmentCurrent: true,
+    });
+    const target = (id: string, company: string) => ({
+      id,
+      company,
+      country: 'China',
+      fit: 'HIGH',
+      rationale: '',
+      uncertainty: '',
+      gaps: '',
+      verification: '',
+    });
+    const experience = (quotations: unknown[]) =>
+      ({
+        schemaVersion: 1,
+        requirements: {
+          version: 1,
+          fields: { objective: 'Source', role: 'BUYER', product: 'Cutter' },
+          sourceKind: 'customer',
+          claimStatus: 'self_declared',
+          current: true,
+        },
+        shortlist: [
+          target('t1', 'Supplier A'),
+          target('t2', 'Supplier B'),
+          target('t3', 'Supplier C'),
+        ],
+        quotations,
+        agenda: [],
+        documentAccess: 'None',
+      }) as never;
+    const one = experience([quote('a', 't1'), quote('b', 't2', { leadTime: undefined })]);
+    expect(missingTermNotice(one)!.missingFrom).toEqual([{ supplier: 'Supplier B' }]);
+    const html = renderToStaticMarkup(
+      ce(MissingTermNotice, {
+        experience: one,
+        action: (v: { missingFrom: { supplier: string }[] }) => v.missingFrom[0]!.supplier,
+      }),
+    );
+    expect(html).toContain('<div class="missing-term-notice-action">Supplier B</div>');
+    const two = experience([
+      quote('a', 't1'),
+      quote('b', 't2', { leadTime: undefined }),
+      quote('c', 't3', { paymentTerms: undefined }),
+    ]);
+    expect(missingTermNotice(two)!.missingFrom.map((m) => m.supplier)).toEqual([
+      'Supplier B',
+      'Supplier C',
+    ]);
+    expect(notice).toContain('view.missingFrom.length === 1');
+    expect(notice).toContain("say('compare.askOne')");
+    expect(notice).toContain("say('compare.askMany')");
   });
 });
