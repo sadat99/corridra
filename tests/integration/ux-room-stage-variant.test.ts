@@ -12,7 +12,17 @@ const createElement = web('react').createElement as (
 ) => unknown;
 const render = web('react-dom/server').renderToStaticMarkup as (element: unknown) => string;
 const load = async (path: string) => await import(/* @vite-ignore */ `../../apps/web/${path}`);
-const text = (html: string) => html.replace(/<[^>]+>/g, '');
+// Reads the words of our own static markup by walking it once: no tag-stripping pattern (CodeQL flags those).
+const text = (html: string) => {
+  let out = '';
+  let inTag = false;
+  for (const ch of html) {
+    if (ch === '<') inTag = true;
+    else if (ch === '>') inTag = false;
+    else if (!inTag) out += ch;
+  }
+  return out;
+};
 
 describe('StageBar room variant', () => {
   it('draws the same markup as before when no variant is given', async () => {
