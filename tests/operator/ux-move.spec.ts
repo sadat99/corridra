@@ -118,7 +118,7 @@ test.beforeAll(async () => {
       const journeys=JSON.parse(q.get('journeys')||'[]');
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={offered}>
-          <WorkspaceShell eyebrow="YOUR MOVE" title="Here is what is waiting for you."
+          <WorkspaceShell eyebrow="YOUR MOVE" title="Good morning, Asha" quietTitle
             nav={<CustomerNav current="move" plainNames move companies/>}>
             <MoveView model={buildMoveModel(input)} startHref="/plan" skippedWorkspaces={skipped} partial={partial} journeys={journeys}/>
           </WorkspaceShell>

@@ -58,7 +58,7 @@ test.beforeAll(async () => {
       const input=JSON.parse(new URLSearchParams(location.search).get('input'));
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={[{code:'en',draft:false}]}>
-          <WorkspaceShell title="Here is what is waiting for you." customer>
+          <WorkspaceShell title="Good morning, Asha" quietTitle customer>
             <MoveView model={buildMoveModel(input)} startHref="/plan"/>
           </WorkspaceShell>
         </LanguageProvider>);`,
@@ -123,7 +123,9 @@ test.afterAll(async () => {
 
 for (const [name, input] of Object.entries(cases))
   for (const [width, height] of [
+    [320, 640],
     [390, 844],
+    [768, 1024],
     [1440, 900],
   ] as const)
     test(`CX-07 Move ${name} at ${width}`, async ({ page }) => {
