@@ -121,7 +121,7 @@ const cards = quoteCardsFrom({
   shortlist: shortlist as never,
 });
 const rows = (html: string) =>
-  [...html.matchAll(/<th scope="row" class="compare-grid-label">(.*?)<\/th>/g)].map((m) => m[1]);
+  [...html.matchAll(/<th scope="row"[^>]*>(.*?)<\/th>/g)].map((m) => m[1]);
 const plain = (html: string) => html.replace(/[\u00a0\u202f]/g, ' ');
 
 // UI/UX.v4 row "Compare" (20 Nov 2026): the lens's "Side by Side" view is the shared table; the fold rule is the
@@ -148,13 +148,30 @@ describe('Compare lens, differences only', () => {
     expect(folded).toContain('Differences Only');
     expect(folded).toContain('aria-pressed="true"');
     expect(folded).toContain('role="status"');
+    // Folding changes the body only: the column heads (verdict, seal, engine reason, currency, trust) are identical
+    // to the same table with nothing folded.
+    const { CompareGrid } = await loadWeb('components/ux/compare-grid');
+    const unfolded = plain(
+      render(
+        ce(CompareGrid, {
+          locale: 'en',
+          columns: cards,
+          rows: grid.rows.map((row) => ({ ...row, same: false })),
+          regionLabel: 'compare.regionReport',
+        }),
+      ),
+    );
+    const heads = (html: string) => html.slice(html.indexOf('<thead'), html.indexOf('</thead>'));
+    expect(heads(folded).length).toBeGreaterThan(200);
+    expect(heads(folded)).toEqual(heads(unfolded));
+    expect(rows(unfolded)).toEqual(grid.rows.map((row) => row.label));
     // The verdicts and the engine reason are as the engine gave them, in the column heads.
     expect(folded).toContain('Missing: Lead time, Payment terms.');
     expect(folded).toContain('Comparable');
     expect(folded).toContain('Not comparable yet');
     expect(folded.match(/USD/g)?.length).toBeGreaterThan(0);
   });
-  it('says every term is the same when nothing differs, built from quoteCardsFrom output', async () => {
+  it('folds every identical term but never the prices, built from quoteCardsFrom output', async () => {
     const { CompareLens, sideBySide } = await loadWeb('components/compare-lens');
     const stated = {
       ...full,
@@ -179,17 +196,53 @@ describe('Compare lens, differences only', () => {
       ),
       shortlist: shortlist as never,
     });
-    const grid = sideBySide(same) as { rows: { same: boolean }[] };
-    // Shipping is excluded in the sample, so that one row always shows; the rest are identical.
-    expect(grid.rows.filter((row) => !row.same)).toHaveLength(1);
+    const grid = sideBySide(same) as { rows: { label: string; same: boolean }[] };
+    // The two price rows and excluded shipping always show; every other term is identical and folds.
+    expect(grid.rows.filter((row) => !row.same).map((row) => row.label)).toEqual([
+      'Original unit price',
+      'Original total',
+      'Shipping scope',
+    ]);
     const html = render(ce(CompareLens, { cards: same, matrix: ce('table') }));
-    expect(html).toContain(`${grid.rows.length - 1} terms are the same in both.`);
-    const allSame = same.map((c) => ({
-      ...c,
-      terms: c.terms.filter((x) => x.state !== 'excluded'),
-    }));
-    const every = render(ce(CompareLens, { cards: allSame, matrix: ce('table') }));
-    expect(every).toContain('Every term is the same in both quotes.');
+    expect(html).toContain(`${grid.rows.length - 3} terms are the same in both.`);
+    expect(rows(html)).toEqual(['Original unit price', 'Original total', 'Shipping scope']);
+    // With the prices always in view, "every term is the same" is never said while prices show.
+    expect(html).not.toContain('Every term is the same');
+  });
+  it('never folds equal prices quoted per a different unit or on a different Incoterm', async () => {
+    const { CompareLens, sideBySide } = await loadWeb('components/compare-lens');
+    const ten = { ...full, unitPriceMinor: '1000', totalPriceMinor: '2000' };
+    const pair = [offer('a', ten), offer('b', { ...ten, unit: 'set', incoterm: 'CIF' })];
+    const priced = quoteCardsFrom({
+      offers: pair as never[],
+      verdicts: compareOffers(
+        pair.map((x) => ({
+          id: x.id,
+          currency: 'USD',
+          terms: x.terms as never,
+          requirementId: '1',
+          uncertainties: '',
+          evidenceCurrent: true,
+        })),
+      ),
+      shortlist: shortlist as never,
+    });
+    // Two equal amounts, USD 10.00 each, but per a different unit and on a different Incoterm.
+    for (const card of priced as { unitPrice: string | null }[])
+      expect(card.unitPrice).toMatch(/^USD\s10\.00$/);
+    const grid = sideBySide(priced) as { rows: { label: string; same: boolean }[] };
+    const folded = grid.rows.filter((row) => row.same).map((row) => row.label);
+    expect(folded).not.toContain('Original unit price');
+    expect(folded).not.toContain('Original total');
+    const html = plain(render(ce(CompareLens, { cards: priced, matrix: ce('table') })));
+    const shown = rows(html);
+    expect(shown).toContain('Original unit price');
+    expect(shown).toContain('Original total');
+    // The count is exactly the rows left out, and the prices are not among them.
+    expect(html).toContain(`${folded.length} terms are the same in both.`);
+    expect(grid.rows.map((row) => row.label).filter((label) => !shown.includes(label))).toEqual(
+      folded,
+    );
   });
   it('keeps one live status region and counts in the locale digits', async () => {
     const { CompareLens } = await loadWeb('components/compare-lens');

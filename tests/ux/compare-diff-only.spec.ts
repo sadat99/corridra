@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 
 // CMP1 (17 November 2026), V3-04-077: the Compare lens differences-only control, on the shared comparison table since
 // UI/UX.v4 row "Compare" (20 November 2026). Own esbuild fixture, as mr-quote-terms.spec.ts, with the two sample
-// offers (Lantern; 绿野 with lead time and payment not stated). The prices are equal, so they fold too: 9 rows.
+// offers (Lantern; 绿野 with lead time and payment not stated). The prices never fold, so 7 rows fold.
 let script = '';
 let styles = '';
 
@@ -95,7 +95,7 @@ for (const width of [320, 390]) {
     await mount(page, width);
     const toggle = page.getByRole('button', { name: 'Differences Only', exact: true });
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('.compare-grid-status')).toHaveText('9 terms are the same in both.');
+    await expect(page.locator('.compare-grid-status')).toHaveText('7 terms are the same in both.');
     const box = (await toggle.boundingBox())!;
     expect(box.height).toBeGreaterThanOrEqual(44);
     expect(box.width).toBeGreaterThanOrEqual(44);
@@ -143,7 +143,7 @@ test('keyboard toggle folds and restores every row in the original order', async
     'Warranty',
   ]);
   await page.keyboard.press('Space');
-  await expect(page.locator('.compare-grid-status')).toContainText('9 terms');
+  await expect(page.locator('.compare-grid-status')).toContainText('7 terms');
   // The show control in the count line restores them too.
   await page.getByRole('button', { name: 'Show Them', exact: true }).focus();
   await page.keyboard.press('Enter');
@@ -162,11 +162,11 @@ test('no row leaves the content without the count line, and the page gets shorte
     await mount(page, width);
     const foldedHeight = await height(page);
     const foldedRows = (await labels(page)).length;
-    await expect(page.locator('.compare-grid-status')).toContainText('9 terms');
+    await expect(page.locator('.compare-grid-status')).toContainText('7 terms');
     await page.getByRole('button', { name: 'Differences Only', exact: true }).click();
     const fullHeight = await height(page);
     const fullRows = (await labels(page)).length;
-    expect(fullRows - foldedRows).toBe(9); // one table: the 9 rows the count names
+    expect(fullRows - foldedRows).toBe(7); // one table: the 7 rows the count names
     expect(foldedHeight).toBeLessThan(fullHeight);
     lengths[width] = [fullHeight, foldedHeight];
   }

@@ -140,7 +140,9 @@ export function sourceLedger(
     ['Original unit price', unitCells],
     ['Original total', totalCells],
   ] as const)
-    rows.push({ label, cells, key: true, differs: differs(cells), same: same(cells) });
+    // The prices never fold: two equal amounts can be per a different unit or on different delivery terms, which
+    // the notice above refuses to call the same price (lib/room.ts), so they always stay in view.
+    rows.push({ label, cells, key: true, differs: differs(cells), same: false });
   const labels: string[] = [];
   for (const card of cards)
     for (const term of card.terms) if (!labels.includes(term.label)) labels.push(term.label);

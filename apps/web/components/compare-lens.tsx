@@ -27,7 +27,9 @@ export function sideBySide(cards: QuoteCardView[]): {
   shippingExcluded: number;
 } {
   const offers = cards.map((card) => ({ currency: card.currency, terms: termsOf(card) }));
-  const diff = termDiff(offers);
+  // The fold rule runs on the terms only: the prices never fold, because two equal amounts can be per a different
+  // unit or on different delivery terms (the notice in lib/room.ts refuses to call those the same price).
+  const diff = termDiff(cards);
   const labels: string[] = [];
   for (const offer of offers)
     for (const term of offer.terms) if (!labels.includes(term.label)) labels.push(term.label);

@@ -221,6 +221,32 @@ describe('the Source room comparison', () => {
     expect(one.rows.some((r) => r.same)).toBe(false);
   });
 
+  // Fix round 1 (reviewer A): equal amounts per a different unit or Incoterm are not the same price, so the price
+  // rows never fold, and the fold count leaves them out.
+  it('never folds the price rows, even two USD 10.00 quotes per a different unit or Incoterm', () => {
+    const ten = machine({ unitPriceMinor: '1000', totalPriceMinor: '2000' });
+    const ledger = sourceLedger(
+      experience([
+        offer('qa', 't1', { terms: ten }),
+        offer('qb', 't2', { terms: { ...ten, unit: 'pieces', incoterm: 'CIF' } }),
+      ]),
+      { at },
+    );
+    const unit = ledger.rows.find((r) => r.label === 'Original unit price')!;
+    const total = ledger.rows.find((r) => r.label === 'Original total')!;
+    expect(unit.cells.map((c) => c.value)).toEqual([
+      expect.stringMatching(/^USD\s10\.00$/),
+      expect.stringMatching(/^USD\s10\.00$/),
+    ]);
+    expect(unit.same).toBe(false);
+    expect(total.same).toBe(false);
+    // Identical prices with identical unit and Incoterm stay in view too.
+    const twin = sourceLedger(experience([offer('qa', 't1'), offer('qc', 't3')]), { at });
+    expect(twin.rows.filter((r) => r.label.startsWith('Original')).every((r) => !r.same)).toBe(
+      true,
+    );
+  });
+
   it('shows nothing when no offer is current, and says how many earlier ones are kept', () => {
     const ledger = sourceLedger(experience([offer('old', 't1', { superseded: true })]), { at });
     expect(ledger.columns).toEqual([]);
