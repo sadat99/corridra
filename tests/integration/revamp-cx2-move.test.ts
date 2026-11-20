@@ -418,3 +418,25 @@ describe('Your Move redesign: who holds the rest', () => {
     }
   });
 });
+
+describe('Your Move redesign: the journeys heading', () => {
+  it('says Your Journeys with the real number of cards and never calls them open', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const card = {
+      journey: 'source',
+      id: 'r1',
+      workspaceId: owner.id,
+      count: '1',
+      title: 'Spinning frames',
+      kind: 'request',
+      status: 'OUTREACH',
+      statusWords: 'Finding companies',
+      dateWords: '2 Oct 2026',
+      at: '2026-10-02T00:00:00Z',
+      href: '/account/rooms/r1',
+    };
+    const html = render(MoveView, { model: busy, startHref: '/plan', journeys: [card] });
+    expect(html).toContain('Your Journeys: 1</h2>');
+    expect(html).not.toMatch(/Your Journeys: \d+ open/i);
+  });
+});

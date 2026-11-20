@@ -732,7 +732,7 @@ export function MoveView({
       {cards.length > 0 || participant ? (
         <section className="move-journeys" aria-labelledby="move-journeys" lang="en">
           <h2 id="move-journeys" className="sr-only">
-            Your journeys
+            Your Journeys: {cards.length + (participant ? 1 : 0)}
           </h2>
           {cards.map((card, index) => (
             <JourneyCardView
