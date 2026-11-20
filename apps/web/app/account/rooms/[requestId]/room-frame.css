@@ -397,3 +397,99 @@
     font-size: var(--text-sm);
   }
 }
+
+/* The request Room's look (Wave 2 unit 05). Scoped to the request Room: the Programme Room shares the classes above
+   and is left as it was. Sizes come from tokens: --text-h2 is a clamp from 22 px to 24 px, so every phone shows 22
+   and a wide screen 24; the stage heading is 20 px; control heights change once, at 768 px. */
+.room[data-room='request'] .room-tag,
+.room[data-room='request'] .room-route {
+  min-height: 1.75rem;
+  font-size: var(--text-sm);
+}
+.room[data-room='request'] .room-route .corridra-icon {
+  width: 1rem;
+  height: 1rem;
+}
+.room[data-room='request'] .room-head h2 {
+  font-size: var(--text-h2);
+}
+.room[data-room='request'] .room-head .room-meta {
+  font-size: var(--text-base);
+}
+.room[data-room='request'] .room-next {
+  gap: var(--space-3) var(--space-6);
+}
+.room[data-room='request'] .room-next-words b {
+  font-size: var(--text-h2);
+  line-height: var(--leading-heading);
+}
+.room[data-room='request'] .room-next-words small,
+.room[data-room='request'] .room-next-words span {
+  font-size: var(--text-sm);
+}
+.room[data-room='request'] .room-next-actions .button {
+  min-height: 3.5rem;
+}
+.room[data-room='request'] .room-next-actions .text-link {
+  min-height: 2.75rem;
+}
+@media (min-width: 48rem) {
+  .room[data-room='request'] .room-next-actions .button {
+    min-height: 3rem;
+  }
+}
+
+/* The views as one segmented control: the icon above the word, the chosen view raised with a brand underline. */
+.room[data-room='request'] .room-lenses {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.room[data-room='request'] .room-lens {
+  position: relative;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 3.5rem;
+  margin-bottom: 0;
+  padding-inline: var(--space-2);
+  border-bottom-width: 2px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-heading);
+}
+.room[data-room='request'] .room-lens .corridra-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.room[data-room='request'] .room-lens[aria-pressed='true'] {
+  border-bottom-color: var(--brand);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-weight: 600;
+}
+.room[data-room='request'] .room-lens[data-count]::after {
+  position: absolute;
+  inset-block-start: var(--space-1);
+  inset-inline-end: var(--space-1);
+}
+@media (min-width: 48rem) {
+  .room[data-room='request'] .room-lens {
+    min-height: 3.25rem;
+  }
+}
+@media (max-width: 22.99rem) {
+  .room[data-room='request'] .room-lenses {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (forced-colors: active) {
+  .room[data-room='request'] .room-lens[aria-pressed='true'] {
+    border-bottom-color: Highlight;
+  }
+}

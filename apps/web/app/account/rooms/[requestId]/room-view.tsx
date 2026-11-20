@@ -30,6 +30,14 @@ import './room-frame.css';
 import './room-budget.css';
 
 type Lens = 'overview' | 'compare' | 'evidence' | 'trip';
+/** One existing icon per view, drawn above its word in the segmented control. */
+const lensIcon: Record<Lens, string> = {
+  overview: 'grid',
+  compare: 'list',
+  evidence: 'evidence',
+  trip: 'trip',
+};
+
 const lensKey: Record<Lens, MessageKey> = {
   overview: 'room.lens.overview',
   compare: 'room.lens.compare',
@@ -381,9 +389,6 @@ export function RoomView({
           </header>
 
           <section className="room-next" aria-label="Your next step" lang="en">
-            <span className="room-next-mark" aria-hidden="true">
-              <CorridraIcon name="arrow" />
-            </span>
             <span className="room-next-words">
               <small>Your next step</small>
               <b>{next.words}</b>
@@ -506,6 +511,7 @@ export function RoomView({
                     setLens(item);
                   }}
                 >
+                  <CorridraIcon name={lensIcon[item]} />
                   {/* An English word until native review (D16), marked so it is read as English. */}
                   <span lang={lensLang(item)}>{lensWords(item)}</span>
                 </button>

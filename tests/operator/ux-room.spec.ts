@@ -2383,3 +2383,89 @@ test.describe('terms no quote states, in one row', () => {
     ).toContainText('Not stated');
   });
 });
+
+// Owner rule: the same size on every phone, growing smoothly with width, and the chosen size on a desktop.
+test('Room sizes are identical at 320, 360 and 390, never shrink as the width grows, and match the design at 1440', async ({
+  page,
+}) => {
+  const body = reportBody([
+    { label: 'Meeting with Lantern Cutting Works', status: 'PROPOSED', scheduleChanged: false },
+  ]);
+  await open(
+    page,
+    { trip: true },
+    {
+      body: detail({
+        original: {
+          objective: 'Find customers or distributors',
+          experience: { schemaVersion: 1, companyCountry: 'BD', marketCode: 'ES' },
+        },
+      }),
+    },
+    { body },
+  );
+  const measure = async (width: number) => {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator('.mr-stage-shape').first()).toBeVisible();
+    return await page.evaluate(() => {
+      const size = (selector: string) => {
+        const el = document.querySelector(selector);
+        return el ? parseFloat(getComputedStyle(el).fontSize) : -1;
+      };
+      const high = (selector: string) => {
+        const el = document.querySelector(selector);
+        return el ? Math.round(el.getBoundingClientRect().height) : -1;
+      };
+      const wide = (selector: string) => {
+        const el = document.querySelector(selector);
+        return el ? Math.round(el.getBoundingClientRect().width) : -1;
+      };
+      return {
+        title: size('.room-head h2'),
+        stage: size('.mr-stage-heading'),
+        sentence: size('.room-next-words b'),
+        chip: size('.room-tag'),
+        word: size('.room-lens span'),
+        chipHeight: high('.room-tag'),
+        lensHeight: high('.room-lens'),
+        buttonHeight: high('.room-next .button-primary'),
+        shape: wide('.mr-stage-shape'),
+      };
+    });
+  };
+  const phones = [await measure(320), await measure(360), await measure(390)];
+  expect(phones[1]).toEqual(phones[0]);
+  expect(phones[2]).toEqual(phones[0]);
+  const widths = [390, 768, 1024, 1280, 1440];
+  let previous = phones[2];
+  for (const width of widths) {
+    const now = await measure(width);
+    for (const key of ['title', 'sentence', 'stage', 'chip', 'word', 'shape'] as const) {
+      expect(now[key], `${key} at ${width}`).toBeGreaterThanOrEqual(previous[key]);
+    }
+    previous = now;
+  }
+  const desktop = await measure(1440);
+  expect(await measure(1024)).toMatchObject({ title: desktop.title, sentence: desktop.sentence });
+  expect(phones[0]).toMatchObject({
+    title: 22,
+    sentence: 22,
+    stage: 20,
+    chip: 14,
+    word: 14,
+    shape: 24,
+  });
+  expect(desktop).toMatchObject({
+    title: 24,
+    sentence: 24,
+    stage: 20,
+    chip: 14,
+    word: 14,
+    chipHeight: 28,
+    lensHeight: 52,
+    shape: 24,
+  });
+  expect(phones[0].lensHeight).toBe(56);
+  expect(phones[0].buttonHeight).toBe(56);
+  expect(desktop.buttonHeight).toBe(48);
+});
