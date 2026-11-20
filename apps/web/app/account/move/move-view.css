@@ -1157,3 +1157,15 @@
   color: var(--text-2);
   font-weight: 500;
 }
+
+/* Today and the waiting list share the left column, so on a wide screen they sit beside the right column. */
+.move-main {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+}
+@media (min-width: 48rem) {
+  .move-main {
+    gap: var(--space-8);
+  }
+}

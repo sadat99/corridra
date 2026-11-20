@@ -431,7 +431,7 @@ export function MoveView({
   return (
     <div className="move-view" lang={html} dir={dir}>
       <div className="move-hello">
-        <div className="move-lede-block" lang="en">
+        <div className="move-lede-block" lang="en" dir="ltr">
           <h1 className="move-lede">{lede.head}</h1>
           <p className="move-lede-body" role={incomplete || filterGap ? 'status' : undefined}>
             {lede.body}
@@ -472,155 +472,158 @@ export function MoveView({
         ) : null}
       </div>
 
-      {today ? (
-        <div className="move-today" data-kind={today.reply ? 'reply' : 'today'}>
-          <TodayCard
-            heading={say('today.heading')}
-            tag={tag(today.id)}
-            title={
-              today.reply
-                ? movePhrase(
-                    labels.move.phrase,
-                    labels.move.verbs.Read,
-                    say('move.card.reply.object'),
-                  )
-                : (today.title ??
-                  movePhrase(
-                    labels.move.phrase,
-                    labels.move.verbs[verbOf[todayCard!.kind as keyof typeof verbOf]],
-                    say(objectKey[todayCard!.kind as keyof typeof objectKey]),
-                  ))
-            }
-            titleLang={today.title ? 'en' : undefined}
-            context={
-              today.reply
-                ? fill(say('move.received'), { date: day(today.reply.received, locale) })
-                : todayCard!.kind === 'report'
-                  ? `${say('wsb.move.report.title')}: ${todayCard!.context ?? ''}`
-                  : todayCard!.kind === 'draft'
-                    ? [todayCard!.context, labels.road.draftSubline].filter(Boolean).join(' · ')
-                    : todayCard!.context
-            }
-            holder={today.holder}
-            holderLabel={say('today.holds')}
-            holderWords={labels.holder}
-            dueLabel={labels.move.due}
-            due={today.dueOn ? longDay(today.dueOn, locale) : null}
-            href={today.href}
-            action={
-              today.reply
-                ? say('move.card.reply.action')
-                : todayCard!.kind === 'draft'
-                  ? say('wsb.move.draft.action')
-                  : say(actionKey[todayCard!.kind])
-            }
-          >
-            {today.reply ? (
-              <>
-                <button
-                  type="button"
-                  className="button button-secondary today-mark"
-                  onClick={() => mark(today.reply!.requestId, today.reply!.latestReplyAt)}
-                >
-                  {say('move.card.reply.read')}
-                </button>
-                {storageBlocked ? (
-                  <p className="today-note" role="status" lang="en">
-                    {storageWords}
-                  </p>
-                ) : null}
-              </>
-            ) : null}
-          </TodayCard>
-        </div>
-      ) : null}
-
       <div className="move-grid">
-        <section className="move-card" aria-labelledby="move-you">
-          <h2 id="move-you">{say('move.you.heading')}</h2>
-          <span
-            className="move-count"
-            data-hot={nothing ? 'false' : 'true'}
-            lang={nothing && uncertain ? 'en' : undefined}
-          >
-            <span className="sr-only">: </span>
-            {nothing && uncertain ? 'Not known yet' : count}
-          </span>
-          <Explain
-            className="move-head-key"
-            name={labels.explain.holder.you.name}
-            text={labels.explain.holder.you.text}
-          >
-            <i className="mr-holder-shape" data-holder="you" aria-hidden="true" />
-          </Explain>
-          {/* With work on the page the shortcuts give way, so the way to start a request stays here. */}
-          {!nothing ? (
-            <Link prefetch={false} className="move-card-link" href={startHref}>
-              <span>{say('move.start')}</span>
-              <CorridraIcon name="arrow" />
-            </Link>
+        <div className="move-main">
+          {today ? (
+            <div className="move-today" data-kind={today.reply ? 'reply' : 'today'}>
+              <TodayCard
+                heading={say('today.heading')}
+                tag={tag(today.id)}
+                title={
+                  today.reply
+                    ? movePhrase(
+                        labels.move.phrase,
+                        labels.move.verbs.Read,
+                        say('move.card.reply.object'),
+                      )
+                    : (today.title ??
+                      movePhrase(
+                        labels.move.phrase,
+                        labels.move.verbs[verbOf[todayCard!.kind as keyof typeof verbOf]],
+                        say(objectKey[todayCard!.kind as keyof typeof objectKey]),
+                      ))
+                }
+                titleLang={today.title ? 'en' : undefined}
+                context={
+                  today.reply
+                    ? fill(say('move.received'), { date: day(today.reply.received, locale) })
+                    : todayCard!.kind === 'report'
+                      ? `${say('wsb.move.report.title')}: ${todayCard!.context ?? ''}`
+                      : todayCard!.kind === 'draft'
+                        ? [todayCard!.context, labels.road.draftSubline].filter(Boolean).join(' · ')
+                        : todayCard!.context
+                }
+                holder={today.holder}
+                holderLabel={say('today.holds')}
+                holderWords={labels.holder}
+                dueLabel={labels.move.due}
+                due={today.dueOn ? longDay(today.dueOn, locale) : null}
+                href={today.href}
+                action={
+                  today.reply
+                    ? say('move.card.reply.action')
+                    : todayCard!.kind === 'draft'
+                      ? say('wsb.move.draft.action')
+                      : say(actionKey[todayCard!.kind])
+                }
+              >
+                {today.reply ? (
+                  <>
+                    <button
+                      type="button"
+                      className="button button-secondary today-mark"
+                      onClick={() => mark(today.reply!.requestId, today.reply!.latestReplyAt)}
+                    >
+                      {say('move.card.reply.read')}
+                    </button>
+                    {storageBlocked ? (
+                      <p className="today-note" role="status" lang="en">
+                        {storageWords}
+                      </p>
+                    ) : null}
+                  </>
+                ) : null}
+              </TodayCard>
+            </div>
           ) : null}
-          {nothing && unreadable ? (
-            <div className="move-empty" role="status" lang="en">
-              <p>
-                <strong>{unreadWords.title}</strong> {unreadWords.text}
-              </p>
-              <div className="move-empty-actions">
-                <a className="text-link ux-action" href="/account/move">
-                  {unreadWords.retry}
-                </a>
-                <Link prefetch={false} className="text-link ux-action" href={startHref}>
-                  {say('move.start')}
-                </Link>
-              </div>
-            </div>
-          ) : nothing && journey ? (
-            <div className="move-empty" role="status" lang="en">
-              <p>
-                <strong>Nothing here{where}.</strong>{' '}
-                {filterGap
-                  ? unsorted > 0
-                    ? unsortedWords
-                    : 'Some work may not be sorted into a journey yet.'
-                  : 'Nothing in this journey needs you right now.'}
-              </p>
-              <Link prefetch={false} className="text-link ux-action" href="/account/move">
-                Show All
+
+          <section className="move-card" aria-labelledby="move-you">
+            <h2 id="move-you">{say('move.you.heading')}</h2>
+            <span
+              className="move-count"
+              data-hot={nothing ? 'false' : 'true'}
+              lang={nothing && uncertain ? 'en' : undefined}
+              dir={nothing && uncertain ? 'ltr' : undefined}
+            >
+              <span className="sr-only">: </span>
+              {nothing && uncertain ? 'Not known yet' : count}
+            </span>
+            <Explain
+              className="move-head-key"
+              name={labels.explain.holder.you.name}
+              text={labels.explain.holder.you.text}
+            >
+              <i className="mr-holder-shape" data-holder="you" aria-hidden="true" />
+            </Explain>
+            {/* With work on the page the shortcuts give way, so the way to start a request stays here. */}
+            {!nothing ? (
+              <Link prefetch={false} className="move-card-link" href={startHref}>
+                <span>{say('move.start')}</span>
+                <CorridraIcon name="arrow" />
               </Link>
-            </div>
-          ) : nothing ? (
-            <div className="move-empty" role="status">
-              <span className="move-empty-mark" aria-hidden="true">
-                <CorridraIcon name="check" />
-              </span>
-              <p>
-                <strong>{say('move.empty.title')}</strong> {say('move.empty.text')}
-              </p>
-              <div className="move-guide">
-                <span className="move-guide-mark" aria-hidden="true">
-                  <CorridraIcon name="draft" />
-                </span>
-                <span className="move-guide-words" lang="en">
-                  <b>Suggested next step</b>
-                  <small>Tell us your goal. It takes a few minutes.</small>
-                </span>
-                <Link prefetch={false} className="button button-secondary" href={startHref}>
-                  {say('move.start')}
+            ) : null}
+            {nothing && unreadable ? (
+              <div className="move-empty" role="status" lang="en">
+                <p>
+                  <strong>{unreadWords.title}</strong> {unreadWords.text}
+                </p>
+                <div className="move-empty-actions">
+                  <a className="text-link ux-action" href="/account/move">
+                    {unreadWords.retry}
+                  </a>
+                  <Link prefetch={false} className="text-link ux-action" href={startHref}>
+                    {say('move.start')}
+                  </Link>
+                </div>
+              </div>
+            ) : nothing && journey ? (
+              <div className="move-empty" role="status" lang="en">
+                <p>
+                  <strong>Nothing here{where}.</strong>{' '}
+                  {filterGap
+                    ? unsorted > 0
+                      ? unsortedWords
+                      : 'Some work may not be sorted into a journey yet.'
+                    : 'Nothing in this journey needs you right now.'}
+                </p>
+                <Link prefetch={false} className="text-link ux-action" href="/account/move">
+                  Show All
                 </Link>
               </div>
-            </div>
-          ) : rest.length === 0 ? null : (
-            <div className="move-items">
-              <ul className="move-list">{rest.slice(0, rowsShown)}</ul>
-              {rest.length > rowsShown ? (
-                <details className="move-more">
-                  <summary>{fill(say('move.more'), { count: rest.length - rowsShown })}</summary>
-                  <ul className="move-list">{rest.slice(rowsShown)}</ul>
-                </details>
-              ) : null}
-            </div>
-          )}
-        </section>
+            ) : nothing ? (
+              <div className="move-empty" role="status">
+                <span className="move-empty-mark" aria-hidden="true">
+                  <CorridraIcon name="check" />
+                </span>
+                <p>
+                  <strong>{say('move.empty.title')}</strong> {say('move.empty.text')}
+                </p>
+                <div className="move-guide">
+                  <span className="move-guide-mark" aria-hidden="true">
+                    <CorridraIcon name="draft" />
+                  </span>
+                  <span className="move-guide-words" lang="en">
+                    <b>Suggested next step</b>
+                    <small>Tell us your goal. It takes a few minutes.</small>
+                  </span>
+                  <Link prefetch={false} className="button button-secondary" href={startHref}>
+                    {say('move.start')}
+                  </Link>
+                </div>
+              </div>
+            ) : rest.length === 0 ? null : (
+              <div className="move-items">
+                <ul className="move-list">{rest.slice(0, rowsShown)}</ul>
+                {rest.length > rowsShown ? (
+                  <details className="move-more">
+                    <summary>{fill(say('move.more'), { count: rest.length - rowsShown })}</summary>
+                    <ul className="move-list">{rest.slice(rowsShown)}</ul>
+                  </details>
+                ) : null}
+              </div>
+            )}
+          </section>
+        </div>
 
         <div className="move-side">
           {latestShown ? (
@@ -657,7 +660,11 @@ export function MoveView({
           ) : null}
           <section className="move-card" aria-labelledby="move-others">
             <h2 id="move-others">{say('move.others.heading')}</h2>
-            <span className="move-count" lang={uncertain ? 'en' : undefined}>
+            <span
+              className="move-count"
+              lang={uncertain ? 'en' : undefined}
+              dir={uncertain ? 'ltr' : undefined}
+            >
               {uncertain ? `${waiting.length} so far` : waiting.length}
             </span>
             <div className="move-lanes">
@@ -677,7 +684,7 @@ export function MoveView({
                       >
                         <i className="mr-holder-shape" data-holder={h} aria-hidden="true" />
                       </Explain>
-                      <span className="move-lane-count" lang="en">
+                      <span className="move-lane-count" lang="en" dir="ltr">
                         {rows.length > 0
                           ? uncertain
                             ? `${rows.length} so far`

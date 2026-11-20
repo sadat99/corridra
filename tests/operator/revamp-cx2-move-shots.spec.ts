@@ -57,7 +57,7 @@ test.beforeAll(async () => {
       import{buildMoveModel}from ${at('apps/web/lib/move-cards.ts')};
       const input=JSON.parse(new URLSearchParams(location.search).get('input'));
       createRoot(document.getElementById('fixture')).render(
-        <LanguageProvider offered={[{code:'en',draft:false}]}>
+        <LanguageProvider offered={[{code:'en',draft:false},{code:'ar',draft:false}]}>
           <WorkspaceShell title="Good morning, Asha" quietTitle customer>
             <MoveView model={buildMoveModel(input)} startHref="/plan"/>
           </WorkspaceShell>
@@ -136,3 +136,13 @@ for (const [name, input] of Object.entries(cases))
       await page.waitForSelector('.move-view');
       await page.screenshot({ path: resolve(out!, `move-${name}-${width}.png`), fullPage: true });
     });
+
+test('CX-07 Move full in Arabic at 320', async ({ page }) => {
+  test.skip(!out, 'Set CX_SHOTS_DIR to take the Move pictures.');
+  mkdirSync(out!, { recursive: true });
+  await page.addInitScript(() => localStorage.setItem('corridra.language', 'ar'));
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto(`${origin}/?input=${encodeURIComponent(JSON.stringify(cases.full))}`);
+  await page.waitForSelector('.move-view');
+  await page.screenshot({ path: resolve(out!, 'move-full-ar-320.png'), fullPage: true });
+});

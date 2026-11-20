@@ -440,3 +440,12 @@ describe('Your Move redesign: the journeys heading', () => {
     expect(html).not.toMatch(/Your Journeys: \d+ open/i);
   });
 });
+
+describe('Your Move redesign: English islands stay left to right', () => {
+  it('draws the lede and the holder counts as left to right English islands inside any page direction', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan' });
+    expect(html).toContain('<div class="move-lede-block" lang="en" dir="ltr">');
+    expect(html).toContain('class="move-lane-count" lang="en" dir="ltr"');
+  });
+});
