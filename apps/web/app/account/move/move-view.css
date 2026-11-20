@@ -1169,3 +1169,35 @@
     gap: var(--space-8);
   }
 }
+
+/* Review round 1 polish. English islands in a right to left page stay left to right but sit at the page's start. */
+.move-lede-block {
+  justify-self: start;
+  max-inline-size: 100%;
+}
+.move-greeting {
+  margin-block-end: calc(-1 * var(--space-3));
+}
+.ux-workspace:has(.move-view[dir='rtl']) .move-greeting {
+  text-align: end;
+}
+.move-view[dir='rtl'] .move-lane-more > summary {
+  justify-content: flex-end;
+}
+.move-card-link {
+  white-space: nowrap;
+}
+@media (max-width: 23.99rem) {
+  /* At 320 the header link drops under the heading rather than wrapping, and a stacked holder count lines up with
+     its word (the shape and the gaps in front of the word). */
+  .move-card > .move-card-link {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-height: 44px;
+    margin-inline: 0;
+    padding-inline: var(--space-5);
+  }
+  .move-lane-count {
+    padding-inline-start: calc(1.25rem + var(--space-3));
+  }
+}

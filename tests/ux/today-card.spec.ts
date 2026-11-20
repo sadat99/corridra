@@ -191,7 +191,9 @@ for (const width of [320, 360, 390, 768, 1024, 1440]) {
     expect(await px('.today-move', 'fontSize')).toBe(24);
     expect(await px('.today-due', 'fontSize')).toBe(16);
     expect(await px('.move-lane-head', 'fontSize')).toBe(16);
-    expect(await px('.move-lane-head .mr-holder-shape', 'width')).toBeGreaterThanOrEqual(19);
+    expect(await px('.move-lane-head .mr-holder-shape', 'width')).toBe(20);
+    // The Waiting for you header link never wraps: it is one 44 px line, beside the heading or under it.
+    expect(await px('.move-card > .move-card-link', 'height')).toBeLessThanOrEqual(48);
     expect(await px('.today-action', 'height')).toBeGreaterThanOrEqual(width >= 768 ? 48 : 56);
     expect(
       await page.evaluate(
