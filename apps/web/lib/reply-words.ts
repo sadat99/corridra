@@ -68,6 +68,13 @@ export type ReplyWords = {
   noMailingList: string;
   loading: string;
   unavailable: string;
+  // The steps (CORRIDRA_UX_BUYER_STEPS): the named step line, the last step's name and the three answers in full words.
+  stepNamed: string;
+  stepNext: string;
+  stepCheckSend: string;
+  interestedFull: string;
+  needInfoFull: string;
+  notRelevantFull: string;
 };
 
 const en: ReplyWords = {
@@ -182,6 +189,12 @@ const en: ReplyWords = {
   noMailingList: 'You will not be added to a mailing list by responding.',
   loading: 'Loading your introduction',
   unavailable: 'This private link is unavailable. Open the complete link you received.',
+  stepNamed: 'Step {n} of {total}: {name}',
+  stepNext: 'Next: {name}',
+  stepCheckSend: 'Check and send',
+  interestedFull: 'Yes, Interested',
+  needInfoFull: 'I Need More Information',
+  notRelevantFull: 'Not Relevant',
 };
 
 const zh: ReplyWords = {
@@ -292,6 +305,12 @@ const zh: ReplyWords = {
   noMailingList: '回复不会使您被加入任何邮件列表。',
   loading: '正在加载您的介绍',
   unavailable: '此私人链接不可用。请打开您收到的完整链接。',
+  stepNamed: '第 {n} 步，共 {total} 步：{name}',
+  stepNext: '下一步：{name}',
+  stepCheckSend: '检查并发送',
+  interestedFull: '是的，有兴趣',
+  needInfoFull: '我需要更多信息',
+  notRelevantFull: '不相关',
 };
 
 export const replyWords: Record<ReplyLanguage, ReplyWords> = { en, zh };
