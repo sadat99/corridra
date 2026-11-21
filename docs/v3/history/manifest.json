@@ -603,6 +603,14 @@
       "bytes": 10534,
       "sha256": "3d09f8e35693ed369c21ea85385794af253c4c46126a49373ecac31be94fecec",
       "meaning": "Exact active ledger at 7eaf3f4 (main after PR 583), before the 20 Nov records for PRs 574 to 583 and the ai_model_policy_real and member_access installs replaced the 19 Nov resume text. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "e39f437",
+      "archive": "docs/v3/history/ledger-before-wave3-records-2026-11-21.md",
+      "bytes": 10541,
+      "sha256": "95bfad2b005c39f3b8c9e491d4f8b910a4e942466c2f036ceb222ee0af3c7a78",
+      "meaning": "Exact active ledger at e39f437 (main after PR 591), before the 21 Nov records for PRs 585 to 591 replaced the 20 Nov resume text (main ef02e0d, PR 585 open, Wave 3 questions a to c open). Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
