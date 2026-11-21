@@ -377,7 +377,13 @@ describe('sample workspace before the module is installed', () => {
     for (const absent of [expired, ahead, elsewhere]) expect(ids).not.toContain(absent);
     expect(ids.length).toBeLessThanOrEqual(50);
     const listed = o.sources.find((s: { id: string }) => s.id === kept);
-    expect(listed).toMatchObject({ kind: 'public_record', locator: 'Provider document fixture' });
+    // Only what the picker shows: no rights or retention detail beyond the test connect applies.
+    expect(listed).toEqual({
+      id: kept,
+      kind: 'public_record',
+      locator: 'Provider document fixture',
+      observedAt: expect.anything(),
+    });
     const times = o.sources.map((s: { observedAt: Date }) => new Date(s.observedAt).getTime());
     expect(times).toEqual([...times].sort((a, b) => b - a));
     const r = await ai.connect(
@@ -440,6 +446,32 @@ describe('sample workspace before the module is installed', () => {
       ai.connect(ownerCtx(), form(t, randomUUID(), { adapter: 'google', expectedVersion: google })),
     ).rejects.toMatchObject({ status: 400, code: 'SOURCE_EVALUATION' });
     expect((await policies()).length).toBe(count);
+  });
+  test('options list at most 50 sources, newest first, ties in id order', async () => {
+    for (let n = 0; n < 52; n++) await source();
+    const current = async () =>
+      (
+        await f.owner.query(
+          'SELECT id FROM app.source_record WHERE tenant_id=$1 AND retention_until>now() AND observed_at<=now()',
+          [f.tenantA],
+        )
+      ).rows.map((r) => r.id as string);
+    const all = await current();
+    expect(all.length).toBeGreaterThan(51);
+    // Every current source observed at the same moment, so only the id decides the order.
+    await f.owner.query('ALTER TABLE app.source_record DISABLE TRIGGER USER');
+    try {
+      await f.owner.query(
+        "UPDATE app.source_record SET observed_at=date_trunc('second',now())-interval '1 hour' WHERE tenant_id=$1 AND id=ANY($2::uuid[])",
+        [f.tenantA, all],
+      );
+    } finally {
+      await f.owner.query('ALTER TABLE app.source_record ENABLE TRIGGER USER');
+    }
+    const newest = await source();
+    const ids = (await ai.connectOptions(ownerCtx())).sources.map((s: { id: string }) => s.id);
+    expect(ids).toHaveLength(50);
+    expect(ids).toEqual([newest, ...[...all].sort().slice(0, 49)]);
   });
 });
 
@@ -646,6 +678,7 @@ describe('real workspace', () => {
         ),
       ).rejects.toMatchObject({
         status: 409,
+        code: 'EU_UNUSABLE',
         message: 'The EU member list could not be used. Choose the countries one by one.',
       });
     } finally {

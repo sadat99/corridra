@@ -28,6 +28,7 @@ import {
   euHelper,
   fallbackOption,
   fromVersion,
+  groupSummary,
   kindLabel,
   progressLine,
   providerName,
@@ -38,6 +39,7 @@ import {
   showTasks,
   stepNames,
   stepQuestions,
+  taskGroups,
   taskLabels,
   tasksChosen,
   words,
@@ -45,12 +47,14 @@ import {
 } from './connect-ai-copy';
 import {
   buildConnectionRequest,
+  effectiveScope,
   emptyDraft,
   minorToUsd,
   stepErrors,
   stepFields,
   usdToMinor,
   type ConnectDraft,
+  type DraftContext,
   type EvaluationStatus,
   type FieldErrors,
   type FieldName,
@@ -123,7 +127,7 @@ function prefill(row: PolicyRow | undefined, limit: number, candidates: Candidat
   return {
     model: c.model ?? '',
     evaluationStatus: isEvaluation(c.evaluationStatus) ? c.evaluationStatus : '',
-    scope: 'countries',
+    scope: row ? 'countries' : '',
     codes: (c.processingLocations ?? []).slice(0, limit),
     inputRate: c.inputRateMinorPerMillion ? minorToUsd(c.inputRateMinorPerMillion) : '',
     outputRate: c.outputRateMinorPerMillion ? minorToUsd(c.outputRateMinorPerMillion) : '',
@@ -134,21 +138,53 @@ function prefill(row: PolicyRow | undefined, limit: number, candidates: Candidat
   } satisfies Partial<ConnectDraft>;
 }
 
-export function ConnectAiForm({ tenant }: { tenant: string }) {
+type View = 'hidden' | 'loading' | 'readFailed' | 'ready' | 'denied';
+
+/**
+ * What a failed first read draws. 404 is the switch off and 401 no session; a lost request says nothing about the switch.
+ * All three draw nothing, so the settings panel is what it was. Only a 403 or a server failure shows the switch is on.
+ */
+export function firstReadView(error: unknown): View {
+  if (!(error instanceof ActionError)) return 'hidden';
+  if (error.status === 403) return 'denied';
+  return error.status >= 500 ? 'readFailed' : 'hidden';
+}
+
+/** What a failed later read draws: the switch turned off (404) draws nothing; anything else offers Try Again. */
+export function laterReadView(error: unknown): View {
+  if (error instanceof ActionError && error.status === 404) return 'hidden';
+  if (error instanceof ActionError && error.status === 403 && !error.code) return 'denied';
+  return 'readFailed';
+}
+
+export function ConnectAiForm({
+  tenant,
+  onShownChange,
+}: {
+  tenant: string;
+  /** Told when the section appears or goes, so the panel can list it among its jump links. */
+  onShownChange?: (shown: boolean) => void;
+}) {
   const base = useId();
   const [options, setOptions] = useState<Options | null>(null);
-  const [view, setView] = useState<'hidden' | 'loading' | 'readFailed' | 'ready' | 'denied'>(
-    'hidden',
-  );
+  const [view, setViewState] = useState<View>('hidden');
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<ConnectDraft>(emptyDraft);
   const [prefilledFor, setPrefilledFor] = useState<AdapterChoice | ''>('');
+  const [prefilledVersion, setPrefilledVersion] = useState<number | null>(null);
+  const [choosing, setChoosing] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [banner, setBanner] = useState<Banner | null>(null);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState<{ provider: string; version: number } | null>(null);
+  const [saved, setSaved] = useState<{
+    provider: string;
+    version: number;
+    refreshFailed: boolean;
+  } | null>(null);
   const savingNow = useRef(false);
+  // The provider whose read is in flight; choosing another provider meanwhile drops that read's answer.
+  const pendingAdapter = useRef<AdapterChoice | null>(null);
   // Focus moves after the render that draws its target: a step heading, the first field with an error, the saved heading.
   const pendingFocus = useRef<string | null>(null);
   const focusSoon = (target: string) => {
@@ -161,6 +197,34 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
     target.focus();
   });
   const summaryRef = useRef<HTMLElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  // On a phone the step action sticks to the bottom only while it is small: when large text or a short screen makes it
+  // take more than a quarter of the screen, it sits in the flow instead, so it never covers a field.
+  useEffect(() => {
+    const area = actionsRef.current;
+    if (!area || typeof ResizeObserver === 'undefined') return;
+    const measure = () => {
+      area.dataset.inline = area.offsetHeight > window.innerHeight * 0.25 ? 'true' : 'false';
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(area);
+    window.addEventListener('resize', measure);
+    measure();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  });
+
+  // The latest callback, read when the view changes, so a new function from the panel never repeats the first read.
+  const shownChange = useRef(onShownChange);
+  useEffect(() => {
+    shownChange.current = onShownChange;
+  });
+  const setView = useCallback((next: View) => {
+    setViewState(next);
+    shownChange.current?.(next !== 'hidden');
+  }, []);
 
   const read = useCallback(
     async (adapter?: AdapterChoice | '') => {
@@ -173,8 +237,7 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
     [tenant],
   );
 
-  // The first read decides whether anything is drawn. 404 is the switch off, 401 no session: draw nothing. A failed
-  // network request says nothing about the switch either, so it also draws nothing.
+  // The first read decides whether anything is drawn (firstReadView).
   useEffect(() => {
     let live = true;
     read()
@@ -184,16 +247,14 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
         setView('ready');
       })
       .catch((error) => {
-        if (!live || !(error instanceof ActionError)) return;
-        if (error.status === 403) setView('denied');
-        else if (error.status >= 500) setView('readFailed');
+        if (live) setView(firstReadView(error));
       });
     return () => {
       live = false;
     };
-  }, [read]);
+  }, [read, setView]);
 
-  // A later read: the switch is known to be on, so a failure is shown with a way to try again.
+  // A later read: the switch is known to have been on (laterReadView).
   const reread = useCallback(
     async (adapter?: AdapterChoice | '') => {
       try {
@@ -201,12 +262,11 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
         setOptions(value);
         return value;
       } catch (error) {
-        if (error instanceof ActionError && error.status === 403 && !error.code) setView('denied');
-        else setView('readFailed');
+        setView(laterReadView(error));
         return null;
       }
     },
-    [read],
+    [read, setView],
   );
 
   if (view === 'hidden') return null;
@@ -222,6 +282,12 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
   const eu = options?.eu ?? { codes: [], recordedOn: null };
   const euOffered = options?.moduleInstalled === true;
   const euUsable = euOffered && eu.codes.length >= 1 && eu.codes.length <= limit;
+  const context: DraftContext = {
+    sourceIds: sources.map((s) => s.id),
+    fallbackIds: candidates.map((p) => p.id),
+    euOffered: euUsable,
+  };
+  const scope = effectiveScope(draft, context);
 
   const focusId = (field: FieldName) =>
     field === 'adapter'
@@ -229,11 +295,11 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
       : field === 'evaluationStatus'
         ? id(`evaluation-${draft.evaluationStatus || evaluationStatuses[0]}`)
         : field === 'codes'
-          ? draft.scope === 'market'
-            ? id('scope-market')
-            : id('find')
+          ? scope === 'countries'
+            ? id('find')
+            : id(`scope-${scope || 'countries'}`)
           : field === 'tasks'
-            ? id(`task-${taskIds[0]}`)
+            ? id('task-group-0')
             : id(field);
   const update = <K extends keyof ConnectDraft>(field: K, value: ConnectDraft[K]) => {
     setDraft((previous) => ({ ...previous, [field]: value }));
@@ -243,24 +309,38 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
     setStep(next);
     focusSoon(focus ?? id('question'));
   };
-  const close = () => {
-    setOpen(false);
-    if (saved) restart();
-    summaryRef.current?.focus();
-  };
   const restart = () => {
+    pendingAdapter.current = null;
+    setChoosing(false);
     setDraft(emptyDraft);
     setPrefilledFor('');
+    setPrefilledVersion(null);
     setErrors({});
     setBanner(null);
     setSaved(null);
     setStep(0);
   };
+  const close = () => {
+    setOpen(false);
+    if (saved) restart();
+    summaryRef.current?.focus();
+  };
+  const chooseAdapter = (adapter: AdapterChoice) => {
+    // A read for another provider that is still in flight no longer counts.
+    pendingAdapter.current = null;
+    setChoosing(false);
+    update('adapter', adapter);
+  };
 
   async function chooseProvider() {
     if (!draft.adapter || draft.adapter === prefilledFor) return goTo(1);
     const adapter = draft.adapter;
+    pendingAdapter.current = adapter;
+    setChoosing(true);
     const fresh = await reread(adapter);
+    if (pendingAdapter.current !== adapter) return;
+    pendingAdapter.current = null;
+    setChoosing(false);
     if (!fresh) return;
     const row = fresh.latest.find((p) => p.key === `connect-${adapter}`);
     // A new provider: answers taken from another provider's earlier version are not kept as if they were this one's.
@@ -274,11 +354,13 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
         ),
       }));
     setPrefilledFor(adapter);
+    setPrefilledVersion(row?.version ?? null);
     goTo(1);
   }
 
   function next() {
-    const found = stepErrors(draft, step);
+    if (choosing) return;
+    const found = stepErrors(draft, step, context);
     setErrors(found);
     const first = stepFields[step].find((field) => found[field]);
     if (first) return void focusSoon(focusId(first));
@@ -286,22 +368,32 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
     goTo(step + 1);
   }
 
+  async function refreshAfterSave(adapter: AdapterChoice | '') {
+    try {
+      setOptions(await read(adapter));
+    } catch {
+      // The version is saved; only the lists behind the screen are older. Say so quietly, never that nothing changed.
+      setSaved((previous) => previous && { ...previous, refreshFailed: true });
+    }
+  }
+
   async function save() {
     if (savingNow.current) return;
-    const found = stepErrors(draft, saveStep);
+    const found = stepErrors(draft, saveStep, context);
     setErrors(found);
     const first = stepFields[saveStep].find((field) => found[field]);
     if (first) return void focusSoon(focusId(first));
-    // Any earlier step that no longer passes (a date that has since passed) is opened with its error.
+    // Any earlier step that no longer passes (a date that has since passed, a source that has gone) opens with its error.
     for (let s = 0; s < saveStep; s++) {
-      const earlier = stepErrors(draft, s);
+      const earlier = stepErrors(draft, s, context);
       const field = stepFields[s].find((f) => earlier[f]);
       if (field) {
         setErrors(earlier);
+        update('confirmed', false);
         return goTo(s, focusId(field));
       }
     }
-    const body = buildConnectionRequest(draft, latestVersion);
+    const body = buildConnectionRequest(draft, latestVersion, context);
     savingNow.current = true;
     setSaving(true);
     setBanner(null);
@@ -315,9 +407,9 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
           }),
         ),
       );
-      setSaved({ provider, version: result.version });
+      setSaved({ provider, version: result.version, refreshFailed: false });
       focusSoon(id('saved'));
-      void reread(draft.adapter);
+      void refreshAfterSave(draft.adapter);
     } catch (error) {
       await refused(error);
     } finally {
@@ -328,24 +420,30 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
 
   async function refused(error: unknown) {
     const code = error instanceof ActionError ? error.code : undefined;
+    // Nothing was saved: the person reads the facts again before the next try.
+    update('confirmed', false);
     if (code === 'VERSION_CHANGED')
       return setBanner({ text: words.save.versionChanged, action: 'loadLatest' });
     if (code === 'SOURCE_TERMS' || code === 'SOURCE_EVALUATION') {
       const field = code === 'SOURCE_TERMS' ? 'termsSourceId' : 'evaluationSourceId';
+      update(field, '');
       await reread(draft.adapter);
       setErrors({ [field]: words.sources.refused });
       setBanner({ text: words.sources.banner });
       return goTo(3, id(field));
     }
     if (code === 'FALLBACK_SELF' || code === 'FALLBACK_NOT_CURRENT') {
+      update('fallbackPolicyId', '');
       await reread(draft.adapter);
       setErrors({ fallbackPolicyId: words.fallback[code] });
       return goTo(6, id('fallbackPolicyId'));
     }
     if (code === 'EU_UNAVAILABLE' || code === 'EU_UNUSABLE' || code === 'COUNTRY_LIMIT') {
+      // The EU list cannot be used now: the countries path opens, with the countries already chosen kept.
+      if (code !== 'COUNTRY_LIMIT') update('scope', 'countries');
       await reread(draft.adapter);
       setErrors({ codes: words.scopeRefused[code] });
-      return goTo(2, focusId('codes'));
+      return goTo(2, id('find'));
     }
     if (code === 'MODULE_NOT_INSTALLED' || code === 'REAL_USE_OFF') {
       await reread(draft.adapter);
@@ -377,6 +475,25 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
   const described = (field: FieldName, helper?: string) =>
     [helper, errors[field] ? id(`${field}-error`) : undefined].filter(Boolean).join(' ') ||
     undefined;
+  const check = (
+    inputId: string,
+    checked: boolean,
+    onChange: (checked: boolean) => void,
+    label: string,
+    field?: FieldName,
+  ) => (
+    <label className="ux-check connect-ai-check">
+      <input
+        id={inputId}
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        aria-invalid={field && errors[field] ? true : undefined}
+        aria-describedby={field ? described(field) : undefined}
+      />
+      <span>{label}</span>
+    </label>
+  );
 
   const steps = [
     // 1 Provider
@@ -392,7 +509,7 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
           name={id('adapter')}
           value={adapter}
           checked={draft.adapter === adapter}
-          onChoose={() => update('adapter', adapter)}
+          onChoose={() => chooseAdapter(adapter)}
           label={providerNames[adapter]}
         />
       ))}
@@ -435,13 +552,14 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
         {error('evaluationStatus')}
       </fieldset>
     </div>,
-    // 3 Countries
+    // 3 Countries: the EU explanation and the owner's settings line sit in one closed disclosure; the search appears only
+    // on the countries path.
     <div key="countries" className="connect-ai-fields">
       <fieldset className="connect-ai-choices">
         <legend>{words.countries.legend}</legend>
         <p className="connect-ai-helper">{words.countries.helper}</p>
-        {euOffered && (
-          <div className="connect-ai-choice">
+        {euUsable && (
+          <>
             <ChoiceChip
               id={id('scope-countries')}
               name={id('scope')}
@@ -450,39 +568,37 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
               onChoose={() => update('scope', 'countries')}
               label={words.countries.oneByOne}
             />
-          </div>
+            <ChoiceChip
+              id={id('scope-market')}
+              name={id('scope')}
+              value="market"
+              checked={draft.scope === 'market'}
+              onChoose={() => update('scope', 'market')}
+              label={words.countries.euLabel}
+            />
+          </>
         )}
-        {euOffered &&
-          (euUsable ? (
-            <div className="connect-ai-choice">
-              <ChoiceChip
-                id={id('scope-market')}
-                name={id('scope')}
-                value="market"
-                checked={draft.scope === 'market'}
-                onChoose={() => update('scope', 'market')}
-                label={words.countries.euLabel}
-              />
-              <p className="connect-ai-helper">
-                {euHelper(eu.codes.length, eu.recordedOn ? inWords(eu.recordedOn) : '')}
-              </p>
-              <details>
-                <summary>{words.countries.showCountries}</summary>
-                <ul className="connect-ai-list">
-                  {eu.codes.map((code) => (
-                    <li key={code}>
-                      {countryName(code)} <span className="connect-ai-code">{code}</span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            </div>
-          ) : (
-            <p className="connect-ai-helper">{words.countries.euEmpty}</p>
-          ))}
-        {draft.adapter && <p className="connect-ai-helper">{euConsequence(draft.adapter)}</p>}
+        {euOffered && !euUsable && <p className="connect-ai-helper">{words.countries.euEmpty}</p>}
+        {euUsable ? (
+          <details className="connect-ai-more">
+            <summary>{words.countries.showCountries}</summary>
+            <p className="connect-ai-helper">
+              {euHelper(eu.codes.length, eu.recordedOn ? inWords(eu.recordedOn) : '')}
+            </p>
+            {draft.adapter && <p className="connect-ai-helper">{euConsequence(draft.adapter)}</p>}
+            <ul className="connect-ai-list">
+              {eu.codes.map((code) => (
+                <li key={code}>
+                  {countryName(code)} <span className="connect-ai-code">{code}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : (
+          draft.adapter && <p className="connect-ai-helper">{euConsequence(draft.adapter)}</p>
+        )}
       </fieldset>
-      {draft.scope === 'countries' || !euUsable ? (
+      {scope === 'countries' ? (
         <CountryListPicker
           inputId={id('find')}
           chosen={draft.codes}
@@ -572,28 +688,35 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
         {error('validUntil')}
       </div>
     </div>,
-    // 7 Tasks
+    // 7 Tasks, in three closed groups with their counts
     <div key="tasks" className="connect-ai-fields">
       <fieldset className="connect-ai-choices" aria-describedby={described('tasks')}>
         <legend>{words.tasks.legend}</legend>
         <p className="connect-ai-helper">{tasksChosen(draft.tasks.length, taskIds.length)}</p>
-        {taskIds.map((task) => (
-          <label key={task} className="ux-check">
-            <input
-              id={id(`task-${task}`)}
-              type="checkbox"
-              checked={draft.tasks.includes(task)}
-              onChange={(event) =>
-                update(
-                  'tasks',
-                  event.target.checked
-                    ? [...draft.tasks, task]
-                    : draft.tasks.filter((t) => t !== task),
-                )
-              }
-            />{' '}
-            {taskLabels[task]}
-          </label>
+        {taskGroups.map((group, index) => (
+          <details key={group.name} className="connect-ai-more">
+            <summary id={id(`task-group-${index}`)}>
+              {groupSummary(
+                group.name,
+                group.tasks.filter((task) => draft.tasks.includes(task)).length,
+                group.tasks.length,
+              )}
+            </summary>
+            {group.tasks.map((task) => (
+              <div key={task}>
+                {check(
+                  id(`task-${task}`),
+                  draft.tasks.includes(task),
+                  (checked) =>
+                    update(
+                      'tasks',
+                      checked ? [...draft.tasks, task] : draft.tasks.filter((t) => t !== task),
+                    ),
+                  taskLabels[task],
+                )}
+              </div>
+            ))}
+          </details>
         ))}
         {error('tasks')}
       </fieldset>
@@ -627,7 +750,12 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
       sources={sources}
       candidates={candidates}
       euCount={eu.codes.length}
-      onChange={(s) => goTo(s)}
+      scope={scope}
+      onChange={(s) => {
+        // A changed answer means the facts before saving are read again.
+        update('confirmed', false);
+        goTo(s);
+      }}
     />,
     // 9 Save
     <div key="save" className="connect-ai-fields">
@@ -665,22 +793,47 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
           recorded={words.beforeSave.recorded}
         />
       </div>
-      <label className="ux-check">
-        <input
-          id={id('confirmed')}
-          type="checkbox"
-          checked={draft.confirmed}
-          onChange={(event) => update('confirmed', event.target.checked)}
-          aria-invalid={errors.confirmed ? true : undefined}
-          aria-describedby={described('confirmed')}
-        />{' '}
-        {words.save.confirm}
-      </label>
+      {check(
+        id('confirmed'),
+        draft.confirmed,
+        (checked) => update('confirmed', checked),
+        words.save.confirm,
+        'confirmed',
+      )}
       {error('confirmed')}
     </div>,
   ];
 
   const body = () => {
+    if (saved)
+      return (
+        <div className="connect-ai-fields">
+          <div role="status">
+            <h3 id={id('saved')} tabIndex={-1} className="connect-ai-question">
+              {words.success.heading}
+            </h3>
+            <p>{savedText(saved.provider, saved.version)}</p>
+            {saved.refreshFailed && (
+              <p className="connect-ai-helper">{words.success.refreshFailed}</p>
+            )}
+          </div>
+          <div className="connect-ai-end">
+            <button type="button" className="primary-link" onClick={close}>
+              {words.backToSettings}
+            </button>
+            <button
+              type="button"
+              className="text-link connect-ai-link"
+              onClick={() => {
+                restart();
+                focusSoon(id('question'));
+              }}
+            >
+              {words.success.another}
+            </button>
+          </div>
+        </div>
+      );
     if (view === 'loading') return <p role="status">{words.loading}</p>;
     if (view === 'readFailed')
       return (
@@ -699,13 +852,7 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
                   setOptions(value);
                   setView('ready');
                 })
-                .catch((e) =>
-                  setView(
-                    e instanceof ActionError && e.status === 403 && !e.code
-                      ? 'denied'
-                      : 'readFailed',
-                  ),
-                );
+                .catch((e) => setView(laterReadView(e)));
             }}
           >
             {words.tryAgain}
@@ -715,7 +862,7 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
     if (view === 'denied' || (options && !options.canManage))
       return (
         <div className="connect-ai-fields">
-          <h3>{words.deniedHeading}</h3>
+          <h3 className="connect-ai-question">{words.deniedHeading}</h3>
           <p>{words.denied}</p>
         </div>
       );
@@ -723,53 +870,28 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
     if (!options.canConnect)
       return (
         <div className="connect-ai-fields">
-          <h3>{words.notAvailable}</h3>
+          <h3 className="connect-ai-question">{words.notAvailable}</h3>
           <p>{options.blockedReason ? words.blocked[options.blockedReason] : null}</p>
-          <button type="button" className="text-link" onClick={close}>
+          <button type="button" className="text-link connect-ai-link" onClick={close}>
             {words.backToSettings}
           </button>
         </div>
       );
-    if (saved)
-      return (
-        <div className="connect-ai-fields">
-          <div role="status">
-            <h3 id={id('saved')} tabIndex={-1}>
-              {words.success.heading}
-            </h3>
-            <p>{savedText(saved.provider, saved.version)}</p>
-          </div>
-          <div className="connect-ai-end">
-            <button type="button" className="primary-link" onClick={close}>
-              {words.backToSettings}
-            </button>
-            <button
-              type="button"
-              className="text-link"
-              onClick={() => {
-                restart();
-                focusSoon(id('question'));
-              }}
-            >
-              {words.success.another}
-            </button>
-          </div>
-        </div>
-      );
-    const showFrom = latestRow && prefilledFor && step >= 1 && step <= 6;
+    const showFrom = prefilledVersion !== null && prefilledFor && step >= 1 && step <= 6;
+    const waiting = (step === 0 && !draft.adapter) || choosing;
     return (
       <form className="connect-ai-form" aria-label={words.formLabel} onSubmit={submit} noValidate>
         <PlanProgress
           line={progressLine(step)}
           names={stepNames}
           current={step}
-          listLabel={words.formLabel}
+          listLabel={words.stepsLabel}
           progressLabel={progressLine(step)}
         />
-        <h3 id={id('question')} tabIndex={-1}>
+        <h3 id={id('question')} tabIndex={-1} className="connect-ai-question">
           {stepQuestions[step]}
         </h3>
-        {showFrom && <p className="connect-ai-helper">{fromVersion(latestRow.version)}</p>}
+        {showFrom && <p className="connect-ai-helper">{fromVersion(prefilledVersion)}</p>}
         {banner && (
           <div className="connect-ai-fields">
             <p role="alert" className="connect-ai-banner">
@@ -777,18 +899,35 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
               <span>{banner.text}</span>
             </p>
             {banner.action === 'loadLatest' && (
-              <button type="button" className="text-link" onClick={() => void loadLatest()}>
+              <button
+                type="button"
+                className="text-link connect-ai-link"
+                onClick={() => void loadLatest()}
+              >
                 {words.save.loadLatest}
               </button>
             )}
             {banner.action === 'retry' && (
-              <button type="button" className="text-link" onClick={() => void save()}>
+              <button
+                type="button"
+                className="text-link connect-ai-link"
+                onClick={() => void save()}
+              >
                 {words.tryAgain}
               </button>
             )}
           </div>
         )}
         {steps[step]}
+        {step > 0 && (
+          <button
+            type="button"
+            className="text-link connect-ai-link connect-ai-back"
+            onClick={() => goTo(step - 1)}
+          >
+            {words.back}
+          </button>
+        )}
         {step === saveStep ? (
           <div className="connect-ai-end">
             <button
@@ -799,27 +938,20 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
             >
               {saving ? words.save.busy : words.save.action}
             </button>
-            <button type="button" className="text-link" onClick={() => goTo(step - 1)}>
-              {words.back}
-            </button>
             <p role="status" className="connect-ai-helper">
               {saving ? words.save.busyStatus : ''}
             </p>
           </div>
         ) : (
-          <div className="connect-ai-actions">
+          <div className="connect-ai-actions" ref={actionsRef}>
             <button
               type="submit"
               className="primary-link"
-              aria-disabled={(step === 0 && !draft.adapter) || undefined}
+              aria-disabled={waiting || undefined}
+              aria-busy={choosing || undefined}
             >
               {step === 0 && !draft.adapter ? words.pickProvider : words.next}
             </button>
-            {step > 0 && (
-              <button type="button" className="text-link" onClick={() => goTo(step - 1)}>
-                {words.back}
-              </button>
-            )}
             <p className="connect-ai-helper">{words.reassurance}</p>
           </div>
         )}
@@ -833,7 +965,9 @@ export function ConnectAiForm({ tenant }: { tenant: string }) {
       open={open}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
-      <summary ref={summaryRef}>{words.open}</summary>
+      <summary ref={summaryRef} data-step="03">
+        {words.open}
+      </summary>
       {body()}
     </details>
   );
@@ -845,6 +979,7 @@ function Review({
   sources,
   candidates,
   euCount,
+  scope,
   onChange,
 }: {
   draft: ConnectDraft;
@@ -852,6 +987,7 @@ function Review({
   sources: SourceRow[];
   candidates: Candidate[];
   euCount: number;
+  scope: ConnectDraft['scope'];
   onChange: (step: number) => void;
 }) {
   const provider = draft.adapter ? providerNames[draft.adapter] : '';
@@ -872,7 +1008,7 @@ function Review({
     ],
     [
       2,
-      draft.scope === 'market'
+      scope === 'market'
         ? `${words.countries.euLabel}, ${euCount}`
         : draft.codes.map(countryName).join(', '),
     ],
@@ -905,7 +1041,7 @@ function Review({
     [
       6,
       <>
-        <details>
+        <details className="connect-ai-plain">
           <summary>{showTasks(draft.tasks.length, taskIds.length)}</summary>
           <ul className="connect-ai-list">
             {taskIds
@@ -931,7 +1067,11 @@ function Review({
             <dt>{stepNames[s]}</dt>
             <dd>{value}</dd>
             <dd>
-              <button type="button" className="text-link" onClick={() => onChange(s)}>
+              <button
+                type="button"
+                className="text-link connect-ai-link"
+                onClick={() => onChange(s)}
+              >
                 {changeLabel(stepNames[s])}
               </button>
             </dd>

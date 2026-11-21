@@ -165,7 +165,7 @@ export class IntelligenceService {
         canManage && blocked === null
           ? (
               await t.db.query(
-                `SELECT id,kind,locator,observed_at AS "observedAt",retention_until AS "retentionUntil",ai_policy AS "aiPolicy" FROM app.source_record WHERE tenant_id=$1 AND retention_until>now() AND observed_at<=now() AND app.can_access(tenant_id,classification,purpose) ORDER BY observed_at DESC,id LIMIT 50`,
+                `SELECT id,kind,locator,observed_at AS "observedAt" FROM app.source_record WHERE tenant_id=$1 AND retention_until>now() AND observed_at<=now() AND app.can_access(tenant_id,classification,purpose) ORDER BY observed_at DESC,id LIMIT 50`,
                 [t.tenantId],
               )
             ).rows

@@ -26,6 +26,7 @@ import {
   stepErrors,
   usdToMinor,
   type ConnectDraft,
+  type DraftContext,
 } from '../../apps/web/app/operator/connect-ai-request';
 import {
   aiConnectionRecordedFact,
@@ -103,6 +104,16 @@ const draft = (patch: Partial<ConnectDraft> = {}): ConnectDraft => ({
   ...patch,
 });
 
+// What the screen offers for a draft: its own sources and fallback, and the EU list.
+const contextOf = (d: ConnectDraft, patch: Partial<DraftContext> = {}): DraftContext => ({
+  sourceIds: [d.termsSourceId, d.evaluationSourceId],
+  fallbackIds: d.fallbackPolicyId ? [d.fallbackPolicyId] : [],
+  euOffered: true,
+  ...patch,
+});
+const build = (d: ConnectDraft, expectedVersion: number, patch: Partial<DraftContext> = {}) =>
+  buildConnectionRequest(d, expectedVersion, contextOf(d, patch));
+
 describe('the owner-approved words, exactly', () => {
   it('labels and explains the EU choice as a list of countries Corridra records', () => {
     expect(words.countries.euLabel).toBe('EU member countries (list Corridra records)');
@@ -128,6 +139,9 @@ describe('the owner-approved words, exactly', () => {
       'No. This save runs no AI and does not switch it on. No AI run is possible in a real workspace yet.',
     );
     expect(words.beforeSave.runSample).toBe('No. This save runs no AI and does not switch it on.');
+  });
+  it('names owners and admins as the people who can connect', () => {
+    expect(words.deniedHeading).toBe('Only owners and admins can do this');
   });
   it('says after saving that it is saved and not switched on', () => {
     expect(words.success.heading).toBe('Saved, not switched on');
@@ -196,8 +210,8 @@ describe('money is exact text, never a float', () => {
     expect(minorToUsd('100000')).toBe('1000.00');
   });
   it('holds the daily budget to 1,000.00 USD', () => {
-    expect(stepErrors(draft({ dailyBudget: '1000' }), 5)).toEqual({});
-    expect(stepErrors(draft({ dailyBudget: '1000.01' }), 5)).toEqual({
+    expect(stepErrors(draft({ dailyBudget: '1000' }), 5, contextOf(draft()))).toEqual({});
+    expect(stepErrors(draft({ dailyBudget: '1000.01' }), 5, contextOf(draft()))).toEqual({
       dailyBudget: words.limits.budgetOver,
     });
   });
@@ -205,7 +219,7 @@ describe('money is exact text, never a float', () => {
 
 describe('the one request the screen sends', () => {
   it('parses under the server schema for chosen countries and for the EU list', () => {
-    const countries = buildConnectionRequest(draft(), 0);
+    const countries = build(draft(), 0);
     expect(guidedConnection.parse(countries)).toMatchObject({
       processingScope: { kind: 'countries', codes: ['DE', 'BD'] },
       inputRateMinorPerMillion: '300',
@@ -215,12 +229,12 @@ describe('the one request the screen sends', () => {
       expectedVersion: 0,
       confirmed: true,
     });
-    const market = buildConnectionRequest(draft({ scope: 'market', codes: [] }), 2);
+    const market = build(draft({ scope: 'market', codes: [] }), 2);
     expect(guidedConnection.parse(market).processingScope).toEqual({ kind: 'market', key: 'EU' });
     expect(market.expectedVersion).toBe(2);
   });
   it('carries only plain answers: no key, no key name, no version to write, no locations for a market', () => {
-    const body = buildConnectionRequest(draft({ scope: 'market', codes: [] }), 1);
+    const body = build(draft({ scope: 'market', codes: [] }), 1);
     expect(Object.keys(body).sort()).toEqual(
       [
         'adapter',
@@ -242,29 +256,31 @@ describe('the one request the screen sends', () => {
     );
     expect(JSON.stringify(body)).not.toMatch(/secret|api|processingLocations|"version"/i);
     const fallback = randomUUID();
-    expect(buildConnectionRequest(draft({ fallbackPolicyId: fallback }), 0).fallbackPolicyId).toBe(
-      fallback,
-    );
+    expect(build(draft({ fallbackPolicyId: fallback }), 0).fallbackPolicyId).toBe(fallback);
   });
   it('sends nothing from an unticked, unfinished or invalid draft', () => {
-    expect(() => buildConnectionRequest(draft({ confirmed: false }), 0)).toThrow(
-      words.save.confirmError,
-    );
-    expect(() => buildConnectionRequest(draft({ termsSourceId: '' }), 0)).toThrow(
-      words.sources.blank,
-    );
-    expect(() => buildConnectionRequest(draft({ maxCost: '1.555' }), 0)).toThrow(
-      words.money.decimals,
-    );
-    expect(() => buildConnectionRequest(draft({ model: '../x' }), 0)).toThrow(words.model.invalid);
-    expect(() => buildConnectionRequest(draft({ validUntil: '2020-01-01' }), 0)).toThrow(
-      words.limits.validError,
-    );
-    expect(() => buildConnectionRequest(draft({ codes: [] }), 0)).toThrow(words.countries.none);
-    expect(() => buildConnectionRequest(draft({ tasks: [] }), 0)).toThrow(words.tasks.error);
-    expect(() => buildConnectionRequest(draft({ reason: '  a ' }), 0)).toThrow(
-      words.save.reasonError,
-    );
+    expect(() => build(draft({ confirmed: false }), 0)).toThrow(words.save.confirmError);
+    expect(() => build(draft({ termsSourceId: '' }), 0)).toThrow(words.sources.blank);
+    expect(() => build(draft({ maxCost: '1.555' }), 0)).toThrow(words.money.decimals);
+    expect(() => build(draft({ model: '../x' }), 0)).toThrow(words.model.invalid);
+    expect(() => build(draft({ validUntil: '2020-01-01' }), 0)).toThrow(words.limits.validError);
+    expect(() => build(draft({ codes: [] }), 0)).toThrow(words.countries.none);
+    expect(() => build(draft({ tasks: [] }), 0)).toThrow(words.tasks.error);
+    expect(() => build(draft({ reason: '  a ' }), 0)).toThrow(words.save.reasonError);
+  });
+  it('sends no source or fallback the lists no longer hold, and no EU list that is not offered', () => {
+    const d = draft({ fallbackPolicyId: randomUUID() });
+    expect(() => build(d, 0, { sourceIds: [d.termsSourceId] })).toThrow(words.sources.refused);
+    expect(() => build(d, 0, { fallbackIds: [] })).toThrow(words.fallback.FALLBACK_NOT_CURRENT);
+    const eu = draft({ scope: 'market', codes: [] });
+    expect(() => build(eu, 0, { euOffered: false })).toThrow(words.scopeRefused.EU_UNAVAILABLE);
+    // Without the EU list on offer, an unanswered choice is the countries path.
+    expect(build(draft({ scope: '' }), 0, { euOffered: false }).processingScope).toEqual({
+      kind: 'countries',
+      codes: ['DE', 'BD'],
+    });
+    // With it on offer, a choice is needed.
+    expect(() => build(draft({ scope: '' }), 0)).toThrow(words.countries.none);
   });
 });
 
@@ -306,5 +322,19 @@ describe('Before You Save and the switch-off page', () => {
   it('draws nothing before the read answers, so with the switch off the panel is what it was', async () => {
     const { ConnectAiForm } = await loadWeb('app/operator/connect-ai-form.tsx');
     expect(render(ce(ConnectAiForm, { tenant: randomUUID() }))).toBe('');
+  });
+  it('draws nothing when the read answers 404 (switch off), 401 or is lost, first or later', async () => {
+    const { firstReadView, laterReadView } = await loadWeb('app/operator/connect-ai-form.tsx');
+    const { ActionError } = await loadWeb('lib/ux/step-up.ts');
+    const off = new ActionError('Not found', 404);
+    expect(firstReadView(off)).toBe('hidden');
+    expect(laterReadView(off)).toBe('hidden');
+    expect(firstReadView(new ActionError('Sign in to continue', 401))).toBe('hidden');
+    expect(firstReadView(new TypeError('Failed to fetch'))).toBe('hidden');
+    // The switch is known to be on: a server failure or a refusal is shown, never hidden.
+    expect(firstReadView(new ActionError('Failed', 500))).toBe('readFailed');
+    expect(firstReadView(new ActionError('Access denied', 403))).toBe('denied');
+    expect(laterReadView(new TypeError('Failed to fetch'))).toBe('readFailed');
+    expect(laterReadView(new ActionError('Access denied', 403))).toBe('denied');
   });
 });

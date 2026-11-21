@@ -255,7 +255,8 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
     [command, setCommand] = useState<Command>('corridor-pack'),
     [draft, setDraft] = useState(''),
     [next, setNext] = useState(''),
-    [drafts, setDrafts] = useState<Partial<Record<Command, string>>>({});
+    [drafts, setDrafts] = useState<Partial<Record<Command, string>>>({}),
+    [aiConnectShown, setAiConnectShown] = useState(false);
   const request = useCallback(
     async (action: string, input?: unknown) => {
       const r = await fetch(
@@ -345,6 +346,8 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
         sections={[
           { label: 'Mission templates', heading: 'Prepare commercial mission templates' },
           { label: 'Directional route', heading: 'Create a directional corridor route' },
+          // Listed only while the Connect AI section is drawn (its switch on), so the panel is otherwise unchanged.
+          ...(aiConnectShown ? [{ label: 'Connect AI', heading: 'Connect an AI Provider' }] : []),
           {
             label: 'Source rights and model policies',
             heading: 'Advanced (developers): versioned policy review',
@@ -485,7 +488,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
             }
           />
         )}
-        <ConnectAiForm tenant={tenant} />
+        <ConnectAiForm tenant={tenant} onShownChange={setAiConnectShown} />
         <details>
           <summary data-step="04">Advanced (developers): versioned policy review</summary>
           <form className="operator-form" onSubmit={submit}>

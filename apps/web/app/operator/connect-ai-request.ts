@@ -11,7 +11,8 @@ export type ConnectDraft = {
   adapter: AdapterChoice | '';
   model: string;
   evaluationStatus: EvaluationStatus | '';
-  scope: 'countries' | 'market';
+  /** Empty until a choice is made while the EU list is offered; without it the countries path is the only one. */
+  scope: 'countries' | 'market' | '';
   codes: string[];
   termsSourceId: string;
   evaluationSourceId: string;
@@ -32,7 +33,7 @@ export const emptyDraft: ConnectDraft = {
   adapter: '',
   model: '',
   evaluationStatus: '',
-  scope: 'countries',
+  scope: '',
   codes: [],
   termsSourceId: '',
   evaluationSourceId: '',
@@ -119,7 +120,23 @@ export const stepFields: readonly (readonly FieldName[])[] = [
   ['reason', 'confirmed'],
 ];
 
-export function fieldError(draft: ConnectDraft, field: FieldName, now = new Date()) {
+/**
+ * What the screen currently offers, so a check never passes an answer the lists no longer hold: a source or fallback that
+ * has since gone, or the EU list when it is not offered.
+ */
+export type DraftContext = {
+  sourceIds: readonly string[];
+  fallbackIds: readonly string[];
+  euOffered: boolean;
+  now?: Date;
+};
+
+/** The scope the request will carry. Without the EU list on offer an unanswered choice means countries one by one. */
+export const effectiveScope = (draft: ConnectDraft, context: DraftContext) =>
+  context.euOffered ? draft.scope : draft.scope || 'countries';
+
+export function fieldError(draft: ConnectDraft, field: FieldName, context: DraftContext) {
+  const now = context.now ?? new Date();
   switch (field) {
     case 'adapter':
       return draft.adapter ? null : words.provider.error;
@@ -127,11 +144,15 @@ export function fieldError(draft: ConnectDraft, field: FieldName, now = new Date
       return modelError(draft.model);
     case 'evaluationStatus':
       return draft.evaluationStatus ? null : words.evaluation.error;
-    case 'codes':
-      return draft.scope === 'market' || draft.codes.length ? null : words.countries.none;
+    case 'codes': {
+      const scope = effectiveScope(draft, context);
+      if (scope === 'market') return context.euOffered ? null : words.scopeRefused.EU_UNAVAILABLE;
+      return scope === 'countries' && draft.codes.length ? null : words.countries.none;
+    }
     case 'termsSourceId':
     case 'evaluationSourceId':
-      return draft[field] ? null : words.sources.blank;
+      if (!draft[field]) return words.sources.blank;
+      return context.sourceIds.includes(draft[field]) ? null : words.sources.refused;
     case 'inputRate':
     case 'outputRate':
     case 'maxCost': {
@@ -148,7 +169,9 @@ export function fieldError(draft: ConnectDraft, field: FieldName, now = new Date
     case 'tasks':
       return draft.tasks.length ? null : words.tasks.error;
     case 'fallbackPolicyId':
-      return null;
+      return !draft.fallbackPolicyId || context.fallbackIds.includes(draft.fallbackPolicyId)
+        ? null
+        : words.fallback.FALLBACK_NOT_CURRENT;
     case 'reason':
       return draft.reason.trim().length >= 3 ? null : words.save.reasonError;
     case 'confirmed':
@@ -156,10 +179,10 @@ export function fieldError(draft: ConnectDraft, field: FieldName, now = new Date
   }
 }
 
-export function stepErrors(draft: ConnectDraft, step: number, now = new Date()): FieldErrors {
+export function stepErrors(draft: ConnectDraft, step: number, context: DraftContext): FieldErrors {
   const errors: FieldErrors = {};
   for (const field of stepFields[step] ?? []) {
-    const error = fieldError(draft, field, now);
+    const error = fieldError(draft, field, context);
     if (error) errors[field] = error;
   }
   return errors;
@@ -179,11 +202,11 @@ const minorOf = (typed: string) => {
 export function buildConnectionRequest(
   draft: ConnectDraft,
   expectedVersion: number,
-  now = new Date(),
+  context: DraftContext,
 ) {
   for (const fields of stepFields)
     for (const field of fields) {
-      const error = fieldError(draft, field, now);
+      const error = fieldError(draft, field, context);
       if (error) throw new Error(error);
     }
   if (!draft.adapter || !draft.evaluationStatus) throw new Error(words.provider.error);
@@ -192,7 +215,7 @@ export function buildConnectionRequest(
     model: draft.model,
     evaluationStatus: draft.evaluationStatus,
     processingScope:
-      draft.scope === 'market'
+      effectiveScope(draft, context) === 'market'
         ? ({ kind: 'market', key: 'EU' } as const)
         : ({ kind: 'countries', codes: [...draft.codes] } as const),
     termsSourceId: draft.termsSourceId,

@@ -72,6 +72,7 @@ export const taskLabels: Record<TaskId, string> = {
 export const words = {
   open: 'Connect an AI Provider',
   formLabel: 'Connect AI',
+  stepsLabel: 'Steps',
   next: 'Next',
   back: 'Back',
   pickProvider: 'Pick a Provider to Continue',
@@ -87,7 +88,7 @@ export const words = {
     REAL_USE_OFF:
       'Connecting an AI provider is not available while real use is switched off for this workspace. Ask the owner to switch real use on.',
   },
-  deniedHeading: 'Only owners can do this',
+  deniedHeading: 'Only owners and admins can do this',
   denied: 'Only owners and admins can connect an AI provider. Ask an owner to do this for you.',
   firstEver: 'No provider has a saved version yet. This will be version 1.',
   provider: { legend: 'Provider', error: 'Choose a provider.' },
@@ -121,6 +122,7 @@ export const words = {
     findHint: 'Type a country name.',
     noMatch: 'No country matches that name. Check the spelling.',
     atCap: 'You have chosen the most this connection can list. Remove one to add another.',
+    showAll: 'Show All',
     none: 'Choose at least one country.',
   },
   sources: {
@@ -200,6 +202,8 @@ export const words = {
   success: {
     heading: 'Saved, not switched on',
     another: 'Connect Another Provider',
+    refreshFailed:
+      'Corridra could not refresh the connection list just now. Your saved version is not affected.',
   },
 } as const;
 
@@ -219,6 +223,37 @@ export const countryAdded = (name: string, count: number, limit: number) =>
 
 export const countryRemoved = (name: string, count: number, limit: number) =>
   `${name} removed. ${count} of ${limit} chosen.`;
+
+/** The twelve tasks in three closed groups, so the step stays short. Every task is in exactly one group. */
+export const taskGroups: readonly { name: string; tasks: readonly TaskId[] }[] = [
+  {
+    name: 'Requests and companies',
+    tasks: [
+      'commercial_intent',
+      'requirement_structuring',
+      'counterparty_research',
+      'entity_duplicate_suggestions',
+      'buyer_supplier_fit',
+    ],
+  },
+  {
+    name: 'Documents and quotes',
+    tasks: ['machinery_specification', 'quotation_comparison', 'translation', 'evidence_gaps'],
+  },
+  {
+    name: 'Meetings and outcomes',
+    tasks: ['meeting_preparation', 'post_meeting_followup', 'opportunity_outcome_summary'],
+  },
+];
+
+export const groupSummary = (name: string, count: number, total: number) =>
+  `${name} (${count} of ${total} chosen)`;
+
+/** How many countries match the search, and how many of them are shown. */
+export const matchesLine = (shown: number, total: number) =>
+  total > shown
+    ? `${shown} of ${total} shown. Keep typing to narrow.`
+    : `${total} ${total === 1 ? 'country matches' : 'countries match'}.`;
 
 export const tasksChosen = (count: number, total: number) => `${count} of ${total} chosen`;
 
