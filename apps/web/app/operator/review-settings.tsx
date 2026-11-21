@@ -6,6 +6,7 @@ import { CountryOptions } from './country-options';
 import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback';
 import { DateTimeInput } from '../../components/ux/date-time-input';
 import { readJson, withStepUp } from '../../lib/ux/step-up';
+import { ConnectAiForm } from './connect-ai-form';
 type Catalogue = {
   routes: { id: string; origin_market: string; destination_market: string }[];
   packs: {
@@ -484,6 +485,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
             }
           />
         )}
+        <ConnectAiForm tenant={tenant} />
         <details>
           <summary data-step="04">Advanced (developers): versioned policy review</summary>
           <form className="operator-form" onSubmit={submit}>
