@@ -233,13 +233,16 @@
 .reply[data-steps] .reply-about > :not(summary) {
   margin-block-start: var(--space-3);
 }
-.reply[data-steps] .reply-about > summary {
-  font-weight: var(--weight-semibold);
-}
 .reply[data-steps] .reply-about > summary:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 .reply[data-steps] .ux-choice-row {
   margin-block: 0;
+}
+/* The fold keeps the browser's own open and closed marker, so it reads as something that opens. */
+.reply[data-steps] .reply-about > summary {
+  display: list-item;
+  padding-block: var(--space-2);
+  font-weight: var(--weight-semibold);
 }
