@@ -79,8 +79,14 @@ for (const width of widths)
       .locator('.ux-choice')
       .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
     for (const h of heights) expect(h).toBeGreaterThanOrEqual(width >= 768 ? 72 : 64);
-    // The long first row wraps rather than being cut or widening the page.
-    expect(heights[0]).toBeGreaterThan(heights[1]);
+    // The long first row wraps on a phone rather than being cut or widening the page.
+    if (width <= 390) expect(heights[0]).toBeGreaterThan(heights[1]);
+    // An icon is drawn at its own size beside the words, never at the browser default.
+    const icon = await page
+      .locator('.ux-choice .corridra-icon')
+      .first()
+      .evaluate((el) => [el.getBoundingClientRect().width, el.getBoundingClientRect().height]);
+    expect(icon).toEqual([24, 24]);
     const over = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
