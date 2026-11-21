@@ -3,11 +3,19 @@
 // no step and changes nothing about the request the button sends. Every row comes from lib/consequence-preview.ts and
 // lib/privacy-label.ts, each with the code fact behind it. The evidence reply adds the one-response sentence with a
 // lock; the recipient reply does not, because a correction exists there. It speaks the page's own language.
+// The third surface, aiConnection (ADR-089, guided Connect AI), shows the screen's own English lines with the same look:
+// what changes, whether money moves and whether anything can run, then who saved it and why, with a lock.
 import { CorridraIcon } from './corridra-icon';
 import { translate } from '../lib/i18n/messages';
 import { localeMeta, type Locale } from '../lib/i18n/locales';
 import { privacyReaders } from '../lib/privacy-label';
-import { beforeSendRows, oneResponseFact, type BeforeSendRow } from '../lib/consequence-preview';
+import {
+  aiConnectionRows,
+  beforeSendRows,
+  oneResponseFact,
+  type AiConnectionRow,
+  type BeforeSendRow,
+} from '../lib/consequence-preview';
 import './before-send.css';
 
 type BeforeSendProps = { locale?: Locale } & (
@@ -25,7 +33,44 @@ type BeforeSendProps = { locale?: Locale } & (
     }
 );
 
-export function BeforeSend(props: BeforeSendProps) {
+type AiConnectionProps = {
+  surface: 'aiConnection';
+  /** The group's name, such as "Before you save". */
+  heading: string;
+  /** Each row's question and its one fact, the screen's own words. */
+  rows: Record<AiConnectionRow['id'], { question: string; fact: string }>;
+  /** The closing line shown with a lock. */
+  recorded: string;
+};
+
+export function BeforeSend(props: BeforeSendProps | AiConnectionProps) {
+  if (props.surface === 'aiConnection') return <AiConnectionBlock {...props} />;
+  return <ReplyBlock {...props} />;
+}
+
+function AiConnectionBlock({ heading, rows, recorded }: AiConnectionProps) {
+  return (
+    <div className="before-send" role="group" aria-label={heading}>
+      <ul className="before-send-rows">
+        {aiConnectionRows.map((row) => (
+          <li key={row.id} className="before-send-row">
+            <CorridraIcon name={row.icon} />
+            <div>
+              <p className="before-send-question">{rows[row.id].question}</p>
+              <p>{rows[row.id].fact}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="before-send-once">
+        <CorridraIcon name="lock" />
+        <span>{recorded}</span>
+      </p>
+    </div>
+  );
+}
+
+function ReplyBlock(props: BeforeSendProps) {
   const { surface, locale = 'en' } = props;
   const say = (key: Parameters<typeof translate>[1]) => translate(locale, key);
   const { html, dir } = localeMeta[locale];

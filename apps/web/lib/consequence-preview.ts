@@ -104,3 +104,42 @@ export const oneResponseFact = {
   body: 'consequence.oneResponse',
   sourceNote: evidenceReplyFacts[0].sourceNote,
 } as const satisfies { surface: BeforeSendSurface; body: MessageKey; sourceNote: string };
+
+// Before You Save on the guided Connect AI screen (ADR-089), the third Before Send surface. Its words are the screen's
+// own English lines (apps/web/app/operator/connect-ai-copy.ts, staff-facing, not translated); the rows here fix their
+// order, icon and the code fact behind each. A row with no fact does not exist.
+export type AiConnectionRow = {
+  id: 'change' | 'money' | 'run';
+  icon: 'document' | 'shield' | 'lock';
+  sourceNote: string;
+};
+
+export const aiConnectionRows: readonly AiConnectionRow[] = [
+  {
+    // A save writes max(version)+1 for the key; a run is authorized only by the latest version of a key.
+    id: 'change',
+    icon: 'document',
+    sourceNote:
+      'packages/intelligence/src/service.ts:connect (version latest+1, VERSION_CHANGED), and packages/db/migrations/0026_governed_intelligence.sql:39 (app.ai_run_authorized, latest version of a key only)',
+  },
+  {
+    // The save inserts one ai_model_policy row and nothing else; no payment, ledger or budget row is written.
+    id: 'money',
+    icon: 'shield',
+    sourceNote:
+      'packages/intelligence/src/service.ts:insertPolicy (one app.ai_model_policy INSERT, no other write)',
+  },
+  {
+    // No provider call, no ai.enabled config_version; ai_run stays sample-only in real workspaces.
+    id: 'run',
+    icon: 'lock',
+    sourceNote:
+      'docs/adr/0089-guided-ai-connection-and-real-workspace-model-policy.md:Decision 5, and packages/db/migrations/0026_governed_intelligence.sql:34 (app.part4_enabled), packages/db/ai-model-policy-real-migrations/0001_real_workspace_model_policy.sql:22 (app.guard_ai, ai_run sample-only)',
+  },
+];
+
+/** The closing line under Before You Save: who saved it and why is kept on the row and its record_change event. */
+export const aiConnectionRecordedFact = {
+  sourceNote:
+    'packages/intelligence/src/service.ts:insertPolicy (created_by, reason), and packages/db/migrations/0026_governed_intelligence.sql:110 (app.record_change event)',
+} as const;

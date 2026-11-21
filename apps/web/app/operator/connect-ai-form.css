@@ -1,0 +1,255 @@
+/* Guided Connect AI (ADR-089). One left-aligned column of at most 40rem: the step question in the h2 token and the serif
+   heading face, body 16 px, helpers 14 px at every width. On a phone the primary action sits in a sticky area inside the
+   column; it holds only that button and its reassurance line, and it sits in the flow instead on a short screen or when
+   large text makes its content take more than 22% of the screen; it returns only below 18% (data-inline, measured by
+   the screen). Back is a quiet link
+   in the flow. The Save step keeps Save in the flow under Before You Save. Heights step at 768 px only. Tokens only.
+   Several selectors repeat a class: the operator panel styles every h3, helper line and link button with long
+   selectors, and these must win inside this one section. */
+.connect-ai-form,
+.connect-ai-fields {
+  display: grid;
+  gap: var(--space-4);
+  max-inline-size: 40rem;
+  min-inline-size: 0;
+}
+.connect-ai h3.connect-ai-question.connect-ai-question.connect-ai-question {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--text-h2);
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.connect-ai-question:focus-visible,
+.connect-ai-before:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.connect-ai-form p,
+.connect-ai-fields p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.connect-ai p.connect-ai-helper.connect-ai-helper.connect-ai-helper,
+.connect-ai .plan-progress p.plan-progress-line.plan-progress-line {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.connect-ai-choices {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.connect-ai-choices legend {
+  margin-block-end: var(--space-2);
+  padding: 0;
+  font-weight: 500;
+}
+.connect-ai-choices .ux-chip,
+.connect-ai-choices .ux-chip label {
+  inline-size: 100%;
+  justify-content: flex-start;
+  text-align: start;
+}
+.connect-ai-choice {
+  display: grid;
+  gap: var(--space-1);
+}
+.connect-ai-form input:not([type='checkbox']):not([type='radio']),
+.connect-ai-form select,
+.connect-ai-form textarea {
+  inline-size: 100%;
+  min-block-size: 3rem;
+}
+/* A checkbox with its words: a 44 px target, the box on the first line of the words. */
+.connect-ai label.connect-ai-check.connect-ai-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-block-size: 2.75rem;
+  padding-block: var(--space-2);
+}
+.connect-ai label.connect-ai-check.connect-ai-check input {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin: 0.15rem 0 0;
+}
+.connect-ai-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-inline-start: 2px solid var(--critical);
+  background: var(--critical-surface);
+}
+.connect-ai-banner .corridra-icon {
+  flex: none;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+}
+.connect-ai-picker {
+  display: grid;
+  gap: var(--space-2);
+}
+.connect-ai-results,
+.connect-ai-chosen,
+.connect-ai-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* Results and chosen countries flow as compact rows of items that wrap. At most five results; the list is bounded and
+   scrolls on its own if large text makes it tall. */
+.connect-ai-results,
+.connect-ai-chosen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-4);
+}
+.connect-ai-results {
+  max-block-size: 18rem;
+  overflow-y: auto;
+}
+.connect-ai-results li,
+.connect-ai-chosen li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-2);
+  min-block-size: 2.75rem;
+}
+.connect-ai-code {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+/* Link buttons in this section read as links, left aligned and as wide as their words, never as full-width boxes. */
+.connect-ai :is(a, button).text-link.connect-ai-link.connect-ai-link.connect-ai-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  inline-size: auto;
+  flex: none;
+  min-block-size: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--brand);
+  text-align: start;
+  text-decoration: underline;
+}
+.connect-ai :is(a, button).text-link.connect-ai-back.connect-ai-back.connect-ai-back {
+  justify-self: start;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.connect-ai-review {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.connect-ai-review > div {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--line);
+}
+.connect-ai-review dt {
+  font-weight: 600;
+}
+.connect-ai-review dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.connect-ai details.connect-ai-more.connect-ai-more.connect-ai-more > :not(summary),
+.connect-ai .connect-ai-review details.connect-ai-plain.connect-ai-plain > :not(summary) {
+  margin-inline: 0;
+}
+/* Folds inside the section (the tasks fold on Review, the task groups, the EU country list) are plain links, not bordered
+   bars inside the bordered card. */
+.connect-ai details.connect-ai-more.connect-ai-more.connect-ai-more,
+.connect-ai .connect-ai-review details.connect-ai-plain.connect-ai-plain {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.connect-ai details.connect-ai-more.connect-ai-more.connect-ai-more > summary,
+.connect-ai .connect-ai-review details.connect-ai-plain.connect-ai-plain > summary {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.connect-ai-actions,
+.connect-ai-end {
+  display: grid;
+  justify-items: stretch;
+  gap: var(--space-2);
+}
+.connect-ai .connect-ai-form :is(.connect-ai-actions, .connect-ai-end) > .primary-link.primary-link,
+.connect-ai .connect-ai-fields > .connect-ai-end > .primary-link.primary-link {
+  inline-size: 100%;
+  min-block-size: 3.75rem;
+  block-size: auto;
+  margin: 0;
+  /* Words wrap between words only, never inside one ("Next" stays whole at 320 px with 200% text). */
+  overflow-wrap: normal;
+  word-break: normal;
+}
+@media (max-width: 767px) and (min-height: 40rem) {
+  .connect-ai-actions:not([data-inline='true']) {
+    position: sticky;
+    inset-block-end: 0;
+    padding-block: var(--space-2);
+    background: var(--surface-1);
+    border-block-start: 1px solid var(--line);
+  }
+  /* A focused control or its error is never left behind the sticky area: the margin is the tallest the area may be while
+     it sticks (22% of the screen for its content, plus its padding and edge, with room to spare). */
+  .connect-ai-form
+    :is(input, select, textarea, summary, label, button, a, [role='button'], .ux-field-error, h3) {
+    scroll-margin-block-end: calc(22vh + var(--space-6));
+    scroll-margin-block-end: calc(22dvh + var(--space-6));
+  }
+}
+@media (min-width: 768px) {
+  .connect-ai-actions,
+  .connect-ai-end {
+    justify-items: start;
+  }
+  .connect-ai
+    .connect-ai-form
+    :is(.connect-ai-actions, .connect-ai-end)
+    > .primary-link.primary-link,
+  .connect-ai .connect-ai-fields > .connect-ai-end > .primary-link.primary-link {
+    inline-size: auto;
+    min-block-size: 3rem;
+  }
+  .connect-ai-review > div {
+    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: var(--space-4);
+  }
+}

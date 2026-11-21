@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { DomainError } from '../../packages/domain/src/index';
 
 // ADR-089. The two Connect AI actions on the workspace route answer 404, before the service is called, unless
 // CORRIDRA_AI_CONNECT_FORM is exactly "true". The service and the database behind them are in ai-connect.test.ts.
@@ -88,6 +89,24 @@ describe('the Connect AI actions on the workspace route', () => {
       expect.objectContaining({ token: 'staff-token', tenantId: tenant }),
       { adapter: 'openai' },
     );
+  });
+
+  test('pass a refusal code through beside the words, so the screen never reads the words', async () => {
+    process.env.CORRIDRA_AI_CONNECT_FORM = 'true';
+    connect.mockRejectedValue(
+      new DomainError(
+        'This connection changed since you opened it. Refresh to see the latest version, then try again.',
+        409,
+        'VERSION_CHANGED',
+      ),
+    );
+    const write = await post();
+    expect(write.status).toBe(409);
+    expect(await write.json()).toMatchObject({
+      code: 'VERSION_CHANGED',
+      error:
+        'This connection changed since you opened it. Refresh to see the latest version, then try again.',
+    });
   });
 
   test('still need a signed-in staff session with the switch on', async () => {

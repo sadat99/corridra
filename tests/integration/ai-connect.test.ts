@@ -353,6 +353,124 @@ describe('sample workspace before the module is installed', () => {
       ai.connect(ownerCtx(), form(t, randomUUID(), { adapter: 'google' })),
     ).rejects.toMatchObject({ status: 400 });
   });
+  test('options list current sources, newest first, to an owner or admin; connect accepts a listed one', async () => {
+    const kept = await source();
+    const [expired, ahead] = [await source(), await source()];
+    const elsewhere = await source(f.users.other.ctx);
+    await f.owner.query('ALTER TABLE app.source_record DISABLE TRIGGER USER');
+    try {
+      await f.owner.query(
+        "UPDATE app.source_record SET observed_at=now()-interval '3 days',retention_until=now()-interval '1 day' WHERE id=$1",
+        [expired],
+      );
+      await f.owner.query(
+        "UPDATE app.source_record SET observed_at=now()+interval '1 day' WHERE id=$1",
+        [ahead],
+      );
+    } finally {
+      await f.owner.query('ALTER TABLE app.source_record ENABLE TRIGGER USER');
+    }
+    const o = await ai.connectOptions(ownerCtx(), 'openai');
+    expect(o.canManage).toBe(true);
+    const ids = o.sources.map((s: { id: string }) => s.id);
+    expect(ids).toContain(kept);
+    for (const absent of [expired, ahead, elsewhere]) expect(ids).not.toContain(absent);
+    expect(ids.length).toBeLessThanOrEqual(50);
+    const listed = o.sources.find((s: { id: string }) => s.id === kept);
+    // Only what the picker shows: no rights or retention detail beyond the test connect applies.
+    expect(listed).toEqual({
+      id: kept,
+      kind: 'public_record',
+      locator: 'Provider document fixture',
+      observedAt: expect.anything(),
+    });
+    const times = o.sources.map((s: { observedAt: Date }) => new Date(s.observedAt).getTime());
+    expect(times).toEqual([...times].sort((a, b) => b - a));
+    const r = await ai.connect(
+      ownerCtx(),
+      form(ids[0], kept, { adapter: 'openai', expectedVersion: await versionOf('openai') }),
+    );
+    expect(r.version).toBe(await versionOf('openai'));
+  });
+  test('options give an operator no sources and canManage false; a viewer cannot read them', async () => {
+    await source();
+    expect(await ai.connectOptions(f.users.operator.ctx)).toMatchObject({
+      canManage: false,
+      sources: [],
+    });
+    await expect(ai.connectOptions(f.users.viewer.ctx)).rejects.toMatchObject({ status: 403 });
+    // The reviewer was made an admin above, so may manage and gets the list.
+    const admin = await ai.connectOptions(f.users.reviewer.ctx);
+    expect(admin.canManage).toBe(true);
+    expect(admin.sources.length).toBeGreaterThan(0);
+  });
+  test('each refusal carries its stable code beside the unchanged words', async () => {
+    const [t, e] = [await source(), await source()];
+    const count = (await policies()).length;
+    const google = await versionOf('google');
+    const anthropic = await versionOf('anthropic');
+    const refused = async (patch: Record<string, unknown>, code: string, status = 409) =>
+      await expect(ai.connect(ownerCtx(), form(t, e, patch)), code).rejects.toMatchObject({
+        status,
+        code,
+      });
+    await refused({ adapter: 'google', expectedVersion: google + 5 }, 'VERSION_CHANGED');
+    await refused(
+      {
+        adapter: 'google',
+        expectedVersion: google,
+        processingScope: { kind: 'market', key: 'EU' },
+      },
+      'EU_UNAVAILABLE',
+    );
+    await refused(
+      {
+        adapter: 'google',
+        expectedVersion: google,
+        processingScope: { kind: 'countries', codes: EU.slice(0, 21) },
+      },
+      'COUNTRY_LIMIT',
+    );
+    const own = (await ai.connectOptions(ownerCtx())).fallbackCandidates.find(
+      (p: { key: string }) => p.key === 'connect-anthropic',
+    );
+    await refused({ expectedVersion: anthropic, fallbackPolicyId: own.id }, 'FALLBACK_SELF');
+    await refused(
+      { adapter: 'google', expectedVersion: google, fallbackPolicyId: randomUUID() },
+      'FALLBACK_NOT_CURRENT',
+    );
+    await expect(
+      ai.connect(ownerCtx(), form(randomUUID(), e, { adapter: 'google', expectedVersion: google })),
+    ).rejects.toMatchObject({ status: 400, code: 'SOURCE_TERMS' });
+    await expect(
+      ai.connect(ownerCtx(), form(t, randomUUID(), { adapter: 'google', expectedVersion: google })),
+    ).rejects.toMatchObject({ status: 400, code: 'SOURCE_EVALUATION' });
+    expect((await policies()).length).toBe(count);
+  });
+  test('options list at most 50 sources, newest first, ties in id order', async () => {
+    // 52 sources observed at one moment later than every earlier source, so they come first and only the id orders them.
+    // The moment is set at insert time: no trigger is switched off.
+    await new Promise((done) => setTimeout(done, 5));
+    const moment = new Date().toISOString();
+    const batch: string[] = [];
+    for (let n = 0; n < 52; n++)
+      batch.push(
+        (
+          await f.evidence.createSource(ownerCtx(), {
+            kind: 'public_record',
+            locator: `Batch source ${n}`,
+            observedAt: moment,
+            classification: 'PUBLIC',
+            purpose: purposeOf,
+            retentionUntil: later(10),
+            aiPolicy: 'REVIEW_REQUIRED',
+          })
+        ).id as string,
+      );
+    const ids = (await ai.connectOptions(ownerCtx())).sources.map((s: { id: string }) => s.id);
+    expect(ids).toHaveLength(50);
+    expect(ids).toEqual([...batch].sort().slice(0, 50));
+  });
 });
 
 describe('real workspace', () => {
@@ -380,6 +498,10 @@ describe('real workspace', () => {
         [randomUUID(), f.tenantA, t],
       ),
     ).rejects.toMatchObject({ code: '42501' });
+  });
+  test('while a real workspace is blocked, options list no sources even to the owner', async () => {
+    const o = await ai.connectOptions(ownerCtx());
+    expect(o).toMatchObject({ canConnect: false, canManage: true, sources: [] });
   });
   test('after the install an owner with a fresh check connects; gates and config versions do not move', async () => {
     await migrateAiModelPolicyReal(f.owner);
@@ -554,6 +676,7 @@ describe('real workspace', () => {
         ),
       ).rejects.toMatchObject({
         status: 409,
+        code: 'EU_UNUSABLE',
         message: 'The EU member list could not be used. Choose the countries one by one.',
       });
     } finally {
