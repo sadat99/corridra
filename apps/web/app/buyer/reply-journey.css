@@ -161,3 +161,88 @@
   border-radius: var(--radius-md);
   font: inherit;
 }
+
+/* Buyer reply steps (Wave 3 unit 08, behind CORRIDRA_UX_BUYER_STEPS). Every rule is scoped to .reply[data-steps], so the
+   page without the switch keeps its look. The .buyer-card prefix keeps these above the customer card rules that size
+   every heading, paragraph and definition. Sizes are tokens; spacing scales between the phone floor and the desktop
+   ceiling; words wrap and nothing has a fixed width. */
+.reply[data-steps],
+.reply[data-steps] section,
+.reply[data-steps] form {
+  gap: clamp(var(--space-4), calc(var(--space-4) + (100vw - 320px) * 0.00715), var(--space-6));
+}
+.buyer-card .reply[data-steps] p.reply-step {
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: normal;
+  line-height: var(--leading-title);
+  text-transform: none;
+}
+.buyer-card .reply[data-steps] h2 {
+  font-family: var(--serif);
+  font-size: var(--text-h2);
+  font-weight: var(--weight-medium);
+  letter-spacing: normal;
+  line-height: var(--leading-title);
+  overflow-wrap: anywhere;
+}
+.reply[data-steps] .reply-intro {
+  display: grid;
+  gap: clamp(var(--space-3), calc(var(--space-3) + (100vw - 320px) * 0.00715), var(--space-5));
+  min-inline-size: 0;
+}
+.buyer-card .reply[data-steps] p.reply-lead {
+  color: var(--text-1);
+  font-family: var(--serif);
+  font-size: var(--text-lead);
+  line-height: var(--leading-reading);
+}
+.reply[data-steps] .reply-facts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.reply[data-steps] .reply-facts > div {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+.buyer-card .reply[data-steps] .reply-facts dt {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-title);
+}
+.buyer-card .reply[data-steps] .reply-facts dd {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--text-base);
+  line-height: var(--leading-reading);
+  overflow-wrap: anywhere;
+}
+.buyer-card .reply[data-steps] .reply-facts dd .reply-claim {
+  display: block;
+  margin-block-start: var(--space-1);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.reply[data-steps] .reply-about > :not(summary) {
+  margin-block-start: var(--space-3);
+}
+.reply[data-steps] .reply-about > summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.reply[data-steps] .ux-choice-row {
+  margin-block: 0;
+}
+/* The fold keeps the browser's own open and closed marker, so it reads as something that opens. */
+.reply[data-steps] .reply-about > summary {
+  display: list-item;
+  padding-block: var(--space-2);
+  font-weight: var(--weight-semibold);
+}

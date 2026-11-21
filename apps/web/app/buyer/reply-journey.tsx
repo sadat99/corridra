@@ -11,6 +11,7 @@ import { ParticipantScope } from '../../components/participant-scope';
 import { PrivacyLabel, PrivacyLabelScope } from '../../components/privacy-label';
 import { BeforeSend } from '../../components/before-send';
 import { FieldError } from '../../components/field-error';
+import { ChoiceButton, ChoiceRow } from '../../components/ux/choice-chip';
 import { translate } from '../../lib/i18n/messages';
 import {
   buildReplyTerms,
@@ -153,6 +154,27 @@ export function ReplyJourney({
   );
   const stepNumber = Math.max(1, order.indexOf(effective) + 1);
   const stepLine = fillReply(words.step, { n: String(stepNumber), total: String(order.length) });
+  // With the steps on, the line names this step and the next one ("Step 1 of 3: Your answer · Next: Your message").
+  // Where no message can follow the answer (nothing shared, or no further introductions chosen), the answer is the only step.
+  const stepName = (step: Phase) =>
+    step === 'answer'
+      ? words.stepAnswer
+      : step === 'message'
+        ? words.stepMessage
+        : step === 'check'
+          ? words.stepCheckSend
+          : words.stepQuote[step as ReplyGroup];
+  const stepOrder: Phase[] = !revising && (!detailOpen || optOut) ? ['answer'] : order;
+  const at = stepOrder.indexOf(effective);
+  const following = at >= 0 ? stepOrder[at + 1] : undefined;
+  const namedStepLine =
+    steps && at >= 0
+      ? fillReply(words.stepNamed, {
+          n: String(at + 1),
+          total: String(stepOrder.length),
+          name: stepName(effective),
+        }) + (following ? ` · ${fillReply(words.stepNext, { name: stepName(following) })}` : '')
+      : stepLine;
 
   const keysOf = (group: ReplyGroup) =>
     replyFields.filter((field) => field.group === group).map((field) => field.key);
@@ -552,6 +574,30 @@ export function ReplyJourney({
 
   const askedHere = (group: ReplyGroup) => ask.filter((key) => keysOf(group).includes(key));
   const lang = replyHtmlLang[language];
+  // What the team shared, as written. Switch off it sits on the answer step; with the steps on it is read on the
+  // check step, at the moment of sending.
+  const sendButton = (
+    <button className="primary-link" disabled={sending || !!latest}>
+      {sending ? words.sending : command ? words.retrySame : words.send}
+    </button>
+  );
+  const backButton = (className: string) => (
+    <button
+      type="button"
+      className={className}
+      disabled={sending || !!command}
+      onClick={() => leave('check', quote ? 'included' : 'message')}
+    >
+      {words.back}
+    </button>
+  );
+  const sharedBox = data.sharedRequirements && (
+    <div className="reply-shared" lang="en" dir="ltr">
+      <h3>{words.requirementLabel}</h3>
+      <p>{data.sharedRequirements}</p>
+      {data.sharedUncertainty && <p>{data.sharedUncertainty}</p>}
+    </div>
+  );
 
   return (
     <div
@@ -571,9 +617,110 @@ export function ReplyJourney({
         expiresAt={data.expiresAt}
         audience={data.role ? `${data.role.toLowerCase()} request` : 'Private buyer introduction'}
       />
-      {effective !== 'receipt' && <p className="reply-step">{stepLine}</p>}
+      {effective !== 'receipt' && <p className="reply-step">{namedStepLine}</p>}
 
-      {effective === 'answer' && (
+      {effective === 'answer' && steps && (
+        // The steps: the introduction as one sentence and two fact rows, the rest behind one fold, then the three
+        // answers as full-word rows. Each answer still records at once through the same respond command.
+        <section aria-labelledby="reply-h">
+          <h2 id="reply-h" ref={heading} tabIndex={-1}>
+            {words.answerQuestion}
+          </h2>
+          <div className="reply-intro" lang="en" dir="ltr">
+            <p className="reply-lead">{data.template}</p>
+            <dl className="reply-facts">
+              <div>
+                <dt>Relevant capability</dt>
+                <dd>
+                  {data.introduction.capability}
+                  <span className="reply-claim">
+                    Operator-reported context. No independent verification is asserted.
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt>What remains unverified</dt>
+                <dd>{data.introduction.uncertainty}</dd>
+              </div>
+            </dl>
+            <details className="reply-about">
+              <summary lang={lang.lang} dir={lang.dir}>
+                {words.aboutIntro}
+              </summary>
+              <p>{data.introduction.fit}</p>
+              <dl className="reply-facts">
+                {(
+                  [
+                    ['Company', data.introduction.company],
+                    ['Country', data.introduction.country],
+                    ['Purpose of conversation', data.introduction.conversationPurpose],
+                  ] as const
+                ).map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+                {data.sharedRequirements && (
+                  <div>
+                    <dt lang={lang.lang} dir={lang.dir}>
+                      {words.requirementLabel}
+                    </dt>
+                    <dd>
+                      {data.sharedRequirements}
+                      {data.sharedUncertainty && (
+                        <span className="reply-claim">{data.sharedUncertainty}</span>
+                      )}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </details>
+          </div>
+          {/* The opt-out comes before the answers, as it always has: each answer records at once. */}
+          <PrivacyLabel surface="recipientReply" locale={language} />
+          <label className="check-field">
+            <input
+              type="checkbox"
+              checked={optOut}
+              disabled={busy || !!pending}
+              onChange={(e) => onOptOut(e.target.checked)}
+            />
+            {words.optOut}
+          </label>
+          <ChoiceRow labelledBy="reply-h">
+            {(
+              [
+                ['INTERESTED', words.interestedFull, 'check'],
+                ['NEED_INFO', words.needInfoFull, 'help'],
+                ['NOT_RELEVANT', words.notRelevantFull, 'close'],
+              ] as const
+            ).map(([decision, label, icon]) => (
+              <ChoiceButton
+                key={decision}
+                variant={decision === 'INTERESTED' ? 'primary' : 'secondary'}
+                icon={icon}
+                disabled={busy || !!pending || declined || (optOut && decision === 'INTERESTED')}
+                onClick={() => onRespond(decision)}
+              >
+                {label}
+              </ChoiceButton>
+            ))}
+          </ChoiceRow>
+          {pending && (
+            <button className="primary-link" disabled={busy} onClick={() => onRespond(pending)}>
+              {words.retrySame}
+            </button>
+          )}
+          {!declined && (
+            <button className="text-link" disabled={busy || !!pending} onClick={onStop}>
+              {words.stop}
+            </button>
+          )}
+        </section>
+      )}
+
+      {effective === 'answer' && !steps && (
         <section aria-labelledby="reply-h">
           <h2 id="reply-h" ref={heading} tabIndex={-1}>
             {words.answerQuestion}
@@ -601,13 +748,7 @@ export function ReplyJourney({
               </dl>
             </div>
           </details>
-          {data.sharedRequirements && (
-            <div className="reply-shared" lang="en" dir="ltr">
-              <h3>{words.requirementLabel}</h3>
-              <p>{data.sharedRequirements}</p>
-              {data.sharedUncertainty && <p>{data.sharedUncertainty}</p>}
-            </div>
-          )}
+          {sharedBox}
           <PrivacyLabel surface="recipientReply" locale={language} />
           <label className="check-field">
             <input
@@ -796,7 +937,7 @@ export function ReplyJourney({
         <PrivacyLabelScope.Provider value={{ memberAccess: false, omitted: beforeSend }}>
           <form onSubmit={(event) => void send(event)} noValidate aria-labelledby="reply-h">
             <h2 id="reply-h" ref={heading} tabIndex={-1}>
-              {words.stepCheck}
+              {steps ? words.stepCheckSend : words.stepCheck}
             </h2>
             <p>{words.checkIntro}</p>
             <PrivacyLabel surface="recipientReply" locale={language} />
@@ -826,6 +967,7 @@ export function ReplyJourney({
             ) : (
               <p>{words.checkNoQuote}</p>
             )}
+            {steps && sharedBox}
             <label className="check-field">
               <input
                 ref={acknowledgeBox}
@@ -878,19 +1020,18 @@ export function ReplyJourney({
                 until={expiryLine(words, data.expiresAt)}
               />
             )}
-            <div className="reply-actions">
-              <button
-                type="button"
-                className="secondary-link"
-                disabled={sending || !!command}
-                onClick={() => leave('check', quote ? 'included' : 'message')}
-              >
-                {words.back}
-              </button>
-              <button className="primary-link" disabled={sending || !!latest}>
-                {sending ? words.sending : command ? words.retrySame : words.send}
-              </button>
-            </div>
+            {steps ? (
+              // With the steps on, Send comes directly under the Before Send block, in the page flow; Back follows as a link.
+              <div className="reply-actions">
+                {sendButton}
+                {backButton('text-link')}
+              </div>
+            ) : (
+              <div className="reply-actions">
+                {backButton('secondary-link')}
+                {sendButton}
+              </div>
+            )}
           </form>
         </PrivacyLabelScope.Provider>
       )}

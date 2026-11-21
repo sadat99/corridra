@@ -290,10 +290,15 @@ describe('on each surface, the label informs and changes no control', () => {
   });
   it('reply journey and saved report: placed beside the existing send and report words, handlers untouched', () => {
     const journey = read('apps/web/app/buyer/reply-journey.tsx');
-    // Once in the answer phase (before the opt-out and the three answers) and once on the check step: two screens,
-    // one label each, both in the page's language.
+    // Once in each answer phase (the older one and the steps one, each before the opt-out and the three answers) and
+    // once on the check step: one label per screen, all in the page's language.
     expect(
       journey.match(/<PrivacyLabel surface="recipientReply" locale=\{language\} \/>/g),
+    ).toHaveLength(3);
+    expect(
+      journey.match(
+        /<PrivacyLabel surface="recipientReply" locale=\{language\} \/>\s*<label className="check-field">/g,
+      ),
     ).toHaveLength(2);
     const answer = journey.slice(
       journey.indexOf("effective === 'answer'"),
