@@ -138,6 +138,27 @@ function prefill(row: PolicyRow | undefined, limit: number, candidates: Candidat
   } satisfies Partial<ConnectDraft>;
 }
 
+// The draft without a source or fallback the new lists no longer hold. Clearing one also clears the tick.
+function withoutGone(draft: ConnectDraft, value: Options): ConnectDraft {
+  const sourceIds = value.sources.map((s) => s.id);
+  const fallbackIds = value.fallbackCandidates
+    .filter((p) => p.key !== `connect-${draft.adapter}`)
+    .map((p) => p.id);
+  const gone = {
+    termsSourceId: !!draft.termsSourceId && !sourceIds.includes(draft.termsSourceId),
+    evaluationSourceId: !!draft.evaluationSourceId && !sourceIds.includes(draft.evaluationSourceId),
+    fallbackPolicyId: !!draft.fallbackPolicyId && !fallbackIds.includes(draft.fallbackPolicyId),
+  };
+  if (!gone.termsSourceId && !gone.evaluationSourceId && !gone.fallbackPolicyId) return draft;
+  return {
+    ...draft,
+    termsSourceId: gone.termsSourceId ? '' : draft.termsSourceId,
+    evaluationSourceId: gone.evaluationSourceId ? '' : draft.evaluationSourceId,
+    fallbackPolicyId: gone.fallbackPolicyId ? '' : draft.fallbackPolicyId,
+    confirmed: false,
+  };
+}
+
 type View = 'hidden' | 'loading' | 'readFailed' | 'ready' | 'denied';
 
 /**
@@ -159,9 +180,12 @@ export function laterReadView(error: unknown): View {
 
 export function ConnectAiForm({
   tenant,
+  step: stepNumber,
   onShownChange,
 }: {
   tenant: string;
+  /** The section's number in the panel, as drawn ("03", or "04" after Add route pack). */
+  step: string;
   /** Told when the section appears or goes, so the panel can list it among its jump links. */
   onShownChange?: (shown: boolean) => void;
 }) {
@@ -197,14 +221,25 @@ export function ConnectAiForm({
     target.focus();
   });
   const summaryRef = useRef<HTMLElement>(null);
-  const actionsRef = useRef<HTMLDivElement>(null);
   // On a phone the step action sticks to the bottom only while it is small: when large text or a short screen makes it
-  // take more than a quarter of the screen, it sits in the flow instead, so it never covers a field.
-  useEffect(() => {
-    const area = actionsRef.current;
+  // take more than about a fifth of the screen, it sits in the flow instead, so it never covers a field. It measures the
+  // area's content without its sticky padding and edge, which are the same in both places, and it switches back only
+  // well below the limit, so typing never makes it jump between the two.
+  const actionsRef = useCallback((area: HTMLDivElement | null) => {
     if (!area || typeof ResizeObserver === 'undefined') return;
+    let inline = false;
     const measure = () => {
-      area.dataset.inline = area.offsetHeight > window.innerHeight * 0.25 ? 'true' : 'false';
+      const style = getComputedStyle(area);
+      const content =
+        area.getBoundingClientRect().height -
+        parseFloat(style.paddingTop) -
+        parseFloat(style.paddingBottom) -
+        parseFloat(style.borderTopWidth) -
+        parseFloat(style.borderBottomWidth);
+      const share = content / window.innerHeight;
+      if (!inline && share > 0.22) inline = true;
+      else if (inline && share < 0.18) inline = false;
+      area.dataset.inline = inline ? 'true' : 'false';
     };
     const observer = new ResizeObserver(measure);
     observer.observe(area);
@@ -214,7 +249,7 @@ export function ConnectAiForm({
       observer.disconnect();
       window.removeEventListener('resize', measure);
     };
-  });
+  }, []);
 
   // The latest callback, read when the view changes, so a new function from the panel never repeats the first read.
   const shownChange = useRef(onShownChange);
@@ -255,18 +290,24 @@ export function ConnectAiForm({
   }, [read, setView]);
 
   // A later read: the switch is known to have been on (laterReadView).
+  // New lists from the server: an answer they no longer hold is cleared, so the select, Review and the request agree.
+  const applyOptions = useCallback((value: Options) => {
+    setOptions(value);
+    setDraft((previous) => withoutGone(previous, value));
+  }, []);
+
   const reread = useCallback(
     async (adapter?: AdapterChoice | '') => {
       try {
         const value = await read(adapter);
-        setOptions(value);
+        applyOptions(value);
         return value;
       } catch (error) {
         setView(laterReadView(error));
         return null;
       }
     },
-    [read, setView],
+    [read, setView, applyOptions],
   );
 
   if (view === 'hidden') return null;
@@ -301,8 +342,13 @@ export function ConnectAiForm({
           : field === 'tasks'
             ? id('task-group-0')
             : id(field);
+  // Any changed answer other than the reason clears the tick: the facts before saving are read again.
   const update = <K extends keyof ConnectDraft>(field: K, value: ConnectDraft[K]) => {
-    setDraft((previous) => ({ ...previous, [field]: value }));
+    setDraft((previous) => ({
+      ...previous,
+      [field]: value,
+      ...(field === 'reason' || field === 'confirmed' ? {} : { confirmed: false }),
+    }));
     setErrors((previous) => ({ ...previous, [field]: undefined }));
   };
   const goTo = (next: number, focus?: string) => {
@@ -337,11 +383,21 @@ export function ConnectAiForm({
     const adapter = draft.adapter;
     pendingAdapter.current = adapter;
     setChoosing(true);
-    const fresh = await reread(adapter);
+    // Only the answer for the provider still chosen counts: a superseded read changes nothing, not even the lists.
+    let fresh: Options;
+    try {
+      fresh = await read(adapter);
+    } catch (error) {
+      if (pendingAdapter.current !== adapter) return;
+      pendingAdapter.current = null;
+      setChoosing(false);
+      setView(laterReadView(error));
+      return;
+    }
     if (pendingAdapter.current !== adapter) return;
     pendingAdapter.current = null;
     setChoosing(false);
-    if (!fresh) return;
+    applyOptions(fresh);
     const row = fresh.latest.find((p) => p.key === `connect-${adapter}`);
     // A new provider: answers taken from another provider's earlier version are not kept as if they were this one's.
     if (row || prefilledFor)
@@ -552,8 +608,8 @@ export function ConnectAiForm({
         {error('evaluationStatus')}
       </fieldset>
     </div>,
-    // 3 Countries: the EU explanation and the owner's settings line sit in one closed disclosure; the search appears only
-    // on the countries path.
+    // 3 Countries: the approved EU words sit right under the EU choice, and the owner's settings line shows once the EU list
+    // is chosen; only the list of countries is folded. Without the EU list the countries path is the only one.
     <div key="countries" className="connect-ai-fields">
       <fieldset className="connect-ai-choices">
         <legend>{words.countries.legend}</legend>
@@ -568,35 +624,35 @@ export function ConnectAiForm({
               onChoose={() => update('scope', 'countries')}
               label={words.countries.oneByOne}
             />
-            <ChoiceChip
-              id={id('scope-market')}
-              name={id('scope')}
-              value="market"
-              checked={draft.scope === 'market'}
-              onChoose={() => update('scope', 'market')}
-              label={words.countries.euLabel}
-            />
+            <div className="connect-ai-choice">
+              <ChoiceChip
+                id={id('scope-market')}
+                name={id('scope')}
+                value="market"
+                checked={draft.scope === 'market'}
+                onChoose={() => update('scope', 'market')}
+                label={words.countries.euLabel}
+              />
+              <p className="connect-ai-helper">
+                {euHelper(eu.codes.length, eu.recordedOn ? inWords(eu.recordedOn) : '')}
+              </p>
+              {scope === 'market' && draft.adapter && (
+                <p className="connect-ai-helper">{euConsequence(draft.adapter)}</p>
+              )}
+              <details className="connect-ai-more">
+                <summary>{words.countries.showCountries}</summary>
+                <ul className="connect-ai-list">
+                  {eu.codes.map((code) => (
+                    <li key={code}>
+                      {countryName(code)} <span className="connect-ai-code">{code}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </div>
           </>
         )}
         {euOffered && !euUsable && <p className="connect-ai-helper">{words.countries.euEmpty}</p>}
-        {euUsable ? (
-          <details className="connect-ai-more">
-            <summary>{words.countries.showCountries}</summary>
-            <p className="connect-ai-helper">
-              {euHelper(eu.codes.length, eu.recordedOn ? inWords(eu.recordedOn) : '')}
-            </p>
-            {draft.adapter && <p className="connect-ai-helper">{euConsequence(draft.adapter)}</p>}
-            <ul className="connect-ai-list">
-              {eu.codes.map((code) => (
-                <li key={code}>
-                  {countryName(code)} <span className="connect-ai-code">{code}</span>
-                </li>
-              ))}
-            </ul>
-          </details>
-        ) : (
-          draft.adapter && <p className="connect-ai-helper">{euConsequence(draft.adapter)}</p>
-        )}
       </fieldset>
       {scope === 'countries' ? (
         <CountryListPicker
@@ -965,7 +1021,7 @@ export function ConnectAiForm({
       open={open}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
-      <summary ref={summaryRef} data-step="03">
+      <summary ref={summaryRef} data-step={stepNumber}>
         {words.open}
       </summary>
       {body()}

@@ -63,12 +63,15 @@ async function open(
     answer = () => ({ status: 201, json: { id: id(90), version: 1 } }),
     hold,
     holdRead,
+    routePack = false,
   }: {
     read?: (url: URL, count: number) => Answer;
     answer?: (body: Sent, count: number) => Answer;
     hold?: Promise<void>;
     /** Holds a read until the returned promise settles, so a person can act while it is under way. */
     holdRead?: (url: URL) => Promise<void> | undefined;
+    /** Whether Add route pack is offered (its own switch on), so both switch-gated sections are drawn. */
+    routePack?: boolean;
   } = {},
 ) {
   const sent: Sent[] = [];
@@ -103,6 +106,8 @@ async function open(
       json: { routes: [], packs: [], types: [], requirements: [], assessments: [] },
     }),
   );
+  if (routePack)
+    await page.route('**/api/team-control/route-pack?*', (route) => route.fulfill({ json: {} }));
   await page.route('**/api/workspace/ai-connect?*', async (route: Route) => {
     const request = route.request();
     if (request.method() === 'GET') {
@@ -211,6 +216,12 @@ test('with the read answering 404 (switch off) nothing is drawn and Advanced is 
   await expect(page.locator('details.connect-ai')).toHaveCount(0);
   await expect(page.getByText('Advanced (developers): versioned policy review')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Connect AI', exact: true })).toHaveCount(0);
+  // The section numbers are today's: Add route pack (03) is off here as well.
+  expect(
+    await page
+      .locator('.ux-settings-sections > details > summary')
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-step'))),
+  ).toEqual(['01', '02', '04', '05']);
 });
 
 test('with no session (401) nothing is drawn', async ({ page }) => {
@@ -340,14 +351,38 @@ test('with the marker the EU choice uses the approved words with the count and d
   await flow(page).getByText('Sample data only', { exact: true }).click();
   await next(page);
   await expect(flow(page).getByText('EU member countries (list Corridra records)')).toBeVisible();
-  // The explanation and the owner's settings line sit in the closed disclosure, word for word.
-  await flow(page).getByText('Show the Countries', { exact: true }).click();
-  await expect(flow(page)).toContainText(
+  // The approved explanation is visible where the choice is made, word for word, with no disclosure opened.
+  const helper = flow(page).getByText(
     'Corridra saves the countries it lists as EU members today (27 countries, recorded 12 October 2026). This is a list of countries, not a check of where your provider processes data. Later changes to the list do not alter what you save.',
+    { exact: true },
   );
-  await expect(flow(page)).toContainText(
+  await expect(helper).toBeVisible();
+  const consequence = flow(page).getByText(
     "To use this list, the owner must set CORRIDRA_GOOGLE_PROCESSING_LOCATIONS and each cited source's rights review to include every country.",
+    { exact: true },
   );
+  // The owner's settings line shows once the EU list is chosen, and only the country list stays folded.
+  await expect(consequence).toHaveCount(0);
+  await flow(page).getByText('EU member countries (list Corridra records)').click();
+  await expect(consequence).toBeVisible();
+  await expect(flow(page).getByText('Austria', { exact: false }).first()).toBeHidden();
+  await flow(page).getByText('Show the Countries', { exact: true }).click();
+  await expect(flow(page).getByText('Austria', { exact: false }).first()).toBeVisible();
+});
+
+test('without the EU list on offer no line refers to it', async ({ page }) => {
+  await open(page, {
+    read: () => ({ json: options({ moduleInstalled: false, locationLimit: 20 }) }),
+  });
+  await page.getByText('Connect an AI Provider', { exact: true }).click();
+  await flow(page).getByText('Google', { exact: true }).click();
+  await next(page);
+  await flow(page).getByLabel('Model name').fill('gemini-test');
+  await flow(page).getByText('Sample data only', { exact: true }).click();
+  await next(page);
+  await expect(flow(page).getByLabel('Find a country')).toBeVisible();
+  await expect(flow(page)).not.toContainText('To use this list');
+  await expect(flow(page)).not.toContainText('EU members');
 });
 
 test('a version saved meanwhile: the answers stay, Load Latest Version re-reads and the next save sends it', async ({
@@ -524,22 +559,65 @@ test('a failed refresh after a save keeps the saved view and says so quietly', a
   await expect(box.getByRole('alert')).toHaveCount(0);
 });
 
-test('a provider read that answers after another provider was chosen is ignored', async ({
+test('a provider read that answers after another provider was chosen changes nothing, not even the lists', async ({
   page,
 }) => {
-  const earlier = {
+  // Google's earlier version uses the Anthropic connection as its fallback. Each read leaves out its own provider's key,
+  // as the server does, so a late Anthropic answer would drop that fallback if it were applied.
+  const anthropicConnection = {
+    id: id(71),
     key: 'connect-anthropic',
-    id: id(81),
-    version: 4,
-    dailyBudgetMinor: '5000',
-    configuration: { model: 'claude-old', evaluationStatus: 'SYNTHETIC_ONLY' },
+    version: 2,
+    adapter: 'anthropic',
+    model: 'claude-x',
   };
+  const googleConnection = {
+    id: id(72),
+    key: 'connect-google',
+    version: 5,
+    adapter: 'google',
+    model: 'gemini-y',
+  };
+  const latest = [
+    {
+      key: 'connect-google',
+      id: id(72),
+      version: 5,
+      dailyBudgetMinor: '5000',
+      configuration: {
+        model: 'gemini-old',
+        evaluationStatus: 'SYNTHETIC_ONLY',
+        processingLocations: ['DE'],
+        tasks: ['translation'],
+        fallbackPolicyIds: [id(71)],
+        inputRateMinorPerMillion: '300',
+        outputRateMinorPerMillion: '1500',
+        maxCostMinor: '200',
+      },
+    },
+    {
+      key: 'connect-anthropic',
+      id: id(71),
+      version: 2,
+      dailyBudgetMinor: '4000',
+      configuration: { model: 'claude-old', evaluationStatus: 'SYNTHETIC_ONLY' },
+    },
+  ];
   let release: () => void = () => undefined;
   const held = new Promise<void>((done) => {
     release = done;
   });
   await open(page, {
-    read: () => ({ json: options({ latest: [earlier] }) }),
+    read: (url) => {
+      const adapter = url.searchParams.get('adapter');
+      const candidates =
+        adapter === 'anthropic'
+          ? [googleConnection]
+          : adapter === 'google'
+            ? [anthropicConnection]
+            : [anthropicConnection, googleConnection];
+      return { json: options({ latest, fallbackCandidates: candidates }) };
+    },
     holdRead: (url) => (url.searchParams.get('adapter') === 'anthropic' ? held : undefined),
   });
   await page.getByText('Connect an AI Provider', { exact: true }).click();
@@ -548,14 +626,129 @@ test('a provider read that answers after another provider was chosen is ignored'
   const action = flow(page).locator('.connect-ai-actions .primary-link');
   await expect(action).toHaveAttribute('aria-busy', 'true');
   await flow(page).getByText('Google', { exact: true }).click();
-  release();
-  // The Anthropic answer arrives after Google was chosen: no step change and nothing prefilled from it.
-  await page.waitForResponse((r) => r.url().includes('adapter=anthropic'));
-  await expect(flow(page)).toContainText('Step 1 of 9: Provider');
   await next(page);
   await question(page, 'Which model will you use?');
-  await expect(flow(page).getByLabel('Model name')).toHaveValue('');
-  await expect(flow(page)).not.toContainText('From version');
+  await expect(flow(page).getByLabel('Model name')).toHaveValue('gemini-old');
+  await expect(flow(page)).toContainText('From version 5');
+  // The Anthropic answer arrives last.
+  const late = page.waitForResponse((r) => r.url().includes('adapter=anthropic'));
+  release();
+  await late;
+  await page.evaluate(
+    () =>
+      new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))),
+  );
+  await expect(flow(page)).toContainText('Step 2 of 9: Model');
+  await expect(flow(page).getByLabel('Model name')).toHaveValue('gemini-old');
+  for (let n = 0; n < 2; n++) await next(page);
+  await flow(page).getByLabel('Provider terms source').selectOption(id(11));
+  await flow(page).getByLabel('Evaluation record source').selectOption(id(12));
+  await next(page);
+  await next(page);
+  await flow(page).getByLabel('Valid until').fill(later);
+  await next(page);
+  await question(page, 'What may this connection be used for?');
+  // The Google lists still stand: the Anthropic connection is offered and kept as the fallback.
+  await expect(flow(page).getByLabel('Fallback connection (optional)')).toHaveValue(id(71));
+});
+
+test('an EU choice whose list goes away meanwhile leads back to an open countries path, never a dead end', async ({
+  page,
+}) => {
+  const { sent } = await open(page, {
+    // After the version conflict the module is gone (no EU list on offer, 20 at most).
+    read: (_url, count) =>
+      count > 2
+        ? { json: options({ moduleInstalled: false, locationLimit: 20 }) }
+        : { json: options() },
+    answer: (_body, count) =>
+      count === 1
+        ? { status: 409, json: { error: 'Changed.', code: 'VERSION_CHANGED' } }
+        : { status: 201, json: { id: id(94), version: 1 } },
+  });
+  await walk(page, 'Anthropic', 'eu');
+  await save(page);
+  await flow(page).getByRole('button', { name: 'Load Latest Version' }).click();
+  await flow(page).getByLabel('I have read the facts above and want to save this version.').check();
+  await save(page);
+  expect(sent).toHaveLength(1);
+  await expect(flow(page)).toContainText('Step 3 of 9: Countries');
+  await expect(flow(page)).toContainText('Choose at least one country.');
+  const find = flow(page).getByLabel('Find a country');
+  await expect(find).toBeFocused();
+  await expect(flow(page)).toContainText('0 of 20 countries chosen');
+  await addCountry(page, 'Bangla', 'Bangladesh');
+  for (let n = 0; n < 6; n++) await next(page);
+  await question(page, 'Save this version');
+  await expect(flow(page)).not.toContainText('EU member countries');
+  await flow(page).getByLabel('I have read the facts above and want to save this version.').check();
+  await save(page);
+  await expect(page.getByRole('heading', { name: 'Saved, not switched on' })).toBeVisible();
+  expect(sent[1]!.processingScope).toEqual({ kind: 'countries', codes: ['BD'] });
+});
+
+test('a source dropped by a later read is cleared everywhere, and Save goes back to it', async ({
+  page,
+}) => {
+  await open(page, {
+    read: (_url, count) => ({ json: options(count > 2 ? { sources: [sources[0]] } : {}) }),
+    answer: () => ({ status: 409, json: { error: 'Changed.', code: 'VERSION_CHANGED' } }),
+  });
+  await walk(page);
+  await save(page);
+  await flow(page).getByRole('button', { name: 'Load Latest Version' }).click();
+  // The tick is cleared with the source, so the facts are read again.
+  const tick = flow(page).getByLabel('I have read the facts above and want to save this version.');
+  await expect(tick).not.toBeChecked();
+  await tick.check();
+  await save(page);
+  await expect(flow(page)).toContainText('Step 4 of 9: Sources');
+  const evaluation = flow(page).getByLabel('Evaluation record source');
+  await expect(evaluation).toBeFocused();
+  await expect(evaluation).toHaveValue('');
+  await expect(flow(page)).toContainText('Choose a source.');
+});
+
+test('Show All shows every chosen country, and the section numbers follow what is drawn', async ({
+  page,
+}) => {
+  await open(page, {
+    read: () => ({ json: options({ moduleInstalled: false, locationLimit: 20 }) }),
+    routePack: true,
+  });
+  // Add route pack and Connect AI are both drawn: every number once.
+  const numbers = () =>
+    page
+      .locator('.ux-settings-sections > details > summary')
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-step')));
+  await expect.poll(numbers).toEqual(['01', '02', '03', '04', '05', '06']);
+  await page.getByText('Connect an AI Provider', { exact: true }).click();
+  await flow(page).getByText('OpenAI', { exact: true }).click();
+  await next(page);
+  await flow(page).getByLabel('Model name').fill('gpt-test');
+  await flow(page).getByText('Sample data only', { exact: true }).click();
+  await next(page);
+  const chosen = ['Germany', 'France', 'Spain', 'Italy', 'Poland', 'Austria', 'Bangladesh'];
+  for (const name of chosen) await addCountry(page, name.slice(0, 5), name);
+  const listed = flow(page).locator('.connect-ai-chosen li');
+  await expect(listed).toHaveCount(5);
+  await flow(page).getByRole('button', { name: 'Show All' }).click();
+  await expect(listed).toHaveCount(7);
+  for (const name of chosen)
+    await expect(flow(page).getByRole('button', { name: `Remove ${name}` })).toBeVisible();
+});
+
+test('with Connect AI off the section numbers are what they were', async ({ page }) => {
+  const { settled } = await open(page, {
+    read: () => ({ status: 404, json: { error: 'Not found' } }),
+    routePack: true,
+  });
+  await settled();
+  const numbers = () =>
+    page
+      .locator('.ux-settings-sections > details > summary')
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-step')));
+  await expect.poll(numbers).toEqual(['01', '02', '03', '04', '05']);
 });
 
 test('an EU list that cannot be used: back to Countries on the countries path, then the save sends countries', async ({
@@ -606,6 +799,26 @@ test('changing an answer from Review clears the tick, so the facts are read agai
   for (let n = 0; n < 7; n++) await next(page);
   await question(page, 'Save this version');
   await expect(tick).not.toBeChecked();
+});
+
+test('changing an answer through the Back links clears the tick too', async ({ page }) => {
+  await open(page);
+  await walk(page);
+  const tick = flow(page).getByLabel('I have read the facts above and want to save this version.');
+  await expect(tick).toBeChecked();
+  const back = flow(page).getByRole('button', { name: 'Back', exact: true });
+  for (let n = 0; n < 4; n++) await back.click();
+  await question(page, 'What does the provider charge?');
+  await flow(page).getByLabel('Cost cap for one call').fill('0.06');
+  for (let n = 0; n < 4; n++) await next(page);
+  await question(page, 'Save this version');
+  await expect(tick).not.toBeChecked();
+  // The reason alone does not clear it.
+  await tick.check();
+  await flow(page)
+    .getByLabel('Why are you saving this version?')
+    .fill('Connect the provider again');
+  await expect(tick).toBeChecked();
 });
 
 for (const [width, height, scale] of [

@@ -111,7 +111,7 @@
 .connect-ai-chosen {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 var(--space-5);
+  gap: 0 var(--space-4);
 }
 .connect-ai-results {
   max-block-size: 18rem;
@@ -170,7 +170,13 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
-/* The tasks fold on Review is a plain link, not a bar. */
+.connect-ai details.connect-ai-more.connect-ai-more.connect-ai-more > :not(summary),
+.connect-ai .connect-ai-review details.connect-ai-plain.connect-ai-plain > :not(summary) {
+  margin-inline: 0;
+}
+/* Folds inside the section (the tasks fold on Review, the task groups, the EU country list) are plain links, not bordered
+   bars inside the bordered card. */
+.connect-ai details.connect-ai-more.connect-ai-more.connect-ai-more,
 .connect-ai .connect-ai-review details.connect-ai-plain.connect-ai-plain {
   margin: 0;
   padding: 0;
@@ -179,6 +185,7 @@
   background: none;
   box-shadow: none;
 }
+.connect-ai details.connect-ai-more.connect-ai-more.connect-ai-more > summary,
 .connect-ai .connect-ai-review details.connect-ai-plain.connect-ai-plain > summary {
   display: inline-flex;
   align-items: center;
@@ -219,7 +226,8 @@
     border-block-start: 1px solid var(--line);
   }
   /* A focused field or its error is never left behind the sticky area. */
-  .connect-ai-form :is(input, select, textarea, summary, label, .ux-field-error, h3) {
+  .connect-ai-form
+    :is(input, select, textarea, summary, label, button, a, [role='button'], .ux-field-error, h3) {
     scroll-margin-block-end: 8rem;
   }
 }

@@ -448,30 +448,28 @@ describe('sample workspace before the module is installed', () => {
     expect((await policies()).length).toBe(count);
   });
   test('options list at most 50 sources, newest first, ties in id order', async () => {
-    for (let n = 0; n < 52; n++) await source();
-    const current = async () =>
-      (
-        await f.owner.query(
-          'SELECT id FROM app.source_record WHERE tenant_id=$1 AND retention_until>now() AND observed_at<=now()',
-          [f.tenantA],
-        )
-      ).rows.map((r) => r.id as string);
-    const all = await current();
-    expect(all.length).toBeGreaterThan(51);
-    // Every current source observed at the same moment, so only the id decides the order.
-    await f.owner.query('ALTER TABLE app.source_record DISABLE TRIGGER USER');
-    try {
-      await f.owner.query(
-        "UPDATE app.source_record SET observed_at=date_trunc('second',now())-interval '1 hour' WHERE tenant_id=$1 AND id=ANY($2::uuid[])",
-        [f.tenantA, all],
+    // 52 sources observed at one moment later than every earlier source, so they come first and only the id orders them.
+    // The moment is set at insert time: no trigger is switched off.
+    await new Promise((done) => setTimeout(done, 5));
+    const moment = new Date().toISOString();
+    const batch: string[] = [];
+    for (let n = 0; n < 52; n++)
+      batch.push(
+        (
+          await f.evidence.createSource(ownerCtx(), {
+            kind: 'public_record',
+            locator: `Batch source ${n}`,
+            observedAt: moment,
+            classification: 'PUBLIC',
+            purpose: purposeOf,
+            retentionUntil: later(10),
+            aiPolicy: 'REVIEW_REQUIRED',
+          })
+        ).id as string,
       );
-    } finally {
-      await f.owner.query('ALTER TABLE app.source_record ENABLE TRIGGER USER');
-    }
-    const newest = await source();
     const ids = (await ai.connectOptions(ownerCtx())).sources.map((s: { id: string }) => s.id);
     expect(ids).toHaveLength(50);
-    expect(ids).toEqual([newest, ...[...all].sort().slice(0, 49)]);
+    expect(ids).toEqual([...batch].sort().slice(0, 50));
   });
 });
 

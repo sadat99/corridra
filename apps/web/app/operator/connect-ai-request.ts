@@ -131,9 +131,12 @@ export type DraftContext = {
   now?: Date;
 };
 
-/** The scope the request will carry. Without the EU list on offer an unanswered choice means countries one by one. */
+/**
+ * The scope the request will carry. Without the EU list on offer it is always countries one by one, even after an earlier
+ * EU choice, so the countries path is open whenever the list goes away.
+ */
 export const effectiveScope = (draft: ConnectDraft, context: DraftContext) =>
-  context.euOffered ? draft.scope : draft.scope || 'countries';
+  context.euOffered ? draft.scope : 'countries';
 
 export function fieldError(draft: ConnectDraft, field: FieldName, context: DraftContext) {
   const now = context.now ?? new Date();
@@ -146,7 +149,7 @@ export function fieldError(draft: ConnectDraft, field: FieldName, context: Draft
       return draft.evaluationStatus ? null : words.evaluation.error;
     case 'codes': {
       const scope = effectiveScope(draft, context);
-      if (scope === 'market') return context.euOffered ? null : words.scopeRefused.EU_UNAVAILABLE;
+      if (scope === 'market') return null;
       return scope === 'countries' && draft.codes.length ? null : words.countries.none;
     }
     case 'termsSourceId':

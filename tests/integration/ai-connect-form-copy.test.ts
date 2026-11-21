@@ -16,8 +16,17 @@ import {
   savedText,
   stepNames,
   stepQuestions,
+  taskGroups,
   taskLabels,
   words,
+  groupSummary,
+  matchesLine,
+  tasksChosen,
+  showTasks,
+  chosenCount,
+  countryAdded,
+  countryRemoved,
+  fromVersion,
 } from '../../apps/web/app/operator/connect-ai-copy';
 import {
   buildConnectionRequest,
@@ -80,6 +89,17 @@ const allLines = () => [
   fallbackOption('Google', 'gemini-test', 2),
   progressLine(0),
   progressLine(8),
+  ...taskGroups.map((group) => group.name),
+  groupSummary('Requests and companies', 2, 5),
+  matchesLine(5, 75),
+  matchesLine(1, 1),
+  matchesLine(3, 3),
+  tasksChosen(2, 12),
+  showTasks(2, 12),
+  chosenCount(3, 20),
+  countryAdded('Bangladesh', 3, 20),
+  countryRemoved('Bangladesh', 2, 20),
+  fromVersion(4),
   ...jsxText('apps/web/app/operator/connect-ai-form.tsx'),
   ...jsxText('apps/web/app/operator/country-list-picker.tsx'),
 ];
@@ -154,6 +174,7 @@ describe('the owner-approved words, exactly', () => {
     expect(stepNames).toHaveLength(9);
     expect(stepQuestions).toHaveLength(9);
     expect(Object.keys(taskLabels).sort()).toEqual([...taskIds].sort());
+    expect(taskGroups.flatMap((group) => group.tasks).sort()).toEqual([...taskIds].sort());
     expect(progressLine(0)).toBe('Step 1 of 9: Provider · Next: Model');
     expect(progressLine(8)).toBe('Step 9 of 9: Save');
   });
@@ -272,8 +293,17 @@ describe('the one request the screen sends', () => {
     const d = draft({ fallbackPolicyId: randomUUID() });
     expect(() => build(d, 0, { sourceIds: [d.termsSourceId] })).toThrow(words.sources.refused);
     expect(() => build(d, 0, { fallbackIds: [] })).toThrow(words.fallback.FALLBACK_NOT_CURRENT);
+    // An earlier EU choice with the list no longer on offer is the countries path: never a market scope.
     const eu = draft({ scope: 'market', codes: [] });
-    expect(() => build(eu, 0, { euOffered: false })).toThrow(words.scopeRefused.EU_UNAVAILABLE);
+    expect(() => build(eu, 0, { euOffered: false })).toThrow(words.countries.none);
+    expect(build({ ...eu, codes: ['BD'] }, 0, { euOffered: false }).processingScope).toEqual({
+      kind: 'countries',
+      codes: ['BD'],
+    });
+    expect(build({ ...eu, codes: ['BD'] }, 0).processingScope).toEqual({
+      kind: 'market',
+      key: 'EU',
+    });
     // Without the EU list on offer, an unanswered choice is the countries path.
     expect(build(draft({ scope: '' }), 0, { euOffered: false }).processingScope).toEqual({
       kind: 'countries',

@@ -87,10 +87,13 @@ function RoutePackForm({
   tenant,
   catalogue,
   onSaved,
+  onShownChange,
 }: {
   tenant: string;
   catalogue: Catalogue;
   onSaved: () => void;
+  /** Told whether the form is drawn, so the panel can number its sections from what is shown. */
+  onShownChange: (shown: boolean) => void;
 }) {
   const [available, setAvailable] = useState(false);
   const [routeId, setRouteId] = useState('');
@@ -101,13 +104,15 @@ function RoutePackForm({
     let live = true;
     fetch(`/api/team-control/route-pack?${new URLSearchParams({ tenant })}`, { cache: 'no-store' })
       .then((r) => {
-        if (live) setAvailable(r.ok);
+        if (!live) return;
+        setAvailable(r.ok);
+        onShownChange(r.ok);
       })
       .catch(() => undefined);
     return () => {
       live = false;
     };
-  }, [tenant]);
+  }, [tenant, onShownChange]);
   if (!available) return null;
   const nextVersion =
     Math.max(0, ...catalogue.packs.filter((p) => p.route_id === routeId).map((p) => p.version)) + 1;
@@ -256,7 +261,14 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
     [draft, setDraft] = useState(''),
     [next, setNext] = useState(''),
     [drafts, setDrafts] = useState<Partial<Record<Command, string>>>({}),
-    [aiConnectShown, setAiConnectShown] = useState(false);
+    [aiConnectShown, setAiConnectShown] = useState(false),
+    [routePackShown, setRoutePackShown] = useState(false);
+  // Section numbers follow what is drawn. With Connect AI off they are what they always were (Advanced 04, references 05,
+  // whether or not Add route pack is shown as 03); with it on it takes the next number and the later sections move up one
+  // only when Add route pack is also shown, so no number repeats.
+  const step = (n: number) => String(n).padStart(2, '0');
+  const aiStep = routePackShown ? 4 : 3;
+  const advancedStep = aiConnectShown && routePackShown ? 5 : 4;
   const request = useCallback(
     async (action: string, input?: unknown) => {
       const r = await fetch(
@@ -486,11 +498,14 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
                 .then(setCatalogue)
                 .catch(() => undefined)
             }
+            onShownChange={setRoutePackShown}
           />
         )}
-        <ConnectAiForm tenant={tenant} onShownChange={setAiConnectShown} />
+        <ConnectAiForm tenant={tenant} step={step(aiStep)} onShownChange={setAiConnectShown} />
         <details>
-          <summary data-step="04">Advanced (developers): versioned policy review</summary>
+          <summary data-step={step(advancedStep)}>
+            Advanced (developers): versioned policy review
+          </summary>
           <form className="operator-form" onSubmit={submit}>
             <label className="field">
               Reviewed configuration action
@@ -534,7 +549,9 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
           </form>
         </details>
         <details>
-          <summary data-step="05">Current route packs and definition references</summary>
+          <summary data-step={step(advancedStep + 1)}>
+            Current route packs and definition references
+          </summary>
           {catalogue ? (
             <>
               <h3>Directional route references</h3>

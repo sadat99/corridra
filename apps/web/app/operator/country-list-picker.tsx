@@ -1,6 +1,6 @@
 'use client';
 // A bounded pick of countries (ADR-089, guided Connect AI): a search field, at most five matching countries to add with a
-// line that says how many matched, and the chosen list with Remove, folded after five. English names with the code beside
+// line that says how many matched, and the chosen list with Remove: the first five, then Show All for every one. English names with the code beside
 // them, no flags. Every add and remove is announced. It keeps only the search text; the chosen codes belong to the screen.
 import { useId, useState } from 'react';
 import { countryCodes } from '@corridra/domain/countries';
@@ -31,6 +31,7 @@ export function CountryListPicker({
   const id = useId();
   const [query, setQuery] = useState('');
   const [announced, setAnnounced] = useState('');
+  const [showAll, setShowAll] = useState(false);
   const text = query.trim().toLowerCase();
   const matching = text
     ? countryCodes.filter(
@@ -54,9 +55,7 @@ export function CountryListPicker({
   };
   const item = (code: string) => (
     <li key={code}>
-      <span>
-        {countryName(code)} <span className="connect-ai-code">{code}</span>
-      </span>
+      <span>{countryName(code)}</span>
       {/* The visible word is Remove; the name adds the country, so each of the list's buttons is told apart. */}
       <button
         type="button"
@@ -71,8 +70,13 @@ export function CountryListPicker({
   return (
     <div className="connect-ai-picker">
       <label htmlFor={inputId}>{words.countries.find}</label>
-      <p id={`${id}-hint`} className="connect-ai-helper">
-        {words.countries.findHint}
+      {/* One line: the hint before typing, then how many countries match. */}
+      <p id={`${id}-hint`} className="connect-ai-helper" role="status">
+        {!text
+          ? words.countries.findHint
+          : matching.length
+            ? matchesLine(shown.length, matching.length)
+            : words.countries.noMatch}
       </p>
       <input
         id={inputId}
@@ -80,16 +84,9 @@ export function CountryListPicker({
         autoComplete="off"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        aria-describedby={`${id}-hint ${id}-matches${error ? ` ${errorId}` : ''}`}
+        aria-describedby={`${id}-hint${error ? ` ${errorId}` : ''}`}
         aria-invalid={error ? true : undefined}
       />
-      <p id={`${id}-matches`} className="connect-ai-helper" role="status">
-        {!text
-          ? ''
-          : matching.length
-            ? matchesLine(shown.length, matching.length)
-            : words.countries.noMatch}
-      </p>
       {full ? (
         <p className="connect-ai-helper">{words.countries.atCap}</p>
       ) : (
@@ -112,13 +109,21 @@ export function CountryListPicker({
       )}
       <p>{chosenCount(chosen.length, limit)}</p>
       {chosen.length > 0 && (
-        <ul className="connect-ai-chosen">{chosen.slice(0, chosenShown).map(item)}</ul>
+        <ul className="connect-ai-chosen" id={`${id}-chosen`}>
+          {(showAll ? chosen : chosen.slice(0, chosenShown)).map(item)}
+        </ul>
       )}
-      {chosen.length > chosenShown && (
-        <details className="connect-ai-more">
-          <summary>{words.countries.showAll}</summary>
-          <ul className="connect-ai-chosen">{chosen.slice(chosenShown).map(item)}</ul>
-        </details>
+      {chosen.length > chosenShown && !showAll && (
+        // Shows every chosen country in the one list, not only those after the first few.
+        <button
+          type="button"
+          className="text-link connect-ai-link"
+          aria-controls={`${id}-chosen`}
+          aria-expanded={false}
+          onClick={() => setShowAll(true)}
+        >
+          {words.countries.showAll}
+        </button>
       )}
       {error && <FieldError id={errorId}>{error}</FieldError>}
       <p className="sr-only" role="status" aria-live="polite">
