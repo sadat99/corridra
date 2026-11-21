@@ -158,16 +158,30 @@ export class IntelligenceService {
         )
       ).rows;
       const eu = await euMembers(t);
+      // Only an owner or admin can save a connection (app.guard_ai), so only they get the source list. It uses the
+      // same test connect applies below, so every listed source is one a save accepts at the time of reading.
+      const canManage = t.role === 'owner' || t.role === 'admin';
+      const sources =
+        canManage && blocked === null
+          ? (
+              await t.db.query(
+                `SELECT id,kind,locator,observed_at AS "observedAt",retention_until AS "retentionUntil",ai_policy AS "aiPolicy" FROM app.source_record WHERE tenant_id=$1 AND retention_until>now() AND observed_at<=now() AND app.can_access(tenant_id,classification,purpose) ORDER BY observed_at DESC,id LIMIT 50`,
+                [t.tenantId],
+              )
+            ).rows
+          : [];
       return {
         moduleInstalled: markerInstalled,
         realWorkspace: real,
         canConnect: blocked === null,
+        canManage,
         blockedReason: blocked,
         locationLimit: markerInstalled ? connectLocationLimit : legacyLocationLimit,
         latest,
         fallbackFor: ownKey,
         fallbackCandidates: candidates,
         eu: { codes: eu.codes, recordedOn: eu.recordedOn },
+        sources,
       };
     });
   }
@@ -179,6 +193,7 @@ export class IntelligenceService {
       const blocked = await connectBlock(t, markerInstalled);
       if (blocked) throw new DomainError(connectBlockMessage[blocked], 403, blocked);
       const key = `connect-${v.adapter}`;
+      // Each refusal below carries a stable code. The screen places the error by the code and never reads the words.
       const latest = Number(
         (
           await t.db.query(
@@ -191,6 +206,7 @@ export class IntelligenceService {
         throw new DomainError(
           'This connection changed since you opened it. Refresh to see the latest version, then try again.',
           409,
+          'VERSION_CHANGED',
         );
       if (v.fallbackPolicyId) {
         const fallback = await t.db.query(
@@ -202,11 +218,13 @@ export class IntelligenceService {
           throw new DomainError(
             'A connection cannot be its own fallback. Choose another connection or save without one.',
             409,
+            'FALLBACK_SELF',
           );
         if (!fallback.rowCount)
           throw new DomainError(
             'The fallback connection is not a current connection. Refresh and choose a current fallback, or save without one.',
             409,
+            'FALLBACK_NOT_CURRENT',
           );
       }
       let processingLocations: string[];
@@ -215,12 +233,14 @@ export class IntelligenceService {
           throw new DomainError(
             'EU member countries are not available yet. Choose the countries one by one.',
             409,
+            'EU_UNAVAILABLE',
           );
         const eu = await euMembers(t);
         if (eu.codes.length < 1 || eu.codes.length > connectLocationLimit)
           throw new DomainError(
             'The EU member list could not be used. Choose the countries one by one.',
             409,
+            'EU_UNUSABLE',
           );
         processingLocations = eu.codes;
       } else {
@@ -229,11 +249,12 @@ export class IntelligenceService {
           throw new DomainError(
             `Choose at most ${legacyLocationLimit} countries until the AI connection module is installed.`,
             409,
+            'COUNTRY_LIMIT',
           );
       }
-      for (const [label, id] of [
-        ['provider terms', v.termsSourceId],
-        ['evaluation record', v.evaluationSourceId],
+      for (const [label, id, code] of [
+        ['provider terms', v.termsSourceId, 'SOURCE_TERMS'],
+        ['evaluation record', v.evaluationSourceId, 'SOURCE_EVALUATION'],
       ] as const) {
         const ok = await t.db.query(
           'SELECT 1 FROM app.source_record WHERE tenant_id=$1 AND id=$2 AND retention_until>now() AND observed_at<=now() AND app.can_access(tenant_id,classification,purpose)',
@@ -243,6 +264,7 @@ export class IntelligenceService {
           throw new DomainError(
             `The ${label} source is expired or not available to you. Choose a current source.`,
             400,
+            code,
           );
       }
       return insertPolicy(
