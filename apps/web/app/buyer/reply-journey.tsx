@@ -677,8 +677,8 @@ export function ReplyJourney({
               </dl>
             </details>
           </div>
-          <PrivacyLabel surface="recipientReply" locale={language} />
           {/* The opt-out comes before the answers, as it always has: each answer records at once. */}
+          <PrivacyLabel surface="recipientReply" locale={language} />
           <label className="check-field">
             <input
               type="checkbox"
