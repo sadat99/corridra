@@ -211,15 +211,16 @@ test.describe('the introduction reads as one sentence, two fact rows and one fol
       introduction.country,
       introduction.conversationPurpose,
       'Plain trims for a spring line, about 1,200 pieces.',
+      'Buyer budget is not verified.',
     ])
       await expect(page.locator('.reply-intro')).toContainText(text);
     await expect(fold).toHaveAttribute('open', '');
     await expect(fold.locator('dd').last()).toBeVisible();
-    // The opt-out box sits directly under the three answers.
-    const after = await page.evaluate(
-      () => document.querySelector('.ux-choice-row')!.nextElementSibling?.className,
+    // The opt-out box comes before the three answers, as it always has, because each answer records at once.
+    const before = await page.evaluate(
+      () => document.querySelector('.ux-choice-row')!.previousElementSibling?.className,
     );
-    expect(after).toBe('check-field');
+    expect(before).toBe('check-field');
     await expect(
       page.getByRole('group', { name: 'Would this company be relevant to you?' }),
     ).toBeVisible();

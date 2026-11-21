@@ -155,7 +155,7 @@ export function ReplyJourney({
   const stepNumber = Math.max(1, order.indexOf(effective) + 1);
   const stepLine = fillReply(words.step, { n: String(stepNumber), total: String(order.length) });
   // With the steps on, the line names this step and the next one ("Step 1 of 3: Your answer · Next: Your message").
-  // Where no message can follow the answer, the answer is the only step.
+  // Where no message can follow the answer (nothing shared, or no further introductions chosen), the answer is the only step.
   const stepName = (step: Phase) =>
     step === 'answer'
       ? words.stepAnswer
@@ -164,7 +164,7 @@ export function ReplyJourney({
         : step === 'check'
           ? words.stepCheckSend
           : words.stepQuote[step as ReplyGroup];
-  const stepOrder: Phase[] = !detailOpen && !revising ? ['answer'] : order;
+  const stepOrder: Phase[] = !revising && (!detailOpen || optOut) ? ['answer'] : order;
   const at = stepOrder.indexOf(effective);
   const following = at >= 0 ? stepOrder[at + 1] : undefined;
   const namedStepLine =
@@ -644,7 +644,9 @@ export function ReplyJourney({
               </div>
             </dl>
             <details className="reply-about">
-              <summary>Why there may be a fit</summary>
+              <summary lang={lang.lang} dir={lang.dir}>
+                {words.aboutIntro}
+              </summary>
               <p>{data.introduction.fit}</p>
               <dl className="reply-facts">
                 {(
@@ -664,13 +666,28 @@ export function ReplyJourney({
                     <dt lang={lang.lang} dir={lang.dir}>
                       {words.requirementLabel}
                     </dt>
-                    <dd>{data.sharedRequirements}</dd>
+                    <dd>
+                      {data.sharedRequirements}
+                      {data.sharedUncertainty && (
+                        <span className="reply-claim">{data.sharedUncertainty}</span>
+                      )}
+                    </dd>
                   </div>
                 )}
               </dl>
             </details>
           </div>
           <PrivacyLabel surface="recipientReply" locale={language} />
+          {/* The opt-out comes before the answers, as it always has: each answer records at once. */}
+          <label className="check-field">
+            <input
+              type="checkbox"
+              checked={optOut}
+              disabled={busy || !!pending}
+              onChange={(e) => onOptOut(e.target.checked)}
+            />
+            {words.optOut}
+          </label>
           <ChoiceRow labelledBy="reply-h">
             {(
               [
@@ -690,15 +707,6 @@ export function ReplyJourney({
               </ChoiceButton>
             ))}
           </ChoiceRow>
-          <label className="check-field">
-            <input
-              type="checkbox"
-              checked={optOut}
-              disabled={busy || !!pending}
-              onChange={(e) => onOptOut(e.target.checked)}
-            />
-            {words.optOut}
-          </label>
           {pending && (
             <button className="primary-link" disabled={busy} onClick={() => onRespond(pending)}>
               {words.retrySame}

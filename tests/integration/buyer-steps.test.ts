@@ -34,6 +34,15 @@ const states = {
   answer: { data: base, pending: null, declined: false },
   pending: { data: base, pending: 'INTERESTED', declined: false },
   declined: { data: base, pending: null, declined: true },
+  shared: {
+    data: {
+      ...base,
+      sharedRequirements: 'Plain trims for a spring line.',
+      sharedUncertainty: 'Buyer budget is not verified.',
+    },
+    pending: null,
+    declined: false,
+  },
   message: {
     data: { ...base, decision: 'INTERESTED', sharedRequirements: 'Plain trims for a spring line.' },
     pending: null,
@@ -181,7 +190,7 @@ describe('with the switch on the reply journey draws the steps', () => {
       expect(html).toContain(`<span>${words}</span>`);
     expect(html).toContain('ux-choice-row');
     expect(html.split(claim)).toHaveLength(2);
-    expect(html).toContain('Why there may be a fit');
+    expect(html).toContain('About this introduction');
     expect(html).not.toContain('reply-shared');
     expect(html).not.toMatch(/[—–]/);
     // With no message to follow, the answer is the only step.
