@@ -732,10 +732,64 @@ test('Show All shows every chosen country, and the section numbers follow what i
   for (const name of chosen) await addCountry(page, name.slice(0, 5), name);
   const listed = flow(page).locator('.connect-ai-chosen li');
   await expect(listed).toHaveCount(5);
-  await flow(page).getByRole('button', { name: 'Show All' }).click();
+  // By keyboard: Enter on Show All keeps the person's place on the first country it revealed.
+  await flow(page).getByRole('button', { name: 'Show All' }).focus();
+  await page.keyboard.press('Enter');
   await expect(listed).toHaveCount(7);
+  await expect(flow(page).getByRole('button', { name: 'Remove Austria' })).toBeFocused();
   for (const name of chosen)
     await expect(flow(page).getByRole('button', { name: `Remove ${name}` })).toBeVisible();
+  // Removing one moves focus to the search field, never to the page.
+  await page.keyboard.press('Enter');
+  await expect(flow(page).getByLabel('Find a country')).toBeFocused();
+  await expect(listed).toHaveCount(6);
+});
+
+test('an EU choice dropped while the list was gone does not come back over the countries chosen meanwhile', async ({
+  page,
+}) => {
+  const { sent } = await open(page, {
+    // The third read (the first Load Latest Version) finds the module gone; every other read finds it installed.
+    read: (_url, count) =>
+      count === 3
+        ? { json: options({ moduleInstalled: false, locationLimit: 20 }) }
+        : { json: options() },
+    answer: (_body, count) =>
+      count < 3
+        ? { status: 409, json: { error: 'Changed.', code: 'VERSION_CHANGED' } }
+        : { status: 201, json: { id: id(95), version: 1 } },
+  });
+  const tick = flow(page).getByLabel('I have read the facts above and want to save this version.');
+  await walk(page, 'Anthropic', 'eu');
+  await save(page);
+  await flow(page).getByRole('button', { name: 'Load Latest Version' }).click();
+  await tick.check();
+  await save(page);
+  // The list is gone: back on Countries with the countries path open.
+  await expect(flow(page)).toContainText('Step 3 of 9: Countries');
+  await addCountry(page, 'Bangla', 'Bangladesh');
+  for (let n = 0; n < 6; n++) await next(page);
+  await tick.check();
+  await save(page);
+  // A second conflict; this time the list is back.
+  await flow(page).getByRole('button', { name: 'Load Latest Version' }).click();
+  await expect(tick).not.toBeChecked();
+  await flow(page).getByRole('button', { name: 'Back', exact: true }).click();
+  await question(page, 'Check your answers');
+  const countriesRow = flow(page)
+    .locator('.connect-ai-review > div')
+    .filter({ hasText: 'Countries' });
+  await expect(countriesRow).toContainText('Bangladesh');
+  await expect(countriesRow).not.toContainText('EU member countries');
+  await next(page);
+  await tick.check();
+  await save(page);
+  await expect(page.getByRole('heading', { name: 'Saved, not switched on' })).toBeVisible();
+  expect(sent.map((body) => body.processingScope)).toEqual([
+    { kind: 'market', key: 'EU' },
+    { kind: 'countries', codes: ['BD'] },
+    { kind: 'countries', codes: ['BD'] },
+  ]);
 });
 
 test('with Connect AI off the section numbers are what they were', async ({ page }) => {

@@ -2,7 +2,7 @@
 // A bounded pick of countries (ADR-089, guided Connect AI): a search field, at most five matching countries to add with a
 // line that says how many matched, and the chosen list with Remove: the first five, then Show All for every one. English names with the code beside
 // them, no flags. Every add and remove is announced. It keeps only the search text; the chosen codes belong to the screen.
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { countryCodes } from '@corridra/domain/countries';
 import { FieldError } from '../../components/field-error';
 import { chosenCount, countryAdded, countryRemoved, matchesLine, words } from './connect-ai-copy';
@@ -32,6 +32,15 @@ export function CountryListPicker({
   const [query, setQuery] = useState('');
   const [announced, setAnnounced] = useState('');
   const [showAll, setShowAll] = useState(false);
+  // The control a click removes hands focus on once the next render is drawn: Show All to the first country it revealed,
+  // Remove to the search field.
+  const pendingFocus = useRef<string | null>(null);
+  useEffect(() => {
+    const target = pendingFocus.current && document.getElementById(pendingFocus.current);
+    if (!target) return;
+    pendingFocus.current = null;
+    target.focus();
+  });
   const text = query.trim().toLowerCase();
   const matching = text
     ? countryCodes.filter(
@@ -52,12 +61,14 @@ export function CountryListPicker({
     const next = chosen.filter((c) => c !== code);
     onChange(next);
     setAnnounced(countryRemoved(countryName(code), next.length, limit));
+    pendingFocus.current = inputId;
   };
   const item = (code: string) => (
     <li key={code}>
       <span>{countryName(code)}</span>
       {/* The visible word is Remove; the name adds the country, so each of the list's buttons is told apart. */}
       <button
+        id={`${id}-remove-${code}`}
         type="button"
         className="text-link connect-ai-link"
         aria-label={`Remove ${countryName(code)}`}
@@ -114,13 +125,16 @@ export function CountryListPicker({
         </ul>
       )}
       {chosen.length > chosenShown && !showAll && (
-        // Shows every chosen country in the one list, not only those after the first few.
+        // Shows every chosen country in the one list, not only those after the first few. The button then goes, so focus
+        // moves to the first country it revealed.
         <button
           type="button"
           className="text-link connect-ai-link"
           aria-controls={`${id}-chosen`}
-          aria-expanded={false}
-          onClick={() => setShowAll(true)}
+          onClick={() => {
+            pendingFocus.current = `${id}-remove-${chosen[chosenShown]}`;
+            setShowAll(true);
+          }}
         >
           {words.countries.showAll}
         </button>

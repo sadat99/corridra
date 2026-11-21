@@ -138,7 +138,14 @@ function prefill(row: PolicyRow | undefined, limit: number, candidates: Candidat
   } satisfies Partial<ConnectDraft>;
 }
 
-// The draft without a source or fallback the new lists no longer hold. Clearing one also clears the tick.
+// Whether these options offer the EU list in a form a save can use.
+const euUsableIn = (value: Options) =>
+  value.moduleInstalled &&
+  value.eu.codes.length >= 1 &&
+  value.eu.codes.length <= value.locationLimit;
+
+// The draft without the answers the new lists no longer hold: a source or fallback that has gone, and an EU choice when
+// the EU list is not usable (so it cannot come back later over countries chosen meanwhile). Any change clears the tick.
 function withoutGone(draft: ConnectDraft, value: Options): ConnectDraft {
   const sourceIds = value.sources.map((s) => s.id);
   const fallbackIds = value.fallbackCandidates
@@ -148,10 +155,12 @@ function withoutGone(draft: ConnectDraft, value: Options): ConnectDraft {
     termsSourceId: !!draft.termsSourceId && !sourceIds.includes(draft.termsSourceId),
     evaluationSourceId: !!draft.evaluationSourceId && !sourceIds.includes(draft.evaluationSourceId),
     fallbackPolicyId: !!draft.fallbackPolicyId && !fallbackIds.includes(draft.fallbackPolicyId),
+    market: draft.scope === 'market' && !euUsableIn(value),
   };
-  if (!gone.termsSourceId && !gone.evaluationSourceId && !gone.fallbackPolicyId) return draft;
+  if (!Object.values(gone).some(Boolean)) return draft;
   return {
     ...draft,
+    scope: gone.market ? 'countries' : draft.scope,
     termsSourceId: gone.termsSourceId ? '' : draft.termsSourceId,
     evaluationSourceId: gone.evaluationSourceId ? '' : draft.evaluationSourceId,
     fallbackPolicyId: gone.fallbackPolicyId ? '' : draft.fallbackPolicyId,
@@ -322,7 +331,7 @@ export function ConnectAiForm({
   const sources = options?.sources ?? [];
   const eu = options?.eu ?? { codes: [], recordedOn: null };
   const euOffered = options?.moduleInstalled === true;
-  const euUsable = euOffered && eu.codes.length >= 1 && eu.codes.length <= limit;
+  const euUsable = !!options && euUsableIn(options);
   const context: DraftContext = {
     sourceIds: sources.map((s) => s.id),
     fallbackIds: candidates.map((p) => p.id),

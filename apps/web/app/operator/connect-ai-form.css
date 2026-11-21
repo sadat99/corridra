@@ -1,7 +1,8 @@
 /* Guided Connect AI (ADR-089). One left-aligned column of at most 40rem: the step question in the h2 token and the serif
    heading face, body 16 px, helpers 14 px at every width. On a phone the primary action sits in a sticky area inside the
    column; it holds only that button and its reassurance line, and it sits in the flow instead on a short screen or when
-   large text makes it take more than a quarter of the screen (data-inline, measured by the screen). Back is a quiet link
+   large text makes its content take more than 22% of the screen; it returns only below 18% (data-inline, measured by
+   the screen). Back is a quiet link
    in the flow. The Save step keeps Save in the flow under Before You Save. Heights step at 768 px only. Tokens only.
    Several selectors repeat a class: the operator panel styles every h3, helper line and link button with long
    selectors, and these must win inside this one section. */
@@ -225,10 +226,12 @@
     background: var(--surface-1);
     border-block-start: 1px solid var(--line);
   }
-  /* A focused field or its error is never left behind the sticky area. */
+  /* A focused control or its error is never left behind the sticky area: the margin is the tallest the area may be while
+     it sticks (22% of the screen for its content, plus its padding and edge, with room to spare). */
   .connect-ai-form
     :is(input, select, textarea, summary, label, button, a, [role='button'], .ux-field-error, h3) {
-    scroll-margin-block-end: 8rem;
+    scroll-margin-block-end: calc(22vh + var(--space-6));
+    scroll-margin-block-end: calc(22dvh + var(--space-6));
   }
 }
 @media (min-width: 768px) {

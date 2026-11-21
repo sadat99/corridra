@@ -27,6 +27,10 @@ import {
   countryAdded,
   countryRemoved,
   fromVersion,
+  changeLabel,
+  reasonCount,
+  kindLabel,
+  providerName,
 } from '../../apps/web/app/operator/connect-ai-copy';
 import {
   buildConnectionRequest,
@@ -100,6 +104,10 @@ const allLines = () => [
   countryAdded('Bangladesh', 3, 20),
   countryRemoved('Bangladesh', 2, 20),
   fromVersion(4),
+  ...stepNames.map(changeLabel),
+  reasonCount(12),
+  kindLabel('public_record'),
+  providerName('anthropic'),
   ...jsxText('apps/web/app/operator/connect-ai-form.tsx'),
   ...jsxText('apps/web/app/operator/country-list-picker.tsx'),
 ];
@@ -181,6 +189,18 @@ describe('the owner-approved words, exactly', () => {
 });
 
 describe('the words the screen must never use', () => {
+  it('scans every line function the copy module exports', async () => {
+    const copy = await loadWeb('app/operator/connect-ai-copy.ts');
+    const functions = Object.entries(copy)
+      .filter(([, value]) => typeof value === 'function')
+      .map(([name]) => name)
+      .sort();
+    // Each one is called in allLines() above; a new one must be added there too.
+    const scanned = read('tests/integration/ai-connect-form-copy.test.ts')
+      .slice(0, read('tests/integration/ai-connect-form-copy.test.ts').indexOf('const draft ='))
+      .split('const allLines')[1];
+    for (const name of functions) expect(scanned, name).toMatch(new RegExp(`\\b${name}\\b`));
+  });
   it('finds no forbidden word and no dash in any line', () => {
     const lines = allLines();
     expect(lines.length).toBeGreaterThan(100);
