@@ -929,3 +929,71 @@ for (const [width, height, scale] of [
       );
     expect(right).toBeLessThanOrEqual(width);
   });
+
+test('a late post-save read from the finished flow does not change the lists of the next provider', async ({
+  page,
+}) => {
+  // The just-saved Anthropic connection, as the server offers it to an OpenAI save.
+  const saved = {
+    id: id(96),
+    key: 'connect-anthropic',
+    version: 1,
+    adapter: 'anthropic',
+    model: 'claude-test-1',
+  };
+  let anthropicReads = 0;
+  let release: () => void = () => undefined;
+  const held = new Promise<void>((done) => {
+    release = done;
+  });
+  await open(page, {
+    read: (url) => {
+      const adapter = url.searchParams.get('adapter');
+      // Each read leaves out its own provider's key, as the server does.
+      return {
+        json: options({ fallbackCandidates: adapter === 'anthropic' ? [] : [saved] }),
+      };
+    },
+    // The read after the Anthropic save (the second Anthropic read) is slow.
+    holdRead: (url) =>
+      url.searchParams.get('adapter') === 'anthropic' && ++anthropicReads === 2 ? held : undefined,
+  });
+  await walk(page);
+  await save(page);
+  await expect(page.getByRole('heading', { name: 'Saved, not switched on' })).toBeVisible();
+  await page.getByRole('button', { name: 'Connect Another Provider' }).click();
+  await flow(page).getByText('OpenAI', { exact: true }).click();
+  await next(page);
+  await flow(page).getByLabel('Model name').fill('gpt-test');
+  await flow(page).getByText('Sample data only', { exact: true }).click();
+  await next(page);
+  await flow(page).getByText('Choose countries one by one', { exact: true }).click();
+  await addCountry(page, 'Germ', 'Germany');
+  await next(page);
+  await flow(page).getByLabel('Provider terms source').selectOption(id(11));
+  await flow(page).getByLabel('Evaluation record source').selectOption(id(12));
+  await next(page);
+  await flow(page).getByLabel('Input rate per million tokens').fill('3');
+  await flow(page).getByLabel('Output rate per million tokens').fill('15');
+  await flow(page).getByLabel('Cost cap for one call').fill('1');
+  await next(page);
+  await flow(page).getByLabel('Daily budget').fill('50');
+  await flow(page).getByLabel('Valid until').fill(later);
+  await next(page);
+  const fallback = flow(page).getByLabel('Fallback connection (optional)');
+  await fallback.selectOption(id(96));
+  // The late Anthropic answer arrives now.
+  const late = page.waitForResponse(
+    (r) => r.url().includes('adapter=anthropic') && anthropicReads === 2,
+  );
+  release();
+  await late;
+  await page.evaluate(
+    () =>
+      new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))),
+  );
+  await expect(fallback).toHaveValue(id(96));
+  await expect(fallback.locator(`option[value="${id(96)}"]`)).toHaveCount(1);
+  await expect(flow(page)).toContainText('Step 7 of 9: Tasks');
+  await expect(page.getByText('Corridra could not refresh')).toHaveCount(0);
+});

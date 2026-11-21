@@ -216,6 +216,9 @@ export function ConnectAiForm({
     refreshFailed: boolean;
   } | null>(null);
   const savingNow = useRef(false);
+  // Which flow this is. Starting again (Connect Another Provider, or closing after a save) begins a new one, so a read
+  // still in flight from the finished flow cannot change the new flow's lists or its saved view.
+  const generation = useRef(0);
   // The provider whose read is in flight; choosing another provider meanwhile drops that read's answer.
   const pendingAdapter = useRef<AdapterChoice | null>(null);
   // Focus moves after the render that draws its target: a step heading, the first field with an error, the saved heading.
@@ -365,6 +368,7 @@ export function ConnectAiForm({
     focusSoon(focus ?? id('question'));
   };
   const restart = () => {
+    generation.current += 1;
     pendingAdapter.current = null;
     setChoosing(false);
     setDraft(emptyDraft);
@@ -434,12 +438,18 @@ export function ConnectAiForm({
   }
 
   async function refreshAfterSave(adapter: AdapterChoice | '') {
+    const started = generation.current;
+    let fresh: Options;
     try {
-      setOptions(await read(adapter));
+      fresh = await read(adapter);
     } catch {
       // The version is saved; only the lists behind the screen are older. Say so quietly, never that nothing changed.
-      setSaved((previous) => previous && { ...previous, refreshFailed: true });
+      if (generation.current === started)
+        setSaved((previous) => previous && { ...previous, refreshFailed: true });
+      return;
     }
+    // A late answer after the person started again belongs to the finished flow: the new flow keeps its own lists.
+    if (generation.current === started) setOptions(fresh);
   }
 
   async function save() {
