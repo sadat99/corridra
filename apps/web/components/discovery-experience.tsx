@@ -7,7 +7,7 @@ import { countryCodes } from '@corridra/domain/countries';
 import { corridorPages, openNote } from '../content/corridors';
 import { Arrow } from './arrow';
 import { CorridorMap } from './corridor-map';
-import { Flag, Flagged, placeMark, type RoutePlace } from './ux/flag';
+import { Flag, Flagged, RegionMark, placeMark, type RoutePlace } from './ux/flag';
 import { WorldRouteMap } from './world-route-map';
 
 // Open destinations from Bangladesh, as equals (owner decision 17 November 2026, routes and markets). China and the EU
@@ -98,6 +98,27 @@ function RouteName({ route }: { route: Direction }) {
     <>
       <Flagged code={route.from.mark}>{route.from.name}</Flagged> →{' '}
       <Flagged code={route.to.mark}>{route.to.name}</Flagged>
+    </>
+  );
+}
+/** One place written in the line of text: its mark, a space that does not break, then its name, which may wrap. */
+function PlaceInLine({ place }: { place: RoutePlace }) {
+  return (
+    <>
+      {place.mark === 'region' ? <RegionMark /> : place.mark ? <Flag code={place.mark} /> : null}
+      {place.mark ? '\u00a0' : null}
+      {place.name}
+    </>
+  );
+}
+/**
+ * The same route for a narrow box (a quick pick). `Flagged` keeps mark, gap and name in one box, which needs more
+ * room than a quick pick has at 320 px with the text at twice its size, so here each mark sits in the text line.
+ */
+function RouteNameInLine({ route }: { route: Direction }) {
+  return (
+    <>
+      <PlaceInLine place={route.from} /> → <PlaceInLine place={route.to} />
     </>
   );
 }
@@ -278,7 +299,7 @@ export function DiscoveryExperience({
                 setStep(0);
               }}
             >
-              <RouteName route={item} />
+              <RouteNameInLine route={item} />
             </button>
           ))}
           {(other.company || other.market) && (
