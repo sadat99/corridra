@@ -55,6 +55,9 @@ import { customerNotificationsEnabled } from '@corridra/auth/customer-notificati
 import { InvitationProvider, OpenInvitationButton } from './invitation-dialog';
 import { parseWorkFilter } from '../../lib/work-items/view';
 import { homeHelper, requestsHelper } from './frame-copy';
+import { activeJourneyMode } from '../../lib/ux/journey-mode-server';
+import { journeyModeOfWork } from '../../lib/ux/journey-mode';
+import { JourneyShowing, ShowEverything } from '../../components/ux/journey-note';
 import './calm-lists.css';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -151,11 +154,17 @@ export default async function Page({
       }
   }
   const heading = headings[view];
+  // Journey modes (null while that switch is off): on Requests the address's own filter wins, then the journey
+  // chosen in the sidebar, so a plain click on Requests opens the chosen journey.
+  const mode = await activeJourneyMode(view === 'work' ? journeyModeOfWork(query.work) : null);
+  const scoped = mode && mode !== 'all' ? mode : null;
+  const workFilter = scoped && query.work === undefined ? scoped : parseWorkFilter(query.work);
   return (
     <CustomerShell
       tab={view}
       eyebrow={heading.eyebrow}
       title={heading.title}
+      journeyMode={mode}
       frame={
         view === 'home'
           ? { helper: homeHelper }
@@ -227,15 +236,19 @@ export default async function Page({
           <RequestsTabs
             requests={
               workspaceIssuer && (
-                <Suspense fallback={<p role="status">Loading your work…</p>}>
-                  <WorkList
-                    subject={data.user.id}
-                    issuer={workspaceIssuer}
-                    filter={parseWorkFilter(query.work)}
-                    rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
-                    framed
-                  />
-                </Suspense>
+                <>
+                  {scoped ? <JourneyShowing mode={scoped} /> : null}
+                  <Suspense fallback={<p role="status">Loading your work…</p>}>
+                    <WorkList
+                      subject={data.user.id}
+                      issuer={workspaceIssuer}
+                      filter={workFilter}
+                      rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
+                      framed
+                      showAll={scoped ? <ShowEverything /> : undefined}
+                    />
+                  </Suspense>
+                </>
               )
             }
             workspaces={

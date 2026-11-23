@@ -15,6 +15,9 @@ import { uxSwitchOn } from '../../../lib/ux-switches';
 import { loadWorkItems } from '../../../lib/work-items/load';
 import { MeetingsList, RequestsSection, type MeetingGroup } from './meetings-list';
 import { MeetingsTabs } from './meetings-tabs';
+import { activeJourneyMode } from '../../../lib/ux/journey-mode-server';
+import { familyOfJourneyMode } from '../../../lib/ux/journey-mode';
+import { JourneyShowing } from '../../../components/ux/journey-note';
 import '../rooms/[requestId]/room-view.css';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -49,7 +52,13 @@ export default async function Page() {
   const list = await loadWorkItems(session.data.user.id, issuer, {
     rooms: uxSwitchOn('CORRIDRA_UX_ROAD'),
   });
-  const requests = list.items.filter((item) => item.kind === 'request');
+  // Journey modes (null while that switch is off): in a journey only that journey's requests, and so only their
+  // meetings, are shown. The list is the one already read; nothing more is read.
+  const mode = await activeJourneyMode();
+  const scoped = mode && mode !== 'all' ? mode : null;
+  const requests = list.items.filter(
+    (item) => item.kind === 'request' && (!scoped || item.family === familyOfJourneyMode[scoped]),
+  );
   // The list is read only where the workspaces and requests modules are on. Where they are not, nothing was read, so
   // the page must not say there are no requests.
   const readable = customerWorkspacesEnabled() && customerRequestsEnabled();
@@ -142,7 +151,8 @@ export default async function Page() {
       />
     ) : null;
   return (
-    <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings">
+    <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings" journeyMode={mode}>
+      {scoped ? <JourneyShowing mode={scoped} /> : null}
       {readable ? null : <p>{intro}</p>}
       <div className="room">
         {partial ? (

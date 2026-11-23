@@ -17,6 +17,8 @@ import { Greeting } from './greeting';
 import { loadWorkItems } from '../../../lib/work-items/load';
 import { isJourney, journeyOfTask, journeyTargets, journeysOf, type Journey } from './journeys';
 import { loadJourneyFacts } from '../../../lib/home-journeys/load';
+import { activeJourneyMode } from '../../../lib/ux/journey-mode-server';
+import { journeyModeOfJourney } from '../../../lib/ux/journey-mode';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,8 +40,11 @@ export default async function Page({
 }) {
   const asked = (await searchParams).journey;
   // Only a known journey filters; anything else shows everything, never an empty page.
-  const journey: Journey | null = isJourney(asked) ? asked : null;
+  const inAddress: Journey | null = isJourney(asked) ? asked : null;
   if (!uxSwitchOn('CORRIDRA_UX_MOVE')) notFound();
+  // Journey modes (null while that switch is off): the address wins, then the journey chosen in the sidebar.
+  const mode = await activeJourneyMode(journeyModeOfJourney(asked));
+  const journey: Journey | null = inAddress ?? (mode && mode !== 'all' ? mode : null);
   const session = await customerPageSession();
   if (!session.ok)
     return (
@@ -94,6 +99,7 @@ export default async function Page({
       title={<Greeting name={session.name} />}
       quietTitle
       count={model.cards.length}
+      journeyMode={mode}
     >
       <AccountHashRedirect view="move" />
       <PendingRequestNotice where="account" enabled={realUseEnabled()} />

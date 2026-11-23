@@ -62,11 +62,23 @@ export const uxSwitchNames = [
   // ADR-089, the guided Connect AI form over the existing model policy command. Off unless exactly "true"; off, its two routes
   // answer 404. It never switches AI on: inference stays behind its own switches and the deployment settings.
   'CORRIDRA_AI_CONNECT_FORM',
+  // Journey modes (owner approved 23 Nov 2026): the Journey switcher in the signed-in sidebar and one journey at a time on Home,
+  // Requests and Meetings. Off unless exactly "true", and it also needs CORRIDRA_UX_SHELLS_V2 and CORRIDRA_UX_MOVE. Presentation only.
+  'CORRIDRA_UX_JOURNEY_MODES',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 
 export function uxSwitchOn(name: UxSwitchName, env: NodeJS.ProcessEnv = process.env): boolean {
   return env[name] === 'true';
+}
+
+/** Journey modes act only with the signed-in frame and Your Move (the journey pages) also on. */
+export function journeyModesOn(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (
+    uxSwitchOn('CORRIDRA_UX_JOURNEY_MODES', env) &&
+    uxSwitchOn('CORRIDRA_UX_SHELLS_V2', env) &&
+    uxSwitchOn('CORRIDRA_UX_MOVE', env)
+  );
 }
 
 /**

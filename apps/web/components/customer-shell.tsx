@@ -4,7 +4,9 @@ import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
-import { uxSwitchOn } from '../lib/ux-switches';
+import { journeyModesOn, uxSwitchOn } from '../lib/ux-switches';
+import type { JourneyMode } from '../lib/ux/journey-mode';
+import { JourneyModeProvider } from './ux/journey-mode-context';
 import { CustomerNav, type CustomerTab } from './customer-nav';
 import { T } from './language-provider';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
@@ -52,7 +54,9 @@ const words = {
  * Server only.
  */
 export function CustomerShell(props: CustomerShellProps) {
-  const frame = <CustomerFrame {...props} />;
+  // Journey modes: only with that switch on is the mode read (by a small async parent, so the frame itself is the
+  // same plain function). With it off the frame is given no mode and is exactly what it was.
+  const frame = journeyModesOn() ? <JourneyFrame {...props} /> : <CustomerFrame {...props} />;
   // With the account module off nothing is added: the frame is exactly what it was. A page that opts out
   // (`closedAccountReads`) is drawn for a closed account too; the closed-account screen then links to it.
   return customerAccountLifecycleEnabled() && !props.closedAccountReads ? (
@@ -78,8 +82,19 @@ type CustomerShellProps = {
   closedAccountReads?: boolean;
   /** The page frame (components/ux/page-frame.tsx): back link, chips, helper, the one primary action and tabs. */
   frame?: PageFrameProps;
+  /**
+   * Journey modes only: the mode a page already knows from its own address (Home's `?journey=`, Requests' `?work=`)
+   * or has already resolved. It wins over the cookie. Ignored while the switch is off.
+   */
+  journeyMode?: JourneyMode | null;
   children: ReactNode;
 };
+
+/** Reads the chosen journey (the page's own word, then the cookie) and hands it to the frame. Switch on only. */
+async function JourneyFrame({ journeyMode, ...props }: CustomerShellProps) {
+  const { activeJourneyMode } = await import('../lib/ux/journey-mode-server');
+  return <CustomerFrame {...props} mode={(await activeJourneyMode(journeyMode)) ?? undefined} />;
+}
 
 function CustomerFrame({
   tab,
@@ -88,8 +103,9 @@ function CustomerFrame({
   quietTitle,
   count,
   frame,
+  mode,
   children,
-}: CustomerShellProps) {
+}: Omit<CustomerShellProps, 'journeyMode'> & { mode?: JourneyMode }) {
   const slots = pageFrameSlots(frame);
   const plainNames = uxSwitchOn('CORRIDRA_UX_NAV');
   const move = uxSwitchOn('CORRIDRA_UX_MOVE');
@@ -136,7 +152,7 @@ function CustomerFrame({
   // Home is Your Move only with both the navigation and the Move switches, exactly as the old list decided.
   const companies = customerCompaniesEnabled();
   const homeIsMove = plainNames && move;
-  const tabs = customerTabs({ companies, move: homeIsMove });
+  const tabs = customerTabs({ companies, move: homeIsMove, journey: mode });
   const here: CustomerTabKey | null =
     tab === 'home' || tab === 'move'
       ? 'home'
@@ -180,6 +196,7 @@ function CustomerFrame({
           current={here ?? ''}
           journeys={journeys}
           journeyCounts={journeys.length ? readJourneyCounts() : undefined}
+          journeyMode={mode}
           groups={groups}
         />
       }
@@ -210,7 +227,7 @@ function CustomerFrame({
         lead={slots.lead}
         nav={slots.tabs || undefined}
       >
-        {children}
+        {mode ? <JourneyModeProvider mode={mode}>{children}</JourneyModeProvider> : children}
       </WorkspaceShell>
       {/* Pocket (phone): drawn at once as New Request; its words upgrade when the sidebar's work list read arrives. */}
       {uxSwitchOn('CORRIDRA_UX_POCKET') ? (
