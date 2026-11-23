@@ -132,8 +132,10 @@ test('L3 home: a chosen door has the cobalt edge, the selected fill and a filled
   for (const dot of await page.locator('#hero .ux-door-dot').all())
     expect((await look(dot)).image, 'a door not chosen has a hollow radio').toBe('none');
   await door(page, 'Sell Abroad').click();
+  // The fill eases in (under 300 ms), so wait for it to settle before reading the rest.
+  await expect.poll(async () => (await look(door(page, 'Sell Abroad'))).fill).toBe(surface);
+  await expect.poll(async () => (await look(door(page, 'Sell Abroad'))).edge).toBe(selected);
   const chosen = await look(door(page, 'Sell Abroad'));
-  expect(chosen.fill).toBe(surface);
   expect(chosen.edge).toBe(selected);
   // The edge is 2 px: one of border and one drawn inside, so the card keeps its size when chosen.
   expect(chosen.edgeWidth).toBe('1px');
@@ -266,12 +268,15 @@ for (const width of [320, 390, 768, 1024, 1440, 1920])
       expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     for (const row of await rows(page).all()) {
       await expect(row.locator('.guide-direction-open')).toBeVisible();
-      // The mark stays before its name, on the name's own line.
-      const [mark, name] = [
+      // The mark stays before its written name, inside the row.
+      const [mark, name, box] = [
         (await row.locator('img.ux-flag, .ux-region-mark').boundingBox())!,
-        (await row.locator('h3').boundingBox())!,
+        (await row.locator('h3 .ux-flagged > span').last().boundingBox())!,
+        (await row.boundingBox())!,
       ];
       expect(mark.x + mark.width).toBeLessThanOrEqual(name.x + 1);
+      expect(mark.y).toBeGreaterThanOrEqual(box.y);
+      expect(mark.y + mark.height).toBeLessThanOrEqual(box.y + box.height);
     }
   });
 
@@ -302,18 +307,10 @@ for (const width of [390, 1440])
 
 // ---- L6 Plan ----
 
-/** Opens /plan with a company country and a market already chosen in this tab. */
-async function openPlan(page: Page, draft: Record<string, unknown>) {
-  await page.addInitScript((saved) => {
-    if (sessionStorage.getItem('v41-seed')) return;
-    sessionStorage.setItem('v41-seed', '1');
-    sessionStorage.setItem(
-      'corridra-mission-draft',
-      JSON.stringify({ version: 2, draft: saved, step: 0, key: 'v41-test-key', at: Date.now() }),
-    );
-  }, draft);
-  await page.goto('/plan');
-  await expect(page.locator('.plan-progress-line')).toContainText('Step 1 of 5');
+/** Opens /plan with a company country and a market already chosen, as a route link does. */
+async function openPlan(page: Page, companyCountry: string, marketCode: string) {
+  await page.goto(`/plan?companyCountry=${companyCountry}&marketCode=${marketCode}`);
+  await expect(page.locator('.plan-progress-line')).toContainText('of 5');
 }
 
 test('L6 plan: "Your request" is a flat navy panel with white words and no gradient', async ({
@@ -342,7 +339,7 @@ test('L1 plan: the place names in "Your request" carry their flag, and a place w
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openPlan(page, { companyCountry: 'BD', marketCode: 'EU' });
+  await openPlan(page, 'BD', 'EU');
   const values = page.locator('aside.ux-brief-summary dd');
   const country = values.nth(1);
   await expect(country).toHaveText('Bangladesh');
@@ -358,7 +355,7 @@ test('L1 plan: the place names in "Your request" carry their flag, and a place w
 
 test('L1 plan: a market outside the nine flags shows its name with no flag', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openPlan(page, { companyCountry: 'BD', marketCode: 'JP' });
+  await openPlan(page, 'BD', 'JP');
   const market = page.locator('aside.ux-brief-summary dd').nth(2);
   await expect(market).toHaveText('Japan');
   await expect(market.locator('img')).toHaveCount(0);
@@ -367,7 +364,7 @@ test('L1 plan: a market outside the nine flags shows its name with no flag', asy
 for (const width of [320, 390, 1440])
   test(`L6 plan: the summary stays inside the page at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await openPlan(page, { companyCountry: 'BD', marketCode: 'GB' });
+    await openPlan(page, 'BD', 'GB');
     expect(await overflow(page)).toBeLessThanOrEqual(0);
   });
 
@@ -445,4 +442,54 @@ for (const width of [320, 390, 768, 1024, 1440, 1920])
       await expect(link).toBeVisible();
       if (width <= 768) expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     }
+  });
+
+// ---- L1 on the service and route pages ----
+
+const routeLabels = [
+  ['/sell', 'Bangladesh to the EU', ['bd', 'eu']],
+  ['/source', 'Bangladesh to China', ['bd', 'cn']],
+  ['/enter-market', 'The EU to Bangladesh', ['eu', 'bd']],
+  ['/trade-missions', 'Bangladesh to China', ['bd', 'cn']],
+] as const;
+
+for (const [path, words, flags] of routeLabels)
+  test(`L1 ${path}: "The route this page is about" names each place with its flag, in the live words`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(path);
+    const route = page.getByRole('complementary', { name: 'Route for this page' });
+    await expect(route.locator('strong')).toHaveText(words);
+    const marks = route.locator('strong .ux-flagged img.ux-flag');
+    expect(await marks.evaluateAll((items) => items.map((item) => item.dataset.flag))).toEqual([
+      ...flags,
+    ]);
+    for (const mark of await marks.all()) await expect(mark).toHaveAttribute('alt', '');
+    for (const width of [320, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await overflow(page), `${path} at ${width}`).toBeLessThanOrEqual(0);
+    }
+  });
+
+const corridorLabels = [
+  ['/corridors/bangladesh-china', 'Bangladesh China', ['bd', 'cn']],
+  ['/corridors/bangladesh-eu', 'Bangladesh EU', ['bd', 'eu']],
+  ['/corridors/bangladesh-spain', 'Bangladesh Spain', ['bd', 'es']],
+] as const;
+
+for (const [path, words, flags] of corridorLabels)
+  test(`L1 ${path}: the route label above the headline has a flag before each place`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(path);
+    const label = page.locator('main .label').first();
+    await expect(label).toHaveText(words);
+    expect(
+      await label
+        .locator('.ux-flagged img.ux-flag')
+        .evaluateAll((items) => items.map((item) => (item as HTMLElement).dataset.flag)),
+    ).toEqual([...flags]);
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
   });

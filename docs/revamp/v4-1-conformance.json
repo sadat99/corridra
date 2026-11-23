@@ -27,95 +27,99 @@
       "file": "apps/web/app/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
-        "L4": "not_started",
+        "L1": "built",
+        "L2": "built",
+        "L3": "built",
+        "L4": "built",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/browser/v41-a-public.spec.ts (L4, L3 home)",
+        "apps/web/components/home-routes.tsx",
+        "apps/web/components/ux/door-card.tsx"
+      ],
+      "notes": "V4.1-A: navy band left aligned with the whole reversed mark, no copper arc; four doors on the light surface with icons and the chosen state; one primary. L1 covers place labels (route lines, clocks); place names inside sentences are not marked. No fact with a source and date in the hero, so L10 does not apply. Not verified: six-width before and after screenshots are not in the repository."
     },
     {
       "route": "/about",
       "file": "apps/web/app/about/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment: place names appear only inside sentences (the open markets line and the office address), which stay unmarked; no choice set."
     },
     {
       "route": "/access/customer",
       "file": "apps/web/app/access/customer/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment: the door cards are navigation links that already carry a CorridraIcon; no place label and no held choice."
     },
     {
       "route": "/access/link",
       "file": "apps/web/app/access/link/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/access/team",
       "file": "apps/web/app/access/team/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment: the door cards are navigation links that already carry a CorridraIcon; the country field is a select, which cannot hold a mark."
     },
     {
       "route": "/account",
@@ -616,19 +620,19 @@
       "file": "apps/web/app/business-trips/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/buyer",
@@ -673,19 +677,19 @@
       "file": "apps/web/app/coming-soon/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/contributor",
@@ -768,38 +772,45 @@
       "file": "apps/web/app/corridors/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
-        "L5": "not_started",
+        "L5": "built",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/browser/v41-a-public.spec.ts (L5 routes, quick picks)",
+        "tests/browser/routes-open-destinations.spec.ts",
+        "apps/web/app/corridors/page.tsx"
+      ],
+      "notes": "V4.1-A: one numbered list in the locked order, 40 px mark per row through Flagged, the word Open, one quiet link per row. The heading and the two sentences that name places stay unmarked prose. The route picker lower on the page is a pair of selects and quick picks, not a guided choice of rows."
     },
     {
       "route": "/corridors/[corridor]",
       "file": "apps/web/app/corridors/[corridor]/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/browser/v41-a-public.spec.ts (L1 corridor label)",
+        "apps/web/app/corridors/[corridor]/page.tsx"
+      ],
+      "notes": "V4.1-A: the route label above the headline has a flag before each place. No choice set. Sentences stay unmarked."
     },
     {
       "route": "/decision-card",
@@ -825,190 +836,193 @@
       "file": "apps/web/app/delegations/[address]/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "not_started",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment: the Where fact shows the free text destination the organiser typed, which has no country code, so no mark can be chosen without guessing. Needs a data decision. No choice set."
     },
     {
       "route": "/delegations/[address]/flyer",
       "file": "apps/web/app/delegations/[address]/flyer/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "not_started",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment: the Where fact shows the free text destination the organiser typed, which has no country code, so no mark can be chosen without guessing. Needs a data decision. No choice set."
     },
     {
       "route": "/enter-market",
       "file": "apps/web/app/enter-market/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/browser/v41-a-public.spec.ts (L1 /enter-market)",
+        "apps/web/components/public-page.tsx"
+      ],
+      "notes": "V4.1-A: the route label is a RouteLine with a flag before each place, words unchanged. No choice set on the page. Place names in sentences and link words stay unmarked."
     },
     {
       "route": "/fairs",
       "file": "apps/web/app/fairs/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "not_started",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "not_started"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment: the fair location line (components/fairs-view.tsx) writes city and country code without a mark, and each date has a source and a checked date that could take the L10 source stamp. The list is empty and the page is behind its switch, so nothing is visible today. No choice set."
     },
     {
       "route": "/fairs/[slug]",
       "file": "apps/web/app/fairs/[slug]/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "not_started",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "not_started"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment: the fair location line (components/fairs-view.tsx) writes city and country code without a mark, and each date has a source and a checked date that could take the L10 source stamp. The list is empty and the page is behind its switch, so nothing is visible today. No choice set."
     },
     {
       "route": "/forgot-password",
       "file": "apps/web/app/forgot-password/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/how-it-works",
       "file": "apps/web/app/how-it-works/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "not_started",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment: the routes section (components/home-more.tsx RoutesSection, called without flags) writes two route lines and the row title Into Bangladesh without marks. Turning the flagged line on changes the live words of the second line (the home wording differs), so it waits for an owner word. No choice set."
     },
     {
       "route": "/install",
       "file": "apps/web/app/install/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/institutions",
       "file": "apps/web/app/institutions/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/machinery",
       "file": "apps/web/app/machinery/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/mute/[requestId]",
@@ -1034,38 +1048,38 @@
       "file": "apps/web/app/network/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/offline",
       "file": "apps/web/app/offline/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/operator",
@@ -1376,38 +1390,43 @@
       "file": "apps/web/app/plan/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "built",
+        "L3": "built",
         "L4": "n/a",
         "L5": "n/a",
-        "L6": "not_started",
+        "L6": "built",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/browser/v41-a-public.spec.ts (L6, L1 plan)",
+        "tests/operator/ux-first-question.spec.ts (v4.1 L6)",
+        "apps/web/components/mr/first-question.tsx",
+        "apps/web/app/plan/plan-v4.css"
+      ],
+      "notes": "V4.1-A: goal rows with one owned icon and the chosen state (with CORRIDRA_UX_FIRSTQ on, as production runs); Your request is a flat navy panel with on-brand white words; its place names go through Flagged. With the switch off the older plain radios show and carry no icon. Country and market selects cannot hold a mark."
     },
     {
       "route": "/privacy",
       "file": "apps/web/app/privacy/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment: place names appear only inside sentences of the notice; the whole-notice control is one on/off toggle, not a choice set."
     },
     {
       "route": "/programme",
@@ -1452,171 +1471,184 @@
       "file": "apps/web/app/reset-password/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/sell",
       "file": "apps/web/app/sell/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/browser/v41-a-public.spec.ts (L1 /sell)",
+        "apps/web/components/public-page.tsx"
+      ],
+      "notes": "V4.1-A: the route label is a RouteLine with a flag before each place, words unchanged. No choice set on the page. Place names in sentences and link words stay unmarked."
     },
     {
       "route": "/signin",
       "file": "apps/web/app/signin/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/signup",
       "file": "apps/web/app/signup/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/source",
       "file": "apps/web/app/source/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/browser/v41-a-public.spec.ts (L1 /source)",
+        "apps/web/components/public-page.tsx"
+      ],
+      "notes": "V4.1-A: the route label is a RouteLine with a flag before each place, words unchanged. No choice set on the page. Place names in sentences and link words stay unmarked."
     },
     {
       "route": "/trade-missions",
       "file": "apps/web/app/trade-missions/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/browser/v41-a-public.spec.ts (L1 /trade-missions)",
+        "apps/web/components/public-page.tsx"
+      ],
+      "notes": "V4.1-A: the route label is a RouteLine with a flag before each place, words unchanged. No choice set on the page. Place names in sentences and link words stay unmarked."
     },
     {
       "route": "/trust",
       "file": "apps/web/app/trust/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/verify-email",
       "file": "apps/web/app/verify-email/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-A assessment (code read, 23 Nov 2026): no place name stands as a label and there is no choice set, so L1 to L3 do not apply; no fact with a source and date, so L10 does not apply."
     },
     {
       "route": "/workspace",
       "file": "apps/web/app/workspace/page.tsx",
       "wave": "A",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "built",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
-        "L7": "not_started",
+        "L7": "built",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/browser/v41-a-public.spec.ts (L7 start here)",
+        "tests/browser/layout-budget-pages.spec.ts",
+        "apps/web/app/workspace/page.tsx"
+      ],
+      "notes": "V4.1-A: Plan a Mission is the only primary button; the three doors are equal cards with an icon and their own route. The doors are links, not a held choice, so L3 does not apply. Local Helper Sign-In is now in Title Case."
     }
   ]
 }
