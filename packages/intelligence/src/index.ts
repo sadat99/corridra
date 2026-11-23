@@ -67,9 +67,7 @@ export type Attempt = {
 export interface GatewayStore {
   // Must authorize current source/claim/rights, current pinned mission policy and actor approval.
   // strictContact is set for a real workspace (ADR-091): a long run of digits is then treated as a possible phone number.
-  authorize(
-    input: TaskInput,
-  ): Promise<{
+  authorize(input: TaskInput): Promise<{
     tenantId: string;
     sources: Source[];
     models: ModelPolicy[];
