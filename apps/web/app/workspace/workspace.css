@@ -81,3 +81,64 @@
     }
   }
 }
+
+/* ===== UI/UX.v4.1 L7 (owner lock, 23 November 2026). "Plan a Mission" is the only primary button. The three "Already
+   working with us" doors are equal cards, each with one owned icon in a 44 px soft square and its own route.
+   Tokens only. */
+.ux-start-tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  color: var(--text-1);
+}
+.ux-start-tile .corridra-icon {
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+}
+.ux-start .ux-start-signin ul {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  border-top: 0;
+}
+.ux-start .ux-start-signin li {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+/* The words take the room, so the three actions line up on the last line of their cards. */
+.ux-start .ux-start-signin li > div:not(.ux-start-actions) {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+.ux-start .ux-start-signin li :is(.button-secondary, .text-link) {
+  min-block-size: 2.75rem;
+  max-inline-size: 100%;
+  white-space: normal;
+}
+.ux-start .ux-start-signin .ux-start-actions {
+  gap: var(--space-1) var(--space-4);
+}
+@media (min-width: 1000px) {
+  .ux-start .ux-start-signin ul {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+  }
+  .ux-start .ux-start-signin li {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line);
+  }
+}
