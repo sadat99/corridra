@@ -150,6 +150,8 @@
   background: var(--ac-critical-surface);
 }
 .ux-kit-dialog {
+  /* Centred in the window: the base reset removes the browser's own margin, which is what centres a modal. */
+  margin: auto;
   border: 1px solid var(--ac-border-strong);
   border-radius: 12px;
   padding: 1.25rem;
