@@ -340,7 +340,7 @@ export default function Page() {
             <div>
               <p>
                 This browser tab can keep an unsent request so you can return to the form. Unsent
-                requests expire in the interface after 24 hours. Passwords are kept out of them.
+                answers in this tab expire after 24 hours. Passwords are kept out of them.
               </p>
               {real ? (
                 <>
@@ -386,7 +386,7 @@ export default function Page() {
               <p>
                 Authorized Corridra team members can access the records needed to deliver and
                 support the work. Information shared through an explicit programme, company or
-                delivery workflow follows what that workflow lets each person see.
+                delivery workflow follows that workflow’s own limits.
               </p>
               <p>
                 Account verification confirms control of an account email. It does not verify a
@@ -408,7 +408,7 @@ export default function Page() {
                 <p>
                   Eligibility records, assigned task instructions, submissions, evidence review,
                   contribution assessments and reward decisions are private work records. Helpers
-                  receive only what they need to see for their assigned task, not full mission or
+                  receive only what is shared with them for their assigned task, not full mission or
                   team access. Authorized staff review submissions within their existing
                   permissions. A recorded reward does not mean a payment has been made; automated
                   payouts are not available.

@@ -14,7 +14,7 @@ const content =
         sections: [
           {
             title: 'Accept your reviewed invitation',
-            text: 'Verify your account email, set a separate helper password and enroll your authenticator. An existing work identity keeps its credentials.',
+            text: 'Verify your account email, set a separate work password and enroll your authenticator. An existing work identity keeps its credentials.',
           },
           {
             title: 'Review the task before accepting',
@@ -29,7 +29,7 @@ const content =
           title: 'Only your assigned work.',
           text: 'Participation is by reviewed invitation. Eligibility, the work and any reward depend on the task you are shown. This is not a public marketplace or an automatic payout service.',
         },
-        cta: 'Open assigned-task access',
+        cta: 'Open Assigned Work',
         ctaHref: '/contributor',
       }
     : publicPages['network'];
