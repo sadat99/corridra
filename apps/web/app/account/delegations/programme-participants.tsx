@@ -4,6 +4,7 @@ import { ProgrammeObjectives } from './programme-objectives';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatDateTime } from '../../../lib/ux/format';
 import Link from 'next/link';
+import { CopyButton } from '../../../components/ux/copy-button';
 import {
   archivedProgrammeMessage,
   useParticipantView,
@@ -76,6 +77,16 @@ function ScopedParticipants(props: Props) {
   // The invitation and access disclosure keeps its open state when the list refreshes or expires.
   const [manageOpen, setManageOpen] = useState(false);
   const [labelNote, setLabelNote] = useState('');
+  const codeInput = useRef<HTMLInputElement>(null);
+  // Email Invitation is disabled while its request runs, which drops focus from it; focus goes back when the answer is in.
+  const emailButton = useRef<HTMLButtonElement>(null),
+    emailAsked = useRef(false);
+  useEffect(() => {
+    if (view.busy || !emailAsked.current) return;
+    emailAsked.current = false;
+    if (document.activeElement === document.body)
+      emailButton.current?.focus({ preventScroll: true });
+  }, [view.busy]);
   useEffect(() => {
     const protect = (event: BeforeUnloadEvent) => {
       if (
@@ -388,8 +399,8 @@ function ScopedParticipants(props: Props) {
               onChange={(e) => setIssueAck(e.target.checked)}
             />
             {realCustomerInput()
-              ? 'I have permission to share this code with the participant and store their email if I enter it. Email is sent only when I choose Email invitation.'
-              : 'I have permission to share this sample code and store the participant email if I enter it. Email is sent only when I choose Email invitation.'}{' '}
+              ? 'I have permission to share this code with the participant and store their email if I enter it. Email is sent only when I choose Email Invitation.'
+              : 'I have permission to share this sample code and store the participant email if I enter it. Email is sent only when I choose Email Invitation.'}{' '}
           </label>
           <button className="primary-link" disabled={view.busy}>
             {realCustomerInput() ? 'Create Invitation Code' : 'Create Sample Invitation Code'}{' '}
@@ -398,42 +409,60 @@ function ScopedParticipants(props: Props) {
       )}
     </>
   ) : null;
+  // What the last email command said, kept on the code it was sent for.
+  const emailNote = typeof view.result?.emailNote === 'string' ? view.result.emailNote : '';
   const codeResult = ready ? (
     <>
       {view.result?.action === 'invite' && view.result.issued === true && (
         <div>
-          <label className="field">
-            {realCustomerInput() ? 'Private invitation code' : 'Private sample invitation code'}{' '}
-            <input readOnly autoComplete="off" value={String(view.result.token)} />
-          </label>
+          <div className="ux-copy-row">
+            <label className="field">
+              {realCustomerInput() ? 'Private invitation code' : 'Private sample invitation code'}{' '}
+              <input
+                ref={codeInput}
+                readOnly
+                autoComplete="off"
+                value={String(view.result.token)}
+              />
+            </label>
+            <CopyButton value={String(view.result.token)} target={codeInput} />
+          </div>
+          <p>This code is shown once. Copy it now.</p>
           <p>
-            Select and copy this code now and send it to the participant yourself. It is shown once
-            and clears when this view is hidden or expires; after that, create a replacement code.
-            If you entered an email, you can also choose Email invitation. The recipient can use{' '}
+            Send it to the participant yourself. It clears when this view is hidden or expires;
+            after that, create a replacement code. If you entered an email, you can also choose
+            Email Invitation. The recipient can use{' '}
             <Link prefetch={false} className="text-link" href="/account/delegations">
               Delegation registrations
             </Link>{' '}
             to inspect and accept it.
           </p>
           {view.result.canEmail === true && !props.archived && (
-            <button
-              type="button"
-              className="text-link"
-              disabled={view.busy}
-              onClick={() =>
-                void view.send({
-                  action: 'emailInvitation',
-                  commandId: crypto.randomUUID(),
-                  workspaceId: props.workspaceId,
-                  programmeId: props.programmeId,
-                  invitationId: view.result!.id,
-                  token: view.result!.token,
-                  acknowledged: true,
-                })
-              }
-            >
-              Email Invitation
-            </button>
+            <>
+              <button
+                ref={emailButton}
+                type="button"
+                className="text-link"
+                disabled={view.busy}
+                onClick={() => {
+                  emailAsked.current = true;
+                  void view.send({
+                    action: 'emailInvitation',
+                    commandId: crypto.randomUUID(),
+                    workspaceId: props.workspaceId,
+                    programmeId: props.programmeId,
+                    invitationId: view.result!.id,
+                    token: view.result!.token,
+                    acknowledged: true,
+                  });
+                }}
+              >
+                Email Invitation
+              </button>
+              <p role="status" aria-live="polite" className={emailNote ? undefined : 'sr-only'}>
+                {emailNote}
+              </p>
+            </>
           )}
         </div>
       )}
