@@ -4838,13 +4838,3 @@ Review: Class A. Reviewer 1 and a security review on d7ef05d (security BLOCK: ac
 Not verified: no live code sign-in against the hosted identity service (runbook first live check includes a wrong code for a no-account address and records the hosted version); Safari, Firefox, real device, screen reader. Known limits: provider-side code sign-up can still create an account without name and privacy notice (provider setting only); each attempt costs two provider calls.
 
 Next action: Guardian merges PR 603 on green CI, verifies the deployment, runs the runbook live check once a readable test mailbox exists.
-
-## 23 Nov 2026: B2b-1 public words (PR 606)
-
-Scope: request words instead of "brief" on / and /how-it-works (D-002); helper, Corridra Network and Corridra team instead of contributor and operator on /, /about, /network and /privacy (D-003, D-056 on /network); "what you can see" for access meanings and plain work words for commercial scope (D-004 part 1); "Price quote or price request (RFQ)" on first use (D-005); the home request builder's chosen route and route line come from one source (D-010, test first); /privacy in plain wording without "draft", "operator", "contributor", "scope" or "disclosure", no new promise and no cookie line (owner approval 23 Nov 2026; the journey cookie line lands with unit J). English values only; keys, ids and routes unchanged.
-
-Review: one corridra-reviewer pass on e8da83c; evidence retaken at 390, 768 and 1440 with the network switch on; helper password, privacy helper sentence, workflow limits and unsent-answers wording corrected in this round. Left for B2b-2: "scope" in content/public-pages.ts on /how-it-works and the switched-off /network.
-
-Not verified: native review of other languages (they still show these strings in English, as before).
-
-Next action: Guardian merges PR 606 on green CI and verifies the deployment.
