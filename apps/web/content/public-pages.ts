@@ -286,7 +286,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Corridra Network',
     title: 'Your local knowledge can have commercial value.',
     description:
-      'We are building a network for clearly defined local work, with a clear task, evidence and reward before you accept.',
+      'We are building a network for local work, with a clear task, evidence and reward before you accept.',
     introduction: {
       title: 'Some market intelligence cannot be collected from a desk.',
       text: 'Some answers need a local check, visit or introduction. Remote research cannot give them.',
