@@ -534,9 +534,44 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_REPLY_PAGE',
     label: 'Supplier Reply Page',
-    line: "One question at a time for a supplier who opens a private link, the full quote form with a receipt, and the team's review of supplier replies (needs its database module). Sample only until real outreach opens.",
+    line: "One question at a time for a supplier who opens a private link, the full quote form with a receipt, and the team's review of supplier replies (needs its database module). A real recipient opens the same page from an emailed introduction once real outreach is on.",
     group: 'Delivery',
     kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_REAL_OUTREACH',
+    label: 'Real outreach by email',
+    line: 'Lets the Corridra team email a reviewed introduction to a real company contact from a real workspace. Needs its database module, a sender address, a reply address, the mail key and the notice signing secret; with any of them missing nothing is sent. Each send still needs a staff member to create and dispatch it, with recorded consent. Sample introductions stay sample.',
+    group: 'Delivery',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_REAL_OUTREACH_MODE',
+    label: 'Real outreach mode',
+    line: 'Test mode unless this is exactly "live". In test mode a message leaves only for an address on the test list; every other message is recorded as a test and sent nowhere. Set to live only on the owner\'s word.',
+    group: 'Delivery',
+    kind: 'mode',
+  },
+  {
+    name: 'CORRIDRA_REAL_OUTREACH_TEST_RECIPIENTS',
+    label: 'Real outreach test list',
+    line: 'The addresses that may receive a test message while real outreach is in test mode. The value is never shown.',
+    group: 'Delivery',
+    kind: 'setting',
+  },
+  {
+    name: 'REAL_OUTREACH_MAIL_FROM',
+    label: 'Real outreach sender address',
+    line: 'The verified address real introductions are sent from. The value is never shown.',
+    group: 'Delivery',
+    kind: 'setting',
+  },
+  {
+    name: 'REAL_OUTREACH_MAIL_REPLY_TO',
+    label: 'Real outreach reply address',
+    line: 'The address a recipient reaches by replying to an introduction. The value is never shown.',
+    group: 'Delivery',
+    kind: 'setting',
   },
   {
     name: 'CORRIDRA_PULSE_ENABLED',
@@ -785,6 +820,10 @@ function resolve(
     if (entry.name === 'CORRIDRA_CUSTOMER_PRODUCTION_UNLOCK')
       return customerProductionUnlocked(env) ? on : off;
     if (entry.name === 'CORRIDRA_REAL_USE_ENABLED') return realUseEnabled(env) ? on : off;
+    if (entry.name === 'CORRIDRA_REAL_OUTREACH_MODE')
+      return env[entry.name] === 'live'
+        ? { text: 'Live', tone: 'caution' as const }
+        : { text: 'Test mode', tone: 'info' as const };
     return off;
   }
   if (entry.kind === 'flagDefaultOn') return env[entry.name] === 'false' ? off : on;

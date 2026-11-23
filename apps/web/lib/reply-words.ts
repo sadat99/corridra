@@ -188,7 +188,8 @@ const en: ReplyWords = {
   sampleOnly: '(madeup) Sample introduction. No real outreach.',
   noMailingList: 'You will not be added to a mailing list by responding.',
   loading: 'Loading your introduction',
-  unavailable: 'This private link is unavailable. Open the complete link you received.',
+  unavailable:
+    'This private link has expired or was replaced. Ask the person who sent it for a new link.',
   stepNamed: 'Step {n} of {total}: {name}',
   stepNext: 'Next: {name}',
   stepCheckSend: 'Check and send',
@@ -304,7 +305,7 @@ const zh: ReplyWords = {
   sampleOnly: '(madeup) 示例介绍。没有真实的对外联系。',
   noMailingList: '回复不会使您被加入任何邮件列表。',
   loading: '正在加载您的介绍',
-  unavailable: '此私人链接不可用。请打开您收到的完整链接。',
+  unavailable: '此私人链接已过期或已被替换。请向发送链接的人索取新链接。',
   stepNamed: '第 {n} 步，共 {total} 步：{name}',
   stepNext: '下一步：{name}',
   stepCheckSend: '检查并发送',
