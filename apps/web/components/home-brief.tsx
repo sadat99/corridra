@@ -21,7 +21,7 @@ import {
 
 export type { GoalKey };
 
-// "Your first mission brief in 60 seconds" (board 3c). Three answers build a draft card that visibly belongs to the
+// "Your first request in 60 seconds" (board 3c). Three answers build a summary card that visibly belongs to the
 // visitor. Nothing is sent from here: the one action opens the real request form (/plan) with the job chosen and the
 // visitor's words in its notes field, where they read, change and send them. No fake Send button.
 const key = (name: string) => name as HomeRoutesKey;
@@ -48,9 +48,11 @@ export function HomeBrief({
   const [when, setWhen] = useState<number | null>(null);
   const trimmed = need.trim();
   const answered = (goal ? 1 : 0) + (trimmed ? 1 : 0) + (when ? 1 : 0);
+  // One source for the two route rows of the summary: the goal answered here, or the door chosen at the top when
+  // no goal is answered yet. "Route chosen" and "Route" can then never disagree (D-010).
+  const kind: RouteKey | null = goal ? goalRoute[goal] : route;
   const routeText = (() => {
-    if (!goal) return '';
-    const kind = goalRoute[goal];
+    if (!kind) return '';
     if (kind !== 'sell') return t(key(`home.b3.br.route.${kind}`));
     return market
       ? fill(t('home.b3.br.route.sell'), { market: t(key(`home.b3.mkto.${market}`)) })
@@ -161,7 +163,7 @@ export function HomeBrief({
           <dl className="tr-brief-dl" aria-live="polite">
             <div>
               <dt>{t('home.b3.br.dt.chosen')}</dt>
-              <dd>{shown(route ? t(key(`home.tr.door.${route}.title`)) : '')}</dd>
+              <dd>{shown(kind ? t(key(`home.tr.door.${kind}.title`)) : '')}</dd>
             </div>
             <div>
               <dt>{t('home.b3.br.dt.goal')}</dt>

@@ -48,7 +48,9 @@ test.describe('the page keeps its words and adds the field', () => {
     const main = page.getByRole('main');
     await expect(main.getByText('The link is your access', { exact: false })).toBeVisible();
     await expect(main.getByRole('heading', { name: 'An introduction' })).toBeVisible();
-    await expect(main.getByRole('heading', { name: 'A report or programme brief' })).toBeVisible();
+    await expect(
+      main.getByRole('heading', { name: 'A report or programme summary' }),
+    ).toBeVisible();
     await expect(main.getByRole('heading', { name: 'Link not working?' })).toBeVisible();
     await expect(open(page)).toBeVisible();
     // The cards still carry no link, and the field is not a form (a form could put the link in an address).

@@ -251,7 +251,7 @@ describe('notice for the optional confirmation and quote records', () => {
     expect(page).toContain('private account identifier');
     expect(page).toContain(arrangements);
     expect(page).toContain('restricted acquisition costs, markup and relationship notes');
-    expect(page).toContain('Customers see only the terms disclosed to them.');
+    expect(page).toContain('Customers see only the terms shared with them.');
     // Both record types reject any change or deletion in the database, and the notice says so.
     expect(page).toContain(confirmationsKept);
     expect(page).toContain(arrangementsKept);
@@ -467,7 +467,7 @@ describe('public programme pages and applications (ADR-080)', () => {
       CORRIDRA_CUSTOMER_MISSION_SHARES_ENABLED: 'true',
     });
     expect(page).toContain(
-      'After you join, you can start a private request from your application. Only when you press that button are your words copied into a request draft in your own workspace, which you review before sending.',
+      'After you join, you can start a private request from your application. Only when you press that button are your words copied into an unsent request in your own workspace, which you review before sending.',
     );
     expect(page).toContain(
       'that copy is part of the request and follows what this notice says about requests, including deletion; it is separate from your application.',
