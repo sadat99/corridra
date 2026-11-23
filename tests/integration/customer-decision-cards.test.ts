@@ -4,6 +4,8 @@ import { commercialFixture } from './commercial-fixture';
 import { command, future } from './access-fixture';
 import { sessionHash } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
+import { migrateCustomerRequestReferences } from '../../packages/db/src/customer-request-reference-migrate';
+import { CustomerRequestService } from '../../packages/auth/src/customer-requests';
 import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
 import { CorridorService, initialRouteConfiguration } from '../../packages/missions/src/corridors';
 import { initialRoutes } from '../../packages/domain/src/corridors';
@@ -1187,6 +1189,265 @@ describe('every authority edge ends the card at once', () => {
   });
 });
 
+// Owner, 23 Nov 2026: "decision cards for real". The sample world is turned real in place for one case at a time, the
+// way the case above already does: both tenants, an open real-use configuration, the real purpose for the staff who
+// published, and a verified real customer session. Everything is put back afterwards.
+describe('real workspaces', () => {
+  const publicOn = { 'corridra.real_report_public': 'on' };
+  async function asReal(
+    who: string,
+    sql: string,
+    args: unknown[] = [],
+    settings: Record<string, string> = {},
+  ) {
+    const hash = sessionHash(randomBytes(32).toString('hex'));
+    await f.auth.query(
+      "INSERT INTO customer_private.session_proof(hash,issuer,subject,expires_at,data_mode,verified_email_hash) VALUES($1,$2,$3,clock_timestamp()+interval '25 seconds','real',$4)",
+      [hash, issuer, session(who).subject, hex('real-' + who + '@business.test')],
+    );
+    const db = await f.runtime.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query("SELECT set_config('corridra.customer_proof_hash',$1,true)", [hash]);
+      for (const [name, value] of Object.entries(settings))
+        await db.query('SELECT set_config($1,$2,true)', [name, value]);
+      const result = await db.query(sql, args);
+      await db.query('COMMIT');
+      return result.rows[0].result;
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    } finally {
+      db.release();
+      await f.auth.query('DELETE FROM customer_private.session_proof WHERE hash=$1', [hash]);
+    }
+  }
+  // The anonymous read inside one transaction that carries the given settings, as the application sends it.
+  async function readWith(hash: string, settings: Record<string, string>) {
+    const db = await f.runtime.connect();
+    try {
+      await db.query('BEGIN');
+      for (const [name, value] of Object.entries(settings))
+        await db.query('SELECT set_config($1,$2,true)', [name, value]);
+      const result = await db.query('SELECT app.read_decision_card($1) AS result', [hash]);
+      await db.query('COMMIT');
+      return result.rows[0].result;
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    } finally {
+      db.release();
+    }
+  }
+  const previewReal = (s: Scenario, settings: Record<string, string> = {}) =>
+    asReal(
+      'alice',
+      'SELECT customer.decision_card_preview($1,$2) AS result',
+      [s.resourceId, s.decisionId],
+      settings,
+    );
+  async function real(
+    sides: { publisher: boolean; workspace: boolean; open?: boolean },
+    work: () => Promise<void>,
+  ) {
+    const real = [
+      ...(sides.publisher ? [f.tenantA] : []),
+      ...(sides.workspace ? [workspaceId] : []),
+    ];
+    await mutate(
+      'customer_private.real_use_configuration',
+      "INSERT INTO customer_private.real_use_configuration(issuer,executor_id,intake_tenant_id,owner_id,notice_version,enabled) VALUES($1,$2,$3,$4,'real-intake-2026-10-21-v1',$5)",
+      [issuer, f.serviceId, f.tenantA, f.users.owner.id, sides.open ?? true],
+    );
+    await mutate(
+      'app.membership',
+      "UPDATE app.membership SET allowed_purposes=array_append(allowed_purposes,'commercial_qualification') WHERE tenant_id=$1 AND NOT 'commercial_qualification'=ANY(allowed_purposes)",
+      [f.tenantA],
+    );
+    await mutate('app.tenant', 'UPDATE app.tenant SET synthetic=false WHERE id=ANY($1)', [real]);
+    try {
+      await work();
+    } finally {
+      await mutate('app.tenant', 'UPDATE app.tenant SET synthetic=true WHERE id=ANY($1)', [
+        [f.tenantA, workspaceId],
+      ]);
+      await mutate(
+        'app.membership',
+        "UPDATE app.membership SET allowed_purposes=array_remove(allowed_purposes,'commercial_qualification') WHERE tenant_id=$1",
+        [f.tenantA],
+      );
+      await mutate(
+        'customer_private.real_use_configuration',
+        'DELETE FROM customer_private.real_use_configuration',
+      );
+    }
+  }
+
+  test('both sides real: a verified real session shares a decision and the public read answers only under the public link setting', async () => {
+    const s = await build('alice', workspaceId);
+    let hash = '';
+    await real({ publisher: true, workspace: true }, async () => {
+      expect(
+        (await asReal('alice', 'SELECT customer.decision_card_state($1) AS result', [s.resourceId]))
+          .canShare,
+      ).toBe(true);
+      const p = await previewReal(s);
+      expect(Object.keys(p.fields).sort()).toEqual(
+        ['company', 'decision', 'dueAt', 'nextAction', 'provenance', 'rationale'].sort(),
+      );
+      const token = newToken();
+      hash = token.hash;
+      const commandId = randomUUID();
+      const card = await asReal(
+        'alice',
+        'SELECT customer.create_decision_card($1,$2,$3,$4,$5,$6) AS result',
+        [commandId, s.resourceId, s.decisionId, p.digest, token.hash, null],
+      );
+      expect(card.state).toBe('ACTIVE');
+      // Same history rule as a sample card: creation writes exactly one event, for the workspace.
+      const events = (
+        await f.owner.query(
+          "SELECT tenant_id FROM app.domain_event WHERE type='customer.decision_card.created' AND correlation_id=$1",
+          [commandId],
+        )
+      ).rows;
+      expect(events).toEqual([{ tenant_id: workspaceId }]);
+      // The anonymous read carries no purpose of its own.
+      expect(await read(token.hash)).toEqual(unknown);
+      expect(await readWith(token.hash, { 'corridra.real_report_public': 'off' })).toEqual(unknown);
+      const open = await readWith(token.hash, publicOn);
+      expect(open.state).toBe('OPEN');
+      expect(open.synthetic).toBe(false);
+      expect(open.card).toEqual(p.fields);
+      expect(
+        (
+          await one(
+            'SELECT opens::int AS opens FROM customer_private.decision_card_open WHERE card_id=$1',
+            [card.cardId],
+          )
+        ).opens,
+      ).toBe(1);
+      // A staff tenant on the transaction never opens a card, whatever its purpose.
+      expect(await readWith(token.hash, { ...publicOn, 'corridra.tenant_id': f.tenantA })).toEqual(
+        unknown,
+      );
+      // A sample session cannot use a real workspace, and the signed-in switch closes a real session.
+      await expect(preview('alice', s, s.decisionId)).rejects.toMatchObject({ code: '42501' });
+      expect((await state('alice', s.resourceId)).canShare).toBe(false);
+      await expect(
+        previewReal(s, { 'corridra.real_report_signed_in': 'off' }),
+      ).rejects.toMatchObject({ code: '42501' });
+      // The stored card is as immutable for a real workspace as for a sample one.
+      await expect(
+        f.owner.query('UPDATE customer_private.decision_card SET field_digest=$2 WHERE id=$1', [
+          card.cardId,
+          p.digest,
+        ]),
+      ).rejects.toThrow();
+      await expect(
+        f.owner.query('DELETE FROM customer_private.decision_card WHERE id=$1', [card.cardId]),
+      ).rejects.toThrow();
+    });
+    // Back in the sample world the same card is a sample card again and says so.
+    const sample = await read(hash);
+    expect(sample.state).toBe('OPEN');
+    expect(sample.synthetic).toBe(true);
+  });
+
+  test('a real card ends when its creator is demoted, comes back when they are promoted, and a session on the transaction never uses the public rule', async () => {
+    const s = await build('bob', workspaceId);
+    const card = await share('bob', s);
+    try {
+      await real({ publisher: true, workspace: true }, async () => {
+        expect((await readWith(card.hash, publicOn)).state).toBe('OPEN');
+        // The role read without a session agrees with the shared role function for the same people.
+        const writer = async (person: Person) =>
+          (
+            await one('SELECT customer_private.decision_card_public_writer($1,$2) AS ok', [
+              workspaceId,
+              principals[person],
+            ])
+          ).ok;
+        expect([
+          await writer('alice'),
+          await writer('bob'),
+          await writer('carol'),
+          await writer('dave'),
+        ]).toEqual([true, true, false, false]);
+        // A customer proof on the transaction, even with the public setting, is held to the session rule.
+        expect(
+          await readWith(card.hash, {
+            ...publicOn,
+            'corridra.customer_proof_hash': hex('no-such-session'),
+          }),
+        ).toEqual(unknown);
+        await mutate('app.tenant', 'UPDATE app.tenant SET synthetic=true WHERE id=ANY($1)', [
+          [f.tenantA, workspaceId],
+        ]);
+        await setRole('bob', 'member', 'admin');
+        await mutate('app.tenant', 'UPDATE app.tenant SET synthetic=false WHERE id=ANY($1)', [
+          [f.tenantA, workspaceId],
+        ]);
+        expect(await writer('bob')).toBe(false);
+        expect(await readWith(card.hash, publicOn)).toEqual(unknown);
+      });
+    } finally {
+      await setRole('bob', 'admin', 'member').catch(() => undefined);
+    }
+    await real({ publisher: true, workspace: true }, async () => {
+      expect((await readWith(card.hash, publicOn)).state).toBe('OPEN');
+    });
+  });
+
+  test('never a mix: one real side and one sample side is refused, signed in and in public', async () => {
+    const s = await build('alice', workspaceId);
+    const card = await share('alice', s);
+    for (const sides of [
+      { publisher: true, workspace: false },
+      { publisher: false, workspace: true },
+    ])
+      await real(sides, async () => {
+        await expect(previewReal(s)).rejects.toMatchObject({ code: '42501' });
+        await expect(preview('alice', s, s.decisionId)).rejects.toMatchObject({ code: '42501' });
+        expect(await readWith(card.hash, publicOn)).toEqual(unknown);
+        expect(await read(card.hash)).toEqual(unknown);
+      });
+    expect((await read(card.hash)).state).toBe('OPEN');
+  });
+
+  test('real use closed: both sides real but the real-use configuration is off, so nothing answers', async () => {
+    const s = await build('alice', workspaceId);
+    const card = await share('alice', s);
+    await real({ publisher: true, workspace: true, open: false }, async () => {
+      await expect(previewReal(s)).rejects.toMatchObject({ code: '42501' });
+      expect(await readWith(card.hash, publicOn)).toEqual(unknown);
+    });
+  });
+
+  test('the new helpers are private: no application role may run them, and the replaced functions keep their grants', async () => {
+    const granted = async (role: string, fn: string) =>
+      (await one('SELECT has_function_privilege($1,$2,$3) AS ok', [role, fn, 'EXECUTE'])).ok;
+    for (const role of ['corridra_runtime', 'corridra_auth'])
+      for (const helper of [
+        'customer_private.decision_card_real_allowed(uuid,uuid,uuid)',
+        'customer_private.decision_card_public_writer(uuid,uuid)',
+      ])
+        expect(await granted(role, helper)).toBe(false);
+    expect(
+      await granted('corridra_runtime', 'customer_private.decision_card_workspace(uuid,uuid)'),
+    ).toBe(false);
+    expect(await granted('corridra_runtime', functions.read)).toBe(true);
+    expect(await granted('corridra_auth', functions.read)).toBe(false);
+    expect(
+      (
+        await one(
+          "SELECT count(*)::int AS n FROM customer_decision_card_migrations.applied WHERE name='0003_real_workspace_decision_cards.sql'",
+        )
+      ).n,
+    ).toBe(1);
+  });
+});
+
 describe('expiry', () => {
   test('a card never lasts longer than seven days; an eight day row is rejected', async () => {
     const s = await build('alice', workspaceId, { days: 20 });
@@ -2026,4 +2287,179 @@ describe('a public read that waits on the open counter', () => {
     expect(result).toEqual(unknown);
     expect(after).toBe(before);
   }, 60000);
+});
+
+// Owner, 23 Nov 2026: "short request references (RQ-000001)". The module is installed here, after the world above has
+// made its requests, so the one-time fill and the trigger for new requests are both proved on real rows.
+describe('short request references', () => {
+  const table = 'customer_private.request_reference';
+  const refs = async (who: string, ids: string[]) =>
+    (await as(who, 'SELECT customer.request_references($1::uuid[]) AS result', [ids])).rows[0]
+      .result as Record<string, string>;
+  let before: { id: string; created_at: Date }[];
+  beforeAll(async () => {
+    before = (
+      await f.owner.query(
+        'SELECT id,created_at FROM customer_private.owned_request ORDER BY created_at,id',
+      )
+    ).rows;
+    expect(before.length).toBeGreaterThan(3);
+    expect(
+      (await one("SELECT to_regclass('customer_private.request_reference') AS t")).t,
+    ).toBeNull();
+    await migrateCustomerRequestReferences(f.owner);
+  }, 120000);
+
+  test('every request that already existed got one reference, oldest first, and no request row was touched', async () => {
+    const rows = (
+      await f.owner.query(
+        `SELECT x.request_id,x.number::int AS number,x.reference FROM ${table} x ORDER BY x.number`,
+      )
+    ).rows;
+    expect(rows.map((row) => row.request_id)).toEqual(before.map((row) => row.id));
+    expect(rows.map((row) => row.number)).toEqual(before.map((_, index) => index + 1));
+    expect(rows[0].reference).toBe('RQ-000001');
+    for (const row of rows) expect(row.reference).toBe('RQ-' + String(row.number).padStart(6, '0'));
+    const after = (
+      await f.owner.query(
+        'SELECT id,created_at FROM customer_private.owned_request ORDER BY created_at,id',
+      )
+    ).rows;
+    expect(after).toEqual(before);
+    expect(
+      (
+        await one(
+          "SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='customer_private' AND table_name='owned_request' AND column_name IN ('number','reference')",
+        )
+      ).n,
+    ).toBe(0);
+  });
+
+  test('a new request gets the next reference in the same transaction, and it never changes', async () => {
+    const last = (await one(`SELECT max(number)::int AS n FROM ${table}`)).n;
+    const s = await build('alice', workspaceId);
+    const row = await one(
+      `SELECT number::int AS number,reference FROM ${table} WHERE request_id=$1`,
+      [s.requestId],
+    );
+    expect(row.number).toBe(last + 1);
+    expect(row.reference).toBe('RQ-' + String(last + 1).padStart(6, '0'));
+    // A request made in a transaction that rolls back leaves no reference behind.
+    const db = await f.owner.connect();
+    const ghost = randomUUID();
+    try {
+      await db.query('BEGIN');
+      await db
+        .query(
+          `INSERT INTO customer_private.owned_request(id,principal_id,command_id,workspace_id,mission_tenant_id,mission_id,request_key,brief_digest,receipt_hash)
+         SELECT $1,principal_id,gen_random_uuid(),workspace_id,mission_tenant_id,mission_id,gen_random_uuid(),brief_digest,receipt_hash
+         FROM customer_private.owned_request WHERE id=$2`,
+          [ghost, s.requestId],
+        )
+        .catch(() => undefined);
+    } finally {
+      await db.query('ROLLBACK');
+      db.release();
+    }
+    expect(await count(table, 'request_id=$1', [ghost])).toBe(0);
+    await expect(
+      f.owner.query(`UPDATE ${table} SET created_at=now() WHERE request_id=$1`, [s.requestId]),
+    ).rejects.toThrow();
+    await expect(
+      f.owner.query(`DELETE FROM ${table} WHERE request_id=$1`, [s.requestId]),
+    ).rejects.toThrow();
+    await expect(
+      f.owner.query(`UPDATE ${table} SET reference='RQ-999999' WHERE request_id=$1`, [s.requestId]),
+    ).rejects.toThrow();
+    expect(
+      (await one(`SELECT reference FROM ${table} WHERE request_id=$1`, [s.requestId])).reference,
+    ).toBe(row.reference);
+  });
+
+  test('a number past 999999 keeps every digit, so the reference stays unique', async () => {
+    const text = (
+      await one(
+        "SELECT pg_get_expr(d.adbin,d.adrelid) AS e FROM pg_attrdef d JOIN pg_attribute a ON a.attrelid=d.adrelid AND a.attnum=d.adnum WHERE d.adrelid='customer_private.request_reference'::regclass AND a.attname='reference'",
+      )
+    ).e as string;
+    const made = await one(
+      `SELECT ${text.replaceAll('number', 'n')} AS reference FROM (VALUES(1000000::bigint)) v(n)`,
+    );
+    expect(made.reference).toBe('RQ-1000000');
+  });
+
+  test('a customer reads the references of their own requests only; unknown, another person and revoked are simply absent', async () => {
+    const mine = await build('alice', workspaceId);
+    const theirs = await build('bob', workspaceId);
+    const revoked = await build('alice', workspaceId);
+    await f.owner.query(
+      "INSERT INTO customer_private.request_revocation(request_id,reason) VALUES($1,'Synthetic request revocation')",
+      [revoked.requestId],
+    );
+    const ids = [mine.requestId, theirs.requestId, revoked.requestId, randomUUID()];
+    const found = await refs('alice', ids);
+    expect(Object.keys(found)).toEqual([mine.requestId]);
+    expect(found[mine.requestId]).toMatch(/^RQ-\d{6}$/);
+    expect(Object.keys(await refs('bob', ids))).toEqual([theirs.requestId]);
+    expect(await refs('dave', ids)).toEqual({});
+    expect(await refs('alice', [])).toEqual({});
+    await expect(
+      f.runtime.query('SELECT customer.request_references($1::uuid[]) AS result', [ids]),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      refs(
+        'alice',
+        Array.from({ length: 101 }, () => randomUUID()),
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+  });
+
+  test('a person removed from the workspace no longer reads the reference of a request they wrote there', async () => {
+    const s = await build('carol', workspaceId);
+    expect(Object.keys(await refs('carol', [s.requestId]))).toEqual([s.requestId]);
+    await workspaces('alice').access({
+      action: 'revoke',
+      commandId: randomUUID(),
+      workspaceId,
+      kind: 'membership',
+      targetId: members.carol!,
+    });
+    expect(await refs('carol', [s.requestId])).toEqual({});
+  });
+
+  test('the table is closed to every application role, row security is on, and only the read function is granted', async () => {
+    for (const role of ['corridra_runtime', 'corridra_auth'])
+      for (const right of ['SELECT', 'INSERT', 'UPDATE', 'DELETE'])
+        expect(
+          (await one('SELECT has_table_privilege($1,$2,$3) AS ok', [role, table, right])).ok,
+        ).toBe(false);
+    await expect(f.runtime.query(`SELECT * FROM ${table}`)).rejects.toMatchObject({
+      code: '42501',
+    });
+    expect(
+      (await one('SELECT relrowsecurity AS on FROM pg_class WHERE oid=$1::regclass', [table])).on,
+    ).toBe(true);
+    const granted = async (role: string, fn: string) =>
+      (await one('SELECT has_function_privilege($1,$2,$3) AS ok', [role, fn, 'EXECUTE'])).ok;
+    expect(await granted('corridra_runtime', 'customer.request_references(uuid[])')).toBe(true);
+    expect(await granted('corridra_auth', 'customer.request_references(uuid[])')).toBe(false);
+    expect(await granted('corridra_runtime', 'customer_private.assign_request_reference()')).toBe(
+      false,
+    );
+    expect(
+      (await one('SELECT count(*)::int AS n FROM customer_request_reference_migrations.applied')).n,
+    ).toBe(1);
+  });
+
+  test('the request list carries the reference as an API field for each request it already shows', async () => {
+    const s = await build('alice', workspaceId);
+    const page = (await new CustomerRequestService(f.runtime, f.auth, options, async () =>
+      session('alice'),
+    ).list({ pageSize: 100 })) as { requests: { id: string; reference?: string }[] };
+    expect(page.requests.length).toBeGreaterThan(0);
+    const stored = (await f.owner.query(`SELECT request_id,reference FROM ${table}`)).rows;
+    for (const item of page.requests)
+      expect(item.reference).toBe(stored.find((row) => row.request_id === item.id)?.reference);
+    expect(page.requests.some((item) => item.id === s.requestId)).toBe(true);
+  });
 });
