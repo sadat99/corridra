@@ -269,8 +269,13 @@ describe('journey mode: Reports in a journey', () => {
     expect(assigned).toContain('!outside.includes(item.requestId)');
     expect(assigned).toContain('No report delivered here is in {journey}.');
     const tabs = web('app/account/reports-tabs.tsx');
-    for (const what of ['Saved missions', 'Missions shared with you', 'Members’ reports'])
-      expect(tabs).toContain(`<NotSortedByJourney what="${what}" />`);
+    for (const [what, panel] of [
+      ['Saved missions', 'saved'],
+      ['Missions shared with you', 'shared'],
+      ['Members’ reports', 'members'],
+    ])
+      expect(tabs).toContain(`panel: journey ? notSorted('${what}', ${panel}) : ${panel},`);
+    expect(tabs).toContain('<NotSortedByJourney what={what} />');
     const note = web('components/ux/journey-not-sorted.tsx');
     expect(note).toContain('{what} are not sorted by journey.');
     // No router: the tabs are also drawn where there is none.
@@ -280,8 +285,11 @@ describe('journey mode: Reports in a journey', () => {
     );
     const page = web('app/account/page.tsx');
     expect(page).toMatch(
-      /delivered=\{[^]*?\{scoped \? <JourneyShowing mode=\{scoped\} \/> : null\}/,
+      /delivered=\{[^]*?<JourneyScoped mode=\{scoped\}>\s*\{requestIssuer && \(/,
     );
+    expect(page).toContain('journey={!!scoped}');
+    // No journey: the section itself and nothing else, so the page is exactly what it was.
+    expect(web('components/ux/journey-scoped.tsx')).toContain('if (!mode) return children;');
   });
 });
 

@@ -10,16 +10,27 @@ import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
  * any panel and no access is added. Members' Reports (ADR-087 U5) comes last and exists only while
  * CORRIDRA_MEMBER_ACCESS is on (decided on the server).
  */
+/** A panel that carries no request, so a chosen journey cannot sort it (journey modes 3.7): whole, and it says so. */
+const notSorted = (what: string, panel: ReactNode) => (
+  <>
+    <NotSortedByJourney what={what} />
+    {panel}
+  </>
+);
+
 export function ReportsTabs({
   delivered,
   saved,
   shared,
   members,
+  journey = false,
 }: {
   delivered?: ReactNode;
   saved?: ReactNode;
   shared?: ReactNode;
   members?: ReactNode;
+  /** A journey is chosen (journey modes): the lists no journey can sort say so. Off, every panel is as it was. */
+  journey?: boolean;
 }) {
   const tabs: SubTab[] = [];
   if (delivered)
@@ -34,12 +45,7 @@ export function ReportsTabs({
       label: 'Saved Missions',
       // These three lists carry no request, so a chosen journey cannot sort them (journey modes 3.7): each stays
       // whole and says so. The line draws nothing in Everything or while journey modes are off.
-      panel: (
-        <>
-          <NotSortedByJourney what="Saved missions" />
-          {saved}
-        </>
-      ),
+      panel: journey ? notSorted('Saved missions', saved) : saved,
       aliases: ['saved-commercial-missions'],
     });
   // "My shared missions" and the invitation links point at #customer-missions, so it opens Shared With Me.
@@ -47,24 +53,14 @@ export function ReportsTabs({
     tabs.push({
       id: 'shared',
       label: 'Shared With Me',
-      panel: (
-        <>
-          <NotSortedByJourney what="Missions shared with you" />
-          {shared}
-        </>
-      ),
+      panel: journey ? notSorted('Missions shared with you', shared) : shared,
       aliases: ['customer-missions'],
     });
   if (members)
     tabs.push({
       id: 'members',
       label: "Members' Reports",
-      panel: (
-        <>
-          <NotSortedByJourney what="Members’ reports" />
-          {members}
-        </>
-      ),
+      panel: journey ? notSorted('Members’ reports', members) : members,
     });
   if (tabs.length === 0) return null;
   if (tabs.length === 1) return <>{tabs[0]!.panel}</>;

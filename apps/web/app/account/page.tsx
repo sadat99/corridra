@@ -57,7 +57,8 @@ import { parseWorkFilter } from '../../lib/work-items/view';
 import { homeHelper, requestsHelper } from './frame-copy';
 import { activeJourneyMode } from '../../lib/ux/journey-mode-server';
 import { journeyModeOfWork, journeyModeWords } from '../../lib/ux/journey-mode';
-import { JourneyShowing, ShowEverything } from '../../components/ux/journey-note';
+import { ShowEverything } from '../../components/ux/journey-note';
+import { JourneyScoped } from '../../components/ux/journey-scoped';
 import { readRequestsOutsideJourney } from '../../lib/work-items/journey-scope-server';
 import './calm-lists.css';
 export const dynamic = 'force-dynamic';
@@ -245,15 +246,16 @@ export default async function Page({
             requests={
               workspaceIssuer && (
                 <Suspense fallback={<p role="status">Loading your work…</p>}>
-                  {scoped ? <JourneyShowing mode={scoped} /> : null}
-                  <WorkList
-                    subject={data.user.id}
-                    issuer={workspaceIssuer}
-                    filter={workFilter}
-                    rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
-                    framed
-                    showAll={scoped ? <ShowEverything /> : undefined}
-                  />
+                  <JourneyScoped mode={scoped}>
+                    <WorkList
+                      subject={data.user.id}
+                      issuer={workspaceIssuer}
+                      filter={workFilter}
+                      rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
+                      framed
+                      showAll={scoped ? <ShowEverything /> : undefined}
+                    />
+                  </JourneyScoped>
                 </Suspense>
               )
             }
@@ -312,10 +314,10 @@ export default async function Page({
             <InvitationProvider>
               <OpenInvitationButton />
               <ReportsTabs
+                journey={!!scoped}
                 delivered={
                   (requestIssuer || (savedMissionIssuer && customerDeliveryEnabled())) && (
-                    <>
-                      {scoped ? <JourneyShowing mode={scoped} /> : null}
+                    <JourneyScoped mode={scoped}>
                       {requestIssuer && (
                         <DeliveredReports
                           subject={data.user.id}
@@ -333,7 +335,7 @@ export default async function Page({
                           journey={journeyName}
                         />
                       )}
-                    </>
+                    </JourneyScoped>
                   )
                 }
                 saved={

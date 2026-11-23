@@ -17,7 +17,7 @@ import { MeetingsList, RequestsSection, type MeetingGroup } from './meetings-lis
 import { MeetingsTabs } from './meetings-tabs';
 import { activeJourneyMode } from '../../../lib/ux/journey-mode-server';
 import { familyOfJourneyMode } from '../../../lib/ux/journey-mode';
-import { JourneyShowing } from '../../../components/ux/journey-note';
+import { JourneyScoped } from '../../../components/ux/journey-scoped';
 import '../rooms/[requestId]/room-view.css';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -152,42 +152,45 @@ export default async function Page() {
     ) : null;
   return (
     <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings" journeyMode={mode}>
-      {scoped ? <JourneyShowing mode={scoped} /> : null}
-      {readable ? null : <p>{intro}</p>}
-      <div className="room">
-        {partial ? (
-          <p role="status">
-            We could not check all your requests just now. Some meetings may be missing.{' '}
-            <Link className="text-link" prefetch={false} href="/account/meetings">
-              Try Again
-            </Link>
-            {oneNotice && meetings.capped ? (
-              <>
-                {' '}
-                We show meetings from the first {meetingReportCap} reports only. Open a request to
-                see all of its meetings.
-              </>
-            ) : null}
-            {oneNotice && meetings.notSaved > 0 ? (
-              <>
-                {' '}
-                {notSavedSentence} {openLibrary}
-              </>
-            ) : null}
-          </p>
-        ) : null}
-        {!readable ? <p role="status">Your requests list is not available here yet.</p> : null}
-        {readable && !meetingsShown ? (
-          <>
-            {whatNext}
+      <JourneyScoped mode={scoped}>
+        {readable ? null : <p>{intro}</p>}
+        <div className="room">
+          {partial ? (
             <p role="status">
-              Meetings and visits are not available here yet. Your requests are listed below.
+              We could not check all your requests just now. Some meetings may be missing.{' '}
+              <Link className="text-link" prefetch={false} href="/account/meetings">
+                Try Again
+              </Link>
+              {oneNotice && meetings.capped ? (
+                <>
+                  {' '}
+                  We show meetings from the first {meetingReportCap} reports only. Open a request to
+                  see all of its meetings.
+                </>
+              ) : null}
+              {oneNotice && meetings.notSaved > 0 ? (
+                <>
+                  {' '}
+                  {notSavedSentence} {openLibrary}
+                </>
+              ) : null}
             </p>
-            {requestsPanel}
-          </>
-        ) : null}
-        {meetingsShown ? <MeetingsTabs meetings={meetingsPanel} requests={requestsPanel} /> : null}
-      </div>
+          ) : null}
+          {!readable ? <p role="status">Your requests list is not available here yet.</p> : null}
+          {readable && !meetingsShown ? (
+            <>
+              {whatNext}
+              <p role="status">
+                Meetings and visits are not available here yet. Your requests are listed below.
+              </p>
+              {requestsPanel}
+            </>
+          ) : null}
+          {meetingsShown ? (
+            <MeetingsTabs meetings={meetingsPanel} requests={requestsPanel} />
+          ) : null}
+        </div>
+      </JourneyScoped>
     </CustomerShell>
   );
 }
