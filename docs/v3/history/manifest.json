@@ -619,6 +619,14 @@
       "bytes": 10325,
       "sha256": "efc0e959ecde326466bdade16f67d6f5cdf0c6a2e0399f115eb62b1cc99f1842",
       "meaning": "Exact active ledger at main 9e91cf7 (PR 593 merged), as written by the 21 Nov records for PRs 585 to 591 (header still said main e39f437), before the 23 Nov records for PR 593 (Connect AI PR 2) and the first-hand ADR-089 acceptance. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "43c2bbc",
+      "archive": "docs/v3/history/ledger-before-commercial-ready-records-2026-11-23.md",
+      "bytes": 10646,
+      "sha256": "8b43a35d67708f518cc6a0576d7516490f7a28d96471686b34281bc3aa72d8f1",
+      "meaning": "Exact active ledger at main 43c2bbc (PR 598 merged), as written by the 23 Nov records for PRs 593, 595 and the Connect AI switch (header still said main aae53aa), before the R0 records of the 23 Nov 2026 commercial-ready run replaced the gate list, the draft-label relay, the merge list and the next action. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

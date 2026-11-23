@@ -4796,3 +4796,25 @@ Owner, 23 Nov 2026, first hand in chat: "i set CORRIDRA_AI_CONNECT_FORM to true 
 Not verified: the production value (not read), whether a deploy followed (aae53aa and df6c0be deployed after it and should carry it), any signed-in pass of the screen. AI in real workspaces is still not active (app.part4_enabled false); the screen saves configuration only.
 
 Tested head: df6c0be (main).
+
+### 23 November 2026: R0 records for the commercial-ready run, Corridra scribe
+
+Request: R0 records (docs only) on branch claude/sharp-davinci-69ui2s for the Guardian session session_0187kU9qixTCkwQJMpZ9Kr8P; brief stamp at planning auth-f03444e9cdfd (main 43c2bbc). The stamp at scribe start was auth-32f355f1f862, explained by this run's own AGENTS.md edit and new docs.
+
+Why: the owner gave first-hand decisions on 23 Nov 2026 that replace the ledger's gate list, the 20 Nov draft-label relay and "D3 refuses real invoices"; the ledger still said main aae53aa.
+
+Owner words (first hand, Guardian session; full table in `docs/revamp/commercial-ready-run-2026-11-23.md` section 1): "there shouldnt be synthetic, draft etc, all must be live and commercially ready, ignoring what i deferred intentionally like scanning etc." and "no gates should be closed." Gates opened: real invoices, real outreach, AI in real workspaces. Not opened: real payments; D01-D08 "not now". Guardian flips switches and runs installs after proof; outreach and money live only on the owner's word "live". Approvals: privacy page plain wording plus the journey cookie line, decision cards for real, short request references, solid sticky header (supersedes the 18 Nov translucent header). Languages: finish all six, keep live, no note on translated pages; native review NOT done, gate OPEN. Draft wording "Everywhere"; Clear Draft becomes Clear Answers with confirm. Code sign-in "Fix while it stays visible". AI provider "All. any provider i choose anytime". Invoice issuer details typed by the owner in an Owner-only staff screen. Clean-up: delete QA test data; retire the two sample members after a read-only check; PR 598 branch carried PR 599 (merged 4ba0ff7 the same day; GitHub removed the branch on merge). "Adopt PR 599". Signed-in smoke via a new test account. Journey modes: "option A+B. combined", "Show switcher", "nice", "always show", prompt "This request is in Sourcing. Switch to Sourcing".
+
+QA facts (Guardian's, this session; receipt paths not supplied to the scribe): production code sign-in final step 404 on /api/auth/sign-in/email-otp; the scribe read `apps/web/app/api/auth/[...all]/route.ts` and its path allowlist has no `sign-in/email-otp`. 8 public pages without og:image; COOP header missing; live sw.js revision d6a0865 at 09:10Z.
+
+Changed: `docs/V3_LEDGER.md` (main 43c2bbc with merges 596, 597, 598 from git; owner decisions; QA facts; next action; superseded lines marked "superseded, replaced by 23 Nov 2026" with their text kept: draft-label relay, languages "earlier", real-world gate list, real invoices control, the constraints gate line, "D3 refuses real invoices"; older lines condensed); exact prior ledger in `docs/v3/history/ledger-before-commercial-ready-records-2026-11-23.md` (10646 bytes, sha256 8b43a35d67708f518cc6a0576d7516490f7a28d96471686b34281bc3aa72d8f1, source 43c2bbc), registered in `docs/v3/history/manifest.json` and `docs/documentation-map.json`; `docs/PLAN_STATUS.md` (rows: commercial-ready run plan CURRENT, Journey modes spec CURRENT, UI/UX.v4.1 amendment CURRENT, which PR 598 merged unregistered; header check line); `docs/documentation-map.json` (the two new docs and the snapshot). Written by the Guardian, not by the scribe: the run plan, the journey-modes spec, the AGENTS.md gates line.
+
+Verification: `node scripts/authority.mjs check` exit 0 (77 governed documents agree); `node scripts/v3-context.mjs verify` exit 0 (always-read total 35658 bytes within 36 KiB; before this run it was 37179 bytes and failing after the AGENTS.md edit); doc tests and format check: see the scribe's return to the Guardian.
+
+Omissions: ui-direction.md rows (no draft, solid header, translation without note, privacy approval) and the deferral register are in R0 scope but outside the scribe's files; not edited here. No production value, deployment state or CI on 43c2bbc read. Nothing built.
+
+Preserved: D01-D06/D08, real payments and payouts closed; native language review open; sample data never shown as real; no direct production database access.
+
+Next action: merge R0, then B1, B2a, B3a, B4 per the run plan section 2.
+
+Tested head: 43c2bbc (main) plus working-tree edits on claude/sharp-davinci-69ui2s.

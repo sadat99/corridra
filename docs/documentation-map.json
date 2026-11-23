@@ -1609,6 +1609,11 @@
       "use": "Exact hashed ledger at 9e91cf7 (main after PR 593), before the 23 Nov records for PR 593 (Connect AI PR 2) and the first-hand ADR-089 acceptance; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-commercial-ready-records-2026-11-23.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 43c2bbc (main after PR 598), before the R0 records of the 23 Nov 2026 commercial-ready run replaced the gate list, the draft-label relay, the merge list and the next action; use the current ledger for live state."
+    },
+    {
       "path": "docs/v3/history/ledger-before-w1-records-2026-11-19.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger at 626d2f8 (the PR 571 merge), before the 19 Nov W1 records recorded merges 560 to 571, the 19 Nov verification and the PR 573 diagnosis; preserves the Guardian 28 Main bullet and the 547 to 559 merge list; use the current ledger for live state."
@@ -1722,6 +1727,16 @@
       "path": "docs/revamp/specs/signal-desk.md",
       "classification": "Current guide/contract",
       "use": "Map of the 18 staff section ids into the locked team navigation with unchanged roles, tests S-01 to S-05"
+    },
+    {
+      "path": "docs/revamp/commercial-ready-run-2026-11-23.md",
+      "classification": "Current guide/contract",
+      "use": "Guardian work graph of the 23 Nov 2026 commercial-ready run: the owner's decisions of that day (section 1), units R0 to L6 with exclusive files, Guardian steps and pre-mortem; records what is planned, not what is built; live state stays in the ledger"
+    },
+    {
+      "path": "docs/revamp/specs/journey-modes.md",
+      "classification": "Current guide/contract",
+      "use": "Owner-approved Journey modes spec (options A and B combined, 23 Nov 2026) for unit J of the commercial-ready run: switcher, request-page prompt, files and tests; switch off by default; not built"
     },
     {
       "path": "docs/revamp/specs/ui-ux-v4-1.md",
