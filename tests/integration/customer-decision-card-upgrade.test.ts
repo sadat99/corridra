@@ -34,6 +34,8 @@ const addedFunctions = [
   'customer_private.decision_card_iso(timestamp with time zone)',
   'customer_private.decision_card_lifetime()',
   'customer_private.decision_card_max_active()',
+  'customer_private.decision_card_public_writer(uuid,uuid)',
+  'customer_private.decision_card_real_allowed(uuid,uuid,uuid)',
   'customer_private.decision_card_resolve(uuid,uuid,uuid)',
   'customer_private.decision_card_summary(customer_private.decision_card)',
   'customer_private.decision_card_workspace(uuid,uuid)',
@@ -211,10 +213,12 @@ afterAll(async () => {
 
 describe('a fresh database', () => {
   test('the installer brings its prerequisites and applies its one file, recording the hash', () => {
-    // 0001 is the module; 0002 is removed member access (owner decision 11 Nov 2026), which replaces one reader.
+    // 0001 is the module; 0002 is removed member access (owner decision 11 Nov 2026), which replaces one reader;
+    // 0003 is decision cards for real workspaces (owner, 23 Nov 2026), which adds two private helpers.
     expect(freshApplied.map((row) => row.name)).toEqual([
       file,
       '0002_removed_member_decision_cards.sql',
+      '0003_real_workspace_decision_cards.sql',
     ]);
     expect(freshApplied[0]!.sha256).toBe(sha(readFileSync(`${directory}/${file}`, 'utf8')));
     for (const schema of [
@@ -241,13 +245,14 @@ describe('installing the decision card module on a populated environment', () =>
     expect(await report(f.owner)).toBe('customer_decision_card_migrations: not installed');
   });
 
-  test('the installer applies both files, records their hashes and reports two applied', async () => {
+  test('the installer applies its three files, records their hashes and reports three applied', async () => {
     await migrateCustomerDecisionCards(f.owner);
-    expect(await report(f.owner)).toBe('customer_decision_card_migrations: 2 applied');
+    expect(await report(f.owner)).toBe('customer_decision_card_migrations: 3 applied');
     const applied = await registry();
     expect(applied.map((row) => row.name)).toEqual([
       file,
       '0002_removed_member_decision_cards.sql',
+      '0003_real_workspace_decision_cards.sql',
     ]);
     expect(applied[0]!.sha256).toBe(sha(readFileSync(`${directory}/${file}`, 'utf8')));
   });

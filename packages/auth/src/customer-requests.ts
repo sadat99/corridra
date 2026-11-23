@@ -111,11 +111,36 @@ export class CustomerRequestService extends CustomerSessionBoundary {
           page.after ?? null,
           page.pageSize,
         ]);
-        return result.rows[0].result;
+        return this.withReferences(db, result.rows[0].result);
       },
       expectedSubject,
       expectedIssuer,
     );
+  }
+  // Adds the short reference (RQ-000001) to each listed request once the request reference module is installed.
+  // The list above has already decided which requests this person may see; the reference function decides again
+  // for itself and answers only for those. Before the module is installed the list is returned exactly as it was.
+  private async withReferences<T>(db: DatabaseClient, page: T): Promise<T> {
+    const listed = (page as { requests?: unknown } | null)?.requests;
+    if (!Array.isArray(listed)) return page;
+    const ids = listed
+      .map((item) => (item as { id?: unknown } | null)?.id)
+      .filter((value): value is string => typeof value === 'string');
+    if (ids.length === 0) return page;
+    const installed = await db.query(
+      "SELECT to_regprocedure('customer.request_references(uuid[])') IS NOT NULL AS installed",
+    );
+    if (installed.rows[0]?.installed !== true) return page;
+    const found: Record<string, unknown> =
+      (await db.query('SELECT customer.request_references($1::uuid[]) AS result', [ids])).rows[0]
+        ?.result ?? {};
+    return {
+      ...page,
+      requests: listed.map((item) => {
+        const reference = found[(item as { id?: string } | null)?.id ?? ''];
+        return typeof reference === 'string' ? { ...(item as object), reference } : item;
+      }),
+    };
   }
 
   async submit(
