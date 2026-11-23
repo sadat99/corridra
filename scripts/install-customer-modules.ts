@@ -45,6 +45,7 @@ import {
 } from '../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerAccountLifecycle } from '../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerProblemReports } from '../packages/db/src/customer-problem-report-migrate';
+import { migrateCustomerRequestReferences } from '../packages/db/src/customer-request-reference-migrate';
 import { migrateCustomerProgrammeErasure } from '../packages/db/src/customer-programme-erasure-migrate';
 import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-change-migrate';
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
@@ -420,6 +421,7 @@ const registries = [
   'customer_programme_projection_migrations',
   'customer_book_migrations',
   'customer_decision_card_migrations',
+  'customer_request_reference_migrations',
   'customer_service_request_migrations',
   'customer_billing_migrations',
   'customer_invoicing_migrations',
@@ -480,6 +482,10 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['decision cards', migrateCustomerDecisionCards],
   // Installing it changes nothing anyone can see: its own control starts closed. It must be in the base run so
   // mission mail 0003 and notifications 0005, installed later in the same run, find it. It needs no mail module.
+
+  // Short request references (RQ-000001): one side table, one trigger on new requests, one read function. It has
+  // no control and no switch, and needs only the customer authority module, which its installer brings.
+  ['request references', migrateCustomerRequestReferences],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);
