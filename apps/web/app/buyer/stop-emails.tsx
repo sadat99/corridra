@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { usePrivateCapability } from '../../components/private-capability';
+import { LinkStatus } from './link-status';
 
 const words = {
   ready:
@@ -31,11 +32,15 @@ export function StopEmails() {
     }
   }
   const message = !usable ? words.gone : words[state];
+  // UI/UX.v4.1 L8: a link that does not open is marked the same way as on the introduction page. No control is added.
+  const shut = !usable || state === 'gone';
   return (
-    <section className="detail-card buyer-card" aria-label="Stop these emails">
-      <p role="status" aria-live="polite">
-        {message}
-      </p>
+    <section
+      className="detail-card buyer-card"
+      aria-label="Stop these emails"
+      data-link-state={shut ? 'unavailable' : undefined}
+    >
+      <LinkStatus message={message} unavailable={shut} />
       {usable && state !== 'done' && state !== 'gone' && (
         <button className="primary-link" disabled={state === 'working'} onClick={stop}>
           Stop These Emails

@@ -1,0 +1,24 @@
+/* A private link that does not open (UI/UX.v4.1 L8): a caution edge on the card and a lock beside the line. Tokens
+   only. The words wrap beside the lock and are never cut. */
+.buyer-card[data-link-state='unavailable'] {
+  border-inline-start: 4px solid var(--caution);
+}
+.buyer-card .link-unavailable {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.buyer-card .link-unavailable .corridra-icon {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-block-start: 0.125em;
+}
+@media (forced-colors: active) {
+  .buyer-card[data-link-state='unavailable'] {
+    border-inline-start-color: CanvasText;
+  }
+}

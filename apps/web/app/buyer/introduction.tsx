@@ -13,6 +13,9 @@ import { ReplyJourney } from './reply-journey';
 import { parseReplyFragment } from '../../lib/reply-terms';
 import { replyHtmlLang, replyWords } from '../../lib/reply-words';
 import { linkGone } from '../delivery-view';
+import { Flagged } from '../../components/ux/flag';
+import { placeMark } from '../../lib/ux/place-mark';
+import { LinkStatus } from './link-status';
 type View = {
   capability?: string;
   role?: string;
@@ -259,13 +262,21 @@ function ScopedIntroduction({
         />
       </section>
     );
+  // UI/UX.v4.1 L8: the link does not open. Told from the one refusal line alone, so nothing about the introduction
+  // is read or shown; the card takes a caution edge, the line a lock, and the retry becomes the one primary action.
+  const unavailable = !data && message === gone;
   return (
-    <section className="detail-card buyer-card" aria-label="Private introduction">
-      <p role="status" aria-live="polite">
-        {message}
-      </p>
+    <section
+      className="detail-card buyer-card"
+      aria-label="Private introduction"
+      data-link-state={unavailable ? 'unavailable' : undefined}
+    >
+      <LinkStatus message={message} unavailable={unavailable} />
       {!data && message !== 'Loading your introduction…' && (
-        <button className="text-link" onClick={() => window.location.reload()}>
+        <button
+          className={unavailable ? 'primary-link' : 'text-link'}
+          onClick={() => window.location.reload()}
+        >
           Retry Private Introduction
         </button>
       )}
@@ -318,7 +329,7 @@ function ScopedIntroduction({
               <div key={label}>
                 <dt>{label}</dt>
                 <dd>
-                  {value}
+                  {label === 'Country' ? <Flagged code={placeMark(value)}>{value}</Flagged> : value}
                   {label === 'Evidence highlights' && (
                     <p className="evidence-label">
                       Operator-reported context. No independent verification is asserted.

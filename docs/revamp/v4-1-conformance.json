@@ -635,38 +635,47 @@
       "file": "apps/web/app/buyer/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
-        "L8": "not_started",
+        "L8": "built",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "docs/revamp/evidence/v41-c-2026-11-23/buyer-unavailable-after-320.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/buyer-unavailable-after-390.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/buyer-unavailable-after-768.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/buyer-unavailable-after-1024.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/buyer-unavailable-after-1440.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/buyer-unavailable-after-1920.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/buyer-stop-unavailable-after-390.jpg",
+        "tests/integration/v41-c-recipient-links.test.ts"
+      ],
+      "notes": "V4.1-C. L8: the card takes a caution edge, the shared refusal line (D-053, words unchanged) a lock, Retry Private Introduction is the one primary action and the existing help links stay; the stop page marks its link state the same way. L1: the Country row goes through Flagged with lib/ux/place-mark.ts (nine existing flags only). L2 and L3 n/a: the three answers act at once and each already has one icon beside its words; no job, goal or door choice here. L10 n/a: the page shows no fact with a dated source. Built, not verified: no axe or signed journey evidence in the row yet."
     },
     {
       "route": "/client",
       "file": "apps/web/app/client/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "not_started",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-C. L1 not started: the shared report body (app/mission-experience-view.tsx) writes a shortlist country without a mark; that file also serves staff screens and is outside this unit. L2 and L3 n/a: no choice rows. L10 n/a: the report keeps its existing source and claim labels, which are trust labels, not a source stamp. The meeting time now uses formatDateTime in the meeting time zone. The refusal line is unchanged."
     },
     {
       "route": "/coming-soon",
@@ -806,19 +815,19 @@
       "file": "apps/web/app/decision-card/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-C. Assessed, no change. L1 n/a: no place name is shown. L2 and L3 n/a: read only, nothing to choose. L10 n/a: the Source row is the existing provenance label (a trust label), not a source stamp. The unavailable state stays one line that leaks nothing."
     },
     {
       "route": "/delegations/[address]",
@@ -1015,19 +1024,19 @@
       "file": "apps/web/app/mute/[requestId]/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-C. Assessed, no change. L1 n/a: no place name. L2 and L3 n/a: one button, no choice. L10 n/a: no fact shown. Both refusals keep their words."
     },
     {
       "route": "/network",
@@ -1414,38 +1423,38 @@
       "file": "apps/web/app/programme/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "not_started",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-C. L1 not started: the shared report body (app/mission-experience-view.tsx) writes a shortlist country without a mark; that file also serves staff screens and is outside this unit. L2 and L3 n/a: no choice rows. L10 n/a: the report keeps its existing source and claim labels, which are trust labels, not a source stamp. The meeting time now uses formatDateTime in the meeting time zone. The refusal line is unchanged."
     },
     {
       "route": "/pulse/mute/[requestId]",
       "file": "apps/web/app/pulse/mute/[requestId]/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-C. Assessed, no change. L1 n/a: no place name. L2 and L3 n/a: one button, no choice. L10 n/a: no fact shown. Both refusals keep their words."
     },
     {
       "route": "/reset-password",
