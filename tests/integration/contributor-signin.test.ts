@@ -75,9 +75,10 @@ describe('the wording follows the helper return, the destination follows the clo
     const show = (returnTo: string) =>
       render(ce(AccessOptions, accessHelp.operatorSignIn(returnTo)));
     expect(show('/contributor')).toContain('href="/contributor/setup"');
-    expect(show('/contributor')).toContain('Set up invited contributor access');
+    expect(show('/contributor')).toContain('Set up invited helper access');
     expect(show('/contributor')).not.toContain('/operator/setup');
     expect(show('/operator')).toContain('href="/operator/setup"');
+    expect(show('/operator')).not.toContain('helper access');
     expect(show('/operator')).not.toContain('contributor access');
   });
 });

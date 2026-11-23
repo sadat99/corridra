@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatDateTime } from '../../lib/ux/format';
 import { PanelHeading } from './panel-heading';
 
 type Member = { user_id?: string; name?: string | null; role?: string; revoked_at?: string | null };
@@ -13,28 +14,78 @@ type AuditEvent = {
   actor_id?: string;
   correlation_id?: string;
 };
-function eventLabel(type: string | undefined) {
-  const labels: Record<string, string> = {
-    config_version: 'Workspace setting',
-    membership: 'Membership',
-    mission: 'Mission',
-    source: 'Source',
-    claim: 'Claim',
-    evidence: 'Evidence',
-    fact: 'Fact',
-    organisation: 'Company',
-  };
-  const actions: Record<string, string> = { insert: 'added', update: 'updated', delete: 'removed' };
-  const [record, action] = (type ?? '').split('.');
-  return labels[record] && actions[action]
-    ? `${labels[record]} ${actions[action]}`
+// Event kinds are "<record>.<insert|update|delete>" from the change triggers, or one exact name.
+// Every kind listed here was read from the migrations; anything else keeps the plain fallback.
+const eventRecords = new Map([
+  ['config_version', 'Workspace setting'],
+  ['membership', 'Membership'],
+  ['mission', 'Mission'],
+  ['source', 'Source'],
+  ['source_record', 'Source'],
+  ['claim', 'Claim'],
+  ['evidence', 'Evidence'],
+  ['evidence_object', 'Evidence'],
+  ['evidence_state', 'Evidence status'],
+  ['scan_report', 'File scan report'],
+  ['fact', 'Fact'],
+  ['canonical_fact', 'Fact'],
+  ['verification', 'Verification'],
+  ['relationship', 'Company relationship'],
+  ['opportunity', 'Opportunity'],
+  ['intake_destination', 'Request destination'],
+  ['organisation', 'Company'],
+  ['organisation_source', 'Company source'],
+  ['organisation_attribute', 'Company detail'],
+  ['private_contact_data', 'Private contact'],
+  ['private_note', 'Private note'],
+  ['private_contact_change', 'Private contact change'],
+  ['private_note_change', 'Private note change'],
+  ['private_record_redaction', 'Private record removal'],
+  ['entity_candidate', 'Possible duplicate'],
+  ['entity_resolution', 'Duplicate decision'],
+  ['target_account', 'Target company'],
+  ['target_contact', 'Target contact'],
+  ['match_assessment', 'Review for fit'],
+  ['assessment_claim', 'Review for fit claim'],
+  ['research_command', 'Research action'],
+  ['communication_policy', 'Message policy'],
+  ['communication_template', 'Message template'],
+  ['communication', 'Message'],
+  ['communication_command', 'Message action'],
+  ['communication_dispatch', 'Message send'],
+  ['communication_receipt', 'Message receipt'],
+  ['communication_attempt', 'Message attempt'],
+  ['communication_optout', 'Message opt-out'],
+  ['buyer_link', 'Buyer link'],
+  ['buyer_link_revocation', 'Buyer link withdrawal'],
+  ['buyer_response', 'Buyer reply'],
+  ['meeting', 'Meeting'],
+  ['meeting_participant', 'Meeting participant'],
+  ['meeting_brief', 'Meeting brief'],
+  ['meeting_outcome', 'Meeting outcome'],
+  ['meeting_command', 'Meeting action'],
+  ['follow_up', 'Follow-up'],
+]);
+const eventActions = new Map([
+  ['insert', 'added'],
+  ['update', 'updated'],
+  ['delete', 'removed'],
+]);
+// A staff member opened a read-only preview of another role's view (the role is in the event record).
+const eventNames = new Map([['view_as.open', 'Preview opened']]);
+export function eventLabel(type: string | undefined) {
+  const named = eventNames.get(type ?? '');
+  if (named) return named;
+  const parts = (type ?? '').split('.');
+  const record = eventRecords.get(parts[0] ?? '');
+  const action = eventActions.get(parts[1] ?? '');
+  return parts.length === 2 && record && action
+    ? `${record} ${action}`
     : 'Workspace change recorded';
 }
-function time(value: string | undefined) {
+export function auditTime(value: string | undefined) {
   if (!value || !Number.isFinite(Date.parse(value))) return 'Time unavailable';
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(value),
-  );
+  return formatDateTime(value);
 }
 export function WorkspaceAudit({
   members,
@@ -136,7 +187,7 @@ export function WorkspaceAudit({
                 <li key={event.id} data-event={event.id}>
                   <div className="ux-audit-event-heading">
                     <strong>{eventLabel(event.type)}</strong>
-                    <time dateTime={event.occurred_at}>{time(event.occurred_at)}</time>
+                    <time dateTime={event.occurred_at}>{auditTime(event.occurred_at)}</time>
                   </div>
                   <details>
                     <summary>Event references</summary>

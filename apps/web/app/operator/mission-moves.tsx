@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { formatDate } from '../../lib/ux/format';
 import { maxMoveObject, maxOpenMoves, moveHolders, moveVerbs } from '@corridra/domain/moves';
 
 // Set a Move (ADR-068): the one thing a person must do next, written by the Corridra team about one
@@ -252,7 +253,7 @@ export function MissionMoves({ tenant, missionId }: { tenant: string; missionId:
             {closed.map((row) => (
               <li key={row.id}>
                 {row.verb} {row.object} · {row.closed?.outcome === 'DONE' ? 'done' : 'cleared'}{' '}
-                {new Date(row.closed!.at).toLocaleDateString()}
+                {formatDate(row.closed!.at)}
               </li>
             ))}
           </ul>

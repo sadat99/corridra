@@ -391,9 +391,7 @@ export const accessHelp = {
       links: [
         {
           href: contributor ? '/contributor/setup' : '/operator/setup',
-          text: contributor
-            ? 'Set up invited contributor access'
-            : 'Set up invited operator access',
+          text: contributor ? 'Set up invited helper access' : 'Set up invited operator access',
         },
         { href: '/workspace', text: 'All workspaces and tools' },
         { href: '/signin', text: 'Customer account sign-in' },
@@ -412,7 +410,7 @@ export const accessHelp = {
     ],
   }),
   contributorSetup: {
-    label: 'Contributor setup help',
+    label: 'Helper setup help',
     links: [
       { href: '/account', text: 'Account and email verification' },
       { href: '/contributor', text: 'Assigned-task access help' },
