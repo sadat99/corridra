@@ -37,14 +37,23 @@ export function placeMark(code: string | null | undefined): PlaceMark {
  * One flag. By default it is decorative (the country name is written beside it, so a screen reader hears the name
  * once). Pass `named` only where the name is not written next to it; the picture then says "<country> flag".
  */
-export function Flag({ code, named = false }: { code: FlagCode; named?: boolean }) {
+export function Flag({
+  code,
+  named = false,
+  size,
+}: {
+  code: FlagCode;
+  named?: boolean;
+  /** UI/UX.v4.1 L1: `row` is the 40 px mark of a route row; left out, the flag is 22 px in the line of text. */
+  size?: 'row';
+}) {
   return (
     // eslint-disable-next-line @next/next/no-img-element -- a 30 by 20 static SVG; no optimiser is needed
     <img
-      className="ux-flag"
+      className={size === 'row' ? 'ux-flag is-row' : 'ux-flag'}
       src={`/flags/${code}.svg`}
-      width={22}
-      height={15}
+      width={size === 'row' ? 40 : 22}
+      height={size === 'row' ? 27 : 15}
       alt={named ? `${flagNames[code]} flag` : ''}
       aria-hidden={named ? undefined : true}
       data-flag={code}
@@ -57,19 +66,33 @@ export function Flag({ code, named = false }: { code: FlagCode; named?: boolean 
  * The neutral compass mark for a region of several countries. It implies no country. Decorative beside the region's
  * written name; with `named` it says "Region of several countries".
  */
-export function RegionMark({ named = false }: { named?: boolean }) {
+export function RegionMark({ named = false, size }: { named?: boolean; size?: 'row' }) {
+  const className = size === 'row' ? 'ux-region-mark is-row' : 'ux-region-mark';
   return named ? (
-    <span className="ux-region-mark" role="img" aria-label="Region of several countries" />
+    <span className={className} role="img" aria-label="Region of several countries" />
   ) : (
-    <span className="ux-region-mark" aria-hidden="true" />
+    <span className={className} aria-hidden="true" />
   );
 }
 
 /** A place name with its mark before it, kept on one line. */
-export function Flagged({ code, children }: { code: PlaceMark; children: React.ReactNode }) {
+export function Flagged({
+  code,
+  size,
+  children,
+}: {
+  code: PlaceMark;
+  /** UI/UX.v4.1 L1: `row` draws the 40 px mark of a route row. */
+  size?: 'row';
+  children: React.ReactNode;
+}) {
   return (
     <span className="ux-flagged">
-      {code === 'region' ? <RegionMark /> : code ? <Flag code={code} /> : null}
+      {code === 'region' ? (
+        <RegionMark size={size} />
+      ) : code ? (
+        <Flag code={code} size={size} />
+      ) : null}
       <span>{children}</span>
     </span>
   );
