@@ -269,3 +269,15 @@ test('v4.1 place rule: words files under lib and content are scanned', () => {
   assert.ok(scanned.includes('apps/web/content/corridors.ts'));
   assert.ok(!scanned.includes('apps/web/components/ux/flag.tsx'));
 });
+
+// V4.1-0 shared pieces, item 2: the open-directions card and the mark helper.
+test('v4.1 open-directions card says what is checked in plain words', () => {
+  const card = read(join(web, 'components/corridor.tsx'));
+  assert.ok(!/reviewed scope/i.test(card), 'say it in plain words, not "reviewed scope"');
+  assert.ok(card.includes('Each direction needs its own check of what we can do there.'));
+});
+
+test('v4.1 a country code gets its flag only when it is one of the nine', () => {
+  const code = read(join(web, 'components/ux/flag.tsx'));
+  assert.match(code, /export function placeMark\(code: string \| null \| undefined\): PlaceMark/);
+});
