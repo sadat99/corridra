@@ -7,7 +7,7 @@ import { countryCodes } from '@corridra/domain/countries';
 import { corridorPages, openNote } from '../content/corridors';
 import { Arrow } from './arrow';
 import { CorridorMap } from './corridor-map';
-import { Flagged, placeMark, type RoutePlace } from './ux/flag';
+import { Flag, Flagged, placeMark, type RoutePlace } from './ux/flag';
 import { WorldRouteMap } from './world-route-map';
 
 // Open destinations from Bangladesh, as equals (owner decision 17 November 2026, routes and markets). China and the EU
@@ -131,7 +131,7 @@ const situations = [
     key: 'enter',
     title: (
       <>
-        Enter <Flagged code="bd">Bangladesh</Flagged>
+        Enter <Flag code="bd" /> Bangladesh
       </>
     ),
     text: 'Find customers and partners without a local office.',
