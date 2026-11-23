@@ -60,16 +60,26 @@
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
-.ux-app-inbox {
+/* The notifications panel hangs from the header's end edge, under the header, and is never wider than the header:
+   when the header row wraps (a narrow window or large text) the inbox button can sit away from the row's end, and a
+   panel aligned to the button ran off the side of the window. The header is the frame, not the button. It is already
+   a positioned box where it is sticky; this is the fallback, at zero specificity so it can never override sticky. */
+:where(.ux-app-header) {
   position: relative;
+}
+.ux-app-inbox {
+  position: static;
 }
 .ux-app-popover {
   position: absolute;
-  inset-inline-end: 0;
+  inset-inline-end: var(--space-4);
   top: calc(100% + var(--space-2));
   z-index: 60;
-  width: min(24rem, calc(100vw - 2rem));
-  max-height: 70vh;
+  width: min(24rem, calc(100% - 2 * var(--space-4)));
+  /* Sized from the header's real bottom (100% is the header's own height), so the panel's foot stays inside the
+     window at any header height and text size. The list scrolls inside the panel. */
+  max-height: min(70vh, calc(100vh - 100% - var(--space-6)));
+  max-height: min(70vh, calc(100dvh - 100% - var(--space-6)));
   overflow: auto;
   padding: var(--space-4);
   background: var(--surface-1);

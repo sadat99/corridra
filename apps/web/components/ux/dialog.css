@@ -1,5 +1,7 @@
 /* The dialog: tokens only. A surface above a dimmed page; full width on a phone, a measured column on a desktop. */
 .ux-dialog {
+  /* Centred in the window: the base reset removes the browser's own margin, which is what centres a modal. */
+  margin: auto;
   width: min(32rem, calc(100vw - 2rem));
   max-height: calc(100dvh - 2rem);
   padding: 0;

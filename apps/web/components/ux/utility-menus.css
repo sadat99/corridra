@@ -1,10 +1,14 @@
 /* Navigation v1, the utility menus (UtilityMenus board): the notifications panel, the language menu, the help and
    accessibility menu and the avatar menu. Existing tokens only; every target is at least 44 px; focus is visible. */
+/* The panel takes the width of the box that holds it (the header's notifications popover) and never asks for more,
+   so it does not scroll sideways; a long word breaks, and the heading and Mark All Read wrap when the text is large. */
 .ux-notice-panel {
-  min-width: min(22rem, calc(100vw - 2rem));
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .ux-notice-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
