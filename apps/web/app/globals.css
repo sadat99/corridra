@@ -35,7 +35,6 @@
 }
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 32px;
 }
 body {
   margin: 0;
@@ -2196,7 +2195,7 @@ summary:hover {
   }
 }
 html {
-  scroll-padding-top: 104px;
+  scroll-padding-top: 6.5rem;
   text-rendering: optimizeLegibility;
 }
 /* Long words never push a public page wider than the window (W6-A). With Largest Text Size and 200 percent browser
