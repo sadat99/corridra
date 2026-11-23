@@ -1,0 +1,28 @@
+{
+  "placeNameOutsideFlagComponent": {
+    "apps/web/app/account/delegations/programme-context-editor.tsx": 2,
+    "apps/web/app/account/drafts/guided-request.tsx": 1,
+    "apps/web/app/layout.tsx": 2,
+    "apps/web/app/operator/delivery-experience.tsx": 1,
+    "apps/web/app/operator/missions.tsx": 3,
+    "apps/web/app/operator/review-settings.tsx": 3,
+    "apps/web/app/operator/view-as/[role]/page.tsx": 1,
+    "apps/web/app/operator/view-as/[role]/sample-screens.tsx": 3,
+    "apps/web/app/plan/intake.tsx": 15,
+    "apps/web/components/corridor-map.tsx": 1,
+    "apps/web/components/corridor.tsx": 4,
+    "apps/web/components/discovery-experience.tsx": 15,
+    "apps/web/components/world-route-map.tsx": 2
+  },
+  "gradientOrBlur": {
+    "apps/web/app/about/about.css": 2,
+    "apps/web/app/account/profile-picture.css": 1,
+    "apps/web/app/globals.css": 2,
+    "apps/web/app/plan/plan-v4.css": 1,
+    "apps/web/components/home-routes.css": 2,
+    "apps/web/components/site-header.css": 4,
+    "apps/web/components/ux/compare-grid.css": 2,
+    "apps/web/components/ux/door-card.css": 1,
+    "apps/web/components/ux/left-nav.css": 2
+  }
+}
