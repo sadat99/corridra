@@ -2,7 +2,8 @@
 // already reads the person's work list for its counts, and this asks for the same list through the same per-render
 // cache, so the page makes no extra read. It never throws and it answers only from the person's own list: off, an
 // unread list, a request beyond the pages read or a reference module that is not installed all give nothing.
-import { journeyModesOn, uxSwitchOn } from '../ux-switches';
+import { uxSwitchOn } from '../ux-switches';
+import { journeyModesOn } from '../ux/journey-modes-on';
 
 const shape = /^RQ-\d{1,12}$/;
 

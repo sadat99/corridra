@@ -5,7 +5,7 @@
 // Everything, when the journeys match, for an unsorted request, or while journey modes are off.
 import './journey-note.css';
 import { useRouter } from 'next/navigation';
-import { journeyModeWords, shouldOfferSwitch } from '../../lib/ux/journey-mode';
+import { journeyModeWords, shouldOfferSwitch, type JourneyOfMode } from '../../lib/ux/journey-mode';
 import type { WorkFamily } from '../../lib/work-items/types';
 import { rememberJourneyMode, useJourneyMode } from './journey-mode-context';
 
@@ -17,9 +17,13 @@ export function JourneyMismatchNote({
   /** A programme room says "This programme"; every other page says "This request". */
   subject?: 'request' | 'programme';
 }) {
-  const router = useRouter();
   const offer = shouldOfferSwitch(useJourneyMode(), family);
-  if (!offer) return null;
+  // Nothing to offer draws nothing and asks for nothing, so the page is exactly what it was.
+  return offer ? <Offer journey={offer} subject={subject} /> : null;
+}
+
+function Offer({ journey: offer, subject }: { journey: JourneyOfMode; subject: string }) {
+  const router = useRouter();
   const journey = journeyModeWords[offer];
   return (
     <p className="ux-journey-note" data-journey-mismatch={offer} lang="en">

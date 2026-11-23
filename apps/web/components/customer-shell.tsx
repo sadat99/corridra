@@ -4,7 +4,8 @@ import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
-import { journeyModesOn, uxSwitchOn } from '../lib/ux-switches';
+import { uxSwitchOn } from '../lib/ux-switches';
+import { journeyModesOn } from '../lib/ux/journey-modes-on';
 import type { JourneyMode } from '../lib/ux/journey-mode';
 import { JourneyModeProvider } from './ux/journey-mode-context';
 import { CustomerNav, type CustomerTab } from './customer-nav';
@@ -152,7 +153,9 @@ function CustomerFrame({
   // Home is Your Move only with both the navigation and the Move switches, exactly as the old list decided.
   const companies = customerCompaniesEnabled();
   const homeIsMove = plainNames && move;
-  const tabs = customerTabs({ companies, move: homeIsMove, journey: mode });
+  const tabs = mode
+    ? customerTabs({ companies, move: homeIsMove, journey: mode })
+    : customerTabs({ companies, move: homeIsMove });
   const here: CustomerTabKey | null =
     tab === 'home' || tab === 'move'
       ? 'home'

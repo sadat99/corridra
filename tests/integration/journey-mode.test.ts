@@ -17,7 +17,8 @@ import {
 } from '../../apps/web/lib/ux/journey-mode';
 import { requestsOutsideJourney } from '../../apps/web/lib/work-items/journey-scope';
 import { customerTabs } from '../../apps/web/lib/ux/customer-navigation';
-import { journeyModesOn, uxSwitchNames } from '../../apps/web/lib/ux-switches';
+import { uxSwitchNames } from '../../apps/web/lib/ux-switches';
+import { journeyModesOn } from '../../apps/web/lib/ux/journey-modes-on';
 
 // Journey modes (docs/revamp/specs/journey-modes.md, owner approved 23 Nov 2026). The pure model: one cookie with a
 // closed list of values, one resolution order, one function that says where a switch lands, and the sidebar's
@@ -251,7 +252,7 @@ describe('journey mode: Reports in a journey', () => {
     const page = web('app/account/page.tsx');
     // Only on Reports and only while a journey is chosen; Everything and switch off ask for nothing.
     expect(page).toMatch(
-      /view === 'results' && scoped \? await readRequestsOutsideJourney\(scoped\) : undefined/,
+      /scoped && view === reportsView\s*\? await readRequestsOutsideJourney\(scoped\)\s*: undefined/,
     );
   });
 

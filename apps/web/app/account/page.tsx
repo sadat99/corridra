@@ -66,6 +66,8 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 const views = ['home', 'work', 'results', 'more'] as const;
+/** The Reports view, named once for the journey scope below. */
+const reportsView = views[2];
 type View = (typeof views)[number];
 const headings: Record<View, { eyebrow: string; title: string }> = {
   home: { eyebrow: 'HOME', title: 'What would you like to do?' },
@@ -163,7 +165,7 @@ export default async function Page({
   // Reports in a journey: the requests the shared work list places in another journey. Their delivered reports are
   // left out; a list with no request id (saved, shared, members') stays whole and says it is not sorted.
   const outside =
-    view === 'results' && scoped ? await readRequestsOutsideJourney(scoped) : undefined;
+    scoped && view === reportsView ? await readRequestsOutsideJourney(scoped) : undefined;
   const journeyName = scoped ? journeyModeWords[scoped] : undefined;
   return (
     <CustomerShell

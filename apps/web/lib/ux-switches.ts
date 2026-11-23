@@ -72,15 +72,6 @@ export function uxSwitchOn(name: UxSwitchName, env: NodeJS.ProcessEnv = process.
   return env[name] === 'true';
 }
 
-/** Journey modes act only with the signed-in frame and Your Move (the journey pages) also on. */
-export function journeyModesOn(env: NodeJS.ProcessEnv = process.env): boolean {
-  return (
-    uxSwitchOn('CORRIDRA_UX_JOURNEY_MODES', env) &&
-    uxSwitchOn('CORRIDRA_UX_SHELLS_V2', env) &&
-    uxSwitchOn('CORRIDRA_UX_MOVE', env)
-  );
-}
-
 /**
  * Whether sign-in keeps the short list of email destinations (ADR-067): while Pulse is on, or while the
  * emailed status link is on, so a link in an email brings the person back to the page it named.

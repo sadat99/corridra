@@ -1,7 +1,7 @@
 // Server side of journey modes: the one place the mode cookie is read. It never writes (the browser writes the
 // cookie) and never throws: with the switch off, or a cookie that cannot be read, there is no mode or Everything.
 import { cookies } from 'next/headers';
-import { journeyModesOn } from '../ux-switches';
+import { journeyModesOn } from './journey-modes-on';
 import {
   journeyModeCookie,
   parseJourneyMode,

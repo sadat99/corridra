@@ -215,14 +215,15 @@ export function MoveView({
   // Journey modes: the cookie is the one source of truth. The page was given the journey the server read from it, so
   // this browser's older memory is not consulted, and every choice here is written to the cookie as well.
   const modes = useJourneyMode() !== null;
-  const remembered = useSyncExternalStore(
+  const stored = useSyncExternalStore(
     subscribeJourney,
     () => journeySnapshot(memoryKey),
     () => null,
   );
+  const remembered = modes ? null : stored;
   const journey: Journey | null =
     asked ??
-    (!modes && present.length > 1 && isJourney(remembered) && present.includes(remembered)
+    (present.length > 1 && isJourney(remembered) && present.includes(remembered)
       ? remembered
       : null);
   const remember = (value: Journey | 'all') => {

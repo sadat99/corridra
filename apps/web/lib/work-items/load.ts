@@ -11,7 +11,7 @@ import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { foundations } from '../foundations';
-import { journeyModesOn } from '../ux-switches';
+import { journeyModesOn } from '../ux/journey-modes-on';
 import { movePageCap, moveWorkspaceCap } from '../move-constants';
 import { followPages } from '../move-pages';
 import { requestTitle } from '../../app/account/request-words';
