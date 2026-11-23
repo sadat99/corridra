@@ -28,24 +28,116 @@ function walk(dir, keep, out = []) {
 const isTest = (p) => /\.(test|spec)\.[cm]?[jt]sx?$/.test(p);
 const tsx = walk(web, (p) => p.endsWith('.tsx') && !isTest(p));
 const css = walk(web, (p) => p.endsWith('.css'));
-// Old rule: components only.
-const placeFiles = tsx.filter((p) => rel(p) !== 'apps/web/components/ux/flag.tsx');
+// Where place names are written: every component, and the words and copy files under lib and content.
+const placeFiles = [
+  ...tsx,
+  ...walk(join(web, 'lib'), (p) => p.endsWith('.ts') && !isTest(p)),
+  ...walk(join(web, 'content'), (p) => p.endsWith('.ts') && !isTest(p)),
+]
+  .filter((p) => rel(p) !== 'apps/web/components/ux/flag.tsx')
+  .sort();
 
-// Rule: a place name written in a component that does not use the shared flag component. The nine places the
-// flag policy covers, plus the EU, UK and US short forms. Prose that must stay unmarked carries `v4.1-prose` on its line.
+// Rule: a place name is written through the shared flag component. The nine places the flag policy covers, plus the
+// EU, UK and US short forms. Counted line by line, in every component and in the words files under lib and content.
+// A line counts when a place name is left on it after taking away:
+// 1. comments;
+// 2. what sits inside a `Flagged` element, or an object, key or prop that passes a mark (`mark: 'bd'`, `Spain: 'es'`);
+// 3. locale tags such as en-US, and component or function names;
+// 4. a bare 'EU', 'UK' or 'US' string, which is a country code in code, unless a display key (label, title, name,
+//    text and the like) holds it.
+// A line that draws a `Flag`, `RegionMark` or `RouteLine` itself is fine. `v4.1-prose` on a line still skips it, and
+// is not owner-approved for new uses.
+// Limits: it cannot tell that the mark is the right one for the name, and a bare 'EU' string shown through a key
+// that is not a display key is not seen. Text that cannot hold markup (option text, aria-label, SVG text, values
+// sent to the server) stays counted in the baseline as known debt.
 const PLACE =
   /\b(China|Bangladesh|Australia|United Kingdom|United States|European Union|Spain|France|Italy|EU|UK|US)\b/;
+const MARK = `['"](?:bd|cn|eu|gb|us|au|es|fr|it|region)['"]`;
+const FLAGGED_ELEMENT = /<Flagged\b[^>]*>.*?<\/Flagged>/g;
+const MARK_OBJECT = new RegExp(`\\{[^{}]*\\bmark\\s*:\\s*${MARK}[^{}]*\\}`, 'g');
+const MARK_PROP = new RegExp(`\\bmark=\\{?${MARK}`);
+const DRAWS_MARK = /<(?:Flag|RegionMark|RouteLine)\b/;
+const CODE_STRING = /(['"])(?:EU|UK|US)\1/g;
+const DISPLAY_KEY =
+  /(?:\b(?:label|title|name|text|heading|alt|placeholder|description)|aria-label)\s*[:=]\s*\{?\s*$/;
+const LOCALE_TAG = /\b[a-z]{2,3}-(?:US|UK|EU)\b/g;
+// A name used as a key that gives its mark (`Spain: 'es'`), and a component or function that is named after a place.
+const MARK_KEY = new RegExp(`(?:\\b\\w+|'[^']*'|"[^"]*")\\s*:\\s*${MARK}`, 'g');
+const CODE_NAME = /<\/?[A-Z]\w*|\bfunction\s+[A-Z]\w*/g;
+
+/** The source with every comment blanked out. Line breaks stay, so line numbers still match. */
+function withoutComments(src) {
+  let out = '';
+  let state = 'code';
+  for (let i = 0; i < src.length; i += 1) {
+    const c = src[i];
+    const two = src.slice(i, i + 2);
+    if (state === 'line') {
+      if (c === '\n') state = 'code';
+      out += c === '\n' ? c : ' ';
+    } else if (state === 'block') {
+      if (two === '*/') {
+        state = 'code';
+        out += '  ';
+        i += 1;
+      } else out += c === '\n' ? c : ' ';
+    } else if (state === 'code') {
+      if (two === '/*') {
+        state = 'block';
+        out += '  ';
+        i += 1;
+      } else if (two === '//' && src[i - 1] !== ':') {
+        state = 'line';
+        out += '  ';
+        i += 1;
+      } else {
+        if (c === "'" || c === '"' || c === '`') state = c;
+        out += c;
+      }
+    } else {
+      // Inside a string. A quoted string ends at its quote or at the line end; a template string at its backtick.
+      if (c === '\\' && i + 1 < src.length && src[i + 1] !== '\n') {
+        out += two;
+        i += 1;
+      } else {
+        if (c === state || (c === '\n' && state !== '`')) state = 'code';
+        out += c;
+      }
+    }
+  }
+  return out;
+}
+
 /** The 1-based numbers of the lines of one source file that write a place name outside the flag component. */
 function placeNameLines(src) {
-  if (/ux\/flag['"]|from '\.\/flag'/.test(src)) return [];
+  const raw = src.split('\n');
   const out = [];
-  src.split('\n').forEach((line, i) => {
-    const t = line.trim();
-    if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*') || t.startsWith('import '))
-      return;
-    if (line.includes('v4.1-prose')) return;
-    if (PLACE.test(line) && (/['"`]/.test(line) || line.includes('>'))) out.push(i + 1);
-  });
+  let open = 0; // `Flagged` elements opened on an earlier line and not yet closed
+  withoutComments(src)
+    .split('\n')
+    .forEach((line, i) => {
+      let rest = line.replace(FLAGGED_ELEMENT, '').replace(MARK_OBJECT, '');
+      if (open > 0) {
+        const close = rest.indexOf('</Flagged>');
+        rest = close < 0 ? '' : rest.slice(close + '</Flagged>'.length);
+        if (close >= 0) open -= 1;
+      }
+      const opens = rest.search(/<Flagged\b/);
+      if (opens >= 0) {
+        rest = rest.slice(0, opens);
+        open += 1;
+      }
+      if (raw[i].includes('v4.1-prose') || line.trim().startsWith('import ')) return;
+      if (DRAWS_MARK.test(rest) || MARK_PROP.test(rest)) return;
+      rest = rest
+        .replace(MARK_KEY, '')
+        .replace(CODE_NAME, '')
+        .replace(LOCALE_TAG, '')
+        .replace(CODE_STRING, (found, quote, at, whole) =>
+          DISPLAY_KEY.test(whole.slice(0, at)) ? found : '',
+        );
+      if (PLACE.test(rest)) out.push(i + 1);
+    });
   return out;
 }
 function placeNameCounts() {
@@ -164,6 +256,9 @@ test('v4.1 place rule: comments, locale tags and country codes in code are not p
     "const url = 'https://example.test/a'; // to China",
     "const shown = { label: 'EU' };",
     "const wrong = { name: 'China', mark: null };",
+    '{shown ? <China /> : null}',
+    'function China() {',
+    "const marks = { Spain: 'es', 'United Kingdom': 'gb' };",
   ];
   assert.deepEqual(lines(src), [8, 9]);
 });
