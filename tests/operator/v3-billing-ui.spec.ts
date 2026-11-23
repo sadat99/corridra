@@ -271,9 +271,7 @@ test('the page shows the held plan, what it includes, the plans on offer and say
     page.getByRole('heading', { name: 'Organiser monthly (sample plan)' }).first(),
   ).toBeVisible();
   await expect(page.getByText('Active', { exact: true }).first()).toBeVisible();
-  await expect(
-    page.getByText('Current period: 23 October 2026 until 23 November 2026.'),
-  ).toBeVisible();
+  await expect(page.getByText('Current period: 23 Oct 2026 until 23 Nov 2026.')).toBeVisible();
   await expect(
     page.getByText(/Nothing is charged, no invoice is made and no payment is taken/),
   ).toBeVisible();
@@ -383,7 +381,7 @@ test('cancel, keep and withdraw each ask first and send the exact change', async
   await page.goto(origin + '/');
   await page.getByRole('button', { name: 'Cancel at the end of the period' }).click();
   const cancel = page.getByRole('form', { name: 'Cancel' });
-  await expect(cancel.getByText(/The plan stays until 23 November 2026/)).toBeVisible();
+  await expect(cancel.getByText(/The plan stays until 23 Nov 2026/)).toBeVisible();
   await cancel.getByRole('button', { name: 'Confirm cancellation' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(Object.keys(posts[0]!).sort()).toEqual([
