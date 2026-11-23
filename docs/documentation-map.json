@@ -1724,6 +1724,11 @@
       "use": "Map of the 18 staff section ids into the locked team navigation with unchanged roles, tests S-01 to S-05"
     },
     {
+      "path": "docs/revamp/specs/ui-ux-v4-1.md",
+      "classification": "Current guide/contract",
+      "use": "UI/UX.v4.1 instant-meaning amendment of 23 Nov 2026: ten locked design decisions (flag or compass mark before place names, one owned icon per choice, chosen state), the not-locked list and evidence; design lock only, not built"
+    },
+    {
       "path": "docs/revamp/CONTRACT.md",
       "classification": "Current guide/contract",
       "use": "Owner's V3 controlled revamp execution contract of 4 Nov 2026, byte for byte (sha256 93230e4b...d4ea); never edit, amend forward in docs/revamp/README.md"
