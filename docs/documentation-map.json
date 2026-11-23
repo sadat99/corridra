@@ -1604,6 +1604,11 @@
       "use": "Exact hashed ledger at e39f437 (main after PR 591), before the 21 Nov records for PRs 585 to 591 and the ADR-089 acceptance; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-pr593-records-2026-11-23.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 9e91cf7 (main after PR 593), before the 23 Nov records for PR 593 (Connect AI PR 2) and the first-hand ADR-089 acceptance; use the current ledger for live state."
+    },
+    {
       "path": "docs/v3/history/ledger-before-w1-records-2026-11-19.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger at 626d2f8 (the PR 571 merge), before the 19 Nov W1 records recorded merges 560 to 571, the 19 Nov verification and the PR 573 diagnosis; preserves the Guardian 28 Main bullet and the 547 to 559 merge list; use the current ledger for live state."
