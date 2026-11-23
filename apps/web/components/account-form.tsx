@@ -34,11 +34,13 @@ function detail(error: unknown) {
 // The identity client replaces the provider's error code with its own and keeps the status, so the status is
 // what is read: this application's proxy answers 429 for too many tries and 409 when the code was right but
 // no account uses the address (codes never create accounts).
+// Shown only after a correct code, so it tells nothing to a person who cannot read that mailbox. The form
+// adds the link to the sign-up page after it.
+const noAccountYet = 'No account uses this address yet.';
 function codeSignInFailure(failure: { status?: number; code: string }) {
   if (failure.code === 'TOO_MANY_ATTEMPTS' || failure.status === 429)
     return 'Too many tries. Ask for a new code.';
-  if (failure.code === 'ACCOUNT_REQUIRED' || failure.status === 409)
-    return 'No account uses this address yet. Create an account first, then sign in.';
+  if (failure.code === 'ACCOUNT_REQUIRED' || failure.status === 409) return noAccountYet;
   if (
     failure.code === 'INVALID_OTP' ||
     failure.code === 'OTP_EXPIRED' ||
@@ -392,6 +394,14 @@ export function AccountForm({
             <CorridraIcon name="close" className="access-error-icon" />
           )}
           {message}
+          {failed && message === noAccountYet && (
+            <>
+              {' '}
+              <Link prefetch={false} href={accessPath('/signup')}>
+                Create an account to continue.
+              </Link>
+            </>
+          )}
         </p>
       )}
       {!(sent && ['forgot', 'reset'].includes(mode)) && (

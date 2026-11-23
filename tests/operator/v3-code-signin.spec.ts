@@ -255,7 +255,7 @@ test('a failed code sign-in says what really happened', async ({ page }) => {
       [{ status: 429, body: {} }, 'Too many tries. Ask for a new code.'],
       [
         { status: 409, body: { code: 'ACCOUNT_REQUIRED', error: 'Account required' } },
-        'No account uses this address yet. Create an account first, then sign in.',
+        'No account uses this address yet. Create an account to continue.',
       ],
     ];
     for (const [next, words] of cases) {
@@ -265,9 +265,15 @@ test('a failed code sign-in says what really happened', async ({ page }) => {
       await expect(code).toHaveValue('123456');
       await expect(page).toHaveURL(/\/signin\?/);
     }
-    // The way to an account is on the same form.
-    await form.getByText('More ways in').click();
-    await expect(form.getByRole('link', { name: 'Create an Account', exact: true })).toBeVisible();
+    // The last case leaves the no-account sentence on screen: it links to the sign-up page and keeps the return target.
+    await expect(
+      form.getByRole('alert').getByRole('link', { name: 'Create an account to continue.' }),
+    ).toHaveAttribute('href', '/signup?returnTo=%2Fplan');
+    // A wrong code never shows that link.
+    reply = { status: 400, body: { code: 'INVALID_OTP', message: 'Invalid OTP' } };
+    await form.getByRole('button', { name: 'Sign In', exact: true }).click();
+    await expect(form.getByRole('alert')).toHaveText(wrong);
+    await expect(form.getByRole('alert').getByRole('link')).toHaveCount(0);
   } finally {
     server.kill('SIGTERM');
   }
