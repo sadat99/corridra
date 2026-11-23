@@ -128,7 +128,7 @@ test('in test mode an address on the test list gets one marked message with both
     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
   });
   expect(body.text).toContain(
-    `https://app.business.test/buyer/unsubscribe#${unsubscribeToken(secret, id)}`,
+    `https://app.business.test/buyer?stop=1#${unsubscribeToken(secret, id)}`,
   );
   expect(body.text).toContain('https://app.business.test/buyer#');
   expect(body.text).not.toContain('—');

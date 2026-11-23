@@ -64,7 +64,7 @@ A real introduction carries a recorded basis (consent, legitimate interest, exis
 
 ### Opt-out and suppression
 
-- Every real message carries a visible opt-out link and the headers `List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
+- Every real message carries a visible opt-out link (`/buyer?stop=1` with its own private token) and the headers `List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
 - The opt-out link has its own token, which opens nothing else. Opening the page changes nothing; only the button or the mail provider's one-click POST records the opt-out. It works with every switch off, after the message has expired, and can be repeated.
 - Suppression is by a hash of the address and applies to every workspace. An address is suppressed by an opt-out link, a hard bounce, a complaint, or an opt-out recorded in any real workspace. Suppression is checked when a message is created, queued, claimed and delivered, and when its page is read.
 

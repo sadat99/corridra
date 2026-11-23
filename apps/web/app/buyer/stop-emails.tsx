@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { usePrivateCapability } from '../../../components/private-capability';
-import { linkGone } from '../../delivery-view';
+import { usePrivateCapability } from '../../components/private-capability';
+import { linkGone } from '../delivery-view';
 
 const words = {
   ready:

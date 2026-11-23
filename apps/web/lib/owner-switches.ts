@@ -560,6 +560,20 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'setting',
   },
   {
+    name: 'CORRIDRA_REAL_OUTREACH_DAILY_WORKSPACE_LIMIT',
+    label: 'Real outreach daily limit per workspace',
+    line: 'The most real introductions one workspace may send in a day. Not set means 20. The database never allows more than 200.',
+    group: 'Delivery',
+    kind: 'setting',
+  },
+  {
+    name: 'CORRIDRA_REAL_OUTREACH_DAILY_GLOBAL_LIMIT',
+    label: 'Real outreach daily limit for all workspaces',
+    line: 'The most real introductions all workspaces together may send in a day. Not set means 100. The database never allows more than 1000.',
+    group: 'Delivery',
+    kind: 'setting',
+  },
+  {
     name: 'REAL_OUTREACH_MAIL_FROM',
     label: 'Real outreach sender address',
     line: 'The verified address real introductions are sent from. The value is never shown.',

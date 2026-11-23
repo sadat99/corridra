@@ -187,7 +187,7 @@ export class RealEmailChannel {
         payload,
         {
           reply: `${config.origin}/buyer#${replyToken(this.secret, effect.id)}`,
-          optOut: `${config.origin}/buyer/unsubscribe#${token}`,
+          optOut: `${config.origin}/buyer?stop=1#${token}`,
         },
         !live,
       );
