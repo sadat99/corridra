@@ -66,9 +66,9 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
               <dd>{c.available}</dd>
               <dt data-tone="info">What happens</dt>
               <dd>
-                Send a request and follow it in your account. Our team reviews it and agrees the
-                scope and a written quote with you. Only then does our team start the research and
-                meeting planning.
+                Send a request and follow it in your account. Our team reviews it and agrees what
+                the work covers and a written quote with you. Only then does our team start the
+                research and meeting planning.
               </dd>
               <dt data-tone="unknown">Not offered</dt>
               <dd>
@@ -87,8 +87,8 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
       </section>
       <section className="guide-note">
         <p>
-          We check each company against the scope you agree. We do not claim a supplier network or
-          certification. We do not guarantee buyers.
+          We check each company against what the work covers, as agreed with you. We do not claim a
+          supplier network or certification. We do not guarantee buyers.
         </p>
         <Link prefetch={false} href="/trust" className="text-link">
           How We Label Facts
