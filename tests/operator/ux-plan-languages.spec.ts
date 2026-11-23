@@ -118,6 +118,9 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
+    // The plan summary draws flags (UI/UX.v4.1 L1). Files under public/ are served by Next at the site root, so
+    // the fixture leaves the flag addresses as they are instead of bundling them.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',

@@ -10,6 +10,7 @@ import { PlanJobFold } from './plan-job-fold';
 import { PlanProgress } from './plan-progress';
 import { objectiveForJob, selectedPicture, pictures } from '../../lib/first-question';
 import { FirstQuestion } from '../../components/mr/first-question';
+import { Flagged, placeMark } from '../../components/ux/flag';
 import { rememberVerifyEmail } from '../../components/verify-email-handoff';
 import { fill } from '../../lib/i18n/fill';
 import { formEn, type FormKey } from '../../lib/i18n/form-words/en';
@@ -1939,19 +1940,29 @@ function IntakeForm({
                 <div>
                   <dt>{say('form.side.country')}</dt>
                   <dd>
-                    {countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
-                      ? regionNames.of(draft.companyCountry)
-                      : say('form.side.notChosen')}
+                    {countryCodes.includes(
+                      draft.companyCountry as (typeof countryCodes)[number],
+                    ) ? (
+                      <Flagged code={placeMark(draft.companyCountry)}>
+                        {regionNames.of(draft.companyCountry)}
+                      </Flagged>
+                    ) : (
+                      say('form.side.notChosen')
+                    )}
                   </dd>
                 </div>
                 <div>
                   <dt>{say('form.side.market')}</dt>
                   <dd>
-                    {draft.marketCode === 'EU'
-                      ? say('form.where.eu')
-                      : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
-                        ? regionNames.of(draft.marketCode)
-                        : say('form.side.notChosen')}
+                    {draft.marketCode === 'EU' ? (
+                      <Flagged code="eu">{say('form.where.eu')}</Flagged>
+                    ) : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number]) ? (
+                      <Flagged code={placeMark(draft.marketCode)}>
+                        {regionNames.of(draft.marketCode)}
+                      </Flagged>
+                    ) : (
+                      say('form.side.notChosen')
+                    )}
                   </dd>
                 </div>
                 {/* The budget row shows only once a budget is given; most jobs never ask for one (CQ-49). */}
