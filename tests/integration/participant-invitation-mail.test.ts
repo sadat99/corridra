@@ -58,18 +58,17 @@ test('the email names the programme and the organiser and gives the expiry in Dh
   }
   expect(message.subject).toBe('You are invited to Guangzhou Sourcing Week');
 });
-test('a changed message gets its own provider retry key, so a resend after a rename is not refused as a replay', async () => {
+test('the provider retry key is one per invitation, with or without the programme details, so a retry never sends a second mail', async () => {
   const facts = { programme: 'Guangzhou Sourcing Week', organiser: 'Meghna Textiles' };
-  await notifyParticipantInvitation({ ...input, ...facts });
+  await notifyParticipantInvitation(input);
   await notifyParticipantInvitation({ ...input, ...facts });
   await notifyParticipantInvitation({ ...input, ...facts, programme: 'Foshan Sourcing Week' });
   const keys = state.send.mock.calls.map((call) => call[0].idempotencyKey);
-  expect(keys[0]).toBe(keys[1]);
-  expect(keys[2]).not.toBe(keys[0]);
-  for (const key of keys) {
-    expect(key).not.toContain(input.token);
-    expect(key).not.toContain('Sourcing');
-  }
+  expect(keys).toHaveLength(3);
+  expect(new Set(keys).size).toBe(1);
+  expect(keys[0]).toBe('notify:PARTICIPANT_INVITE:participant-invitation:' + input.id);
+  expect(keys[0]).not.toContain(input.token);
+  expect(keys[0]).not.toContain('Sourcing');
 });
 test('closed notifications or unavailable mail settings make no provider request', async () => {
   vi.stubEnv('CORRIDRA_NOTIFICATIONS_V2', 'false');
