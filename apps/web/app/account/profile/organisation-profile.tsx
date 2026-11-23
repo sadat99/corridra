@@ -90,12 +90,7 @@ export function ProfileReview({ draft, onEdit }: { draft: Draft; onEdit: (step: 
     <section className="profile-review" aria-label="What you entered">
       {groups.map(([name, facts], n) => (
         <div key={name} className="profile-review-group">
-          <div className="profile-review-head">
-            <h3>{name}</h3>
-            <button type="button" className="text-link" onClick={() => onEdit(n)}>
-              Edit {name}
-            </button>
-          </div>
+          <h3>{name}</h3>
           <dl className="profile-review-facts">
             {facts.map(([label, value]) => (
               <div key={label}>
@@ -104,6 +99,9 @@ export function ProfileReview({ draft, onEdit }: { draft: Draft; onEdit: (step: 
               </div>
             ))}
           </dl>
+          <button type="button" className="text-link" onClick={() => onEdit(n)}>
+            Edit {name}
+          </button>
         </div>
       ))}
     </section>
