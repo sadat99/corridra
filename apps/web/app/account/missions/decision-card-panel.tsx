@@ -46,28 +46,19 @@ export const decisionCardStateWords: Record<CardSummary['state'], string> = {
   UNAVAILABLE: 'Not available',
 };
 
-/** What the owner sees. `real` is a report from a real workspace; cards exist for sample workspaces only. */
+/** What the owner sees. A report from a real workspace and one from a sample workspace are offered the same way. */
 export function DecisionCardPanelView({
   panel,
   decisions = [],
   handlers = {},
-  real = false,
   memberAccess = false,
 }: {
   panel?: Panel;
   decisions?: Decision[];
   handlers?: Handlers;
-  real?: boolean;
   /** Member access is on (ADR-087 U5): the label names the workspace's owners and admins. */
   memberAccess?: boolean;
 }) {
-  if (real)
-    return (
-      <section className="decision-card-owner" aria-label="Share a decision">
-        <h3>Share a decision</h3>
-        <p>Decision cards are available for sample workspaces only.</p>
-      </section>
-    );
   // Absent, never disabled: until the service says this person can share, nothing is drawn.
   if (!panel || panel.phase !== 'ready') return null;
   const preview = panel.preview;
@@ -227,13 +218,13 @@ export function DecisionCardPanel({
   subject,
   issuer,
   decisions,
-  synthetic,
   memberAccess = false,
 }: {
   resourceId: string;
   subject: string;
   issuer: string;
   decisions: Decision[];
+  /** The kind of workspace. Not used to decide anything here: the service says whether this person can share. */
   synthetic: boolean;
   memberAccess?: boolean;
 }) {
@@ -243,7 +234,6 @@ export function DecisionCardPanel({
   const controller = useRef<AbortController | null>(null);
   const scope = { subject, issuer };
   useEffect(() => {
-    if (!synthetic) return;
     const task = new AbortController();
     controller.current = task;
     send(requestBodies({ resourceId, commandId: '' }).state(), scope, task.signal)
@@ -272,7 +262,7 @@ export function DecisionCardPanel({
       window.removeEventListener('pagehide', hide);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resourceId, subject, issuer, synthetic]);
+  }, [resourceId, subject, issuer]);
 
   async function run(work: (signal: AbortSignal) => Promise<void>) {
     const task = controller.current ?? new AbortController();
@@ -337,7 +327,6 @@ export function DecisionCardPanel({
         panel={panel}
         decisions={decisions}
         handlers={handlers}
-        real={!synthetic}
         memberAccess={memberAccess}
       />
       <Dialog

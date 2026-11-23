@@ -25,6 +25,10 @@ const classification: Record<string, string> = {
   'customer.my_request_withdrawals': 'own',
   'customer.private_request_moves': 'revoked only',
   'customer.private_requests': 'flags withdrawn',
+  // The short reference (RQ-000001) of the caller's own requests (request references 0001; owner, 23 Nov 2026). A
+  // revoked request has no reference to read; a withdrawn request keeps its reference, as it keeps its place in the
+  // owner's list, because a withdrawal hides nothing the owner owns.
+  'customer.request_references': 'revoked only',
   'customer.programme_mission_choices': 'revoked only',
   'customer.restore_request': 'own',
   'customer.set_mission_mail_mute': 'own',

@@ -240,16 +240,21 @@ describe('D-07 every refusal has its exact words', () => {
   ])('%s %s', (status, reason, words) => {
     expect(failureWords(status, reason)).toBe(words);
   });
-  it('says plainly when the report is from a real workspace, and never guesses otherwise', async () => {
+  // Owner, 23 Nov 2026: "decision cards for real". A real workspace is offered decision cards like a sample one, so
+  // the old line that said cards were for sample workspaces only is gone.
+  it('never says cards are for sample workspaces only, and never guesses otherwise', async () => {
     const { DecisionCardPanelView } = await loadWeb('app/account/missions/decision-card-panel');
-    const real = render(ce(DecisionCardPanelView, { real: true }));
-    expect(real).toContain('Decision cards are available for sample workspaces only.');
+    // Absent, never disabled: with no state from the service nothing is drawn, whatever the workspace.
+    expect(render(ce(DecisionCardPanelView, {}))).toBe('');
+    expect(
+      readFileSync('apps/web/app/account/missions/decision-card-panel.tsx', 'utf8'),
+    ).not.toMatch(/sample workspaces only|synthetic workspaces only/i);
     expect(failureWords(403, undefined)).toBe('You cannot share from this report.');
     expect(failureWords(500, undefined)).toBe('Something went wrong. Try again.');
   });
-  it('D-07 real workspace: only the plain line, with no control, link, count or preview', async () => {
+  it('D-07 real workspace: the same panel as a sample workspace, with its controls, cards and preview', async () => {
     const { DecisionCardPanelView } = await loadWeb('app/account/missions/decision-card-panel');
-    // Even a panel that is otherwise ready, with cards and a link, shows nothing but the line.
+    // A panel that is ready, with cards and a preview, is drawn in full: the workspace kind changes nothing.
     let p = panelReducer(initialPanel, {
       type: 'stateLoaded',
       canShare: true,
@@ -268,12 +273,15 @@ describe('D-07 every refusal has its exact words', () => {
     });
     p = panelReducer(p, { type: 'choose', decisionId });
     p = panelReducer(p, { type: 'previewLoaded', preview });
-    const html = render(
-      ce(DecisionCardPanelView, { panel: p, decisions, handlers: {}, real: true }),
-    );
-    expect(html).toContain('Decision cards are available for sample workspaces only.');
-    expect(html).not.toMatch(/<(button|input|dl|ul|a )\b/);
-    expect(html).not.toMatch(/Preview|Create link|Withdraw|opens|decision-card#/);
+    const html = render(ce(DecisionCardPanelView, { panel: p, decisions, handlers: {} }));
+    expect(html).not.toContain('sample workspaces only');
+    expect(html).toContain('Share a decision');
+    expect(html).toMatch(/<button\b/);
+    expect(html).toMatch(/Withdraw/);
+    // The view takes no workspace kind any more: a leftover flag cannot change what is drawn.
+    expect(
+      render(ce(DecisionCardPanelView, { panel: p, decisions, handlers: {}, real: true } as never)),
+    ).toBe(html);
   });
   it('a changed decision clears the preview so it must be previewed again', () => {
     let p = panelReducer(ready(), { type: 'choose', decisionId });
@@ -402,9 +410,9 @@ describe('D-09 with the switch off nothing appears and the saved mission page is
       const html = render(ce(DecisionCardPanelView, { panel, decisions, handlers: {} }));
       expect(html).toBe('');
     }
-    // The sample panel never says the real-workspace line, and the state read is the only way in.
+    // The state read is the only way in, for a real workspace and a sample one alike: nothing skips it.
     const source = readFileSync('apps/web/app/account/missions/decision-card-panel.tsx', 'utf8');
-    expect(source).toMatch(/if \(!synthetic\) return;/);
+    expect(source).not.toMatch(/if \(!synthetic\) return;/);
     expect(source).toMatch(
       /\.catch\(\(\) => \{\s*if \(!task\.signal\.aborted\) dispatch\(\{ type: 'stateFailed' \}\);/,
     );

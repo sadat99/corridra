@@ -9,6 +9,7 @@ import {
 } from './customer-session';
 import { customerDecisionsEnabled } from './customer-decisions';
 import { customerProductionLocked } from './customer-production';
+import { realReportPublicLinkEnabled } from './real-report-access';
 
 // ADR-076 item 4: the decision card is off unless the owner sets the switch to exactly 'true', saved reports and
 // decisions are on, and production is not locked. The database module must also be installed (see installed()).
@@ -100,7 +101,8 @@ const openResult = z.object({
   state: z.literal('OPEN'),
   card: fields,
   expiresAt: text,
-  synthetic: z.literal(true),
+  // True for a card of a sample workspace, false for a card of a real workspace.
+  synthetic: z.boolean(),
 });
 // The link secret is present only for a card that is active now.
 export type CreatedDecisionCard = z.infer<typeof createResult> & { token?: string };
@@ -147,8 +149,17 @@ export class CustomerDecisionCardService extends CustomerSessionBoundary {
     options: CustomerWorkspaceOptions,
     readSession: () => Promise<CustomerSession | null>,
     private readonly secret: string,
+    // Owner switch: lets a public link open a report that belongs to a real workspace. A card is a public link to
+    // one decision of such a report, so it follows the same switch and opens no access of its own.
+    private readonly publicRealReports: () => boolean = realReportPublicLinkEnabled,
   ) {
     super(runtimePool, authPool, options, readSession);
+  }
+  // In a real workspace a card opens for its reader while the public report link switch is on, and not otherwise.
+  // While it is off nothing is offered or made, so no link is ever created that cannot open. Listing and
+  // withdrawing always work.
+  private realCardsClosed() {
+    return this.options.dataMode === 'real' && !this.publicRealReports();
   }
   // True once the owner's protected install run has added the five database functions. Reads the catalogue only,
   // through the runtime role that will run them (the authentication role cannot see the customer schema).
@@ -197,17 +208,19 @@ export class CustomerDecisionCardService extends CustomerSessionBoundary {
   // The signed-in customer's own cards for one saved report, and whether they may share from it.
   async state(resourceId: unknown, subject?: string, issuer?: string) {
     const v = stateRequest.shape.resourceId.parse(resourceId);
-    return this.call(
+    const found = await this.call(
       stateResult,
       'SELECT customer.decision_card_state($1) AS result',
       [v],
       subject,
       issuer,
     );
+    return this.realCardsClosed() ? { ...found, canShare: false } : found;
   }
   // The exact six fields, their digest and the latest expiry. Writes nothing.
   async preview(resourceId: unknown, decisionId: unknown, subject?: string, issuer?: string) {
     const v = previewRequest.parse({ action: 'preview', resourceId, decisionId });
+    if (this.realCardsClosed()) throw new DomainError(denied, 403);
     return this.call(
       previewResult,
       'SELECT customer.decision_card_preview($1,$2) AS result',
@@ -235,6 +248,7 @@ export class CustomerDecisionCardService extends CustomerSessionBoundary {
     beforeCreate?: (customer: { issuer: string; subject: string }) => Promise<void>,
   ): Promise<CreatedDecisionCard> {
     const v = createRequest.parse(input);
+    if (this.realCardsClosed()) throw new DomainError(denied, 403);
     return this.run(
       async (db, proof) => {
         const token = cardToken(this.secret, proof.issuer, proof.subject, v.commandId);
@@ -278,13 +292,36 @@ const unknown = { state: 'unknown' } as const;
 // The anonymous read. The database function counts the open, so this is a plain statement on the primary pool:
 // never a read-only transaction and never a secondary copy of the database.
 export class DecisionCardReader {
-  constructor(private readonly pool: DatabasePool) {}
+  constructor(
+    private readonly pool: DatabasePool,
+    // Owner switch for public links to reports of real workspaces. Off by default.
+    private readonly publicRealReports: () => boolean = realReportPublicLinkEnabled,
+  ) {}
+  // With the owner switch on, the read carries a transaction setting that the database honours only for a real
+  // workspace; with it off the read is the single statement it always was, and a real card answers unknown.
+  private async query(digest: string) {
+    const text = 'SELECT app.read_decision_card($1) AS result';
+    if (!this.publicRealReports()) return this.pool.query(text, [digest]);
+    const db = await this.pool.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query("SELECT set_config('corridra.real_report_public','on',true)");
+      const result = await db.query(text, [digest]);
+      await db.query('COMMIT');
+      return result;
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    } finally {
+      db.release();
+    }
+  }
   // `digest` is the SHA-256 of the link secret, or null for a request that was not well formed. Every answer
   // that is not an open card, including a module that is not installed, is the same single value.
   async read(digest: string | null): Promise<OpenDecisionCard | typeof unknown> {
     if (digest === null) return unknown;
     try {
-      const result = await this.pool.query('SELECT app.read_decision_card($1) AS result', [digest]);
+      const result = await this.query(digest);
       const open = openResult.safeParse(result.rows[0]?.result);
       return open.success ? open.data : unknown;
     } catch (error) {

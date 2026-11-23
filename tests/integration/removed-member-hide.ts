@@ -40,6 +40,12 @@ export const LATER_FILES: Record<string, string[]> = {
     '0020_offer_commissioning_term.sql',
     '0021_organisation_source_rights_and_takedown.sql',
   ],
+  // Decision cards for real workspaces (B7, 23 Nov 2026). It replaces two functions the removed member file does not
+  // touch, and its own suites prove it, a removed creator and a person who was never a member included.
+  'customer-decision-card-migrations': ['0003_real_workspace_decision_cards.sql'],
+  // Short request references (B7, 23 Nov 2026). The file needs customer file 0004, which these suites hide while they
+  // build the earlier state, so its installer runs here and finds nothing to apply. Its own suite proves the module.
+  'customer-request-reference-migrations': ['0001_request_references.sql'],
 };
 export function removedFileHidden(directory: string, name: string) {
   const gate = globalThis as { __removedHide?: boolean; __erasureHide?: boolean };
