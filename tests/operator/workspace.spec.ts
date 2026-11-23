@@ -3247,7 +3247,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       '/operator/signin?next=' + encodeURIComponent(`/contributor?workspace=${seed.tenantId}`),
     );
     await expect(
-      contributorPage.getByRole('heading', { name: 'Use your contributor work account' }),
+      contributorPage.getByRole('heading', { name: 'Use your helper work account' }),
     ).toBeVisible();
     await contributorPage.getByLabel('Email', { exact: true }).fill('contributor@example.invalid');
     await contributorPage.getByLabel('Password', { exact: true }).fill(contributorPassword);
