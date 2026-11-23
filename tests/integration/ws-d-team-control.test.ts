@@ -85,6 +85,20 @@ test('only the workspace owner with a fresh authenticator check can invite, and 
   expect(denied.rows[0].n).toBe(0);
 });
 
+test('an invited member gets the workspace processing purpose, so the workspace appears for them', async () => {
+  const created = await team.invite(f.users.owner.ctx, invite('purpose.member@example.invalid'));
+  const row = (
+    await f.owner.query(
+      `SELECT m.allowed_purposes,
+        CASE WHEN to_regprocedure('app.tenant_processing_purpose(uuid)') IS NULL THEN 'synthetic_validation'
+        ELSE app.tenant_processing_purpose(m.tenant_id) END AS expected
+       FROM app.membership m WHERE m.tenant_id=$1 AND m.user_id=$2`,
+      [f.tenantA, created.principalId],
+    )
+  ).rows[0];
+  expect(row.allowed_purposes).toEqual([row.expected]);
+});
+
 test('an invitation creates a pending member, a 7-day setup row and audit events; resend and cancel keep history', async () => {
   const created = await team.invite(f.users.owner.ctx, invite('new.member@example.invalid'));
   expect(created).toMatchObject({ role: 'operator', expiresInDays: 7 });
