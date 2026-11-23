@@ -47,7 +47,7 @@ Standing owner [parallel work rules](docs/agents/operating-rules.md), 13 Novembe
 - Never claim done without command output proving it (tests, typecheck, build, route check). Quote the result in the ledger.
 - Never edit, skip or weaken a test to make it pass. Never fake data, KPIs, AI output or controls. A UI control without a working backend is marked MISSING, not shipped.
 - Never change auth, RLS, migrations history, money or event records without stating the blast radius first. Migrations are additive only.
-- Synthetic-only gates (D01-D06, D08) stay closed. No real outreach, payments or live data.
+- Gates D01-D06 and D08 stay closed, and so do real payments and payouts. Owner, 23 Nov 2026, opened real outreach, AI in real workspaces and real invoices: build each in test mode first; outreach and money go live only on the owner's word "live". Sample data is never shown as real. (Superseded, replaced by 23 Nov 2026: "Synthetic-only gates (D01-D06, D08) stay closed. No real outreach, payments or live data.")
 - Same mistake twice: add one line here.
 - Leave headroom below the ledger limit; run context-tools tests after handoff edits, since the status wrapper also counts toward the reader budget.
 - For optional schema installs, set the module action to `install` explicitly; `apply=yes` with `unchanged` skips it. Verify registry advancement in the actual job log.

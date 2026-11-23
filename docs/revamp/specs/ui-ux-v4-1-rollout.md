@@ -21,7 +21,7 @@ Where they disagree, UI/UX.v4 and the real route and backend contracts win over 
 | Enforcement added with this handoff | `scripts/v4-1-conformance.mjs`, `tests/v4-1-guard.test.mjs` with a frozen baseline, and the ledger.                                        |
 | Not verified                        | Production switch values, any signed-in journey with the newer switches on, real-device checks. Do not infer them from code.               |
 
-## Mechanical enforcement (already in place)
+## Mechanical enforcement (in place; no screen is built yet)
 
 - `node scripts/v4-1-conformance.mjs check` fails when a route has no ledger row, a row has no page, a status is outside `n/a, not_assessed, not_started, built, verified`, a scoped decision sits on the wrong route, or `built` and `verified` rows lack evidence. A new page cannot skip v4.1.
 - `tests/v4-1-guard.test.mjs` (in `pnpm test:docs`): the ledger check, the nine-flag policy, a ratchet on place names written outside the flag component, and a ratchet on gradients or backdrop blur in stylesheets. A count may fall and never rise. Lower the baseline when you remove debt: `V41_WRITE_BASELINE=1 node --test tests/v4-1-guard.test.mjs`.
@@ -31,13 +31,13 @@ Where they disagree, UI/UX.v4 and the real route and backend contracts win over 
 
 Names V4.1-A to D avoid the older numbered revamp waves. One PR per slice, each behind its existing switch where the module is optional. Run `node scripts/v4-1-conformance.mjs summary` before and after.
 
-| Wave   | Scope                        | Routes                                                                             | Notes                                                                                         |
-| ------ | ---------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| V4.1-0 | Shared pieces                | none                                                                               | Before any screen. See below.                                                                 |
-| V4.1-A | Public pages                 | home, routes, plan, start here, services, fairs, programmes, auth, legal           | The six scoped decisions L4 to L7 live here first (`/`, `/corridors`, `/plan`, `/workspace`). |
-| V4.1-B | Customer account             | `/account/**`                                                                      | Owner has not yet reviewed these mockups against live screens. Review first.                  |
-| V4.1-C | Recipient links, contributor | `/buyer`, `/client`, `/decision-card`, `/programme`, mute pages, `/contributor/**` | L8 and L9 live here. Private links must leak nothing.                                         |
-| V4.1-D | Operator and owner           | `/operator/**`                                                                     | Protected surface. Keep the 18 section ids, MFA and role checks. Run `pnpm test:operator`.    |
+| Wave   | Scope                        | Routes                                                                             | Notes                                                                                      |
+| ------ | ---------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| V4.1-0 | Shared pieces                | none                                                                               | Before any screen. See below.                                                              |
+| V4.1-A | Public pages                 | home, routes, plan, start here, services, fairs, programmes, auth, legal           | The scoped decisions L4 to L7 live here first (`/`, `/corridors`, `/plan`, `/workspace`).  |
+| V4.1-B | Customer account             | `/account/**`                                                                      | Owner has not yet reviewed these mockups against live screens. Review first.               |
+| V4.1-C | Recipient links, contributor | `/buyer`, `/client`, `/decision-card`, `/programme`, mute pages, `/contributor/**` | L8 and L9 live here. Private links must leak nothing.                                      |
+| V4.1-D | Operator and owner           | `/operator/**`                                                                     | Protected surface. Keep the 18 section ids, MFA and role checks. Run `pnpm test:operator`. |
 
 ### V4.1-0 shared pieces
 
@@ -61,8 +61,10 @@ The UI/UX.v4 definition of done, plus:
 ## Working beside other agents
 
 - Fetch `main` and the open PR list first. List another PR's files before editing and keep file sets disjoint (known issue KI-07).
-- Touch it, convert it: a PR that changes a visible file also updates that route's ledger row. A visible change with no row update is incomplete.
-- Only the scribe edits the shared ledger and work-log lines. Builders edit the conformance ledger rows of their own routes only.
+- Touch it, convert it: a V4.1 wave PR that changes a visible file also updates that route's conformance row. A visible change in a wave PR with no row update is incomplete. (Guardian, 23 Nov 2026, after review of PR 599: a PR that is not a V4.1 wave PR, such as a copy or defect fix, does not edit `docs/revamp/v4-1-conformance.json`; it only keeps the guard counts at or below the baseline.)
+- Regenerating `tests/v4-1-guard-baseline.json` is allowed only to lower counts; the PR shows the baseline diff and it may contain no increase. The `v4.1-prose` line escape is not owner-approved as a rule exception: do not add new uses without the owner's word.
+- Known guard limits (review of PR 599, to fix in the first wave): a place-name line is only counted when it also holds a quote or `>`, so rewrapping multi-line JSX text can change counts; only `.tsx` files are scanned, so words files under `lib/` are not enforced.
+- Only the scribe edits the shared ledger (`docs/V3_LEDGER.md`) and work-log lines. Builders edit the conformance ledger rows of their own routes only.
 - Rollback is the existing switch or a revert of the squash commit. Never delete data to match a screenshot.
 
 ## Decisions only the owner can take
