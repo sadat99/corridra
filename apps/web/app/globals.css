@@ -9017,6 +9017,8 @@ samp {
     display: grid;
     grid-column: 1;
     grid-row: 1;
+    /* The receipt check follows the form closely, as its quiet second part. */
+    row-gap: var(--space-4);
   }
   .guide-plan-body:has(.ux-brief-summary):not(
       :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
