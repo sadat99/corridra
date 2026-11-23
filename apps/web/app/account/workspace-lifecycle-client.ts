@@ -44,7 +44,10 @@ export const lifecycleWords = {
   signInAgain: 'For your safety, sign in again to do this, then try again.',
 } as const;
 
-/** UTC with the zone named, written like "6 Nov 2026, 14:30 UTC". */
+/**
+ * Staff screens only: UTC with the zone named, written like "6 Nov 2026, 14:30 UTC". The staff queues that import it
+ * keep their UTC times. A customer screen uses formatDateTime in lib/ux/format.ts, the reader's own time zone (D-050).
+ */
 export const whenWords = (value: string) =>
   new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium',

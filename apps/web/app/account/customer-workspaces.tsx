@@ -522,7 +522,7 @@ export function CustomerWorkspaces({
                             {start && <MenuAnchor href={start}>New Request</MenuAnchor>}
                             {draftsEnabled && !closedToNew && (
                               <MenuAnchor href={'/account/drafts/' + row.id}>
-                                Continue a Saved Draft
+                                Continue a Saved Request
                               </MenuAnchor>
                             )}
                             {draftsEnabled && requestsEnabled && !closedToNew && (

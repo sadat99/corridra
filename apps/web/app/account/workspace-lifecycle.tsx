@@ -18,10 +18,10 @@ import {
   sessionHeaders,
   lifecycleWords,
   useLifecycleCommand,
-  whenWords,
   type LifecycleState,
 } from './workspace-lifecycle-client';
 import { announceWorkspacesChanged } from '../../lib/ux/workspaces-changed';
+import { formatDateTime } from '../../lib/ux/format';
 
 type Kind = 'rename' | 'archive' | 'restore' | 'transfer' | 'cancel' | 'accept' | 'decline';
 type Filter = 'active' | 'archived';
@@ -112,8 +112,8 @@ function WorkspaceLifecycleCard({
       {offer && state.role === 'owner' && offer.byYou && (
         <p role="status">
           {live
-            ? `Ownership offer sent. It stays open until ${whenWords(offer.expiresAt)}. `
-            : `The offer expired on ${whenWords(offer.expiresAt)}. You are still the owner. `}
+            ? `Ownership offer sent. It stays open until ${formatDateTime(offer.expiresAt)}. `
+            : `The offer expired on ${formatDateTime(offer.expiresAt)}. You are still the owner. `}
           {live ? (
             <button type="button" className="text-link" onClick={() => onOpen('cancel')}>
               Cancel Offer
@@ -130,8 +130,8 @@ function WorkspaceLifecycleCard({
       {offer && offer.toYou && (
         <p role="status">
           {live
-            ? `The owner wants to make you the owner of ${name}. This offer is open until ${whenWords(offer.expiresAt)}. If you accept, they become an admin. `
-            : `This offer expired on ${whenWords(offer.expiresAt)}. Ask the owner to send a new one.`}
+            ? `The owner wants to make you the owner of ${name}. This offer is open until ${formatDateTime(offer.expiresAt)}. If you accept, they become an admin. `
+            : `This offer expired on ${formatDateTime(offer.expiresAt)}. Ask the owner to send a new one.`}
           {live && !state.open && 'Accepting is paused right now. '}
           {live && (
             <>

@@ -131,7 +131,7 @@ function parseView(value: unknown, scope: Scope): View {
     !Array.isArray(v.draft.details.requirements) ||
     !Array.isArray(v.draft.details.outcomes)
   )
-    throw new Error('Invalid draft');
+    throw new Error('Invalid saved request');
   return v;
 }
 function parseList(value: unknown, scope: Scope): ListPage {
@@ -179,7 +179,7 @@ function Guided(scope: Scope) {
   const [busy, setBusy] = useState(false);
   const [conflict, setConflict] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
-  const [message, setMessage] = useState('Loading your drafts…');
+  const [message, setMessage] = useState('Loading your saved requests…');
   const [ack, setAck] = useState(false);
   const [autosaving, setAutosaving] = useState(false);
   const active = useRef(false);
@@ -231,8 +231,8 @@ function Guided(scope: Scope) {
       if (status === 503) {
         reset(
           realCustomerInput()
-            ? 'Request drafts are unavailable.'
-            : 'Sample request drafts are unavailable.',
+            ? 'Saved requests are unavailable.'
+            : 'Sample saved requests are unavailable.',
         );
         return true;
       }
@@ -267,10 +267,10 @@ function Guided(scope: Scope) {
         setRows((old) => (after && old ? [...old, ...page.drafts] : page.drafts));
         setNextAfter(page.nextAfter);
         // CQ-22: the empty line only when the first page is empty, never beside drafts already listed.
-        if (!after) setMessage(page.drafts.length ? '' : 'You have no saved drafts yet.');
+        if (!after) setMessage(page.drafts.length ? '' : 'You have no saved requests yet.');
       } catch {
         if (active.current && !controller.signal.aborted)
-          setMessage('Your drafts could not be loaded. Try again.');
+          setMessage('Your saved requests could not be loaded. Try again.');
       }
     },
     [scope, headers, denied, reset],
@@ -336,7 +336,7 @@ function Guided(scope: Scope) {
       setConflict(false);
       setMessage('');
     } catch {
-      if (active.current) setMessage('That draft could not be opened. Try again.');
+      if (active.current) setMessage('That saved request could not be opened. Try again.');
     } finally {
       flight.current = false;
       if (active.current) setBusy(false);
@@ -398,7 +398,7 @@ function Guided(scope: Scope) {
     if (r.status === 409) {
       setConflict(true);
       setMessage(
-        'This draft changed somewhere else, or your account changed. Your text below is kept. Reload the latest draft before saving again.',
+        'This saved request changed somewhere else, or your account changed. Your text below is kept. Reload the latest saved version before saving again.',
       );
       return null;
     }
@@ -424,7 +424,7 @@ function Guided(scope: Scope) {
     setBusy(true);
     try {
       const saved = await persist();
-      if (saved && active.current) setMessage('Draft saved. You can come back to it any time.');
+      if (saved && active.current) setMessage('Request saved. You can come back to it any time.');
     } catch {
       if (active.current)
         setMessage('Saving could not be confirmed. Your text is kept. Try again.');
@@ -443,12 +443,12 @@ function Guided(scope: Scope) {
     try {
       const done = await persist();
       if (!done) autoFailed.current = started;
-      else if (active.current) setMessage('Draft saved automatically.');
+      else if (active.current) setMessage('Request saved automatically.');
     } catch {
       autoFailed.current = started;
       if (active.current)
         setMessage(
-          'Saving could not be confirmed. Your text is kept. Use Save draft to try again.',
+          'Saving could not be confirmed. Your text is kept. Use Save Request to try again.',
         );
     } finally {
       flight.current = false;
@@ -468,16 +468,20 @@ function Guided(scope: Scope) {
   }, [dirty, form, busy, autosaving, conflict, isClosed]);
   const reload = async () => {
     if (!draftId) {
-      reset('Loading your drafts…');
+      reset('Loading your saved requests…');
       void loadList();
       return;
     }
-    if (dirty && !window.confirm('Discard your unsaved changes and load the latest saved draft?'))
+    if (dirty && !window.confirm('Discard your unsaved changes and load the latest saved version?'))
       return;
     await open({ id: draftId } as Row);
   };
   const discard = async () => {
-    if (flight.current || !draftId || !window.confirm('Discard this draft? It cannot be reopened.'))
+    if (
+      flight.current ||
+      !draftId ||
+      !window.confirm('Discard this saved request? It cannot be reopened.')
+    )
       return;
     flight.current = true;
     setBusy(true);
@@ -502,9 +506,9 @@ function Guided(scope: Scope) {
       if (!r.ok) throw new Error('failed');
       setClosed('DISCARDED');
       setDirty(false);
-      setMessage('Draft discarded.');
+      setMessage('Saved request discarded.');
     } catch {
-      setMessage('The draft could not be discarded. Try again.');
+      setMessage('The saved request could not be discarded. Try again.');
     } finally {
       flight.current = false;
       if (active.current) setBusy(false);
@@ -570,7 +574,7 @@ function Guided(scope: Scope) {
       });
       if (!c.ok) {
         setMessage(
-          'Your request was sent, but this draft could not be marked as sent. Press Send again to finish.',
+          'Your request was sent, but its saved copy could not be marked as sent. Press Send again to finish.',
         );
         return;
       }
@@ -582,7 +586,7 @@ function Guided(scope: Scope) {
         setMessage(
           e instanceof Error && e.message === 'limit'
             ? 'The request limit was reached. Try again later.'
-            : 'Sending could not be confirmed. Your draft is kept. Press Send again to retry safely.',
+            : 'Sending could not be confirmed. Your saved request is kept. Press Send again to retry safely.',
         );
     } finally {
       flight.current = false;
@@ -665,9 +669,9 @@ function Guided(scope: Scope) {
           <button
             type="button"
             className="text-link ux-back"
-            onClick={() => reset('Loading your drafts…') ?? void loadList()}
+            onClick={() => reset('Loading your saved requests…') ?? void loadList()}
           >
-            Back to Your Drafts
+            Back to Your Saved Requests
           </button>
         </p>
       </section>
@@ -679,7 +683,7 @@ function Guided(scope: Scope) {
 
   if (!form)
     return (
-      <section aria-label="Guided request drafts" className="account-compact">
+      <section aria-label="Saved requests" className="account-compact">
         <p>
           {realCustomerInput()
             ? 'Start a request in a few questions, save it and come back later. What you enter is self-declared until the Corridra team checks it.'
@@ -705,8 +709,8 @@ function Guided(scope: Scope) {
           ))}
         </ul>
         {rows && rows.length > 0 && (
-          <section aria-label="Your drafts">
-            <h2>Your drafts</h2>
+          <section aria-label="Your saved requests">
+            <h2>Your saved requests</h2>
             {discarded > 0 && (
               <button
                 type="button"
@@ -714,10 +718,10 @@ function Guided(scope: Scope) {
                 aria-pressed={showDiscarded}
                 onClick={() => setShowDiscarded((value) => !value)}
               >
-                {showDiscarded ? 'Hide' : 'Show'} Discarded Drafts ({discarded})
+                {showDiscarded ? 'Hide' : 'Show'} Discarded Requests ({discarded})
               </button>
             )}
-            {listed.length === 0 && <p>Only discarded drafts are saved here.</p>}
+            {listed.length === 0 && <p>Only discarded requests are saved here.</p>}
             <ul>
               {listed.map((row) => (
                 <li key={row.id}>
@@ -742,7 +746,7 @@ function Guided(scope: Scope) {
             </ul>
             {nextAfter && (
               <button type="button" className="text-link" onClick={() => void loadList(nextAfter)}>
-                Load More Drafts
+                Load More Saved Requests
               </button>
             )}
           </section>
@@ -799,14 +803,14 @@ function Guided(scope: Scope) {
       {locked && (
         <p role="status">
           {closed === 'SUBMITTED'
-            ? 'This draft was sent as a request and is now read-only.'
-            : 'This draft was discarded and is now read-only.'}
+            ? 'This saved request was sent and is now read-only.'
+            : 'This saved request was discarded and is now read-only.'}
         </p>
       )}
       {conflict && (
         <p>
           <button type="button" className="button" disabled={busy} onClick={() => void reload()}>
-            Reload the Latest Draft
+            Reload the Latest Saved Version
           </button>
         </p>
       )}
@@ -1299,7 +1303,7 @@ function Guided(scope: Scope) {
                   <li key={g}>{g}</li>
                 ))}
               </ul>
-              <p>You can save the draft now and finish later.</p>
+              <p>You can save the request now and finish later.</p>
             </div>
           )}
           <h3>What happens next</h3>
@@ -1368,7 +1372,7 @@ function Guided(scope: Scope) {
             disabled={busy || autosaving || conflict || (!dirty && draftId !== null)}
             onClick={() => void save()}
           >
-            Save Draft
+            Save Request
           </button>
         )}
         {!locked && draftId && (
@@ -1379,7 +1383,7 @@ function Guided(scope: Scope) {
             disabled={busy || autosaving}
             onClick={() => void discard()}
           >
-            Discard This Draft
+            Discard This Saved Request
           </button>
         )}
         <button
@@ -1400,7 +1404,7 @@ function Guided(scope: Scope) {
             void loadList();
           }}
         >
-          Back to Your Drafts
+          Back to Your Saved Requests
         </button>
       </div>
       {!locked && (

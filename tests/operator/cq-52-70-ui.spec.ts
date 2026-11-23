@@ -128,7 +128,7 @@ test('CQ-52: each workspace row keeps every action in one menu, the first being 
   await expect(owner.getByRole('menuitem', { name: 'Plan and Billing' })).toBeVisible();
   expect(await linkPairs(owner.locator('a'))).toEqual([
     ['New Request', '/account/drafts/' + ownerId],
-    ['Continue a Saved Draft', '/account/drafts/' + ownerId],
+    ['Continue a Saved Request', '/account/drafts/' + ownerId],
     ['Send a Private Request', '/account/request/' + ownerId],
     ['Edit Company Profile', '/account/profile/' + ownerId],
     ['Plan Delegations', '/account/delegations/' + ownerId],
@@ -142,7 +142,7 @@ test('CQ-52: each workspace row keeps every action in one menu, the first being 
   const member = await menuFor(page, 'Synthetic Chattogram Dyers');
   expect(await linkPairs(member.locator('a'))).toEqual([
     ['New Request', '/account/drafts/' + memberId],
-    ['Continue a Saved Draft', '/account/drafts/' + memberId],
+    ['Continue a Saved Request', '/account/drafts/' + memberId],
     ['Send a Private Request', '/account/request/' + memberId],
     ['View Company Profile', '/account/profile/' + memberId],
     ['Paid-Service Requests', '/account/service-requests/' + memberId],

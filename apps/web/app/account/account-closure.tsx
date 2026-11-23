@@ -12,10 +12,10 @@ import {
 import {
   sessionHeaders,
   useLifecycleCommand,
-  whenWords,
   type LifecycleResult,
 } from './workspace-lifecycle-client';
 import { LifecycleErrorLine } from './lifecycle-error-line';
+import { formatDateTime } from '../../lib/ux/format';
 import { ErasureDialog } from './erasure-dialog';
 
 /** Shown while the real controls are closed or unavailable. Plain text, one sentence, no control. */
@@ -147,7 +147,7 @@ export function AccountClosure({ subject, issuer }: { subject: string; issuer: s
         <>
           <div className="ux-account-row">
             {state.status === 'closed' && state.undoUntil ? (
-              <p>Your account is closed until {whenWords(state.undoUntil)}.</p>
+              <p>Your account is closed until {formatDateTime(state.undoUntil)}.</p>
             ) : (
               <p>{accountWords.finalNotice}</p>
             )}
@@ -202,9 +202,9 @@ export function AccountClosure({ subject, issuer }: { subject: string; issuer: s
             <dt>Reference</dt>
             <dd>{erasure.reference}</dd>
             <dt>Sent</dt>
-            <dd>{whenWords(erasure.filedAt)}</dd>
+            <dd>{formatDateTime(erasure.filedAt)}</dd>
             <dt>Staff reply due by</dt>
-            <dd>{whenWords(erasure.dueAt)}</dd>
+            <dd>{formatDateTime(erasure.dueAt)}</dd>
             <dt>Status</dt>
             <dd>{statusLabel}</dd>
           </dl>
