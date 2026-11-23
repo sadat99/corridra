@@ -566,7 +566,7 @@ function TenantWorkspace({
                           >
                             <OperatorIcon name="shield" />
                             <span>
-                              <span>Corridors and policies</span>
+                              <span>Routes and policies</span>
                               <small id="operator-admin-hint-workspace-settings" aria-hidden="true">
                                 Scope, rules and guardrails.
                               </small>
@@ -829,7 +829,7 @@ function TenantWorkspace({
                 tabs={[
                   {
                     id: 'settings-policies',
-                    label: 'Corridors and policies',
+                    label: 'Routes and policies',
                     panel: (
                       <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
                     ),

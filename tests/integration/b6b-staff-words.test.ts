@@ -200,3 +200,35 @@ describe('D-032 and the front door lines (added by the Guardian, 23 Nov 2026)', 
     );
   });
 });
+
+describe('review of 7088945: billing period dates and one name for the settings section', () => {
+  it('shows a billing period date as the calendar date it is, in any viewer zone', async () => {
+    const { billingPeriodDate } = await load('app/operator/customer-billing.tsx');
+    for (const zone of ['America/New_York', 'Asia/Dhaka', 'Pacific/Kiritimati', 'UTC']) {
+      setViewerTimeZone(zone);
+      try {
+        // A period start or end is a SQL date ("YYYY-MM-DD"): no time and no zone shift.
+        expect(billingPeriodDate('2026-11-01'), zone).toBe('1 Nov 2026');
+        expect(billingPeriodDate('2026-12-31'), zone).toBe('31 Dec 2026');
+      } finally {
+        setViewerTimeZone(undefined);
+      }
+    }
+    const source = operator('customer-billing.tsx');
+    expect(source).not.toMatch(
+      /formatDateTime\((?:detail\.subscription|ev)\.period(?:Start|End)\)/,
+    );
+    expect(source.match(/ billingPeriodDate\(/g)).toHaveLength(4);
+    expect(source).toContain('<time dateTime={ev.at}>{formatDateTime(ev.at)}</time>');
+  });
+  it('says Routes and policies everywhere staff read the settings section name', () => {
+    const workspace = operator('workspace.tsx');
+    const operations = operator('operations.tsx');
+    expect(workspace).toContain('<span>Routes and policies</span>');
+    expect(workspace).toContain("label: 'Routes and policies',");
+    expect(operations).toContain('Routes and policies before readiness review.');
+    expect(operations).toContain('<a href="#workspace-settings">Routes and policies</a>');
+    for (const source of [workspace, operations])
+      expect(source).not.toContain('Corridors and policies');
+  });
+});

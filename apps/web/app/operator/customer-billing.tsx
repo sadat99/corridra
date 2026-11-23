@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { displayMoney } from '@corridra/domain/locale';
-import { formatDateTime } from '../../lib/ux/format';
+import { formatDate, formatDateTime } from '../../lib/ux/format';
 
 type Summary = {
   id: string;
@@ -140,6 +140,8 @@ function plainError(status: number | null, sample: boolean | null = null) {
             : 'Check the details. Every note starts with Synthetic, prices are whole minor units and a plan states every limit once.'
           : 'This could not be completed. Try again.';
 }
+/** A billing period start or end is a calendar date ("YYYY-MM-DD"): show that day, with no time and no zone shift. */
+export const billingPeriodDate = (value: string) => formatDate(value, { timeZone: 'UTC' });
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function CustomerBilling({ tenant }: { tenant: string }) {
@@ -453,9 +455,9 @@ function Scoped({ tenant }: { tenant: string }) {
             {taxOptions.find(([k]) => k === detail.plan.taxTreatment)?.[1].toLowerCase()}.
             {detail.subscription.periodStart && detail.subscription.periodEnd
               ? ' Period ' +
-                formatDateTime(detail.subscription.periodStart) +
+                billingPeriodDate(detail.subscription.periodStart) +
                 ' until ' +
-                formatDateTime(detail.subscription.periodEnd) +
+                billingPeriodDate(detail.subscription.periodEnd) +
                 '.'
               : ''}
           </p>
@@ -471,9 +473,9 @@ function Scoped({ tenant }: { tenant: string }) {
                 <time dateTime={ev.at}>{formatDateTime(ev.at)}</time>
                 {ev.periodStart && ev.periodEnd
                   ? ' · ' +
-                    formatDateTime(ev.periodStart) +
+                    billingPeriodDate(ev.periodStart) +
                     ' until ' +
-                    formatDateTime(ev.periodEnd)
+                    billingPeriodDate(ev.periodEnd)
                   : ''}
                 {ev.endReason ? ' · ' + ev.endReason.replace('_', ' ') : ''}
                 {ev.customerNote ? ' · customer sees: ' + ev.customerNote : ''}
