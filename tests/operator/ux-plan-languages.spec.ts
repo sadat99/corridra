@@ -32,6 +32,8 @@ import { countryCodes } from '../../packages/domain/src/countries';
 // names the commit that carries that form. That commit is kept reachable because the pull request is merged with
 // a merge commit, not squashed (no tag), so main's history holds it.
 // Layout Phase 2a (5 Nov 2026): English action labels moved to Title Case on purpose, so the baseline is the commit that carries them.
+// B2a (23 November 2026): the baseline copy of intake.tsx was refreshed again to the page after the owner's wording
+// change (no "draft", Clear Answers with a confirm step, one progress template), on the same ground as W1-C below.
 // W1-C (18 November 2026): the baseline copies in tests/operator/fixtures/plan-baseline were refreshed to the page after the
 // UI/UX.v4 change (progress words, exact job disclosure, action area, no callout box), so the equality tests keep proving
 // that language and switch settings change nothing else. The allowlist below follows the new notice block.
@@ -518,10 +520,16 @@ const stepWords: FormKey[] = [
   'form.step.contact',
 ];
 
-/** The progress words of a step (1 to 5) in the shown language: "Step 2 of 5: Where · Next: Details". The template is
- * English until a native review; the step names are the form's own words. */
-function progressWords(names: readonly string[], step: number) {
-  return `Step ${step} of 5: ${names[step - 1]}${names[step] ? ` · Next: ${names[step]}` : ''}`;
+/** The progress words of a step (1 to 5) in the shown language: "Step 2 of 5: Where · Next: Details" in English.
+ * B2a (23 November 2026): the line is one form word template, so each language shows its own sentence. */
+function progressWords(words: Readonly<Record<FormKey, string>>, step: number) {
+  const names = stepWords.map((key) => words[key]);
+  const next = names[step];
+  return words[next ? 'form.step.line' : 'form.step.lineLast']
+    .replace('{step}', String(step))
+    .replace('{total}', '5')
+    .replace('{name}', names[step - 1]!)
+    .replace('{next}', next ?? '');
 }
 
 /** The exact job sits behind "Know the Exact Job? Choose It" (UI/UX.v4); open it if it is closed, then choose. */
@@ -604,12 +612,7 @@ test.describe('with the form released', () => {
       await expect(page.locator('.mr-fq')).toHaveAttribute('lang', localeMeta[code].html);
       await expect(page.locator('.mr-fq-legend')).toHaveText(translate(code, 'fq.legend'));
       // UI/UX.v4 progress as words; the step list stays for screen readers in the form's language.
-      await expect(page.locator('.plan-progress-line')).toHaveText(
-        progressWords(
-          stepWords.map((key) => words[key]),
-          1,
-        ),
-      );
+      await expect(page.locator('.plan-progress-line')).toHaveText(progressWords(words, 1));
       await expect(page.locator('ol.sr-only li')).toHaveText(stepWords.map((key) => words[key]));
       await expect(page.locator('ol.sr-only')).toHaveAttribute(
         'aria-label',
@@ -623,7 +626,7 @@ test.describe('with the form released', () => {
       await expect(page.locator('.plan-sample-note > p').last()).toHaveText(
         words['form.notice.englishParts'],
       );
-      // The reassurance line claims a saved draft only once one exists, and Clear Draft is always there.
+      // The reassurance line claims a saved draft only once one exists, and Clear Answers is always there.
       await expect(page.locator('.plan-action-note')).not.toContainText('Saved in this tab');
       await expect(page.locator('.plan-action-note button')).toHaveText(
         words['form.action.clearDraft'],
@@ -645,12 +648,7 @@ test.describe('with the form released', () => {
         const step = Number(state.match(/^step (\d)/)?.[1] ?? 0);
         if (!step) return;
         await expect(form.locator('h2')).toHaveText(words[titles[step - 1]]);
-        await expect(page.locator('.plan-progress-line')).toHaveText(
-          progressWords(
-            stepWords.map((key) => words[key]),
-            step,
-          ),
-        );
+        await expect(page.locator('.plan-progress-line')).toHaveText(progressWords(words, step));
         if (state.endsWith('errors'))
           await expect(page.locator('.ux-error-summary strong')).toHaveText(
             words['form.summary.title'],
@@ -810,6 +808,12 @@ test.describe('with the form released', () => {
     await expect(form.locator('h2')).toHaveText(de['form.step.titleWhere']);
     await expect(form.locator('input[name="companyCountry"]')).toHaveValue('DE');
     await expect(form.getByRole('combobox').first()).toHaveValue('Deutschland');
+    // B2a (D-009): the confirm step's close button speaks the chosen language, and Escape keeps the answers.
+    await page.getByRole('button', { name: de['form.action.clearDraft'], exact: true }).click();
+    await expect(page.locator('dialog[open] .ux-dialog-close')).toHaveText(de['form.action.close']);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('dialog[open]')).toHaveCount(0);
+    await expect(form.locator('input[name="companyCountry"]')).toHaveValue('DE');
   });
 
   test('a draft that cannot be restored, resumed or saved says so in the chosen language', async ({
@@ -840,7 +844,9 @@ test.describe('with the form released', () => {
     );
     const notice = expired.locator('.ux-draft-notice');
     await expect(notice).toContainText(de['form.message.draftNotResumed']);
-    await expect(notice.locator('span[lang="en"]')).toHaveText('Drafts expire after 24 hours.');
+    await expect(notice.locator('span[lang="en"]')).toHaveText(
+      'Answers are kept in this tab for 24 hours.',
+    );
     const blocked = await page(() => {
       const setItem = Storage.prototype.setItem;
       Storage.prototype.setItem = function (this: Storage, key: string, value: string) {
@@ -1035,10 +1041,7 @@ test.describe('with the form released', () => {
         ];
         for (const [step, answer] of [...answers, null].entries()) {
           await expect(page.locator('.plan-progress-line')).toHaveText(
-            progressWords(
-              stepWords.map((key) => drafts[code][key]),
-              step + 1,
-            ),
+            progressWords(drafts[code], step + 1),
           );
           // How far the word reaches past the form's content box (inside its border and padding) on either side.
           const past = await page.evaluate(() => {
@@ -1252,10 +1255,7 @@ test.describe('the page-length budget', () => {
         const screens: { main: number; question: number; card: number }[] = [];
         for (const [step, answer] of [...answers, null].entries()) {
           await expect(page.locator('.plan-progress-line')).toHaveText(
-            progressWords(
-              stepWords.map((key) => (code === 'en' ? formEn[key] : drafts[code][key])),
-              step + 1,
-            ),
+            progressWords(code === 'en' ? formEn : drafts[code], step + 1),
           );
           screens.push(
             await page.evaluate(() => {

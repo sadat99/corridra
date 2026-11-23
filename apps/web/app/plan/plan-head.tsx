@@ -1,5 +1,6 @@
 'use client';
 import { useSignedInSeen } from '../../components/use-signed-in';
+import { formEn } from '../../lib/i18n/form-words/en';
 import { useFormWords } from './form-words';
 
 /**
@@ -11,17 +12,25 @@ import { useFormWords } from './form-words';
 export function PlanHead({ realMode }: { realMode: boolean }) {
   const { say, withEnglish } = useFormWords();
   const signedIn = useSignedInSeen() === 'customer';
+  // B2a (D-008): the signed-in sentence is a form word. Until a language has its own, it is shown as English.
+  const signedInLead = say('form.head.signedInLead');
   return (
     <header className="guide-plan-head">
       <p className="label">{say('form.head.label')}</p>
       <h1>{say('form.head.title')}</h1>
       {realMode && (
         <p className="guide-lead">
-          {withEnglish(
-            'form.head.realLead',
-            signedIn
-              ? 'You are signed in, so your request and its replies stay private in your account.'
-              : 'Create an account at the final step to keep your request and replies private.',
+          {signedIn && signedInLead !== formEn['form.head.signedInLead'] ? (
+            <>
+              {say('form.head.realLead')} {signedInLead}
+            </>
+          ) : (
+            withEnglish(
+              'form.head.realLead',
+              signedIn
+                ? signedInLead
+                : 'Create an account at the final step to keep your request and replies private.',
+            )
           )}
         </p>
       )}

@@ -89,7 +89,7 @@ test('on a phone the example request is a closed line with the live count, and o
   ]);
 });
 
-test('on a wide screen the summary column is open, and the receipt check sits under it', async ({
+test('on a wide screen the summary column is open, and the receipt check sits under the form', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.desktop);
@@ -103,9 +103,12 @@ test('on a wide screen the summary column is open, and the receipt check sits un
     page.locator('#receipt-check').boundingBox(),
     page.locator('form.intake-form').boundingBox(),
   ]);
-  expect(r!.y).toBeGreaterThanOrEqual(a!.y + a!.height - 1);
-  expect(Math.abs(r!.x - a!.x)).toBeLessThan(2);
-  expect(r!.x).toBeGreaterThan(f!.x + f!.width - 1);
+  // B2a (D-006): the receipt check is in the main column, under the form; the summary column holds the summary
+  // alone, to the right of both, so the sticky summary can never meet the receipt check.
+  expect(r!.y).toBeGreaterThanOrEqual(f!.y + f!.height - 1);
+  expect(Math.abs(r!.x - f!.x)).toBeLessThan(2);
+  expect(a!.x).toBeGreaterThan(f!.x + f!.width - 1);
+  expect(a!.x).toBeGreaterThan(r!.x + r!.width - 1);
   // The receipt check is still a disclosure that opens.
   await page.locator('#receipt-check summary').click();
   await expect(page.locator('#receipt-check input')).toBeVisible();
@@ -168,15 +171,15 @@ test('every other public page keeps the full footer with the legend in view', as
 });
 
 // Owner 2a and the board's phone bottom action area: the reassurance line sits under Continue in the fixed bar, says
-// "Saved in this tab for up to 24 hours." only once a draft exists, and Clear Draft stays a 44 px target.
-test('on a phone the reassurance line and Clear Draft sit under Continue in the action area, with a 44 px target', async ({
+// "Saved in this tab for up to 24 hours." only once a draft exists, and Clear Answers stays a 44 px target.
+test('on a phone the reassurance line and Clear Answers sit under Continue in the action area, with a 44 px target', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.phone);
   await page.goto('/plan');
   const line = page.locator('.plan-action-note');
   await expect(line).not.toContainText('Saved in this tab');
-  const clear = line.getByRole('button', { name: 'Clear Draft' });
+  const clear = line.getByRole('button', { name: 'Clear Answers' });
   await expect(clear).toBeVisible();
   expect((await clear.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
   await page.locator('form.intake-form input[type="radio"]').first().check({ force: true });

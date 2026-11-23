@@ -253,7 +253,7 @@ test('P-04 a guest draft survives a reload and resumes on the same step with its
   await fillField(page, 'unit', 'kg');
   await page.reload();
   await expect(
-    page.getByText('A draft from this tab was resumed.', { exact: false }).first(),
+    page.getByText('Your earlier answers from this tab are back.', { exact: false }).first(),
   ).toBeVisible();
   await expect(page.getByRole('textbox', { name: /Your offer or requirement/ })).toHaveValue(
     'QA test (madeup): combed cotton yarn, kept across a reload',

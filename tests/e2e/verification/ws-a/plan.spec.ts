@@ -55,7 +55,7 @@ test('A-2 focus stays in the field while typing, and problems are plain words on
     page.getByRole('heading', { level: 2, name: 'What would make this worthwhile?' }),
   ).toBeVisible();
   // The desired outcomes group says it is required, and its error sits with the group.
-  const group = page.getByRole('group', { name: /Desired outcomes \(Required\)/ });
+  const group = page.getByRole('group', { name: /Desired outcomes \(required\)/ });
   await expect(group).toBeVisible();
   await next(page).click();
   await expect(group.locator('#outcomes-error')).toBeVisible();
@@ -86,10 +86,14 @@ test('A-3 a link naming another job asks before replacing a saved draft, and Cle
   const offer = page.getByLabel('What should the trip achieve?', { exact: true });
   await expect(offer).toBeVisible();
   await expect(offer).not.toHaveAttribute('placeholder', /towel/i);
-  // Back to a sourcing link: continuing keeps the saved trip; Clear draft applies the link instead.
+  // Back to a sourcing link: continuing keeps the saved trip; Clear Answers (after its confirm step) applies the link instead.
   await page.goto('/plan?job=sourcing');
   await expect(page.getByRole('group', { name: /You have a saved request/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Clear Draft', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear Answers', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Clear your answers?' })
+    .getByRole('button', { name: 'Clear Answers', exact: true })
+    .click();
   await expect(page.getByRole('group', { name: /You have a saved request/ })).toHaveCount(0);
   await expect(job(page)).toHaveValue('sourcing');
   // Countries are listed by name with the route countries first (CQ-15).

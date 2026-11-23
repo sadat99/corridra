@@ -56,7 +56,7 @@ export async function POST(request: Request) {
             : status === 400
               ? 'Check the highlighted fields'
               : status === 409
-                ? 'This brief changed after submission. Start a new brief.'
+                ? 'This request changed after it was sent. Start a new request.'
                 : 'Intake could not be saved. Your input is still here.',
         fields: e instanceof z.ZodError ? z.flattenError(e).fieldErrors : undefined,
       },

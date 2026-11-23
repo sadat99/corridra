@@ -339,12 +339,16 @@ const staysEnglish = [
   'Your request is saved on this device. You do not need to copy a code. Use another device? Copy the code first.',
   'This device no longer remembers your request. Copy the code now if you still need it.',
   'Nothing here is an offer, a quote or a promise.',
-  'Drafts expire after 24 hours.',
+  'Answers are kept in this tab for 24 hours.',
   'Your request is saved for 24 hours.',
   'No real customer mission has been accepted.',
 ];
 const formSource = () =>
-  ['apps/web/app/plan/intake.tsx', 'apps/web/app/plan/plan-head.tsx']
+  [
+    'apps/web/app/plan/intake.tsx',
+    'apps/web/app/plan/plan-head.tsx',
+    'apps/web/app/plan/plan-contact-note.tsx',
+  ]
     .map(read)
     .join('\n')
     .replace(/\s+/g, ' ');
@@ -363,6 +367,7 @@ describe('the English form words', () => {
     const sources = [
       'apps/web/app/plan/intake.tsx',
       'apps/web/app/plan/plan-head.tsx',
+      'apps/web/app/plan/plan-contact-note.tsx',
       'apps/web/app/plan/form-words.tsx',
       'apps/web/lib/i18n/form-words/messages.ts',
     ]
@@ -479,10 +484,12 @@ describe('the message reader', () => {
 
   it('reads a known sentence followed by one that stays English, in their order', () => {
     expect(
-      readFormMessage(`${formEn['form.message.draftNotResumed']} Drafts expire after 24 hours.`),
+      readFormMessage(
+        `${formEn['form.message.draftNotResumed']} Answers are kept in this tab for 24 hours.`,
+      ),
     ).toEqual([
       { key: 'form.message.draftNotResumed', values: {} },
-      { english: 'Drafts expire after 24 hours.', lead: null },
+      { english: 'Answers are kept in this tab for 24 hours.', lead: null },
     ]);
     expect(
       readFormMessage(
@@ -1079,7 +1086,7 @@ describe('the messages the form shows', () => {
     // The messages that add an English sentence to a translated one are found, in a ternary branch too.
     expect(written.map(({ message }) => message)).toEqual(
       expect.arrayContaining([
-        `${formEn['form.message.draftNotResumed']} Drafts expire after 24 hours.`,
+        `${formEn['form.message.draftNotResumed']} Answers are kept in this tab for 24 hours.`,
         `Your request is saved for 24 hours. ${formEn['form.message.accountNotCreated']}`,
         `${formEn['form.message.recorded']} No real customer mission has been accepted.`,
       ]),
@@ -1150,8 +1157,10 @@ describe('the messages the form shows', () => {
       de['form.message.consentLead'] + island('Read and acknowledge the test intake notice'),
     );
     // After a translated part.
-    expect(shown(`${formEn['form.message.draftNotResumed']} Drafts expire after 24 hours.`)).toBe(
-      de['form.message.draftNotResumed'] + island('Drafts expire after 24 hours.'),
+    expect(
+      shown(`${formEn['form.message.draftNotResumed']} Answers are kept in this tab for 24 hours.`),
+    ).toBe(
+      de['form.message.draftNotResumed'] + island('Answers are kept in this tab for 24 hours.'),
     );
     // Opening a message, before a translated part.
     expect(

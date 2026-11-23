@@ -105,11 +105,13 @@ test('UX-02 expired and corrupt drafts recover to a usable form without claiming
   await page.reload();
   await openExactJob(page);
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue('');
-  await expect(page.getByText('Drafts expire after 24 hours.', { exact: false })).toBeVisible();
+  await expect(
+    page.getByText('Answers are kept in this tab for 24 hours.', { exact: false }),
+  ).toBeVisible();
   await page.evaluate(() => sessionStorage.setItem('corridra-mission-draft', '{broken'));
   await page.reload();
   await expect(
-    page.getByText('A saved draft could not be restored.', { exact: false }),
+    page.getByText('Your saved answers could not be brought back.', { exact: false }),
   ).toBeVisible();
   // UI/UX.v4: before a choice the button says why it waits; it is still a real submit and shows the same error.
   await page.getByRole('button', { name: 'Pick One to Continue', exact: true }).click();
@@ -170,7 +172,7 @@ test('UX-02 blocked draft storage is visible and does not discard current form e
   });
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(
-    page.getByText('This browser could not save the draft.', { exact: false }),
+    page.getByText('This browser could not save your answers.', { exact: false }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page

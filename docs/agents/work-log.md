@@ -4838,3 +4838,13 @@ Review: Class A. Reviewer 1 and a security review on d7ef05d (security BLOCK: ac
 Not verified: no live code sign-in against the hosted identity service (runbook first live check includes a wrong code for a no-account address and records the hosted version); Safari, Firefox, real device, screen reader. Known limits: provider-side code sign-up can still create an account without name and privacy notice (provider setting only); each attempt costs two provider calls.
 
 Next action: Guardian merges PR 603 on green CI, verifies the deployment, runs the runbook live check once a readable test mailbox exists.
+
+## 23 Nov 2026: B2a plan flow (PR 602)
+
+Scope: /plan wording without "draft" (D-001) in all seven catalogues; summary stays sticky and the receipt check sits under the form from 1001 px (D-006); no Activate line for a signed-in, verified person (D-007); one translated step template (D-008); "Clear Answers" with a confirm through the shared dialog, Cancel focused by default, Escape cancels (D-009); one lowercase "(required)" marker (D-011); /plan errors on the shared ErrorSummary (D-012). Resumed notice: "Your earlier answers from this tab are back. Your saved choices take precedence over link suggestions." Storage keys, payload, ids and routes unchanged.
+
+Review: one corridra-reviewer pass on 7137c34, verdict merge; the dialog close label, an Escape test and the leftover "brief" sentence applied in this round. Accepted test changes: layout-budget-plan wide-screen case follows the receipt position (four checks, none loosened); verification A-2 locator reads "(required)" and still asserts required.
+
+Not verified: native review of the bn, zh, es, ar, fr, de words; screenshots at 768 and 1440; private-request mode still shows the Activate sentence. Follow-up: the UX gate samples one scroll position after 30 Tabs and is sensitive to the sticky header (focus can sit under the header); fix site-wide with scroll padding in the shared kit unit.
+
+Next action: Guardian merges PR 602 on green CI and verifies the deployment.

@@ -16,6 +16,8 @@ export const formEn = {
   'form.head.title': 'What do you want to do?',
   'form.head.realLead': 'Start with your objective.',
   'form.head.sampleLead': 'A short request is enough. No account needed.',
+  'form.head.signedInLead':
+    'You are signed in, so your request and its replies stay private in your account.',
 
   'form.notice.sampleLead': 'Test intake is open. Real customer mission admission is unavailable.',
   'form.notice.sampleUse': 'Use invented details and an email ending in {domain}.',
@@ -41,6 +43,8 @@ export const formEn = {
   'form.step.contact': 'Contact',
   'form.step.journey': 'Request steps',
   'form.step.progress': 'Request progress',
+  'form.step.line': 'Step {step} of {total}: {name} · Next: {next}',
+  'form.step.lineLast': 'Step {step} of {total}: {name}',
   'form.step.titleGoal': 'What are you trying to achieve?',
   'form.step.titleWhere': 'Where?',
   'form.step.titleDetails': 'What are you offering or looking for?',
@@ -158,7 +162,11 @@ export const formEn = {
   'form.action.saving': 'Saving…',
   'form.action.createAccount': 'Create Account and Continue',
   'form.action.submit': 'Submit Mission Request',
-  'form.action.clearDraft': 'Clear Draft',
+  'form.action.clearDraft': 'Clear Answers',
+  'form.action.cancel': 'Cancel',
+  'form.action.close': 'Close',
+  'form.clear.title': 'Clear your answers?',
+  'form.clear.body': 'This removes everything you entered in this tab.',
 
   'form.receipt.label': 'REQUEST SAVED',
   'form.receipt.title': 'Keep your private receipt.',
@@ -186,7 +194,6 @@ export const formEn = {
   'form.side.notChosen': 'Not chosen yet',
   'form.side.noCurrency': '(currency not chosen)',
   'form.side.notSupplied': 'Not supplied',
-  'form.side.draftOnly': 'Draft only.',
 
   // Messages the form itself sets. Each is the exact English the person sees; `{name}` marks a variable part.
   'form.message.claimFailed': 'Your request could not be submitted. Try again.',
@@ -195,12 +202,12 @@ export const formEn = {
   'form.message.navigationMissing':
     'Request navigation is unavailable. Open your account to continue.',
   'form.message.draftLostReal':
-    'A saved draft could not be restored. Keep a copy of your request before leaving this tab.',
+    'Your saved answers could not be brought back. Keep a copy of your request before leaving this tab.',
   'form.message.draftLostSample':
-    'A saved draft could not be restored. The form still works; keep a copy of your invented request before leaving this tab.',
+    'Your saved answers could not be brought back. The form still works; keep a copy of your invented request before leaving this tab.',
   'form.message.draftResumed':
-    'A draft from this tab was resumed. Your saved choices take precedence over link suggestions.',
-  'form.message.draftNotResumed': 'The earlier draft could not be resumed.',
+    'Your earlier answers from this tab are back. Your saved choices take precedence over link suggestions.',
+  'form.message.draftNotResumed': 'Your earlier answers could not be brought back.',
   'form.message.accountUnchecked': 'Account status could not be checked. Sign in or try again.',
   'form.message.pendingUnchecked': 'Saved request status could not be checked. Try again.',
   'form.message.paused':
@@ -208,9 +215,9 @@ export const formEn = {
   'form.message.opening': 'Opening your private request…',
   'form.message.accountFailed': 'Your account could not be checked.',
   'form.message.draftUnsavedReal':
-    'This browser could not save the draft. Keep this tab open and copy your request before leaving.',
+    'This browser could not save your answers. Keep this tab open and copy your request before leaving.',
   'form.message.draftUnsavedSample':
-    'This browser could not save the draft. Keep this tab open and copy the invented request before leaving.',
+    'This browser could not save your answers. Keep this tab open and copy the invented request before leaving.',
   'form.message.chooseJob': 'Choose the commercial job',
   'form.message.chooseCountry': 'Choose the company country',
   'form.message.chooseMarket': 'Choose the target market',
@@ -240,7 +247,7 @@ export const formEn = {
   'form.message.intakeUnavailable': 'Intake is unavailable',
   'form.message.activationNeeded': 'Finish account activation to submit your request',
   'form.message.checkFields': 'Check the highlighted fields',
-  'form.message.changed': 'This brief changed after submission. Start a new brief.',
+  'form.message.changed': 'This request changed after it was sent. Start a new request.',
   'form.message.intakeNotSaved': 'Intake could not be saved. Your input is still here.',
   'form.message.receiptExpired': 'Receipt unavailable or expired',
   'form.message.receiptUnavailable': 'Intake unavailable',
