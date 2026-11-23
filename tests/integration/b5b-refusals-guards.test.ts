@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AgendaItem, MissionExperience } from '../../packages/delivery/src/report';
 
 // Unit B5b of the commercial-ready run. D-053: a private link that no longer opens says one thing on every
@@ -149,5 +149,28 @@ describe('D-058: a missing status, state, fit or label never throws', () => {
       ['apps/web/app/account/service-requests/service-request-new.tsx', /\]\.toLowerCase\(/],
     ];
     for (const [path, pattern] of bare) expect(read(path), path).not.toMatch(pattern);
+  });
+});
+
+describe('D-058: Listen checks the voices of the browser without throwing', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const browser = (voices: { lang?: string }[], pageLanguage: string) => {
+    vi.stubGlobal('window', { speechSynthesis: { getVoices: () => voices } });
+    vi.stubGlobal('SpeechSynthesisUtterance', class {});
+    vi.stubGlobal('document', {
+      getElementById: () => null,
+      documentElement: { lang: pageLanguage },
+    });
+  };
+
+  it('a voice that names no language is passed over, on every page', async () => {
+    const { canSpeak } = await loadWeb('lib/ux/listen-store.ts');
+    // Some browsers list a voice with no language. It cannot read the page, and it must not stop the check.
+    browser([{}, { lang: undefined }, { lang: 'en-GB' }], 'en');
+    expect(canSpeak()).toBe(true);
+    browser([{}, { lang: undefined }], 'en');
+    expect(canSpeak()).toBe(false);
+    browser([{ lang: undefined }, { lang: 'zh-CN' }], 'zh-Hans');
+    expect(canSpeak()).toBe(true);
   });
 });

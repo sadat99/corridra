@@ -89,8 +89,14 @@ function ScopedIntroduction({
   const linkToken = fragment ? fragment.token : capability;
   const words = replyWords[fragment?.language ?? 'en'];
   // D-053: one line for a link that no longer opens, the same on every private page. The Reply Page keeps its own
-  // words in the language of the link (lib/reply-words.ts).
+  // words in the language of the link (lib/reply-words.ts) and, for a failed read or answer, the reason as before.
   const gone = replyPage ? words.unavailable : linkGone;
+  const failed = (error: unknown, whenUnknown: string) =>
+    replyPage
+      ? error instanceof Error && error.message
+        ? error.message
+        : whenUnknown
+      : refusalWords(error, linkGone, whenUnknown);
   const [data, setData] = useState<View | null>(null),
     [message, setMessage] = useState(
       replyPage ? `${words.loading}…` : 'Loading your introduction…',
@@ -137,8 +143,7 @@ function ScopedIntroduction({
         }
       })
       .catch((e) => {
-        if (active)
-          setMessage(refusalWords(e, gone, 'Your introduction could not be opened. Try again.'));
+        if (active) setMessage(failed(e, 'Your introduction could not be opened. Try again.'));
       });
     return () => {
       active = false;
@@ -176,7 +181,7 @@ function ScopedIntroduction({
         setData(null);
         setPending(null);
       }
-      setMessage(refusalWords(e, gone, 'Your response could not be saved. Try again.'));
+      setMessage(failed(e, 'Your response could not be saved. Try again.'));
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -205,7 +210,7 @@ function ScopedIntroduction({
         setData(null);
         setPending(null);
       }
-      setMessage(refusalWords(e, gone, 'Your request could not be saved. Try again.'));
+      setMessage(failed(e, 'Your request could not be saved. Try again.'));
     } finally {
       inFlight.current = false;
       setBusy(false);
