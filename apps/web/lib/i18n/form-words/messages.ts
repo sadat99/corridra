@@ -12,7 +12,7 @@ export const issueSeparator = '. ';
  * led by a translated instruction, so a person always knows what to do, and the English consent wording is kept.
  */
 export const englishOnlyMessages: Readonly<Record<string, FormKey | null>> = {
-  'Drafts expire after 24 hours.': null,
+  'Answers are kept in this tab for 24 hours.': null,
   'Your request is saved for 24 hours.': null,
   'No real customer mission has been accepted.': null,
   'Read and acknowledge the test intake notice': 'form.message.consentLead',

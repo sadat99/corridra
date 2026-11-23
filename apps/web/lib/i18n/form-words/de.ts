@@ -152,6 +152,13 @@ export const words: FormCatalog = {
   'form.action.createAccount': 'Konto erstellen und weiter',
   'form.action.submit': 'Anfrage senden',
   'form.action.clearDraft': 'Entwurf löschen',
+  // B2a plan flow (23 November 2026): new keys. Empty shows the English until the language units translate them.
+  'form.head.signedInLead': '',
+  'form.step.line': '',
+  'form.step.lineLast': '',
+  'form.action.cancel': '',
+  'form.clear.title': '',
+  'form.clear.body': '',
 
   'form.receipt.label': 'Anfrage gespeichert',
   'form.receipt.title': 'Bewahren Sie Ihren privaten Beleg auf.',

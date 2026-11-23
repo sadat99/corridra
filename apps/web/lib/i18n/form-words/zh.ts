@@ -144,6 +144,13 @@ export const words: FormCatalog = {
   'form.action.createAccount': '创建账户并继续',
   'form.action.submit': '提交需求',
   'form.action.clearDraft': '清除草稿',
+  // B2a plan flow (23 November 2026): new keys. Empty shows the English until the language units translate them.
+  'form.head.signedInLead': '',
+  'form.step.line': '',
+  'form.step.lineLast': '',
+  'form.action.cancel': '',
+  'form.clear.title': '',
+  'form.clear.body': '',
 
   'form.receipt.label': '需求已保存',
   'form.receipt.title': '请保留您的私密回执。',

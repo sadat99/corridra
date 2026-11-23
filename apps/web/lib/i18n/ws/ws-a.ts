@@ -5,7 +5,7 @@ import type { Locale } from '../locales';
 // translations are drafts until a native reviewer is recorded in docs/qa/2026-10-31/i18n-review.md.
 // Privacy and consent lines stay in English.
 export const wsAEn = {
-  'wsa.plan.required': 'Required',
+  'wsa.plan.required': 'required',
   'wsa.plan.outcomesHint': 'Choose at least one.',
   'wsa.plan.trip.offer': 'What should the trip achieve?',
   'wsa.plan.trip.offerExample':

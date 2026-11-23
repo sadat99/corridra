@@ -152,6 +152,13 @@ export const words: FormCatalog = {
   'form.action.createAccount': 'অ্যাকাউন্ট খুলে এগিয়ে যান',
   'form.action.submit': 'অনুরোধ পাঠান',
   'form.action.clearDraft': 'খসড়া মুছুন',
+  // B2a plan flow (23 November 2026): new keys. Empty shows the English until the language units translate them.
+  'form.head.signedInLead': '',
+  'form.step.line': '',
+  'form.step.lineLast': '',
+  'form.action.cancel': '',
+  'form.clear.title': '',
+  'form.clear.body': '',
 
   'form.receipt.label': 'অনুরোধ সংরক্ষিত',
   'form.receipt.title': 'আপনার ব্যক্তিগত রসিদ রেখে দিন।',

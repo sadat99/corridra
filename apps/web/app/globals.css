@@ -8996,3 +8996,47 @@ samp {
   }
 }
 /* audit-fixes-1 (AF-1) end */
+/* B2a plan flow (2026-11-23) */
+/* D-006: from 1001 px the receipt check shares the summary's column in the plain state. A sticky box is held by the
+   whole grid, not by its own row, so the sticky summary slid over the receipt check. The summary's row now takes
+   the room the form leaves above the receipt check, and the panel inside the summary is the sticky part: it stops
+   at the end of its own row and never reaches the receipt check. */
+.ux-brief-details > .ux-brief-heading {
+  margin-block-end: var(--space-4);
+}
+@media (min-width: 1001px) {
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    ) {
+    grid-template-rows: 1fr auto;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    .ux-brief-summary {
+    position: static;
+    display: block;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    .ux-brief-details {
+    position: sticky;
+    top: 7rem;
+    padding: var(--space-5);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--guided-hero-radius);
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    #receipt-check {
+    align-self: end;
+  }
+}
+/* end B2a */
