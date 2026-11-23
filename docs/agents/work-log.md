@@ -4828,3 +4828,13 @@ Review: one corridra-reviewer pass on e09fc2c, verdict merge; should-fix items (
 Preserved: no migration, no authority or RLS change, no code exposed to new readers; sample data never shown as real.
 
 Next action: Guardian merges PR 604 on green CI, verifies the deployment, then launches B11a.
+
+## 23 Nov 2026: B2b-1 public words (PR 606)
+
+Scope: request words instead of "brief" on / and /how-it-works (D-002); helper, Corridra Network and Corridra team instead of contributor and operator on /, /about, /network and /privacy (D-003, D-056 on /network); "what you can see" for access meanings and plain work words for commercial scope (D-004 part 1); "Price quote or price request (RFQ)" on first use (D-005); the home request builder's chosen route and route line come from one source (D-010, test first); /privacy in plain wording without "draft", "operator", "contributor", "scope" or "disclosure", no new promise and no cookie line (owner approval 23 Nov 2026; the journey cookie line lands with unit J). English values only; keys, ids and routes unchanged.
+
+Review: one corridra-reviewer pass on e8da83c; evidence retaken at 390, 768 and 1440 with the network switch on; helper password, privacy helper sentence, workflow limits and unsent-answers wording corrected in this round. Left for B2b-2: "scope" in content/public-pages.ts on /how-it-works and the switched-off /network.
+
+Not verified: native review of other languages (they still show these strings in English, as before).
+
+Next action: Guardian merges PR 606 on green CI and verifies the deployment.
