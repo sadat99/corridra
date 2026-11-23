@@ -69,7 +69,8 @@ export function canSpeak() {
   const voices = window.speechSynthesis.getVoices();
   // Voices load late in some browsers. Until they are listed, trust English only.
   if (voices.length === 0) return language === 'en';
-  return voices.some((voice) => voice.lang.toLowerCase().startsWith(language));
+  // D-058: some browsers list a voice that names no language. It cannot read the page and is passed over.
+  return voices.some((voice) => (voice.lang ?? '').toLowerCase().startsWith(language));
 }
 
 let speaking = false;

@@ -48,6 +48,7 @@ export function ChoiceChipRow({ children }: { children: ReactNode }) {
 // Choice row (Wave 3 unit 08): the answers of one question as large, full-word rows, 64 px on a phone and 72 px from 768
 // px. Each row is a button that acts at once (it does not hold a radio state), so a screen reads them as a named group.
 // Words wrap and are never cut; no width is fixed. Keep the row out of `.reply-actions` and other button rows.
+// UI/UX.v4.1 (L2, L3) adds two optional props to a row, `ownedIcon` and `chosen`; a row given neither is unchanged.
 export function ChoiceRow({
   labelledBy,
   children,
@@ -68,6 +69,8 @@ export function ChoiceButton({
   disabled,
   variant = 'secondary',
   icon,
+  ownedIcon,
+  chosen,
   children,
 }: {
   onClick: () => void;
@@ -76,6 +79,17 @@ export function ChoiceButton({
   variant?: 'primary' | 'secondary';
   /** An existing icon name, drawn beside the words and hidden from a screen reader. */
   icon?: string;
+  /**
+   * UI/UX.v4.1 L2: the one owned icon of a choice, an existing icon name drawn in a 44 px soft square before the
+   * words and hidden from a screen reader. A row with an owned icon draws no second icon.
+   */
+  ownedIcon?: string;
+  /**
+   * UI/UX.v4.1 L3: give it when the row is one of a set the person picks from. True is the chosen row (2 px edge,
+   * selected fill, filled radio), false a row not chosen (hollow radio); the button states it as pressed or not.
+   * Leave it out for a row that only acts at once.
+   */
+  chosen?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -84,9 +98,17 @@ export function ChoiceButton({
       className={`ux-choice ux-choice-${variant}`}
       onClick={onClick}
       disabled={disabled}
+      aria-pressed={chosen}
     >
-      {icon && <CorridraIcon name={icon} />}
+      {ownedIcon ? (
+        <span className="ux-choice-tile" aria-hidden="true">
+          <CorridraIcon name={ownedIcon} />
+        </span>
+      ) : (
+        icon && <CorridraIcon name={icon} />
+      )}
       <span>{children}</span>
+      {chosen !== undefined && <span className="ux-choice-radio" aria-hidden="true" />}
     </button>
   );
 }

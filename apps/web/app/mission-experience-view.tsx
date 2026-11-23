@@ -34,6 +34,14 @@ const offerFieldLabels: Record<string, string> = {
   commissioning: 'Commissioning',
   paymentTerms: 'Payment terms',
 };
+/**
+ * A stored code in lower case, for a line of plain words. An approved report is read back as stored and is not
+ * checked field by field, so a status, state or fit can be absent in a report approved before the field existed:
+ * the plain words given are shown in its place and nothing is thrown.
+ */
+export function lowerWords(value: unknown, whenMissing: string): string {
+  return typeof value === 'string' && value ? value.toLowerCase() : whenMissing;
+}
 export function AgendaView({
   agenda,
   language = 'en',
@@ -45,14 +53,15 @@ export function AgendaView({
     <ul>
       {agenda.map((a) => (
         <li key={a.id}>
-          <strong>{a.label}</strong> · {a.state.replaceAll('_', ' ').toLowerCase()}
+          <strong>{a.label}</strong> ·{' '}
+          {lowerWords(a.state, 'status not supplied').replaceAll('_', ' ')}
           <p>
             {a.nextAction} · {a.responsibility} · due {formatUtcDay(a.dueAt, language)}
           </p>
           {a.meetings.map((m) => (
             <p key={m.id}>
               {visitKindWord(m.activityKind) ? `${visitKindWord(m.activityKind)} · ` : ''}
-              {m.status.toLowerCase().replaceAll('_', ' ')}:{' '}
+              {lowerWords(m.status, 'status not supplied').replaceAll('_', ' ')}:{' '}
               {m.scheduleChanged
                 ? 'Schedule changed. An updated review is required.'
                 : m.startsAt
@@ -220,7 +229,7 @@ export function MissionExperienceView({
               {t.country})
             </h4>
             <p>
-              {t.fit.toLowerCase()} · {t.rationale}
+              {lowerWords(t.fit, 'fit not supplied')} · {t.rationale}
             </p>
             <p>Uncertainty: {t.uncertainty}</p>
             <p>Evidence gaps: {t.gaps}</p>
