@@ -98,8 +98,14 @@ export async function changeRealIntakeOwner(
         `Expected exactly one active owner or admin named "${plan.owner}" in the real workspace, found ${owners.length}`,
       );
     const owner = owners[0]!;
-    // The same test app.submit_mission applies to the recorded owner: without it real intake would refuse every request.
-    if (!owner.real_purpose || owner.disabled)
+    // The test app.submit_mission applies to a recorded owner: without it real intake would refuse every request.
+    const passes = (member: Member | undefined) =>
+      !!member &&
+      !member.revoked &&
+      ['owner', 'admin'].includes(member.role) &&
+      member.real_purpose &&
+      !member.disabled;
+    if (!passes(owner))
       throw new Error(
         'The new owner needs an active account and the real processing purpose in the real workspace',
       );
@@ -135,18 +141,19 @@ export async function changeRealIntakeOwner(
     const currentOwnerId = latest?.owner_id ?? configuration.owner_id;
     const ownerChanges = currentOwnerId !== owner.user_id;
     const lines = [`real workspace: ${plan.workspace} (${short(workspaceId)})`];
-    if (ownerChanges) {
-      const current = (
-        await db.query<{ name: string | null }>(
-          'SELECT u.name FROM identity.principal p LEFT JOIN identity."user" u ON u.id=p.identity_id WHERE p.id=$1',
-          [currentOwnerId],
-        )
-      ).rows[0];
+    // Only the names this operation searched for are printed; every other identity appears as a short id, never by a name
+    // read from the database.
+    if (ownerChanges)
       lines.push(
-        `owner of new real requests: ${value.apply ? 'changed' : 'would change'} from ${current?.name ?? 'an unnamed identity'} (${short(currentOwnerId)}) to ${plan.owner} (${short(owner.user_id)})`,
+        `owner of new real requests: ${value.apply ? 'changed' : 'would change'} from the current owner (${short(currentOwnerId)}) to ${plan.owner} (${short(owner.user_id)})`,
       );
-    } else
-      lines.push(`owner of new real requests: already ${plan.owner} (${short(owner.user_id)})`);
+    else lines.push(`owner of new real requests: already ${plan.owner} (${short(owner.user_id)})`);
+    // Whether each owner would pass the check real intake applies once an owner is recorded.
+    const configurationOwner = members.find((member) => member.user_id === configuration.owner_id);
+    lines.push(
+      `owner check: configuration owner (${short(configuration.owner_id)}) ${passes(configurationOwner) ? 'passes' : 'does not pass'}`,
+      `owner check: new owner ${plan.owner} (${short(owner.user_id)}) passes`,
+    );
     for (const member of leaving)
       lines.push(
         member.revoked

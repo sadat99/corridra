@@ -1,6 +1,7 @@
 -- B11a (owner decision 23 Nov 2026). The owner of new real requests can be changed without touching the one
 -- immutable row customer_private.real_use_configuration: a new owner is appended here and the newest row wins.
--- With no row the configuration owner is used, exactly as before. Installing this file alone changes no owner.
+-- With no row the configuration owner is used and nothing else is checked, exactly as before: installing this file alone
+-- changes no owner and adds no refusal, so a failed or partial run of the owner change can never stop real intake.
 -- Additive only: no existing row, request, membership, user or account is changed or removed by this file.
 -- Existing requests keep the owner recorded on them. The sample intake (app.intake_destination) is not read differently.
 DO $pre$ BEGIN
@@ -19,9 +20,10 @@ REVOKE ALL ON customer_private.real_intake_owner_version FROM PUBLIC,corridra_ru
 CREATE TRIGGER real_intake_owner_version_immutable BEFORE UPDATE OR DELETE ON customer_private.real_intake_owner_version
  FOR EACH ROW EXECUTE FUNCTION app.reject_rewrite();
 
--- One change to app.submit_mission, real branch only: the owner comes from the newest version row when one exists, and that
--- owner must be an active owner or admin of the real intake workspace with the real processing purpose, or real intake is
--- refused. The sample branch (ELSE) and everything after it are the installed text, unchanged.
+-- One change to app.submit_mission, real branch only: the owner comes from the newest version row when one exists, and a
+-- recorded owner must be an active owner or admin of the real intake workspace with the real processing purpose, or real
+-- intake is refused. With no version row there is no such check. The sample branch (ELSE) and everything after it are the
+-- installed text, unchanged.
 DO $guard$ BEGIN IF encode(sha256(convert_to(pg_get_functiondef('app.submit_mission(uuid,text,text,jsonb,text)'::regprocedure),'UTF8')),'hex')<>'b389b936999303645506ebd88a66e2df4b39c2007409a02e3af20c65161d0810' THEN RAISE EXCEPTION 'Real intake owner prerequisite function differs: app.submit_mission';END IF;END $guard$;
 CREATE OR REPLACE FUNCTION app.submit_mission(k uuid, h text, r text, b jsonb, n text)
  RETURNS jsonb
@@ -35,7 +37,7 @@ BEGIN
   IF NOT customer_private.real_admission_open() OR NOT customer_private.real_session() OR NOT EXISTS(SELECT FROM customer_private.request_attestation a WHERE a.proof_hash=current_setting('corridra.customer_proof_hash',true) AND a.request_key=k AND a.payload_hash=h AND a.receipt_hash=r AND a.notice_version=n AND a.brief_digest=encode(sha256(convert_to(b::text,'UTF8')),'hex') AND NOT app.tenant_is_synthetic(a.workspace_id)) THEN RAISE EXCEPTION 'Verified private request attestation required' USING ERRCODE='42501';END IF;
   SELECT true,c.intake_tenant_id,c.executor_id,coalesce((SELECT o.owner_id FROM customer_private.real_intake_owner_version o ORDER BY o.id DESC LIMIT 1),c.owner_id),c.enabled,c.notice_version INTO d FROM customer_private.real_use_configuration c WHERE c.enabled;
   IF NOT app.real_use_allowed(d.tenant_id) OR NOT customer_private.real_brief_valid(b) THEN RAISE EXCEPTION 'Real intake unavailable or invalid' USING ERRCODE='23514';END IF;
-  IF NOT EXISTS(SELECT FROM app.membership m JOIN identity.principal p ON p.id=m.user_id WHERE m.tenant_id=d.tenant_id AND m.user_id=d.owner_id AND m.revoked_at IS NULL AND m.role IN ('owner','admin') AND 'commercial_qualification'=ANY(m.allowed_purposes) AND p.disabled_at IS NULL) THEN RAISE EXCEPTION 'Real intake unavailable' USING ERRCODE='42501';END IF;
+  IF EXISTS(SELECT FROM customer_private.real_intake_owner_version) AND NOT EXISTS(SELECT FROM app.membership m JOIN identity.principal p ON p.id=m.user_id WHERE m.tenant_id=d.tenant_id AND m.user_id=d.owner_id AND m.revoked_at IS NULL AND m.role IN ('owner','admin') AND 'commercial_qualification'=ANY(m.allowed_purposes) AND p.disabled_at IS NULL) THEN RAISE EXCEPTION 'Real intake unavailable' USING ERRCODE='42501';END IF;
   PERFORM set_config('corridra.purpose','commercial_qualification',true);
  ELSE
   SELECT * INTO d FROM app.intake_destination WHERE singleton AND enabled;

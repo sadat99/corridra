@@ -150,7 +150,7 @@ describe('the real intake owner install wiring', () => {
     const now =
       '  SELECT true,c.intake_tenant_id,c.executor_id,coalesce((SELECT o.owner_id FROM customer_private.real_intake_owner_version o ORDER BY o.id DESC LIMIT 1),c.owner_id),c.enabled,c.notice_version INTO d FROM customer_private.real_use_configuration c WHERE c.enabled;\n';
     const check =
-      "  IF NOT EXISTS(SELECT FROM app.membership m JOIN identity.principal p ON p.id=m.user_id WHERE m.tenant_id=d.tenant_id AND m.user_id=d.owner_id AND m.revoked_at IS NULL AND m.role IN ('owner','admin') AND 'commercial_qualification'=ANY(m.allowed_purposes) AND p.disabled_at IS NULL) THEN RAISE EXCEPTION 'Real intake unavailable' USING ERRCODE='42501';END IF;\n";
+      "  IF EXISTS(SELECT FROM customer_private.real_intake_owner_version) AND NOT EXISTS(SELECT FROM app.membership m JOIN identity.principal p ON p.id=m.user_id WHERE m.tenant_id=d.tenant_id AND m.user_id=d.owner_id AND m.revoked_at IS NULL AND m.role IN ('owner','admin') AND 'commercial_qualification'=ANY(m.allowed_purposes) AND p.disabled_at IS NULL) THEN RAISE EXCEPTION 'Real intake unavailable' USING ERRCODE='42501';END IF;\n";
     const mine = submitMission(sql);
     expect(mine.split(now).length - 1).toBe(1);
     expect(mine.split(check).length - 1).toBe(1);

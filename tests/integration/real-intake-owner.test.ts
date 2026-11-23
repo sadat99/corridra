@@ -4,6 +4,8 @@ import { realStaffFixture } from './real-staff-fixture';
 import { CustomerWorkspaceService } from '../../packages/auth/src/customer-workspaces';
 import { CustomerRequestService } from '../../packages/auth/src/customer-requests';
 import { migrateCustomerRealIntakeOwner } from '../../packages/db/src/customer-real-intake-owner-migrate';
+import { migrateNetworkRealUse } from '../../packages/db/src/network-real-use-migrate';
+import { configureNetworkRealUse } from '../../packages/auth/src/network-real-use-configuration';
 import {
   changeRealIntakeOwner,
   realIntakeOwnerPlan,
@@ -65,7 +67,7 @@ async function addPerson(name: string, role: string) {
     [identityId, name, `${id}@example.invalid`],
   );
   await s.f.owner.query(
-    "INSERT INTO identity.principal(id,identity_id,operating_country) VALUES($1,$2,'SG')",
+    "INSERT INTO identity.principal(id,identity_id,operating_country) VALUES($1,$2,'DE')",
     [id, identityId],
   );
   await asService(
@@ -208,6 +210,13 @@ describe('the real intake owner change', () => {
     await migrateCustomerRealIntakeOwner(s.f.owner);
     expect((await requestOwner()).ownerId).toBe(s.f.users.owner!.id);
     expect((await state()).versions).toBe(0);
+    // With no owner recorded the module adds no check: real intake behaves exactly as before, even when the configuration
+    // owner is no longer an owner or admin, so a failed or partial install can never stop real intake.
+    await setMember(s.f.users.owner!.id, 'viewer', false);
+    expect((await requestOwner()).ownerId).toBe(s.f.users.owner!.id);
+    await setMember(s.f.users.owner!.id, 'owner', true);
+    expect((await requestOwner()).ownerId).toBe(s.f.users.owner!.id);
+    await setMember(s.f.users.owner!.id, 'owner', false);
     await expect(
       s.f.runtime.query('SELECT * FROM customer_private.real_intake_owner_version'),
     ).rejects.toMatchObject({ code: '42501' });
@@ -294,13 +303,34 @@ describe('the real intake owner change', () => {
     ).rejects.toThrow();
   });
 
+  test('the dry run says when the configuration owner would not pass the owner check, and prints no name read from the database', async () => {
+    // The configuration owner carries a free-text display name; only its short id may reach the log.
+    await rename(s.f.users.owner!.id, 'Free text <name> from the database');
+    await setMember(founder, 'owner', false);
+    await setMember(s.f.users.owner!.id, 'viewer', false);
+    const result = await run(false);
+    expect(result.lines).toContain(
+      `owner check: configuration owner (${short(s.f.users.owner!.id)}) does not pass`,
+    );
+    expect(result.lines).toContain(
+      `owner check: new owner Corridra founder (${short(founder)}) passes`,
+    );
+    expect(result.lines.join('\n')).not.toMatch(/Free text|<name>/);
+    await setMember(s.f.users.owner!.id, 'owner', false);
+    const passing = await run(false);
+    expect(passing.lines.join('\n')).not.toMatch(/Free text|<name>/);
+    await rename(s.f.users.owner!.id, 'Synthetic owner');
+  }, 120000);
+
   test('the dry run lists exactly what would change, with names and short ids only, and writes nothing', async () => {
     before = await state();
     const result = await run(false);
     expect(result.state).toBe('dry_run');
     expect(result.lines).toEqual([
       `real workspace: Corridra request operations (${short(s.intakeTenantId)})`,
-      `owner of new real requests: would change from Synthetic owner (${short(s.f.users.owner!.id)}) to Corridra founder (${short(founder)})`,
+      `owner of new real requests: would change from the current owner (${short(s.f.users.owner!.id)}) to Corridra founder (${short(founder)})`,
+      `owner check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
+      `owner check: new owner Corridra founder (${short(founder)}) passes`,
       `member: would remove Synthetic operator (${short(s.f.users.operator!.id)}), role operator, from the real workspace only`,
       `member: would remove Synthetic reviewer (${short(s.f.users.reviewer!.id)}), role reviewer, from the real workspace only`,
       'nothing written (dry run)',
@@ -384,11 +414,40 @@ describe('the real intake owner change', () => {
     expect(again.lines).toEqual([
       `real workspace: Corridra request operations (${short(s.intakeTenantId)})`,
       `owner of new real requests: already Corridra founder (${short(founder)})`,
+      `owner check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
+      `owner check: new owner Corridra founder (${short(founder)}) passes`,
       `member: Synthetic operator (${short(s.f.users.operator!.id)}) is already removed from the real workspace`,
       `member: Synthetic reviewer (${short(s.f.users.reviewer!.id)}) is already removed from the real workspace`,
       'unchanged',
     ]);
     expect(await state()).toEqual(start);
+  }, 120000);
+
+  test('the offline network switch follows the recorded owner when the configuration owner has left the real workspace', async () => {
+    // In production the configuration owner is one of the removed members. The network open and pause step must keep working.
+    await migrateNetworkRealUse(s.f.owner);
+    const networkReason = 'Owner approved reviewed real contributor work within retained scope';
+    await setMember(s.f.users.owner!.id, 'owner', true);
+    expect(
+      await configureNetworkRealUse(s.f.owner, { enabled: true, reason: networkReason }),
+    ).toEqual({ enabled: true, changed: true });
+    const written = (
+      await s.f.owner.query(
+        "SELECT created_by FROM app.config_version WHERE tenant_id=$1 AND key='network.enabled' ORDER BY version DESC LIMIT 1",
+        [s.intakeTenantId],
+      )
+    ).rows[0];
+    expect(written.created_by).toBe(founder);
+    // It still refuses when the recorded owner is not an active owner or admin.
+    await setMember(founder, 'operator', false);
+    await expect(
+      configureNetworkRealUse(s.f.owner, { enabled: false, reason: networkReason }),
+    ).rejects.toThrow('Enabled real scope and active original owner/executor are required');
+    await setMember(founder, 'owner', false);
+    expect(
+      await configureNetworkRealUse(s.f.owner, { enabled: false, reason: networkReason }),
+    ).toEqual({ enabled: false, changed: true });
+    await setMember(s.f.users.owner!.id, 'owner', false);
   }, 120000);
 
   test('the owner record is append only, and real intake is refused while the recorded owner is not an active owner or admin', async () => {
