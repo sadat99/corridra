@@ -38,7 +38,7 @@ export default async function Page({
   // sent back to the invitation steps they already completed.
   if (!workspace.success && (await signedIn(s)))
     return (
-      <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks." compact>
+      <WorkspaceShell eyebrow="Assigned work" title="Your assigned tasks." compact>
         <p role="status">
           <strong>You’re set up. No tasks assigned yet.</strong>
         </p>
@@ -54,7 +54,7 @@ export default async function Page({
     );
   if (!workspace.success)
     return (
-      <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks." compact>
+      <WorkspaceShell eyebrow="Assigned work" title="Your assigned tasks." compact>
         <p>
           Open the workspace link supplied with your reviewed invitation. A customer account does
           not grant assigned-task access.
@@ -64,7 +64,7 @@ export default async function Page({
         ) : (
           <>
             <Link prefetch={false} className="primary-link" href="/contributor/setup">
-              Accept a Reviewed Contributor Invitation
+              Accept a Reviewed Helper Invitation
             </Link>
             <Link prefetch={false} className="text-link" href="/network">
               How assigned work works
@@ -86,28 +86,26 @@ export default async function Page({
   const identity = await s.provider.getSession(await headers());
   if (!identity)
     redirect(
-      '/operator/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace.data),
+      '/contributor/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace.data),
     );
   return (
-    <WorkspaceShell
-      eyebrow="ASSIGNED EXECUTION WORK"
-      title={today ? 'Today.' : 'Your assigned tasks.'}
-    >
+    <WorkspaceShell eyebrow="Assigned work" title={today ? 'Today.' : 'Your assigned tasks.'}>
       <p>
         {today ? 'Tasks due today. You see only what Corridra shared with you. ' : null}
-        Only your disclosed tasks appear here. Follow each task’s instructions, deadlines and
+        Only the tasks shared with you appear here. Follow each task’s instructions, deadlines and
         evidence requirements. Your access does not include the full mission or team workspace.
       </p>
       {process.env.CORRIDRA_NETWORK_ENABLED === 'true' ? (
         <TaskBoard workspace={workspace.data} today={today} />
       ) : (
-        <p>The execution network is awaiting activation review. No work is currently available.</p>
+        <p>The Corridra Network is awaiting activation review. No work is currently available.</p>
       )}
       <Link
         prefetch={false}
         className="text-link"
         href={
-          '/operator/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace.data)
+          '/contributor/signin?next=' +
+          encodeURIComponent('/contributor?workspace=' + workspace.data)
         }
         target="_blank"
         rel="noopener noreferrer"

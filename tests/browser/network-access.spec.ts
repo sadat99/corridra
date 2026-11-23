@@ -28,7 +28,7 @@ test('contributor setup explains verified access and does not collect uninvited 
   expect(response?.headers()['cache-control']).toContain('no-store');
   expect(response?.headers()['referrer-policy']).toBe('no-referrer');
   await expect(
-    page.getByRole('heading', { name: 'Set up your contributor access.', exact: true }),
+    page.getByRole('heading', { name: 'Set up your helper access.', exact: true }),
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Account and email verification' })).toHaveAttribute(
     'href',

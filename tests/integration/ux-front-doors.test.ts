@@ -139,14 +139,15 @@ describe('the switch and every switch-off path', () => {
     const page = read('apps/web/app/contributor/page.tsx');
     expect(page).toContain("uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') ? (");
     for (const line of [
-      'Accept a Reviewed Contributor Invitation',
+      'Accept a Reviewed Helper Invitation',
       'How assigned work works',
       'Choose your sign-in route',
       'Back to Corridra',
     ])
       expect(page).toContain(line);
-    // The door only replaces the no-workspace links; the signed-in page and sign-in redirects are untouched.
-    expect(page).toContain("redirect(\n      '/operator/signin?next='");
+    // The door only replaces the no-workspace links; the signed-in page is untouched and the sign-in redirect
+    // keeps its return, now to the helper sign-in (B6a, D-054).
+    expect(page).toContain("redirect(\n      '/contributor/signin?next='");
     expect(page.match(/<FrontDoor/g)).toHaveLength(1);
   });
 });

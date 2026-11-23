@@ -8,7 +8,7 @@ import { ContributorSignout } from '../signout';
 import { HelperMe } from './helper-me';
 export const dynamic = 'force-dynamic';
 export const metadata = {
-  title: 'Me | Corridra',
+  title: 'My Assigned Work | Corridra',
   robots: { index: false, follow: false },
 };
 
@@ -24,7 +24,7 @@ export default async function Page({
   const workspace = z.uuid().safeParse((await searchParams).workspace);
   if (!s || !workspace.success)
     return (
-      <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Me." compact>
+      <WorkspaceShell eyebrow="Assigned work" title="My Assigned Work" compact>
         <p>
           Open the workspace link supplied with your reviewed invitation. A customer account does
           not grant assigned-task access.
@@ -37,11 +37,13 @@ export default async function Page({
   await s.ready;
   const identity = await s.provider.getSession(await headers());
   if (!identity)
+    // The helper sign-in keeps only a task-page return (the closed list in lib/workspace-navigation.ts), so a
+    // signed-out helper comes back to the task page of this workspace, where Me is one tab away.
     redirect(
-      '/operator/signin?next=' + encodeURIComponent('/contributor/me?workspace=' + workspace.data),
+      '/contributor/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace.data),
     );
   return (
-    <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Me.">
+    <WorkspaceShell eyebrow="Assigned work" title="My Assigned Work">
       <HelperMe workspace={workspace.data} />
       <ContributorSignout />
     </WorkspaceShell>

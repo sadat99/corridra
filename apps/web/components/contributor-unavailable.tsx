@@ -7,10 +7,10 @@ import { WorkspaceShell } from './workspace-shell';
  */
 export function ContributorUnavailable() {
   return (
-    <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks." compact>
+    <WorkspaceShell eyebrow="Assigned work" title="Your assigned tasks." compact>
       <p>
         Assigned-task access is not configured in this environment. Keep the invitation supplied by
-        your operator.
+        the Corridra team.
       </p>
       <Link prefetch={false} className="text-link" href="/network">
         How assigned work works

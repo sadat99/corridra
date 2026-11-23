@@ -248,7 +248,7 @@ test('the Me page holds language, reading and the switches in one card and stays
   const seed = await signInOwner(page, '/operator');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/contributor/me?workspace=${seed.tenantId}`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Me.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'My Assigned Work' })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   const card = page.locator('section', {
     has: page.getByRole('heading', { name: 'Make it easier to read', level: 2 }),

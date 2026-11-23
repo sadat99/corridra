@@ -697,9 +697,9 @@ test('helper sign-in uses helper words and its return lands on the task page, ne
       await expect(
         page.getByRole('heading', { name: 'Sign in to your assigned tasks.', exact: true }),
       ).toBeVisible();
-      await expect(page.getByRole('form', { name: 'Contributor sign-in' })).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Helper sign-in' })).toBeVisible();
       await expect(
-        page.getByRole('heading', { name: 'Use your contributor work account' }),
+        page.getByRole('heading', { name: 'Use your helper work account' }),
       ).toBeVisible();
       await expect(main.getByLabel('Email', { exact: true })).toBeVisible();
       await expect(main.getByLabel('Password', { exact: true })).toBeVisible();
@@ -730,7 +730,7 @@ test('helper sign-in uses helper words and its return lands on the task page, ne
       await context.clearCookies();
       await page.goto('about:blank');
       await page.goto('/operator/signin?next=' + encodeURIComponent('/contributor'));
-      await expect(page.getByRole('form', { name: 'Contributor sign-in' })).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Helper sign-in' })).toBeVisible();
       await signInThrough(
         '/operator/signin?next=' + encodeURIComponent('/contributor'),
         '/contributor',
