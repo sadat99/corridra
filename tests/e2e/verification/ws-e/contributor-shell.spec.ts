@@ -11,7 +11,7 @@ test('the contributor shell has a left bar on wide screens and a drawer on phone
   await expect(page.locator('h1')).toContainText('Your assigned tasks');
   const header = page.locator('header.ux-app-header[data-shell="contributor"]');
   await expect(header).toBeVisible();
-  const nav = page.getByRole('navigation', { name: 'Contributor sections' });
+  const nav = page.getByRole('navigation', { name: 'Helper sections' });
   const menu = page.getByRole('button', { name: 'Sections', exact: true });
   const wide = info.project.name === 'w1280';
   if (wide) {
@@ -20,7 +20,7 @@ test('the contributor shell has a left bar on wide screens and a drawer on phone
     await expect(nav).toBeHidden();
     await menu.click();
     await expect(menu).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.getByRole('dialog', { name: 'Contributor sections' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Helper sections' })).toBeVisible();
   }
   await expect(nav).toBeVisible();
   const tasks = nav.getByRole('link', { name: 'Your tasks', exact: true });
@@ -54,7 +54,7 @@ test('Your tasks drops a workspace value that is not an id', async ({ page }, in
     await page.getByRole('button', { name: 'Sections', exact: true }).click();
   await expect(
     page
-      .getByRole('navigation', { name: 'Contributor sections' })
+      .getByRole('navigation', { name: 'Helper sections' })
       .getByRole('link', { name: 'Your tasks', exact: true }),
   ).toHaveAttribute('href', '/contributor');
 });

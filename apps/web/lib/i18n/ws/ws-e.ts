@@ -4,7 +4,7 @@ import type { Locale } from '../locales';
 // Keys start with "wse.". English is the source; every other language needs the same keys. The
 // translations are drafts until a native reviewer is recorded in docs/qa/2026-10-31/i18n-review.md.
 // Privacy and consent lines stay in English. The three team group words Delivery, Outcomes and All
-// tools and settings, and the menu words Close menu, Collapse menu, Expand menu, Contributor sections
+// tools and settings, and the menu words Close menu, Collapse menu, Expand menu, Helper sections
 // and How assigned work works, are English placeholders in every language until reviewed (D16): the sidebar
 // marks a word lang="en" when the chosen language's text equals the English text (open language gap).
 export const wsEEn = {
@@ -30,7 +30,7 @@ export const wsEEn = {
   'wse.shell.closeMenu': 'Close menu',
   'wse.shell.collapseMenu': 'Collapse menu',
   'wse.shell.expandMenu': 'Expand menu',
-  'wse.contributor.nav': 'Contributor sections',
+  'wse.contributor.nav': 'Helper sections',
   'wse.contributor.how': 'How assigned work works',
   'wse.shell.website': 'Corridra website',
   'wse.shell.help': 'Help',
@@ -70,7 +70,7 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.shell.closeMenu': 'Close menu',
     'wse.shell.collapseMenu': 'Collapse menu',
     'wse.shell.expandMenu': 'Expand menu',
-    'wse.contributor.nav': 'Contributor sections',
+    'wse.contributor.nav': 'Helper sections',
     'wse.contributor.how': 'How assigned work works',
     'wse.shell.website': 'Corridra ওয়েবসাইট',
     'wse.shell.help': 'সাহায্য',
@@ -108,7 +108,7 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.shell.closeMenu': 'Close menu',
     'wse.shell.collapseMenu': 'Collapse menu',
     'wse.shell.expandMenu': 'Expand menu',
-    'wse.contributor.nav': 'Contributor sections',
+    'wse.contributor.nav': 'Helper sections',
     'wse.contributor.how': 'How assigned work works',
     'wse.shell.website': 'Corridra 网站',
     'wse.shell.help': '帮助',
@@ -146,7 +146,7 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.shell.closeMenu': 'Close menu',
     'wse.shell.collapseMenu': 'Collapse menu',
     'wse.shell.expandMenu': 'Expand menu',
-    'wse.contributor.nav': 'Contributor sections',
+    'wse.contributor.nav': 'Helper sections',
     'wse.contributor.how': 'How assigned work works',
     'wse.shell.website': 'Sitio web de Corridra',
     'wse.shell.help': 'Ayuda',
@@ -184,7 +184,7 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.shell.closeMenu': 'Close menu',
     'wse.shell.collapseMenu': 'Collapse menu',
     'wse.shell.expandMenu': 'Expand menu',
-    'wse.contributor.nav': 'Contributor sections',
+    'wse.contributor.nav': 'Helper sections',
     'wse.contributor.how': 'How assigned work works',
     'wse.shell.website': 'موقع Corridra',
     'wse.shell.help': 'مساعدة',
@@ -222,7 +222,7 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.shell.closeMenu': 'Close menu',
     'wse.shell.collapseMenu': 'Collapse menu',
     'wse.shell.expandMenu': 'Expand menu',
-    'wse.contributor.nav': 'Contributor sections',
+    'wse.contributor.nav': 'Helper sections',
     'wse.contributor.how': 'How assigned work works',
     'wse.shell.website': 'Site Corridra',
     'wse.shell.help': 'Aide',
@@ -260,7 +260,7 @@ export const wsE: Record<Exclude<Locale, 'en'>, Record<keyof typeof wsEEn, strin
     'wse.shell.closeMenu': 'Close menu',
     'wse.shell.collapseMenu': 'Collapse menu',
     'wse.shell.expandMenu': 'Expand menu',
-    'wse.contributor.nav': 'Contributor sections',
+    'wse.contributor.nav': 'Helper sections',
     'wse.contributor.how': 'How assigned work works',
     'wse.shell.website': 'Corridra-Website',
     'wse.shell.help': 'Hilfe',

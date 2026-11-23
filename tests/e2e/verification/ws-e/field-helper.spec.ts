@@ -16,7 +16,7 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   const tabs = page.getByRole('navigation', { name: 'Helper tabs' });
   if (wide) {
     await expect(tabs).toBeHidden();
-    await expect(page.getByRole('navigation', { name: 'Contributor sections' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Helper sections' })).toBeVisible();
     return;
   }
   await expect(tabs).toBeVisible();
@@ -49,7 +49,7 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
 
   await tabs.getByRole('link', { name: 'Me', exact: true }).click();
   await expect(page).toHaveURL(/\/contributor\/me\?workspace=/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Me.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'My Assigned Work' })).toBeVisible();
   await expect(tabs.getByRole('link', { name: 'Me', exact: true })).toHaveAttribute(
     'aria-current',
     'page',

@@ -23,11 +23,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
   const returnTo = isContributorReturn(checked) ? checked : '/contributor';
   if (!foundations()) return <ContributorUnavailable />;
   return (
-    <WorkspaceShell
-      eyebrow="ASSIGNED EXECUTION WORK"
-      title="Sign in to your assigned tasks."
-      compact
-    >
+    <WorkspaceShell eyebrow="Assigned work" title="Sign in to your assigned tasks." compact>
       <OperatorSignin returnTo={returnTo} />
       <Link prefetch={false} className="text-link" href="/operator/forgot-password?for=helper">
         Forgot your work password?
