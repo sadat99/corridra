@@ -146,7 +146,7 @@ test('with the switch on a person can sign in with an emailed code and keep the 
     await code.fill('123456');
     await form.getByRole('button', { name: 'Sign In', exact: true }).click();
     await expect(form.getByRole('alert')).toHaveText(
-      'That code is wrong or has expired. Check it or ask for a new code.',
+      'That code is wrong or has expired, or no account uses this address. Check it, ask for a new code, or create an account.',
     );
     await expect(form.getByRole('alert')).toBeFocused();
     await expect(code).toHaveValue('123456');
@@ -203,6 +203,138 @@ test('with the switch on a person can sign in with an emailed code and keep the 
         });
       }
     }
+  } finally {
+    server.kill('SIGTERM');
+  }
+});
+
+// B1, 23 Nov 2026 (D-015). A correct code must never be called wrong because the route or the service failed.
+test('a failed code sign-in says what really happened', async ({ page }) => {
+  test.setTimeout(150000);
+  const { server, origin } = start(3415, true);
+  try {
+    await ready(page, origin);
+    type Reply = { status: number; body: Record<string, unknown> } | 'network';
+    let reply = { status: 404, body: { error: 'Not found' } } as Reply;
+    await page.route('**/api/auth/**', async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      if (path.endsWith('/sign-in/email-otp')) {
+        if (reply === 'network') return route.abort('connectionfailed');
+        return route.fulfill({
+          status: reply.status,
+          contentType: 'application/json',
+          body: JSON.stringify(reply.body),
+        });
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    });
+    // KI-27: a mocked code is not a server session, so the return target is the open request page.
+    await page.goto(origin + '/signin?returnTo=/plan&method=code');
+    const form = page.getByRole('form', { name: 'Account access' });
+    await form.getByLabel('Email', { exact: true }).fill('person@example.invalid');
+    await form.getByRole('button', { name: 'Send Code', exact: true }).click();
+    const code = form.getByLabel('Six-digit code');
+    await code.fill('123456');
+    const unavailable =
+      'Sign-in by code is unavailable right now. Use your password or try again in a few minutes.';
+    const wrong =
+      'That code is wrong or has expired, or no account uses this address. Check it, ask for a new code, or create an account.';
+    const cases: [Reply, string][] = [
+      [{ status: 404, body: { error: 'Not found' } }, unavailable],
+      [{ status: 503, body: { error: 'Account service is unavailable.' } }, unavailable],
+      [{ status: 500, body: {} }, unavailable],
+      ['network', unavailable],
+      [{ status: 403, body: { error: 'Request origin is not allowed' } }, unavailable],
+      [{ status: 400, body: { code: 'INVALID_OTP', message: 'Invalid OTP' } }, wrong],
+      [{ status: 400, body: { code: 'OTP_EXPIRED', message: 'OTP expired' } }, wrong],
+      [{ status: 401, body: {} }, wrong],
+      // The proxy gives one answer for a wrong code, an expired code and an address with no account.
+      [{ status: 400, body: { code: 'CODE_REFUSED', error: 'Sign-in refused' } }, wrong],
+      [
+        { status: 429, body: { code: 'TOO_MANY_REQUESTS', error: 'Too many requests' } },
+        'Too many tries. Ask for a new code.',
+      ],
+      [{ status: 429, body: {} }, 'Too many tries. Ask for a new code.'],
+    ];
+    for (const [next, words] of cases) {
+      reply = next;
+      await form.getByRole('button', { name: 'Sign In', exact: true }).click();
+      await expect(form.getByRole('alert'), JSON.stringify(next)).toHaveText(words);
+      await expect(code).toHaveValue('123456');
+      await expect(page).toHaveURL(/\/signin\?/);
+    }
+    // The way to an account is always under the code form, whatever the answer was, and keeps the return target.
+    await expect(form.getByRole('alert').getByRole('link')).toHaveCount(0);
+    await expect(
+      form.getByRole('link', { name: 'Create an Account', exact: true }).first(),
+    ).toHaveAttribute('href', '/signup?returnTo=%2Fplan');
+    await expect(
+      form.getByRole('link', { name: 'Create an Account', exact: true }).first(),
+    ).toBeVisible();
+  } finally {
+    server.kill('SIGTERM');
+  }
+});
+
+// B1, 23 Nov 2026 (D-028 and D-026a). The name rule matches the server, and every action under the fields
+// keeps to the form's own width.
+test('create account keeps the name rule and its actions inside the form', async ({ page }) => {
+  test.setTimeout(150000);
+  const { server, origin } = start(3416, true);
+  try {
+    await ready(page, origin);
+    const sent: string[] = [];
+    await page.route('**/api/auth/**', async (route) => {
+      sent.push(new URL(route.request().url()).pathname);
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    });
+    for (const path of ['/signup', '/signin', '/signin?method=code']) {
+      await page.goto(origin + path);
+      const form = page.getByRole('form', { name: 'Account access' });
+      await expect(form).toBeVisible();
+      for (const width of [1280, 1024, 390, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        const outside = await form.evaluate((node) => {
+          const box = node.getBoundingClientRect();
+          const fields = Array.from(node.querySelectorAll('input')).map((i) =>
+            i.getBoundingClientRect(),
+          );
+          const left = Math.min(...fields.map((f) => f.left));
+          const right = Math.max(...fields.map((f) => f.right));
+          return Array.from(node.querySelectorAll(':scope > a, :scope > button'))
+            .map((el) => ({ el, r: el.getBoundingClientRect() }))
+            .filter(({ r }) => r.width > 0)
+            .filter(
+              ({ r }) =>
+                r.left < box.left - 0.5 ||
+                r.right > box.right + 0.5 ||
+                Math.abs(r.left - left) > 0.5 ||
+                Math.abs(r.right - right) > 0.5,
+            )
+            .map(
+              ({ el, r }) =>
+                `${el.textContent} ${Math.round(r.left)}-${Math.round(r.right)} fields ${Math.round(left)}-${Math.round(right)}`,
+            );
+        });
+        expect(outside, `${path} at ${width}`).toEqual([]);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+          width,
+        );
+      }
+    }
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(origin + '/signup');
+    const form = page.getByRole('form', { name: 'Account access' });
+    const name = form.getByLabel('Name', { exact: true });
+    await expect(name).toHaveAttribute('maxlength', '100');
+    await name.fill('   ');
+    await form.getByLabel('Email', { exact: true }).fill('person@example.invalid');
+    await form.getByLabel('Password', { exact: true }).fill('a long enough password');
+    await form.getByRole('button', { name: 'Create Account', exact: true }).click();
+    await expect(form.getByRole('alert')).toHaveText(
+      'Enter your name, using up to 100 characters.',
+    );
+    expect(sent.filter((path) => path.endsWith('/sign-up/email'))).toEqual([]);
   } finally {
     server.kill('SIGTERM');
   }
