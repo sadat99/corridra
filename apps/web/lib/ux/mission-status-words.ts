@@ -11,8 +11,10 @@ const titleCase = (code: string) =>
     .join(' ');
 
 // Each word is the stored word in Title Case, so a person reads the same word as before, never new wording.
+// One exception (owner, 23 Nov 2026: a customer never reads "draft"): a DRAFT mission is a request the team has
+// received and not yet reviewed (D6), so it reads Received. The stored code stays DRAFT.
 const missionStatus: Record<string, string> = {
-  DRAFT: 'Draft',
+  DRAFT: 'Received',
   QUALIFICATION: 'Qualification',
   ACTIVE: 'Active',
   TARGETING: 'Targeting',

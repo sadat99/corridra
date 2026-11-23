@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { groupFields, placeName, requestTitle } from '../../apps/web/app/account/request-words';
 import { buildMoveModel, type MoveInput } from '../../apps/web/lib/move-cards';
 import { customerRoad, customerStatusLabel } from '../../apps/web/lib/ux/customer-road';
+import { missionStatusWords } from '../../apps/web/lib/ux/mission-status-words';
+import { tools } from '../../apps/web/lib/all-tools';
 import { mrLabelsFor } from '../../apps/web/components/mr/labels';
 import { cleanReports } from '../../packages/auth/src/customer-delivered-reports';
 import { translate } from '../../apps/web/lib/i18n/messages';
@@ -33,7 +35,8 @@ describe('D6: a sent request is never a draft', () => {
   it('labels a DRAFT or QUALIFICATION mission the customer sent as received, waiting for review', () => {
     expect(customerStatusLabel('DRAFT', true).label).toBe('Received, waiting for review');
     expect(customerStatusLabel('QUALIFICATION', true).label).toBe('Received, waiting for review');
-    expect(customerStatusLabel('DRAFT', false).label).toBe('Draft');
+    expect(customerStatusLabel('DRAFT', false).label).toBe('Saved, not sent yet');
+    expect(customerStatusLabel('QUALIFICATION', false).label).toBe('Saved, not sent yet');
     expect(customerRoad({ status: 'DRAFT', submitted: true }).status.label).toBe(
       'Received, waiting for review',
     );
@@ -42,6 +45,17 @@ describe('D6: a sent request is never a draft', () => {
     expect(mrLabelsFor('en').road.sublines.DRAFT).toBe('Received, waiting for review.');
     for (const locale of localeCodes)
       expect(mrLabelsFor(locale).road.sublines.DRAFT).not.toMatch(/draft/i);
+  });
+  // Owner, 23 Nov 2026: no customer-readable "draft"; an unsent guided request is a saved request.
+  it('a DRAFT mission on a delivered report reads Received, the stored code never changes', () => {
+    expect(missionStatusWords('DRAFT')).toBe('Received');
+    expect(missionStatusWords('QUALIFICATION')).toBe('Qualification');
+  });
+  it('no line or label in All Tools says draft; the work list names saved requests', () => {
+    for (const tool of tools) expect(`${tool.label} ${tool.line}`, tool.href).not.toMatch(/draft/i);
+    expect(tools.find((tool) => tool.href === '/account?view=work')?.line).toBe(
+      'Workspaces, saved requests and every request you sent.',
+    );
   });
   it('CQ-21: Your Move lists a received request under waiting on the team, not "nothing is waiting"', () => {
     const model = buildMoveModel({ ...empty, requests: [received('DRAFT')] });

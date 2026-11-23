@@ -37,7 +37,7 @@ describe('Next Move order: first rule that fits wins', () => {
     const move = nextMove(signals({ drafts: { count: 1, href: '/account/drafts/w1?draft=d1' } }));
     expect(move).toMatchObject({
       key: 'draft',
-      label: 'Finish Your Draft',
+      label: 'Finish Your Saved Request',
       href: '/account/drafts/w1?draft=d1',
       badge: null,
     });
@@ -113,6 +113,17 @@ describe('counts shown are honest', () => {
     }
     for (const move of [nextMove(none), nextMove(signals({ drafts: { count: 1, href: '/d' } }))])
       expect(move.reason).not.toMatch(/[—–]/);
+    // Owner, 23 Nov 2026: a customer never reads "draft"; an unsent guided request is a saved request.
+    const saved = nextMove(signals({ drafts: { count: 1, href: '/d' } }));
+    expect(saved.reason).toBe(
+      'A saved request is half done and nothing is waiting on your answer.',
+    );
+    for (const move of [
+      nextMove(none),
+      saved,
+      nextMove(signals({ quotes: { count: 1, href: '/q' } })),
+    ])
+      expect(`${move.label} ${move.reason}`).not.toMatch(/draft/i);
   });
 });
 
