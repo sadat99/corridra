@@ -233,7 +233,7 @@ test('/corridors/bangladesh-china: the board words, four jobs, three open sectio
   await expect(page.getByText('A proposed visit is not a confirmed appointment.')).toBeVisible();
   await expect(
     page.getByText(
-      'We check each company against the scope you agree. We do not claim a supplier network or certification. We do not guarantee buyers.',
+      'We check each company against what the work covers, as agreed with you. We do not claim a supplier network or certification. We do not guarantee buyers.',
     ),
   ).toBeVisible();
   await expect(

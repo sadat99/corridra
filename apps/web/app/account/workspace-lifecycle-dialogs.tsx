@@ -4,13 +4,13 @@ import type { CustomerAccessPage } from '@corridra/auth/customer-workspaces';
 import {
   lifecycleWords,
   useLifecycleCommand,
-  whenWords,
   type LifecycleCommand,
   type LifecycleResult,
   type LifecycleState,
   type SessionHeaders,
 } from './workspace-lifecycle-client';
 import { limitWords } from '../../lib/account-limit';
+import { formatDateTime } from '../../lib/ux/format';
 import { LifecycleErrorLine } from './lifecycle-error-line';
 import './invitation-dialog.css';
 
@@ -151,7 +151,7 @@ export function RenameBody(props: BodyProps) {
           <ul>
             {renames.map((entry) => (
               <li key={entry.version}>
-                {entry.previousName} to {entry.name}. {whenWords(entry.at)}.{' '}
+                {entry.previousName} to {entry.name}. {formatDateTime(entry.at)}.{' '}
                 {entry.byYou ? 'By you.' : 'By another person.'}
                 {entry.reason ? ` ${entry.reason}` : ''}
               </li>
@@ -359,7 +359,7 @@ export function TransferBody(props: BodyProps) {
             props.onFinished(
               `Offer sent to ${chosen.label}.${
                 result.done.expiresAt
-                  ? ` It stays open until ${whenWords(result.done.expiresAt)}.`
+                  ? ` It stays open until ${formatDateTime(result.done.expiresAt)}.`
                   : ''
               }`,
             ),

@@ -19,15 +19,25 @@ export async function configureNetworkRealUse(pool: DatabasePool, input: unknown
     await db.query(
       "SELECT pg_advisory_xact_lock(hashtext('corridra:network-real-use-configuration'))",
     );
+    // The owner is the one real intake uses: the newest recorded owner when the real intake owner module holds one (B11a),
+    // else the configuration owner, exactly as before that module.
+    const recorded = (
+      await db.query<{ present: boolean }>(
+        "SELECT to_regclass('customer_private.real_intake_owner_version') IS NOT NULL AS present",
+      )
+    ).rows[0]!.present;
+    const ownerId = recorded
+      ? 'coalesce((SELECT o.owner_id FROM customer_private.real_intake_owner_version o ORDER BY o.id DESC LIMIT 1),c.owner_id)'
+      : 'c.owner_id';
     const source = (
       await db.query<{
         intake_tenant_id: string;
         owner_id: string;
         executor_id: string;
-      }>(`SELECT c.intake_tenant_id,c.owner_id,c.executor_id FROM customer_private.real_use_configuration c
+      }>(`SELECT c.intake_tenant_id,owner.id AS owner_id,c.executor_id FROM customer_private.real_use_configuration c
       JOIN app.tenant t ON t.id=c.intake_tenant_id AND NOT t.synthetic
       JOIN identity.principal executor ON executor.id=c.executor_id AND executor.kind='service' AND executor.disabled_at IS NULL
-      JOIN identity.principal owner ON owner.id=c.owner_id AND owner.disabled_at IS NULL
+      JOIN identity.principal owner ON owner.id=${ownerId} AND owner.disabled_at IS NULL
       JOIN app.membership m ON m.tenant_id=t.id AND m.user_id=owner.id AND m.revoked_at IS NULL AND m.role IN ('owner','admin')
       WHERE c.enabled AND 'commercial_qualification'=ANY(m.allowed_purposes) AND owner.operating_country=ANY(m.allowed_countries)
       FOR SHARE OF c,t,executor,owner,m`)

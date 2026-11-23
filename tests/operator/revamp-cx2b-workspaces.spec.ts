@@ -139,7 +139,7 @@ test('CX-05 a row menu opens from the keyboard, moves with the arrows and Escape
   await expect(button).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByRole('menuitem', { name: 'New Request', exact: true })).toBeFocused();
   await page.keyboard.press('ArrowDown');
-  await expect(page.getByRole('menuitem', { name: 'Continue a Saved Draft' })).toBeFocused();
+  await expect(page.getByRole('menuitem', { name: 'Continue a Saved Request' })).toBeFocused();
   await page.keyboard.press('End');
   await expect(page.getByRole('menuitem', { name: 'Manage Team', exact: true })).toBeFocused();
   await page.keyboard.press('Escape');
@@ -470,3 +470,138 @@ for (const width of [390, 768, 1440])
     expect(c!.y < j!.y || c!.x < j!.x).toBe(true);
     if (width < 768) expect(c!.height).toBeGreaterThanOrEqual(44);
   });
+
+// Unit B3b (owner walk, 23 November 2026).
+// D-051: the row menu is drawn over the table card, never cut off by it. Every item of the last row's menu is fully
+// painted and takes a click, at a phone, a tablet and a desktop width. The window is tall enough to hold the whole
+// menu, so nothing is scrolled to bring an item into sight: a clipping card can be scrolled inside by a script, which
+// would hide the very fault this test is for.
+for (const width of [390, 768, 1440])
+  test(`D-051 the last row's menu is whole and every item can be pressed at ${width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 1400 });
+    await open(page);
+    const table = page.getByRole('table', { name: 'Your workspaces' });
+    await trigger(page, 'Synthetic Gazipur Wovens').click();
+    const menu = page.getByRole('menu', { name: 'Actions for Synthetic Gazipur Wovens' });
+    await expect(menu).toBeVisible();
+    const items = menu.getByRole('menuitem');
+    const count = await items.count();
+    expect(count).toBeGreaterThanOrEqual(6);
+    await expect(items.nth(2)).toHaveText('Send a Private Request');
+    // The menu reaches below the card, so the card would cut it off if it clipped.
+    const edges = await menu.evaluate((panel) => ({
+      menuBottom: panel.getBoundingClientRect().bottom,
+      tableBottom: document.querySelector('.ux-ws-table')!.getBoundingClientRect().bottom,
+    }));
+    expect(edges.menuBottom).toBeGreaterThan(edges.tableBottom);
+    expect(await table.evaluate((node) => getComputedStyle(node).overflow)).toBe('visible');
+    expect(await table.evaluate((node) => node.scrollTop)).toBe(0);
+    for (let index = 0; index < count; index++) {
+      const item = items.nth(index);
+      await expect(item).toBeInViewport({ ratio: 1 });
+      // The middle of each edge and the centre of the item are the item itself, so no ancestor clips any side of it
+      // (the corners are left out: the row is rounded, and a rounded corner is not part of the row).
+      const covered = await item.evaluate((node) => {
+        const box = node.getBoundingClientRect();
+        const midX = box.left + box.width / 2;
+        const midY = box.top + box.height / 2;
+        const points = [
+          [midX, box.top + 2],
+          [midX, box.bottom - 2],
+          [box.left + 2, midY],
+          [box.right - 2, midY],
+          [midX, midY],
+        ];
+        return points.every(([x, y]) => {
+          const hit = document.elementFromPoint(x!, y!);
+          return !!hit && (hit === node || node.contains(hit));
+        });
+      });
+      expect(covered, `menu item ${index + 1} is fully painted`).toBe(true);
+      await item.click({ trial: true, timeout: 2000 });
+    }
+    // The card keeps its rounded border with the menu open, and its head row stays inside the rounded corner.
+    expect(
+      await table.evaluate((node) => parseFloat(getComputedStyle(node).borderTopLeftRadius)),
+    ).toBeGreaterThan(0);
+    expect(await table.evaluate((node) => parseFloat(getComputedStyle(node).borderTopWidth))).toBe(
+      1,
+    );
+    // On a phone-height window the page itself scrolls to the last item; the card is not what scrolls.
+    await page.setViewportSize({ width, height: 700 });
+    await items.last().scrollIntoViewIfNeeded();
+    await expect(items.last()).toBeInViewport({ ratio: 0.9 });
+    expect(await table.evaluate((node) => node.scrollTop)).toBe(0);
+  });
+
+// D-052: the row menu says "Continue a Saved Request"; the route it opens is unchanged.
+test('D-052 the row menu offers Continue a Saved Request and still opens the same page', async ({
+  page,
+}) => {
+  await open(page);
+  await trigger(page, 'Synthetic Dhaka Knits').click();
+  const menu = page.getByRole('menu', { name: 'Actions for Synthetic Dhaka Knits' });
+  await expect(
+    menu.getByRole('menuitem', { name: 'Continue a Saved Request', exact: true }),
+  ).toHaveAttribute('href', '/account/drafts/' + ownerId);
+  await expect(menu.getByText(/draft/i)).toHaveCount(0);
+});
+
+// D-050: a time in the Team dialog is written the one way, in the reader's own time zone, never in UTC.
+// D-044: the new invitation code has the shared Copy Code button beside it.
+test.describe('D-050 and D-044 in the Team dialog, read in Dhaka', () => {
+  test.use({ timezoneId: 'Asia/Dhaka', permissions: ['clipboard-read', 'clipboard-write'] });
+  test('an invitation expiry and a new code read in the local time zone, and the code can be copied', async ({
+    page,
+  }) => {
+    await open(page);
+    await page.route('**/api/customer-workspace-access**', (route) =>
+      route.request().method() === 'POST'
+        ? route.fulfill({
+            json: {
+              workspaceId: ownerId,
+              invitationId: memberId,
+              expiresAt: '2026-11-24T07:07:00.000Z',
+              issued: true,
+              token: 'T'.repeat(43),
+            },
+          })
+        : route.fulfill({
+            json: {
+              workspaceId: ownerId,
+              ownerProtected: true,
+              nextInvitationAfter: null,
+              nextMemberAfter: null,
+              invitations: [
+                {
+                  id: memberId,
+                  label: 'Synthetic buyer desk',
+                  expiresAt: '2026-11-24T07:07:00.000Z',
+                  memberId: null,
+                  status: 'pending',
+                },
+              ],
+              memberships: [],
+            },
+          }),
+    );
+    await trigger(page, 'Synthetic Dhaka Knits').click();
+    await page.getByRole('menuitem', { name: 'Manage Team', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Team for Synthetic Dhaka Knits' });
+    const row = dialog.getByRole('listitem').filter({ hasText: 'Synthetic buyer desk' });
+    await expect(row).toContainText('Expires 24 Nov 2026, 13:07 (Dhaka, UTC+6)');
+    await expect(row.locator('time')).toHaveAttribute('datetime', '2026-11-24T07:07:00.000Z');
+    await expect(dialog.getByText(/\d{2}:\d{2} UTC/)).toHaveCount(0);
+
+    await dialog.getByLabel('Sample invitation label', { exact: true }).fill('copy test');
+    await dialog.getByRole('button', { name: 'Issue Sample Invitation', exact: true }).click();
+    const code = dialog.getByLabel('New workspace invitation code', { exact: true });
+    await expect(code).toHaveValue('T'.repeat(43));
+    await expect(dialog.getByText('It expires 24 Nov 2026, 13:07 (Dhaka, UTC+6).')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Copy Code', exact: true }).click();
+    await expect(dialog.getByRole('status').filter({ hasText: 'Copied' })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('T'.repeat(43));
+  });
+});

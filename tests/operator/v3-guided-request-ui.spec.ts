@@ -260,7 +260,7 @@ test('the start screen offers the three products and the other objective, and ke
   await expect(
     page.getByRole('link', { name: 'Use the single-page request form instead' }),
   ).toHaveAttribute('href', '/account/request/' + workspaceId);
-  await expect(page.getByRole('status')).toHaveText('You have no saved drafts yet.');
+  await expect(page.getByRole('status')).toHaveText('You have no saved requests yet.');
 });
 
 test('only the sourcing context chosen shows its questions, and buyers never see machinery controls (V3-04-076)', async ({
@@ -275,7 +275,7 @@ test('only the sourcing context chosen shows its questions, and buyers never see
     await expect(page.getByRole('button', { name: 'Add ' + word, exact: true })).toHaveCount(0);
   await expect(page.getByLabel('What kind of purchase is this?')).toHaveCount(0);
   page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: 'Back to Your Drafts' }).click();
+  await page.getByRole('button', { name: 'Back to Your Saved Requests' }).click();
   await page.getByRole('button', { name: 'Find suppliers and source products' }).click();
   await next(page);
   await expect(page.getByRole('button', { name: 'Add Commissioning' })).toHaveCount(0);
@@ -316,8 +316,8 @@ test('a draft saves as a new version with the exact command, headers and typed d
   await page
     .getByLabel('What do you offer or need? (start with Synthetic)')
     .fill('Synthetic hotel towels');
-  await page.getByRole('button', { name: 'Save Draft' }).click();
-  await expect(page.getByRole('status')).toContainText('Draft saved');
+  await page.getByRole('button', { name: 'Save Request' }).click();
+  await expect(page.getByRole('status')).toContainText('Request saved');
   expect(server.log.saves).toHaveLength(1);
   expect(server.log.saves[0]).toMatchObject({
     workspaceId,
@@ -341,7 +341,7 @@ test('a draft saves as a new version with the exact command, headers and typed d
   await page.getByLabel('Target country or market');
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await page.getByLabel('Target country or market').fill('Spain and Portugal');
-  await page.getByRole('button', { name: 'Save Draft' }).click();
+  await page.getByRole('button', { name: 'Save Request' }).click();
   await expect.poll(() => server.log.saves.length).toBe(2);
   expect(server.log.saves[1]).toMatchObject({ expectedVersion: 1, draftId: expect.any(String) });
 });
@@ -361,8 +361,8 @@ test('current position is optional, saved with the original description and reco
     .getByRole('textbox', { name: 'What do you need to buy? (start with Synthetic)' })
     .fill('Synthetic umbrella photo; size and material are not known yet');
   await expect(page.getByText(/Image interpretation is not available/)).toBeVisible();
-  await page.getByRole('button', { name: 'Save Draft', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Draft saved');
+  await page.getByRole('button', { name: 'Save Request', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Request saved');
   expect(server.log.saves[0].details).toMatchObject({
     sourcingContext: null,
     requirements: [{ label: 'Current position', value: 'Synthetic An existing supplier' }],
@@ -377,7 +377,7 @@ test('current position is optional, saved with the original description and reco
     page.getByRole('textbox', { name: 'What do you need to buy? (start with Synthetic)' }),
   ).toHaveValue('Synthetic umbrella photo; size and material are not known yet');
   await page.getByRole('combobox', { name: 'Where are you starting? (optional)' }).selectOption('');
-  await page.getByRole('button', { name: 'Save Draft', exact: true }).click();
+  await page.getByRole('button', { name: 'Save Request', exact: true }).click();
   await expect.poll(() => server.log.saves.length).toBe(2);
   expect(server.log.saves[1].details).toMatchObject({ requirements: [] });
 });
@@ -391,11 +391,11 @@ test('an unconfirmed save keeps the text and retries with the same command id', 
   await page.goto(origin);
   await page.getByRole('button', { name: 'Find buyers and business partners' }).click();
   await page.getByLabel('Target country or market').fill('Spain');
-  await page.getByRole('button', { name: 'Save Draft' }).click();
+  await page.getByRole('button', { name: 'Save Request' }).click();
   await expect(page.getByRole('status')).toContainText('Saving could not be confirmed');
   await expect(page.getByLabel('Target country or market')).toHaveValue('Spain');
-  await page.getByRole('button', { name: 'Save Draft' }).click();
-  await expect(page.getByRole('status')).toContainText('Draft saved');
+  await page.getByRole('button', { name: 'Save Request' }).click();
+  await expect(page.getByRole('status')).toContainText('Request saved');
   expect(server.log.saves).toHaveLength(2);
   expect(server.log.saves[1].commandId).toBe(server.log.saves[0].commandId);
 });
@@ -412,7 +412,7 @@ test('inline guidance explains test-mode text rules and blocks saving until fixe
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await page.getByLabel('Name this request (start with Synthetic)').fill('Towel buyers');
   await expect(page.getByRole('alert')).toContainText('starts with Synthetic');
-  await page.getByRole('button', { name: 'Save Draft' }).click();
+  await page.getByRole('button', { name: 'Save Request' }).click();
   await expect(page.getByRole('status')).toContainText('Fix the highlighted details');
   expect(server.log.saves).toHaveLength(0);
 });
@@ -434,7 +434,7 @@ test('review names what is missing in plain language, offers save-and-finish-lat
     'a test email address',
   ])
     await expect(alert).toContainText(gap);
-  await expect(alert).toContainText('You can save the draft now and finish later.');
+  await expect(alert).toContainText('You can save the request now and finish later.');
   await expect(page.getByRole('button', { name: 'Send Request' })).toBeDisabled();
   await expect(page.getByText('A request is not an accepted engagement')).toBeVisible();
   await expect(page.getByText('self-declared and unverified')).toBeVisible();
@@ -529,11 +529,11 @@ test("a conflicting save keeps the customer's text and offers a reload instead o
   await page.goto(origin);
   await page.getByRole('button', { name: /Continue Synthetic towel buyer search/ }).click();
   await page.getByLabel('Target country or market').fill('Italy');
-  await page.getByRole('button', { name: 'Save Draft' }).click();
+  await page.getByRole('button', { name: 'Save Request' }).click();
   await expect(page.getByRole('status')).toContainText('Your text below is kept');
   await expect(page.getByLabel('Target country or market')).toHaveValue('Italy');
-  await expect(page.getByRole('button', { name: 'Reload the Latest Draft' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Save Draft' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Reload the Latest Saved Version' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save Request' })).toBeDisabled();
 });
 
 for (const status of [403, 503])
@@ -542,7 +542,7 @@ for (const status of [403, 503])
     await page.goto(origin);
     await page.getByRole('button', { name: /Continue Synthetic towel buyer search/ }).click();
     await page.getByLabel('Target country or market').fill('Italy');
-    await page.getByRole('button', { name: 'Save Draft' }).click();
+    await page.getByRole('button', { name: 'Save Request' }).click();
     await expect(page.getByRole('status')).toContainText(
       status === 403 ? 'Access to this workspace changed' : 'unavailable',
     );
@@ -561,7 +561,7 @@ test('a sent draft opens read-only at the review and offers no way to edit or se
   await page.getByRole('button', { name: /View Synthetic towel buyer search/ }).click();
   await expect(page.getByText('now read-only')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send Request' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Save Draft' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save Request' })).toHaveCount(0);
   await page.getByRole('button', { name: '1. What you want' }).click();
   await expect(page.getByLabel('Name this request (start with Synthetic)')).toBeDisabled();
 });
@@ -581,7 +581,7 @@ test('a saved company profile is optional: it fills the company and pins its ver
   );
   await expect(page.getByLabel('Website (optional)')).toHaveValue('https://towels.example');
   await expect(page.getByRole('status')).toContainText('version 4');
-  await page.getByRole('button', { name: 'Save Draft' }).click();
+  await page.getByRole('button', { name: 'Save Request' }).click();
   await expect.poll(() => server.log.saves.length).toBe(1);
   expect(server.log.saves[0]).toMatchObject({
     details: { profileVersion: 4, companyName: 'Synthetic Dhaka Towels Limited' },
@@ -628,7 +628,7 @@ test('leaving with unsaved changes asks first, and changing the signed-in accoun
   await page.getByLabel('Target country or market').fill('Italy');
   await expect(page.getByText('You have unsaved changes.')).toBeVisible();
   page.once('dialog', (dialog) => dialog.dismiss());
-  await page.getByRole('button', { name: 'Back to Your Drafts' }).click();
+  await page.getByRole('button', { name: 'Back to Your Saved Requests' }).click();
   await expect(page.getByLabel('Target country or market')).toHaveValue('Italy');
   await page.evaluate((issuerValue) => {
     window.dispatchEvent(
@@ -717,7 +717,7 @@ test('P-04a an edit is saved once after a pause with no click, and nothing else 
   await expect(page.getByText('You have unsaved changes.')).toBeVisible();
   expect(server.log.saves).toHaveLength(0);
   await expect.poll(saved(server, 1), { timeout: 8000 }).toBe(true);
-  await expect(page.getByRole('status')).toContainText('Draft saved automatically');
+  await expect(page.getByRole('status')).toContainText('Request saved automatically');
   await expect(page.getByText('You have unsaved changes.')).toHaveCount(0);
   await page.waitForTimeout(2600);
   expect(server.log.saves).toHaveLength(1);
@@ -770,12 +770,12 @@ test('P-04c a changed draft and a closed draft are never saved automatically', a
   await openExisting(page);
   await market(page).fill('Italy');
   await expect.poll(saved(stale, 1), { timeout: 8000 }).toBe(true);
-  await expect(page.getByRole('status')).toContainText('This draft changed somewhere else');
+  await expect(page.getByRole('status')).toContainText('This saved request changed somewhere else');
   await market(page).fill('Italy again');
   await page.waitForTimeout(3000);
   expect(stale.log.saves).toHaveLength(1);
   await expect(market(page)).toHaveValue('Italy again');
-  await expect(page.getByRole('button', { name: 'Save Draft' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Save Request' })).toBeDisabled();
 
   const closed = fake([
     existing({ status: 'SUBMITTED', requestId: '20000000-0000-4000-8000-000000000001' }),
@@ -861,9 +861,9 @@ test('P-04f the editor cannot be left while an automatic save is in flight, so a
   await openExisting(page);
   await market(page).fill('Italy');
   await expect.poll(() => page.getByText('Saving…').count(), { timeout: 8000 }).toBe(1);
-  await expect(page.getByRole('button', { name: 'Back to Your Drafts' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Back to Your Saved Requests' })).toBeDisabled();
   release();
   await expect(page.getByText('You have unsaved changes.')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Back to Your Drafts' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Back to Your Saved Requests' })).toBeEnabled();
   expect(server.log.saves).toHaveLength(1);
 });
