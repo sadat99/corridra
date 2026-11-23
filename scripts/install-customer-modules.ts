@@ -480,10 +480,12 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['consented programme projections', migrateCustomerProgrammeProjections],
   ['trip and supplier books', migrateCustomerBooks],
   ['decision cards', migrateCustomerDecisionCards],
-  // Short request references (RQ-000001): one side table, one trigger on new requests, one read function.
-  ['request references', migrateCustomerRequestReferences],
   // Installing it changes nothing anyone can see: its own control starts closed. It must be in the base run so
   // mission mail 0003 and notifications 0005, installed later in the same run, find it. It needs no mail module.
+
+  // Short request references (RQ-000001): one side table, one trigger on new requests, one read function. It has
+  // no control and no switch, and needs only the customer authority module, which its installer brings.
+  ['request references', migrateCustomerRequestReferences],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);

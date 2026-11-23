@@ -2430,23 +2430,38 @@ describe('short request references', () => {
     );
     expect(row.number).toBe(last + 1);
     expect(row.reference).toBe('RQ-' + String(last + 1).padStart(6, '0'));
-    // A request made in a transaction that rolls back leaves no reference behind.
+    // A request made in a transaction that rolls back leaves no reference behind. A mission carries one request at
+    // most, so the ghost request gets a mission of its own: a copy of this one under a new id, made with the mission
+    // table's guards off for that statement, all inside the transaction that is rolled back.
     const db = await f.owner.connect();
     const ghost = randomUUID();
+    const ghostMission = randomUUID();
+    let inside = -1;
     try {
       await db.query('BEGIN');
-      await db
-        .query(
-          `INSERT INTO customer_private.owned_request(id,principal_id,command_id,workspace_id,mission_tenant_id,mission_id,request_key,brief_digest,receipt_hash)
-         SELECT $1,principal_id,gen_random_uuid(),workspace_id,mission_tenant_id,mission_id,gen_random_uuid(),brief_digest,receipt_hash
+      await db.query('ALTER TABLE app.mission DISABLE TRIGGER USER');
+      await db.query(
+        `INSERT INTO app.mission SELECT (jsonb_populate_record(m,jsonb_build_object('id',$1::uuid))).*
+         FROM app.mission m JOIN customer_private.owned_request r ON r.mission_tenant_id=m.tenant_id AND r.mission_id=m.id
+         WHERE r.id=$2`,
+        [ghostMission, s.requestId],
+      );
+      await db.query('ALTER TABLE app.mission ENABLE TRIGGER USER');
+      const made = await db.query(
+        `INSERT INTO customer_private.owned_request(id,principal_id,command_id,workspace_id,mission_tenant_id,mission_id,request_key,brief_digest,receipt_hash)
+         SELECT $1,principal_id,gen_random_uuid(),workspace_id,mission_tenant_id,$3,gen_random_uuid(),brief_digest,receipt_hash
          FROM customer_private.owned_request WHERE id=$2`,
-          [ghost, s.requestId],
-        )
-        .catch(() => undefined);
+        [ghost, s.requestId, ghostMission],
+      );
+      expect(made.rowCount).toBe(1);
+      inside = (
+        await db.query(`SELECT count(*)::int AS n FROM ${table} WHERE request_id=$1`, [ghost])
+      ).rows[0].n;
     } finally {
       await db.query('ROLLBACK');
       db.release();
     }
+    expect(inside).toBe(1);
     expect(await count(table, 'request_id=$1', [ghost])).toBe(0);
     await expect(
       f.owner.query(`UPDATE ${table} SET created_at=now() WHERE request_id=$1`, [s.requestId]),
