@@ -6,15 +6,15 @@ const content =
         ...publicPages['network'],
         title: 'Invited tasks. Clear work and review.',
         description:
-          'Scoped contributor work with reviewed eligibility, explicit task instructions and independent evidence review.',
+          'Defined helper tasks with reviewed eligibility, explicit task instructions and independent evidence review.',
         introduction: {
           title: 'Use your local knowledge for a defined task.',
-          text: 'An operator reviews eligibility and assigns a specific piece of work. Your access covers that task, not the whole mission or team workspace.',
+          text: 'The Corridra team reviews eligibility and assigns a specific piece of work. Your access covers that task, not the whole mission or team workspace.',
         },
         sections: [
           {
             title: 'Accept your reviewed invitation',
-            text: 'Verify your account email, set a separate contributor password and enroll your authenticator. An existing work identity keeps its credentials.',
+            text: 'Verify your account email, set a separate work password and enroll your authenticator. An existing work identity keeps its credentials.',
           },
           {
             title: 'Review the task before accepting',
@@ -27,9 +27,9 @@ const content =
         ],
         closing: {
           title: 'Only your assigned work.',
-          text: 'Participation is by reviewed invitation. Eligibility, scope and rewards depend on the disclosed task. This is not a public marketplace or an automatic payout service.',
+          text: 'Participation is by reviewed invitation. Eligibility, the work and any reward depend on the task you are shown. This is not a public marketplace or an automatic payout service.',
         },
-        cta: 'Open assigned-task access',
+        cta: 'Open Assigned Work',
         ctaHref: '/contributor',
       }
     : publicPages['network'];
@@ -45,7 +45,7 @@ export default function Page() {
         ...content,
         related:
           process.env.CORRIDRA_NETWORK_ENABLED === 'true'
-            ? { href: '/contributor/setup', label: 'First invitation? Set up contributor access' }
+            ? { href: '/contributor/setup', label: 'First Invitation? Set Up Helper Access' }
             : { href: '/contributor', label: 'Already Invited? Open Assigned-Task Access' },
       }}
     />

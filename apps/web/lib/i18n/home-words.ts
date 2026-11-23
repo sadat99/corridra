@@ -79,7 +79,8 @@ const homeTwoEn = {
   'home.tr.pick.2.text':
     'Quotes that do not compare, or a fair list that is not a buyer list, for your own market.',
   'home.tr.pick.3.title': 'Start a request',
-  'home.tr.pick.3.text': 'A person reads it, asks a few questions, then sends a scoped quote.',
+  'home.tr.pick.3.text':
+    'A person reads it, asks a few questions, then sends a quote for that work.',
   'home.tr.open.china': 'Open the China Route',
   'home.tr.open.china.text': 'A quote check you can try, and a factory-visit day on two clocks.',
   'home.tr.open.sell': 'Open Sell Abroad',
@@ -192,7 +193,7 @@ const homeTwoEn = {
   'home.tr.comp.1.title': 'Same delivery point',
   'home.tr.comp.1.text':
     '{fob} and {cif} are different prices for different jobs. Both are kept as quoted, then the gap is asked about.',
-  'home.tr.comp.2.title': 'Same scope',
+  'home.tr.comp.2.title': 'Same work',
   'home.tr.comp.2.text':
     'Installation, training, spare parts and warranty, each marked In the price, Not in the price, or Not stated.',
   'home.tr.comp.3.title': 'Same kind of proof',
@@ -234,10 +235,10 @@ const homeTwoEn = {
     'National laws stay separate inside it, so a buyer in Lyon and a buyer in Milan are read one country at a time.',
   'home.tr.mk.gb.line.head': 'The UK is read as a market of its own.',
   'home.tr.mk.gb.line':
-    'Buyers from Manchester to Glasgow are qualified one by one against your brief, not against a list.',
+    'Buyers from Manchester to Glasgow are qualified one by one against your request, not against a list.',
   'home.tr.mk.us.line.head': 'The US is a big country to cover in one trip.',
   'home.tr.mk.us.line':
-    'The shortlist starts from the cities and sales channels in your brief, not from the whole map.',
+    'The shortlist starts from the cities and sales channels in your request, not from the whole map.',
   'home.tr.mk.au.line.head': 'From Dhaka, Australia is a long trip.',
   'home.tr.mk.au.line':
     'Knowing who is worth meeting before you fly matters more when each extra day away is expensive.',
@@ -245,22 +246,22 @@ const homeTwoEn = {
   'home.tr.mk.asia.line':
     'Tell us which, and each is read on its own: Singapore, Tokyo, Seoul and Kuala Lumpur are different conversations.',
   'home.tr.w.title': 'Who is worth meeting?',
-  'home.tr.w.brief': 'Example brief',
+  'home.tr.w.brief': 'Example request',
   'home.tr.w.brief.lead': 'Knitwear for mid-price retail.',
   'home.tr.w.steps': 'Step through what changes',
   'home.tr.w.step1': 'The fair list',
-  'home.tr.w.step2': 'Checked against your brief',
+  'home.tr.w.step2': 'Checked against your request',
   'home.tr.w.step3': 'Show companies outside the fair list',
   'home.tr.w.sum1':
     'names on the fair list, all presented the same way. A list tells you who paid for a stand, not who buys what you make.',
   'home.tr.w.sum2':
-    'of 8 fit this brief. The other 6 are not a fit, each with a reason you can check.',
+    'of 8 fit this request. The other 6 are not a fit, each with a reason you can check.',
   'home.tr.w.sum3':
     'worth meeting: 2 from the fair list, and 3 that were never on it. Each one says how it is known.',
   'home.tr.w.aria': 'Example companies: fair list compared with a qualified list',
   'home.tr.w.col.company': 'Company',
   'home.tr.w.col.fair': 'On the fair list as',
-  'home.tr.w.col.read': "Corridra's read for this brief",
+  'home.tr.w.col.read': "Corridra's read for this request",
   'home.tr.w.notChecked': 'Not checked yet',
   'home.tr.w.worth': 'Worth meeting',
   'home.tr.w.notFit': 'Not a fit',
@@ -339,8 +340,8 @@ const homeTwoEn = {
     'With {m} useful meetings, each one costs {each}. If only {half} of them turn out to be with the right people, each costs {each2}.',
   'home.tr.fc.one': 'With one useful meeting, that one meeting carries the whole cost.',
   'home.tr.fc.after':
-    'A scoped mission works on the meetings, so more of them are with companies that fit, on the fair list or off it.',
-  'home.tr.fc.cta': 'Scope a Mission for This Fair',
+    'A planned mission works on the meetings, so more of them are with companies that fit, on the fair list or off it.',
+  'home.tr.fc.cta': 'Plan a Mission for This Fair',
   // Delegation
   'home.tr.dl.eyebrow': 'For organisers · delegations and programmes',
   'home.tr.dl.title': 'One programme. Many companies. Each one private.',
@@ -388,7 +389,7 @@ const homeTwoEn = {
   'home.tr.ms.s5': 'Access',
   'home.tr.ms.s6': 'Meeting or visit',
   'home.tr.ms.s7': 'Opportunity',
-  'home.tr.ms.s8': 'Quote or RFQ',
+  'home.tr.ms.s8': 'Price quote or price request (RFQ)',
   'home.tr.ms.s9': 'Proposal',
   'home.tr.ms.s10': 'Contract',
   'home.tr.ms.s11': 'Invoice',
@@ -419,7 +420,7 @@ const homeTwoEn = {
   'home.tr.br.g.other': 'Something else',
   'home.tr.br.next': 'What happens next',
   'home.tr.br.next.text':
-    'A person reads it, asks a few questions, then sends you a scoped quote. Nothing starts until you agree.',
+    'A person reads it, asks a few questions, then sends you a quote for that work. Nothing starts until you agree.',
   // Trust
   'home.tr.tr.eyebrow': 'Trust, on every route',
   'home.tr.tr.title': 'Every fact says how it is known.',
@@ -450,7 +451,7 @@ const homeTwoEn = {
   'home.tr.pe.4': 'Overseas buyer',
   'home.tr.pe.5': 'Supplier',
   'home.tr.pe.6': 'Delegation leader',
-  'home.tr.pe.7': 'Local contributor',
+  'home.tr.pe.7': 'Local helper',
   'home.tr.pe.0.give':
     'Your product. How much you can make. The market you want and your goals. Travel details if you have them.',
   'home.tr.pe.0.get':
@@ -472,19 +473,19 @@ const homeTwoEn = {
     'A shortlist with reasons and doubts. The evidence behind each name. Visit and meeting support.',
   'home.tr.pe.5.give': 'Nothing to start. You do not need to register to consider an introduction.',
   'home.tr.pe.5.get':
-    'A specific, permitted requirement or introduction. You can say it is relevant. You can ask for details. You answer within your own scope.',
+    'A specific, permitted requirement or introduction. You can say it is relevant. You can ask for details. You answer within what you can see.',
   'home.tr.pe.6.give': 'Your programme, and the group you lead. Each company brings its own goals.',
   'home.tr.pe.6.get':
     "What is happening across the programme and the overall outcomes, without access to any company's private data.",
   'home.tr.pe.7.give': 'Your skills. Your time. Your location.',
   'home.tr.pe.7.get':
-    'Precisely scoped tasks, with eligibility, deadline, expected evidence and reward stated first. Plus review, attribution and a way to dispute a decision.',
+    'Clearly defined tasks, with eligibility, deadline, expected evidence and reward stated first. Plus review, attribution and a way to dispute a decision.',
   // FAQ
   'home.tr.fq.eyebrow': 'Straight answers',
   'home.tr.fq.title': 'Questions people ask before they start.',
   'home.tr.fq.1.q': 'Who is Corridra?',
   'home.tr.fq.1.a1':
-    'A cross-border market access service. We run scoped missions for companies in Bangladesh that buy from China or sell to the EU, the UK, the US, Australia and key Asian markets: we find the companies that matter, check what they claim, compare offers and set up meetings and visits.',
+    'A cross-border market access service. We run missions for companies in Bangladesh that buy from China or sell to the EU, the UK, the US, Australia and key Asian markets: we find the companies that matter, check what they claim, compare offers and set up meetings and visits.',
   'home.tr.fq.1.a2': 'For any other route, we say plainly whether we can help.',
   'home.tr.fq.2.q': 'Which markets do you work in?',
   'home.tr.fq.2.a1':
@@ -496,7 +497,7 @@ const homeTwoEn = {
     'The page has two big doors because buying and selling are opposite problems: too many suppliers to compare, or too few buyers worth meeting.',
   'home.tr.fq.3.q': 'What does it cost?',
   'home.tr.fq.3.a1':
-    'Missions are paid and scoped to what you need. After a short conversation we send you a quote for that mission. We do not publish prices, because checking two suppliers and comparing a full machinery purchase are different pieces of work.',
+    'Missions are paid and planned around what you need. After a short conversation we send you a quote for that mission. We do not publish prices, because checking two suppliers and comparing a full machinery purchase are different pieces of work.',
   'home.tr.fq.3.a2': 'You see the quote and decide before any work starts.',
   'home.tr.fq.4.q': 'Will you replace my agent, my chamber or my fair?',
   'home.tr.fq.4.a1':
@@ -518,7 +519,7 @@ const homeTwoEn = {
     'No. We do not arrange visas, hotels or tourism, and we cannot promise any visa outcome. We work on who to meet, what to compare, and what happens next.',
   'home.tr.fq.8.q': 'What happens after I send a request?',
   'home.tr.fq.8.a1':
-    'A person reads your brief and contacts you with a few questions. After a short conversation you get a scoped quote. Nothing starts until you agree to it, and you can stop at any point before that.',
+    'A person reads your request and contacts you with a few questions. After a short conversation you get a quote for that work. Nothing starts until you agree to it, and you can stop at any point before that.',
   // Route statuses and what Corridra is not
   'home.tr.rs.eyebrow': 'Route statuses',
   'home.tr.rs.title': 'Open routes now. Plain answers on the rest.',
@@ -565,7 +566,7 @@ const homeTwoEn = {
   'home.tr.not.7': 'Not a payment processor or lender.',
   'home.tr.not.7.text': 'We record money. We do not move it.',
   'home.tr.not.8': 'Not a social network.',
-  'home.tr.not.8.text': 'Introductions have a purpose and a scope.',
+  'home.tr.not.8.text': 'Introductions have a purpose and clear limits.',
   // Close
   'home.tr.fn.eyebrow': 'Start now, decide later',
   'home.tr.fn.title.none': 'Begin with one question: what do you want to do abroad?',
@@ -613,9 +614,9 @@ const homeBoardEn = {
   'home.b3.fc.tooLarge': 'That total looks too large. Check the numbers.',
   'home.b3.rs.ready': 'Each part of being ready is tracked on its own, never as one "complete":',
   // The brief: three answers that build a draft the visitor owns, then open the real request form with them.
-  'home.b3.br.title': 'Your first mission brief in 60 seconds.',
+  'home.b3.br.title': 'Your first request in 60 seconds.',
   'home.b3.br.lead':
-    'Three answers. Watch your draft build as you answer. No account, no form wall.',
+    'Three answers. Watch your request build as you answer. No account, no form wall.',
   'home.b3.br.need': 'What do you need?',
   'home.b3.br.need.help':
     'In your own words, any language. Product, quantity, budget, places, people. Rough is fine.',
@@ -624,8 +625,8 @@ const homeBoardEn = {
   'home.b3.br.when.2': 'In 1 to 3 months',
   'home.b3.br.when.3': 'In 3 to 6 months',
   'home.b3.br.when.4': 'Not decided yet',
-  'home.b3.br.stamp': 'Draft, not sent',
-  'home.b3.br.card': 'Mission brief',
+  'home.b3.br.stamp': 'Not sent yet',
+  'home.b3.br.card': 'Your request',
   'home.b3.br.count': '{n} of 3 answered',
   'home.b3.br.dt.chosen': 'Route chosen',
   'home.b3.br.dt.goal': 'Goal',
@@ -634,7 +635,7 @@ const homeBoardEn = {
   'home.b3.br.dt.when': 'Timing',
   'home.b3.br.dt.next': 'What happens next',
   'home.b3.br.next':
-    'A person reads it, asks a few questions, then sends you a scoped quote. Nothing starts until you agree.',
+    'A person reads it, asks a few questions, then sends you a quote for that work. Nothing starts until you agree.',
   'home.b3.br.ns': 'Not stated yet',
   'home.b3.br.stated': 'stated by you',
   'home.b3.br.send':

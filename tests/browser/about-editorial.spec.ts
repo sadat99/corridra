@@ -36,8 +36,8 @@ test('keeps every fact, caveat and link of the About page, with no em dash', asy
   const main = page.locator('main');
   const network =
     process.env.CORRIDRA_NETWORK_ENABLED === 'true'
-      ? 'Reviewed contributors can receive specific execution tasks through Corridra Network. Invitations, eligibility review, task assignment and evidence review remain separate steps. Contributor access does not include the full mission or team workspace.'
-      : 'Independent contributor participation remains a controlled expansion plan.';
+      ? 'Reviewed helpers can receive specific tasks through Corridra Network. Invitations, eligibility review, task assignment and evidence review remain separate steps. Helper access does not include the full mission or team workspace.'
+      : 'Independent helper participation remains a controlled expansion plan.';
   for (const words of [
     'Corridra helps companies turn a cross-border commercial objective into planned work, relevant relationships and accountable follow-through.',
     'Neither tells you which company fits, what is known or who will take the next step.',
@@ -47,7 +47,7 @@ test('keeps every fact, caveat and link of the About page, with no em dash', asy
     'Open now: China, the EU, the UK, the US, Australia and key Asian markets.',
     'A listed route does not mean every service is available there. We confirm fit for each request.',
     // owner decision 17 Nov 2026, routes and markets
-    'We run missions from Bangladesh to each of these. Each route needs its own reviewed scope and delivery capacity. Missions into Bangladesh are taken case by case.',
+    'We run missions from Bangladesh to each of these. Each route needs its own reviewed work plan and delivery capacity. Missions into Bangladesh are taken case by case.',
     'A scheduled meeting is not a meeting held. A proposal is not an order, and an order is not cash collected.',
     'Corridra supports decisions and execution. It does not guarantee introductions, company quality, regulatory approval or commercial results.',
     'We publish no unverified client list, network size or success rate.',

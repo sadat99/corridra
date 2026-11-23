@@ -26,9 +26,9 @@ const contents = [
   ['accounts', 'Your account'],
   ['requests', 'What a request contains'],
   ['purposes', 'What we collect and why'],
-  ['drafts', 'Drafts and account activation'],
+  ['drafts', 'Unsent requests and account activation'],
   ['access', 'Who can see the work'],
-  ['contributors', 'Invited contributor work'],
+  ['contributors', 'Invited helper work'],
   ['programme-applications', 'Public programme pages and applications'],
   ['helper-interest', 'Telling us you want to be a field helper'],
   ['sharing', 'Who we share information with'],
@@ -192,7 +192,7 @@ export default function Page() {
               </p>
               <p>
                 Your password goes to the account provider. It is not saved in mission requests,
-                request drafts, receipts or application events. Necessary session cookies keep
+                unsent requests, receipts or application events. Necessary session cookies keep
                 account access working.
               </p>
               <p>
@@ -201,7 +201,7 @@ export default function Page() {
                   : 'Account creation is separate from workspace and mission access. The test-intake restrictions on this page still apply.'}
               </p>
               <p>
-                Invited staff use a separate operator identity and an authenticator. A customer
+                Invited staff use a separate Corridra team identity and an authenticator. A customer
                 account does not grant staff access.
               </p>
             </div>
@@ -221,7 +221,7 @@ export default function Page() {
               </p>
               <p>
                 Request records are stored in the Frankfurt application database. Authorized
-                Corridra operators use them to review the request, clarify the work and record
+                Corridra team members use them to review the request, clarify the work and record
                 progress and replies. Request information is not automatically sent to AI or
                 outreach providers.
               </p>
@@ -257,7 +257,7 @@ export default function Page() {
                     and responsibilities stated in the quote, its original terms, any supply price
                     and conditional commission). To explain the agreement you review and keep its
                     history. The current handling team can also keep restricted acquisition costs,
-                    markup and relationship notes. Customers see only the terms disclosed to them.
+                    markup and relationship notes. Customers see only the terms shared with them.
                     Basis: providing the service you asked for. These records do not confirm a sale
                     or payment. Quote arrangements cannot be changed or deleted once saved and are
                     kept as part of the request’s history.
@@ -336,11 +336,11 @@ export default function Page() {
             </div>
           </article>
           <article id="drafts">
-            <h2>Drafts and account activation</h2>
+            <h2>Unsent requests and account activation</h2>
             <div>
               <p>
-                This browser tab can keep a request draft so you can return to the form. Drafts
-                expire in the interface after 24 hours. Passwords are kept out of that draft.
+                This browser tab can keep an unsent request so you can return to the form. Unsent
+                answers in this tab expire after 24 hours. Passwords are kept out of them.
               </p>
               {real ? (
                 <>
@@ -384,9 +384,9 @@ export default function Page() {
                 participation does not grant unrestricted access to another company’s private work.
               </p>
               <p>
-                Authorized operators can access the records needed to deliver and support the work.
-                Information shared through an explicit programme, company or delivery workflow
-                follows that workflow’s scope.
+                Authorized Corridra team members can access the records needed to deliver and
+                support the work. Information shared through an explicit programme, company or
+                delivery workflow follows that workflow’s own limits.
               </p>
               <p>
                 Account verification confirms control of an account email. It does not verify a
@@ -396,20 +396,19 @@ export default function Page() {
           </article>
           {process.env.CORRIDRA_NETWORK_ENABLED === 'true' && (
             <article id="contributors">
-              <h2>Invited contributor work</h2>
+              <h2>Invited helper work</h2>
               <div>
                 <p>
-                  An authorized owner or administrator records a contributor’s name, email and
-                  operating country when preparing a reviewed invitation. The invited person
-                  verifies their customer account email before setting a separate work password and
-                  enrolling an authenticator. Work password hashes, authenticator credentials,
-                  recovery codes and sessions are stored separately from customer accounts in the
-                  application database.
+                  An authorized owner or administrator records a helper’s name, email and operating
+                  country when preparing a reviewed invitation. The invited person verifies their
+                  customer account email before setting a separate work password and enrolling an
+                  authenticator. Work password hashes, authenticator credentials, recovery codes and
+                  sessions are stored separately from customer accounts in the application database.
                 </p>
                 <p>
                   Eligibility records, assigned task instructions, submissions, evidence review,
-                  contribution assessments and reward decisions are private work records.
-                  Contributors receive only their assigned task disclosures, not full mission or
+                  contribution assessments and reward decisions are private work records. Helpers
+                  receive only what is shared with them for their assigned task, not full mission or
                   team access. Authorized staff review submissions within their existing
                   permissions. A recorded reward does not mean a payment has been made; automated
                   payouts are not available.
@@ -422,7 +421,7 @@ export default function Page() {
                 </p>
                 <p>
                   <Link className="text-link" prefetch={false} href="/network">
-                    How invited contributor access works
+                    How invited helper access works
                   </Link>
                 </p>
               </div>
@@ -472,7 +471,7 @@ export default function Page() {
                 {objectivePath && (
                   <p>
                     After you join, you can start a private request from your application. Only when
-                    you press that button are your words copied into a request draft in your own
+                    you press that button are your words copied into an unsent request in your own
                     workspace, which you review before sending. From then on that copy is part of
                     the request and follows what this notice says about requests, including
                     deletion; it is separate from your application.
@@ -575,8 +574,8 @@ export default function Page() {
                   </li>
                 )}
                 <li>
-                  Your browser tab keeps form drafts and short-lived working state in session
-                  storage. It is removed when you close the tab.
+                  Your browser tab keeps unsent form answers and short-lived working state in
+                  session storage. It is removed when you close the tab.
                 </li>
                 {translatedForm ? (
                   <li>
@@ -635,7 +634,7 @@ export default function Page() {
               </p>
               <p>
                 {real
-                  ? 'Scanning and additional security integrations are deferred by the operator’s explicit decision. An unscanned file must be identified as bypassed, never as clean or independently verified. Do not assume a file is safe merely because it is available in Corridra.'
+                  ? 'Scanning and additional security integrations are deferred by Corridra’s explicit decision. An unscanned file must be identified as bypassed, never as clean or independently verified. Do not assume a file is safe merely because it is available in Corridra.'
                   : 'Test-only file workflows remain subject to their configured scanning rules. A scan bypass is recorded separately from a clean scan.'}
               </p>
             </div>
@@ -649,9 +648,9 @@ export default function Page() {
                 records remain until an administrator removes them.
               </p>
               <p>
-                Expiry of a draft, handoff, receipt or shared view limits access through that
-                mechanism. It does not erase the underlying record. Permissions, corrections and
-                audit history are handled separately.
+                Expiry of an unsent request, handoff, receipt or shared view limits access through
+                that mechanism. It does not erase the underlying record. Permissions, corrections
+                and audit history are handled separately.
               </p>
               <p>
                 Contact us to ask about access, corrections or deletion. We review requests

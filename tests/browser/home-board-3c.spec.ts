@@ -46,7 +46,7 @@ test('every product section of the board is on the home, in board order', async 
   for (const title of [
     'Choose a door. This page opens that route.',
     'One mission, from first intent to repeat business.',
-    'Your first mission brief in 60 seconds.',
+    'Your first request in 60 seconds.',
     'Every fact says how it is known.',
     'Eight people. One clear promise each.',
     'Questions people ask before they start.',
@@ -262,7 +262,7 @@ test('the brief builds a draft the visitor owns and opens /plan with the job and
   });
   await page.goto('/');
   const brief = page.locator('#brief');
-  await expect(brief.getByText('Draft, not sent')).toBeVisible();
+  await expect(brief.getByText('Not sent yet')).toBeVisible();
   await expect(brief.getByText('0 of 3 answered')).toBeVisible();
   await expect(brief.getByRole('button', { name: /Send/ })).toHaveCount(0);
   await brief
@@ -277,7 +277,7 @@ test('the brief builds a draft the visitor owns and opens /plan with the job and
     .locator('xpath=following-sibling::label')
     .click();
   await expect(brief.getByText('3 of 3 answered')).toBeVisible();
-  const card = brief.getByRole('group', { name: 'Mission brief' });
+  const card = brief.getByRole('group', { name: 'Your request' });
   await expect(card).toContainText('Buy machinery and compare offers like for like');
   await expect(card).toContainText('Bangladesh to China');
   await expect(card).toContainText('Two dyeing machines, installed.');
@@ -299,6 +299,40 @@ test('the brief builds a draft the visitor owns and opens /plan with the job and
     .poll(() => page.evaluate(() => Object.values(sessionStorage).join('\n')))
     .toContain('What I need: Two dyeing machines, installed.');
   expect(writes).toEqual([]);
+});
+
+test('the request summary names one route: Route chosen and Route never disagree (D-010)', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const brief = page.locator('#brief');
+  const card = brief.locator('.tr-brief-card');
+  const row = (term: string) =>
+    card
+      .locator('dt')
+      .filter({ hasText: new RegExp(`^${term}$`) })
+      .locator('xpath=following-sibling::dd');
+  // Nothing answered: both rows say so.
+  await expect(row('Route chosen')).toHaveText('Not stated yet');
+  await expect(row('Route')).toHaveText('Not stated yet');
+  // The goal is answered in the builder, with no door chosen at the top of the page.
+  await brief
+    .getByRole('radio', { name: 'Buy from China' })
+    .locator('xpath=following-sibling::label')
+    .click();
+  await expect(row('Route chosen')).toHaveText('Buying from China');
+  await expect(row('Route')).toHaveText('Bangladesh to China');
+  // A door chosen afterwards does not overwrite the visitor's own answer, and the two rows still agree.
+  await door(page, 'Sell Abroad').click();
+  await expect(brief.getByRole('radio', { name: 'Buy from China' })).toBeChecked();
+  await expect(row('Route chosen')).toHaveText('Buying from China');
+  await expect(row('Route')).toHaveText('Bangladesh to China');
+  await brief
+    .getByRole('radio', { name: 'Run a delegation' })
+    .locator('xpath=following-sibling::label')
+    .click();
+  await expect(row('Route chosen')).toHaveText('Leading a delegation');
+  await expect(row('Route')).toHaveText('To agree with you');
 });
 
 test('with no support number set, no Talk or WhatsApp control is drawn (never a dead button)', async ({
@@ -330,7 +364,7 @@ test('trust shows five labels and a correction as a new entry; the people work b
   await page.keyboard.press('ArrowRight');
   await expect(tabs.getByRole('tab', { name: 'Importer' })).toBeFocused();
   await page.keyboard.press('End');
-  await expect(tabs.getByRole('tab', { name: 'Local contributor' })).toHaveAttribute(
+  await expect(tabs.getByRole('tab', { name: 'Local helper' })).toHaveAttribute(
     'aria-selected',
     'true',
   );

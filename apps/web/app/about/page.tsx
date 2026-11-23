@@ -44,7 +44,7 @@ const useCases = [
 // The customer road (D5): the step names are the shared ones the home page, How it works and the account use.
 const stepText: Record<RoadStep, string> = {
   define: 'Tell us the market, the commercial need and what would make it worthwhile.',
-  find: 'We research companies that could fit and agree scope and any fees with you first.',
+  find: 'We research companies that could fit and agree the work and any fees with you first.',
   compare: 'Companies and offers side by side, with what is claimed and what is checked.',
   visit: 'We prepare introductions. We organise the meetings and visits you agree.',
   decide: 'Choose who to work with, with the evidence and open questions in view.',
@@ -53,8 +53,8 @@ const stepText: Record<RoadStep, string> = {
 
 const networkText =
   process.env.CORRIDRA_NETWORK_ENABLED === 'true'
-    ? 'Reviewed contributors can receive specific execution tasks through Corridra Network. Invitations, eligibility review, task assignment and evidence review remain separate steps. Contributor access does not include the full mission or team workspace.'
-    : 'Independent contributor participation remains a controlled expansion plan.';
+    ? 'Reviewed helpers can receive specific tasks through Corridra Network. Invitations, eligibility review, task assignment and evidence review remain separate steps. Helper access does not include the full mission or team workspace.'
+    : 'Independent helper participation remains a controlled expansion plan.';
 
 /**
  * A section of the closing band: its key line, the essentials, the supporting detail behind Show Details, and its
@@ -229,7 +229,7 @@ export default function Page() {
           detail={
             <p>
               We run missions from Bangladesh to each of these. Each route needs its own reviewed
-              scope and delivery capacity. Missions into Bangladesh are taken case by case.
+              work plan and delivery capacity. Missions into Bangladesh are taken case by case.
             </p>
           }
           link={{ href: '/corridors', label: 'Explore the Routes' }}
@@ -319,7 +319,7 @@ export default function Page() {
               <div>
                 <dt>Quote</dt>
                 <dd>
-                  Programme terms and service quotes make scope, fees, responsibilities and
+                  Programme terms and service quotes make the work, fees, responsibilities and
                   exclusions explicit. Accepting a quote records an intention to proceed.
                 </dd>
               </div>
