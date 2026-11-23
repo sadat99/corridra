@@ -25,6 +25,15 @@ const flagNames: Record<FlagCode, string> = {
 };
 
 /**
+ * The mark for a country code as the forms hold it ("BD", "EU"): its flag when it is one of the nine, otherwise
+ * nothing, so every other place shows its name only.
+ */
+export function placeMark(code: string | null | undefined): PlaceMark {
+  const key = (code ?? '').toLowerCase();
+  return (flagCodes as readonly string[]).includes(key) ? (key as FlagCode) : null;
+}
+
+/**
  * One flag. By default it is decorative (the country name is written beside it, so a screen reader hears the name
  * once). Pass `named` only where the name is not written next to it; the picture then says "<country> flag".
  */

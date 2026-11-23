@@ -7,15 +7,31 @@ import { countryCodes } from '@corridra/domain/countries';
 import { corridorPages, openNote } from '../content/corridors';
 import { Arrow } from './arrow';
 import { CorridorMap } from './corridor-map';
+import { Flagged, placeMark, type RoutePlace } from './ux/flag';
 import { WorldRouteMap } from './world-route-map';
 
 // Open destinations from Bangladesh, as equals (owner decision 17 November 2026, routes and markets). China and the EU
 // have their own pages; the UK, the US and Australia have none yet and open the request with both countries filled in.
 // The Spain page stays reachable at its own address but is no longer offered as a route here.
-const directions = [
+const bangladesh: RoutePlace = { name: 'Bangladesh', mark: 'bd' };
+const china: RoutePlace = { name: 'China', mark: 'cn' };
+const europeanUnion: RoutePlace = { name: 'European Union', mark: 'eu' };
+type Direction = {
+  key: string;
+  from: RoutePlace;
+  to: RoutePlace;
+  company: string;
+  market: string;
+  slug: string;
+  note: string;
+  reverse: boolean;
+  world: boolean;
+};
+const directions: Direction[] = [
   {
     key: 'bangladesh-china',
-    label: 'Bangladesh → China',
+    from: bangladesh,
+    to: china,
     company: 'BD',
     market: 'CN',
     slug: 'bangladesh-china',
@@ -25,7 +41,8 @@ const directions = [
   },
   {
     key: 'bangladesh-eu',
-    label: 'Bangladesh → European Union',
+    from: bangladesh,
+    to: europeanUnion,
     company: 'BD',
     market: 'EU',
     slug: 'bangladesh-eu',
@@ -35,13 +52,14 @@ const directions = [
   },
   ...(
     [
-      ['bangladesh-uk', 'the UK', 'GB'],
-      ['bangladesh-us', 'the US', 'US'],
-      ['bangladesh-au', 'Australia', 'AU'],
+      ['bangladesh-uk', { name: 'the UK', mark: 'gb' }, 'GB'],
+      ['bangladesh-us', { name: 'the US', mark: 'us' }, 'US'],
+      ['bangladesh-au', { name: 'Australia', mark: 'au' }, 'AU'],
     ] as const
-  ).map(([key, name, market]) => ({
+  ).map(([key, to, market]) => ({
     key,
-    label: `Bangladesh → ${name}`,
+    from: bangladesh,
+    to,
     company: 'BD',
     market,
     slug: '',
@@ -51,7 +69,8 @@ const directions = [
   })),
   {
     key: 'china-bangladesh',
-    label: 'China → Bangladesh',
+    from: china,
+    to: bangladesh,
     company: 'CN',
     market: 'BD',
     slug: 'bangladesh-china',
@@ -61,7 +80,8 @@ const directions = [
   },
   {
     key: 'eu-bangladesh',
-    label: 'European Union → Bangladesh',
+    from: europeanUnion,
+    to: bangladesh,
     company: 'EU',
     market: 'BD',
     slug: 'bangladesh-eu',
@@ -70,6 +90,17 @@ const directions = [
     world: false,
   },
 ];
+/** A route in plain text, in the live wording, for text that cannot hold a mark (the text of a list option). */
+const routeText = (route: Direction) => `${route.from.name} → ${route.to.name}`;
+/** A route as its two places, each with its mark before it, in the same wording. */
+function RouteName({ route }: { route: Direction }) {
+  return (
+    <>
+      <Flagged code={route.from.mark}>{route.from.name}</Flagged> →{' '}
+      <Flagged code={route.to.mark}>{route.to.name}</Flagged>
+    </>
+  );
+}
 /** The five situations from the Public Experience. Each presets the existing selectors. */
 const situations = [
   {
@@ -98,7 +129,11 @@ const situations = [
   },
   {
     key: 'enter',
-    title: 'Enter Bangladesh',
+    title: (
+      <>
+        Enter <Flagged code="bd">Bangladesh</Flagged>
+      </>
+    ),
     text: 'Find customers and partners without a local office.',
     role: 'exporter',
     job: 'market_entry',
@@ -152,7 +187,7 @@ export function DiscoveryExperience({
   );
   const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
   const placeName = (code: string) =>
-    code === 'EU' ? 'European Union' : (regionNames.of(code) ?? code);
+    code === 'EU' ? europeanUnion.name : (regionNames.of(code) ?? code);
   const chosen = other.company && other.market && other.company !== other.market ? other : null;
   const known = chosen
     ? directions.find((item) => item.company === chosen.company && item.market === chosen.market)
@@ -163,7 +198,8 @@ export function DiscoveryExperience({
     (custom
       ? {
           key: 'custom',
-          label: `${placeName(custom.company)} → ${placeName(custom.market)}`,
+          from: { name: placeName(custom.company), mark: placeMark(custom.company) },
+          to: { name: placeName(custom.market), mark: placeMark(custom.market) },
           company: custom.company,
           market: custom.market,
           slug: '',
@@ -237,7 +273,7 @@ export function DiscoveryExperience({
                 setStep(0);
               }}
             >
-              {item.label}
+              <RouteName route={item} />
             </button>
           ))}
           {(other.company || other.market) && (
@@ -259,7 +295,9 @@ export function DiscoveryExperience({
           <CorridorMap company={route.company} market={route.market} />
         )}
         <div className="guide-route-result">
-          <h3>{route.label}</h3>
+          <h3>
+            <RouteName route={route} />
+          </h3>
           <p className="ux-atlas-note">{route.note}</p>
           <div className="guide-route-actions">
             <Link prefetch={false} className="primary-link" href={briefUrl}>
@@ -351,7 +389,7 @@ export function DiscoveryExperience({
             >
               {directions.map((item) => (
                 <option key={item.key} value={item.key}>
-                  {item.label}
+                  {routeText(item)}
                 </option>
               ))}
             </select>
@@ -392,7 +430,7 @@ export function DiscoveryExperience({
       ) : (
         <>
           <p className="ux-example-scope">
-            {selectedJob.label} · {route.label} · Sample scenario
+            {selectedJob.label} · <RouteName route={route} /> · Sample scenario
           </p>
           <nav className="ux-example-steps" aria-label="Example steps">
             {exampleSteps.map((label, index) => (

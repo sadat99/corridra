@@ -34,6 +34,7 @@ import {
 } from '../../lib/ux/options';
 import { SearchSelect } from '../../components/ux/search-select';
 import { Dialog } from '../../components/ux/dialog';
+import { Flagged, placeMark } from '../../components/ux/flag';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
@@ -1939,19 +1940,29 @@ function IntakeForm({
                 <div>
                   <dt>{say('form.side.country')}</dt>
                   <dd>
-                    {countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
-                      ? regionNames.of(draft.companyCountry)
-                      : say('form.side.notChosen')}
+                    {countryCodes.includes(
+                      draft.companyCountry as (typeof countryCodes)[number],
+                    ) ? (
+                      <Flagged code={placeMark(draft.companyCountry)}>
+                        {regionNames.of(draft.companyCountry)}
+                      </Flagged>
+                    ) : (
+                      say('form.side.notChosen')
+                    )}
                   </dd>
                 </div>
                 <div>
                   <dt>{say('form.side.market')}</dt>
                   <dd>
-                    {draft.marketCode === 'EU'
-                      ? say('form.where.eu')
-                      : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
-                        ? regionNames.of(draft.marketCode)
-                        : say('form.side.notChosen')}
+                    {draft.marketCode === 'EU' ? (
+                      <Flagged code="eu">{say('form.where.eu')}</Flagged>
+                    ) : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number]) ? (
+                      <Flagged code={placeMark(draft.marketCode)}>
+                        {regionNames.of(draft.marketCode)}
+                      </Flagged>
+                    ) : (
+                      say('form.side.notChosen')
+                    )}
                   </dd>
                 </div>
                 {/* The budget row shows only once a budget is given; most jobs never ask for one (CQ-49). */}
