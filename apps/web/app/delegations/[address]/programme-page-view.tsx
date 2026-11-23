@@ -1,16 +1,9 @@
 import type { PublicProgrammePage } from '@corridra/auth/customer-programme-publication';
 import { pp } from '../../../lib/i18n/programme-pages';
+import { formatDate } from '../../../lib/ux/format';
 import { ApplyLink } from './apply-link';
 import type { ShareKitParts } from './share-kit';
 import { ShareRow } from './share-row';
-
-const day = (iso: string) =>
-  new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(iso));
 
 /** The public words of one programme, exactly as its organiser published them. Used by the public page and by the
  * organiser's preview, so what is previewed is what is published.
@@ -33,6 +26,9 @@ export function ProgrammePageView({
   const p = page.programme;
   const open = page.state === 'OPEN';
   const confirmed = p.activities.filter((item) => item.status === 'CONFIRMED').length;
+  // Applications close at the end of a UTC day, so the day is read in UTC and never shifts. Empty while the editor's
+  // date box is.
+  const closes = formatDate(page.closesAt, { timeZone: 'UTC' });
   return (
     <div className="programme-public">
       <p className="programme-public-lead">{p.summary}</p>
@@ -56,24 +52,24 @@ export function ProgrammePageView({
           {open ? pp('pp.public.apply.title') : pp('pp.public.apply.closedTitle')}
         </h2>
         <dl className="programme-public-terms">
-          <div>
-            <dt>{pp('pp.public.fact.fee')}</dt>
-            <dd>{p.fee ?? pp('pp.public.notStated')}</dd>
-          </div>
-          <div>
-            <dt>{pp('pp.public.fact.places')}</dt>
-            <dd>
-              {p.capacity
-                ? pp('pp.public.placesPlanned', { count: p.capacity })
-                : pp('pp.public.notStated')}
-            </dd>
-          </div>
+          {p.fee && (
+            <div>
+              <dt>{pp('pp.public.fact.fee')}</dt>
+              <dd>{p.fee}</dd>
+            </div>
+          )}
+          {p.capacity ? (
+            <div>
+              <dt>{pp('pp.public.fact.places')}</dt>
+              <dd>{pp('pp.public.placesPlanned', { count: p.capacity })}</dd>
+            </div>
+          ) : null}
           <div>
             <dt>{open ? pp('pp.public.apply.closes') : pp('pp.public.apply.closedOn')}</dt>
             <dd>
-              <time dateTime={page.closesAt}>
-                {pp('pp.public.dateUtc', { date: day(page.closesAt) })}
-              </time>
+              {closes && (
+                <time dateTime={page.closesAt}>{pp('pp.public.dateUtc', { date: closes })}</time>
+              )}
             </dd>
           </div>
         </dl>

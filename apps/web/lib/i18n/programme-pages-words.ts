@@ -104,7 +104,7 @@ export const programmePagesWords = {
   'pp.path.step.request.text': 'Only you and the Corridra team see it, not the organisers.',
   'pp.path.step.request.carried': 'Your words are already in it. You review it before it is sent.',
   'pp.path.step.request.prefill':
-    'The organisers shared the destination and dates: {market}, {start} to {end} ({zone}). They are added to your draft. You can change them before it is sent.',
+    'The organisers shared the destination and dates: {market}, {start} to {end} ({zone}). They are added to your request. You can change them before it is sent.',
   'pp.path.step.request.have': 'You have a private request.',
   'pp.path.step.request.another': 'Start Another Request',
   'pp.path.step.request.elsewhere': 'Start a Request From Your Workspaces',
@@ -165,6 +165,9 @@ export const programmePagesWords = {
   'pp.refusal.PROGRAMME_APPLICATIONS_CLOSED':
     'This programme is not taking applications right now.',
   'pp.refusal.PROGRAMME_ALREADY_REGISTERED': 'This person is already registered in this programme.',
+  // The same refusal as the applicant reads it about themselves (the line above is the organiser's).
+  'pp.refusal.applicant.PROGRAMME_ALREADY_REGISTERED':
+    'You are already registered in this programme.',
   'pp.refusal.PROGRAMME_APPLICATION_CHANGED':
     'This application changed since you opened it. Nothing was saved. Reload to see the latest.',
   'pp.refusal.PROGRAMME_APPLICATION_WITHDRAWN': 'The applicant withdrew this application.',
@@ -281,7 +284,7 @@ export const programmePagesWords = {
   'pp.edit.back': 'Back',
   'pp.edit.publish': 'Publish the Page',
   'pp.edit.publishing': 'Publishing…',
-  'pp.edit.close': 'Close and Keep Draft',
+  'pp.edit.close': 'Close and Finish Later',
   'pp.edit.problem.title': 'Write a title of 3 to 160 characters.',
   'pp.edit.problem.organiser': 'Write the name of the organiser.',
   'pp.edit.problem.sample':
@@ -384,7 +387,7 @@ export const programmePagesWords = {
   'pp.first.ackNeeded': 'Tick both boxes before you publish.',
   'pp.first.startAgain': 'Start Again',
   'pp.first.startAgainConfirm': 'Clear everything typed here and start again?',
-  'pp.first.restoring': 'Checking for a draft in this browser…',
+  'pp.first.restoring': 'Checking for words you typed earlier in this browser…',
   'pp.first.busy.create': 'Saving the programme…',
   'pp.first.busy.template': 'Adding the template…',
   'pp.first.error.create':

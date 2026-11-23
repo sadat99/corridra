@@ -4,6 +4,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { ProgrammePageView } from '../../delegations/[address]/programme-page-view';
 import '../../delegations/[address]/programme-page.css';
 import { pp } from '../../../lib/i18n/programme-pages';
+import { errorAfterChange, type NamedFields } from './form-error';
 import { customerHeaders, useCommandIds } from './pricing-client';
 import {
   type Decision,
@@ -263,6 +264,32 @@ export function lineProblem(key: FirstRunLine, draft: Draft, sample: boolean): s
         : '';
   }
 }
+type EditorField = keyof Draft | 'agreed';
+// The fields each problem names, so its box goes when the person changes one of them (D-040).
+const problemFields: NamedFields<EditorField> = {
+  [pp('pp.edit.problem.title')]: ['title'],
+  [pp('pp.edit.problem.organiser')]: ['organiser'],
+  [pp('pp.edit.problem.sample')]: ['title', 'organiser'],
+  [pp('pp.edit.problem.summary')]: ['summary'],
+  [pp('pp.edit.problem.destination')]: ['destination'],
+  [pp('pp.edit.problem.dates')]: ['dates'],
+  [pp('pp.edit.problem.schedule')]: ['startsOn', 'endsOn'],
+  [pp('pp.edit.problem.focus')]: ['focus'],
+  [pp('pp.edit.problem.audience')]: ['audience'],
+  [pp('pp.edit.problem.eligibility')]: ['eligibility'],
+  [pp('pp.edit.problem.capacity')]: ['capacity'],
+  [pp('pp.edit.problem.activitiesCount')]: ['activities'],
+  [pp('pp.edit.problem.activityLength')]: ['activities'],
+  [pp('pp.edit.problem.activitySame')]: ['activities'],
+  [pp('pp.edit.problem.fee')]: ['fee'],
+  [pp('pp.edit.problem.listCount')]: ['included', 'excluded'],
+  [pp('pp.edit.problem.listLength')]: ['included', 'excluded'],
+  [pp('pp.edit.problem.closes')]: ['closes'],
+  [pp('pp.edit.agreeNeeded')]: ['agreed'],
+};
+/** The editor's error box after one field changed. A refusal from the server names no field, so it stays. */
+export const editorErrorAfterChange = (error: string, changed: EditorField) =>
+  errorAfterChange(problemFields, error, changed);
 const stateWords: Record<PageView['state'], string> = {
   NONE: pp('pp.state.NONE'),
   OPEN: pp('pp.state.OPEN'),
@@ -390,8 +417,10 @@ function ScopedPage({
     setDraft(null);
     setError('');
   }
-  const set = (key: keyof Draft) => (value: string) =>
+  const set = (key: keyof Draft) => (value: string) => {
     setDraft((d) => (d ? { ...d, [key]: value } : d));
+    setError((shown) => editorErrorAfterChange(shown, key));
+  };
 
   function forward() {
     if (!draft) return;
@@ -746,7 +775,10 @@ function ScopedPage({
               <input
                 type="checkbox"
                 checked={agreed}
-                onChange={(event) => setAgreed(event.target.checked)}
+                onChange={(event) => {
+                  setAgreed(event.target.checked);
+                  setError((shown) => editorErrorAfterChange(shown, 'agreed'));
+                }}
               />{' '}
               {pp('pp.edit.agree')}
             </label>

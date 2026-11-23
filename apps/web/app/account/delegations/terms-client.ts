@@ -366,3 +366,8 @@ export function failureText(e: unknown) {
 }
 export const syntheticOk = (v: string) =>
   realCustomerInput() ? v.trim().length >= 2 : /^Synthetic .{3,}/.test(v.trim());
+/** The line above the terms form. Only a sample workspace is told the first word, which the database asks of sample
+ * text. */
+export const termsVersionNote = () =>
+  'Each version is kept. A new version asks participants to accept it again.' +
+  (realCustomerInput() ? '' : ' Start each text with the word Synthetic.');

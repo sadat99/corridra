@@ -5,7 +5,7 @@ import type {
   OwnProgrammeProjection,
 } from '@corridra/auth/customer-programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
-import { formatDate } from '../../../lib/ux/format';
+import { formatDate, formatDateTime } from '../../../lib/ux/format';
 import { groupAgendaByDay } from '../../../lib/programme-agenda';
 import { DateTimeInput } from '../../../components/ux/date-time-input';
 
@@ -21,6 +21,18 @@ const missingLabels: Record<string, string> = {
   currentTerms: 'Current terms acceptance',
   currentSharedCompany: 'Current shared company profile',
 };
+/**
+ * When a scheduled activity runs: in the programme's time zone, else the activity's own, else UTC, which the line
+ * then says was not recorded.
+ */
+export function agendaTimes(
+  row: Pick<ProgrammeProjection['agenda'][number], 'startsAt' | 'endsAt' | 'timezone'>,
+  zone: string | undefined,
+): string {
+  const recorded = zone ?? row.timezone;
+  const moment = (at: string | null) => formatDateTime(at ?? '', { timeZone: recorded ?? 'UTC' });
+  return `${moment(row.startsAt)} to ${moment(row.endsAt)}${recorded ? '' : ', time zone not recorded'}`;
+}
 function useProjection<T extends { expiresAt: string }>(identity: Identity, query: Query) {
   const [data, setData] = useState<T | null>(null),
     [notice, setNotice] = useState(''),
@@ -336,22 +348,7 @@ function OwnerPanel(
           <strong>Needs review</strong>
         </>
       )}
-      {row.scheduled && (
-        <p>
-          {new Intl.DateTimeFormat('en-GB', {
-            dateStyle: 'medium',
-            timeStyle: 'short',
-            timeZone: zone ?? row.timezone ?? 'UTC',
-          }).format(new Date(row.startsAt!))}{' '}
-          to{' '}
-          {new Intl.DateTimeFormat('en-GB', {
-            dateStyle: 'medium',
-            timeStyle: 'short',
-            timeZone: zone ?? row.timezone ?? 'UTC',
-          }).format(new Date(row.endsAt!))}
-          {!(zone ?? row.timezone) && ' (UTC, time zone not recorded)'}
-        </p>
-      )}
+      {row.scheduled && <p>{agendaTimes(row, zone)}</p>}
       {overlapsWith.length > 0 && (
         <p>
           <strong>Overlaps with {overlapsWith.join(', ')}</strong>
@@ -826,7 +823,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
             </form>
           ) : (
             <p>
-              Apply for a place using your company profile in Your place first. Sharing also
+              Confirm your place using your company profile in Your place first. Sharing also
               requires an active registration and current company authority.
             </p>
           )}

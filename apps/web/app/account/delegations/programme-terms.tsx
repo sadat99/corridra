@@ -14,6 +14,7 @@ import {
   syntheticOk,
   termsApi,
   TermsError,
+  termsVersionNote,
 } from './terms-client';
 
 type Props = {
@@ -442,10 +443,7 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
                 }}
               >
                 <h5>{t ? 'Publish version ' + (t.version + 1) : 'Publish the first version'}</h5>
-                <p>
-                  Each version is kept. A new version asks participants to accept it again. Start
-                  each text with the word Synthetic.
-                </p>
+                <p>{termsVersionNote()}</p>
                 <label className="field">
                   What is included
                   <textarea

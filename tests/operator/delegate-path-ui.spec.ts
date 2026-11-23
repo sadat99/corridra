@@ -672,7 +672,7 @@ test('shared programme dates and destination are shown, added to the draft for e
   await openRegistration(page);
   // Said before the press, in the step the person is on, with the exact values.
   await expect(step(page, 1)).toContainText(
-    'The organisers shared the destination and dates: CN, 2027-03-09 to 2027-03-13 (Asia/Shanghai). They are added to your draft. You can change them before it is sent.',
+    'The organisers shared the destination and dates: CN, 2027-03-09 to 2027-03-13 (Asia/Shanghai). They are added to your request. You can change them before it is sent.',
   );
   await step(page, 1).getByRole('button', { name: 'Find Suppliers or Products' }).click();
   await page.waitForURL(`**/account/drafts/${workspaceId}?draft=${draftId}`);
