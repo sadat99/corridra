@@ -65,10 +65,10 @@ export function nextMove(signals: PocketSignals | null): NextMove {
   if (drafts && draftText && drafts.href)
     return {
       key: 'draft',
-      label: 'Finish Your Draft',
+      label: 'Finish Your Saved Request',
       href: drafts.href,
       icon: 'draft',
-      reason: 'A draft is half done and nothing is waiting on your answer.',
+      reason: 'A saved request is half done and nothing is waiting on your answer.',
       badge: drafts.count > 1 || partial ? draftText : null,
     };
   return {
