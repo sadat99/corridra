@@ -128,8 +128,8 @@ for (const size of [
     for (let y = 0; y <= height; y += 40) {
       await page.evaluate((top) => window.scrollTo(0, top), y);
       const overlap = await page.evaluate(() => {
-        // The panel a person sees: the summary's own box is its whole row from 1001 px.
-        const summary = document.querySelector('.ux-brief-details')!.getBoundingClientRect();
+        // The sticky summary box a person sees, against the receipt check, at every scroll position.
+        const summary = document.querySelector('.ux-brief-summary')!.getBoundingClientRect();
         const receipt = document.querySelector('#receipt-check')!.getBoundingClientRect();
         if (!receipt.height || !summary.height) return 0;
         const wide = Math.min(summary.right, receipt.right) - Math.max(summary.left, receipt.left);
