@@ -20,6 +20,7 @@ import { translate, type MessageKey } from '../../../../lib/i18n/messages';
 import { afterSaveHref, roadRecords, type RoomLink, type RoomTask } from '../../../../lib/room';
 import { MissingTermNotice } from '../../../../components/missing-term-notice';
 import { classifyObjective } from '../../../../lib/work-items/classify';
+import { JourneyMismatchNote } from '../../../../components/ux/journey-mismatch-note';
 import { isCurrentOffer } from '../../../../lib/experience-offers';
 import { SavedCommercialReport, type ReportSection } from '../../missions/saved-commercial-report';
 import { useRoomDetail } from './room-data';
@@ -356,6 +357,7 @@ export function RoomView({
       {state === 'ready' && detail && !detail.available && <p role="status">{say('room.gone')}</p>}
       {state === 'ready' && detail?.available && detail.progress && (
         <>
+          <JourneyMismatchNote family={family} />
           <header className="room-head">
             <div className="room-tags" lang="en">
               {journey ? (

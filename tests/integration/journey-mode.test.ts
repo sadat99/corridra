@@ -151,6 +151,36 @@ describe('journey mode: the prompt on a request page', () => {
     // Switch off: no mode, no prompt.
     expect(shouldOfferSwitch(null, 'SOURCE')).toBeNull();
   });
+
+  it('says exactly "This request is in X." and "Switch to X", and never switches by itself', () => {
+    const note = web('components/ux/journey-mismatch-note.tsx');
+    expect(note).toContain("This {subject} is in {journey}.{' '}");
+    expect(note).toMatch(/>\s*Switch to \{journey\}\s*<\/button>/);
+    expect(note).toContain("subject = 'request'");
+    expect(note).toContain("subject?: 'request' | 'programme'");
+    expect(note).toContain('shouldOfferSwitch(useJourneyMode(), family)');
+    expect(note).toContain('lang="en"');
+    // A quiet line, not an alert, with no dismiss control; the cookie is written only by the press.
+    expect(note).not.toMatch(/role="alert"|role="status"|useEffect|router\.push|dismiss/i);
+    expect(note).toMatch(
+      /onClick=\{\(\) => \{\s*rememberJourneyMode\(offer\);\s*router\.refresh\(\);/,
+    );
+    expect(journeyModeWords.source).toBe('Sourcing');
+    expect(journeyModeWords.sell).toBe('Selling');
+    expect(journeyModeWords.organise).toBe('Organising');
+  });
+
+  it('is on the Room, the saved request page and the programme room', () => {
+    expect(web('app/account/rooms/[requestId]/room-view.tsx')).toContain(
+      '<JourneyMismatchNote family={family} />',
+    );
+    expect(web('app/account/requests/request-detail.tsx')).toContain(
+      '<JourneyMismatchNote family={classifyObjective(original?.objective)} />',
+    );
+    expect(web('app/account/delegations/[workspaceId]/page.tsx')).toContain(
+      '<JourneyMismatchNote family="ORGANISE" subject="programme" />',
+    );
+  });
 });
 
 describe('journey mode: the sidebar per mode', () => {

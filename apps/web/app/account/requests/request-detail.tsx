@@ -16,6 +16,8 @@ import { customerStatusLabel } from '../../../lib/ux/customer-road';
 import { formatDateTime } from '../../../lib/ux/format';
 import { requestFacts, requestTitle } from '../request-words';
 import { limitWords } from '../../../lib/account-limit';
+import { classifyObjective } from '../../../lib/work-items/classify';
+import { JourneyMismatchNote } from '../../../components/ux/journey-mismatch-note';
 
 const displayDate = (value: string) => formatDateTime(value);
 
@@ -268,6 +270,7 @@ export function RequestDetailView({
           </p>
         ) : (
           <>
+            <JourneyMismatchNote family={classifyObjective(original?.objective)} />
             <section aria-label="Request overview" className="detail-card">
               <h2>{requestTitle(original) ?? original?.objective}</h2>
               {detail.progress && (
