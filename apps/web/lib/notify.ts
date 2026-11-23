@@ -1,4 +1,5 @@
 import 'server-only';
+import { createHash } from 'node:crypto';
 import type { InboxContext, NotificationType, RecipientKind } from '@corridra/communications/inbox';
 import { readAuthMailConfig, sendWithResend } from '@corridra/auth/customer-auth-mail';
 import { missionMailApplicationEnabled } from '@corridra/auth/mission-mail';
@@ -125,7 +126,17 @@ export async function notifyParticipantInvitation(input: {
         },
       },
     },
-    'participant-invitation:' + input.id,
+    // The provider refuses a different message under a used key. A resend whose words changed (a renamed
+    // programme, a new expiry) therefore gets its own key; an unchanged resend keeps the same one.
+    'participant-invitation:' +
+      input.id +
+      ':' +
+      createHash('sha256')
+        .update(
+          JSON.stringify([input.programme ?? '', input.organiser ?? '', input.expiresAt ?? '']),
+        )
+        .digest('hex')
+        .slice(0, 16),
   );
   return email === 'sent' ? 'sent' : 'not_sent';
 }

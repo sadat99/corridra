@@ -57,6 +57,18 @@ describe('participant invitation email (D-037, D-038)', () => {
     expect(message.text).not.toMatch(/expires/);
   });
 
+  test('names are capped and lose direction and control marks before they reach the mail', () => {
+    const message = invite({
+      programme: 'Trade\u202e Week \u0007' + 'x'.repeat(400),
+      organiser: 'Meghna\u200f Textiles',
+    });
+    expect(message.text).not.toMatch(
+      /[\u0000-\u0009\u000b-\u001f\u007f\u200e\u200f\u202a-\u202e\u2066-\u2069]/,
+    );
+    expect(message.subject.length).toBeLessThanOrEqual('You are invited to '.length + 160);
+    expect(message.text).toContain('Meghna Textiles invited you to join Trade Week ');
+  });
+
   test('other mails are unchanged: no invitation lines outside the participant invitation', () => {
     const quote = mail.buildNotificationEmail({
       type: 'QUOTE_SENT',

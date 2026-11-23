@@ -98,9 +98,16 @@ export type NotificationEmail = {
   dir: 'ltr' | 'rtl';
 };
 
-/** Names shown in a mail stay on one line, whatever was typed. */
+/** Names shown in a mail stay on one short line, without control or text-direction marks, whatever was typed. */
 const oneLine = (value: unknown) =>
-  typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+  typeof value === 'string'
+    ? value
+        .replace(/[\u0000-\u001f\u007f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 160)
+        .trim()
+    : '';
 
 /** What a participant invitation says about itself. Each part is left out when it is not known. */
 export type InvitationFacts = {
