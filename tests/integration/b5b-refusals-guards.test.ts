@@ -63,6 +63,45 @@ describe('D-053: one refusal line for a private link that no longer opens', () =
   });
 });
 
+describe('D-053: the Reply Page keeps the failure words it had', () => {
+  const sayAgain = 'Your response could not be saved. Try again.';
+
+  it('a failed read, answer or stop keeps the reason the error carries, refused or not', async () => {
+    const { replyFailureWords } = await loadWeb('app/buyer/introduction.tsx');
+    const { ParticipantRequestError } = await loadWeb('components/private-capability.ts');
+    // A refused link still shows the reason from the server here, never the shared line of the older page.
+    for (const status of [401, 403, 404, 410])
+      expect(
+        replyFailureWords(
+          new ParticipantRequestError('This private link is unavailable or expired', status),
+          sayAgain,
+        ),
+      ).toBe('This private link is unavailable or expired');
+    expect(replyFailureWords(new Error('Failed to fetch'), sayAgain)).toBe('Failed to fetch');
+    // An error with no reason shows no words, as before; it does not gain a fallback.
+    expect(replyFailureWords(new Error(''), sayAgain)).toBe('');
+    // Only a failure that is not an error takes the words given.
+    expect(replyFailureWords('offline', sayAgain)).toBe(sayAgain);
+    expect(replyFailureWords(undefined, 'Please try again.')).toBe('Please try again.');
+  });
+
+  it('each Reply Page fallback is the one it was, and the new words belong to the older page only', () => {
+    const buyer = read('apps/web/app/buyer/introduction.tsx').replace(/\s+/g, ' ');
+    // One place decides: the Reply Page takes its old words, the older page the shared pattern.
+    expect(buyer).toContain(
+      'replyPage ? replyFailureWords(error, replyWhenNotAnError) : refusalWords(error, linkGone, whenUnknown)',
+    );
+    expect(buyer).toContain("failed(e, 'Your introduction could not be opened. Try again.', '')");
+    expect(buyer).toContain(
+      "failed( e, 'Your response could not be saved. Try again.', 'Your response could not be saved. Try again.', )",
+    );
+    expect(buyer).toContain(
+      "failed(e, 'Your request could not be saved. Try again.', 'Please try again.')",
+    );
+    expect(buyer).toContain('const gone = replyPage ? words.unavailable : linkGone;');
+  });
+});
+
 describe('D-058: a missing status, state, fit or label never throws', () => {
   it('lowerWords gives the plain fallback for a value that did not arrive', async () => {
     const { lowerWords } = await loadWeb('app/mission-experience-view.tsx');

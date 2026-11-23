@@ -41,6 +41,13 @@ export function refusalWords(error: unknown, gone: string, whenUnknown: string):
   if (accessDenied(error)) return gone;
   return error instanceof Error && error.message ? error.message : whenUnknown;
 }
+/**
+ * The Reply Page keeps the failure words it has always had: the reason the error carries, whatever its kind, and
+ * the given words only for a failure that is not an error at all. Nothing here is new wording.
+ */
+export function replyFailureWords(error: unknown, whenNotAnError: string): string {
+  return error instanceof Error ? error.message : whenNotAnError;
+}
 export function BuyerIntroduction({
   replyPage = false,
   chineseReleased = false,
@@ -91,11 +98,9 @@ function ScopedIntroduction({
   // D-053: one line for a link that no longer opens, the same on every private page. The Reply Page keeps its own
   // words in the language of the link (lib/reply-words.ts) and, for a failed read or answer, the reason as before.
   const gone = replyPage ? words.unavailable : linkGone;
-  const failed = (error: unknown, whenUnknown: string) =>
+  const failed = (error: unknown, whenUnknown: string, replyWhenNotAnError: string) =>
     replyPage
-      ? error instanceof Error && error.message
-        ? error.message
-        : whenUnknown
+      ? replyFailureWords(error, replyWhenNotAnError)
       : refusalWords(error, linkGone, whenUnknown);
   const [data, setData] = useState<View | null>(null),
     [message, setMessage] = useState(
@@ -143,7 +148,7 @@ function ScopedIntroduction({
         }
       })
       .catch((e) => {
-        if (active) setMessage(failed(e, 'Your introduction could not be opened. Try again.'));
+        if (active) setMessage(failed(e, 'Your introduction could not be opened. Try again.', ''));
       });
     return () => {
       active = false;
@@ -181,7 +186,13 @@ function ScopedIntroduction({
         setData(null);
         setPending(null);
       }
-      setMessage(failed(e, 'Your response could not be saved. Try again.'));
+      setMessage(
+        failed(
+          e,
+          'Your response could not be saved. Try again.',
+          'Your response could not be saved. Try again.',
+        ),
+      );
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -210,7 +221,7 @@ function ScopedIntroduction({
         setData(null);
         setPending(null);
       }
-      setMessage(failed(e, 'Your request could not be saved. Try again.'));
+      setMessage(failed(e, 'Your request could not be saved. Try again.', 'Please try again.'));
     } finally {
       inFlight.current = false;
       setBusy(false);
