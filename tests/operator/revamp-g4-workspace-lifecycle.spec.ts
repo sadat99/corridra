@@ -6,6 +6,9 @@ import { resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import { lifecycleWords } from '../../apps/web/app/account/workspace-lifecycle-client';
 
+// The times on these screens are written in the reader's own time zone (owner walk D-050), so the zone is fixed here.
+test.use({ timezoneId: 'UTC' });
+
 // CRUD G4, workspace lifecycle in Workspaces and Team: owner-only menu items, Rename Workspace (reason, stale conflict),
 // Archive Workspace (typed name, ten second Undo, Archived filter and banner), Restore, Transfer Ownership (offer,
 // cancel, accept, decline, expiry). Closed or unavailable renders nothing. Case ids: G4-01 to G4-09.
@@ -493,7 +496,9 @@ test('G4-10 Transfer Ownership lists only active members, needs the typed name, 
   await dialog.getByLabel('Type the workspace name to confirm').fill(owner);
   await send.click();
   await expect(
-    page.getByText(/Offer sent to Synthetic Salma\. It stays open until 1 Jan 2099, 10:00 UTC\./),
+    page.getByText(
+      /Offer sent to Synthetic Salma\. It stays open until 1 Jan 2099, 10:00 \(UTC\)\./,
+    ),
   ).toBeVisible();
   expect(sent[0]).toMatchObject({
     action: 'offer_transfer',
@@ -503,7 +508,7 @@ test('G4-10 Transfer Ownership lists only active members, needs the typed name, 
     expectedVersion: 3,
   });
   await expect(
-    page.getByText('Ownership offer sent. It stays open until 1 Jan 2099, 10:00 UTC.'),
+    page.getByText('Ownership offer sent. It stays open until 1 Jan 2099, 10:00 (UTC).'),
   ).toBeVisible();
   await trigger(page, owner).click();
   await expect(page.getByRole('menuitem', { name: 'Cancel Ownership Offer' })).toBeVisible();
@@ -533,7 +538,7 @@ test('G4-11 the named member sees Accept Ownership and Decline, and each asks fi
     name: 'Workspace notices for Synthetic Gazipur Wovens',
   });
   await expect(notice).toContainText('wants to make you the owner of Synthetic Gazipur Wovens');
-  await expect(notice).toContainText('1 Jan 2099, 10:00 UTC');
+  await expect(notice).toContainText('1 Jan 2099, 10:00 (UTC)');
   await notice.getByRole('button', { name: 'Decline' }).click();
   const decline = page.getByRole('dialog', { name: 'Decline Ownership?' });
   await expect(decline.getByRole('button', { name: 'Not Now' })).toBeFocused();
@@ -563,11 +568,13 @@ test('G4-12 an expired offer shows plain words to the owner and the member, and 
     },
   });
   await expect(
-    page.getByText('The offer expired on 1 Jan 2020, 10:00 UTC. You are still the owner.'),
+    page.getByText('The offer expired on 1 Jan 2020, 10:00 (UTC). You are still the owner.'),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Transfer Ownership' }).first()).toBeVisible();
   await expect(
-    page.getByText('This offer expired on 1 Jan 2020, 10:00 UTC. Ask the owner to send a new one.'),
+    page.getByText(
+      'This offer expired on 1 Jan 2020, 10:00 (UTC). Ask the owner to send a new one.',
+    ),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Accept Ownership' })).toHaveCount(0);
 });
@@ -822,7 +829,7 @@ test('G4-19 with the lifecycle control off the list flag keeps an archived works
   const items = await menuNames(page, owner);
   for (const item of [
     'New Request',
-    'Continue a Saved Draft',
+    'Continue a Saved Request',
     'Send a Private Request',
     'Restore Workspace',
     ...lifecycleItems,
@@ -843,7 +850,7 @@ test('G4-20 when the lifecycle read fails from the start the list flag still kee
   const row = page.getByRole('row', { name: /Synthetic Gazipur Wovens/ });
   await expect(row.locator('.ux-badge')).toHaveText('Archived');
   const items = await menuNames(page, 'Synthetic Gazipur Wovens');
-  for (const item of ['New Request', 'Continue a Saved Draft', 'Send a Private Request'])
+  for (const item of ['New Request', 'Continue a Saved Request', 'Send a Private Request'])
     expect(items).not.toContain(item);
 });
 

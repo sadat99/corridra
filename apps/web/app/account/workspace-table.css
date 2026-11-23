@@ -85,10 +85,25 @@
 .ux-ws-table {
   border-collapse: separate;
   border-spacing: 0;
-  overflow: hidden;
+  /* The row menu is drawn over the card and past its edge, so the card must not clip (owner walk D-051). */
+  overflow: visible;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface-1);
+}
+/* With nothing clipped, the corner cells carry the card's inner radius, so the head row and the hover colour stay
+   inside the rounded border. */
+.ux-ws-table thead tr:first-child > :first-child {
+  border-start-start-radius: calc(var(--radius-md) - 1px);
+}
+.ux-ws-table thead tr:first-child > :last-child {
+  border-start-end-radius: calc(var(--radius-md) - 1px);
+}
+.ux-ws-table tbody tr:last-child > :first-child {
+  border-end-start-radius: calc(var(--radius-md) - 1px);
+}
+.ux-ws-table tbody tr:last-child > :last-child {
+  border-end-end-radius: calc(var(--radius-md) - 1px);
 }
 .ux-ws-table th,
 .ux-ws-table td {

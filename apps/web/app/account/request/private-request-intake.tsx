@@ -262,7 +262,7 @@ function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean; workspa
   if (paused)
     return (
       <section className="detail-card">
-        <p role="status">Rechecking account access before restoring your private draft…</p>
+        <p role="status">Rechecking account access before restoring your private request…</p>
         <a className="text-link" href="/account">
           Return to your account
         </a>
@@ -283,7 +283,7 @@ function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean; workspa
           Review my saved requests
         </a>
       </p>
-      {!loaded && <p role="status">Loading your private request draft…</p>}
+      {!loaded && <p role="status">Loading your private request…</p>}
       {problem && <p role="alert">{problem}</p>}
       {denied && (
         <a className="text-link" href="/account">

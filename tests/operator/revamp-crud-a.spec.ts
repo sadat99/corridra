@@ -193,14 +193,14 @@ test('CRUD-4 discarded drafts are hidden by default and one button shows them ag
   await expect(page.getByText('Synthetic towel buyer search', { exact: true })).toBeVisible();
   await expect(page.getByText('Synthetic sent request', { exact: true })).toBeVisible();
   await expect(page.getByText('Synthetic old sourcing idea', { exact: true })).toHaveCount(0);
-  const toggle = page.getByRole('button', { name: 'Show Discarded Drafts (1)', exact: true });
+  const toggle = page.getByRole('button', { name: 'Show Discarded Requests (1)', exact: true });
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
   await toggle.click();
   await expect(page.getByText('Synthetic old sourcing idea', { exact: true })).toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Hide Discarded Drafts (1)', exact: true }),
+    page.getByRole('button', { name: 'Hide Discarded Requests (1)', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: 'Hide Discarded Drafts (1)', exact: true }).click();
+  await page.getByRole('button', { name: 'Hide Discarded Requests (1)', exact: true }).click();
   await expect(page.getByText('Synthetic old sourcing idea', { exact: true })).toHaveCount(0);
 });
 

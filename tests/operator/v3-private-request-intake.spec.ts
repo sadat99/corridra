@@ -561,7 +561,7 @@ test('restoring a hidden private form reloads server authority and resumes only 
     window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })),
   );
   await expect(page.getByRole('status')).toHaveText(
-    'Rechecking account access before restoring your private draft…',
+    'Rechecking account access before restoring your private request…',
   );
   await expect(page.getByLabel('Your offer or requirement')).toHaveCount(0);
   const navigation = page.waitForResponse(

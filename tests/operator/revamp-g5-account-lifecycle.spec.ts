@@ -12,6 +12,9 @@ import { accountLifecycleWords } from '../../packages/auth/src/customer-account-
 import { accountWords } from '../../apps/web/app/account/account-lifecycle-words';
 import { lifecycleWords } from '../../apps/web/app/account/workspace-lifecycle-client';
 
+// The times on these screens are written in the reader's own time zone (owner walk D-050), so the zone is fixed here.
+test.use({ timezoneId: 'UTC' });
+
 let server: Server, origin: string;
 let bundle = '';
 let componentCss = '';
@@ -237,7 +240,9 @@ test('G5-04 Close Account shows wording A, needs the typed phrase, sends no id, 
   await dialog.getByLabel('Type Close my account to confirm').fill('Close my account');
   expect(sent).toHaveLength(0);
   await close.click();
-  await expect(page.getByText('Your account is closed until 6 Dec 2026, 10:00 UTC.')).toBeVisible();
+  await expect(
+    page.getByText('Your account is closed until 6 Dec 2026, 10:00 (UTC).'),
+  ).toBeVisible();
   expect(sent).toEqual([
     { action: 'close', confirmation: 'Close my account', commandId: expect.any(String) },
   ]);
@@ -314,9 +319,9 @@ test('G5-07 Ask for Erasure shows wording B, files the request with no body but 
   expect(sent).toEqual([{ action: 'file_erasure', commandId: expect.any(String) }]);
   const panel = page.locator('dl');
   await expect(panel).toContainText('ERA-2026-0042');
-  await expect(panel).toContainText('6 Nov 2026, 10:00 UTC');
+  await expect(panel).toContainText('6 Nov 2026, 10:00 (UTC)');
   await expect(panel).toContainText('Staff reply due by');
-  await expect(panel).toContainText('6 Dec 2026, 10:00 UTC');
+  await expect(panel).toContainText('6 Dec 2026, 10:00 (UTC)');
   await expect(panel).toContainText('Received');
   await expect(page.getByRole('button', { name: 'Ask for Erasure' })).toHaveCount(0);
 });
@@ -430,7 +435,9 @@ test('G5-15 the Account and Data section of a closed account offers Reopen when 
   page,
 }) => {
   await open(page, { state: { ...closedState, open: false } });
-  await expect(page.getByText('Your account is closed until 6 Dec 2026, 10:00 UTC.')).toBeVisible();
+  await expect(
+    page.getByText('Your account is closed until 6 Dec 2026, 10:00 (UTC).'),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Reopen My Account' })).toBeVisible();
   await expect(page.getByText(comingSoon)).toHaveCount(0);
 });

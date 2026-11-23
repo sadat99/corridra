@@ -1,9 +1,11 @@
 import { archivedRefusalText } from './archived-refusal';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import type { CustomerAccessPage, CustomerWorkspace } from '@corridra/auth/customer-workspaces';
 import { limitWords } from '../../lib/account-limit';
+import { formatDateTime } from '../../lib/ux/format';
+import { CopyButton } from '../../components/ux/copy-button';
 
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const validId = (v: unknown): v is string => typeof v === 'string' && uuid.test(v);
@@ -14,12 +16,8 @@ const label = (v: unknown): v is string =>
   v === v.trim() &&
   !/[\u0000-\u001f\u007f]/u.test(v);
 const date = (v: unknown) => typeof v === 'string' && Number.isFinite(Date.parse(v));
-const when = (value: string) =>
-  new Intl.DateTimeFormat('en-GB', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'UTC',
-  }).format(new Date(value)) + ' UTC';
+// The one way a time is written, in the reader's own time zone (owner walk D-050).
+const when = (value: string) => formatDateTime(value);
 type Invite = { version: 1; commandId: string; label: string };
 type Cursor = { invitationAfter?: string; memberAfter?: string };
 type RoleChange = {
@@ -109,6 +107,7 @@ export function CustomerWorkspaceTeam({
     [pending, setPending] = useState<Invite | null>(null);
   const [storageFailed, setStorageFailed] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const issuedCodeId = useId();
   const [issued, setIssued] = useState<{
     id: string;
     label: string;
@@ -804,12 +803,21 @@ export function CustomerWorkspaceTeam({
             <p>Invitation reference: {issued.id}</p>
             {issued.token ? (
               <>
-                <label className="field">
-                  New workspace invitation code
-                  <input value={issued.token} readOnly autoComplete="off" spellCheck={false} />
-                </label>
+                <div className="ux-copy-row">
+                  <label className="field">
+                    New workspace invitation code
+                    <input
+                      id={issuedCodeId}
+                      value={issued.token}
+                      readOnly
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </label>
+                  <CopyButton value={issued.token} target={issuedCodeId} />
+                </div>
                 <p>
-                  Shown on this page only. Select and copy the code privately. It expires{' '}
+                  Shown on this page only. Copy the code and keep it private. It expires{' '}
                   <time dateTime={issued.expiresAt}>{when(issued.expiresAt)}</time>. If lost, cancel
                   the invitation and issue another.
                 </p>
