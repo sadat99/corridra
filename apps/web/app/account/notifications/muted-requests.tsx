@@ -11,6 +11,15 @@ const kindWords: Record<MailMute['store'], string> = {
   request: 'Receipt email',
   reminder: 'Reminder emails',
 };
+/**
+ * The words for one kind of muted email. The kind arrives from the server as stored, so a kind this page has no
+ * words for yet (or none at all) is named plainly; the page never stops on it.
+ */
+export function kindWord(store: unknown): string {
+  return typeof store === 'string' && Object.hasOwn(kindWords, store)
+    ? kindWords[store as MailMute['store']]
+    : 'Emails';
+}
 
 export function MutedRequests({
   initial,
@@ -112,7 +121,7 @@ export function MutedRequests({
             <span>
               <strong>{title(item.requestId)}</strong>
               <span>
-                {kindWords[item.store]}: {item.muted ? 'stopped' : 'on again'}
+                {kindWord(item.store)}: {item.muted ? 'stopped' : 'on again'}
               </span>
               {item.store === 'request' && (
                 <span>
@@ -157,7 +166,7 @@ export function MutedRequests({
         {asking && (
           <>
             <p>
-              We will send {kindWords[asking.store].toLowerCase()} about {title(asking.requestId)}{' '}
+              We will send {kindWord(asking.store).toLowerCase()} about {title(asking.requestId)}{' '}
               again, only for things that happen from now on. Nothing from the time you stopped them
               is sent. You can mute them again at any time.
             </p>

@@ -28,6 +28,15 @@ type Props = {
   workspaceId: string | null;
 };
 const starter = realCustomerInput() ? '' : 'Synthetic ';
+/**
+ * What the help is linked to, in lower case for the middle of a sentence. The words are looked up by a kind that
+ * reaches this form from the page address, so a kind with no words is named plainly; the form never stops on it.
+ */
+export function contextWord(kind: unknown): string {
+  const words =
+    typeof kind === 'string' && Object.hasOwn(contextText, kind) ? contextText[kind] : '';
+  return words ? words.toLowerCase() : 'request';
+}
 
 export function ServiceRequestNew(props: Props) {
   return (
@@ -197,10 +206,9 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
   return (
     <section aria-label="Request help" className="account-compact">
       <p>
-        You are asking for paid local help linked to your{' '}
-        <strong>{contextText[kind].toLowerCase()}</strong>. We reply with a quote that lists every
-        cost and everything left out. Accepting it records your order intent only. Nothing is
-        charged and billing is not switched on.
+        You are asking for paid local help linked to your <strong>{contextWord(kind)}</strong>. We
+        reply with a quote that lists every cost and everything left out. Accepting it records your
+        order intent only. Nothing is charged and billing is not switched on.
       </p>
       {state === 'loading' && <p role="status">Loading the services…</p>}
       {(state === 'error' || state === 'off') && (

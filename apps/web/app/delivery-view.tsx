@@ -17,7 +17,7 @@ import { ConsequencePreview } from '../components/consequence-preview';
 import { BeforeSend } from '../components/before-send';
 import { FieldError } from '../components/field-error';
 import { translate } from '../lib/i18n/messages';
-import { MissionExperienceView, AgendaView } from './mission-experience-view';
+import { MissionExperienceView, AgendaView, lowerWords } from './mission-experience-view';
 /** CQ-42: one plain line for a link that no longer opens (expired, replaced or withdrawn). */
 export const linkGone =
   'This private link has expired or was replaced. Ask the person who sent it for a new link.';
@@ -498,7 +498,8 @@ function ScopedDeliveryView({
             <ul>
               {m.itinerary.map((mt, i) => (
                 <li key={`${mt.label}-${i}`}>
-                  <strong>{mt.label}</strong> · {mt.status.toLowerCase().replaceAll('_', ' ')}
+                  <strong>{mt.label}</strong> ·{' '}
+                  {lowerWords(mt.status, 'status not supplied').replaceAll('_', ' ')}
                   <p>
                     {mt.scheduleChanged
                       ? 'Schedule changed. The Corridra team will send an updated itinerary.'
@@ -539,7 +540,7 @@ function ScopedDeliveryView({
                   <h4>{r.title}</h4>
                   <p>{r.instructions}</p>
                   <p>
-                    {r.status.toLowerCase()} · Due {formatUtcDay(r.dueAt)}
+                    {lowerWords(r.status, 'status not supplied')} · Due {formatUtcDay(r.dueAt)}
                   </p>
                   {r.response && <p>Your declaration: {r.response}</p>}
                   {r.status === 'OPEN' && (
