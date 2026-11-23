@@ -60,7 +60,7 @@ export function homeLines({ registrationId, place, fees }: HomeInput): HomeLines
   let next: HomeLines['next'] = null;
   if (termsChanged) next = { text: 'Read and accept the changed terms' };
   else if (status === 'NOT_APPLIED' && (place.placesAvailable || place.waitlist))
-    next = { text: 'Apply for a place' };
+    next = { text: 'Confirm your place' };
   else if (owed.length > 0) next = { text: 'Review the recorded fee' };
   else if (tasks.length > 0) next = { text: 'Next task: ' + tasks[0]!.title };
   return { where: placeWords(place), open: parts.length ? parts.join('; ') + '.' : null, next };

@@ -31,7 +31,7 @@ export const reasonCodes = ['NO_PROFILE', 'ROLE', 'SECTOR', 'COUNTRY', 'SIZE', '
 // What the participant reads when a rule is not met. Codes only come from the database, never profile content.
 export const participantReason: Record<string, string> = {
   NO_PROFILE:
-    'We could not find an organisation profile for the workspace you chose. Add one in your account, then apply again.',
+    'We could not find an organisation profile for the workspace you chose. Add one in your account, then try again.',
   ROLE: "Your organisation's commercial role is not one this programme accepts.",
   SECTOR: "Your organisation's sectors do not match the sectors this programme accepts.",
   COUNTRY: "Your organisation's country is not one this programme accepts.",
