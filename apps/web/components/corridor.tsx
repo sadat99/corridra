@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Flagged } from './ux/flag';
+
 export function Corridor() {
   return (
     <div
@@ -33,18 +35,25 @@ export function Corridor() {
       <div className="corridor-locations">
         <div>
           <span className="location-code">BD</span>
-          <strong>Bangladesh</strong>
+          <strong>
+            <Flagged code="bd">Bangladesh</Flagged>
+          </strong>
         </div>
         <span className="location-connection" aria-hidden="true">
           →
         </span>
         <div>
           <span className="location-code">CN / EU / GB / US / AU</span>
-          <strong>China, the EU, the UK, the US, Australia and key Asian markets</strong>
+          <strong>
+            <Flagged code="cn">China</Flagged>, <Flagged code="eu">the EU</Flagged>,{' '}
+            <Flagged code="gb">the UK</Flagged>, <Flagged code="us">the US</Flagged>,{' '}
+            <Flagged code="au">Australia</Flagged> and{' '}
+            <Flagged code="region">key Asian markets</Flagged>
+          </strong>
         </div>
       </div>
       <p className="corridor-caption">
-        Shared mission workflows. Each direction requires its own reviewed scope.
+        Shared mission workflows. Each direction needs its own check of what we can do there.
       </p>
       <p>
         <Link prefetch={false} href="/corridors">
