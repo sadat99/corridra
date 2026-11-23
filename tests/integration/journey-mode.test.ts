@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import {
   elsewhereCount,
   groupsShownInJourney,
@@ -464,5 +464,35 @@ describe('journey mode: source and structure', () => {
     expect(source).toMatch(/Show Everything/);
     expect(source).toMatch(/Companies are shared across all your journeys\./);
     expect(source).not.toMatch(/role="alert"/);
+  });
+});
+
+describe('journey mode: every signed-in page is rendered per request (work package 8)', () => {
+  // The frame reads the mode cookie. A page drawn at build time could not, so every page that draws the customer
+  // frame, itself or through the shared problem-report session page, must say it is dynamic.
+  const pages = (readdirSync('apps/web/app', { recursive: true }) as string[])
+    .map((path) => path.replaceAll('\\', '/'))
+    .filter((path) => /(^|\/)page\.tsx$/.test(path));
+  const framed = pages.filter((path) =>
+    /\bCustomerShell\b|problem-reports\/session-page|\/session-page'/.test(web(`app/${path}`)),
+  );
+  it('finds the pages that draw the customer frame', () => {
+    expect(framed.length).toBeGreaterThan(20);
+    expect(framed).toContain('account/page.tsx');
+    expect(framed).toContain('account/problem-reports/page.tsx');
+    expect(framed).toContain('account/problem-reports/new/page.tsx');
+    expect(framed).toContain('account/problem-reports/[reference]/page.tsx');
+    // The frame is drawn by pages only (and the shared session page), never by a layout that could be static.
+    const others = (readdirSync('apps/web/app', { recursive: true }) as string[])
+      .map((path) => path.replaceAll('\\', '/'))
+      .filter((path) => path.endsWith('.tsx') && !/(^|\/)page\.tsx$/.test(path))
+      .filter((path) => /<CustomerShell\b/.test(web(`app/${path}`)));
+    expect(others).toEqual(['account/problem-reports/session-page.tsx']);
+  });
+  it('each one is force-dynamic', () => {
+    const fixed = framed.filter(
+      (path) => !web(`app/${path}`).includes("export const dynamic = 'force-dynamic';"),
+    );
+    expect(fixed).toEqual([]);
   });
 });
