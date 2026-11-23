@@ -23,6 +23,30 @@ Steps:
 4. If the plan is what you expect, run it again with `apply=yes`.
 5. Open the owner page and check that the related settings still show the state you expect.
 
+## Real intake owner change
+
+Owner decision of 23 November 2026: "Corridra founder" becomes the owner of new real requests, then "Synthetic operator" and "Synthetic reviewer" lose their roles in the real workspace "Corridra request operations" only. The install choice is `field_modules_action=real_intake_owner_apply`. The Guardian runs it after the merge, first on a temporary database branch.
+
+What it does and does not do:
+
+- It installs one small database module (`customer-real-intake-owner-migrations`), which needs the real-use modules first. Installing the module alone changes no owner.
+- It adds one row to the owner record (`customer_private.real_intake_owner_version`). The newest row decides who owns a new real request. The one configuration row of real use is never written.
+- It ends the two sample memberships in the real workspace by marking them removed, the same way the staff team screen does. Each removal writes an audit record in the name of the pinned service identity, because offline work has no signed-in person.
+- It deletes nothing. No user, identity, customer account, workspace, request or membership row is removed. Sample workspaces, the sample intake and the owner recorded on existing requests stay as they are.
+- It refuses, and writes nothing, unless each of the three names matches exactly one person in the real workspace, the new owner is an active owner or admin there with the real processing purpose and an allowed operating country, and the real workspace keeps an active owner.
+- It moves no work. While a member still to be removed owns an open mission, meeting, case, opportunity or current route readiness record in the real workspace, the apply refuses with "Reassign these on the staff screens first". A signed-in staff member reassigns them on the staff screens, which keeps the normal audit record, and then the step is run again. Closed or finished work keeps its recorded owner. Open follow-ups, delivery requests and route releases are counted for information only, because their owner cannot be changed by an update.
+- Once an owner is recorded, a new real request is refused with "Real intake unavailable" while that recorded owner is not an active owner or admin of the real workspace. Keep that person's role, or record another owner first. Before any owner is recorded there is no such check, so installing the module alone cannot stop real intake.
+- The offline network open and pause step (`network_use_action`) uses the same owner: the recorded one when there is one, else the configuration owner. It keeps working after the earlier owner has left the real workspace.
+
+Steps:
+
+1. Run **Install customer modules** on `main` with `field_modules_action=real_intake_owner_apply` and `apply=no`. This is the dry run. It writes nothing and lists exactly what would change, with the three names it searched for and 8-character ids only. It also says whether the module can be installed, whether the configuration owner and the new owner each pass the intake check (membership) and the network check (membership plus operating country), and how much open work the members to remove still own.
+2. Check the list: one workspace, one owner change, four check lines, the open work counts and two members. A line that starts with "apply would refuse" names what to fix first.
+3. Run it again with `apply=yes`. The log shows the same lines and ends with `applied`.
+4. A later run with the same choice ends with `unchanged`.
+
+Way back: nothing needs to be deleted. Add the two members again on the staff team screen. To return new real requests to the earlier owner, add a later row to the owner record that names that person; this needs a reviewed installer step, which this change does not include.
+
 ## Feature switches for this release
 
 Each switch is off in production until you set it to `true` in the Vercel project settings, then redeploy:
