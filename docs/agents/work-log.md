@@ -4788,3 +4788,11 @@ Next action: owner signed-in pass, then the owner switches CORRIDRA_AI_CONNECT_F
 Added after the PR 593 records were written (same PR, conductor's evidence): PR 595 (peer session branch claude/trusting-goldberg-yx6xm0, head 50e11d9) merged as aae53aa after exact-head CI (23 success, CodeQL neutral), Codex clean and one independent review with no blocking finding. It changes `packages/auth/src/team-control.ts` and `tests/integration/ws-d-team-control.test.ts` only: invited members get the workspace's processing purpose in allowed_purposes. Review follow-ups recorded in the ledger: the test uses a synthetic tenant, and `packages/auth/src/operator-invitation.ts:93` has the same defect. Live sw.js has aae53aa (read 23 Nov). The peer session's report of one manual production membership repair is unverified here. The ledger header now says main aae53aa; older lines condensed again to fit the cap (all in the snapshot).
 
 Tested head: aae53aa (main); edits on claude/records-593.
+
+### 23 November 2026: Connect AI switch set by the owner, Corridra conductor
+
+Owner, 23 Nov 2026, first hand in chat: "i set CORRIDRA_AI_CONNECT_FORM to true today few one hour ago." Recorded in the ledger, `docs/PLAN_STATUS.md` (ADR 0089 row) and `docs/agents/ui-direction.md` (Connect AI row and note), which said off and unset.
+
+Not verified: the production value (not read), whether a deploy followed (aae53aa and df6c0be deployed after it and should carry it), any signed-in pass of the screen. AI in real workspaces is still not active (app.part4_enabled false); the screen saves configuration only.
+
+Tested head: df6c0be (main).
