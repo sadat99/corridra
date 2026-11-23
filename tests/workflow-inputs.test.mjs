@@ -483,7 +483,7 @@ test('the QA data retirement choice only reports, moves no other module and carr
   assert.equal(Object.keys(declared).length, 24);
   assert.match(
     declared.field_modules_action.description,
-    /qa_data_retire \(B11b, owner decision 23 Nov 2026: read-only report[^)]*with or without apply[^)]*refuses unless exactly one matches[^)]*writes, archives and deletes nothing[^)]*no user or account is touched[^)]*\)/,
+    /qa_data_retire \(B11b, owner decision 23 Nov 2026: read-only report[^)]*run without apply, it is refused together with apply[^)]*refuses unless exactly one matches[^)]*writes, archives and deletes nothing[^)]*no user or account is touched[^)]*\)/,
   );
 });
 

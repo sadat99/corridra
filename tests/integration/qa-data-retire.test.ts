@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture, rawContext } from './support';
+import type { DatabasePool } from '../../packages/db/src/index';
 import { digest, harness, issuer, options, type Fixture } from './revamp-g4-support';
 import { watching } from './problem-report-support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
@@ -153,6 +154,9 @@ beforeAll(async () => {
   };
   workspaceId = await h.provision('olga', plan.workspace);
   await h.provision('zed', 'Synthetic QA kept workspace');
+  // The moment of the owner decision in this made-up world: the QA workspace exists, and anything made later is not it.
+  plan.workspaceCreatedBefore = (await f.owner.query('SELECT clock_timestamp()::text AS at'))
+    .rows[0].at as string;
   const sent = await requests('olga').submit(
     { commandId: randomUUID(), workspaceId, brief: brief('Source suppliers', 'CN') },
     prepare,
@@ -299,6 +303,69 @@ describe('before anything is retired', () => {
       'workspace: still to retire, not archived, and workspace changes are paused: open them first',
     );
     expect(states(await report())[0]).toBe('request: still to retire, not withdrawn');
+  });
+
+  test('the connection is always released, and discarded when the rollback fails', async () => {
+    const released: unknown[] = [];
+    const breaking: DatabasePool = {
+      query: f.owner.query.bind(f.owner),
+      end: f.owner.end.bind(f.owner),
+      connect: async () => {
+        const client = await f.owner.connect();
+        return new Proxy(client, {
+          get(target, key, receiver) {
+            if (key === 'query')
+              return (text: unknown, ...rest: unknown[]) =>
+                text === 'ROLLBACK'
+                  ? Promise.reject(new Error('the rollback could not be sent'))
+                  : Reflect.apply(target.query, target, [text, ...rest]);
+            if (key === 'release')
+              return (error?: Error) => {
+                released.push(error);
+                return target.release(error);
+              };
+            return Reflect.get(target, key, receiver);
+          },
+        });
+      },
+    };
+    expect((await reportQaDataRetire(breaking, plan)).state).toBe('still to retire');
+    expect(released).toHaveLength(1);
+    expect(released[0]).toBeInstanceOf(Error);
+    // A refused report releases its connection too, with a clean rollback.
+    const seen: unknown[] = [];
+    const counting: DatabasePool = {
+      ...breaking,
+      connect: async () => {
+        const client = await f.owner.connect();
+        return new Proxy(client, {
+          get(target, key, receiver) {
+            if (key !== 'release') return Reflect.get(target, key, receiver);
+            return (error?: Error) => {
+              seen.push(error);
+              return target.release(error);
+            };
+          },
+        });
+      },
+    };
+    await expect(
+      reportQaDataRetire(counting, { ...plan, problemReport: 'RP-999999' }),
+    ).rejects.toThrow('found 0');
+    expect(seen).toEqual([undefined]);
+  });
+
+  test('a same-named workspace made after the owner decision is never taken for the QA workspace', async () => {
+    await h.provision('zed', 'Synthetic late QA workspace');
+    await expect(report({ workspace: 'Synthetic late QA workspace' })).rejects.toThrow(
+      'The workspace named "Synthetic late QA workspace" was created after the owner decision, so it is not the QA workspace',
+    );
+    // The real cut-off is the end of the day of the decision, fixed in the module.
+    expect(qaDataRetirePlan.workspaceCreatedBefore).toBe('2026-11-24T00:00:00Z');
+    // The QA workspace itself would be refused the same way if it had been made after the cut-off.
+    await expect(report({ workspaceCreatedBefore: '2000-01-01T00:00:00Z' })).rejects.toThrow(
+      'was created after the owner decision',
+    );
   });
 
   test('only the schema owner may read it, a kept name is never a target, and a report from elsewhere is left alone', async () => {

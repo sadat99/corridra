@@ -18,6 +18,7 @@ describe('the QA data retirement install wiring', () => {
   test('the names are the owner-approved ones and no kept name is a target', () => {
     expect(qaDataRetirePlan).toEqual({
       workspace: 'QA-Organiser Workspace (madeup)',
+      workspaceCreatedBefore: '2026-11-24T00:00:00Z',
       programme: 'QA-Test Programme (madeup)',
       problemReport: 'RP-000001',
       request: {
@@ -40,7 +41,11 @@ describe('the QA data retirement install wiring', () => {
 
   test('the module can only read: one read-only transaction, always rolled back, and no writing statement', () => {
     expect(code).toContain("'BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY'");
-    expect(code).toMatch(/finally \{\s*await db\.query\('ROLLBACK'\);\s*db\.release\(\);/);
+    // Rolled back and released on every path; a failed rollback discards the connection instead of reusing it.
+    expect(code).toMatch(
+      /try \{\s*await db\.query\('BEGIN[^']*READ ONLY'\);\s*return await read\(db, plan\);\s*\} finally \{\s*db\.release\(await rollback\(db\)\);\s*\}/,
+    );
+    expect(code.split('db.release(').length - 1).toBe(1);
     expect(code).not.toMatch(/'COMMIT'|"COMMIT"/);
     expect(code).not.toMatch(/\b(INSERT|UPDATE|DELETE|TRUNCATE|ALTER|DROP|CREATE|GRANT|REVOKE)\b/);
     // No session is made up and no actor is set: nothing here can call a lifecycle as a person.
@@ -53,13 +58,27 @@ describe('the QA data retirement install wiring', () => {
     expect(code).toContain("pg_advisory_xact_lock(hashtext('corridra:qa-data-retire'))");
   });
 
-  test('the script takes a two-valued action with no reason and no apply guard, and adds no registry or migration', () => {
+  test('the script takes a two-valued action with no reason, refuses it together with apply, and adds no registry or migration', () => {
     expect(script).toContain(
       "QA_DATA_RETIRE_ACTION: z.enum(['unchanged', 'report']).default('unchanged')",
     );
-    expect(script).not.toMatch(
-      /QA_DATA_RETIRE_REASON|QA_DATA_RETIRE_ACTION !== 'unchanged' && !apply/,
+    expect(script).not.toMatch(/QA_DATA_RETIRE_REASON/);
+    // Refused together with INSTALL_APPLY=yes while the settings are checked: before the first report, before any
+    // installer or migration, and before the database is opened.
+    const refusal = script.indexOf(
+      "if (v.QA_DATA_RETIRE_ACTION !== 'unchanged' && apply)\n  throw new Error(",
     );
+    expect(refusal).toBeGreaterThan(script.indexOf("const apply = v.INSTALL_APPLY === 'yes';"));
+    expect(script.slice(refusal, refusal + 200)).toContain(
+      'The QA data retirement report is read only: run it without INSTALL_APPLY=yes',
+    );
+    for (const later of [
+      'const pool = databasePool',
+      "await report(apply ? 'Before install'",
+      'await reportQaDataRetire(pool)',
+      'if (apply) {',
+    ])
+      expect(script.indexOf(later), later).toBeGreaterThan(refusal);
     expect(script).not.toMatch(/qa_data_retire_migrations|migrateCustomerQaDataRetire/);
     expect(readdirSync(resolve('packages/db')).filter((name) => /qa/i.test(name))).toEqual([]);
   });
@@ -86,6 +105,7 @@ describe('the QA data retirement install wiring', () => {
     expect(workflow).toMatch(/^\s{12}qa_data_retire,$/m);
     expect(workflow).not.toMatch(/qa_data_retire_(apply|archive|delete)/);
     expect(workflow).not.toMatch(/^\s{6}qa_data[a-z_]*:/m);
+    expect(workflow).toContain('run without apply, it is refused together with apply');
     const lines = workflow.split('\n').filter((line) => line.includes('QA_DATA_RETIRE'));
     expect(lines).toHaveLength(1);
     expect(lines[0]).toContain(

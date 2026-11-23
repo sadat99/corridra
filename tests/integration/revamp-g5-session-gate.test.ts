@@ -356,7 +356,7 @@ describe('every customer route reaches data through the session boundary', () =>
     );
     for (const path of pages)
       expect(text(path), path).not.toMatch(
-        /customer-account-lifecycle-configuration|customer-account-lifecycle-migrate|customer-invoicing-real-supplier-secret/,
+        /customer-account-lifecycle-configuration|customer-account-lifecycle-migrate|customer-invoicing-real-supplier-secret|customer-qa-data-retire|customer-real-intake-owner|customer-data-cleanup/,
       );
   });
 });

@@ -1,4 +1,4 @@
-import type { DatabaseClient, DatabasePool } from '@corridra/db';
+import { rollback, type DatabaseClient, type DatabasePool } from '@corridra/db';
 import { dataCleanupKeepList } from './customer-data-cleanup';
 
 // Offline schema-owner report only (B11b, owner decision 23 Nov 2026: "dont delete any existing users"). No request handler
@@ -16,6 +16,8 @@ import { dataCleanupKeepList } from './customer-data-cleanup';
 // and never a name read from the database.
 export type QaDataRetirePlan = {
   workspace: string;
+  /** The QA workspace existed when the owner decided: a same-named workspace made later is never it. */
+  workspaceCreatedBefore: string;
   programme: string;
   problemReport: string;
   request: { title: string; objective: string; markets: readonly string[] };
@@ -26,6 +28,8 @@ export type QaDataRetirePlan = {
 
 export const qaDataRetirePlan: QaDataRetirePlan = {
   workspace: 'QA-Organiser Workspace (madeup)',
+  // The end of the day of the owner decision. A workspace a customer names the same way after it can never resolve.
+  workspaceCreatedBefore: '2026-11-24T00:00:00Z',
   programme: 'QA-Test Programme (madeup)',
   problemReport: 'RP-000001',
   // A request has no stored title: the screens make it from the objective and the market the sender chose
@@ -108,13 +112,20 @@ async function read(db: DatabaseClient, plan: QaDataRetirePlan): Promise<QaDataR
   // One report at a time, so two runs never interleave their lines. An advisory lock writes nothing.
   await db.query("SELECT pg_advisory_xact_lock(hashtext('corridra:qa-data-retire'))");
 
-  const workspace = await one<{ id: string; archived: boolean }>(
+  // Every workspace of that name counts, so two are refused whichever is older. The one match must also have existed at
+  // the owner decision: a workspace a customer names the same way later is never taken for the QA one.
+  const workspace = await one<{ id: string; archived: boolean; existed: boolean }>(
     db,
     `workspace named "${plan.workspace}"`,
-    `SELECT t.id::text AS id,customer_private.workspace_archived(t.id) AS archived
+    `SELECT t.id::text AS id,customer_private.workspace_archived(t.id) AS archived,
+      w.created_at<$2::timestamptz AS existed
     FROM app.tenant t JOIN customer.workspace w ON w.tenant_id=t.id WHERE t.name=$1`,
-    [plan.workspace],
+    [plan.workspace, plan.workspaceCreatedBefore],
   );
+  if (!workspace.existed)
+    throw new Error(
+      `The workspace named "${plan.workspace}" was created after the owner decision, so it is not the QA workspace`,
+    );
   const programme = await one<{ id: string; archived: boolean }>(
     db,
     `programme named "${plan.programme}" in the workspace "${plan.workspace}"`,
@@ -338,7 +349,8 @@ async function read(db: DatabaseClient, plan: QaDataRetirePlan): Promise<QaDataR
   };
 }
 
-// Read only, whatever the installer's apply setting: one snapshot in a read-only transaction that is always rolled back.
+// Read only: one snapshot in a read-only transaction that is always rolled back. The installer refuses to run it together
+// with an apply, so it never shares a run with an install.
 // The installer passes no plan; the names are fixed above and never taken from input.
 export async function reportQaDataRetire(
   pool: DatabasePool,
@@ -349,7 +361,7 @@ export async function reportQaDataRetire(
     await db.query('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
     return await read(db, plan);
   } finally {
-    await db.query('ROLLBACK');
-    db.release();
+    // Always released. A failed ROLLBACK leaves the connection in an unknown state, so it is discarded, not reused.
+    db.release(await rollback(db));
   }
 }
