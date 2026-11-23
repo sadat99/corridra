@@ -1,7 +1,6 @@
 // Plain words for a customer's own request (CQ-23, CQ-24). Pure functions over the original brief the
 // customer wrote, so every rule is tested without a database. Nothing is invented: a title uses only
 // the objective and market the customer chose, and a field the customer left empty is never shown.
-import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { formatDate, timeZoneLabel } from '../../lib/ux/format';
 import { countryName } from '../../lib/ux/options';
 
@@ -137,8 +136,8 @@ const factLabels: Record<string, string> = {
 };
 /** Sentence case for any field without a written label (CQ-24): "Delivery window", never "Delivery Window". */
 function factLabel(key: string, nested: boolean) {
-  // The one Goal is the customer's own choice; a requirement goal written in other words keeps its own name.
-  if (key === 'objective' && nested) return 'Requirement goal';
+  // The one Goal is the customer's own choice; the requirement objective is the type of work they chose, in words.
+  if (key === 'objective' && nested) return 'Type of work';
   const words = key.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
   return factLabels[key] ?? words.charAt(0).toUpperCase() + words.slice(1);
 }
@@ -166,7 +165,7 @@ export type RequestFact = { key: string; label: string; value: string | string[]
 
 /**
  * The original brief as facts a customer reads (D-017): every nested part is opened, a field of the form itself
- * (format marker, type-of-work code, role code) is left out at every depth, and a fact the form wrote twice is shown
+ * (format marker, type-of-work key, role code) is left out at every depth, and a fact the form wrote twice is shown
  * once. The customer's own words and values are never changed. A budget is left to the exact-money line above the list.
  */
 export function requestFacts(
@@ -194,10 +193,9 @@ export function requestFacts(
     if (value === '' || value == null || (Array.isArray(value) && value.length === 0)) return false;
     if (!nested) return true;
     // Written by the form from an answer that is already shown.
-    if (key === 'objective')
-      return (
-        !same(value, original.objective) && !missionCatalogue.some((t) => same(t.label, value))
-      );
+    // The form stores the chosen type of work here, as its catalogue words; it is a fact of its own unless it only
+    // repeats the Goal. The job key beside it is never shown.
+    if (key === 'objective') return !same(value, original.objective);
     if (key === 'product') return !same(value, original.offer);
     if (key === 'marketCode')
       return typeof value !== 'string' || !same(placeName(value), placeNameOf(original.market));
@@ -209,6 +207,8 @@ export function requestFacts(
     keys.flatMap((key) =>
       shown
         .filter((leaf) => leaf.key === key && !used.has(leaf.path))
+        // The customer's own top-level answer first: Goal, then Type of work.
+        .sort((a, b) => Number(a.nested) - Number(b.nested))
         .map((leaf) => {
           used.add(leaf.path);
           return leaf;

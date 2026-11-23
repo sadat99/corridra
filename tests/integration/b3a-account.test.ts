@@ -89,6 +89,32 @@ describe('D-017: the request detail shows each fact once, in plain words', () =>
     expect(groups.map((group) => group.title)).toEqual(['Goal', 'Where', 'Details', 'Contact']);
   });
 
+  it('keeps the type of work the customer chose, in its own words, and never the job key', async () => {
+    // What the plan form really stores: the job key, and the job's catalogue label as the requirement objective,
+    // beside a different top-level goal.
+    const { requestFacts } = await load('app/account/request-words.ts');
+    const groups = requestFacts({
+      ...brief,
+      experience: {
+        ...brief.experience,
+        job: 'machinery_procurement',
+        requirements: {
+          ...brief.experience.requirements,
+          objective: 'Procure machinery',
+          role: 'BUYER',
+        },
+      },
+    }) as { title: string; rows: { key: string; label: string; value: unknown }[] }[];
+    const goal = groups.find((group) => group.title === 'Goal')!.rows;
+    expect(goal.slice(0, 2).map((row) => [row.label, row.value])).toEqual([
+      ['Goal', 'Source suppliers'],
+      ['Type of work', 'Procure machinery'],
+    ]);
+    const words = JSON.stringify(groups);
+    expect(words).not.toContain('machinery_procurement');
+    expect(words).not.toContain('BUYER');
+  });
+
   it('keeps a requirement goal the customer wrote in other words', async () => {
     const { requestFacts } = await load('app/account/request-words.ts');
     const rows = (
@@ -162,9 +188,11 @@ describe('D-034: a refused request shows the refusal and one way back', () => {
     expect(html).not.toContain('Sign in again');
     expect(html).not.toContain('00000000-0000-4000-8000-000000000001');
     expect(html).toContain('No request details are shown.');
+    // One name for one place: the same words as the frame's back link to that address.
     expect(html).toContain(
-      '<a class="text-link" href="/account#customer-requests">Back to Your Requests</a>',
+      '<a class="text-link" href="/account#customer-requests">Back to my saved requests</a>',
     );
+    expect(html).not.toContain('Back to Your Requests');
     expect(html.match(/<a /g)).toHaveLength(1);
   });
 

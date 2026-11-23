@@ -247,7 +247,7 @@ export function RequestDetailView({
         <div role="alert">
           <p>Your private request access could not be confirmed. No request details are shown.</p>
           <a className="text-link" href={savedRequestBack.href}>
-            Back to Your Requests
+            {savedRequestBack.label}
           </a>
         </div>
       )}
