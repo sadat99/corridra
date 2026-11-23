@@ -37,9 +37,22 @@ export class CommunicationService {
    * ADR-090. A private link of a real workspace is answered under that workspace's own processing purpose and is
    * never labelled a sample. Without the real outreach module every link is a sample link, exactly as before.
    */
+  private realInstalled = false;
+  /** True once the real outreach module is present. Asked again on each call until then, never after. */
+  private async realModule() {
+    if (!this.realInstalled)
+      this.realInstalled =
+        (
+          await this.pool.query<{ installed: boolean }>(
+            "SELECT to_regprocedure('app.outreach_real_installed()') IS NOT NULL AS installed",
+          )
+        ).rows[0]?.installed === true;
+    return this.realInstalled;
+  }
   private async realLink(tokenHash: string) {
+    if (!(await this.realModule())) return false;
     const r = await this.pool.query<{ real: boolean | null }>(
-      "SELECT CASE WHEN to_regprocedure('app.outreach_link_real(text)') IS NULL THEN false ELSE (SELECT app.outreach_link_real($1)) END AS real",
+      'SELECT app.outreach_link_real($1) AS real',
       [tokenHash],
     );
     return r.rows[0]?.real === true;
@@ -66,17 +79,18 @@ export class CommunicationService {
   }
   /** ADR-090. The opt-out link of one real message. It works with every switch off and can be repeated. */
   async unsubscribe(token: string) {
-    if (!/^[a-f0-9]{64}$/.test(token)) return false;
+    if (!/^[a-f0-9]{64}$/.test(token) || !(await this.realModule())) return false;
     const r = await this.pool.query<{ done: boolean }>(
-      "SELECT CASE WHEN to_regprocedure('app.outreach_unsubscribe(text)') IS NULL THEN false ELSE (SELECT app.outreach_unsubscribe($1)) END AS done",
+      'SELECT app.outreach_unsubscribe($1) AS done',
       [hash(token)],
     );
     return r.rows[0]?.done === true;
   }
   /** ADR-090. One verified provider notice, recorded once. Returns false for a repeat or an unknown message. */
   async providerEvent(eventId: string, event: OutreachEvent) {
+    if (!(await this.realModule())) return false;
     const r = await this.pool.query<{ done: boolean }>(
-      "SELECT CASE WHEN to_regprocedure('app.outreach_record_event(text,uuid,text,boolean)') IS NULL THEN false ELSE (SELECT app.outreach_record_event($1,$2,$3,$4)) END AS done",
+      'SELECT app.outreach_record_event($1,$2,$3,$4) AS done',
       [eventId, event.messageId, event.kind, event.hard],
     );
     return r.rows[0]?.done === true;

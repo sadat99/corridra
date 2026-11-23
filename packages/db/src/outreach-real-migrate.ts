@@ -4,7 +4,7 @@ import type { DatabasePool } from './index';
 import { migrateOnce } from './migration-run';
 
 // ADR-090. Explicit optional installation of the real email lane for introductions. It refuses to run unless the customer
-// real-use modules through 0017 are already installed (it never installs them itself), and the SQL refuses unless the three
+// real-use modules through 0020 are already installed (it never installs them itself), and the SQL refuses unless the three
 // functions it replaces and the receipt check are exactly the definitions it names. It sends nothing and turns nothing on:
 // the switch, the mode and every workspace policy are separate. No runtime request receives this owner connection.
 export function migrateOutreachReal(pool: DatabasePool) {
@@ -30,7 +30,7 @@ async function migrateOutreachRealRun(pool: DatabasePool) {
           await db.query<{ name: string }>('SELECT name FROM customer_real_use_migrations.applied')
         ).rows.map((row) => row.name)
       : [];
-    if (!done.some((name) => name >= '0017_'))
+    if (!done.some((name) => name >= '0020_'))
       throw new Error(
         'The customer real-use modules are not installed, so the real outreach module was not installed. Run the real-use install first.',
       );

@@ -64,7 +64,7 @@ async function prospect(email: string) {
   });
   return { targetId: target.targetId, contactId: contact.id as string };
 }
-async function introduce(email: string, withConsent: object | undefined = consent) {
+async function introduce(email: string, withConsent: object | null = consent) {
   const p = await prospect(email);
   const input = command('introduce', {
     ...p,
@@ -90,6 +90,13 @@ const status = async (id: string) =>
       id,
     ])
   ).rows[0];
+const approached = async (targetId: string) =>
+  (
+    await owner().query(
+      'SELECT approached FROM app.experience_outreach_rows_for($1,ARRAY[$2]::uuid[])',
+      [s.intakeTenantId, targetId],
+    )
+  ).rows[0].approached as boolean;
 beforeAll(async () => {
   s = await realStaffFixture(
     'https://ep-real-outreach-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth',
@@ -169,7 +176,7 @@ test('sample and real never mix: each workspace kind takes only its own channel'
 });
 
 test('a real introduction needs recorded consent, and consent is kept with the message', async () => {
-  await expect(introduce('no-consent@supplier-a.business.test', undefined)).rejects.toThrow();
+  await expect(introduce('no-consent@supplier-a.business.test', null)).rejects.toThrow();
   expect(
     (
       await owner().query(
@@ -200,6 +207,8 @@ test('nothing is sent without the staff dispatch, and test mode sends nothing to
   expect(await receipt(m.id)).toEqual({ provider: 'email_test', reference: `sink:${m.id}` });
   expect(await send(m.id)).toBe('DELIVERED');
   expect(fetched).toEqual([]);
+  // A test-mode receipt is never counted as an approach on a customer report.
+  expect(await approached(m.targetId)).toBe(false);
 });
 
 test('with the switch off or a setting missing a queued message is never delivered', async () => {
@@ -213,6 +222,42 @@ test('with the switch off or a setting missing a queued message is never deliver
   expect(await send(m.id)).toBe('PENDING');
   expect(fetched).toEqual([]);
   expect(await receipt(m.id)).toBeUndefined();
+  // The third failed attempt stops the message. It is kept, and the existing staff retry queues it again.
+  await owner().query('UPDATE app.communication_dispatch SET available_at=now() WHERE id=$1', [
+    m.id,
+  ]);
+  expect(await send(m.id)).toBe('DEAD');
+  expect(fetched).toEqual([]);
+  await comms.command(
+    s.ctx,
+    command('retry', { messageId: m.id, reason: 'Settings are complete now' }),
+  );
+  expect(await status(m.id)).toMatchObject({ status: 'PENDING' });
+  env = baseEnv();
+  expect(await send(m.id)).toBe('DELIVERED');
+});
+
+test('each workspace kind resolves only its own service executor', async () => {
+  const executor = async (tenant: string) =>
+    (await owner().query('SELECT app.outreach_executor($1,true) e', [tenant])).rows[0].e;
+  expect(await executor(s.f.tenantA)).toBe(
+    (await owner().query('SELECT service_id FROM app.intake_destination')).rows[0].service_id,
+  );
+  expect(await executor(s.intakeTenantId)).toBe(
+    (await owner().query('SELECT executor_id FROM customer_private.real_use_configuration')).rows[0]
+      .executor_id,
+  );
+  // A sample workspace with no sample executor resolves nobody: it never falls through to the real one.
+  expect(await executor(s.f.tenantB)).toBeNull();
+  expect(await executor(randomUUID())).toBeNull();
+  const db = await s.f.runtime.connect();
+  try {
+    await expect(
+      db.query('SELECT app.outreach_executor($1,true)', [s.intakeTenantId]),
+    ).rejects.toMatchObject({ code: '42501' });
+  } finally {
+    db.release();
+  }
 });
 
 test('live mode sends once and the reply page opens for the real recipient as real, never as a sample', async () => {
@@ -221,6 +266,7 @@ test('live mode sends once and the reply page opens for the real recipient as re
   expect(await send(m.id)).toBe('DELIVERED');
   expect(fetched).toEqual(['https://api.resend.com/emails']);
   expect(await receipt(m.id)).toEqual({ provider: 'email', reference: `resend:${m.id}` });
+  expect(await approached(m.targetId)).toBe(true);
   const view = await comms.buyer({ action: 'read', token: m.token });
   expect(view).toMatchObject({ introduction: presentation, decision: null, synthetic: false });
   expect(JSON.stringify(view)).not.toContain('supplier-d.business.test');
@@ -237,23 +283,18 @@ test('live mode sends once and the reply page opens for the real recipient as re
     decision: 'INTERESTED',
     synthetic: false,
   });
-});
-
-test('the approval is checked again at send time: an approver without two-step sign-in sends nothing', async () => {
-  const m = await introduce('approver@supplier-e.business.test');
-  const user = (
-    await owner().query('SELECT identity_id FROM identity.principal WHERE id=$1', [
-      s.f.users.owner.id,
-    ])
-  ).rows[0].identity_id;
-  await owner().query('UPDATE identity."user" SET "twoFactorEnabled"=false WHERE id=$1', [user]);
-  try {
-    expect(await send(m.id)).toBe('SUPPRESSED');
-  } finally {
-    await owner().query('UPDATE identity."user" SET "twoFactorEnabled"=true WHERE id=$1', [user]);
-  }
-  expect(fetched).toEqual([]);
-  expect(await receipt(m.id)).toBeUndefined();
+  // The opt-out on the reply page is recorded by the real executor and suppresses the address.
+  const second = await introduce('page-optout@supplier-d.business.test');
+  expect(await comms.buyer({ action: 'optout', token: second.token })).toEqual({ optedOut: true });
+  expect(await send(second.id)).toBe('SUPPRESSED');
+  expect(
+    (
+      await owner().query(
+        'SELECT p.kind FROM app.communication_optout o JOIN identity.principal p ON p.id=o.created_by WHERE o.contact_id=$1',
+        [second.contactId],
+      )
+    ).rows,
+  ).toEqual([{ kind: 'service' }]);
 });
 
 test('the workspace limit and the global limit each stop the next send', async () => {
@@ -372,4 +413,22 @@ test('another workspace and the runtime role itself cannot read consent, suppres
     db.release();
   }
   expect((await comms.workspace(s.f.users.other.ctx)).messages).toEqual([]);
+});
+
+// Last in the file: it changes the approver's own sign-in.
+test('the approval is checked again at send time: an approver without two-step sign-in sends nothing', async () => {
+  const m = await introduce('approver@supplier-e.business.test');
+  const user = (
+    await owner().query('SELECT identity_id FROM identity.principal WHERE id=$1', [
+      s.f.users.owner.id,
+    ])
+  ).rows[0].identity_id;
+  await owner().query('UPDATE identity."user" SET "twoFactorEnabled"=false WHERE id=$1', [user]);
+  try {
+    expect(await send(m.id)).toBe('SUPPRESSED');
+  } finally {
+    await owner().query('UPDATE identity."user" SET "twoFactorEnabled"=true WHERE id=$1', [user]);
+  }
+  expect(fetched).toEqual([]);
+  expect(await receipt(m.id)).toBeUndefined();
 });

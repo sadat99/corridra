@@ -1,6 +1,6 @@
 -- ADR-090. Optional module: the real email lane for introductions, beside the sample lane. Nothing is sent by this file.
 -- One pipeline, two lanes that cannot mix: a sample workspace takes only the SYNTHETIC and MANUAL channels and a real workspace
--- (app.real_use_allowed) takes only EMAIL. Three functions are replaced, each hash-guarded against the definition named here:
+-- (app.real_use_allowed) takes only EMAIL. Seven functions are replaced, each hash-guarded against the definition named here:
 --  1. app.guard_communication() (migrations/0009). Sample conditions are unchanged. A real workspace is accepted when real use
 --     is allowed, only with an EMAIL policy, with policy jurisdiction OTHER for a country outside BD, ES and DE, and never for
 --     a suppressed address.
@@ -9,14 +9,22 @@
 --     two-step sign-in, country, purpose, classification, expiry, policy version, revocation) applies to both lanes as before.
 --  3. app.experience_outreach_rows_for(uuid,uuid[]) (customer-real-use 0017). One condition added: a test-mode receipt
 --     (provider email_test) never counts a target as approached.
+--  4. app.record_capability_change(), app.buyer_decide(text,uuid,text,boolean), app.buyer_optout(text) (migrations/0009) and
+--     app.recipient_detail_respond(text,uuid,jsonb) (migrations/0025 as changed by customer-real-use 0020). In each, only the lookup of the service executor that
+--     records a receipt, an answer or an opt-out is replaced by app.outreach_executor: the same lookup for a sample workspace,
+--     the configured real-use executor for a real workspace, and nobody for anything else. Guard 1 uses the same call.
 -- The receipt provider check gains 'email' (live) and 'email_test' (test mode). New tables hold consent, suppression, provider
 -- notices and daily counts; the runtime role writes them only through the functions below.
--- Rollback: rollback/0001_restore.sql restores the three definitions and the check; it is run only as a reviewed forward run.
+-- Rollback: rollback/0001_restore.sql restores the seven definitions and the check; it is run only as a reviewed forward run.
 DO $guard$ BEGIN
  IF to_regprocedure('app.real_use_allowed(uuid)') IS NULL OR to_regprocedure('app.tenant_is_synthetic(uuid)') IS NULL
   OR to_regprocedure('app.guard_communication()') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.guard_communication()'::regprocedure),'UTF8')),'hex')<>'8cb1b516ee4779bb60d063392963168457b7b4f1cc5c1899216ff17977aa371a'
   OR to_regprocedure('app.communication_allowed(uuid,boolean)') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.communication_allowed(uuid,boolean)'::regprocedure),'UTF8')),'hex')<>'b0bd1d71e29456555852f9d041f377edf41d1f917d006f2ba0ca471678313b1e'
   OR to_regprocedure('app.experience_outreach_rows_for(uuid,uuid[])') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.experience_outreach_rows_for(uuid,uuid[])'::regprocedure),'UTF8')),'hex')<>'2db8a86152ef0bda44a5bc6f1bc31d192a2cf29e741f610a95bd21e653ea438f'
+  OR to_regprocedure('app.record_capability_change()') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.record_capability_change()'::regprocedure),'UTF8')),'hex')<>'40126ce07f7acdc0a848f7dd000996f30be4fcc81805421f6531f7d0d6c8380b'
+  OR to_regprocedure('app.buyer_decide(text,uuid,text,boolean)') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.buyer_decide(text,uuid,text,boolean)'::regprocedure),'UTF8')),'hex')<>'793a0bd10d4838e304396b2f60ca06847596b625f721ccad63a8bef2f4dbf134'
+  OR to_regprocedure('app.buyer_optout(text)') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.buyer_optout(text)'::regprocedure),'UTF8')),'hex')<>'bb5b7f87b61e941c1f2cfdb8fd6e5a8cb75d4107ca33eb36e591ae1bc4b6aa8c'
+  OR to_regprocedure('app.recipient_detail_respond(text,uuid,jsonb)') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.recipient_detail_respond(text,uuid,jsonb)'::regprocedure),'UTF8')),'hex')<>'32526f9c89d6483fe12d6f51bb0fb4a379e06adc6aa8c23a69f92fa5870bc71c'
   OR (SELECT encode(sha256(convert_to(pg_get_constraintdef(oid),'UTF8')),'hex') FROM pg_constraint WHERE conrelid='app.communication_receipt'::regclass AND conname='communication_receipt_provider_check') IS DISTINCT FROM '174138f6919e061f801b941a2318cee4d854a3afad79c1adb1c2c11768fb810d'
  THEN RAISE EXCEPTION 'Real outreach prerequisite differs'; END IF;
 END $guard$;
@@ -63,6 +71,15 @@ CREATE FUNCTION app.outreach_suppressed(k text) RETURNS boolean LANGUAGE sql STA
  SELECT EXISTS(SELECT FROM app.outreach_suppression s WHERE s.recipient_key=k)
   OR EXISTS(SELECT FROM app.communication_optout o WHERE o.recipient_key=k AND NOT app.tenant_is_synthetic(o.tenant_id))
 $$;
+-- The service executor that records what no signed-in person records. A sample workspace resolves only the sample intake
+-- executor and a real workspace only the real-use executor; neither can resolve the other's, and anything else resolves nobody.
+CREATE FUNCTION app.outreach_executor(t uuid,strict boolean) RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT CASE WHEN app.tenant_is_synthetic(t) THEN (SELECT d.service_id FROM app.intake_destination d WHERE d.tenant_id=t AND d.enabled
+   AND (NOT strict OR EXISTS(SELECT FROM identity.principal p WHERE p.id=d.service_id AND p.kind='service' AND p.disabled_at IS NULL)))
+  WHEN app.real_use_allowed(t) THEN (SELECT c.executor_id FROM customer_private.real_use_configuration c WHERE c.enabled
+   AND (NOT strict OR EXISTS(SELECT FROM identity.principal p WHERE p.id=c.executor_id AND p.kind='service' AND p.disabled_at IS NULL))) END
+$$;
+REVOKE ALL ON FUNCTION app.outreach_executor(uuid,boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
 CREATE FUNCTION app.outreach_link_real(h text) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
  SELECT NOT app.tenant_is_synthetic(l.tenant_id) FROM app.buyer_link l WHERE l.token_hash=h
 $$;
@@ -164,7 +181,7 @@ BEGIN
    OR NOT EXISTS(SELECT FROM app.communication_template WHERE tenant_id=NEW.tenant_id AND id=NEW.template_id AND contact_purpose=pol.contact_purpose)
    OR EXISTS(SELECT FROM app.communication_optout WHERE tenant_id=NEW.tenant_id AND recipient_key=encode(sha256(convert_to(lower(pc.email),'UTF8')),'hex'))
    OR (real AND app.outreach_suppressed(encode(sha256(convert_to(lower(pc.email),'UTF8')),'hex')))
-   OR NOT EXISTS(SELECT FROM app.intake_destination d JOIN identity.principal p ON p.id=d.service_id WHERE d.tenant_id=NEW.tenant_id AND d.enabled AND p.kind='service' AND p.disabled_at IS NULL)
+   OR app.outreach_executor(NEW.tenant_id,true) IS NULL
   THEN RAISE EXCEPTION 'Contact policy, recipient, mission or capability executor unavailable'; END IF;
   IF NOT (NEW.presentation ?& ARRAY['company','country','capability','fit','evidence','uncertainty','conversationPurpose','availableDates']) OR (SELECT count(*) FROM jsonb_object_keys(NEW.presentation))<>8 OR EXISTS(SELECT FROM jsonb_each(NEW.presentation) WHERE jsonb_typeof(value)<>'string' OR length(value#>>'{}') NOT BETWEEN 2 AND 1000) THEN RAISE EXCEPTION 'Invalid introduction'; END IF;
  ELSIF TG_TABLE_NAME='buyer_link_revocation' THEN
@@ -219,3 +236,56 @@ CREATE OR REPLACE FUNCTION app.experience_outreach_rows_for(t uuid, targets uuid
   WHERE c.tenant_id=t AND c.target_id=x.id) r
  WHERE EXISTS(SELECT FROM app.target_account ta WHERE ta.tenant_id=t AND ta.id=x.id)
 $$;
+CREATE OR REPLACE FUNCTION app.record_capability_change() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE a uuid:=app.actor_id(); eid uuid:=gen_random_uuid(); rec jsonb:=to_jsonb(NEW);
+BEGIN
+ IF TG_TABLE_NAME='buyer_response' OR a IS NULL THEN a:=app.outreach_executor(NEW.tenant_id,true); END IF;
+ IF a IS NULL OR (TG_TABLE_NAME IN ('buyer_response','communication_optout') AND (rec->>'created_by')::uuid<>a) THEN RAISE EXCEPTION 'Capability executor required'; END IF;
+ INSERT INTO app.domain_event VALUES(eid,NEW.tenant_id,TG_TABLE_NAME||'.'||lower(TG_OP),1,TG_TABLE_NAME,NEW.id::text,1,a,now(),coalesce(NULLIF(current_setting('corridra.correlation_id',true),'')::uuid,gen_random_uuid()),coalesce(NULLIF(current_setting('corridra.causation_id',true),'')::uuid,gen_random_uuid()),jsonb_strip_nulls(jsonb_build_object('id',NEW.id,'status',rec->>'status')));
+ INSERT INTO app.audit_event(id,tenant_id,domain_event_id,actor_id,action) VALUES(gen_random_uuid(),NEW.tenant_id,eid,a,TG_TABLE_NAME||'.'||lower(TG_OP));
+ INSERT INTO app.outbox(id,tenant_id,event_id) VALUES(gen_random_uuid(),NEW.tenant_id,eid);
+ INSERT INTO app.outbox_delivery(event_id,tenant_id) VALUES(eid,NEW.tenant_id);
+ RETURN NEW;
+END $$;
+CREATE OR REPLACE FUNCTION app.buyer_decide(h text,rid uuid,decision text,optout boolean) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE l app.buyer_link; c app.communication; old app.buyer_response; service uuid; contact app.private_contact_data;
+BEGIN
+ IF h IS NULL OR rid IS NULL OR decision IS NULL OR optout IS NULL OR h !~ '^[a-f0-9]{64}$' OR decision NOT IN ('INTERESTED','NEED_INFO','NOT_RELEVANT') OR (decision='INTERESTED' AND optout) THEN RAISE EXCEPTION 'Invalid response' USING ERRCODE='23514'; END IF;
+ SELECT * INTO l FROM app.buyer_link WHERE token_hash=h FOR UPDATE;
+ IF l.id IS NULL OR NOT app.communication_enabled(l.tenant_id,'communications.introductions') THEN RETURN NULL; END IF;
+ SELECT * INTO old FROM app.buyer_response WHERE tenant_id=l.tenant_id AND link_id=l.id;
+ IF old.id IS NOT NULL THEN
+  IF NOT app.communication_allowed(l.message_id,true) THEN RETURN NULL; END IF;
+  IF old.status<>decision OR old.opt_out<>optout THEN RAISE EXCEPTION 'Decision already recorded' USING ERRCODE='23514'; END IF;
+  RETURN jsonb_build_object('decision',old.status,'recorded',true);
+ END IF;
+ IF NOT app.communication_allowed(l.message_id) THEN RETURN NULL; END IF;
+ SELECT * INTO c FROM app.communication WHERE tenant_id=l.tenant_id AND id=l.message_id;
+ service:=app.outreach_executor(l.tenant_id,true);
+ IF service IS NULL THEN RETURN NULL; END IF;
+ INSERT INTO app.buyer_response(id,tenant_id,link_id,status,opt_out,created_by) VALUES(rid,l.tenant_id,l.id,decision,optout,service);
+ IF optout THEN
+  SELECT * INTO contact FROM app.private_contact_data WHERE tenant_id=c.tenant_id AND id=c.contact_id;
+  INSERT INTO app.communication_optout(tenant_id,contact_id,recipient_key,reason,created_by) VALUES(l.tenant_id,contact.id,encode(sha256(convert_to(lower(contact.email),'UTF8')),'hex'),'Buyer requested no further introductions',service) ON CONFLICT(tenant_id,recipient_key) DO NOTHING;
+ END IF;
+ RETURN jsonb_build_object('decision',decision,'recorded',true);
+END $$;
+CREATE OR REPLACE FUNCTION app.buyer_optout(h text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE l app.buyer_link; c app.communication; service uuid; pc app.private_contact_data;
+BEGIN
+ SELECT * INTO l FROM app.buyer_link WHERE token_hash=h FOR UPDATE;
+ IF l.id IS NULL OR NOT app.communication_allowed(l.message_id,true) THEN RETURN false; END IF;
+ SELECT * INTO c FROM app.communication WHERE tenant_id=l.tenant_id AND id=l.message_id;
+ service:=app.outreach_executor(l.tenant_id,false);
+ SELECT * INTO pc FROM app.private_contact_data WHERE tenant_id=c.tenant_id AND id=c.contact_id;
+ IF service IS NULL THEN RETURN false; END IF;
+ INSERT INTO app.communication_optout(tenant_id,contact_id,recipient_key,reason,created_by) VALUES(l.tenant_id,pc.id,encode(sha256(convert_to(lower(pc.email),'UTF8')),'hex'),'Buyer requested no further introductions',service) ON CONFLICT(tenant_id,recipient_key) DO NOTHING;
+ RETURN true;
+END $$;
+-- app.recipient_detail_respond is changed in place, because a later real-use file already changed its text: only the executor lookup is swapped.
+DO $swap$ DECLARE d text:=pg_get_functiondef('app.recipient_detail_respond(text,uuid,jsonb)'::regprocedure);
+ a text:=$a$SELECT dest.service_id INTO service FROM app.intake_destination dest JOIN identity.principal p ON p.id=dest.service_id WHERE dest.tenant_id=l.tenant_id AND dest.enabled AND p.kind='service' AND p.disabled_at IS NULL;$a$; b text:=$b$service:=app.outreach_executor(l.tenant_id,true);$b$;
+BEGIN
+ IF (length(d)-length(replace(d,a,'')))/length(a)<>1 THEN RAISE EXCEPTION 'Real outreach prerequisite differs'; END IF;
+ EXECUTE replace(d,a,b);
+END $swap$;

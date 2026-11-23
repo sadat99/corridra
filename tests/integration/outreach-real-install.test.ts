@@ -5,7 +5,7 @@ import { commercialFixture } from './commercial-fixture';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateOutreachReal } from '../../packages/db/src/outreach-real-migrate';
 
-// ADR-090, the database side of the install. Three functions are replaced once, each hash-guarded against the definition
+// ADR-090, the database side of the install. Seven functions are replaced once, each hash-guarded against the definition
 // it names, and one receipt check is widened. Everything else the module adds is new.
 let f: Awaited<ReturnType<typeof commercialFixture>>;
 const dir = 'packages/db/outreach-real-migrations';
@@ -14,6 +14,10 @@ const replaced = [
   'app.guard_communication()',
   'app.communication_allowed(uuid,boolean)',
   'app.experience_outreach_rows_for(uuid,uuid[])',
+  'app.record_capability_change()',
+  'app.buyer_decide(text,uuid,text,boolean)',
+  'app.buyer_optout(text)',
+  'app.recipient_detail_respond(text,uuid,jsonb)',
 ];
 const sha = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const definition = async (name: string) =>
@@ -71,7 +75,7 @@ test('a drifted prerequisite function stops the install and changes nothing', as
   }
 });
 
-test('the install replaces exactly three functions, widens one check, and a second run changes nothing', async () => {
+test('the install replaces exactly seven functions, widens one check, and a second run changes nothing', async () => {
   const before = await functionHashes();
   expect(await providerCheck()).not.toContain('email');
   await migrateOutreachReal(f.owner);
@@ -82,6 +86,7 @@ test('the install replaces exactly three functions, widens one check, and a seco
   expect(changed.sort()).toEqual([...replaced].sort());
   expect([...after.keys()].filter((name) => !before.has(name)).sort()).toEqual([
     'app.deliver_real_email(uuid,text,uuid,text,text)',
+    'app.outreach_executor(uuid,boolean)',
     'app.outreach_link_real(text)',
     'app.outreach_rate_take(uuid,text,uuid,integer,integer)',
     'app.outreach_real_installed()',
@@ -116,17 +121,22 @@ test('the install replaces exactly three functions, widens one check, and a seco
       ).toBe(false);
 });
 
-test('the rollback file restores the three functions and the check to their earlier definitions', async () => {
+test('the rollback file restores the seven functions and the check to their earlier definitions', async () => {
   await f.owner.query(readFileSync(`${dir}/rollback/0001_restore.sql`, 'utf8'));
   expect(await providerCheck()).not.toContain('email');
   const restored = await functionHashes();
-  expect(restored.get('app.guard_communication()')).toBe(
-    '8cb1b516ee4779bb60d063392963168457b7b4f1cc5c1899216ff17977aa371a',
-  );
-  expect(restored.get('app.communication_allowed(uuid,boolean)')).toBe(
-    'b0bd1d71e29456555852f9d041f377edf41d1f917d006f2ba0ca471678313b1e',
-  );
-  expect(restored.get('app.experience_outreach_rows_for(uuid,uuid[])')).toBe(
-    '2db8a86152ef0bda44a5bc6f1bc31d192a2cf29e741f610a95bd21e653ea438f',
-  );
+  expect(Object.fromEntries(replaced.map((name) => [name, restored.get(name)]))).toEqual({
+    'app.guard_communication()': '8cb1b516ee4779bb60d063392963168457b7b4f1cc5c1899216ff17977aa371a',
+    'app.communication_allowed(uuid,boolean)':
+      'b0bd1d71e29456555852f9d041f377edf41d1f917d006f2ba0ca471678313b1e',
+    'app.experience_outreach_rows_for(uuid,uuid[])':
+      '2db8a86152ef0bda44a5bc6f1bc31d192a2cf29e741f610a95bd21e653ea438f',
+    'app.record_capability_change()':
+      '40126ce07f7acdc0a848f7dd000996f30be4fcc81805421f6531f7d0d6c8380b',
+    'app.buyer_decide(text,uuid,text,boolean)':
+      '793a0bd10d4838e304396b2f60ca06847596b625f721ccad63a8bef2f4dbf134',
+    'app.buyer_optout(text)': 'bb5b7f87b61e941c1f2cfdb8fd6e5a8cb75d4107ca33eb36e591ae1bc4b6aa8c',
+    'app.recipient_detail_respond(text,uuid,jsonb)':
+      '32526f9c89d6483fe12d6f51bb0fb4a379e06adc6aa8c23a69f92fa5870bc71c',
+  });
 });
