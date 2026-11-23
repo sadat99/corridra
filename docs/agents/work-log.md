@@ -4848,3 +4848,113 @@ Review: one corridra-reviewer pass on 7137c34, verdict merge; the dialog close l
 Not verified: native review of the bn, zh, es, ar, fr, de words; screenshots at 768 and 1440; private-request mode still shows the Activate sentence. Follow-up: the UX gate samples one scroll position after 30 Tabs and is sensitive to the sticky header (focus can sit under the header); fix site-wide with scroll padding in the shared kit unit.
 
 Next action: Guardian merges PR 602 on green CI and verifies the deployment.
+
+## 23 Nov 2026: B3a account requests, Room, reports, profile (PR 605)
+
+Scope: request detail shows each fact once and keeps the customer's own type of work (D-017); problem report dates through format.ts (D-019); D-021 to D-024; Room route chip fits at the largest text size, root cause the 32rem stage column (D-025); one way back and no Room link or reference until the request is readable (D-034); D-035; plain words on decisions and the service-request error; help-request refusal "Check each field and try again."; help-request dates through format.ts. D-016 not changed: the Room's grouped "Done" and "Later" lines are the owner-approved board (ui-direction.md:87).
+
+Review: one corridra-reviewer pass on 25553ad, verdict merge; the dropped type-of-work fact and the back-link wording fixed in this round. CI: operator (6) failed once on the KI-65 order-flaky pair and was re-run once.
+
+Not changed (follow-up): billing and invoice dates still read "23 October 2026" and "... UTC"; they move to format.ts in unit B8. Sample-only "Synthetic" labels stay until B7.
+
+Merged as 9eda642.
+
+## 23 Nov 2026: B2b-1 public words (PR 606)
+
+Scope: request words instead of "brief" on / and /how-it-works (D-002); helper, Corridra Network and Corridra team instead of contributor and operator on /, /about, /network and /privacy (D-003, D-056 on /network); "what you can see" for access meanings and plain work words for commercial scope (D-004 part 1); "Price quote or price request (RFQ)" on first use (D-005); the home request builder's chosen route and route line come from one source (D-010, test first); /privacy in plain wording without draft, operator, contributor, scope or disclosure, no new promise and no cookie line (owner approval 23 Nov 2026; the journey cookie line lands with unit J). English values only; keys, ids and routes unchanged.
+
+Review: one corridra-reviewer pass on e8da83c; evidence retaken at 390, 768 and 1440 with the network switch on; helper password, privacy helper sentence, workflow limits and unsent-answers wording corrected in that round.
+
+Not verified: native review of other languages.
+
+Merged as 307e95f.
+
+## 23 Nov 2026: B11a real intake owner (PR 607)
+
+Scope: append-only version table, a hash-guarded app.submit_mission and the configureNetworkRealUse effective owner; revokes the Synthetic operator and reviewer roles in "Corridra request operations" only; the install refuses while open work is owned by leaving members.
+
+Review: security review, second review and refute pass.
+
+Not done: install pending; 11 open requests must be reassigned to the Corridra founder first.
+
+Next action: the owner approves the install workflow gate.
+
+Merged as 65e1190.
+
+## 23 Nov 2026: B6a helper sign-in and assigned work (PR 608)
+
+Scope: helper sign-in door, My Assigned Work and helper words.
+
+Review: verdict merge.
+
+Merged as 70369e5.
+
+## 23 Nov 2026: B2b-2 public scope wording (PR 609)
+
+Scope: public scope wording moved to route details; one shared share image in lib/ux/page-metadata.ts; readability fix on /network.
+
+Review: verdict merge.
+
+Follow-up: the share image URL carries no content hash.
+
+Merged as cbad910.
+
+## 23 Nov 2026: B3b workspaces (PR 610)
+
+Scope: D-050 to D-052; CopyButton; plain words; closed-account date through format.ts.
+
+Review: verdict fix, then fixed in 96faf48.
+
+Follow-up: whenWords keeps UTC for staff callers only (three operator callers and lib/problem-report-queue.ts).
+
+Merged as 571d470.
+
+## 23 Nov 2026: B5a shared fixes and scroll padding (PR 611)
+
+Scope: D-020, D-036, D-049; WCAG 2.4.11 scroll padding of 6.5rem.
+
+Review: verdict merge; comment fix in e8d8981.
+
+Not verified: Safari and Firefox panel frame; wrapped headers at 200% text exceed the 6.5rem reserve.
+
+Merged as 73f03cb.
+
+## 23 Nov 2026: B11b sample data retire report (PR 612)
+
+Scope: Class A read-only installer step qa_data_retire plus an owner checklist.
+
+Review: correctness verdict merge, security verdict merge, refute held; four fixes verified on 667d6ef.
+
+Not done: the report has not been run yet.
+
+Next action: the owner approves the install workflow gate.
+
+Merged as 063b77e.
+
+## 23 Nov 2026: B5b buyer refusals and Listen guards (PR 613)
+
+Scope: one refusal pattern on /buyer (D-053); Listen voice-check guards (D-058), root cause lib/ux/listen-store.ts:72.
+
+Review: verdict merge (Guardian 34); should-fix done in 3316a80.
+
+Not verified: the Listen cause in a real browser console (unit test only). Follow-up: `unavailable` in lib/reply-words.ts still uses the old words (being fixed in B9).
+
+Merged as 8438cda.
+
+## 23 Nov 2026: B5c saved request words (PR 614)
+
+Scope: customer "draft" words changed to "saved request" in shared helpers (9 files, exception granted).
+
+Review: verdict merge on 804ca1c; later commits are a test rename and a merge of main only.
+
+Merged as 80100b6; Vercel deployment success.
+
+## 23 Nov 2026: V41-0a v4.1 shared pieces (PR 615)
+
+Scope: ChoiceButton owned icon and chosen state; a new source stamp component; one ui-direction.md row; two tests.
+
+Review: verdict merge on 3fe7324.
+
+Follow-up: aria-pressed versus radio semantics; hover specificity; KI-26 race in tests/ux/choice-row.spec.ts.
+
+Merged as 9c81596.
