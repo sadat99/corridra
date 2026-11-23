@@ -276,9 +276,11 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
+  /* The edge of the one box is drawn inside it, so the list adds no rule across the page. */
+  border: 0;
   border-radius: var(--radius-md);
   background: var(--surface-1);
+  box-shadow: inset 0 0 0 1px var(--line);
   overflow: hidden;
 }
 .ux-public .guide-routes .guide-directions ol.guide-direction-list > li.guide-direction-row {
@@ -354,15 +356,25 @@
   background: transparent;
   color: var(--action-hover);
 }
-/* A narrow row: number, mark, words and Open on the first line; the link takes its own line under the words. */
+/* A narrow row wraps instead of shrinking: number, words and Open share the first line while they fit, the link takes
+   its own line, and at a very large text size each part takes the width it needs. Rows stay one height. */
 @media (max-width: 600px) {
   .ux-public .guide-routes .guide-directions ol.guide-direction-list > li.guide-direction-row {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    align-content: center;
     gap: 0 var(--space-3);
     padding: var(--space-2) var(--space-3);
   }
   .guide-direction-list .guide-direction-text {
+    flex: 1 1 8rem;
+    min-inline-size: 0;
     padding-inline-start: calc(2.5rem + var(--space-3));
+  }
+  .guide-direction-list :is(.guide-direction-n, .guide-direction-open) {
+    flex: none;
+    max-inline-size: 100%;
   }
   .ux-public
     .guide-routes
@@ -370,10 +382,10 @@
     ol.guide-direction-list
     > li.guide-direction-row
     > a.text-link {
-    grid-column: 1 / -1;
+    flex: 1 1 100%;
     flex-wrap: wrap;
+    justify-content: flex-start;
     min-inline-size: 0;
     overflow-wrap: anywhere;
-    justify-self: start;
   }
 }

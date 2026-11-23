@@ -36,7 +36,7 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
             </Link>
           </nav>
           {/* UI/UX.v4.1 L1: each place of the route has its mark before its written name; the words are unchanged. */}
-          <p className="label">
+          <p className="label guide-corridor-places">
             {c.title.split('\u2013').map((place, index) => (
               <Fragment key={place}>
                 {index > 0 ? ' ' : null}
