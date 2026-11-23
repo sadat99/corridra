@@ -55,7 +55,7 @@ test('A-2 focus stays in the field while typing, and problems are plain words on
     page.getByRole('heading', { level: 2, name: 'What would make this worthwhile?' }),
   ).toBeVisible();
   // The desired outcomes group says it is required, and its error sits with the group.
-  const group = page.getByRole('group', { name: /Desired outcomes \(Required\)/ });
+  const group = page.getByRole('group', { name: /Desired outcomes \(required\)/ });
   await expect(group).toBeVisible();
   await next(page).click();
   await expect(group.locator('#outcomes-error')).toBeVisible();
