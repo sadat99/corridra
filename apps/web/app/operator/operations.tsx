@@ -1039,7 +1039,7 @@ export function Operations({
                         {route && !pack && (
                           <p>
                             This route has no effective pack. Create a reviewed configuration in
-                            Routes and policies before readiness review.
+                            Routes and settings before readiness review.
                           </p>
                         )}
                         {pack && (
@@ -1077,7 +1077,7 @@ export function Operations({
                         >
                           <p>
                             Create routes and install reusable templates in{' '}
-                            <a href="#workspace-settings">Routes and policies</a>. Manage approved
+                            <a href="#workspace-settings">Routes and settings</a>. Manage approved
                             models in <a href="#workspace-ai">AI assistance</a> and contributors in{' '}
                             <a href="#workspace-network">Execution network</a>. Credentials stay in
                             secure provider settings.

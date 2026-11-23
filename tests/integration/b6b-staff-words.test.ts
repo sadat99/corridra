@@ -112,18 +112,18 @@ describe('D-031 audit lines say what happened', () => {
 });
 
 describe('D-033 staff words follow the glossary', () => {
-  it('says Routes and policies for the settings section and keeps its id and address', async () => {
+  it('says Routes and settings for the settings section and keeps its id and address', async () => {
     const { workspaceSections } = await load('lib/workspace-navigation.ts');
     const item = (workspaceSections as readonly { id: string; label: string }[]).find(
       (entry) => entry.id === 'workspace-settings',
     );
-    expect(item?.label).toBe('Routes and policies');
+    expect(item?.label).toBe('Routes and settings');
     const map = read('apps/web/lib/ux/team-map.ts');
-    expect(map).toContain("{ id: 'workspace-settings', label: 'Routes and policies' }");
+    expect(map).toContain("{ id: 'workspace-settings', label: 'Routes and settings' }");
     const page = operator('[section]/[missionId]/mission-page.tsx');
-    expect(page).toContain('An owner adds one under Routes and policies, then it shows');
+    expect(page).toContain('An owner adds one under Routes and settings, then it shows');
     for (const source of [read('apps/web/lib/workspace-navigation.ts'), map, page])
-      expect(source).not.toContain('Corridors and policies');
+      expect(source).not.toMatch(/Corridors and policies|Routes and policies/);
   });
   it('writes RFQ out and says what you can see on the opportunities summary', () => {
     const source = operator('opportunities.tsx');
@@ -191,12 +191,12 @@ describe('D-032 and the front door lines (added by the Guardian, 23 Nov 2026)', 
     const { founderDoor, helperDoor } = await load('lib/front-doors.ts');
     const line = (items: readonly { id: string; line: string }[], id: string) =>
       items.find((item) => item.id === id)?.line;
-    expect(line(founderDoor, 'routes')).toBe('Routes and policies.');
+    expect(line(founderDoor, 'routes')).toBe('Routes and settings.');
     expect(line(helperDoor, 'accept')).toBe(
       'Set up your separate helper access from the invitation the Corridra team sent.',
     );
     expect(read('apps/web/lib/front-doors.ts')).not.toMatch(
-      /Corridors and policies|contributor access/,
+      /Corridors and policies|Routes and policies|contributor access/,
     );
   });
 });
@@ -221,14 +221,14 @@ describe('review of 7088945: billing period dates and one name for the settings 
     expect(source.match(/ billingPeriodDate\(/g)).toHaveLength(4);
     expect(source).toContain('<time dateTime={ev.at}>{formatDateTime(ev.at)}</time>');
   });
-  it('says Routes and policies everywhere staff read the settings section name', () => {
+  it('says Routes and settings everywhere staff read the settings section name', () => {
     const workspace = operator('workspace.tsx');
     const operations = operator('operations.tsx');
-    expect(workspace).toContain('<span>Routes and policies</span>');
-    expect(workspace).toContain("label: 'Routes and policies',");
-    expect(operations).toContain('Routes and policies before readiness review.');
-    expect(operations).toContain('<a href="#workspace-settings">Routes and policies</a>');
+    expect(workspace).toContain('<span>Routes and settings</span>');
+    expect(workspace).toContain("label: 'Routes and settings',");
+    expect(operations).toContain('Routes and settings before readiness review.');
+    expect(operations).toContain('<a href="#workspace-settings">Routes and settings</a>');
     for (const source of [workspace, operations])
-      expect(source).not.toContain('Corridors and policies');
+      expect(source).not.toMatch(/Corridors and policies|Routes and policies/);
   });
 });

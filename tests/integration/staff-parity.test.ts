@@ -42,7 +42,7 @@ const frozen: [string, string, string, string[]][] = [
   ['ops-center', 'control-center', 'Corridor Control Center', ['owner', 'admin']],
   ['ops-health', 'health', 'Recovery and health', staff],
   ['ops-gates', 'readiness', 'Production readiness', staff],
-  ['workspace-settings', 'settings', 'Routes and policies', ['owner', 'admin']],
+  ['workspace-settings', 'settings', 'Routes and settings', ['owner', 'admin']],
   ['workspace-audit', 'audit', 'Access and audit', ['owner', 'admin']],
   ['workspace-authenticator', 'authenticator', 'Authenticator', all],
   ['workspace-controls', 'controls', 'Workspace controls', ['owner']],

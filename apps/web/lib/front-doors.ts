@@ -30,7 +30,7 @@ export const founderDoor: readonly DoorItem[] = [
   {
     id: 'routes',
     title: 'Routes and settings',
-    line: 'Routes and policies.',
+    line: 'Routes and settings.',
     href: '/operator#workspace-settings',
   },
   {
