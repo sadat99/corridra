@@ -21,6 +21,7 @@ test('security headers and local assets are served', async ({ request }) => {
   expect(response.headers()['content-security-policy']).not.toContain("'unsafe-eval'");
   expect(response.headers()['x-content-type-options']).toBe('nosniff');
   expect(response.headers()['x-frame-options']).toBe('DENY');
+  expect(response.headers()['cross-origin-opener-policy']).toBe('same-origin');
   expect(response.headers()['x-powered-by']).toBeUndefined();
   const icon = await request.get('/icon.svg');
   expect(icon.ok()).toBe(true);

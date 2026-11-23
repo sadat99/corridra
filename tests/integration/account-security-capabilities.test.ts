@@ -62,6 +62,8 @@ describe('account security capabilities', () => {
     expect(touched).toEqual([]);
   });
 
+  // B1, 23 Nov 2026 (D-015): exactly one path was added, 'sign-in/email-otp', for sign-in with a code. It is a
+  // sign-in path, not an account change path; tests/integration/auth-proxy-code-signin.test.ts covers its checks.
   test('the auth proxy allowlist is unchanged: no account change path reaches the browser', () => {
     const source = readFileSync(resolve('apps/web/app/api/auth/[...all]/route.ts'), 'utf8');
     const block = source.slice(
@@ -70,6 +72,7 @@ describe('account security capabilities', () => {
     );
     expect(block).toBe(`const paths = new Set([
   'sign-in/email',
+  'sign-in/email-otp',
   'sign-up/email',
   'sign-out',
   'get-session',

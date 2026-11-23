@@ -29,6 +29,25 @@ function detail(error: unknown) {
   const e = (error ?? {}) as { status?: number; code?: string };
   return { status: e.status, code: String(e.code ?? '') };
 }
+// What a refused code sign-in says (D-015). Only a refused code reads as a wrong code. A missing route, a
+// service fault or no answer at all says the route is unavailable, so a correct code is never called wrong.
+// The identity client replaces the provider's error code with its own and keeps the status, so the status is
+// what is read: this application's proxy answers 429 for too many tries and 409 when the code was right but
+// no account uses the address (codes never create accounts).
+function codeSignInFailure(failure: { status?: number; code: string }) {
+  if (failure.code === 'TOO_MANY_ATTEMPTS' || failure.status === 429)
+    return 'Too many tries. Ask for a new code.';
+  if (failure.code === 'ACCOUNT_REQUIRED' || failure.status === 409)
+    return 'No account uses this address yet. Create an account first, then sign in.';
+  if (
+    failure.code === 'INVALID_OTP' ||
+    failure.code === 'OTP_EXPIRED' ||
+    failure.status === 400 ||
+    failure.status === 401
+  )
+    return 'That code is wrong or has expired. Check it or ask for a new code.';
+  return 'Sign-in by code is unavailable right now. Use your password or try again in a few minutes.';
+}
 export function AccountForm({
   mode,
   codeSignIn = false,
@@ -133,12 +152,7 @@ export function AccountForm({
         setMessage('If this address can sign in, a code is on its way.');
       } else if (codeEnabled && viaCode) {
         const failure = await settle(() => accountClient.signIn.emailOtp({ email, otp: code }));
-        if (failure)
-          throw new Error(
-            failure.code === 'TOO_MANY_ATTEMPTS' || failure.status === 429
-              ? 'Too many tries. Ask for a new code.'
-              : 'That code is wrong or has expired. Check it or ask for a new code.',
-          );
+        if (failure) throw new Error(codeSignInFailure(failure));
         setCode('');
         announceSessionChange();
         router.replace(destination);
@@ -151,6 +165,10 @@ export function AccountForm({
         router.replace(destination);
         router.refresh();
       } else if (mode === 'signup') {
+        // D-028: the rule the server keeps for a name, said before anything is sent.
+        const typed = name.trim();
+        if (!typed || [...typed].length > 100)
+          throw new Error('Enter your name, using up to 100 characters.');
         const result = await accountClient.signUp.email({ name, email, password });
         if (result.error)
           throw new Error(
@@ -253,7 +271,7 @@ export function AccountForm({
             onChange={(e) => setName(e.target.value)}
             autoComplete="name"
             required
-            maxLength={120}
+            maxLength={100}
           />
         </label>
       )}

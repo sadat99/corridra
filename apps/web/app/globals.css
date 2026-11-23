@@ -8996,3 +8996,21 @@ samp {
   }
 }
 /* audit-fixes-1 (AF-1) end */
+
+/* B1 auth pages (2026-11-23) */
+/* D-026: an access form is one column, so an action that follows another action must not take the 12 px
+   side gap the AC/1 action rows give neighbours from 640 px. At full width that gap pushed "Forgot Your
+   Password?" and "Back to Sign-in" 12 px to the right of the fields. Every action keeps the fields' edges. */
+main
+  :is(.ux-account-access, .ux-access)
+  form.operator-form
+  > :is(a, button):is(.text-link, .primary-link, .secondary-link, .button, .button-secondary):not(
+    .ux-back,
+    [role='tab']
+  )
+  + :is(a, button):is(.text-link, .primary-link, .secondary-link, .button, .button-secondary):not(
+    .ux-back
+  ):not([role='tab']):not(.ux-back, [role='tab']) {
+  margin-inline: 0;
+}
+/* end B1 */

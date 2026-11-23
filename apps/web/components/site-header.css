@@ -12,15 +12,14 @@
   gap: 0 var(--space-2);
   min-height: 4.5rem;
 }
-/* UI/UX.v4 top bar (owner, 18 Nov 2026, board screen 10): sticky at every width with a light translucent fill, so Listen
-   and the language are reachable at any scroll depth. The 60 px phone height is the token --header-h-phone. */
+/* UI/UX.v4 top bar (owner, 18 Nov 2026, board screen 10): sticky at every width, so Listen and the language are
+   reachable at any scroll depth. Owner, 23 Nov 2026: solid sticky header (supersedes the translucent fill of 18 Nov):
+   the page's own paper, no see-through and no blur. The 60 px phone height is the token --header-h-phone. */
 .site-header.public-header {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: color-mix(in srgb, var(--paper) 90%, transparent);
-  backdrop-filter: saturate(1.4) blur(14px);
-  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  background: var(--paper);
 }
 @media (max-width: 700px) {
   .site-header.public-header {
