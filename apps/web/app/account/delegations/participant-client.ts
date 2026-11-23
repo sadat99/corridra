@@ -311,10 +311,12 @@ export function useParticipantView(
       setBusy(true);
       if (!which) {
         available.current = false;
-        deadline.current = 0;
-        if (timer.current) clearTimeout(timer.current);
+        // What stays on screen keeps its deadline and its timer while it is read again, so a read that hangs cannot keep a
+        // one-time code or a private list past its expiry. A read that answers sets both afresh, below.
         if (keepWhileReloading || keepView) setRefreshing(true);
         else {
+          deadline.current = 0;
+          if (timer.current) clearTimeout(timer.current);
           setData(null);
           setStatus('loading');
         }
@@ -434,18 +436,23 @@ export function useParticipantView(
         return;
       }
       const command = intent.current ?? payload;
-      if (command.action !== 'preview') {
+      // The command kept for an exact retry and the one shown as pending are always the same one: a kept command is sent
+      // in place of whatever is asked next, so it must never be kept without the retry button and the folded forms that
+      // say so. An email in flight changes nothing the screens show, so it is kept only once its outcome is unconfirmed
+      // and the page keeps its length until then; one cut off by a hidden page or an expired view is not kept at all.
+      const keepForRetry = () => {
         intent.current = command;
-        // The screens fold their forms away while a command is pending. An email in flight changes nothing they show, so
-        // it is marked pending only once its outcome is unconfirmed (below) and the page keeps its length until then.
-        if (command.action !== 'emailInvitation') setPending(command);
-      }
+        setPending(command);
+      };
+      if (command.action !== 'preview' && command.action !== 'emailInvitation') keepForRetry();
       writing.current = true;
       setBusy(true);
       // Where this command's words go. An email's are kept on the code it sends (`emailNote`), so the screen says them
       // beside the Email Invitation button and the notice under the section, and with it the page length, is left alone.
+      // With no code on screen (an email retried after a reload) they go under the section like any other command's.
+      const besideCode = command.action === 'emailInvitation' && result?.action === 'invite';
       const say = (words: string) =>
-        command.action === 'emailInvitation'
+        besideCode
           ? setResult((old) => (old ? { ...old, emailNote: words } : old))
           : setNotice(words);
       say('');
@@ -500,7 +507,7 @@ export function useParticipantView(
         if (response.status === 503) {
           available.current = false;
           if (timer.current) clearTimeout(timer.current);
-          setPending(intent.current);
+          if (command.action !== 'preview') keepForRetry();
           setData(null);
           setStatus('unavailable');
           setNotice('Participation is unavailable. Reload before retrying an unconfirmed request.');
@@ -562,7 +569,7 @@ export function useParticipantView(
         return value;
       } catch {
         if (!task.signal.aborted && active.current) {
-          setPending(intent.current);
+          if (command.action !== 'preview') keepForRetry();
           say(
             command.action === 'preview'
               ? 'The invitation could not be checked. Try again.'
@@ -576,7 +583,7 @@ export function useParticipantView(
         }
       }
     },
-    [subject, issuer, load, deny, expire, status, onOutcome],
+    [subject, issuer, load, deny, expire, status, result, onOutcome],
   );
   useEffect(() => {
     active.current = true;

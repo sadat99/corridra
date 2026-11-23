@@ -118,11 +118,12 @@ const issued = () => ({
   synthetic: false,
 });
 
+const participantsApi = '/api/customer-programme-participants';
 async function serve(page: Page, answer: (route: Route) => unknown) {
   await page.route('**' + fixturePath + '*', (route) =>
     route.fulfill({ contentType: 'text/html', body: html }),
   );
-  await page.route('**/api/customer-programme-participants*', answer);
+  await page.route('**' + participantsApi + '*', answer);
 }
 
 /** The organiser creates a code; the list then holds `rows` invitations, so the code sits well down the page. */
@@ -347,6 +348,95 @@ test.describe('Email Invitation (D-041)', () => {
     expect(Math.abs((await top()) - before)).toBeLessThanOrEqual(1);
     await expect(page.getByText('Spring buyers group 25', { exact: true })).toBeVisible();
   });
+
+  test('an email cut off by leaving the page is never sent again in place of the next command', async ({
+    page,
+  }) => {
+    let release = () => {};
+    const held = new Promise<void>((done) => (release = done));
+    const posts: Record<string, unknown>[] = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().includes(participantsApi))
+        posts.push(request.postDataJSON() as Record<string, unknown>);
+    });
+    const code = await issueCode(page, {
+      // The answer to the email does not arrive while the page is open.
+      email: async (route) => {
+        await held;
+        await route.abort().catch(() => {});
+      },
+    });
+    await page.getByRole('button', { name: 'Email Invitation', exact: true }).click();
+    await expect.poll(() => posts.at(-1)?.action).toBe('emailInvitation');
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    await expect(code).toHaveCount(0);
+    await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
+    // Back on the page the form sends what it says, not the email that was cut off.
+    await page.getByLabel('Invitation label', { exact: true }).fill('Autumn buyers group');
+    await page.getByRole('checkbox', { name: /permission to share this code/ }).check();
+    await page.getByRole('button', { name: 'Create Invitation Code', exact: true }).click();
+    await expect.poll(() => posts.length).toBe(3);
+    expect(posts[2]).toMatchObject({ action: 'invite', label: 'Autumn buyers group' });
+    await expect(code).toHaveValue(token);
+    await expect(
+      page.getByRole('button', { name: 'Retry Same Participant Request', exact: true }),
+    ).toHaveCount(0);
+    release();
+  });
+
+  test('an unconfirmed email retried after the code has left the screen still says what happened', async ({
+    page,
+  }) => {
+    let emails = 0;
+    const code = await issueCode(page, {
+      email: (route) =>
+        ++emails === 1
+          ? route.abort()
+          : route.fulfill({
+              json: { id: invitationId, programmeId, email: 'sent', synthetic: false },
+            }),
+    });
+    await page.getByRole('button', { name: 'Email Invitation', exact: true }).click();
+    const retry = page.getByRole('button', { name: 'Retry Same Participant Request', exact: true });
+    await expect(retry).toBeVisible();
+    await page.getByRole('button', { name: 'Reload Programme Participants', exact: true }).click();
+    await expect(code).toHaveCount(0);
+    await retry.click();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Invitation email sent.' }),
+    ).toBeVisible();
+    expect(emails).toBe(2);
+  });
+
+  test('the one-time code still clears at its expiry while the read after the email hangs', async ({
+    page,
+  }) => {
+    let release = () => {};
+    const held = new Promise<void>((done) => (release = done));
+    let reloads = 0;
+    await page.clock.install();
+    const code = await issueCode(page, {
+      email: (route) =>
+        route.fulfill({
+          json: { id: invitationId, programmeId, email: 'sent', synthetic: false },
+        }),
+    });
+    await page.route('**' + participantsApi + '*', async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      reloads++;
+      await held;
+      await route.abort().catch(() => {});
+    });
+    await page.getByRole('button', { name: 'Email Invitation', exact: true }).click();
+    await expect.poll(() => reloads).toBe(1);
+    await expect(code).toHaveValue(token);
+    // The private view lasts 60 seconds from the read that drew it; the hanging read does not stretch that.
+    await page.clock.fastForward(61_000);
+    await expect(code).toHaveCount(0);
+    await expect(page.getByText(/This private view expired/)).toBeVisible();
+    await expect(page.getByText('Spring buyers group 1', { exact: true })).toHaveCount(0);
+    release();
+  });
 });
 
 // The route's answer to a code that matches no open invitation, and to an account with no access: the same 403.
@@ -428,6 +518,32 @@ test.describe('the participant checks a code (D-042, D-043, D-044)', () => {
     await expect(code).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Spring buyers programme' })).toHaveCount(0);
     await expect(page.getByText(wrongCode)).toHaveCount(0);
+  });
+
+  test('the registrations still clear at their expiry while the read after a refused check hangs', async ({
+    page,
+  }) => {
+    let release = () => {};
+    const held = new Promise<void>((done) => (release = done));
+    let reloads = 0;
+    await page.clock.install();
+    await openCheck(page, refuse);
+    await page.route('**' + participantsApi + '*', async (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      reloads++;
+      await held;
+      await route.abort().catch(() => {});
+    });
+    await page.getByLabel('Private invitation code', { exact: true }).fill(token);
+    await page.getByRole('button', { name: 'Preview Invitation', exact: true }).click();
+    await expect.poll(() => reloads).toBe(1);
+    await expect(page.getByText(wrongCode, { exact: true })).toBeVisible();
+    const registration = page.getByRole('heading', { name: 'Spring buyers programme' });
+    await expect(registration).toBeVisible();
+    await page.clock.fastForward(61_000);
+    await expect(registration).toHaveCount(0);
+    await expect(page.getByText(/This private view expired/)).toBeVisible();
+    release();
   });
 
   test('a short code gets the site message, not the browser tooltip, and nothing is sent', async ({
