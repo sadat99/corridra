@@ -114,7 +114,7 @@ describe('the webhook receiver', () => {
     expect(call.to).toBe('person@example.invalid');
     expect(call.idempotencyKey).toBe('550e8400-e29b-41d4-a716-446655440000');
     expect(call.message.subject).toBe('Your Corridra code: 123456');
-    expect(call.config.from).toBe('"Sadat, Corridra" <sadat@c.example.invalid>');
+    expect(call.config.from).toBe('Corridra <sadat@c.example.invalid>');
     expect(call.config.replyTo).toBe('sadat@reply.example.invalid');
   });
   it.each([

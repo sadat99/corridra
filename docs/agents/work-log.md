@@ -4819,6 +4819,16 @@ Next action: merge R0, then B1, B2a, B3a, B4 per the run plan section 2.
 
 Tested head: 43c2bbc (main) plus working-tree edits on claude/sharp-davinci-69ui2s.
 
+## 23 Nov 2026: B4 programmes, delegations and invitations (PR 604)
+
+Scope: QA defects D-037 to D-048 on programme, delegation and invitation screens; sender display name "Corridra" for all customer mails (packages/auth/src/customer-auth-mail.ts); organiser named in invitations through the existing customer.collaborative_workspaces() read; D-045 option 1 wording ("Confirm your place", "Your place on this programme", "Confirm My Place"); shared CopyButton (components/ux/copy-button.tsx) added to the shared components table; invitation idempotency key kept stable per invitation. Evidence: docs/revamp/evidence/b4-programmes-2026-11-23/.
+
+Review: one corridra-reviewer pass on e09fc2c, verdict merge; should-fix items (idempotency key, runbook sender name) applied in this round. Not built (follow-up list): already-registered notice before the public Apply form; sample-only "Synthetic" prefix (moves to B7); first-run "Not stated yet" (publish schema requires it); invitation expiry shown in Dhaka time rather than the programme's zone.
+
+Preserved: no migration, no authority or RLS change, no code exposed to new readers; sample data never shown as real.
+
+Next action: Guardian merges PR 604 on green CI, verifies the deployment, then launches B11a.
+
 ## 23 Nov 2026: B1 auth and security (PR 603)
 
 Scope: D-015 code sign-in fixed while it stays visible (proxy allowlist sign-in/email-otp behind CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true', else 404); one byte-identical 400 refusal for no account, wrong code, expired code and too many tries on a code, with the sentence "That code is wrong or has expired, or no account uses this address. Check it, ask for a new code, or create an account." and Create an Account always under the code form; provider faults and unrecognised 4xx answer 503 unavailable, provider 429 stays 429; refusals wait for a fixed floor; one preflight per address per process (not across instances, stated); application/json on rebuilt bodies; trimmed sign-up name forwarded; query string cleared; D-014 COOP same-origin header; D-026 aligned buttons and full-width solid sticky header (supersedes the 18 Nov translucent header; ui-direction rows 79 and 123 marked superseded). Versions: installed customer SDK resolves better-auth 1.7.10 through the lockfile override; 1.7.18 is staff only; hosted provider version unknown.

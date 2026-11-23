@@ -2,6 +2,7 @@
 // rule is tested without a provider: what may be stored in the inbox, whether an email may go, and
 // the message itself. Nothing here sends; lib/notify.ts does, through the existing mission email
 // provider, and only when that provider is configured and switched on. Owner: WS-E.
+import { formatDateTime } from './format';
 import { safeInternalPath } from './safe-path';
 
 export type NotificationKindName =
@@ -97,6 +98,45 @@ export type NotificationEmail = {
   dir: 'ltr' | 'rtl';
 };
 
+/** Names shown in a mail stay on one short line, without control or text-direction marks, whatever was typed. */
+const oneLine = (value: unknown) =>
+  typeof value === 'string'
+    ? value
+        .replace(/[\u0000-\u001f\u007f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 160)
+        .trim()
+    : '';
+
+/** What a participant invitation says about itself. Each part is left out when it is not known. */
+export type InvitationFacts = {
+  programme?: string;
+  organiser?: string;
+  /** The moment the code stops working. Shown in Dhaka time with its zone, never as a raw timestamp. */
+  expiresAt?: string | Date;
+};
+
+export const invitationIgnoreLine =
+  'If you did not expect this invitation, you can ignore this email. Nothing happens unless you use the code.';
+
+function invitationWords(facts: InvitationFacts | undefined) {
+  const programme = oneLine(facts?.programme);
+  const organiser = oneLine(facts?.organiser);
+  const expires = facts?.expiresAt
+    ? formatDateTime(facts.expiresAt, { timeZone: 'Asia/Dhaka', locale: 'en' })
+    : '';
+  const before: string[] = [];
+  if (programme && organiser) before.push(`${organiser} invited you to join ${programme}.`);
+  else if (programme) before.push(`You are invited to join ${programme}.`);
+  else if (organiser) before.push(`${organiser} invited you to join a programme.`);
+  return {
+    subject: programme ? `You are invited to ${programme}` : '',
+    before,
+    after: expires ? [`This invitation expires on ${expires}.`] : [],
+  };
+}
+
 /**
  * The message for one hand-off. `link` is a same-site path (made absolute with the application
  * origin) or an absolute link on that origin; anything else is dropped. `lines` are extra plain
@@ -108,6 +148,8 @@ export function buildNotificationEmail(input: {
   title?: string;
   link?: string;
   lines?: string[];
+  /** Participant invitations only: the programme, the organiser and when the code expires. */
+  invitation?: InvitationFacts;
 }): NotificationEmail {
   const origin = new URL(input.origin).origin;
   let link: string | null = null;
@@ -123,18 +165,33 @@ export function buildNotificationEmail(input: {
       }
     }
   }
-  const subject = input.title?.trim() || subjects[input.type];
+  const invited = input.type === 'PARTICIPANT_INVITE';
+  const words = invited ? invitationWords(input.invitation) : null;
+  const subject = input.title?.trim() || words?.subject || subjects[input.type];
   const lead = leads[input.type];
-  const lines = (input.lines ?? []).map((line) => line.trim()).filter(Boolean);
-  const text = [subject, '', lead, ...lines, ...(link ? ['', link] : []), '', 'Corridra'].join(
-    '\n',
-  );
+  const lines = [
+    ...(words?.before ?? []),
+    lead,
+    ...(input.lines ?? []).map((line) => line.trim()).filter(Boolean),
+    ...(words?.after ?? []),
+  ];
+  // Said after the link, so the last thing read is that doing nothing is safe.
+  const closing = invited ? [invitationIgnoreLine] : [];
+  const text = [
+    subject,
+    '',
+    ...lines,
+    ...(link ? ['', link] : []),
+    ...(closing.length ? ['', ...closing] : []),
+    '',
+    'Corridra',
+  ].join('\n');
   const html = [
     '<!doctype html><html lang="en" dir="ltr"><body style="font-family:Arial,sans-serif;line-height:1.5">',
     `<p style="font-size:18px;font-weight:bold">${escape(subject)}</p>`,
-    `<p>${escape(lead)}</p>`,
     ...lines.map((line) => `<p>${escape(line)}</p>`),
     link ? `<p><a href="${escape(link)}">${escape(link)}</a></p>` : '',
+    ...closing.map((line) => `<p>${escape(line)}</p>`),
     '<p>Corridra</p></body></html>',
   ].join('');
   return { subject, preheader: lead, html, text, locale: 'en', dir: 'ltr' };

@@ -38,6 +38,38 @@ test('invitation code is email-only, with a stable provider retry key and no inv
   expect(first.idempotencyKey).toBe(second.idempotencyKey);
   expect(first.idempotencyKey).not.toContain(input.token);
 });
+test('the email names the programme and the organiser and gives the expiry in Dhaka time (D-037, D-038)', async () => {
+  expect(
+    await notifyParticipantInvitation({
+      ...input,
+      programme: 'Guangzhou Sourcing Week',
+      organiser: 'Meghna Textiles',
+      expiresAt: '2026-11-30T06:21:40.16943+00:00',
+    }),
+  ).toBe('sent');
+  const { message } = state.send.mock.calls[0][0];
+  for (const body of [message.text, message.html]) {
+    expect(body).toContain('Meghna Textiles invited you to join Guangzhou Sourcing Week.');
+    expect(body).toContain('This invitation expires on 30 Nov 2026, 12:21 (Dhaka, UTC+6).');
+    expect(body).toContain(
+      'If you did not expect this invitation, you can ignore this email. Nothing happens unless you use the code.',
+    );
+    expect(body).toContain(input.token);
+  }
+  expect(message.subject).toBe('You are invited to Guangzhou Sourcing Week');
+});
+test('the provider retry key is one per invitation, with or without the programme details, so a retry never sends a second mail', async () => {
+  const facts = { programme: 'Guangzhou Sourcing Week', organiser: 'Meghna Textiles' };
+  await notifyParticipantInvitation(input);
+  await notifyParticipantInvitation({ ...input, ...facts });
+  await notifyParticipantInvitation({ ...input, ...facts, programme: 'Foshan Sourcing Week' });
+  const keys = state.send.mock.calls.map((call) => call[0].idempotencyKey);
+  expect(keys).toHaveLength(3);
+  expect(new Set(keys).size).toBe(1);
+  expect(keys[0]).toBe('notify:PARTICIPANT_INVITE:participant-invitation:' + input.id);
+  expect(keys[0]).not.toContain(input.token);
+  expect(keys[0]).not.toContain('Sourcing');
+});
 test('closed notifications or unavailable mail settings make no provider request', async () => {
   vi.stubEnv('CORRIDRA_NOTIFICATIONS_V2', 'false');
   expect(await notifyParticipantInvitation(input)).toBe('off');

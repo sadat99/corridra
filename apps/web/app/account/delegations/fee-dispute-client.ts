@@ -4,6 +4,7 @@ import type {
   OpenFeeDisputes,
   OwnFeeDisputes,
 } from '@corridra/auth/customer-programme-economics';
+import { formatDateTime } from '../../../lib/ux/format';
 import { TermsError } from './terms-client';
 
 // Fee questions: a participant flags a question about their own fee or payment status, the organiser answers with one word.
@@ -19,6 +20,9 @@ export const statusWords: Record<FeeDispute['status'], string> = {
   RESOLVED: 'Marked as sorted out by the organiser',
   DECLINED: 'Organiser has not changed anything',
 };
+/** One open fee question as the organiser reads it: who asked, about what, and when. */
+export const feeQuestionLine = (label: string, dispute: Pick<FeeDispute, 'reason' | 'filedAt'>) =>
+  `${label}: ${reasonWords[dispute.reason]}, asked ${formatDateTime(dispute.filedAt)}.`;
 const reasons = Object.keys(reasonWords);
 const object = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === 'object' && !Array.isArray(v);

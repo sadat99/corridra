@@ -728,7 +728,7 @@ test('a participant must accept the terms and choose a profile before applying, 
   ).toBeVisible();
   await p.getByText('Who can take part').click();
   await expect(p.getByText('Commercial roles: Seller')).toBeVisible();
-  const apply = p.getByRole('button', { name: 'Apply for a Place' });
+  const apply = p.getByRole('button', { name: 'Confirm My Place' });
   await expect(apply).toBeDisabled();
   await p
     .getByLabel('Organisation profile to check')
@@ -778,7 +778,7 @@ test('criteria with every list empty and no minimum ask for no profile, and the 
   await organiser(page, '?c=participant');
   const p = page.getByRole('region', { name: 'Your place in Synthetic Dhaka trade programme' });
   await expect(p.getByLabel('Organisation profile to check')).toHaveCount(0);
-  const apply = p.getByRole('button', { name: 'Apply for a Place' });
+  const apply = p.getByRole('button', { name: 'Confirm My Place' });
   await expect(apply).toBeDisabled();
   await p.getByLabel(/I have read and accept version 2/).check();
   await expect(apply).toBeEnabled();
@@ -814,9 +814,9 @@ test('a participant who is not eligible reads plain reasons and nothing from the
     p.getByText("Your organisation's commercial role is not one this programme accepts."),
   ).toBeVisible();
   await expect(p.getByText('fewer details filled in than this programme asks for')).toBeVisible();
-  await expect(p.getByText('Add one in your account, then apply again.')).toBeVisible();
-  await expect(p.getByRole('button', { name: 'Apply for a Place' })).toBeVisible();
-  await expect(p.getByRole('heading', { name: 'Apply again' })).toBeVisible();
+  await expect(p.getByText('Add one in your account, then try again.')).toBeVisible();
+  await expect(p.getByRole('button', { name: 'Confirm My Place' })).toBeVisible();
+  await expect(p.getByRole('heading', { name: 'Confirm your place again' })).toBeVisible();
 });
 
 test('a waiting participant sees their number and can give the place up only after confirming', async ({
@@ -888,7 +888,7 @@ test('newer terms need a fresh acceptance, and a full programme without a waitin
   await organiser(second, '?c=participant');
   const q = second.getByRole('region', { name: 'Your place in Synthetic Dhaka trade programme' });
   await expect(q.getByText('This programme is full and has no waiting list.')).toBeVisible();
-  await expect(q.getByRole('button', { name: 'Apply for a Place' })).toBeDisabled();
+  await expect(q.getByRole('button', { name: 'Confirm My Place' })).toBeDisabled();
 });
 
 test('reminders list what is due or late, mark done sends one exact request, and an empty list says so', async ({
