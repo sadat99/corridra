@@ -98,6 +98,8 @@ import { migrateCustomerPaymentsSimulated } from '../packages/db/src/customer-pa
 import { configureSimulatedPayments } from '../packages/auth/src/customer-payments-simulated-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
 import { inventoryDataCleanup } from '../packages/auth/src/customer-data-cleanup';
+import { migrateCustomerRealIntakeOwner } from '../packages/db/src/customer-real-intake-owner-migrate';
+import { changeRealIntakeOwner } from '../packages/auth/src/customer-real-intake-owner';
 import {
   assertNoneBehind,
   refreshInstalledOptionalModules,
@@ -213,6 +215,12 @@ const v = z
     ),
     VIEW_AS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     DATA_CLEANUP_ACTION: z.enum(['unchanged', 'inventory']).default('unchanged'),
+    // B11a: the founder becomes the owner of new real requests and the two sample members leave the real workspace only.
+    REAL_INTAKE_OWNER_ACTION: z.enum(['unchanged', 'apply']).default('unchanged'),
+    REAL_INTAKE_OWNER_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     WORKSPACE_LIFECYCLE_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
@@ -295,6 +303,9 @@ if (!['unchanged', 'install'].includes(v.SIMULATED_PAYMENTS_ACTION) && !v.SIMULA
   throw new Error('Simulated payments changes require an explicit reason');
 if (v.SIMULATED_PAYMENTS_ACTION === 'set_refund_window' && !v.SIMULATED_PAYMENTS_REFUND_DAYS)
   throw new Error('Setting the refund window needs the number of days');
+// No INSTALL_APPLY guard on purpose: without INSTALL_APPLY=yes this action is its own dry run and writes nothing.
+if (v.REAL_INTAKE_OWNER_ACTION === 'apply' && !v.REAL_INTAKE_OWNER_REASON)
+  throw new Error('The real intake owner change requires an explicit reason');
 if (v.REQUEST_WITHDRAWAL_ACTION !== 'unchanged' && !apply)
   throw new Error('Request withdrawal changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.REQUEST_WITHDRAWAL_ACTION) && !v.REQUEST_WITHDRAWAL_REASON)
@@ -424,6 +435,7 @@ const registries = [
   'recipient_reply_review_migrations',
   'view_as_migrations',
   'commercial_readiness_migrations',
+  'customer_real_intake_owner_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
 const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<void>][] = [
@@ -506,6 +518,13 @@ try {
   if (v.DATA_CLEANUP_ACTION !== 'unchanged')
     console.log(
       `Data cleanup inventory (nothing written)\n${(await inventoryDataCleanup(pool)).lines.join('\n')}`,
+    );
+  // Real intake owner (B11a), dry run: without INSTALL_APPLY=yes it only reads, in a read-only transaction, and lists exactly
+  // what an apply would change. It refuses (and the run fails) unless each name matches exactly one person. The log is public:
+  // names and 8-character ids only, never an email address.
+  if (v.REAL_INTAKE_OWNER_ACTION === 'apply' && !apply)
+    console.log(
+      `Real intake owner change, dry run\n${(await changeRealIntakeOwner(pool, { apply: false, reason: v.REAL_INTAKE_OWNER_REASON })).lines.join('\n')}`,
     );
   if (apply) {
     // Each migrator runs at most once in this run, instead of once per module that depends on it (KI-51). Ended in the
@@ -955,6 +974,17 @@ try {
     if (v.VIEW_AS_ACTION !== 'unchanged') {
       await migrateViewAs(pool);
       console.log('View-as audit function: installed or already current');
+    }
+    // Real intake owner (B11a, owner decision 23 Nov 2026). Never part of the base run. The module is installed first (it
+    // changes no owner by itself and needs the real-use schema), then one transaction appends the founder as the owner of new
+    // real requests and ends the two sample memberships in the real workspace only. Nothing is deleted; a second run is unchanged.
+    if (v.REAL_INTAKE_OWNER_ACTION === 'apply') {
+      await migrateCustomerRealIntakeOwner(pool);
+      const result = await changeRealIntakeOwner(pool, {
+        apply: true,
+        reason: v.REAL_INTAKE_OWNER_REASON,
+      });
+      console.log(`Real intake owner change: ${result.state}\n${result.lines.join('\n')}`);
     }
     await report('After install');
     // Once more after every mail, notifications and withdrawal step above, so a run that also passes
