@@ -56,8 +56,9 @@ import { InvitationProvider, OpenInvitationButton } from './invitation-dialog';
 import { parseWorkFilter } from '../../lib/work-items/view';
 import { homeHelper, requestsHelper } from './frame-copy';
 import { activeJourneyMode } from '../../lib/ux/journey-mode-server';
-import { journeyModeOfWork } from '../../lib/ux/journey-mode';
+import { journeyModeOfWork, journeyModeWords } from '../../lib/ux/journey-mode';
 import { JourneyShowing, ShowEverything } from '../../components/ux/journey-note';
+import { readRequestsOutsideJourney } from '../../lib/work-items/journey-scope-server';
 import './calm-lists.css';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -159,6 +160,11 @@ export default async function Page({
   const mode = await activeJourneyMode(view === 'work' ? journeyModeOfWork(query.work) : null);
   const scoped = mode && mode !== 'all' ? mode : null;
   const workFilter = scoped && query.work === undefined ? scoped : parseWorkFilter(query.work);
+  // Reports in a journey: the requests the shared work list places in another journey. Their delivered reports are
+  // left out; a list with no request id (saved, shared, members') stays whole and says it is not sorted.
+  const outside =
+    view === 'results' && scoped ? await readRequestsOutsideJourney(scoped) : undefined;
+  const journeyName = scoped ? journeyModeWords[scoped] : undefined;
   return (
     <CustomerShell
       tab={view}
@@ -307,15 +313,23 @@ export default async function Page({
                 delivered={
                   (requestIssuer || (savedMissionIssuer && customerDeliveryEnabled())) && (
                     <>
+                      {scoped ? <JourneyShowing mode={scoped} /> : null}
                       {requestIssuer && (
                         <DeliveredReports
                           subject={data.user.id}
                           issuer={requestIssuer}
                           showEmpty={!(savedMissionIssuer && customerDeliveryEnabled())}
+                          outside={outside}
+                          journey={journeyName}
                         />
                       )}
                       {savedMissionIssuer && customerDeliveryEnabled() && (
-                        <AssignedMissions subject={data.user.id} issuer={savedMissionIssuer} />
+                        <AssignedMissions
+                          subject={data.user.id}
+                          issuer={savedMissionIssuer}
+                          outside={outside}
+                          journey={journeyName}
+                        />
                       )}
                     </>
                   )

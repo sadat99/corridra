@@ -55,6 +55,10 @@ let f: Awaited<ReturnType<typeof fixture>>;
 let statements = 0;
 let services: Record<string, unknown> | null = null;
 vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => services }));
+// Reports in a journey asks who is signed in exactly as the sidebar counts do; here that is the measured person.
+vi.mock('../../apps/web/lib/customer-page-session', () => ({
+  customerIdentity: async () => ({ subject, issuer }),
+}));
 
 function count(pool: { query: unknown; connect: unknown }) {
   const query = (pool as { query: (...a: unknown[]) => unknown }).query.bind(pool);
@@ -150,6 +154,30 @@ test('loadWorkItems for a person with three workspaces runs a small, fixed numbe
   expect(list.workspaces).toHaveLength(3);
   expect(first).toBeGreaterThan(0);
   expect(first).toBeLessThanOrEqual(60);
+});
+
+// Journey modes, Reports in a journey (spec 4.3). The scope is one loadWorkItems call with the sidebar's own
+// arguments. On a real page the sidebar counts have already made that call in the same render, so the per-render
+// cache answers and Reports adds 0 statements; the number printed here is the most it could ever cost, the cost of
+// the call with nothing to share it with (this test has no render, so nothing is shared).
+test('Reports in a journey costs at most one work-list read, the one the sidebar already makes', async () => {
+  const { loadWorkItems } = await import('../../apps/web/lib/work-items/load');
+  const { readRequestsOutsideJourney } =
+    await import('../../apps/web/lib/work-items/journey-scope-server');
+  statements = 0;
+  await loadWorkItems(subject, issuer, { rooms: false });
+  const sidebar = statements;
+  statements = 0;
+  const outside = await readRequestsOutsideJourney('source');
+  const scope = statements;
+  console.log(
+    `Journey modes read cost: Reports in a journey runs ${scope} SQL statements unshared, the same ${sidebar} the sidebar counts run; shared in one render it adds 0`,
+  );
+  // The person here has saved guided requests only, so no request is named as outside the journey.
+  expect(outside).toEqual([]);
+  expect(scope).toBeGreaterThan(0);
+  expect(scope).toBe(sidebar);
+  expect(scope).toBeLessThanOrEqual(60);
 });
 
 const details = (family: MissionDraftFamily, n: number): MissionDraftDetails => ({

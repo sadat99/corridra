@@ -56,10 +56,16 @@ export function SaveReportForm({
     </form>
   );
 }
-export function AssignedMissions(props: SavedMissionScope) {
+type AssignedScope = SavedMissionScope & {
+  /** Journey modes: requests the work list places in another journey. Their deliveries are left out. */
+  outside?: string[];
+  /** The chosen journey's name, for the line when every delivery here is in another journey. */
+  journey?: string;
+};
+export function AssignedMissions(props: AssignedScope) {
   return <PrivateAssignments key={JSON.stringify([props.issuer, props.subject])} {...props} />;
 }
-function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
+function PrivateAssignments({ subject, issuer, outside, journey }: AssignedScope) {
   const router = useRouter();
   const [data, setData] = useState<Page | null>(null),
     [status, setStatus] = useState('loading'),
@@ -203,6 +209,10 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
     e.preventDefault();
     void accept(acceptCommand(assignmentId));
   }
+  const shown =
+    data && outside?.length
+      ? data.assignments.filter((item) => !outside.includes(item.requestId))
+      : (data?.assignments ?? []);
   return (
     <section
       className="detail-card ux-mission-detail ux-delivered-card"
@@ -251,7 +261,10 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
               on the Requests page.
             </p>
           )}
-          {data.assignments.map((item) => (
+          {data.assignments.length > 0 && shown.length === 0 && (
+            <p>No report delivered here is in {journey}.</p>
+          )}
+          {shown.map((item) => (
             <article className="delivery-card" key={item.id}>
               {item.available ? (
                 <>

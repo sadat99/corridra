@@ -13,11 +13,17 @@ export async function DeliveredReports({
   subject,
   issuer,
   showEmpty = false,
+  outside,
+  journey,
 }: {
   subject: string;
   issuer: string;
   /** The Delivered tab holds nothing else, so an empty list says so instead of leaving the tab blank. */
   showEmpty?: boolean;
+  /** Journey modes: requests the work list places in another journey. Their reports are left out. */
+  outside?: string[];
+  /** The chosen journey's name, for the empty line when every report is in another journey. */
+  journey?: string;
 }) {
   const none = showEmpty ? (
     <EmptyState icon="inbox">No reports have been delivered to you yet.</EmptyState>
@@ -46,6 +52,14 @@ export async function DeliveredReports({
     );
   }
   if (reports.length === 0) return none;
+  if (outside?.length) {
+    const elsewhere = new Set(outside);
+    reports = reports.filter((report) => !elsewhere.has(report.requestId));
+    if (reports.length === 0)
+      return showEmpty ? (
+        <EmptyState icon="inbox">No reports have been delivered in {journey} yet.</EmptyState>
+      ) : null;
+  }
   return (
     <section className="detail-card library-card" aria-labelledby="delivered-reports-heading">
       <h2 id="delivered-reports-heading">Reports for your requests</h2>

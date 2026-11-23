@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { NotSortedByJourney } from '../../components/ux/journey-note';
 import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 
 /**
@@ -31,7 +32,14 @@ export function ReportsTabs({
     tabs.push({
       id: 'saved',
       label: 'Saved Missions',
-      panel: saved,
+      // These three lists carry no request, so a chosen journey cannot sort them (journey modes 3.7): each stays
+      // whole and says so. The line draws nothing in Everything or while journey modes are off.
+      panel: (
+        <>
+          <NotSortedByJourney what="Saved missions" />
+          {saved}
+        </>
+      ),
       aliases: ['saved-commercial-missions'],
     });
   // "My shared missions" and the invitation links point at #customer-missions, so it opens Shared With Me.
@@ -39,14 +47,24 @@ export function ReportsTabs({
     tabs.push({
       id: 'shared',
       label: 'Shared With Me',
-      panel: shared,
+      panel: (
+        <>
+          <NotSortedByJourney what="Missions shared with you" />
+          {shared}
+        </>
+      ),
       aliases: ['customer-missions'],
     });
   if (members)
     tabs.push({
       id: 'members',
       label: "Members' Reports",
-      panel: members,
+      panel: (
+        <>
+          <NotSortedByJourney what="Members’ reports" />
+          {members}
+        </>
+      ),
     });
   if (tabs.length === 0) return null;
   if (tabs.length === 1) return <>{tabs[0]!.panel}</>;

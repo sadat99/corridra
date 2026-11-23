@@ -46,6 +46,20 @@ export function JourneyShowing({ mode }: { mode: JourneyOfMode }) {
   );
 }
 
+/**
+ * Above a list that has no request to sort it by: while a journey is chosen it is still shown whole, and says so.
+ * Nothing in Everything or while journey modes are off.
+ */
+export function NotSortedByJourney({ what }: { what: string }) {
+  const mode = useJourneyMode();
+  if (!mode || mode === 'all') return null;
+  return (
+    <p className="ux-journey-note" lang="en">
+      {what} are not sorted by journey.
+    </p>
+  );
+}
+
 /** On Companies while a journey is chosen: the list is the same in every journey. Nothing in Everything. */
 export function CompaniesShared() {
   const mode = useJourneyMode();
