@@ -9,10 +9,13 @@ import { InvoiceIssuerForm } from './invoice-issuer-form';
 import { chooseIssuerTenant } from './issuer-access';
 
 export const dynamic = 'force-dynamic';
-export const metadata = {
-  title: 'Invoice issuer | Corridra',
-  robots: { index: false, follow: false },
-};
+// With the switch off the page does not exist, so not even its name is sent in the 404 answer.
+export function generateMetadata() {
+  return {
+    ...(invoiceIssuerEnabled() ? { title: 'Invoice issuer | Corridra' } : {}),
+    robots: { index: false, follow: false },
+  };
+}
 
 function Denied({ children }: { children: string }) {
   return (

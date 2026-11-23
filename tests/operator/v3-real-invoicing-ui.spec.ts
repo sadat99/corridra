@@ -285,7 +285,7 @@ test('an owner reads a real tax invoice with both parties, the tax lines, paymen
     taxInvoice.getByText(/Recorded by the Corridra team: SGD\s20\.00 on 25 Oct 2026/),
   ).toBeVisible();
   await expect(taxInvoice.getByText(/SGD\s20\.00 on 25 Oct 2026 · Bank transfer/)).toBeVisible();
-  await expect(taxInvoice.getByText(/CN-2026-000001: SGD\s5\.00 on 26 October 2026/)).toBeVisible();
+  await expect(taxInvoice.getByText(/CN-2026-000001: SGD\s5\.00 on 26 Oct 2026/)).toBeVisible();
   await expect(taxInvoice.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
   // A supplier that is not GST registered issues a plain invoice with no registration line and no made-up notice.
   const plain = page.getByRole('listitem').filter({ hasText: 'Invoice INV-2026-000002' });
