@@ -4828,3 +4828,13 @@ Review: one corridra-reviewer pass on e09fc2c, verdict merge; should-fix items (
 Preserved: no migration, no authority or RLS change, no code exposed to new readers; sample data never shown as real.
 
 Next action: Guardian merges PR 604 on green CI, verifies the deployment, then launches B11a.
+
+## 23 Nov 2026: B1 auth and security (PR 603)
+
+Scope: D-015 code sign-in fixed while it stays visible (proxy allowlist sign-in/email-otp behind CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true', else 404); one byte-identical 400 refusal for no account, wrong code, expired code and too many tries on a code, with the sentence "That code is wrong or has expired, or no account uses this address. Check it, ask for a new code, or create an account." and Create an Account always under the code form; provider faults and unrecognised 4xx answer 503 unavailable, provider 429 stays 429; refusals wait for a fixed floor; one preflight per address per process (not across instances, stated); application/json on rebuilt bodies; trimmed sign-up name forwarded; query string cleared; D-014 COOP same-origin header; D-026 aligned buttons and full-width solid sticky header (supersedes the 18 Nov translucent header; ui-direction rows 79 and 123 marked superseded). Versions: installed customer SDK resolves better-auth 1.7.10 through the lockfile override; 1.7.18 is staff only; hosted provider version unknown.
+
+Review: Class A. Reviewer 1 and a security review on d7ef05d (security BLOCK: account oracle and non-atomic counter on better-auth 1.6.x), fixed; security re-review on dcc527d verdict merge; its four should-fix items applied in this round.
+
+Not verified: no live code sign-in against the hosted identity service (runbook first live check includes a wrong code for a no-account address and records the hosted version); Safari, Firefox, real device, screen reader. Known limits: provider-side code sign-up can still create an account without name and privacy notice (provider setting only); each attempt costs two provider calls.
+
+Next action: Guardian merges PR 603 on green CI, verifies the deployment, runs the runbook live check once a readable test mailbox exists.
