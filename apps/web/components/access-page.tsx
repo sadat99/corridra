@@ -5,6 +5,7 @@ import { CorridraIcon } from './corridra-icon';
 import { AccessElsewhere, AccessNotCustomer } from './access-elsewhere';
 import { accessDoor, type AccessDoorId, type AccessIconName } from '../lib/access-doors';
 import { uxSwitchOn } from '../lib/ux-switches';
+import { pageOpenGraph } from '../lib/ux/page-metadata';
 import './page-compact.css';
 import '../app/access/access.css';
 
@@ -14,7 +15,7 @@ export function accessDoorMetadata(id: AccessDoorId, heading: string, lead: stri
   return {
     title: `${accessDoor(id).title} | Corridra`,
     description: lead,
-    openGraph: { title: heading, description: lead },
+    openGraph: pageOpenGraph(heading, lead),
     robots: { index, follow: index },
   };
 }

@@ -73,14 +73,14 @@ export const publicPages: Record<string, PublicPageContent> = {
     route: {
       label: 'Bangladesh to the EU',
       href: '/corridors/bangladesh-eu',
-      linkLabel: 'Read the EU scope',
+      linkLabel: 'Read the EU route details',
     },
     reverse: {
       title: 'It also works the other way.',
       text: 'A seller from the EU can reach suitable buyers in Bangladesh. Each case is set up and reviewed separately.',
       cta: 'Plan a Mission From the EU',
       href: '/plan?marketCode=BD&job=buyers',
-      scopeLabel: 'Read the EU to Bangladesh scope',
+      scopeLabel: 'Read the EU to Bangladesh route details',
       scopeHref: '/corridors/bangladesh-eu',
     },
     record: {
@@ -125,7 +125,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     route: {
       label: 'Bangladesh to China',
       href: '/corridors/bangladesh-china',
-      linkLabel: 'Read the China scope',
+      linkLabel: 'Read the China route details',
     },
     record: {
       title: 'What we record for every supplier',
@@ -163,13 +163,13 @@ export const publicPages: Record<string, PublicPageContent> = {
     ],
     closing: {
       title: 'Bangladesh without the usual black box.',
-      text: 'Reverse directions are set up case by case. Each offer needs its own reviewed scope.',
+      text: 'Reverse directions are set up case by case. Each offer is reviewed on its own terms.',
     },
     cta: 'Plan a Market-Entry Mission',
     route: {
       label: 'The EU to Bangladesh',
       href: '/corridors/bangladesh-eu',
-      linkLabel: 'Read the EU to Bangladesh scope',
+      linkLabel: 'Read the EU to Bangladesh route details',
     },
     record: {
       title: 'What we record for every market visit',
@@ -213,7 +213,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     route: {
       label: 'Bangladesh to China',
       href: '/corridors/bangladesh-china',
-      linkLabel: 'Read the China scope',
+      linkLabel: 'Read the China route details',
     },
     record: {
       title: 'What we record for every delegation',
@@ -232,7 +232,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     description: 'How a request moves from your first goal to a recorded result, in six steps.',
     introduction: {
       title: 'Begin with a decision you need to make.',
-      text: 'A mission gives the work a clear goal, scope and window.',
+      text: 'A mission gives the work a clear goal, limits and time window.',
     },
     groups: ['Before You Meet', 'Meet and Follow Up'],
     sections: [
@@ -286,7 +286,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Corridra Network',
     title: 'Your local knowledge can have commercial value.',
     description:
-      'We are building a network for scoped local work, with a clear task, evidence and reward before you accept.',
+      'We are building a network for local work, with a clear task, evidence and reward before you accept.',
     introduction: {
       title: 'Some market intelligence cannot be collected from a desk.',
       text: 'Some answers need a local check, visit or introduction. Remote research cannot give them.',
@@ -364,7 +364,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       {
         title: 'Verified',
         tag: 'Verified',
-        text: 'A defined check was completed. Its scope and limits still matter.',
+        text: 'A defined check was completed. What it covered and its limits still matter.',
       },
       {
         title: 'Derived',
@@ -417,7 +417,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       },
       {
         title: 'Earn depth before claiming breadth',
-        text: 'From Bangladesh we run missions to China, the EU, the UK, the US, Australia and key Asian markets. Each needs its own reviewed scope. We claim no global coverage.',
+        text: 'From Bangladesh we run missions to China, the EU, the UK, the US, Australia and key Asian markets. Each is reviewed on its own terms. We claim no global coverage.',
       },
       {
         title: 'Keep the evidence close',
@@ -447,7 +447,7 @@ publicPages.machinery = {
     },
     {
       title: 'Compare the actual offers',
-      text: 'Keep each original currency and term. Missing scope makes a comparison incomplete.',
+      text: 'Keep each original currency and term. An offer that leaves out part of the work makes a comparison incomplete.',
     },
     {
       title: 'Use visits to resolve questions',
