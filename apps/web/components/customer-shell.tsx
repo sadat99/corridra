@@ -8,6 +8,7 @@ import { uxSwitchOn } from '../lib/ux-switches';
 import { journeyModesOn } from '../lib/ux/journey-modes-on';
 import type { JourneyMode } from '../lib/ux/journey-mode';
 import { JourneyModeProvider } from './ux/journey-mode-context';
+import { JourneySwitchAction } from './ux/journey-switch-action';
 import { CustomerNav, type CustomerTab } from './customer-nav';
 import { T } from './language-provider';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
@@ -230,7 +231,13 @@ function CustomerFrame({
         lead={slots.lead}
         nav={slots.tabs || undefined}
       >
-        {mode ? <JourneyModeProvider mode={mode}>{children}</JourneyModeProvider> : children}
+        {mode ? (
+          <JourneyModeProvider mode={mode}>
+            <JourneySwitchAction>{children}</JourneySwitchAction>
+          </JourneyModeProvider>
+        ) : (
+          children
+        )}
       </WorkspaceShell>
       {/* Pocket (phone): drawn at once as New Request; its words upgrade when the sidebar's work list read arrives. */}
       {uxSwitchOn('CORRIDRA_UX_POCKET') ? (

@@ -162,10 +162,15 @@ describe('journey mode: the prompt on a request page', () => {
     expect(note).toContain("subject?: 'request' | 'programme'");
     expect(note).toContain('shouldOfferSwitch(useJourneyMode(), family)');
     expect(note).toContain('lang="en"');
-    // A quiet line, not an alert, with no dismiss control; the cookie is written only by the press.
-    expect(note).not.toMatch(/role="alert"|role="status"|useEffect|router\.push|dismiss/i);
-    expect(note).toMatch(
-      /onClick=\{\(\) => \{\s*rememberJourneyMode\(offer\);\s*router\.refresh\(\);/,
+    // A quiet line, not an alert, with no dismiss control and no router of its own: the frame hands it the action.
+    expect(note).not.toMatch(/role="alert"|role="status"|useEffect|next\/navigation|dismiss/i);
+    expect(note).toContain('onClick={() => switchTo(offer)}');
+    const action = web('components/ux/journey-switch-action.tsx');
+    // The cookie is written only by the press, and the page is drawn again where it is: never a navigation.
+    expect(action).toMatch(/rememberJourneyMode\(mode\);\s*router\.refresh\(\);/);
+    expect(action).not.toMatch(/router\.(push|replace)|useEffect/);
+    expect(web('components/customer-shell.tsx')).toContain(
+      '<JourneySwitchAction>{children}</JourneySwitchAction>',
     );
     expect(journeyModeWords.source).toBe('Sourcing');
     expect(journeyModeWords.sell).toBe('Selling');

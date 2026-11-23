@@ -17,6 +17,15 @@ export function JourneyModeProvider({
   return <JourneyModeContext.Provider value={mode}>{children}</JourneyModeContext.Provider>;
 }
 
+/**
+ * How a page asks for another journey without holding a router of its own: the frame supplies it (journey-switch-
+ * action.tsx). Null outside the frame, where nothing can be switched.
+ */
+export const JourneySwitchContext = createContext<((mode: JourneyMode) => void) | null>(null);
+export function useJourneySwitch(): ((mode: JourneyMode) => void) | null {
+  return useContext(JourneySwitchContext);
+}
+
 /** The mode the page was drawn in, or null where journey modes are off. */
 export function useJourneyMode(): JourneyMode | null {
   return useContext(JourneyModeContext);

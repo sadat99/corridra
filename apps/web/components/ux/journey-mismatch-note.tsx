@@ -4,10 +4,9 @@
 // the person presses the button, the cookie is written and the page is drawn again where it is. Nothing is drawn in
 // Everything, when the journeys match, for an unsorted request, or while journey modes are off.
 import './journey-note.css';
-import { useRouter } from 'next/navigation';
-import { journeyModeWords, shouldOfferSwitch, type JourneyOfMode } from '../../lib/ux/journey-mode';
+import { journeyModeWords, shouldOfferSwitch } from '../../lib/ux/journey-mode';
 import type { WorkFamily } from '../../lib/work-items/types';
-import { rememberJourneyMode, useJourneyMode } from './journey-mode-context';
+import { useJourneyMode, useJourneySwitch } from './journey-mode-context';
 
 export function JourneyMismatchNote({
   family,
@@ -18,12 +17,9 @@ export function JourneyMismatchNote({
   subject?: 'request' | 'programme';
 }) {
   const offer = shouldOfferSwitch(useJourneyMode(), family);
-  // Nothing to offer draws nothing and asks for nothing, so the page is exactly what it was.
-  return offer ? <Offer journey={offer} subject={subject} /> : null;
-}
-
-function Offer({ journey: offer, subject }: { journey: JourneyOfMode; subject: string }) {
-  const router = useRouter();
+  // The frame holds the router and hands the action down, so this file needs none and draws anywhere.
+  const switchTo = useJourneySwitch();
+  if (!offer || !switchTo) return null;
   const journey = journeyModeWords[offer];
   return (
     <p className="ux-journey-note" data-journey-mismatch={offer} lang="en">
@@ -31,10 +27,7 @@ function Offer({ journey: offer, subject }: { journey: JourneyOfMode; subject: s
       <button
         type="button"
         className="text-link ux-journey-note-action"
-        onClick={() => {
-          rememberJourneyMode(offer);
-          router.refresh();
-        }}
+        onClick={() => switchTo(offer)}
       >
         Switch to {journey}
       </button>
