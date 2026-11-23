@@ -178,3 +178,25 @@ describe('helper words on the shared setup and recovery pages', () => {
     );
   });
 });
+
+describe('D-032 and the front door lines (added by the Guardian, 23 Nov 2026)', () => {
+  it('calls the unsent request "your request" in English and keeps the key', async () => {
+    const { translate } = await load('lib/i18n/messages.ts');
+    expect(translate('en', 'move.card.draft.object')).toBe('your request');
+    const source = read('apps/web/lib/i18n/messages.ts');
+    expect(source.match(/'move\.card\.draft\.object':/g)).toHaveLength(7);
+    expect(source).not.toContain("'your draft request'");
+  });
+  it('says routes and helper on the front door lines', async () => {
+    const { founderDoor, helperDoor } = await load('lib/front-doors.ts');
+    const line = (items: readonly { id: string; line: string }[], id: string) =>
+      items.find((item) => item.id === id)?.line;
+    expect(line(founderDoor, 'routes')).toBe('Routes and policies.');
+    expect(line(helperDoor, 'accept')).toBe(
+      'Set up your separate helper access from the invitation the Corridra team sent.',
+    );
+    expect(read('apps/web/lib/front-doors.ts')).not.toMatch(
+      /Corridors and policies|contributor access/,
+    );
+  });
+});

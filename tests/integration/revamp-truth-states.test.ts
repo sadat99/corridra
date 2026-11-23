@@ -255,7 +255,7 @@ describe('Your Move never says nothing is waiting when it could not look', () =>
       startHref: '/plan',
       unreadable: true,
     });
-    expect(html).toContain('Send your draft request');
+    expect(html).toContain('Send your request');
     expect(html).toContain('this list may not show everything');
     expect(html).not.toContain('Nothing is waiting for you right now.');
   });

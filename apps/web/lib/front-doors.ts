@@ -30,7 +30,7 @@ export const founderDoor: readonly DoorItem[] = [
   {
     id: 'routes',
     title: 'Routes and settings',
-    line: 'Corridors and policies.',
+    line: 'Routes and policies.',
     href: '/operator#workspace-settings',
   },
   {
@@ -69,7 +69,7 @@ export const helperDoor: readonly DoorItem[] = [
   {
     id: 'accept',
     title: helperWays.setup.text,
-    line: 'Set up your separate contributor access from the invitation your operator sent.',
+    line: 'Set up your separate helper access from the invitation the Corridra team sent.',
     href: helperWays.setup.href,
     primary: true,
   },

@@ -262,7 +262,7 @@ export const en = {
   'mr.mode.real': 'Real',
   'move.you.heading': 'Waiting for you',
   'move.others.heading': 'Waiting on others',
-  'move.card.draft.object': 'your draft request',
+  'move.card.draft.object': 'your request',
   'move.card.draft.action': 'Open the Draft',
   'move.card.quote.object': 'the quote for your service request',
   'move.card.quote.action': 'Accept or Decline',
