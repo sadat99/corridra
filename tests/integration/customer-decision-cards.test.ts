@@ -1399,6 +1399,92 @@ describe('real workspaces', () => {
     });
   });
 
+  // The removed member suites keep file 0003 away from their ladder (tests/integration/removed-member-hide.ts), so the
+  // real card path is proven here for the two people those suites are about.
+  test('a creator removed from a real workspace, and a person who was never a member, get nothing in public or signed in while the public link setting is on and real use is open for both sides', async () => {
+    const both = { publisher: true, workspace: true };
+    const writer = async (person: Person) =>
+      (
+        await one('SELECT customer_private.decision_card_public_writer($1,$2) AS ok', [
+          workspaceId,
+          principals[person],
+        ])
+      ).ok;
+    const stateSql = 'SELECT customer.decision_card_state($1) AS result';
+    const previewSql = 'SELECT customer.decision_card_preview($1,$2) AS result';
+    const createSql = 'SELECT customer.create_decision_card($1,$2,$3,$4,$5,$6) AS result';
+    // erin leaves in an earlier case. She is brought back as an admin so that this case stands alone.
+    if (!(await writer('erin'))) {
+      await join('erin');
+      await setRole('erin', 'admin', 'member');
+    }
+    const s = await build('erin', workspaceId);
+    const card = await share('erin', s);
+    // dave was never a member of this workspace. He holds the same report by its link, nothing more.
+    const held = await holdLink('dave', s);
+    let digest = '';
+    await real(both, async () => {
+      // Control: while erin is an admin the card opens and she can share.
+      expect((await readWith(card.hash, publicOn)).state).toBe('OPEN');
+      expect((await asReal('erin', stateSql, [s.resourceId])).canShare).toBe(true);
+      digest = (await asReal('erin', previewSql, [s.resourceId, s.decisionId])).digest;
+      expect(await writer('dave')).toBe(false);
+      for (const resource of [held, s.resourceId]) {
+        await expect(asReal('dave', previewSql, [resource, s.decisionId])).rejects.toMatchObject({
+          code: '42501',
+        });
+        await expect(
+          asReal('dave', createSql, [
+            randomUUID(),
+            resource,
+            s.decisionId,
+            digest,
+            newToken().hash,
+            null,
+          ]),
+        ).rejects.toMatchObject({ code: '42501' });
+      }
+      expect(await asReal('dave', stateSql, [held])).toMatchObject({ canShare: false, cards: [] });
+      await expect(asReal('dave', stateSql, [s.resourceId])).rejects.toMatchObject({
+        code: '42501',
+      });
+    });
+    // The removal is made in the sample world, as the role change in the case above is.
+    await workspaces('alice').access({
+      action: 'revoke',
+      commandId: randomUUID(),
+      workspaceId,
+      kind: 'membership',
+      targetId: members.erin!,
+    });
+    const made = await count('customer_private.decision_card');
+    await real(both, async () => {
+      expect(await writer('erin')).toBe(false);
+      expect(await readWith(card.hash, publicOn)).toEqual(unknown);
+      expect(await read(card.hash)).toEqual(unknown);
+      await expect(asReal('erin', previewSql, [s.resourceId, s.decisionId])).rejects.toMatchObject({
+        code: '42501',
+      });
+      await expect(
+        asReal('erin', createSql, [
+          randomUUID(),
+          s.resourceId,
+          s.decisionId,
+          digest,
+          newToken().hash,
+          null,
+        ]),
+      ).rejects.toMatchObject({ code: '42501' });
+      // A removed person's real session no longer reaches the report at all, so the state is refused outright.
+      await expect(asReal('erin', stateSql, [s.resourceId])).rejects.toMatchObject({
+        code: '42501',
+      });
+    });
+    expect(await count('customer_private.decision_card')).toBe(made);
+    // Back in the sample world the card stays closed too: its creator is gone.
+    expect(await read(card.hash)).toEqual(unknown);
+  });
+
   test('never a mix: one real side and one sample side is refused, signed in and in public', async () => {
     const s = await build('alice', workspaceId);
     const card = await share('alice', s);

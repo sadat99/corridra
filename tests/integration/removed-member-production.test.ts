@@ -50,6 +50,7 @@ import { migrateCommercialReadiness } from '../../packages/db/src/commercial-rea
 import { migrateCustomerProgrammeProjections } from '../../packages/db/src/customer-programme-projection-migrate';
 import { migrateCustomerBooks } from '../../packages/db/src/customer-book-migrate';
 import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
+import { migrateCustomerRequestReferences } from '../../packages/db/src/customer-request-reference-migrate';
 
 const BASE_INSTALLERS = {
   migrateCustomerAuthority,
@@ -80,6 +81,7 @@ const BASE_INSTALLERS = {
   migrateCustomerProgrammeProjections,
   migrateCustomerBooks,
   migrateCustomerDecisionCards,
+  migrateCustomerRequestReferences,
 };
 
 // Removed members, the verified production ladder (install run 42950597177, 11 Nov 2026): customer migrations 3, real-use 13,
@@ -363,8 +365,9 @@ describe('the verified production ladder', () => {
   test('the script wires exactly these steps: the list it installs, then real-use, then the refresh, then the report and the check', () => {
     fileSql('realUse');
     const names = baseInstallers().map((i) => i.name);
-    expect(names).toHaveLength(28);
+    expect(names).toHaveLength(29);
     expect(names).toContain('migrateCustomerDecisionCards');
+    expect(names).toContain('migrateCustomerRequestReferences');
     expect(names).toContain('migrateCommercialReadiness');
     expect(names).not.toContain('migrateCustomerRealUse');
     const real = script.indexOf("if (v.REAL_USE_ACTION !== 'unchanged') {");
