@@ -332,10 +332,10 @@ describe('the real intake owner change', () => {
     await setMember(s.f.users.owner!.id, 'viewer', false);
     const result = await run(false);
     expect(result.lines).toContain(
-      `owner check: configuration owner (${short(s.f.users.owner!.id)}) does not pass: not an active owner or admin`,
+      `intake check: configuration owner (${short(s.f.users.owner!.id)}) does not pass: not an active owner or admin`,
     );
     expect(result.lines).toContain(
-      `owner check: new owner Corridra founder (${short(founder)}) passes`,
+      `intake check: new owner Corridra founder (${short(founder)}) passes`,
     );
     expect(result.lines.join('\n')).not.toMatch(/Free text|<name>/);
     await setMember(s.f.users.owner!.id, 'owner', false);
@@ -351,9 +351,12 @@ describe('the real intake owner change', () => {
     expect(result.lines).toEqual([
       `real workspace: Corridra request operations (${short(s.intakeTenantId)})`,
       `owner of new real requests: would change from the current owner (${short(s.f.users.owner!.id)}) to Corridra founder (${short(founder)})`,
-      `owner check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
-      `owner check: new owner Corridra founder (${short(founder)}) passes`,
-      'open work owned by the leaving members: missions 0, cases 0, opportunities 0',
+      `intake check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
+      `intake check: new owner Corridra founder (${short(founder)}) passes`,
+      `network check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
+      `network check: new owner Corridra founder (${short(founder)}) passes`,
+      'open work owned by the members to remove: missions 0, meetings 0, cases 0, opportunities 0, route readiness 0',
+      'for information, not blocking: open follow-ups 0, delivery requests 0, route releases 0',
       `member: would remove Synthetic operator (${short(s.f.users.operator!.id)}), role operator, from the real workspace only`,
       `member: would remove Synthetic reviewer (${short(s.f.users.reviewer!.id)}), role reviewer, from the real workspace only`,
       'nothing written (dry run)',
@@ -437,9 +440,12 @@ describe('the real intake owner change', () => {
     expect(again.lines).toEqual([
       `real workspace: Corridra request operations (${short(s.intakeTenantId)})`,
       `owner of new real requests: already Corridra founder (${short(founder)})`,
-      `owner check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
-      `owner check: new owner Corridra founder (${short(founder)}) passes`,
-      'open work owned by the leaving members: missions 0, cases 0, opportunities 0',
+      `intake check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
+      `intake check: new owner Corridra founder (${short(founder)}) passes`,
+      `network check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
+      `network check: new owner Corridra founder (${short(founder)}) passes`,
+      'open work owned by the members to remove: missions 0, meetings 0, cases 0, opportunities 0, route readiness 0',
+      'for information, not blocking: open follow-ups 0, delivery requests 0, route releases 0',
       `member: Synthetic operator (${short(s.f.users.operator!.id)}) is already removed from the real workspace`,
       `member: Synthetic reviewer (${short(s.f.users.reviewer!.id)}) is already removed from the real workspace`,
       'unchanged',
@@ -530,22 +536,52 @@ describe('the production shape: the configuration owner is one of the removed me
   test('open requests owned by a leaving member stop the apply until staff reassign them, then the change lands', async () => {
     const made = await requestOwner();
     expect(made.ownerId).toBe(s.f.users.owner!.id);
+    // An open meeting of that request, owned by the same leaving member. Test set-up only: the row is written past the
+    // meeting guards, which need a whole outreach history; what matters here is that the step counts it.
+    const meetingId = randomUUID();
+    const mission = (
+      await s.f.owner.query('SELECT mission_id FROM customer_private.owned_request WHERE id=$1', [
+        made.requestId,
+      ])
+    ).rows[0].mission_id as string;
+    const seed = async (sql: string, args: unknown[]) => {
+      const db = await s.f.owner.connect();
+      try {
+        await db.query('BEGIN');
+        await db.query("SET LOCAL session_replication_role='replica'");
+        await db.query(sql, args);
+        await db.query('COMMIT');
+      } catch (error) {
+        await db.query('ROLLBACK');
+        throw error;
+      } finally {
+        db.release();
+      }
+    };
+    await seed(
+      `INSERT INTO app.meeting(id,tenant_id,mission_id,target_id,title,status,purpose,owner_id,next_action,due_at,reason,created_by)
+       VALUES($1,$2,$3,gen_random_uuid(),'Supplier visit','SCHEDULED','commercial_qualification',$4,'Hold the meeting',now()+interval '3 days','Scheduled with the supplier',$4)`,
+      [meetingId, s.intakeTenantId, mission, s.f.users.owner!.id],
+    );
     const start = await state();
     const dry = await run(false);
     expect(dry.state).toBe('dry_run');
     expect(dry.lines).toEqual([
       `real workspace: Corridra request operations (${short(s.intakeTenantId)})`,
       `owner of new real requests: would change from the current owner (${short(s.f.users.owner!.id)}) to Corridra founder (${short(admin)})`,
-      `owner check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
-      `owner check: new owner Corridra founder (${short(admin)}) passes`,
-      'open work owned by the leaving members: missions 1, cases 0, opportunities 0',
+      `intake check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
+      `intake check: new owner Corridra founder (${short(admin)}) passes`,
+      `network check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
+      `network check: new owner Corridra founder (${short(admin)}) passes`,
+      'open work owned by the members to remove: missions 1, meetings 1, cases 0, opportunities 0, route readiness 0',
+      'for information, not blocking: open follow-ups 0, delivery requests 0, route releases 0',
       'apply would refuse: Reassign these on the staff screens first',
       `member: would remove Synthetic operator (${short(s.f.users.owner!.id)}), role owner, from the real workspace only`,
       `member: would remove Synthetic reviewer (${short(s.f.users.reviewer!.id)}), role reviewer, from the real workspace only`,
       'nothing written (dry run)',
     ]);
     await expect(run(true)).rejects.toThrow(
-      'Reassign these on the staff screens first: open missions 1, cases 0, opportunities 0 owned by the leaving members',
+      'Reassign these on the staff screens first: open missions 1, meetings 1, cases 0, opportunities 0, route readiness 0 owned by the members to remove',
     );
     expect(await state()).toEqual(start);
     // Staff reassign the open request on their own screen: a signed-in member, the mission guard and its audit event.
@@ -555,11 +591,17 @@ describe('the production shape: the configuration owner is one of the removed me
         [s.intakeTenantId, s.f.users.owner!.id, admin],
       ),
     );
+    // The meeting alone still stops the apply.
+    await expect(run(true)).rejects.toThrow(
+      'Reassign these on the staff screens first: open missions 0, meetings 1, cases 0, opportunities 0, route readiness 0 owned by the members to remove',
+    );
+    // Stands in for the staff meeting screen, which this test does not drive.
+    await seed('UPDATE app.meeting SET owner_id=$2 WHERE id=$1', [meetingId, admin]);
     const before = await state();
     const result = await run(true);
     expect(result.state).toBe('applied');
     expect(result.lines).toContain(
-      'open work owned by the leaving members: missions 0, cases 0, opportunities 0',
+      'open work owned by the members to remove: missions 0, meetings 0, cases 0, opportunities 0, route readiness 0',
     );
     expect(result.lines.join('\n')).not.toMatch(/apply would refuse/);
     const after = await state();
@@ -588,7 +630,7 @@ describe('the production shape: the configuration owner is one of the removed me
     const again = await run(true);
     expect(again.state).toBe('unchanged');
     expect(again.lines).toContain(
-      `owner check: configuration owner (${short(s.f.users.owner!.id)}) does not pass: not an active owner or admin`,
+      `intake check: configuration owner (${short(s.f.users.owner!.id)}) does not pass: not an active owner or admin`,
     );
   }, 180000);
 

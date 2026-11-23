@@ -102,20 +102,22 @@ export async function changeRealIntakeOwner(
     const owner = owners[0]!;
     // The test app.submit_mission applies to a recorded owner (without it real intake would refuse every request), plus the
     // operating country rule of the offline network step, which reads the same owner.
-    const failures = (member: Member | undefined) => {
+    // Two checks, named for what reads them: the intake check is the membership test in app.submit_mission; the network
+    // check is that test plus the operating country, as the offline network step applies it.
+    const failures = (member: Member | undefined, network: boolean) => {
       if (!member || member.revoked || !['owner', 'admin'].includes(member.role))
         return ['not an active owner or admin'];
       return [
         ...(member.disabled ? ['account disabled'] : []),
         ...(member.real_purpose ? [] : ['no real processing purpose']),
-        ...(member.country_ok ? [] : ['operating country not allowed']),
+        ...(network && !member.country_ok ? ['operating country not allowed'] : []),
       ];
     };
-    const verdict = (member: Member | undefined) => {
-      const found = failures(member);
+    const verdict = (member: Member | undefined, network: boolean) => {
+      const found = failures(member, network);
       return found.length ? `does not pass: ${found.join(', ')}` : 'passes';
     };
-    if (failures(owner).length)
+    if (failures(owner, true).length)
       throw new Error(
         'The new owner needs an active account, the real processing purpose and an allowed operating country in the real workspace',
       );
@@ -161,32 +163,55 @@ export async function changeRealIntakeOwner(
     // Whether each owner would pass the check real intake applies once an owner is recorded.
     const configurationOwner = members.find((member) => member.user_id === configuration.owner_id);
     lines.push(
-      `owner check: configuration owner (${short(configuration.owner_id)}) ${verdict(configurationOwner)}`,
-      `owner check: new owner ${plan.owner} (${short(owner.user_id)}) ${verdict(owner)}`,
+      `intake check: configuration owner (${short(configuration.owner_id)}) ${verdict(configurationOwner, false)}`,
+      `intake check: new owner ${plan.owner} (${short(owner.user_id)}) ${verdict(owner, false)}`,
+      `network check: configuration owner (${short(configuration.owner_id)}) ${verdict(configurationOwner, true)}`,
+      `network check: new owner ${plan.owner} (${short(owner.user_id)}) ${verdict(owner, true)}`,
     );
     // Open work the leaving members still own. A staff update needs an owner who is an active member, and the staff screens
     // then preselect another owner, so the work would move silently. Nothing here reassigns it: the mission guard accepts an
     // owner change only from a signed-in member. The apply refuses until staff have reassigned it on their own screens.
+    // The lock app.submit_mission takes for every request: held from here to the commit, so no real request can land on
+    // a member who is being removed while this transaction counts and writes.
+    if (value.apply) await db.query("SELECT pg_advisory_xact_lock(hashtext('corridra:intake'))");
+    // Only the members still to be removed are counted. Blocking kinds are those a staff form would silently move to
+    // another owner; the others cannot change owner on an update, so they are shown for information only.
     const open = (
-      await db.query<{ missions: number; cases: number; opportunities: number }>(
+      await db.query<Record<string, number>>(
         `SELECT
           (SELECT count(*) FROM app.mission m WHERE m.tenant_id=$1 AND m.owner_id=ANY($2::uuid[])
             AND m.status NOT IN ('CLOSED','CANCELLED'))::int AS missions,
+          (SELECT count(*) FROM app.meeting g WHERE g.tenant_id=$1 AND g.owner_id=ANY($2::uuid[])
+            AND g.status IN ('PROPOSED','ACCEPTED','SCHEDULED','RESCHEDULE_REQUIRED'))::int AS meetings,
           (SELECT count(*) FROM app.operations_case c WHERE c.tenant_id=$1 AND c.owner_id=ANY($2::uuid[])
             AND c.state IN ('OPEN','BLOCKED') AND c.version=(SELECT max(v.version) FROM app.operations_case v
             WHERE v.tenant_id=c.tenant_id AND v.key=c.key))::int AS cases,
           (SELECT count(*) FROM app.opportunity o WHERE o.tenant_id=$1 AND o.owner_id=ANY($2::uuid[])
-            AND o.status<>'LOST')::int AS opportunities`,
-        [workspaceId, leaving.map((member) => member.user_id)],
+            AND o.status NOT IN ('LOST','CASH_COLLECTED','RECURRING_REVENUE'))::int AS opportunities,
+          (SELECT count(*) FROM app.route_readiness r WHERE r.tenant_id=$1 AND r.owner_id=ANY($2::uuid[])
+            AND r.version=(SELECT max(v.version) FROM app.route_readiness v WHERE v.tenant_id=r.tenant_id
+            AND v.route_id=r.route_id AND v.mission_type=r.mission_type AND v.dimension=r.dimension))::int AS readiness,
+          (SELECT count(*) FROM app.follow_up f WHERE f.tenant_id=$1 AND f.owner_id=ANY($2::uuid[])
+            AND f.status='OPEN')::int AS follow_ups,
+          (SELECT count(*) FROM app.delivery_request d WHERE d.tenant_id=$1
+            AND d.owner_id=ANY($2::uuid[]))::int AS delivery_requests,
+          (SELECT count(*) FROM app.route_release l WHERE l.tenant_id=$1 AND l.owner_id=ANY($2::uuid[])
+            AND l.version=(SELECT max(v.version) FROM app.route_release v WHERE v.tenant_id=l.tenant_id
+            AND v.route_id=l.route_id AND v.mission_type=l.mission_type))::int AS releases`,
+        [workspaceId, toRemove.map((member) => member.user_id)],
       )
     ).rows[0]!;
-    const counts = `missions ${open.missions}, cases ${open.cases}, opportunities ${open.opportunities}`;
-    const blocked = toRemove.length > 0 && open.missions + open.cases + open.opportunities > 0;
-    lines.push(`open work owned by the leaving members: ${counts}`);
+    const counts = `missions ${open.missions}, meetings ${open.meetings}, cases ${open.cases}, opportunities ${open.opportunities}, route readiness ${open.readiness}`;
+    const blocked =
+      open.missions! + open.meetings! + open.cases! + open.opportunities! + open.readiness! > 0;
+    lines.push(
+      `open work owned by the members to remove: ${counts}`,
+      `for information, not blocking: open follow-ups ${open.follow_ups}, delivery requests ${open.delivery_requests}, route releases ${open.releases}`,
+    );
     if (blocked) {
       if (value.apply)
         throw new Error(
-          `Reassign these on the staff screens first: open ${counts} owned by the leaving members`,
+          `Reassign these on the staff screens first: open ${counts} owned by the members to remove`,
         );
       lines.push('apply would refuse: Reassign these on the staff screens first');
     }
