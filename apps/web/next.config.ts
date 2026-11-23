@@ -50,6 +50,9 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
+          // D-014 (B1, 23 Nov 2026): a page opened from another site cannot reach this window, and this window
+          // cannot be reached through one it opens. Nothing here uses window.opener or a cross-site popup.
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
         ],
       },
       {
