@@ -71,3 +71,10 @@
   flex: 1 1 100%;
   margin: 0;
 }
+/* From 48rem the answers sit in two columns, so the last step stays inside one desktop screen. */
+@media (min-width: 48rem) {
+  .invoice-issuer-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-4);
+  }
+}
