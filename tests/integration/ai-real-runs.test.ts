@@ -13,6 +13,12 @@ import { migrateAiModelPolicyReal } from '../../packages/db/src/ai-model-policy-
 import { migrateAiRealRuns } from '../../packages/db/src/ai-real-runs-migrate';
 import { IntelligenceService } from '../../packages/intelligence/src/service';
 import {
+  IntelligenceGateway,
+  holdsLongNumber,
+  type Attempt,
+  type GatewayStore,
+} from '../../packages/intelligence/src/index';
+import {
   SdkInferenceAdapter,
   adapterSecretRef,
   type AdapterRequest,
@@ -26,6 +32,10 @@ let routes: CorridorService;
 let access: AccessService;
 let ai: IntelligenceService;
 const requests: AdapterRequest[] = [];
+// Runs once inside the next provider call, so a test can pause the control while a run is in flight.
+let duringGenerate: (() => Promise<unknown>) | null = null;
+let lastRun: { commandId: string; policyId: string };
+let paused: { missionId: string; policyId: string; claim: string; unreviewed: string };
 const reason = 'Real workspace AI assistance check';
 const later = (days: number) => new Date(Date.now() + days * 86400000).toISOString();
 let purpose = 'synthetic_validation';
@@ -209,6 +219,11 @@ beforeAll(async () => {
   ai = new IntelligenceService(f.runtime, true, {
     async generate(r) {
       requests.push(r);
+      if (duringGenerate) {
+        const hook = duringGenerate;
+        duringGenerate = null;
+        await hook();
+      }
       const s = JSON.parse(r.prompt).untrustedSources[0];
       return {
         output: {
@@ -230,7 +245,7 @@ beforeAll(async () => {
     reason,
   });
   await access.appendConfig(f.users.owner.ctx, { key: 'ai.enabled', enabled: true });
-  for (let i = 0; i < 12; i++) missions.push((await f.target('CN')).missionId);
+  for (let i = 0; i < 26; i++) missions.push((await f.target('CN')).missionId);
   await migrateCustomerRealUse(f.owner);
   await migrateNetworkRealUse(f.owner);
   await migrateAiModelPolicyReal(f.owner);
@@ -315,6 +330,29 @@ describe('open', () => {
       (await f.owner.query('SELECT version,enabled,reason FROM app.ai_real_control')).rows,
     ).toEqual([{ version: 1, enabled: true, reason: 'Owner opened AI for real workspaces' }]);
     await expect(f.owner.query('UPDATE app.ai_real_control SET enabled=false')).rejects.toThrow();
+    // The workspace setting was switched on before the control was opened. It never counts: nothing goes live on opening.
+    expect(await gate()).toBe(false);
+    const before = { rows: await rows(), sent: requests.length };
+    await expect(
+      ai.run(f.ctx, command(open.missionId, open.policyId, open.claim)),
+    ).rejects.toMatchObject({ code: 'AI_REAL_OFF' });
+    await expect(
+      rawContext(
+        f.runtime,
+        raw('operator'),
+        "INSERT INTO app.ai_run(id,tenant_id,mission_id,policy_id,task,input,input_hash,created_by) VALUES($1,$2,$3,$4,'commercial_intent',$5::jsonb,'hash',app.actor_id())",
+        [
+          randomUUID(),
+          f.tenantA,
+          open.missionId,
+          open.policyId,
+          JSON.stringify({ task: 'commercial_intent', schemaVersion: 1, claimIds: [open.claim] }),
+        ],
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+    expect({ rows: await rows(), sent: requests.length }).toEqual(before);
+    // Only a setting the workspace owner writes after the opening switches AI on for that workspace.
+    await access.appendConfig(f.users.owner.ctx, { key: 'ai.enabled', enabled: true });
     expect(await gate()).toBe(true);
     await access.appendConfig(f.users.owner.ctx, { key: 'ai.enabled', enabled: false });
     expect(await gate()).toBe(false);
@@ -368,6 +406,7 @@ describe('open', () => {
       expect(stored.output.authority).toBe('UNVERIFIED_DRAFT');
       expect(stored.metadata.adapter).toBe(adapter);
       seen.push(stored.metadata.adapter);
+      lastRun = { commandId: cmd.commandId, policyId: target.policyId };
       // An exact retry never calls the provider again.
       await ai.run(f.ctx, cmd);
       expect(requests).toHaveLength(sent + 1);
@@ -444,6 +483,126 @@ describe('open', () => {
       ).rejects.toMatchObject({ code: '42501' });
     }
     expect({ rows: await rows(), sent: requests.length }).toEqual(before);
+  });
+});
+
+describe('long numbers and the last check before a provider call', () => {
+  const bare = [
+    'Ring 0171 2345 6789 for the capacity sheet.',
+    'Ring 0171.234.5678 for the capacity sheet.',
+    'The desk is on (0171) 234-5678.',
+    'The desk is on 01712345678.',
+  ];
+  const ordinary =
+    'The line was installed in 2026 on 2026-11-23 at a cost of 1,250,000 taka and makes 100 units per hour.';
+
+  test('the rule refuses a bare phone number and passes a year, a date and a comma-grouped amount', () => {
+    for (const words of bare) expect(holdsLongNumber(words), words).toBe(true);
+    for (const words of [ordinary, statement, 'Built in 2019 and 2026.', 'It costs 999,999 taka.'])
+      expect(holdsLongNumber(words), words).toBe(false);
+  });
+
+  test('a real workspace refuses a statement with a bare phone number in the database, and runs an ordinary one', async () => {
+    const before = { rows: await rows(), sent: requests.length };
+    for (const words of bare) {
+      const c = await publicClaim(words);
+      const policyId = await policy('openai', c.source);
+      const missionId = await assign(policyId);
+      await expect(
+        ai.run(f.ctx, command(missionId, policyId, c.claim)),
+        words,
+      ).rejects.toMatchObject({
+        code: '42501',
+        message: 'A cited statement holds a long number that may be a phone number',
+      });
+    }
+    expect({ rows: await rows(), sent: requests.length }).toEqual(before);
+    const c = await publicClaim(ordinary);
+    const policyId = await policy('openai', c.source);
+    const missionId = await assign(policyId);
+    const cmd = command(missionId, policyId, c.claim);
+    const result = await ai.run(f.ctx, cmd);
+    expect('output' in result && result.output).toBeTruthy();
+    expect(requests).toHaveLength(before.sent + 1);
+    expect(JSON.parse(requests[before.sent].prompt).untrustedSources[0].quote).toBe(ordinary);
+    lastRun = { commandId: cmd.commandId, policyId };
+  });
+
+  // The application path, on its own: the gateway with the sources and the policy of a real run.
+  async function gateway(proceed: boolean[], quote?: string, strictContact = true) {
+    const sources = await ai.sources(f.ctx, lastRun.commandId);
+    const model = (
+      await f.owner.query('SELECT configuration FROM app.ai_model_policy WHERE id=$1', [
+        lastRun.policyId,
+      ])
+    ).rows[0].configuration;
+    const log = { reserve: 0, generate: 0, records: [] as Attempt[] };
+    const store: GatewayStore = {
+      authorize: async () => ({
+        tenantId: f.tenantA,
+        sources: [{ ...sources[0], quote: quote ?? sources[0].quote }],
+        models: [model, model],
+        strictContact,
+      }),
+      reserve: async () => {
+        log.reserve++;
+        return true;
+      },
+      record: async (attempt) => {
+        log.records.push(attempt);
+      },
+      proceed: async () => proceed.shift() ?? false,
+    };
+    const run = () =>
+      new IntelligenceGateway(
+        {
+          async generate(r) {
+            log.generate++;
+            return {
+              output: {
+                authority: 'UNVERIFIED_DRAFT',
+                facts: [JSON.parse(r.prompt).untrustedSources[0]],
+                unknowns: ['Acceptance is not known'],
+                data: { proposedIntent: 'Review a machine', fields: [] },
+              },
+              inputTokens: 100,
+              outputTokens: 100,
+            };
+          },
+        },
+        true,
+      ).execute(
+        { task: 'commercial_intent', schemaVersion: 1, claimIds: [sources[0].claimId] },
+        store,
+      );
+    return { log, run };
+  }
+
+  test('the application refuses a bare phone number for a real workspace before any reservation, and leaves a sample workspace as it was', async () => {
+    for (const words of bare) {
+      const strict = await gateway([true, true], words);
+      await expect(strict.run(), words).rejects.toThrow('Personal contact data is not supported');
+      expect(strict.log).toEqual({ reserve: 0, generate: 0, records: [] });
+    }
+    const sample = await gateway([true, true], bare[0], false);
+    expect((await sample.run()).output).toBeTruthy();
+    expect(sample.log.generate).toBe(1);
+  });
+
+  test('the control is read again before a reservation and right before the provider call', async () => {
+    const early = await gateway([false]);
+    expect(await early.run()).toMatchObject({ output: null, fallback: 'MANUAL_REVIEW' });
+    expect(early.log).toEqual({ reserve: 0, generate: 0, records: [] });
+    const late = await gateway([true, false]);
+    expect(await late.run()).toMatchObject({ output: null, fallback: 'MANUAL_REVIEW' });
+    expect(late.log).toMatchObject({ reserve: 1, generate: 0 });
+    expect(late.log.records).toMatchObject([
+      { status: 'FAILED', errorCode: 'PAUSED_BEFORE_INFERENCE', inputTokens: 0, outputTokens: 0 },
+    ]);
+    const through = await gateway([true, true]);
+    expect((await through.run()).output).toBeTruthy();
+    expect(through.log).toMatchObject({ reserve: 1, generate: 1 });
+    expect(through.log.records).toMatchObject([{ status: 'SUCCEEDED' }]);
   });
 });
 
@@ -601,6 +760,7 @@ describe('paused', () => {
         [pending.commandId],
       )
     ).rows[0].id;
+    paused = { missionId, policyId, claim: c.claim, unreviewed };
     expect(await control(false)).toEqual({ enabled: false, changed: true });
     const before = { rows: await rows(), sent: requests.length };
     expect(await gate()).toBe(false);
@@ -614,7 +774,7 @@ describe('paused', () => {
         decision: 'ACCEPT',
         reason,
       }),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: '42501' });
     expect({ rows: await rows(), sent: requests.length }).toEqual(before);
     const workspace = await ai.workspace(f.ctx);
     expect(workspace.enabled).toBe(false);
@@ -628,6 +788,64 @@ describe('paused', () => {
     ]);
   });
 
+  test('a pause in the middle of a run stores no result text and still ends the run in a recorded state', async () => {
+    // Reopening after a pause needs no new workspace setting: the one written after the first opening still counts.
+    expect(await control(true)).toEqual({ enabled: true, changed: true });
+    expect(await gate()).toBe(true);
+    const c = await publicClaim(statement);
+    const policyId = await policy('google', c.source);
+    const missionId = await assign(policyId);
+    const cmd = command(missionId, policyId, c.claim);
+    const sent = requests.length;
+    duringGenerate = () => control(false);
+    const result = await ai.run(f.ctx, cmd);
+    expect(result).toMatchObject({ output: null, fallback: 'MANUAL_REVIEW' });
+    // One call was already on its way when the pause landed; no second call follows it.
+    expect(requests).toHaveLength(sent + 1);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT r.status,r.output FROM app.ai_result r JOIN app.ai_attempt a ON a.id=r.attempt_id WHERE a.run_id=$1',
+          [cmd.commandId],
+        )
+      ).rows,
+    ).toEqual([{ status: 'FAILED', output: null }]);
+    expect(
+      (
+        await f.owner.query('SELECT status,reason_code FROM app.ai_completion WHERE run_id=$1', [
+          cmd.commandId,
+        ])
+      ).rows,
+    ).toEqual([{ status: 'MANUAL_REVIEW', reason_code: 'PROVIDER_OR_BUDGET_UNAVAILABLE' }]);
+    const shown = (await ai.workspace(f.ctx)).drafts.filter(
+      (d: { run_id: string }) => d.run_id === cmd.commandId,
+    );
+    expect(shown.map((d: { status: string }) => d.status)).toEqual(['FAILED']);
+    // While paused, only those two closing rows are accepted: no new run, attempt, successful result or review.
+    const closed = async (sql: string, args: unknown[]) =>
+      expect(rawContext(f.runtime, raw('operator'), sql, args)).rejects.toMatchObject({
+        code: '42501',
+      });
+    await closed(
+      "INSERT INTO app.ai_run(id,tenant_id,mission_id,policy_id,task,input,input_hash,created_by) VALUES($1,$2,$3,$4,'commercial_intent',$5::jsonb,'hash',app.actor_id())",
+      [
+        randomUUID(),
+        f.tenantA,
+        missionId,
+        policyId,
+        JSON.stringify({ task: 'commercial_intent', schemaVersion: 1, claimIds: [c.claim] }),
+      ],
+    );
+    await closed(
+      'INSERT INTO app.ai_attempt(id,tenant_id,run_id,policy_id,reserved_minor,created_by) VALUES($1,$2,$3,$4,1,app.actor_id())',
+      [randomUUID(), f.tenantA, cmd.commandId, policyId],
+    );
+    await closed(
+      "INSERT INTO app.ai_review(id,tenant_id,result_id,decision,reason,created_by) VALUES($1,$2,$3,'ACCEPT',$4,app.actor_id())",
+      [randomUUID(), f.tenantA, paused.unreviewed, reason],
+    );
+  });
+
   test('switching real use off closes AI for the real workspace even while the control is open', async () => {
     await control(true);
     expect(await gate()).toBe(true);
@@ -635,6 +853,35 @@ describe('paused', () => {
     try {
       await f.owner.query('UPDATE customer_private.real_use_configuration SET enabled=false');
       expect(await gate()).toBe(false);
+      const before = { rows: await rows(), sent: requests.length };
+      // The database refuses a run and a review on its own while real use is off.
+      await expect(
+        rawContext(
+          f.runtime,
+          raw('operator'),
+          "INSERT INTO app.ai_run(id,tenant_id,mission_id,policy_id,task,input,input_hash,created_by) VALUES($1,$2,$3,$4,'commercial_intent',$5::jsonb,'hash',app.actor_id())",
+          [
+            randomUUID(),
+            f.tenantA,
+            paused.missionId,
+            paused.policyId,
+            JSON.stringify({
+              task: 'commercial_intent',
+              schemaVersion: 1,
+              claimIds: [paused.claim],
+            }),
+          ],
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+      await expect(
+        rawContext(
+          f.runtime,
+          raw('reviewer'),
+          "INSERT INTO app.ai_review(id,tenant_id,result_id,decision,reason,created_by) VALUES($1,$2,$3,'ACCEPT',$4,app.actor_id())",
+          [randomUUID(), f.tenantA, paused.unreviewed, reason],
+        ),
+      ).rejects.toMatchObject({ code: '42501' });
+      expect({ rows: await rows(), sent: requests.length }).toEqual(before);
     } finally {
       await f.owner.query('UPDATE customer_private.real_use_configuration SET enabled=true');
       await f.owner.query(

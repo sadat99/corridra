@@ -2,14 +2,22 @@
 -- Installing it opens nothing. A control, app.ai_real_control, starts closed; while it is closed every difference below is
 -- unreachable and real workspaces behave exactly as after ADR-089. Only the offline installer opens or pauses it, with a reason.
 -- Three functions are replaced, each hash-guarded against the definition named here, and nothing else is replaced:
---  1. app.guard_ai() (as left by 0001 of this family). One opening check changes, for ai_run, ai_attempt, ai_result, ai_review
---     and ai_completion: a sample workspace is accepted exactly as before (its processing purpose is still synthetic_validation),
---     and a real workspace is accepted only when real use is allowed and the control is open, under its own processing purpose.
---     One check is added: in a real workspace a run or an attempt needs a model policy whose evaluation status is
---     APPROVED_PROVIDER, so a provider evaluated on sample data only never serves real work. The app.ai_model_policy branch and
---     every other rule (roles, fresh authenticator check, budgets, attempt limit, circuit, grounding, review) are byte-identical.
+--  1. app.guard_ai() (as left by 0001 of this family). For ai_run, ai_attempt, ai_result, ai_review and ai_completion:
+--     a. The opening check accepts a sample workspace exactly as before (its processing purpose is still synthetic_validation)
+--        and a real workspace only when real use is allowed and the control is open, under its own processing purpose.
+--     b. While the control is closed a real workspace may still record the two rows that end a run already started: a FAILED
+--        result and a MANUAL_REVIEW completion. So a pause in the middle of a run never leaves it pending for ever. Neither
+--        row carries any output, and each still needs the run or attempt the same person created.
+--     c. In a real workspace a run or an attempt needs a model policy whose evaluation status is APPROVED_PROVIDER, so a
+--        provider evaluated on sample data only never serves real work.
+--     d. In a real workspace a run is refused when a cited statement holds seven or more digits in a row, counting through
+--        spaces, dots, dashes and brackets (a phone number written without a plus sign or a keyword). Dates written
+--        YYYY-MM-DD are taken out first. A year (2026) and an amount grouped with commas (1,250,000) pass.
+--     The app.ai_model_policy branch and every other rule (roles, fresh authenticator check, budgets, attempt limit, circuit,
+--     grounding, review) are byte-identical.
 --  2. app.part4_enabled(uuid,text) (as left by network-real-use 0001). For a real workspace the key ai.enabled can now be true,
---     only while the control is open and the owner of that workspace has switched ai.enabled on. network.enabled is unchanged.
+--     only while the control is open and only when the owner of that workspace wrote the latest ai.enabled setting after the
+--     control was first opened. A setting written earlier never counts. network.enabled is unchanged.
 --  3. app.ai_output_grounded(uuid,uuid,jsonb) (migrations/0026). The access check reads the workspace's own processing purpose
 --     instead of the fixed sample purpose. Every grounding rule is byte-identical.
 -- app.ai_run_authorized, app.ai_scoped_sources, app.guard_ai_mission_budget, every RLS policy and every trigger are untouched.
@@ -48,14 +56,20 @@ REVOKE ALL ON FUNCTION app.ai_real_runs_open() FROM PUBLIC,corridra_auth;
 GRANT EXECUTE ON FUNCTION app.ai_real_runs_open() TO corridra_runtime;
 
 CREATE OR REPLACE FUNCTION app.guard_ai() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog AS $$
-DECLARE run app.ai_run; attempt app.ai_attempt; policy app.ai_model_policy; cfg jsonb; n integer;
+DECLARE run app.ai_run; attempt app.ai_attempt; policy app.ai_model_policy; cfg jsonb; n integer; closing boolean:=false;
 BEGIN
  IF NEW.created_at IS DISTINCT FROM now() THEN RAISE EXCEPTION 'Server-recorded AI timestamp required'; END IF;
  IF TG_TABLE_NAME='ai_model_policy' THEN
   IF NEW.created_by<>app.actor_id() OR NOT app.can_access(NEW.tenant_id,'INTERNAL',app.tenant_processing_purpose(NEW.tenant_id)) OR NOT EXISTS(SELECT FROM app.tenant WHERE id=NEW.tenant_id AND (synthetic OR app.real_use_allowed(id))) THEN RAISE EXCEPTION 'Scoped synthetic actor required' USING ERRCODE='42501'; END IF;
- ELSIF NEW.created_by<>app.actor_id() OR NOT app.can_access(NEW.tenant_id,'INTERNAL',app.tenant_processing_purpose(NEW.tenant_id)) OR NOT EXISTS(SELECT FROM app.tenant WHERE id=NEW.tenant_id AND (synthetic OR (app.real_use_allowed(id) AND app.ai_real_runs_open()))) THEN RAISE EXCEPTION 'Scoped synthetic actor required' USING ERRCODE='42501'; END IF;
+ ELSE
+  IF TG_TABLE_NAME='ai_completion' THEN closing:=NEW.status='MANUAL_REVIEW'; ELSIF TG_TABLE_NAME='ai_result' THEN closing:=NEW.status='FAILED'; END IF;
+  IF NEW.created_by<>app.actor_id() OR NOT app.can_access(NEW.tenant_id,'INTERNAL',app.tenant_processing_purpose(NEW.tenant_id)) OR NOT EXISTS(SELECT FROM app.tenant WHERE id=NEW.tenant_id AND (synthetic OR (app.real_use_allowed(id) AND (app.ai_real_runs_open() OR closing)))) THEN RAISE EXCEPTION 'Scoped synthetic actor required' USING ERRCODE='42501'; END IF;
+ END IF;
  IF TG_TABLE_NAME IN ('ai_run','ai_attempt') THEN
   IF NOT coalesce(app.tenant_is_synthetic(NEW.tenant_id),false) AND NOT EXISTS(SELECT FROM app.ai_model_policy WHERE tenant_id=NEW.tenant_id AND id=NEW.policy_id AND configuration->>'evaluationStatus'='APPROVED_PROVIDER') THEN RAISE EXCEPTION 'Approved provider evaluation required in a real workspace' USING ERRCODE='42501'; END IF;
+ END IF;
+ IF TG_TABLE_NAME='ai_run' THEN
+  IF NOT coalesce(app.tenant_is_synthetic(NEW.tenant_id),false) AND EXISTS(SELECT FROM app.claim c WHERE c.tenant_id=NEW.tenant_id AND c.id::text IN (SELECT jsonb_array_elements_text(CASE WHEN jsonb_typeof(NEW.input->'claimIds')='array' THEN NEW.input->'claimIds' ELSE '[]'::jsonb END)) AND regexp_replace(c.statement,'[0-9]{4}-[0-9]{2}-[0-9]{2}','','g') ~ '[0-9]([ .()-]*[0-9]){6,}') THEN RAISE EXCEPTION 'A cited statement holds a long number that may be a phone number' USING ERRCODE='42501'; END IF;
  END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended(NEW.tenant_id::text||':ai-budget',0));
  IF TG_TABLE_NAME='ai_model_policy' THEN
@@ -97,7 +111,7 @@ END $$;
 CREATE OR REPLACE FUNCTION app.part4_enabled(t uuid,k text) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
  SELECT coalesce(app.can_access(t,'INTERNAL',app.tenant_processing_purpose(t))
  AND app.network_scope_allowed(t)
- AND (app.tenant_is_synthetic(t) OR k='network.enabled' OR (k='ai.enabled' AND app.ai_real_runs_open()))
+ AND (app.tenant_is_synthetic(t) OR k='network.enabled' OR (k='ai.enabled' AND app.ai_real_runs_open() AND coalesce((SELECT created_at FROM app.config_version WHERE tenant_id=t AND key=k AND effective_from<=now() ORDER BY version DESC LIMIT 1)>(SELECT min(created_at) FROM app.ai_real_control WHERE enabled),false)))
  AND (SELECT value->>'enabled'='true' FROM app.config_version WHERE tenant_id=t AND key=k AND effective_from<=now() ORDER BY version DESC LIMIT 1),false)
 $$;
 

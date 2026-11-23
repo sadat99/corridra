@@ -192,18 +192,27 @@ test('the control answers the runtime role only, and nobody but the owner reads 
 });
 
 test('only the named lines differ from the definitions the step found', async () => {
-  // 1. app.guard_ai(): the opening check of the five run tables and one added check; everything else is byte-identical.
+  // 1. app.guard_ai(): the opening check of the five run tables, the two closing rows, and two checks added for real
+  // workspaces (approved provider, long numbers); everything else is byte-identical.
   const guardWas = written(`${dir}/${first}`, 'FUNCTION app.guard_ai()');
   const opening =
     " ELSIF NEW.created_by<>app.actor_id() OR NOT app.can_access(NEW.tenant_id,'INTERNAL','synthetic_validation') OR NOT EXISTS(SELECT FROM app.tenant WHERE id=NEW.tenant_id AND synthetic) THEN RAISE EXCEPTION 'Scoped synthetic actor required' USING ERRCODE='42501'; END IF;\n";
   const openingNow =
-    " ELSIF NEW.created_by<>app.actor_id() OR NOT app.can_access(NEW.tenant_id,'INTERNAL',app.tenant_processing_purpose(NEW.tenant_id)) OR NOT EXISTS(SELECT FROM app.tenant WHERE id=NEW.tenant_id AND (synthetic OR (app.real_use_allowed(id) AND app.ai_real_runs_open()))) THEN RAISE EXCEPTION 'Scoped synthetic actor required' USING ERRCODE='42501'; END IF;\n" +
-    " IF TG_TABLE_NAME IN ('ai_run','ai_attempt') THEN\n  IF NOT coalesce(app.tenant_is_synthetic(NEW.tenant_id),false) AND NOT EXISTS(SELECT FROM app.ai_model_policy WHERE tenant_id=NEW.tenant_id AND id=NEW.policy_id AND configuration->>'evaluationStatus'='APPROVED_PROVIDER') THEN RAISE EXCEPTION 'Approved provider evaluation required in a real workspace' USING ERRCODE='42501'; END IF;\n END IF;\n";
+    " ELSE\n  IF TG_TABLE_NAME='ai_completion' THEN closing:=NEW.status='MANUAL_REVIEW'; ELSIF TG_TABLE_NAME='ai_result' THEN closing:=NEW.status='FAILED'; END IF;\n" +
+    "  IF NEW.created_by<>app.actor_id() OR NOT app.can_access(NEW.tenant_id,'INTERNAL',app.tenant_processing_purpose(NEW.tenant_id)) OR NOT EXISTS(SELECT FROM app.tenant WHERE id=NEW.tenant_id AND (synthetic OR (app.real_use_allowed(id) AND (app.ai_real_runs_open() OR closing)))) THEN RAISE EXCEPTION 'Scoped synthetic actor required' USING ERRCODE='42501'; END IF;\n END IF;\n" +
+    " IF TG_TABLE_NAME IN ('ai_run','ai_attempt') THEN\n  IF NOT coalesce(app.tenant_is_synthetic(NEW.tenant_id),false) AND NOT EXISTS(SELECT FROM app.ai_model_policy WHERE tenant_id=NEW.tenant_id AND id=NEW.policy_id AND configuration->>'evaluationStatus'='APPROVED_PROVIDER') THEN RAISE EXCEPTION 'Approved provider evaluation required in a real workspace' USING ERRCODE='42501'; END IF;\n END IF;\n" +
+    " IF TG_TABLE_NAME='ai_run' THEN\n  IF NOT coalesce(app.tenant_is_synthetic(NEW.tenant_id),false) AND EXISTS(SELECT FROM app.claim c WHERE c.tenant_id=NEW.tenant_id AND c.id::text IN (SELECT jsonb_array_elements_text(CASE WHEN jsonb_typeof(NEW.input->'claimIds')='array' THEN NEW.input->'claimIds' ELSE '[]'::jsonb END)) AND regexp_replace(c.statement,'[0-9]{4}-[0-9]{2}-[0-9]{2}','','g') ~ '[0-9]([ .()-]*[0-9]){6,}') THEN RAISE EXCEPTION 'A cited statement holds a long number that may be a phone number' USING ERRCODE='42501'; END IF;\n END IF;\n";
+  const declared = 'cfg jsonb; n integer;';
+  const declaredNow = 'cfg jsonb; n integer; closing boolean:=false;';
   const guardNow = stored((await definition('app.guard_ai()')).d);
   expect(guardWas.split(opening)).toHaveLength(2);
   expect(guardNow.split(openingNow)).toHaveLength(2);
-  expect(guardNow.replace(openingNow, opening).trim()).toBe(guardWas.trim());
-  // 2. app.part4_enabled: one more way for the key ai.enabled to be true in a real workspace, behind the control.
+  expect(guardNow.split(declaredNow)).toHaveLength(2);
+  expect(guardNow.replace(openingNow, opening).replace(declaredNow, declared).trim()).toBe(
+    guardWas.trim(),
+  );
+  // 2. app.part4_enabled: one more way for the key ai.enabled to be true in a real workspace, behind the control and only
+  // for a setting written after the control was first opened.
   const part4Was = written(
     'packages/db/network-real-use-migrations/0001_real_invited_execution.sql',
     'CREATE OR REPLACE FUNCTION app.part4_enabled(t uuid,k text)',
@@ -211,7 +220,7 @@ test('only the named lines differ from the definitions the step found', async ()
   const part4Now = stored((await definition('app.part4_enabled(uuid,text)')).d);
   const key = " AND (app.tenant_is_synthetic(t) OR k='network.enabled')\n";
   const keyNow =
-    " AND (app.tenant_is_synthetic(t) OR k='network.enabled' OR (k='ai.enabled' AND app.ai_real_runs_open()))\n";
+    " AND (app.tenant_is_synthetic(t) OR k='network.enabled' OR (k='ai.enabled' AND app.ai_real_runs_open() AND coalesce((SELECT created_at FROM app.config_version WHERE tenant_id=t AND key=k AND effective_from<=now() ORDER BY version DESC LIMIT 1)>(SELECT min(created_at) FROM app.ai_real_control WHERE enabled),false)))\n";
   expect(part4Now.split(keyNow)).toHaveLength(2);
   expect(part4Now.replace(keyNow, key).trim()).toBe(part4Was.trim());
   // 3. app.ai_output_grounded: the access check reads the workspace's own purpose; every grounding rule is byte-identical.

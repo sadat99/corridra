@@ -343,10 +343,12 @@ export class IntelligenceService {
     if (!this.enabled) throw new DomainError('AI assistance is disabled', 503);
     const v = runCommand.parse(raw),
       hash = createHash('sha256').update(JSON.stringify(v)).digest('hex');
+    let real = false;
     const existing = await withTenant(this.pool, ctx, 'trust.write', async (t) => {
       // ADR-091. A real workspace gets a plain answer while AI is off for it. The database refuses the insert in any case.
+      real = await isRealWorkspace(t);
       if (
-        (await isRealWorkspace(t)) &&
+        real &&
         (await t.db.query("SELECT app.part4_enabled($1,'ai.enabled') AS enabled", [t.tenantId]))
           .rows[0].enabled !== true
       )
@@ -427,8 +429,21 @@ export class IntelligenceService {
           tenantId: ctx.tenantId,
           sources,
           models: [primary, fallback?.configuration ?? primary],
+          strictContact: real,
         };
       },
+      // ADR-091. In a real workspace the owner's control and the workspace setting are read again before each
+      // reservation and right before the provider call, so a pause in between stops the call.
+      proceed: async () =>
+        !real ||
+        (await withTenant(
+          this.pool,
+          ctx,
+          'trust.write',
+          async (t) =>
+            (await t.db.query("SELECT app.part4_enabled($1,'ai.enabled') AS enabled", [t.tenantId]))
+              .rows[0].enabled === true,
+        )),
       reserve: async (p, worst) => {
         const id = randomUUID();
         try {

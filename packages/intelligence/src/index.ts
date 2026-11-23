@@ -66,9 +66,17 @@ export type Attempt = {
 };
 export interface GatewayStore {
   // Must authorize current source/claim/rights, current pinned mission policy and actor approval.
+  // strictContact is set for a real workspace (ADR-091): a long run of digits is then treated as a possible phone number.
   authorize(
     input: TaskInput,
-  ): Promise<{ tenantId: string; sources: Source[]; models: ModelPolicy[] }>;
+  ): Promise<{
+    tenantId: string;
+    sources: Source[];
+    models: ModelPolicy[];
+    strictContact?: boolean;
+  }>;
+  // Asked again right before a reservation and right before the provider call. False stops the run without a call.
+  proceed?(): Promise<boolean>;
   reserve(policy: ModelPolicy, worstCost: string): Promise<boolean>;
   record(attempt: Attempt, output?: unknown): Promise<void>;
 }
@@ -82,6 +90,11 @@ export const estimatedCost = (input: number, output: number, p: ModelPolicy) => 
     BigInt(1000000)
   ).toString();
 };
+// ADR-091, real workspaces only. Seven or more digits in a row, counting through spaces, dots, dashes and brackets, may be
+// a phone number written without a plus sign or a keyword. Dates written YYYY-MM-DD are taken out first. A year (2026) and
+// an amount grouped with commas (1,250,000) pass. The database applies the same rule in app.guard_ai().
+export const holdsLongNumber = (text: string) =>
+  /\d(?:[ .()-]*\d){6,}/.test(text.replace(/\d{4}-\d{2}-\d{2}/g, ''));
 export function checkGrounding(output: unknown, sources: Source[]) {
   const visit = (v: unknown): void => {
     if (Array.isArray(v)) {
@@ -148,6 +161,8 @@ export class IntelligenceGateway {
       )
     )
       throw new DomainError('Personal contact data is not supported');
+    if (context.strictContact && context.sources.some((s) => holdsLongNumber(s.quote)))
+      throw new DomainError('Personal contact data is not supported');
     for (const source of context.sources)
       if (source.rights.sourceId !== source.sourceId)
         throw new DomainError('Source rights mismatch');
@@ -183,6 +198,7 @@ export class IntelligenceGateway {
       const remainingBeforeReservation = task.timeoutMs - (Date.now() - started);
       if (remainingBeforeReservation <= 0) break;
       if (this.adapter.ready && !this.adapter.ready(p)) continue;
+      if (store.proceed && !(await store.proceed())) break;
       const worst = estimatedCost(inputCeiling, task.maxOutputTokens, p);
       if (
         reservedTotal + BigInt(worst) > totalCeiling ||
@@ -206,6 +222,24 @@ export class IntelligenceGateway {
           estimatedMinor: '0',
           latencyMs: 0,
           errorCode: 'DEADLINE_BEFORE_INFERENCE',
+        });
+        break;
+      }
+      // The last check before any text leaves: a pause between the reservation and here stops the call.
+      if (store.proceed && !(await store.proceed())) {
+        await store.record({
+          policyId: p.id,
+          model: p.model,
+          adapter: p.adapter,
+          promptVersion: task.promptVersion,
+          evaluationSet: task.evaluationSet,
+          status: 'FAILED',
+          inputTokens: 0,
+          outputTokens: 0,
+          reservedMinor: worst,
+          estimatedMinor: '0',
+          latencyMs: 0,
+          errorCode: 'PAUSED_BEFORE_INFERENCE',
         });
         break;
       }

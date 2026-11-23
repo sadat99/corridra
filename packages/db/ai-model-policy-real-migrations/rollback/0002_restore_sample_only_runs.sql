@@ -10,8 +10,8 @@
 DO $guard$ DECLARE n integer; BEGIN
  PERFORM pg_advisory_xact_lock(hashtext('corridra:migrations'));
  IF to_regclass('ai_model_policy_real_migrations.applied') IS NULL OR to_regprocedure('app.ai_real_runs_open()') IS NULL
-  OR to_regprocedure('app.guard_ai()') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.guard_ai()'::regprocedure),'UTF8')),'hex')<>'f7e28c09e8d82d3c32d39060c73e48f0643567084fb38c9f8977e8152f91f47e'
-  OR to_regprocedure('app.part4_enabled(uuid,text)') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.part4_enabled(uuid,text)'::regprocedure),'UTF8')),'hex')<>'7149cc8983f6549c15e67c37ebfac509f25b8df557f3b9d31784a0452b5e9d14'
+  OR to_regprocedure('app.guard_ai()') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.guard_ai()'::regprocedure),'UTF8')),'hex')<>'4c0ae1fa80ee849474372766797841dae6acea6b7e57a9adb1620e3aa42e195d'
+  OR to_regprocedure('app.part4_enabled(uuid,text)') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.part4_enabled(uuid,text)'::regprocedure),'UTF8')),'hex')<>'4ae6f61dd686b93fe4d518aad7192edf1702a8bedf7be82c7a91817e9032e3af'
   OR to_regprocedure('app.ai_output_grounded(uuid,uuid,jsonb)') IS NULL OR encode(sha256(convert_to(pg_get_functiondef('app.ai_output_grounded(uuid,uuid,jsonb)'::regprocedure),'UTF8')),'hex')<>'af18f09733df3bdaf41c0ddbb4663556c1e1411a8869ba57ed84e5f409664b1e'
  THEN RAISE EXCEPTION 'AI real workspace rollback refused: a function is not the ADR-091 definition'; END IF;
  IF app.ai_real_runs_open() THEN RAISE EXCEPTION 'AI real workspace rollback refused: pause AI for real workspaces first'; END IF;
