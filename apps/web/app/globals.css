@@ -9039,4 +9039,9 @@ samp {
     align-self: end;
   }
 }
+/* D-009: the confirm step sits in the middle of the screen. The page reset removes the browser's own centring of a
+   modal dialog, so it is put back for this one. */
+.guide-plan-main > .ux-dialog {
+  margin: auto;
+}
 /* end B2a */

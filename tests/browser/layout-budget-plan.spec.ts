@@ -168,15 +168,15 @@ test('every other public page keeps the full footer with the legend in view', as
 });
 
 // Owner 2a and the board's phone bottom action area: the reassurance line sits under Continue in the fixed bar, says
-// "Saved in this tab for up to 24 hours." only once a draft exists, and Clear Draft stays a 44 px target.
-test('on a phone the reassurance line and Clear Draft sit under Continue in the action area, with a 44 px target', async ({
+// "Saved in this tab for up to 24 hours." only once a draft exists, and Clear Answers stays a 44 px target.
+test('on a phone the reassurance line and Clear Answers sit under Continue in the action area, with a 44 px target', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.phone);
   await page.goto('/plan');
   const line = page.locator('.plan-action-note');
   await expect(line).not.toContainText('Saved in this tab');
-  const clear = line.getByRole('button', { name: 'Clear Draft' });
+  const clear = line.getByRole('button', { name: 'Clear Answers' });
   await expect(clear).toBeVisible();
   expect((await clear.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
   await page.locator('form.intake-form input[type="radio"]').first().check({ force: true });

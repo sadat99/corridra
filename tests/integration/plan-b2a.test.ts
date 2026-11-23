@@ -32,7 +32,11 @@ describe('D-001: no customer-readable "draft" in the request form words', () => 
   });
 
   it('says the plain facts instead', () => {
-    expect(words['form.side.draftOnly']).toBe('Nothing is sent until you check it.');
+    // The summary note is a privacy sentence, so it stays English in every language and is not a form word.
+    expect(words['form.side.draftOnly']).toBeUndefined();
+    expect(readFileSync(resolve('apps/web/app/plan/intake.tsx'), 'utf8')).toContain(
+      "'Nothing is sent until you check it. Nothing here is an offer, a quote or a promise.'",
+    );
     expect(words['form.message.draftResumed']).toBe('Your earlier answers from this tab are back.');
     expect(words['form.action.clearDraft']).toBe('Clear Answers');
   });

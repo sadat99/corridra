@@ -148,14 +148,14 @@ export const words: FormCatalog = {
   'form.action.saving': 'جارٍ الحفظ…',
   'form.action.createAccount': 'إنشاء حساب والمتابعة',
   'form.action.submit': 'إرسال الطلب',
-  'form.action.clearDraft': 'مسح المسودة',
-  // B2a plan flow (23 November 2026): new keys. Empty shows the English until the language units translate them.
-  'form.head.signedInLead': '',
-  'form.step.line': '',
-  'form.step.lineLast': '',
-  'form.action.cancel': '',
-  'form.clear.title': '',
-  'form.clear.body': '',
+  'form.action.clearDraft': 'مسح الإجابات',
+  // B2a plan flow (23 November 2026): the confirm step for Clear Answers.
+  'form.head.signedInLead': 'لقد سجّلت الدخول، لذا يبقى طلبك والردود عليه خاصة في حسابك.',
+  'form.step.line': 'الخطوة {step} من {total}: {name} · التالي: {next}',
+  'form.step.lineLast': 'الخطوة {step} من {total}: {name}',
+  'form.action.cancel': 'إلغاء',
+  'form.clear.title': 'هل تريد مسح إجاباتك؟',
+  'form.clear.body': 'سيؤدي هذا إلى حذف كل ما أدخلته في علامة التبويب هذه.',
 
   'form.receipt.label': 'تم حفظ الطلب',
   'form.receipt.title': 'احتفظ بإيصالك الخاص.',
@@ -183,27 +183,25 @@ export const words: FormCatalog = {
   'form.side.notChosen': 'لم يُختر',
   'form.side.noCurrency': '(لم تُختر العملة)',
   'form.side.notSupplied': 'غير مذكورة',
-  'form.side.draftOnly': 'هذه مسودة فقط.',
 
   'form.message.claimFailed': 'تعذر إرسال طلبك. حاول مرة أخرى.',
   'form.message.claimUnreadable': 'تعذرت قراءة الرد على الطلب. افتح حسابك للتحقق منه.',
   'form.message.navigationMissing': 'تعذر فتح صفحة الطلب. افتح حسابك للمتابعة.',
   'form.message.draftLostReal':
-    'تعذرت استعادة مسودة محفوظة. احتفظ بنسخة من طلبك قبل مغادرة علامة التبويب هذه.',
+    'تعذرت استعادة إجاباتك المحفوظة. احتفظ بنسخة من طلبك قبل مغادرة علامة التبويب هذه.',
   'form.message.draftLostSample':
-    'تعذرت استعادة مسودة محفوظة. النموذج لا يزال يعمل. احتفظ بنسخة من طلبك الخيالي قبل مغادرة علامة التبويب هذه.',
-  'form.message.draftResumed':
-    'تم استئناف مسودة من علامة التبويب هذه. اختياراتك المحفوظة لها الأولوية على اقتراحات الروابط.',
-  'form.message.draftNotResumed': 'تعذر استئناف المسودة السابقة.',
+    'تعذرت استعادة إجاباتك المحفوظة. النموذج لا يزال يعمل. احتفظ بنسخة من طلبك الخيالي قبل مغادرة علامة التبويب هذه.',
+  'form.message.draftResumed': 'عادت إجاباتك السابقة من علامة التبويب هذه.',
+  'form.message.draftNotResumed': 'تعذرت استعادة إجاباتك السابقة.',
   'form.message.accountUnchecked': 'تعذر التحقق من حالة الحساب. سجّل الدخول أو حاول مرة أخرى.',
   'form.message.pendingUnchecked': 'تعذر التحقق من حالة الطلب المحفوظ. حاول مرة أخرى.',
   'form.message.paused': 'الطلبات الجديدة متوقفة مؤقتًا. تبقى الطلبات الحالية متاحة في حسابك.',
   'form.message.opening': 'جارٍ فتح طلبك الخاص…',
   'form.message.accountFailed': 'تعذر التحقق من حسابك.',
   'form.message.draftUnsavedReal':
-    'لم يتمكن هذا المتصفح من حفظ المسودة. أبقِ علامة التبويب مفتوحة وانسخ طلبك قبل المغادرة.',
+    'لم يتمكن هذا المتصفح من حفظ إجاباتك. أبقِ علامة التبويب مفتوحة وانسخ طلبك قبل المغادرة.',
   'form.message.draftUnsavedSample':
-    'لم يتمكن هذا المتصفح من حفظ المسودة. أبقِ علامة التبويب مفتوحة وانسخ الطلب الخيالي قبل المغادرة.',
+    'لم يتمكن هذا المتصفح من حفظ إجاباتك. أبقِ علامة التبويب مفتوحة وانسخ الطلب الخيالي قبل المغادرة.',
   'form.message.chooseJob': 'اختر العمل التجاري.',
   'form.message.chooseCountry': 'اختر بلد الشركة.',
   'form.message.chooseMarket': 'اختر السوق المستهدفة.',

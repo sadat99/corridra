@@ -151,14 +151,15 @@ export const words: FormCatalog = {
   'form.action.saving': 'সংরক্ষণ হচ্ছে…',
   'form.action.createAccount': 'অ্যাকাউন্ট খুলে এগিয়ে যান',
   'form.action.submit': 'অনুরোধ পাঠান',
-  'form.action.clearDraft': 'খসড়া মুছুন',
-  // B2a plan flow (23 November 2026): new keys. Empty shows the English until the language units translate them.
-  'form.head.signedInLead': '',
-  'form.step.line': '',
-  'form.step.lineLast': '',
-  'form.action.cancel': '',
-  'form.clear.title': '',
-  'form.clear.body': '',
+  'form.action.clearDraft': 'উত্তর মুছুন',
+  // B2a plan flow (23 November 2026): the confirm step for Clear Answers.
+  'form.head.signedInLead':
+    'আপনি সাইন ইন করে আছেন, তাই আপনার অনুরোধ ও তার উত্তরগুলো আপনার অ্যাকাউন্টে ব্যক্তিগত থাকে।',
+  'form.step.line': '{total} ধাপের মধ্যে ধাপ {step}: {name} · এরপর: {next}',
+  'form.step.lineLast': '{total} ধাপের মধ্যে ধাপ {step}: {name}',
+  'form.action.cancel': 'বাতিল',
+  'form.clear.title': 'আপনার উত্তরগুলো মুছবেন?',
+  'form.clear.body': 'এতে এই ট্যাবে আপনার লেখা সবকিছু মুছে যাবে।',
 
   'form.receipt.label': 'অনুরোধ সংরক্ষিত',
   'form.receipt.title': 'আপনার ব্যক্তিগত রসিদ রেখে দিন।',
@@ -186,19 +187,17 @@ export const words: FormCatalog = {
   'form.side.notChosen': 'বেছে নেওয়া হয়নি',
   'form.side.noCurrency': '(মুদ্রা বেছে নেওয়া হয়নি)',
   'form.side.notSupplied': 'দেওয়া হয়নি',
-  'form.side.draftOnly': 'এটি শুধু খসড়া।',
 
   'form.message.claimFailed': 'আপনার অনুরোধ পাঠানো যায়নি। আবার চেষ্টা করুন।',
   'form.message.claimUnreadable': 'অনুরোধের উত্তর পড়া যায়নি। যাচাই করতে আপনার অ্যাকাউন্ট খুলুন।',
   'form.message.navigationMissing':
     'অনুরোধের পাতা খোলা যাচ্ছে না। এগিয়ে যেতে আপনার অ্যাকাউন্ট খুলুন।',
   'form.message.draftLostReal':
-    'সংরক্ষিত খসড়া ফিরিয়ে আনা যায়নি। এই ট্যাব ছাড়ার আগে আপনার অনুরোধের একটি কপি রাখুন।',
+    'আপনার সংরক্ষিত উত্তরগুলো ফিরিয়ে আনা যায়নি। এই ট্যাব ছাড়ার আগে আপনার অনুরোধের একটি কপি রাখুন।',
   'form.message.draftLostSample':
-    'সংরক্ষিত খসড়া ফিরিয়ে আনা যায়নি। ফর্মটি এখনও কাজ করছে। এই ট্যাব ছাড়ার আগে আপনার কাল্পনিক অনুরোধের একটি কপি রাখুন।',
-  'form.message.draftResumed':
-    'এই ট্যাবের একটি খসড়া আবার চালু হয়েছে। লিংকের পরামর্শের চেয়ে আপনার সংরক্ষিত পছন্দ অগ্রাধিকার পায়।',
-  'form.message.draftNotResumed': 'আগের খসড়াটি আবার চালু করা যায়নি।',
+    'আপনার সংরক্ষিত উত্তরগুলো ফিরিয়ে আনা যায়নি। ফর্মটি এখনও কাজ করছে। এই ট্যাব ছাড়ার আগে আপনার কাল্পনিক অনুরোধের একটি কপি রাখুন।',
+  'form.message.draftResumed': 'এই ট্যাবে আপনার আগের উত্তরগুলো ফিরে এসেছে।',
+  'form.message.draftNotResumed': 'আপনার আগের উত্তরগুলো ফিরিয়ে আনা যায়নি।',
   'form.message.accountUnchecked':
     'অ্যাকাউন্টের অবস্থা যাচাই করা যায়নি। সাইন ইন করুন বা আবার চেষ্টা করুন।',
   'form.message.pendingUnchecked': 'সংরক্ষিত অনুরোধের অবস্থা যাচাই করা যায়নি। আবার চেষ্টা করুন।',
@@ -207,9 +206,9 @@ export const words: FormCatalog = {
   'form.message.opening': 'আপনার ব্যক্তিগত অনুরোধ খোলা হচ্ছে…',
   'form.message.accountFailed': 'আপনার অ্যাকাউন্ট যাচাই করা যায়নি।',
   'form.message.draftUnsavedReal':
-    'এই ব্রাউজার খসড়াটি সংরক্ষণ করতে পারেনি। ট্যাবটি খোলা রাখুন এবং যাওয়ার আগে আপনার অনুরোধ কপি করুন।',
+    'এই ব্রাউজার আপনার উত্তরগুলো সংরক্ষণ করতে পারেনি। ট্যাবটি খোলা রাখুন এবং যাওয়ার আগে আপনার অনুরোধ কপি করুন।',
   'form.message.draftUnsavedSample':
-    'এই ব্রাউজার খসড়াটি সংরক্ষণ করতে পারেনি। ট্যাবটি খোলা রাখুন এবং যাওয়ার আগে কাল্পনিক অনুরোধটি কপি করুন।',
+    'এই ব্রাউজার আপনার উত্তরগুলো সংরক্ষণ করতে পারেনি। ট্যাবটি খোলা রাখুন এবং যাওয়ার আগে কাল্পনিক অনুরোধটি কপি করুন।',
   'form.message.chooseJob': 'ব্যবসায়িক কাজটি বেছে নিন।',
   'form.message.chooseCountry': 'প্রতিষ্ঠানের দেশ বেছে নিন।',
   'form.message.chooseMarket': 'লক্ষ্য বাজার বেছে নিন।',

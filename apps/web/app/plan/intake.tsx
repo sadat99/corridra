@@ -1972,9 +1972,8 @@ function IntakeForm({
                 </div>
               </dl>
               <p>
-                {withEnglish(
-                  'form.side.draftOnly',
-                  'Nothing here is an offer, a quote or a promise.',
+                {englishIsland(
+                  'Nothing is sent until you check it. Nothing here is an offer, a quote or a promise.',
                 )}
               </p>
             </details>

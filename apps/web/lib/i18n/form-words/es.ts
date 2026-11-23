@@ -149,14 +149,15 @@ export const words: FormCatalog = {
   'form.action.saving': 'Guardando…',
   'form.action.createAccount': 'Crear cuenta y continuar',
   'form.action.submit': 'Enviar la solicitud',
-  'form.action.clearDraft': 'Borrar el borrador',
-  // B2a plan flow (23 November 2026): new keys. Empty shows the English until the language units translate them.
-  'form.head.signedInLead': '',
-  'form.step.line': '',
-  'form.step.lineLast': '',
-  'form.action.cancel': '',
-  'form.clear.title': '',
-  'form.clear.body': '',
+  'form.action.clearDraft': 'Borrar respuestas',
+  // B2a plan flow (23 November 2026): the confirm step for Clear Answers.
+  'form.head.signedInLead':
+    'Ha iniciado sesión, así que su solicitud y sus respuestas se mantienen privadas en su cuenta.',
+  'form.step.line': 'Paso {step} de {total}: {name} · Siguiente: {next}',
+  'form.step.lineLast': 'Paso {step} de {total}: {name}',
+  'form.action.cancel': 'Cancelar',
+  'form.clear.title': '¿Borrar sus respuestas?',
+  'form.clear.body': 'Esto elimina todo lo que ha introducido en esta pestaña.',
 
   'form.receipt.label': 'Solicitud guardada',
   'form.receipt.title': 'Guarde su recibo privado.',
@@ -184,7 +185,6 @@ export const words: FormCatalog = {
   'form.side.notChosen': 'Sin elegir',
   'form.side.noCurrency': '(moneda sin elegir)',
   'form.side.notSupplied': 'No indicado',
-  'form.side.draftOnly': 'Solo es un borrador.',
 
   'form.message.claimFailed': 'No se pudo enviar su solicitud. Inténtelo de nuevo.',
   'form.message.claimUnreadable':
@@ -192,12 +192,11 @@ export const words: FormCatalog = {
   'form.message.navigationMissing':
     'No se puede abrir la página de la solicitud. Abra su cuenta para continuar.',
   'form.message.draftLostReal':
-    'No se pudo recuperar un borrador guardado. Guarde una copia de su solicitud antes de salir de esta pestaña.',
+    'No se pudieron recuperar sus respuestas guardadas. Guarde una copia de su solicitud antes de salir de esta pestaña.',
   'form.message.draftLostSample':
-    'No se pudo recuperar un borrador guardado. El formulario sigue funcionando. Guarde una copia de su solicitud inventada antes de salir de esta pestaña.',
-  'form.message.draftResumed':
-    'Se ha retomado un borrador de esta pestaña. Sus opciones guardadas tienen prioridad sobre las sugerencias de los enlaces.',
-  'form.message.draftNotResumed': 'No se pudo retomar el borrador anterior.',
+    'No se pudieron recuperar sus respuestas guardadas. El formulario sigue funcionando. Guarde una copia de su solicitud inventada antes de salir de esta pestaña.',
+  'form.message.draftResumed': 'Sus respuestas anteriores de esta pestaña han vuelto.',
+  'form.message.draftNotResumed': 'No se pudieron recuperar sus respuestas anteriores.',
   'form.message.accountUnchecked':
     'No se pudo comprobar el estado de la cuenta. Inicie sesión o inténtelo de nuevo.',
   'form.message.pendingUnchecked':
@@ -207,9 +206,9 @@ export const words: FormCatalog = {
   'form.message.opening': 'Abriendo su solicitud privada…',
   'form.message.accountFailed': 'No se pudo comprobar su cuenta.',
   'form.message.draftUnsavedReal':
-    'Este navegador no pudo guardar el borrador. Mantenga esta pestaña abierta y copie su solicitud antes de salir.',
+    'Este navegador no pudo guardar sus respuestas. Mantenga esta pestaña abierta y copie su solicitud antes de salir.',
   'form.message.draftUnsavedSample':
-    'Este navegador no pudo guardar el borrador. Mantenga esta pestaña abierta y copie la solicitud inventada antes de salir.',
+    'Este navegador no pudo guardar sus respuestas. Mantenga esta pestaña abierta y copie la solicitud inventada antes de salir.',
   'form.message.chooseJob': 'Elija el trabajo comercial.',
   'form.message.chooseCountry': 'Elija el país de la empresa.',
   'form.message.chooseMarket': 'Elija el mercado de destino.',

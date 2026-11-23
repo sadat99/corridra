@@ -151,14 +151,15 @@ export const words: FormCatalog = {
   'form.action.saving': 'Wird gespeichert…',
   'form.action.createAccount': 'Konto erstellen und weiter',
   'form.action.submit': 'Anfrage senden',
-  'form.action.clearDraft': 'Entwurf löschen',
-  // B2a plan flow (23 November 2026): new keys. Empty shows the English until the language units translate them.
-  'form.head.signedInLead': '',
-  'form.step.line': '',
-  'form.step.lineLast': '',
-  'form.action.cancel': '',
-  'form.clear.title': '',
-  'form.clear.body': '',
+  'form.action.clearDraft': 'Angaben löschen',
+  // B2a plan flow (23 November 2026): the confirm step for Clear Answers.
+  'form.head.signedInLead':
+    'Sie sind angemeldet. Ihre Anfrage und die Antworten darauf bleiben daher privat in Ihrem Konto.',
+  'form.step.line': 'Schritt {step} von {total}: {name} · Danach: {next}',
+  'form.step.lineLast': 'Schritt {step} von {total}: {name}',
+  'form.action.cancel': 'Abbrechen',
+  'form.clear.title': 'Ihre Angaben löschen?',
+  'form.clear.body': 'Damit wird alles entfernt, was Sie in diesem Tab eingegeben haben.',
 
   'form.receipt.label': 'Anfrage gespeichert',
   'form.receipt.title': 'Bewahren Sie Ihren privaten Beleg auf.',
@@ -186,7 +187,6 @@ export const words: FormCatalog = {
   'form.side.notChosen': 'Nicht gewählt',
   'form.side.noCurrency': '(Währung nicht gewählt)',
   'form.side.notSupplied': 'Nicht angegeben',
-  'form.side.draftOnly': 'Nur ein Entwurf.',
 
   'form.message.claimFailed': 'Ihre Anfrage konnte nicht gesendet werden. Versuchen Sie es erneut.',
   'form.message.claimUnreadable':
@@ -194,12 +194,11 @@ export const words: FormCatalog = {
   'form.message.navigationMissing':
     'Die Seite der Anfrage lässt sich nicht öffnen. Öffnen Sie Ihr Konto, um fortzufahren.',
   'form.message.draftLostReal':
-    'Ein gespeicherter Entwurf konnte nicht wiederhergestellt werden. Sichern Sie eine Kopie Ihrer Anfrage, bevor Sie diesen Tab verlassen.',
+    'Ihre gespeicherten Angaben konnten nicht wiederhergestellt werden. Sichern Sie eine Kopie Ihrer Anfrage, bevor Sie diesen Tab verlassen.',
   'form.message.draftLostSample':
-    'Ein gespeicherter Entwurf konnte nicht wiederhergestellt werden. Das Formular funktioniert weiter. Sichern Sie eine Kopie Ihrer erfundenen Anfrage, bevor Sie diesen Tab verlassen.',
-  'form.message.draftResumed':
-    'Ein Entwurf aus diesem Tab wurde fortgesetzt. Ihre gespeicherten Angaben haben Vorrang vor Vorschlägen aus Links.',
-  'form.message.draftNotResumed': 'Der frühere Entwurf konnte nicht fortgesetzt werden.',
+    'Ihre gespeicherten Angaben konnten nicht wiederhergestellt werden. Das Formular funktioniert weiter. Sichern Sie eine Kopie Ihrer erfundenen Anfrage, bevor Sie diesen Tab verlassen.',
+  'form.message.draftResumed': 'Ihre früheren Angaben aus diesem Tab sind wieder da.',
+  'form.message.draftNotResumed': 'Ihre früheren Angaben konnten nicht wiederhergestellt werden.',
   'form.message.accountUnchecked':
     'Der Kontostatus konnte nicht geprüft werden. Melden Sie sich an oder versuchen Sie es erneut.',
   'form.message.pendingUnchecked':
@@ -209,9 +208,9 @@ export const words: FormCatalog = {
   'form.message.opening': 'Ihre private Anfrage wird geöffnet…',
   'form.message.accountFailed': 'Ihr Konto konnte nicht geprüft werden.',
   'form.message.draftUnsavedReal':
-    'Dieser Browser konnte den Entwurf nicht speichern. Lassen Sie diesen Tab offen und kopieren Sie Ihre Anfrage, bevor Sie ihn verlassen.',
+    'Dieser Browser konnte Ihre Angaben nicht speichern. Lassen Sie diesen Tab offen und kopieren Sie Ihre Anfrage, bevor Sie ihn verlassen.',
   'form.message.draftUnsavedSample':
-    'Dieser Browser konnte den Entwurf nicht speichern. Lassen Sie diesen Tab offen und kopieren Sie die erfundene Anfrage, bevor Sie ihn verlassen.',
+    'Dieser Browser konnte Ihre Angaben nicht speichern. Lassen Sie diesen Tab offen und kopieren Sie die erfundene Anfrage, bevor Sie ihn verlassen.',
   'form.message.chooseJob': 'Wählen Sie die geschäftliche Aufgabe.',
   'form.message.chooseCountry': 'Wählen Sie das Land des Unternehmens.',
   'form.message.chooseMarket': 'Wählen Sie den Zielmarkt.',

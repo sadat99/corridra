@@ -24,23 +24,29 @@ const answers = {
   email: 'person@example.com',
 };
 
+// Each call seeds once: init scripts pile up on a page and run in order on every load, so a later call must win
+// over an earlier one, and a reload must not put the answers back after the form cleared them.
+let seeds = 0;
+
 /** Opens /plan with answers already saved in this tab, on the given step (0 to 4). */
 async function openSaved(page: Page, step: number, draft: Record<string, unknown> = answers) {
+  seeds += 1;
   await page.addInitScript(
-    ([saved, at]) => {
-      if (!sessionStorage.getItem('corridra-mission-draft'))
-        sessionStorage.setItem(
-          'corridra-mission-draft',
-          JSON.stringify({
-            version: 2,
-            draft: saved,
-            step: at,
-            key: 'b2a-test-key',
-            at: Date.now(),
-          }),
-        );
+    ([saved, at, seed]) => {
+      if (Number(sessionStorage.getItem('b2a-test-seed') ?? 0) >= seed) return;
+      sessionStorage.setItem('b2a-test-seed', String(seed));
+      sessionStorage.setItem(
+        'corridra-mission-draft',
+        JSON.stringify({
+          version: 2,
+          draft: saved,
+          step: at,
+          key: 'b2a-test-key',
+          at: Date.now(),
+        }),
+      );
     },
-    [draft, step] as const,
+    [draft, step, seeds] as const,
   );
   await page.goto('/plan');
   await expect(page.locator('.plan-progress-line')).toContainText(`Step ${step + 1} of 5`);

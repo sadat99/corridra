@@ -153,14 +153,15 @@ export const words: FormCatalog = {
   'form.action.saving': 'Enregistrement…',
   'form.action.createAccount': 'Créer un compte et continuer',
   'form.action.submit': 'Envoyer la demande',
-  'form.action.clearDraft': 'Effacer le brouillon',
-  // B2a plan flow (23 November 2026): new keys. Empty shows the English until the language units translate them.
-  'form.head.signedInLead': '',
-  'form.step.line': '',
-  'form.step.lineLast': '',
-  'form.action.cancel': '',
-  'form.clear.title': '',
-  'form.clear.body': '',
+  'form.action.clearDraft': 'Effacer les réponses',
+  // B2a plan flow (23 November 2026): the confirm step for Clear Answers.
+  'form.head.signedInLead':
+    'Vous êtes connecté, donc votre demande et ses réponses restent privées dans votre compte.',
+  'form.step.line': 'Étape {step} sur {total} : {name} · Ensuite : {next}',
+  'form.step.lineLast': 'Étape {step} sur {total} : {name}',
+  'form.action.cancel': 'Annuler',
+  'form.clear.title': 'Effacer vos réponses ?',
+  'form.clear.body': 'Cela supprime tout ce que vous avez saisi dans cet onglet.',
 
   'form.receipt.label': 'Demande enregistrée',
   'form.receipt.title': 'Gardez votre reçu privé.',
@@ -188,7 +189,6 @@ export const words: FormCatalog = {
   'form.side.notChosen': 'Non choisi',
   'form.side.noCurrency': '(devise non choisie)',
   'form.side.notSupplied': 'Non indiqué',
-  'form.side.draftOnly': 'Brouillon uniquement.',
 
   'form.message.claimFailed': 'Votre demande n’a pas pu être envoyée. Réessayez.',
   'form.message.claimUnreadable':
@@ -196,12 +196,11 @@ export const words: FormCatalog = {
   'form.message.navigationMissing':
     'La page de la demande ne s’ouvre pas. Ouvrez votre compte pour continuer.',
   'form.message.draftLostReal':
-    'Un brouillon enregistré n’a pas pu être restauré. Gardez une copie de votre demande avant de quitter cet onglet.',
+    'Vos réponses enregistrées n’ont pas pu être restaurées. Gardez une copie de votre demande avant de quitter cet onglet.',
   'form.message.draftLostSample':
-    'Un brouillon enregistré n’a pas pu être restauré. Le formulaire fonctionne toujours. Gardez une copie de votre demande fictive avant de quitter cet onglet.',
-  'form.message.draftResumed':
-    'Un brouillon de cet onglet a été repris. Vos choix enregistrés priment sur les suggestions des liens.',
-  'form.message.draftNotResumed': 'Le brouillon précédent n’a pas pu être repris.',
+    'Vos réponses enregistrées n’ont pas pu être restaurées. Le formulaire fonctionne toujours. Gardez une copie de votre demande fictive avant de quitter cet onglet.',
+  'form.message.draftResumed': 'Vos réponses précédentes de cet onglet sont de retour.',
+  'form.message.draftNotResumed': 'Vos réponses précédentes n’ont pas pu être restaurées.',
   'form.message.accountUnchecked':
     'L’état du compte n’a pas pu être vérifié. Connectez-vous ou réessayez.',
   'form.message.pendingUnchecked':
@@ -211,9 +210,9 @@ export const words: FormCatalog = {
   'form.message.opening': 'Ouverture de votre demande privée…',
   'form.message.accountFailed': 'Votre compte n’a pas pu être vérifié.',
   'form.message.draftUnsavedReal':
-    'Ce navigateur n’a pas pu enregistrer le brouillon. Gardez cet onglet ouvert et copiez votre demande avant de partir.',
+    'Ce navigateur n’a pas pu enregistrer vos réponses. Gardez cet onglet ouvert et copiez votre demande avant de partir.',
   'form.message.draftUnsavedSample':
-    'Ce navigateur n’a pas pu enregistrer le brouillon. Gardez cet onglet ouvert et copiez la demande fictive avant de partir.',
+    'Ce navigateur n’a pas pu enregistrer vos réponses. Gardez cet onglet ouvert et copiez la demande fictive avant de partir.',
   'form.message.chooseJob': 'Choisissez le travail commercial.',
   'form.message.chooseCountry': 'Choisissez le pays de l’entreprise.',
   'form.message.chooseMarket': 'Choisissez le marché cible.',

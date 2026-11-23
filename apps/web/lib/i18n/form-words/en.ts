@@ -193,7 +193,6 @@ export const formEn = {
   'form.side.notChosen': 'Not chosen yet',
   'form.side.noCurrency': '(currency not chosen)',
   'form.side.notSupplied': 'Not supplied',
-  'form.side.draftOnly': 'Nothing is sent until you check it.',
 
   // Messages the form itself sets. Each is the exact English the person sees; `{name}` marks a variable part.
   'form.message.claimFailed': 'Your request could not be submitted. Try again.',

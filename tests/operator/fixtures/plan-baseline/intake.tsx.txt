@@ -5,6 +5,7 @@ import { accountClient } from '../../lib/neon-auth-client';
 import { accountAccessPath } from '../../lib/account-return';
 import { browserStores, forgetReceipt, readReceipt, saveReceipt } from '../../lib/receipt-memory';
 import { PlanActionBar } from './plan-action-bar';
+import { PlanContactNote } from './plan-contact-note';
 import { PlanJobFold } from './plan-job-fold';
 import { PlanProgress } from './plan-progress';
 import { objectiveForJob, selectedPicture, pictures } from '../../lib/first-question';
@@ -32,6 +33,7 @@ import {
   pinnedCountries,
 } from '../../lib/ux/options';
 import { SearchSelect } from '../../components/ux/search-select';
+import { Dialog } from '../../components/ux/dialog';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
@@ -216,6 +218,28 @@ const fieldStep: Record<string, number> = {
   notes: 3,
 };
 const budgetFields = ['budgetAmount', 'currency', 'budgetBasis'];
+// B2a (D-012): the fields the structured request is built from. The shared requirements line can name any of them.
+const structuredFields: readonly string[] = [
+  ...Object.values(requirementField),
+  'objective',
+  'job',
+  'companyCountry',
+  'marketCode',
+  'organiser',
+  'participants',
+];
+/**
+ * The error lines that sum up other fields: the shared requirements line, the amount line (amount, currency and
+ * basis are checked together) and the unit line (quantity and unit are checked together). A change to a field takes
+ * away the lines that sum it up, so the banner follows the fields and does not wait for the next check.
+ */
+function summaryErrors(field: string): string[] {
+  return [
+    ...(structuredFields.includes(field) ? ['requirements'] : []),
+    ...(budgetFields.includes(field) ? ['budgetAmount'] : []),
+    ...(field === 'quantity' ? ['unit'] : []),
+  ];
+}
 /**
  * The optional fields a step folds behind "More details (optional)" so the step fits the flow-step budget. Only
  * optional fields are listed: a required field is never folded. A folded field stays mounted (hidden) with its
@@ -405,6 +429,8 @@ function IntakeForm({
     [jobFoldChoice, setJobFoldChoice] = useState<boolean | undefined>(undefined),
     // A draft of this request is saved in this tab (UI/UX.v4 reassurance line); it is only claimed once one exists.
     [draftSaved, setDraftSaved] = useState(false),
+    // Clear Answers asks first (B2a, D-009): the confirm is open.
+    [clearAsking, setClearAsking] = useState(false),
     [checkEmpty, setCheckEmpty] = useState(false),
     // The person's own open or close choice for each fold; without one a fold is open when it holds a value.
     [foldChoice, setFoldChoice] = useState<Partial<Record<FoldGroup, boolean>>>({});
@@ -446,7 +472,9 @@ function IntakeForm({
           setStep(saved.version === 2 ? Math.max(0, Math.min(4, Number(saved.step) || 0)) : 0);
         }
         if (saved && !restored)
-          setDraftNotice(`${formEn['form.message.draftNotResumed']} Drafts expire after 24 hours.`);
+          setDraftNotice(
+            `${formEn['form.message.draftNotResumed']} Answers are kept in this tab for 24 hours.`,
+          );
         const query = new URLSearchParams(window.location.search);
         const suggestedJob = query.get('job');
         if (
@@ -623,7 +651,17 @@ function IntakeForm({
     }
     setDraft(v);
     persist(v, step);
-    setErrors((e) => (e[field]?.length ? { ...e, [field]: [] } : e));
+    // Every field this change touched, and the lines that sum those fields up, lose their error (B2a, D-012).
+    const touched = [
+      field,
+      ...(Object.keys(v) as (keyof Draft)[]).filter((name) => v[name] !== draft[name]),
+    ];
+    const names = [...new Set<string>([...touched, ...touched.flatMap(summaryErrors)])];
+    setErrors((e) =>
+      names.some((name) => e[name]?.length)
+        ? { ...e, ...Object.fromEntries(names.map((name) => [name, []])) }
+        : e,
+    );
   }
   function canonicalDraft() {
     const {
@@ -988,8 +1026,8 @@ function IntakeForm({
         ? wsa('wsa.plan.countries.eu')
         : wsa('wsa.plan.countries.other');
   const delegation = draft.job === 'delegations';
-  // UI/UX.v4: progress as words ("Step 1 of 5: Goal · Next: Where"). The templates are English until a native review;
-  // the step names are the form's own words in the shown language.
+  // UI/UX.v4: progress as words ("Step 1 of 5: Goal · Next: Where"), one template in the form words (B2a, D-008). A
+  // template that is still the English one says so; the step names are the form's own words in the shown language.
   const stepNames = stepWords.map((word) => say(word));
   const stepName = (index: number) =>
     translated ? (
@@ -999,18 +1037,14 @@ function IntakeForm({
     ) : (
       stepNames[index]
     );
-  const progressLine = (
-    <>
-      {english(`Step ${step + 1} of ${groups.length}: `)}
-      {stepName(step)}
-      {step + 1 < stepWords.length && (
-        <>
-          {english(' · Next: ')}
-          {stepName(step + 1)}
-        </>
-      )}
-    </>
-  );
+  const lineKey: FormKey = step + 1 < stepWords.length ? 'form.step.line' : 'form.step.lineLast';
+  const lineWords = sayWith(lineKey, {
+    step: String(step + 1),
+    total: String(groups.length),
+    name: stepName(step),
+    next: step + 1 < stepWords.length ? stepName(step + 1) : '',
+  });
+  const progressLine = say(lineKey) === formEn[lineKey] ? english(lineWords) : lineWords;
   // The job disclosure is open when a job is set, when the job has an error, or when the person opened it.
   // A job error forces it open (the field must be visible); "Something else" has no default job, so it opens too.
   const jobFoldOpen =
@@ -1624,14 +1658,7 @@ function IntakeForm({
                       )}
                     </p>
                   )}
-                  <p className="guide-hint">
-                    {realMode
-                      ? withEnglish(
-                          'form.contact.realHint',
-                          'Activate your account to submit it and read replies privately.',
-                        )
-                      : say('form.contact.sampleHint')}
-                  </p>
+                  <PlanContactNote realMode={realMode} account={account} />
                 </>
               )}
               <PlanActionBar
@@ -1642,17 +1669,7 @@ function IntakeForm({
                     <button
                       className="text-link"
                       type="button"
-                      onClick={() => {
-                        // A cleared draft starts again from what the link asked for (CQ-14).
-                        const fresh = withLinkChoices(empty);
-                        key.current = crypto.randomUUID();
-                        setDraft(fresh);
-                        setDraftNotice('');
-                        setJobChoice('');
-                        setStep(0);
-                        setErrors({});
-                        persist(fresh, 0);
-                      }}
+                      onClick={() => setClearAsking(true)}
                     >
                       {say('form.action.clearDraft')}
                     </button>
@@ -1692,6 +1709,47 @@ function IntakeForm({
                 </button>
               </PlanActionBar>
             </form>
+          )}
+          {!finished && !pendingReady && (
+            <Dialog
+              open={clearAsking}
+              onClose={() => setClearAsking(false)}
+              title={say('form.clear.title')}
+            >
+              <p>
+                {say('form.clear.body') === formEn['form.clear.body']
+                  ? english(say('form.clear.body'))
+                  : say('form.clear.body')}
+              </p>
+              <div className="ux-dialog-actions">
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  data-autofocus=""
+                  onClick={() => setClearAsking(false)}
+                >
+                  {say('form.action.cancel')}
+                </button>
+                <button
+                  type="button"
+                  className="primary-link"
+                  onClick={() => {
+                    // Cleared answers start again from what the link asked for (CQ-14).
+                    const fresh = withLinkChoices(empty);
+                    key.current = crypto.randomUUID();
+                    setDraft(fresh);
+                    setDraftNotice('');
+                    setJobChoice('');
+                    setStep(0);
+                    setErrors({});
+                    persist(fresh, 0);
+                    setClearAsking(false);
+                  }}
+                >
+                  {say('form.action.clearDraft')}
+                </button>
+              </div>
+            </Dialog>
           )}
           {receipt && (
             <section className="receipt-panel" aria-labelledby="plan-receipt-title">
@@ -1859,9 +1917,7 @@ function IntakeForm({
             className="ux-brief-summary"
             aria-label={realMode ? say('form.side.realLabel') : say('form.side.sampleLabel')}
           >
-            <p className="plan-summary-heading ux-brief-heading">
-              {realMode ? say('form.side.realHeading') : say('form.side.sampleHeading')}
-            </p>
+            {/* B2a (D-006): the wide-screen heading sits inside the panel, so the panel is one sticky box. */}
             <details className="ux-brief-details">
               <summary>
                 <span>
@@ -1871,6 +1927,9 @@ function IntakeForm({
                   <span className="ux-brief-count">{english(`, ${chosenCount} of 3 chosen`)}</span>
                 </span>
               </summary>
+              <p className="plan-summary-heading ux-brief-heading">
+                {realMode ? say('form.side.realHeading') : say('form.side.sampleHeading')}
+              </p>
               <dl>
                 <div>
                   <dt>{say('form.side.objective')}</dt>
@@ -1913,13 +1972,9 @@ function IntakeForm({
                 </div>
               </dl>
               <p>
-                {withEnglish(
-                  'form.side.draftOnly',
-                  'Nothing here is an offer, a quote or a promise.',
+                {englishIsland(
+                  'Nothing is sent until you check it. Nothing here is an offer, a quote or a promise.',
                 )}
-                {/* Board 01: the English summary also says nothing is sent until checked. Translated forms say it in the
-                    privacy line under the choices, so the summary does not grow by an English line there. */}
-                {!translated && ' Nothing is sent until you check it.'}
               </p>
             </details>
           </aside>
