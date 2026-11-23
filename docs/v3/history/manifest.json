@@ -611,6 +611,14 @@
       "bytes": 10541,
       "sha256": "95bfad2b005c39f3b8c9e491d4f8b910a4e942466c2f036ceb222ee0af3c7a78",
       "meaning": "Exact active ledger at e39f437 (main after PR 591), before the 21 Nov records for PRs 585 to 591 replaced the 20 Nov resume text (main ef02e0d, PR 585 open, Wave 3 questions a to c open). Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "9e91cf7",
+      "archive": "docs/v3/history/ledger-before-pr593-records-2026-11-23.md",
+      "bytes": 10325,
+      "sha256": "efc0e959ecde326466bdade16f67d6f5cdf0c6a2e0399f115eb62b1cc99f1842",
+      "meaning": "Exact active ledger at main 9e91cf7 (PR 593 merged), as written by the 21 Nov records for PRs 585 to 591 (header still said main e39f437), before the 23 Nov records for PR 593 (Connect AI PR 2) and the first-hand ADR-089 acceptance. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
