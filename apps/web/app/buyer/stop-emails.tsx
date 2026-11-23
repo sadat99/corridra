@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { usePrivateCapability } from '../../components/private-capability';
-import { linkGone } from '../delivery-view';
 
 const words = {
   ready:
@@ -9,6 +8,7 @@ const words = {
   working: 'Stopping these emails…',
   done: 'Done. We will not email this address again.',
   failed: 'This did not go through. Try again.',
+  gone: 'This link does not open. It may be incomplete or replaced. Open the complete link from the email.',
 };
 /** ADR-090: the opt-out of one emailed introduction. Nothing is sent until the button is chosen. */
 export function StopEmails() {
@@ -30,7 +30,7 @@ export function StopEmails() {
       setState('failed');
     }
   }
-  const message = !usable || state === 'gone' ? linkGone : words[state];
+  const message = !usable ? words.gone : words[state];
   return (
     <section className="detail-card buyer-card" aria-label="Stop these emails">
       <p role="status" aria-live="polite">

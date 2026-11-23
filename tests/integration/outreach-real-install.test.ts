@@ -88,6 +88,7 @@ test('the install replaces exactly seven functions, widens one check, and a seco
     'app.deliver_real_email(uuid,text,uuid,text,text)',
     'app.outreach_executor(uuid,boolean)',
     'app.outreach_link_real(text)',
+    'app.outreach_message_real(uuid)',
     'app.outreach_rate_take(uuid,text,uuid,integer,integer)',
     'app.outreach_real_installed()',
     'app.outreach_real_payload(uuid,text,uuid)',

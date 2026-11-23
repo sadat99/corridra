@@ -33,7 +33,7 @@ The existing tables, reply page, opt-out and staff list are kept. The lane is ch
 
 ### Approval before each send is kept
 
-There is no new way to send. Each real message is created by a staff member (`introduce`) and dispatched by a staff member (`dispatch`), one message per approval. There is no schedule, no batch and no automatic send. `app.communication_allowed` checks the approver again when the message is claimed and when it is delivered: role, two-step sign-in, country, purpose, classification, expiry, policy version and revocation.
+There is no new way to send. Each real message is created by a staff member (`introduce`) and dispatched by a staff member (`dispatch`), one message per approval. A real message is dispatched only when a staff member names that one message; a dispatch without a message id starts the waiting sample messages only and never a real one. There is no schedule, no batch and no automatic send. An introduction on an EMAIL policy without its consent basis is refused when it is created, in plain words. `app.communication_allowed` checks the approver again when the message is claimed and when it is delivered: role, two-step sign-in, country, purpose, classification, expiry, policy version and revocation.
 
 In this unit the staff screen does not yet offer the EMAIL channel or the consent fields. Real outreach is reachable only through the existing command. The staff fields are follow-up unit B9b.
 
@@ -53,7 +53,7 @@ Names only. Values are set by the owner and are never written in the repository.
 | `CORRIDRA_REAL_OUTREACH_DAILY_WORKSPACE_LIMIT` | Optional. Sends per workspace per day (UTC). Default 20, capped at 200 by the database.           |
 | `CORRIDRA_REAL_OUTREACH_DAILY_GLOBAL_LIMIT`    | Optional. Sends across all workspaces per day (UTC). Default 100, capped at 1000 by the database. |
 
-- In test mode a message leaves only for an address on the test list, with "[Test]" at the start of its subject. Every other message goes to a sink that makes no network call. Both are recorded with the receipt provider `email_test`, which is never counted as an approach on a customer report.
+- In test mode a message leaves only for an address on the test list, with "[Test]" at the start of its subject. Every other message goes to a sink that makes no network call. Both are recorded with the receipt provider `email_test`, which is never counted as an approach on a customer report. The staff list data marks them "Test, not sent" or "Test, sent to a test address only"; showing that note on the staff screen is part of B9b.
 - In live mode a delivered message is recorded with the receipt provider `email`.
 - Fail closed: with the switch on and the key, sender, reply address, signing secret or `APP_ORIGIN` missing or malformed, nothing is read, sent or recorded. Live mode with a missing setting is closed, never treated as test mode.
 - A message that cannot be sent (switch off, setting missing, limit reached, provider failure) ends its attempt without a receipt. After three attempts it stops and is kept; the existing staff retry queues it again. Nothing is sent twice: the message id is the provider idempotency key.
@@ -65,8 +65,8 @@ A real introduction carries a recorded basis (consent, legitimate interest, exis
 ### Opt-out and suppression
 
 - Every real message carries a visible opt-out link (`/buyer?stop=1` with its own private token) and the headers `List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
-- The opt-out link has its own token, which opens nothing else. Opening the page changes nothing; only the button or the mail provider's one-click POST records the opt-out. It works with every switch off, after the message has expired, and can be repeated.
-- Suppression is by a hash of the address and applies to every workspace. An address is suppressed by an opt-out link, a hard bounce, a complaint, or an opt-out recorded in any real workspace. Suppression is checked when a message is created, queued, claimed and delivered, and when its page is read.
+- The opt-out link has its own token, which opens nothing else. Opening the page changes nothing, and opening the one-click address in a browser only leads to that page; only the button or the mail provider's one-click POST records the opt-out. The opt-out has its own limits per caller and per token and never spends the shared hourly total, so other traffic cannot close it. It works with every switch off, after the message has expired, and can be repeated.
+- Suppression is by a hash of the address and applies to every workspace. An address is suppressed by an opt-out link, a hard bounce, a complaint, or an opt-out recorded in any real workspace. Suppression is checked when a message is created, queued and claimed, when the address is handed to the sender, and when its page is read. If a suppression lands after the provider has accepted a message, the receipt is still recorded and every later send is stopped.
 
 ### Bounces and complaints
 

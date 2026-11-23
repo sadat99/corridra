@@ -80,6 +80,10 @@ CREATE FUNCTION app.outreach_executor(t uuid,strict boolean) RETURNS uuid LANGUA
    AND (NOT strict OR EXISTS(SELECT FROM identity.principal p WHERE p.id=c.executor_id AND p.kind='service' AND p.disabled_at IS NULL))) END
 $$;
 REVOKE ALL ON FUNCTION app.outreach_executor(uuid,boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
+-- True for a message of the real email lane. Staff dispatch uses it to keep a batch to the sample lane.
+CREATE FUNCTION app.outreach_message_real(mid uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT EXISTS(SELECT FROM app.communication c JOIN app.communication_policy p ON p.tenant_id=c.tenant_id AND p.id=c.policy_id WHERE c.id=mid AND p.channel='EMAIL')
+$$;
 CREATE FUNCTION app.outreach_link_real(h text) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
  SELECT NOT app.tenant_is_synthetic(l.tenant_id) FROM app.buyer_link l WHERE l.token_hash=h
 $$;
@@ -122,7 +126,9 @@ BEGIN
  SELECT encode(sha256(convert_to(lower(pc.email),'UTF8')),'hex') INTO recipient FROM app.communication c JOIN app.private_contact_data pc ON pc.tenant_id=c.tenant_id AND pc.id=c.contact_id WHERE c.id=mid;
  PERFORM pg_advisory_xact_lock(hashtextextended(j.tenant_id::text||':recipient:'||recipient,0));
  PERFORM 1 FROM app.buyer_link WHERE tenant_id=j.tenant_id AND message_id=mid FOR SHARE;
- IF app.tenant_is_synthetic(j.tenant_id) OR NOT app.communication_allowed(mid) OR NOT app.communication_enabled(j.tenant_id,'communications.dispatch') OR NOT app.communication_enabled(j.tenant_id,'communications.introductions') THEN RAISE EXCEPTION 'Delivery unavailable' USING ERRCODE='42501'; END IF;
+ -- The address was checked when the lease holder read it. A suppression that lands after the provider accepted the message
+ -- must not lose the receipt, so it is not checked again here; it still stops every later send.
+ IF app.tenant_is_synthetic(j.tenant_id) OR NOT app.communication_allowed(mid,true) OR NOT app.communication_enabled(j.tenant_id,'communications.dispatch') OR NOT app.communication_enabled(j.tenant_id,'communications.introductions') THEN RAISE EXCEPTION 'Delivery unavailable' USING ERRCODE='42501'; END IF;
  SELECT p.channel INTO mode FROM app.communication c JOIN app.communication_policy p ON p.tenant_id=c.tenant_id AND p.id=c.policy_id WHERE c.id=mid;
  IF mode IS DISTINCT FROM 'EMAIL' THEN RAISE EXCEPTION 'Delivery unavailable' USING ERRCODE='42501'; END IF;
  INSERT INTO app.communication_receipt(id,tenant_id,provider,reference) VALUES(mid,j.tenant_id,provider,reference) ON CONFLICT(id) DO NOTHING;
@@ -155,8 +161,8 @@ BEGIN
  END IF;
  RETURN true;
 END $$;
-REVOKE ALL ON FUNCTION app.outreach_real_installed(),app.outreach_suppressed(text),app.outreach_link_real(text),app.outreach_record_consent(uuid,text,text,text),app.outreach_real_payload(uuid,text,uuid),app.outreach_rate_take(uuid,text,uuid,integer,integer),app.deliver_real_email(uuid,text,uuid,text,text),app.outreach_unsubscribe(text),app.outreach_record_event(text,uuid,text,boolean) FROM PUBLIC,corridra_auth;
-GRANT EXECUTE ON FUNCTION app.outreach_real_installed(),app.outreach_suppressed(text),app.outreach_link_real(text),app.outreach_record_consent(uuid,text,text,text),app.outreach_real_payload(uuid,text,uuid),app.outreach_rate_take(uuid,text,uuid,integer,integer),app.deliver_real_email(uuid,text,uuid,text,text),app.outreach_unsubscribe(text),app.outreach_record_event(text,uuid,text,boolean) TO corridra_runtime;
+REVOKE ALL ON FUNCTION app.outreach_real_installed(),app.outreach_suppressed(text),app.outreach_link_real(text),app.outreach_message_real(uuid),app.outreach_record_consent(uuid,text,text,text),app.outreach_real_payload(uuid,text,uuid),app.outreach_rate_take(uuid,text,uuid,integer,integer),app.deliver_real_email(uuid,text,uuid,text,text),app.outreach_unsubscribe(text),app.outreach_record_event(text,uuid,text,boolean) FROM PUBLIC,corridra_auth;
+GRANT EXECUTE ON FUNCTION app.outreach_real_installed(),app.outreach_suppressed(text),app.outreach_link_real(text),app.outreach_message_real(uuid),app.outreach_record_consent(uuid,text,text,text),app.outreach_real_payload(uuid,text,uuid),app.outreach_rate_take(uuid,text,uuid,integer,integer),app.deliver_real_email(uuid,text,uuid,text,text),app.outreach_unsubscribe(text),app.outreach_record_event(text,uuid,text,boolean) TO corridra_runtime;
 
 CREATE OR REPLACE FUNCTION app.guard_communication() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE pol app.communication_policy; pc app.private_contact_data; country text; v integer; real boolean;

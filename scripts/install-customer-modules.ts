@@ -51,6 +51,7 @@ import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-chan
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-migrate';
 import { migrateAiModelPolicyReal } from '../packages/db/src/ai-model-policy-real-migrate';
+import { migrateOutreachReal } from '../packages/db/src/outreach-real-migrate';
 import { configureSourcingWorkflow } from '../packages/auth/src/sourcing-workflow-configuration';
 import { migrateSupplySources } from '../packages/db/src/supply-source-migrate';
 import { migrateHelperInterest } from '../packages/db/src/helper-interest-migrate';
@@ -138,6 +139,7 @@ const v = z
     PROFILE_PICTURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     // ADR-089: real workspaces may hold a model policy only; AI inference stays off.
     AI_MODEL_POLICY_REAL_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    OUTREACH_REAL_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_REPLY_METADATA_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_EXPORT_ACCESS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     QUOTATION_LINK_CHECK_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
@@ -344,6 +346,8 @@ if (v.PROFILE_PICTURE_ACTION !== 'unchanged' && !apply)
   throw new Error('Profile picture installation requires INSTALL_APPLY=yes');
 if (v.AI_MODEL_POLICY_REAL_ACTION !== 'unchanged' && !apply)
   throw new Error('AI model policy for real workspaces requires INSTALL_APPLY=yes');
+if (v.OUTREACH_REAL_ACTION !== 'unchanged' && !apply)
+  throw new Error('Real outreach installation requires INSTALL_APPLY=yes');
 if (v.VIEWER_REPLY_METADATA_ACTION !== 'unchanged' && !apply)
   throw new Error('Viewer reply metadata installation requires INSTALL_APPLY=yes');
 if (v.VIEWER_EXPORT_ACCESS_ACTION !== 'unchanged' && !apply)
@@ -924,6 +928,13 @@ try {
       console.log(
         'AI model policy for real workspaces installed or already current (inference stays off)',
       );
+    }
+    // ADR-090 is never part of the base run. It adds the real email lane for introductions behind seven hash-guarded function
+    // replacements. It sends nothing and turns nothing on: the switch stays off and the mode stays test. Needs the real-use
+    // modules through 0020 and the owner's word. Reached only through OUTREACH_REAL_ACTION=install.
+    if (v.OUTREACH_REAL_ACTION === 'install') {
+      await migrateOutreachReal(pool);
+      console.log('Real outreach module installed or already current (switch off, test mode)');
     }
     // Supply sources (ADR-082) are never part of the base run. Install leaves the module control closed; enable and pause
     // touch only that control and need a reason. Reached through field_modules_action (supply_sources_install,

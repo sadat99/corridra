@@ -7,7 +7,8 @@ import {
 import { foundations } from '../../../../lib/foundations';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// ADR-090. Two public entries for the real email lane, both POST only, so opening a link never changes anything.
+// ADR-090. Two public entries for the real email lane. Only POST records anything, so opening a link never changes
+// anything: a GET of the opt-out address only sends the reader to the page with the Stop These Emails button.
 //  unsubscribe: the opt-out of one message, by its own private token. It is honoured with every switch off. Mail
 //    providers call it without a browser (one-click), so there is no origin check; the token is the authority.
 //  webhook: signed bounce, complaint and delivery notices from the mail provider. Refused when the signing secret is
@@ -34,6 +35,16 @@ async function readCapped(request: Request, max: number) {
   }
   return Buffer.concat(chunks).toString('utf8');
 }
+/** The one-click address opened in a browser: show the opt-out page. The token moves to the fragment; nothing is recorded. */
+export async function GET(request: Request, { params }: { params: Promise<{ action: string }> }) {
+  const token = new URL(request.url).searchParams.get('t') ?? '';
+  if ((await params).action !== 'unsubscribe' || !/^[a-f0-9]{64}$/.test(token))
+    return Response.json({ error: 'Not found' }, { status: 404, headers });
+  return new Response(null, {
+    status: 303,
+    headers: { ...headers, Location: `/buyer?stop=1#${token}` },
+  });
+}
 export async function POST(request: Request, { params }: { params: Promise<{ action: string }> }) {
   try {
     const { action } = await params;
@@ -56,7 +67,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ act
       const client = process.env.VERCEL
         ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
         : 'local';
-      await s.communications.budget(client, token);
+      await s.communications.optOutBudget(client, token);
       if (!(await s.communications.unsubscribe(token))) throw new DomainError('Not found', 404);
       return Response.json({ stopped: true }, { headers });
     }

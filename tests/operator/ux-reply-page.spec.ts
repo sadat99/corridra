@@ -385,7 +385,7 @@ test('a link without a usable token says so and sends nothing', async ({ page })
   const sent = await open(page, { hash: 'l=zh' });
   await expect(
     page.getByText(
-      'This private link has expired or was replaced. Ask the person who sent it for a new link.',
+      'This private link does not open. It may be incomplete, expired or replaced. Ask the person who sent it for a new link.',
     ),
   ).toBeVisible();
   expect(sent).toHaveLength(0);

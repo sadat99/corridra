@@ -8,6 +8,27 @@ import { OutreachChannel } from '../../packages/communications/src/adapters';
 import { unsubscribeToken } from '../../packages/communications/src/real-outreach';
 import { OutboxDispatcher } from '../../packages/workflows/src/index';
 import { migrateOutreachReal } from '../../packages/db/src/outreach-real-migrate';
+import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
+
+const { session, start, services } = vi.hoisted(() => ({
+  session: vi.fn(),
+  start: vi.fn(async (id: string) => `run-${id}`),
+  services: { communications: undefined as unknown },
+}));
+vi.mock('server-only', () => ({}));
+vi.mock('../../apps/web/lib/communication-orchestrator', () => ({
+  communicationOrchestrator: { start },
+}));
+vi.mock('../../apps/web/lib/notify', () => ({ notify: vi.fn() }));
+vi.mock('../../apps/web/lib/foundations', () => ({
+  foundations: () => ({
+    ready: Promise.resolve(),
+    provider: { getSession: session },
+    config: { APP_ORIGIN: 'https://app.corridra.test' },
+    access: { config: async () => [] },
+    communications: services.communications,
+  }),
+}));
 
 // ADR-090. The real email lane against the database: consent, approval, suppression, bounces, limits, isolation and the
 // reply page for a real recipient. The network is a counted stub in every test; the default mode is test mode.
@@ -107,6 +128,7 @@ beforeAll(async () => {
   await a.appendConfig(s.ctx, { key: 'communications.introductions', enabled: true });
   await a.appendConfig(s.ctx, { key: 'communications.dispatch', enabled: true });
   comms = new CommunicationService(s.f.runtime, secret);
+  services.communications = comms;
   policyId = (
     await comms.command(
       s.ctx,
@@ -176,7 +198,9 @@ test('sample and real never mix: each workspace kind takes only its own channel'
 });
 
 test('a real introduction needs recorded consent, and consent is kept with the message', async () => {
-  await expect(introduce('no-consent@supplier-a.business.test', null)).rejects.toThrow();
+  await expect(introduce('no-consent@supplier-a.business.test', null)).rejects.toThrow(
+    'Record why this person may be contacted before creating a real introduction.',
+  );
   expect(
     (
       await owner().query(
@@ -312,12 +336,14 @@ test('the workspace limit and the global limit each stop the next send', async (
   expect(await send(first.id)).toBe('DELIVERED');
   expect(await send(second.id)).toBe('PENDING');
   expect(await receipt(second.id)).toBeUndefined();
+  expect(await status(second.id)).toEqual({ status: 'PENDING', last_error: 'TRANSIENT' });
   env = { ...baseEnv(), CORRIDRA_REAL_OUTREACH_DAILY_GLOBAL_LIMIT: String(await used()) };
   await owner().query('UPDATE app.communication_dispatch SET available_at=now() WHERE id=$1', [
     second.id,
   ]);
   expect(await send(second.id)).toBe('PENDING');
   expect(await receipt(second.id)).toBeUndefined();
+  expect(await status(second.id)).toEqual({ status: 'PENDING', last_error: 'TRANSIENT' });
   expect(fetched).toEqual([]);
 });
 
@@ -413,6 +439,119 @@ test('another workspace and the runtime role itself cannot read consent, suppres
     db.release();
   }
   expect((await comms.workspace(s.f.users.other.ctx)).messages).toEqual([]);
+});
+
+test('a test-mode message that left for nowhere is labelled for staff as not sent', async () => {
+  const m = await introduce('label@supplier-j.business.test');
+  expect(await send(m.id)).toBe('DELIVERED');
+  const row = (await comms.workspace(s.ctx)).messages.find((x) => x.id === m.id);
+  expect(row).toMatchObject({ receipt_provider: 'email_test', delivery_note: 'Test, not sent' });
+});
+
+test('a suppression that lands while the provider is accepting the message does not lose the receipt', async () => {
+  const email = 'race@supplier-k.business.test';
+  const m = await introduce(email);
+  env = { ...baseEnv(), CORRIDRA_REAL_OUTREACH_MODE: 'live' };
+  vi.stubGlobal('fetch', async (url: string) => {
+    fetched.push(String(url));
+    expect(await comms.unsubscribe(unsubscribeToken(secret, m.id))).toBe(true);
+    return new Response('{}', { status: 200 });
+  });
+  expect(await send(m.id)).toBe('DELIVERED');
+  expect(fetched).toHaveLength(1);
+  expect(await receipt(m.id)).toEqual({ provider: 'email', reference: `resend:${m.id}` });
+  // The address is suppressed from then on.
+  await expect(introduce(email)).rejects.toThrow();
+});
+
+test('one staff dispatch sends one named real message; a dispatch without a name never sends a real one', async () => {
+  const { POST } = await import('../../apps/web/app/api/workspace/[action]/route');
+  const dispatch = (body: unknown) =>
+    POST(
+      new Request(`https://app.corridra.test/api/workspace/dispatch?tenant=${s.intakeTenantId}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', origin: 'https://app.corridra.test' },
+        body: JSON.stringify(body),
+      }),
+      { params: Promise.resolve({ action: 'dispatch' }) },
+    );
+  session.mockResolvedValue({ token: s.f.users.owner.token });
+  const first = await introduce('one@supplier-l.business.test');
+  const second = await introduce('two@supplier-l.business.test');
+  start.mockClear();
+  const batch = await dispatch({});
+  expect([batch.status, await batch.json()]).toEqual([201, { started: [] }]);
+  expect(start).not.toHaveBeenCalled();
+  const one = await dispatch({ messageId: first.id });
+  expect([one.status, await one.json()]).toEqual([201, { started: [first.id] }]);
+  expect(start.mock.calls).toEqual([[first.id]]);
+  expect(
+    (
+      await owner().query(
+        'SELECT id,workflow_run_id FROM app.communication_dispatch WHERE id=ANY($1::uuid[]) ORDER BY workflow_run_id NULLS LAST',
+        [[first.id, second.id]],
+      )
+    ).rows,
+  ).toEqual([
+    { id: first.id, workflow_run_id: `run-${first.id}` },
+    { id: second.id, workflow_run_id: null },
+  ]);
+  // A message that is unknown, or of a workspace this staff member is not in, is refused and starts nothing.
+  expect((await dispatch({ messageId: randomUUID() })).status).toBe(409);
+  session.mockResolvedValue({ token: s.f.users.other.token });
+  expect((await dispatch({ messageId: second.id })).status).toBeGreaterThanOrEqual(400);
+  expect(start.mock.calls).toEqual([[first.id]]);
+});
+
+test('the opt-out limit never spends the shared hourly total', async () => {
+  let closed = false;
+  for (let n = 0; n < 61 && !closed; n++)
+    await comms.budget(`caller-${n}`, `token-${n}`).catch(() => {
+      closed = true;
+    });
+  expect(closed).toBe(true);
+  await expect(comms.budget('fresh-caller', 'fresh-token')).rejects.toThrow('Too many requests');
+  await expect(comms.optOutBudget('fresh-caller', 'fresh-token')).resolves.toBeUndefined();
+  // Its own limits still hold: one token is tried at most 6 times an hour.
+  let stopped = false;
+  for (let n = 0; n < 7 && !stopped; n++)
+    await comms.optOutBudget(`other-${n}`, 'same-token').catch(() => {
+      stopped = true;
+    });
+  expect(stopped).toBe(true);
+});
+
+test('a real recipient can send the full reply form', async () => {
+  const m = await introduce('form@supplier-m.business.test');
+  const experience = new DeliveryExperienceService(s.f.runtime);
+  await experience.disclosure(s.ctx, {
+    commandId: randomUUID(),
+    linkId: m.id,
+    role: 'SUPPLIER',
+    sharedRequirements: 'Only the approved machinery requirement is shared.',
+    uncertainty: 'Budget and technical fit are not verified.',
+    rfqId: null,
+    allowQuotation: false,
+    allowMeetingInterest: true,
+    approved: true,
+    reason: 'Reviewed disclosure for the real reply form',
+  });
+  const view = (await comms.buyer({ action: 'read', token: m.token })) as Record<string, unknown>;
+  expect(view).toMatchObject({ role: 'SUPPLIER', synthetic: false });
+  const reply = {
+    action: 'detail-response',
+    token: m.token,
+    responseId: randomUUID(),
+    body: 'We can supply this machine. Please confirm the technical parameters.',
+    meetingInterest: true,
+    quotation: null,
+    acknowledged: true,
+  };
+  expect(await comms.buyer(reply)).toMatchObject({
+    recorded: true,
+    sourceKind: 'SELF_DECLARATION',
+  });
+  expect(await comms.buyer(reply)).toMatchObject({ recorded: true });
 });
 
 // Last in the file: it changes the approver's own sign-in.

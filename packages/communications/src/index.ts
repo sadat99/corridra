@@ -57,6 +57,20 @@ export class CommunicationService {
     );
     return r.rows[0]?.real === true;
   }
+  /**
+   * ADR-090. The limit for the opt-out entry: per caller and per token only. It never spends the shared hourly
+   * total, so no amount of other traffic can close the opt-out.
+   */
+  async optOutBudget(client: string, token: string) {
+    const key = (v: string) =>
+      createHmac('sha256', this.secret).update(`optout-budget:${v}`).digest('hex');
+    const r = await this.pool.query(
+      'SELECT app.intake_budget($1,60) AS client,app.intake_budget($2,6) AS token',
+      [key(`client:${client}`), key(`token:${token}`)],
+    );
+    if (!r.rows[0].client || !r.rows[0].token)
+      throw new DomainError('Too many requests. Try again in an hour.', 429);
+  }
   async buyer(input: unknown) {
     const v = buyerRequest.parse(input);
     if (!(await this.realLink(hash(v.token)))) return this.buyerAnswer(v);
@@ -227,9 +241,11 @@ export class CommunicationService {
       const messages = wants('messages')
         ? await keysetPage(db, {
             select: `c.*,p.channel,l.id AS link_id,br.status AS decision,br.id AS response_id,br.created_at AS response_at,j.status AS delivery_status,j.attempts,j.last_error,j.workflow_run_id,
+              cr.provider AS receipt_provider,CASE WHEN cr.provider='email_test' AND cr.reference LIKE 'sink:%' THEN 'Test, not sent' WHEN cr.provider='email_test' THEN 'Test, sent to a test address only' END AS delivery_note,
               EXISTS(SELECT FROM app.buyer_link_revocation r WHERE r.tenant_id=l.tenant_id AND r.link_id=l.id) AS revoked`,
             from: `app.communication c JOIN app.communication_policy p ON p.tenant_id=c.tenant_id AND p.id=c.policy_id LEFT JOIN app.buyer_link l ON l.tenant_id=c.tenant_id AND l.message_id=c.id
-              LEFT JOIN app.buyer_response br ON br.tenant_id=l.tenant_id AND br.link_id=l.id LEFT JOIN app.communication_dispatch j ON j.tenant_id=c.tenant_id AND j.id=c.id`,
+              LEFT JOIN app.buyer_response br ON br.tenant_id=l.tenant_id AND br.link_id=l.id LEFT JOIN app.communication_dispatch j ON j.tenant_id=c.tenant_id AND j.id=c.id
+              LEFT JOIN app.communication_receipt cr ON cr.tenant_id=c.tenant_id AND cr.id=c.id`,
             where: 'c.tenant_id=$1',
             values: [ctx.tenantId],
             sortExpression: 'c.created_at',
@@ -362,6 +378,21 @@ export class CommunicationService {
             )
           ).rows[0].enabled;
           if (!enabled) throw new DomainError('New introductions are disabled', 409);
+          // ADR-090: a real email introduction is refused here, in plain words, unless its consent basis is recorded.
+          const emailChannel =
+            (
+              await db.query<{ channel: string }>(
+                'SELECT channel FROM app.communication_policy WHERE tenant_id=$1 AND id=$2',
+                [ctx.tenantId, v.policyId],
+              )
+            ).rows[0]?.channel === 'EMAIL';
+          if (emailChannel && !v.consent)
+            throw new DomainError(
+              'Record why this person may be contacted before creating a real introduction.',
+              400,
+            );
+          if (!emailChannel && v.consent)
+            throw new DomainError('Consent is recorded only for a real email introduction.', 400);
           await db.query(
             'INSERT INTO app.communication(id,tenant_id,target_id,contact_id,policy_id,template_id,presentation,expires_at,created_by) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9)',
             [
@@ -441,7 +472,12 @@ export class CommunicationService {
       ? { ...result, buyerPath: `/buyer#${this.capability('buyer', result.id)}` }
       : result;
   }
-  pending(ctx: RequestContext) {
+  /**
+   * The messages one staff dispatch starts. `messageId` absent: the waiting sample messages, as before, and never a
+   * real email (ADR-090: a real message is sent only when a staff member names that one message). `messageId` given:
+   * that one real message, if it is waiting and this staff member may act on it.
+   */
+  pending(ctx: RequestContext, messageId?: string) {
     return withTenant(this.pool, ctx, 'communications.manage', async ({ db }) => {
       if (
         !(
@@ -452,9 +488,24 @@ export class CommunicationService {
         ).rows[0].enabled
       )
         throw new DomainError('Dispatch is disabled', 409);
+      const real = await this.realModule();
+      const waiting =
+        "tenant_id=$1 AND status IN ('PENDING','RUNNING') AND available_at<=now() AND (lease_until IS NULL OR lease_until<=now())";
+      if (messageId) {
+        const one = real
+          ? ((
+              await db.query(
+                `SELECT id FROM app.communication_dispatch WHERE ${waiting} AND id=$2 AND app.outreach_message_real(id)`,
+                [ctx.tenantId, messageId],
+              )
+            ).rows as { id: string }[])
+          : [];
+        if (!one.length) throw new DomainError('This message cannot be sent now', 409);
+        return one;
+      }
       return (
         await db.query(
-          "SELECT id FROM app.communication_dispatch WHERE tenant_id=$1 AND status IN ('PENDING','RUNNING') AND available_at<=now() AND (lease_until IS NULL OR lease_until<=now()) ORDER BY available_at LIMIT 20",
+          `SELECT id FROM app.communication_dispatch WHERE ${waiting}${real ? ' AND NOT app.outreach_message_real(id)' : ''} ORDER BY available_at LIMIT 20`,
           [ctx.tenantId],
         )
       ).rows as { id: string }[];

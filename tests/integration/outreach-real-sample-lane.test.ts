@@ -5,6 +5,7 @@ import { SyntheticChannel, OutreachChannel } from '../../packages/communications
 import { OutboxDispatcher } from '../../packages/workflows/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateOutreachReal } from '../../packages/db/src/outreach-real-migrate';
+import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
 
 // ADR-090. The sample lane gives the same results before and after the real outreach module is installed: queueing, the
 // sample receipt, the page read, an answer with an opt-out, the opt-out alone, and the events each of them records.
@@ -50,6 +51,40 @@ async function sampleRun(adapter: SyntheticChannel | OutreachChannel) {
     decision: 'NOT_RELEVANT',
     optOut: true,
   });
+  // The full reply form of a sample recipient (app.recipient_detail_respond), with its own recorded event.
+  const c = await f.introduction();
+  await new DeliveryExperienceService(f.runtime).disclosure(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    linkId: c.id,
+    role: 'SUPPLIER',
+    sharedRequirements: 'Only the approved sample requirement is shared.',
+    uncertainty: 'Nothing here is independently verified.',
+    rfqId: null,
+    allowQuotation: false,
+    allowMeetingInterest: true,
+    approved: true,
+    reason: 'Sample disclosure for the reply form comparison',
+  });
+  const form = {
+    action: 'detail-response',
+    token: c.token,
+    responseId: randomUUID(),
+    body: 'A sample answer to the shared requirement.',
+    meetingInterest: true,
+    quotation: null,
+    acknowledged: true,
+  };
+  const { createdAt: _createdAt, ...formAnswer } = (await f.communications.buyer(form)) as Record<
+    string,
+    unknown
+  >;
+  void _createdAt;
+  const formExecutor = (
+    await f.owner.query(
+      'SELECT p.kind FROM app.recipient_detail_response r JOIN identity.principal p ON p.id=r.created_by WHERE r.id=$1',
+      [form.responseId],
+    )
+  ).rows;
   const optedOut = await f.communications.buyer({ action: 'optout', token: b.token });
   const afterOptOut = await dispatcher.attempt(b.id, f.communications.dispatchCapability(b.id));
   return {
@@ -57,6 +92,8 @@ async function sampleRun(adapter: SyntheticChannel | OutreachChannel) {
     receipt,
     read,
     decided,
+    formAnswer,
+    formExecutor,
     optedOut,
     afterOptOut,
     events: await events(),
@@ -70,6 +107,8 @@ test('the sample lane is the same before and after the real outreach module is i
     receipt: [{ provider: 'synthetic' }],
     read: { synthetic: true, decision: null },
     decided: { decision: 'NOT_RELEVANT', recorded: true },
+    formAnswer: { recorded: true, sourceKind: 'SELF_DECLARATION' },
+    formExecutor: [{ kind: 'service' }],
     optedOut: { optedOut: true },
     afterOptOut: 'SUPPRESSED',
   });

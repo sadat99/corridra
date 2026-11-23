@@ -38,7 +38,7 @@ test('a link without a usable token, or one the server does not know, says the o
   page,
 }) => {
   const gone =
-    'This private link has expired or was replaced. Ask the person who sent it for a new link.';
+    'This link does not open. It may be incomplete or replaced. Open the complete link from the email.';
   const none = await open(page, 'not-a-token');
   await expect(page.getByRole('status')).toHaveText(gone);
   await expect(page.getByRole('button', { name: 'Stop These Emails' })).toHaveCount(0);

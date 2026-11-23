@@ -9,7 +9,11 @@ let known = true;
 const services = {
   ready: Promise.resolve(),
   communications: {
-    async budget(...args: unknown[]) {
+    async budget() {
+      // The shared hourly total is spent: the opt-out must not depend on it.
+      throw new Error('The shared budget must never be charged for an opt-out');
+    },
+    async optOutBudget(...args: unknown[]) {
       calls.push({ method: 'budget', args });
     },
     async unsubscribe(...args: unknown[]) {
@@ -42,11 +46,31 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
-test('only POST exists, so opening a link can never record anything', () => {
+test('opening the one-click address shows the opt-out page and records nothing', async () => {
   expect(
-    Object.keys(route).filter((name) => /^(GET|HEAD|PUT|PATCH|DELETE|OPTIONS)$/.test(name)),
+    Object.keys(route).filter((name) => /^(HEAD|PUT|PATCH|DELETE|OPTIONS)$/.test(name)),
   ).toEqual([]);
-  expect(typeof route.POST).toBe('function');
+  const opened = await route.GET(
+    new Request(`https://app.business.test/api/outreach/unsubscribe?t=${token}`),
+    { params: Promise.resolve({ action: 'unsubscribe' }) },
+  );
+  expect(opened.status).toBe(303);
+  expect(opened.headers.get('location')).toBe(`/buyer?stop=1#${token}`);
+  expect(opened.headers.get('referrer-policy')).toBe('no-referrer');
+  expect(opened.headers.get('cache-control')).toBe('no-store');
+  for (const [action, query] of [
+    ['unsubscribe', ''],
+    ['unsubscribe', '?t=abc'],
+    ['webhook', `?t=${token}`],
+  ])
+    expect(
+      (
+        await route.GET(new Request(`https://app.business.test/api/outreach/${action}${query}`), {
+          params: Promise.resolve({ action }),
+        })
+      ).status,
+    ).toBe(404);
+  expect(calls).toEqual([]);
 });
 
 test('the opt-out works by one-click POST and from the page, with every outreach setting unset', async () => {
