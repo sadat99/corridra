@@ -60,6 +60,10 @@ test.beforeAll(async () => {
 async function mount(page: Page, width: number) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto('/plan');
+  // KI-26: the page must finish hydrating before its document is replaced, or React can remove the mount node.
+  await expect(
+    page.getByRole('button', { name: /^(Continue|Pick One to Continue)$/ }),
+  ).toBeEnabled();
   await page.evaluate(
     ({ css }) => {
       document.body.innerHTML = '<div id="mount"></div>';
