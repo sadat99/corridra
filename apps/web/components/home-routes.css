@@ -2138,7 +2138,10 @@
   align-items: center;
   gap: var(--space-6);
   padding-block: var(--space-8);
-  padding-inline: 0;
+}
+/* The question, its doors and the first action keep the same side room as the band and the sections below. */
+.ux-guide-home.tr-home .tr-top :is(.tr-doors, .tr-start) {
+  padding-inline: min(var(--space-6), 5vw);
 }
 .ux-guide-home.tr-home .tr-hero-head {
   justify-items: start;
@@ -2209,6 +2212,9 @@
   }
   .ux-guide-home.tr-home .tr-top .tr-doors-small {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-guide-home.tr-home .tr-top :is(.tr-doors, .tr-start) {
+    padding-inline: min(var(--space-4), 4vw);
   }
 }
 @media (min-width: 48rem) {

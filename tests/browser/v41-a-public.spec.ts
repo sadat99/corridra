@@ -165,7 +165,11 @@ test('L4 home: one primary action below the choices, left aligned with them', as
     (await primary.boundingBox())!,
   ];
   expect(start.y).toBeGreaterThanOrEqual(doors.y + doors.height);
-  expect(Math.abs(start.x - doors.x)).toBeLessThanOrEqual(1);
+  const firstDoor = (await door(page, 'Buying from China').boundingBox())!;
+  expect(
+    Math.abs(start.x - firstDoor.x),
+    'the action starts where the doors start',
+  ).toBeLessThanOrEqual(1);
   expect(
     await page.locator('#hero .tr-start').evaluate((el) => getComputedStyle(el).textAlign),
   ).toMatch(/^(start|left)$/);
