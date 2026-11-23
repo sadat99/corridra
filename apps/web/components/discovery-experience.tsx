@@ -102,6 +102,8 @@ function RouteName({ route }: { route: Direction }) {
   );
 }
 /** The five situations from the Public Experience. Each presets the existing selectors. */
+// The card styles every inner span as its small description line, so the "Enter Bangladesh" title keeps its flag
+// and name together in the shared `ux-flagged` box on an element that is not a span.
 const situations = [
   {
     key: 'source',
@@ -131,7 +133,10 @@ const situations = [
     key: 'enter',
     title: (
       <>
-        Enter <Flag code="bd" /> Bangladesh
+        Enter{' '}
+        <bdi className="ux-flagged">
+          <Flag code="bd" /> Bangladesh
+        </bdi>
       </>
     ),
     text: 'Find customers and partners without a local office.',
