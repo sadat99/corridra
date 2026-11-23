@@ -13,8 +13,6 @@ import { ReplyJourney } from './reply-journey';
 import { parseReplyFragment } from '../../lib/reply-terms';
 import { replyHtmlLang, replyWords } from '../../lib/reply-words';
 import { linkGone } from '../delivery-view';
-import { Flagged } from '../../components/ux/flag';
-import { placeMark } from '../../lib/ux/place-mark';
 import { LinkStatus } from './link-status';
 type View = {
   capability?: string;
@@ -329,7 +327,7 @@ function ScopedIntroduction({
               <div key={label}>
                 <dt>{label}</dt>
                 <dd>
-                  {label === 'Country' ? <Flagged code={placeMark(value)}>{value}</Flagged> : value}
+                  {value}
                   {label === 'Evidence highlights' && (
                     <p className="evidence-label">
                       Operator-reported context. No independent verification is asserted.

@@ -12,8 +12,6 @@ import { PrivacyLabel, PrivacyLabelScope } from '../../components/privacy-label'
 import { BeforeSend } from '../../components/before-send';
 import { FieldError } from '../../components/field-error';
 import { ChoiceButton, ChoiceRow } from '../../components/ux/choice-chip';
-import { Flagged } from '../../components/ux/flag';
-import { placeMark } from '../../lib/ux/place-mark';
 import { translate } from '../../lib/i18n/messages';
 import {
   buildReplyTerms,
@@ -660,13 +658,7 @@ export function ReplyJourney({
                 ).map(([label, value]) => (
                   <div key={label}>
                     <dt>{label}</dt>
-                    <dd>
-                      {label === 'Country' ? (
-                        <Flagged code={placeMark(value)}>{value}</Flagged>
-                      ) : (
-                        value
-                      )}
-                    </dd>
+                    <dd>{value}</dd>
                   </div>
                 ))}
                 {data.sharedRequirements && (
@@ -750,13 +742,7 @@ export function ReplyJourney({
                 ).map(([label, value]) => (
                   <div key={label}>
                     <dt>{label}</dt>
-                    <dd>
-                      {label === 'Country' ? (
-                        <Flagged code={placeMark(value)}>{value}</Flagged>
-                      ) : (
-                        value
-                      )}
-                    </dd>
+                    <dd>{value}</dd>
                   </div>
                 ))}
               </dl>

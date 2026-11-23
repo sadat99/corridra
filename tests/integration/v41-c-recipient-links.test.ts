@@ -68,16 +68,14 @@ describe('L1: a place name finds its mark, and never a new flag', () => {
       expect(flagCodes).toContain(code.slice(3, 5));
   });
 
-  it('the Country row of a private introduction goes through the shared flag component', () => {
+  it('the private introduction keeps its Country row as it was: its mark waits for a later unit', () => {
+    // The Reply Page markup with its switch off is held by golden files (tests/integration/fixtures/buyer-steps-off),
+    // and four existing browser harnesses bundle this page without the flag pictures. Both stay untouched here, so
+    // the row is unchanged and the ledger says L1 is not started on /buyer.
     const intro = read('apps/web/app/buyer/introduction.tsx');
     const journey = read('apps/web/app/buyer/reply-journey.tsx');
-    expect(intro.match(/<Flagged code=\{placeMark\(value\)\}>\{value\}<\/Flagged>/g)).toHaveLength(
-      1,
-    );
-    expect(
-      journey.match(/<Flagged code=\{placeMark\(value\)\}>\{value\}<\/Flagged>/g),
-    ).toHaveLength(2);
-    // The row is still the row it was: same label, same value, same order.
+    expect(intro).not.toContain('Flagged');
+    expect(journey).not.toContain('Flagged');
     expect(intro.match(/\['Country', data\.introduction\.country\]/g)).toHaveLength(1);
     expect(journey.match(/\['Country', data\.introduction\.country\]/g)).toHaveLength(2);
   });
@@ -194,7 +192,7 @@ describe('the conformance ledger rows of the recipient routes', () => {
     }[];
   };
   const row = (route: string) => ledger.routes.find((r) => r.route === route)!;
-  it('are assessed, and /buyer carries L8 and L1 as built with evidence', () => {
+  it('are assessed, and /buyer carries L8 as built with evidence and L1 as not started', () => {
     for (const route of [
       '/buyer',
       '/client',
@@ -208,7 +206,7 @@ describe('the conformance ledger rows of the recipient routes', () => {
       expect(row(route).notes, route).not.toMatch(dashes);
     }
     expect(row('/buyer').decisions.L8).toBe('built');
-    expect(row('/buyer').decisions.L1).toBe('built');
+    expect(row('/buyer').decisions.L1).toBe('not_started');
     expect(row('/buyer').evidence.length).toBeGreaterThan(0);
   });
 });

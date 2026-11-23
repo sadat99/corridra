@@ -635,7 +635,7 @@
       "file": "apps/web/app/buyer/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "built",
+        "L1": "not_started",
         "L2": "n/a",
         "L3": "n/a",
         "L4": "n/a",
@@ -656,7 +656,7 @@
         "docs/revamp/evidence/v41-c-2026-11-23/buyer-stop-unavailable-after-390.jpg",
         "tests/integration/v41-c-recipient-links.test.ts"
       ],
-      "notes": "V4.1-C. L8: the card takes a caution edge, the shared refusal line (D-053, words unchanged) a lock, Retry Private Introduction is the one primary action and the existing help links stay; the stop page marks its link state the same way. L1: the Country row goes through Flagged with lib/ux/place-mark.ts (nine existing flags only). L2 and L3 n/a: the three answers act at once and each already has one icon beside its words; no job, goal or door choice here. L10 n/a: the page shows no fact with a dated source. Built, not verified: no axe or signed journey evidence in the row yet."
+      "notes": "V4.1-C. L8: the card takes a caution edge, the shared refusal line (D-053, words unchanged) a lock, Retry Private Introduction is the one primary action and the existing help links stay; the stop page marks its link state the same way. L1 not started: the Country row has no mark yet. The Reply Page markup with its switch off is held by golden files (tests/integration/fixtures/buyer-steps-off) and four existing browser harnesses bundle this page and cannot load the flag stylesheet; changing either needs its own unit. L2 and L3 n/a: the three answers act at once and each already has one icon beside its words; no job, goal or door choice here. L10 n/a: the page shows no fact with a dated source. Built, not verified: no axe or signed journey evidence in the row yet."
     },
     {
       "route": "/client",
