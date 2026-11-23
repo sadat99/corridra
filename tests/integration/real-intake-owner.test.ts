@@ -3,15 +3,13 @@ import { randomUUID } from 'node:crypto';
 import { realStaffFixture } from './real-staff-fixture';
 import { CustomerWorkspaceService } from '../../packages/auth/src/customer-workspaces';
 import { CustomerRequestService } from '../../packages/auth/src/customer-requests';
-import {
-  migrateCustomerRealIntakeOwner,
-  previewCustomerRealIntakeOwnerInstall,
-} from '../../packages/db/src/customer-real-intake-owner-migrate';
+import { migrateCustomerRealIntakeOwner } from '../../packages/db/src/customer-real-intake-owner-migrate';
 import { withTenant } from '../../packages/db/src/index';
 import { migrateNetworkRealUse } from '../../packages/db/src/network-real-use-migrate';
 import { configureNetworkRealUse } from '../../packages/auth/src/network-real-use-configuration';
 import {
   changeRealIntakeOwner,
+  previewCustomerRealIntakeOwnerInstall,
   realIntakeOwnerPlan,
 } from '../../packages/auth/src/customer-real-intake-owner';
 

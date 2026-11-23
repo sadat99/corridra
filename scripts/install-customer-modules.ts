@@ -98,11 +98,11 @@ import { migrateCustomerPaymentsSimulated } from '../packages/db/src/customer-pa
 import { configureSimulatedPayments } from '../packages/auth/src/customer-payments-simulated-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
 import { inventoryDataCleanup } from '../packages/auth/src/customer-data-cleanup';
+import { migrateCustomerRealIntakeOwner } from '../packages/db/src/customer-real-intake-owner-migrate';
 import {
-  migrateCustomerRealIntakeOwner,
+  changeRealIntakeOwner,
   previewCustomerRealIntakeOwnerInstall,
-} from '../packages/db/src/customer-real-intake-owner-migrate';
-import { changeRealIntakeOwner } from '../packages/auth/src/customer-real-intake-owner';
+} from '../packages/auth/src/customer-real-intake-owner';
 import {
   assertNoneBehind,
   refreshInstalledOptionalModules,

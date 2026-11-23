@@ -76,8 +76,10 @@ describe('the real intake owner install wiring', () => {
     expect(preview).toBeGreaterThan(before);
     expect(preview).toBeLessThan(applyAt);
     expect(script.slice(preview, dry + 400)).toContain('apply would refuse: ');
-    expect(migrator).toContain("await db.query('BEGIN READ ONLY')");
-    expect(migrator).toContain('is not the text this module was written against');
+    expect(source).toContain("await db.query('BEGIN READ ONLY')");
+    expect(source).toContain('is not the text this module was written against');
+    // The migrator file keeps its one wrapped migrator: the preview lives with the operation.
+    expect(migrator).not.toContain('previewCustomerRealIntakeOwnerInstall');
     expect(script.slice(change, change + 200)).toContain("result.lines.join('\\n')");
     expect(script.split('reason: v.REAL_INTAKE_OWNER_REASON').length - 1).toBe(2);
   });
