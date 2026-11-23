@@ -325,6 +325,8 @@ describe('every customer route reaches data through the session boundary', () =>
       'customer-invoicing-real-supplier-secret.ts',
       // Offline: the real intake owner change, run by the protected installer only (B11a, owner decision 23 Nov 2026).
       'customer-real-intake-owner.ts',
+      // Offline: the read-only QA test data retirement report, run by the protected installer only (B11b).
+      'customer-qa-data-retire.ts',
       'customer-request-admission.ts',
       'customer-erasure-queue.ts',
       'customer-session.ts',

@@ -109,6 +109,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'ai_model_policy_real',
     'data_cleanup_inventory',
     'real_intake_owner_apply',
+    'qa_data_retire',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
@@ -161,6 +162,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['ai_model_policy_real', u, u, u, u, u, u, u, u],
     ['data_cleanup_inventory', u, u, u, u, u, u, u, u],
     ['real_intake_owner_apply', u, u, u, u, u, u, u, u],
+    ['qa_data_retire', u, u, u, u, u, u, u, u],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
@@ -444,6 +446,44 @@ test('the real intake owner choice moves only its own action, carries a fixed re
   assert.match(
     declared.field_modules_action.description,
     /real_intake_owner_apply \(B11a, owner decision 23 Nov 2026:[^)]*without apply it is a dry run[^)]*deletes nothing[^)]*only when the owner approves\)/,
+  );
+});
+
+test('the QA data retirement choice only reports, moves no other module and carries no reason or input', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const steps = workflow.jobs.install.steps;
+  const env = steps.find((step) => step.name === 'Report or install the customer modules').env;
+  const guard = steps.find((step) => step.name?.startsWith('Verify exact revision')).if;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    const own = choice === 'qa_data_retire';
+    assert.equal(evaluate(env.QA_DATA_RETIRE_ACTION, inputs), own ? 'report' : 'unchanged', choice);
+    if (!own) continue;
+    assert.equal(evaluate(guard, inputs), true, 'the exact-head check must run');
+    for (const [name, value] of Object.entries(env))
+      if (name.endsWith('_ACTION') && name !== 'QA_DATA_RETIRE_ACTION')
+        assert.ok(
+          ['unchanged', 'no'].includes(String(evaluate(String(value), inputs))),
+          `${choice} must not move ${name}`,
+        );
+  }
+  // One variable only: a report records nothing, so it carries no reason and no setting of its own.
+  assert.deepEqual(
+    Object.keys(env).filter((name) => name.startsWith('QA_DATA_RETIRE')),
+    ['QA_DATA_RETIRE_ACTION'],
+  );
+  assert.equal(Object.keys(declared).length, 24);
+  assert.match(
+    declared.field_modules_action.description,
+    /qa_data_retire \(B11b, owner decision 23 Nov 2026: read-only report[^)]*with or without apply[^)]*refuses unless exactly one matches[^)]*writes, archives and deletes nothing[^)]*no user or account is touched[^)]*\)/,
   );
 });
 
