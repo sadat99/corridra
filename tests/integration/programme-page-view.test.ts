@@ -106,7 +106,7 @@ describe('the public programme page', () => {
     expect(html).not.toContain('/account/delegations?apply=');
   });
 
-  it('marks a sample page and states unknown facts as not stated, never as zero', async () => {
+  it('marks a sample page and leaves out a fee or places the organiser did not state, never a zero', async () => {
     const { ProgrammePageView } = await load();
     const { fee: _fee, capacity: _capacity, ...rest } = programme;
     void _fee;
@@ -121,9 +121,29 @@ describe('the public programme page', () => {
     );
     const words = text(html);
     expect(words).toContain('This is a sample page.');
-    expect(words.match(/Not stated yet/g)).toHaveLength(2);
+    // D-046: an optional fact with no value has no row at all, so a visitor never reads "Not stated yet".
+    expect(words).not.toContain('Not stated yet');
+    expect(html).not.toContain('<dt>Fee</dt>');
+    expect(html).not.toContain('<dt>Places</dt>');
+    expect(words).not.toMatch(/\b0 planned/);
+    // The facts every page has stay.
+    for (const label of ['Where', 'When', 'Applications close', 'Organised by', 'Focus'])
+      expect(html).toContain(`<dt>${label}</dt>`);
+    expect(words).toContain('To take part');
     expect(words).not.toContain('The programme Planned');
     expect(html).not.toContain('programme-plan-title');
+  });
+
+  it('keeps the preview on the screen while the closing date box is empty', async () => {
+    const { ProgrammePageView } = await load();
+    // The editor builds the closing moment from the date box, so an emptied box is not a date.
+    const html = render(
+      ce(ProgrammePageView, { page: page({ closesAt: 'T23:59:00.000Z' }), preview: true }),
+    );
+    expect(text(html)).toContain(programme.summary);
+    expect(html).toContain('<dt>Applications close</dt>');
+    expect(text(html)).not.toContain('(UTC)');
+    expect(text(html)).not.toContain('Invalid');
   });
 
   it('draws the organiser preview with the same words and no working Apply or share action', async () => {

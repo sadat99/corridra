@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { pp } from '../../../lib/i18n/programme-pages';
+import { formatDate } from '../../../lib/ux/format';
 import { customerHeaders, object } from './pricing-client';
 
 // Browser helpers for the programme page and applications (ADR-080). Nothing here decides authority: the database
@@ -123,13 +124,20 @@ export const refusalWords: Record<string, string> = {
   PROGRAMME_APPLICATION_LIMIT: pp('pp.refusal.PROGRAMME_APPLICATION_LIMIT'),
   PROGRAMME_APPLICATION_RATE_LIMITED: pp('pp.refusal.PROGRAMME_APPLICATION_RATE_LIMITED'),
 };
+// The applicant reads the same refusals about themselves, so the one written about "this person" has their own words.
+export const applicantRefusalWords: Record<string, string> = {
+  ...refusalWords,
+  PROGRAMME_ALREADY_REGISTERED: pp('pp.refusal.applicant.PROGRAMME_ALREADY_REGISTERED'),
+};
 export type Outcome =
   { ok: true; body: Record<string, unknown> } | { ok: false; message: string; denied: boolean };
 // Every write names the signed-in person here, where it is sent: the server refuses a request whose identity is not the
-// current session's.
+// current session's. `refusals` are the words for the side that sends it: the organiser's unless the applicant's are
+// passed.
 export async function pageRequest(
   identity: { subject: string; issuer: string },
   payload: Record<string, unknown>,
+  refusals: Record<string, string> = refusalWords,
 ): Promise<Outcome> {
   let r: Response;
   try {
@@ -149,7 +157,7 @@ export async function pageRequest(
   const body: unknown = await r.json().catch(() => null);
   if (r.ok && object(body)) return { ok: true, body };
   const code = object(body) && typeof body.code === 'string' ? body.code : '';
-  if (refusalWords[code]) return { ok: false, denied: false, message: refusalWords[code] };
+  if (refusals[code]) return { ok: false, denied: false, message: refusals[code] };
   if (object(body) && body.code === 'archived' && typeof body.error === 'string')
     return { ok: false, denied: false, message: body.error };
   if ([401, 403].includes(r.status))
@@ -160,13 +168,8 @@ export async function pageRequest(
   if (r.status === 503) return { ok: false, denied: false, message: pp('pp.error.unavailable') };
   return { ok: false, denied: false, message: pp('pp.error.notSaved') };
 }
-export const shortDay = (iso: string) =>
-  new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(iso));
+/** The UTC day of a stored moment, "18 Nov 2026", so the day never shifts with the reader's zone. */
+export const shortDay = (iso: string) => formatDate(iso, { timeZone: 'UTC' });
 
 // The two application counts of the organiser's own page read (existing GET, nothing new). Counts only; null while
 // unread, where pages are off for this programme, or when the read fails.

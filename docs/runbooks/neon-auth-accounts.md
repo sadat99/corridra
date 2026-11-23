@@ -55,7 +55,7 @@ Two separate switches, both unset until the owner acts. Staff recovery mail abov
 | `CORRIDRA_CUSTOMER_CODE_SIGNIN`       | Adds "Sign in with a code" under the password form on `/signin`. Password stays the default. Read on the server. |
 | `CORRIDRA_CUSTOMER_AUTH_MAIL_ENABLED` | Turns on `POST /api/auth-mail`, the receiver for Neon Auth email events. With it unset the route answers 404.    |
 
-Settings for the mail receiver, set by the owner in the host (never in the repository, never in chat): `CUSTOMER_AUTH_MAIL_KEY` (secret, the Resend key for the sending domain), `CUSTOMER_AUTH_MAIL_FROM` (`sadat@c.obsidianglobal.studio`, shown as "Sadat, Corridra"), `CUSTOMER_AUTH_MAIL_REPLY_TO` (`sadat@obsidianglobal.studio`), and only if the key address cannot be derived from `NEON_AUTH_BASE_URL`, `CUSTOMER_AUTH_MAIL_WEBHOOK_JWKS_URL`. If any is missing or invalid the receiver answers 503 and sends nothing.
+Settings for the mail receiver, set by the owner in the host (never in the repository, never in chat): `CUSTOMER_AUTH_MAIL_KEY` (secret, the Resend key for the sending domain), `CUSTOMER_AUTH_MAIL_FROM` (`sadat@c.obsidianglobal.studio`, shown as "Corridra"), `CUSTOMER_AUTH_MAIL_REPLY_TO` (`sadat@obsidianglobal.studio`), and only if the key address cannot be derived from `NEON_AUTH_BASE_URL`, `CUSTOMER_AUTH_MAIL_WEBHOOK_JWKS_URL`. If any is missing or invalid the receiver answers 503 and sends nothing.
 
 ### What Neon does (from its documentation, read 23 October 2026)
 

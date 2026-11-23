@@ -645,7 +645,14 @@ for (const mode of ['real', 'synthetic'] as const) {
       reportingPurpose: 'Synthetic participant invitation and privacy checks',
       acknowledged: true,
     });
-    const mails: { id: string; recipientEmail: string; token: string }[] = [];
+    const mails: {
+      id: string;
+      recipientEmail: string;
+      token: string;
+      programme?: string;
+      organiser?: string;
+      expiresAt?: string;
+    }[] = [];
     let fail = false;
     const participants = new CustomerParticipantService(
       f.runtime,
@@ -721,7 +728,12 @@ for (const mode of ['real', 'synthetic'] as const) {
       id: issued.id,
       recipientEmail: 'participant@example.test',
       token: issued.token,
+      // D-037: the email names the programme and the organiser and gives the expiry.
+      programme: 'Synthetic email programme',
+      organiser: 'Synthetic email organiser',
+      expiresAt: expect.any(String),
     });
+    expect(Date.parse(mails[1]!.expiresAt!)).toBeGreaterThan(Date.now());
     expect(JSON.stringify(sent)).not.toContain(issued.token);
     expect(JSON.stringify(sent)).not.toContain('participant@example.test');
     const count = (

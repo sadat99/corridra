@@ -208,7 +208,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
       task.current?.abort();
       clear();
       setStatus('expired');
-      setMessage('Private details and drafts were cleared. Reload to check current access.');
+      setMessage('Private details and unsaved text were cleared. Reload to check current access.');
     };
     const visibility = () => {
       if (document.visibilityState === 'hidden') hide();
@@ -244,7 +244,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
         setMessage(
           pending
             ? 'Resolve the pending change before closing these tools.'
-            : 'Your objective draft is unsaved. Save it or clear the text before closing these tools.',
+            : 'Your objective is unsaved. Save it or clear the text before closing these tools.',
         );
       }
     };
@@ -353,7 +353,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
           if ([401, 403, 503].includes(r.status)) {
             clear();
             setStatus('denied');
-            throw Error('Access changed. Private details and drafts were cleared.');
+            throw Error('Access changed. Private details and unsaved text were cleared.');
           }
           if (r.status >= 400 && r.status < 500) {
             setPending(null);

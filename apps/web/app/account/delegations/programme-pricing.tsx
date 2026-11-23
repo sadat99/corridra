@@ -758,7 +758,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
             </button>
           )}
           {editing && (!textDraft.restored || restoredEditor !== editing) && (
-            <p role="status">Restoring your fee schedule draft…</p>
+            <p role="status">Restoring what you typed for this fee schedule…</p>
           )}
           {editing && textDraft.restored && restoredEditor === editing && (
             <form

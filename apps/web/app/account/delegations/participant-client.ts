@@ -299,16 +299,24 @@ export function useParticipantView(
     clearDraft();
   }, [clearDraft, invalidate]);
   const load = useCallback(
-    async (which?: 'invitations' | 'registrations', cursor?: string, preserveResult = false) => {
+    async (
+      which?: 'invitations' | 'registrations',
+      cursor?: string,
+      preserveResult = false,
+      // What is on screen stays while this one read runs, so the place and the focus of the person are kept.
+      keepView = false,
+    ) => {
       if (reading.current || writing.current || !active.current) return;
       reading.current = true;
       setBusy(true);
       if (!which) {
         available.current = false;
-        deadline.current = 0;
-        if (timer.current) clearTimeout(timer.current);
-        if (keepWhileReloading) setRefreshing(true);
+        // What stays on screen keeps its deadline and its timer while it is read again, so a read that hangs cannot keep a
+        // one-time code or a private list past its expiry. A read that answers sets both afresh, below.
+        if (keepWhileReloading || keepView) setRefreshing(true);
         else {
+          deadline.current = 0;
+          if (timer.current) clearTimeout(timer.current);
           setData(null);
           setStatus('loading');
         }
@@ -428,13 +436,26 @@ export function useParticipantView(
         return;
       }
       const command = intent.current ?? payload;
-      if (command.action !== 'preview') {
+      // The command kept for an exact retry and the one shown as pending are always the same one: a kept command is sent
+      // in place of whatever is asked next, so it must never be kept without the retry button and the folded forms that
+      // say so. An email in flight changes nothing the screens show, so it is kept only once its outcome is unconfirmed
+      // and the page keeps its length until then; one cut off by a hidden page or an expired view is not kept at all.
+      const keepForRetry = () => {
         intent.current = command;
         setPending(command);
-      }
+      };
+      if (command.action !== 'preview' && command.action !== 'emailInvitation') keepForRetry();
       writing.current = true;
       setBusy(true);
-      setNotice('');
+      // Where this command's words go. An email's are kept on the code it sends (`emailNote`), so the screen says them
+      // beside the Email Invitation button and the notice under the section, and with it the page length, is left alone.
+      // With no code on screen (an email retried after a reload) they go under the section like any other command's.
+      const besideCode = command.action === 'emailInvitation' && result?.action === 'invite';
+      const say = (words: string) =>
+        besideCode
+          ? setResult((old) => (old ? { ...old, emailNote: words } : old))
+          : setNotice(words);
+      say('');
       if (command.action !== 'emailInvitation') setResult(null);
       const task = new AbortController();
       post.current = task;
@@ -453,7 +474,15 @@ export function useParticipantView(
         });
         if (task.signal.aborted || !active.current) return;
         if ([401, 403].includes(response.status)) {
-          deny();
+          if (command.action !== 'preview') {
+            deny();
+            return;
+          }
+          // The route refuses a wrong or expired code exactly as it refuses lost access. The person keeps the page and the
+          // code they typed; the list is read again in place, and that read clears everything if access really is gone.
+          setResult({ action: 'previewRefused', requestToken: command.token });
+          writing.current = false;
+          await load(undefined, undefined, true, true);
           return;
         }
         if (response.status === 409) {
@@ -467,7 +496,7 @@ export function useParticipantView(
             refusal === archivedParticipantMessage ||
             archivedWorkspaceMessages.includes(refusal)
           ) {
-            setNotice(refusal);
+            say(refusal);
             return;
           }
           setData(null);
@@ -478,6 +507,7 @@ export function useParticipantView(
         if (response.status === 503) {
           available.current = false;
           if (timer.current) clearTimeout(timer.current);
+          if (command.action !== 'preview') keepForRetry();
           setData(null);
           setStatus('unavailable');
           setNotice('Participation is unavailable. Reload before retrying an unconfirmed request.');
@@ -486,7 +516,7 @@ export function useParticipantView(
         if ([400, 415, 422].includes(response.status)) {
           intent.current = null;
           setPending(null);
-          setNotice('This request was not accepted. Check the details and try again.');
+          say('This request was not accepted. Check the details and try again.');
           return;
         }
         if (!response.ok) throw Error('Unconfirmed participant command');
@@ -515,7 +545,7 @@ export function useParticipantView(
           intent.current = null;
           setPending(null);
           writing.current = false;
-          setNotice(
+          say(
             command.action === 'emailInvitation'
               ? value.email === 'sent'
                 ? 'Invitation email sent.'
@@ -532,17 +562,20 @@ export function useParticipantView(
                     : 'You’re registered for this programme.'
                   : 'The programme access change is saved. Check the updated list.',
           );
-          await load(undefined, undefined, true);
+          // An email changes nothing in the list, so the code and its button stay where they are while it is read again.
+          await load(undefined, undefined, true, command.action === 'emailInvitation');
         }
         if (task.signal.aborted || !active.current) return;
         return value;
       } catch {
-        if (!task.signal.aborted && active.current)
-          setNotice(
+        if (!task.signal.aborted && active.current) {
+          if (command.action !== 'preview') keepForRetry();
+          say(
             command.action === 'preview'
               ? 'The invitation could not be checked. Try again.'
               : 'Saving could not be confirmed. Retry the same request before changing it.',
           );
+        }
       } finally {
         if (!task.signal.aborted && active.current) {
           writing.current = false;
@@ -550,7 +583,7 @@ export function useParticipantView(
         }
       }
     },
-    [subject, issuer, load, deny, expire, status, onOutcome],
+    [subject, issuer, load, deny, expire, status, result, onOutcome],
   );
   useEffect(() => {
     active.current = true;

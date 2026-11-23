@@ -1,7 +1,7 @@
 'use client';
 import type { FeeDispute } from '@corridra/auth/customer-programme-economics';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { disputeApi, parseOpenDisputes, reasonWords } from './fee-dispute-client';
+import { disputeApi, feeQuestionLine, parseOpenDisputes } from './fee-dispute-client';
 import { failureText, TermsError } from './terms-client';
 
 type Props = {
@@ -100,8 +100,7 @@ function Scoped({ subject, issuer, workspaceId, programmeId, labels }: Props) {
           <ul>
             {items.map((d) => (
               <li key={d.id}>
-                {labels[d.registrationId] ?? 'A participant'}: {reasonWords[d.reason]}, asked{' '}
-                {d.filedAt.slice(0, 10)}.
+                {feeQuestionLine(labels[d.registrationId] ?? 'A participant', d)}
                 <div className="guide-actions-row">
                   <button
                     type="button"
