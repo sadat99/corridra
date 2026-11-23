@@ -177,9 +177,8 @@ describe('journey mode: the sidebar per mode', () => {
         '/account/meetings',
         '/account?view=results',
       ]);
-      expect(tabs.map(({ href: _href, ...rest }) => rest)).toEqual(
-        today.map(({ href: _href, ...rest }) => rest),
-      );
+      const rest = (list: typeof today) => list.map((tab) => ({ ...tab, href: '' }));
+      expect(rest(tabs)).toEqual(rest(today));
     }
     expect(journeyScopedHref('home', 'all')).toBe('/account/move');
     expect(journeyScopedHref('requests', 'all')).toBe('/account?view=work');
