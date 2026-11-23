@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState, type CSSProperties } from 'react';
 import { CorridraIcon } from './corridra-icon';
@@ -45,6 +46,13 @@ const terms = {
 /** The person each door preselects in "Eight people" (board 3c): Importer, Exporter, Delegation leader. */
 const personFor: Partial<Record<RouteKey, number>> = { china: 1, sell: 0, delegation: 6 };
 /** The brief goal each door preselects. */
+/** UI/UX.v4.1 L2: the one owned icon of each door. */
+const doorIcon: Record<RouteKey, string> = {
+  china: 'buy',
+  sell: 'sell',
+  delegation: 'people',
+  other: 'draft',
+};
 const goalFor: Record<RouteKey, GoalKey> = {
   china: 'china',
   sell: 'sell',
@@ -106,16 +114,31 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
   const draft = pages && locale !== 'en' && offered.some((o) => o.code === locale && o.draft);
   return (
     <>
-      <section className="tr-hero" id="hero" aria-labelledby="home-title">
-        <div className="tr-hero-head">
-          <p className="tr-brandline">{route ? t('home.title') : t('home.eyebrow')}</p>
-          <h1 id="home-title">{title}</h1>
-          <p className="tr-lead">{lead}</p>
-          {draft ? (
-            <p className="tr-draft" lang="en" dir="ltr">
-              {t('home.b3.draft')}
-            </p>
-          ) : null}
+      {/* UI/UX.v4.1 L4 (owner lock, 23 November 2026): the navy band holds the brand line, the headline and the lead,
+          left aligned, with the whole reversed mark; the four choices and the one primary action sit below it on
+          the light surface. The section keeps its id and its order. */}
+      <section className="tr-top" id="hero" aria-labelledby="home-title">
+        <div className="tr-hero">
+          <div className="tr-hero-head">
+            <p className="tr-brandline">{route ? t('home.title') : t('home.eyebrow')}</p>
+            <h1 id="home-title">{title}</h1>
+            <p className="tr-lead">{lead}</p>
+            {draft ? (
+              <p className="tr-draft" lang="en" dir="ltr">
+                {t('home.b3.draft')}
+              </p>
+            ) : null}
+          </div>
+          {/* The identity mark, whole and never cropped; the name is written in the header, so it is decorative. */}
+          <Image
+            className="tr-hero-mark"
+            src="/brand/corridra-mark-reversed.svg"
+            alt=""
+            width={533}
+            height={511}
+            unoptimized
+            priority
+          />
         </div>
         <fieldset className="tr-doors">
           <legend>{t('home.tr.q')}</legend>
@@ -289,6 +312,8 @@ function Door({
       checked={checked}
       onChoose={onChoose}
       size={big ? 'big' : 'small'}
+      tone="light"
+      icon={doorIcon[route]}
       side={big ? t(route === 'china' ? 'home.tr.side.supply' : 'home.tr.side.demand') : undefined}
       route={big ? <RouteLine route={route as 'china' | 'sell'} /> : undefined}
       title={t(key(`home.tr.door.${route}.title`))}

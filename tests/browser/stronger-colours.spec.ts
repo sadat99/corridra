@@ -175,8 +175,9 @@ test('the choice is never sent to a server: no cookie and no request carries it'
 });
 
 // The navy regions: the footer, the band and, on the Two Routes home (17 November 2026), the hero, the closing section,
-// the quote reaction and the calculator result. The ring there is white with a navy edge. The checked door is filled
-// white, but its ring is drawn outside it, on the navy, so white shows there.
+// the quote reaction and the calculator result. The ring there is white with a navy edge. Since UI/UX.v4.1 L4 (23
+// November 2026) the hero band holds the headline only; the doors and the first action sit below it on the light
+// surface and are measured there.
 const navyRegions = '.guide-footer, .guide-band, .tr-hero, .tr-navy, .tr-reaction, .tr-result';
 const navyEdges = [
   '.tr-hero .primary-link',
@@ -205,16 +206,20 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
         if (path === '/') {
           // The elements the finding named are really among those measured, so this cannot pass by measuring nothing.
           const names = rings.map((row) => row.element).join('\n');
-          expect(names).toMatch(/input\.sr-only/);
           expect(names).toMatch(/guide-footer-actions|primary-link/);
           expect(names).toMatch(/^a.*primary-link/m);
+          // UI/UX.v4.1 L4 (23 November 2026): the doors sit below the navy band, on the light surface. They are
+          // measured there, in the hero section, and are really among the elements measured.
+          const { rings: heroRings } = await measureColours(page, '#hero');
+          expect(heroRings.map((row) => row.element).join('\n')).toMatch(/input\.sr-only/);
+          expect(weakRings(heroRings), `hero at ${width}`).toEqual([]);
           // Every door in turn is the checked one; its ring must reach 3 to 1 in each state.
           const doors = page.locator('fieldset.tr-doors input[type="radio"]');
           expect(await doors.count()).toBe(4);
           for (let index = 0; index < 4; index += 1) {
             await doors.nth(index).locator('xpath=following-sibling::label').click();
             await expect(doors.nth(index)).toBeChecked();
-            const { rings: doorRings } = await measureColours(page, navyRegions);
+            const { rings: doorRings } = await measureColours(page, `#hero, ${navyRegions}`);
             expect(weakRings(doorRings), `door ${index} checked at ${width}`).toEqual([]);
           }
         }
@@ -234,18 +239,19 @@ test('the ring check can fail: a weak outline on a door ring is measured, whiche
   expect(await doors.count()).toBe(4);
   for (let index = 0; index < 4; index += 1) {
     await doors.nth(index).locator('xpath=following-sibling::label').click();
-    const { rings } = await measureColours(page, '.tr-hero');
+    const { rings } = await measureColours(page, '#hero');
     expect(weakRings(rings), `door ${index}`).toEqual([]);
     expect(rings.map((row) => row.element).join('\n')).toMatch(/input\.sr-only/);
   }
-  // Then a navy ring on the navy hero (1 to 1) must be caught for every checked door.
+  // Then a white ring on the light surface the doors now sit on (UI/UX.v4.1 L4) must be caught for every checked
+  // door, as a navy ring on the navy hero was before the doors moved.
   await page.addStyleTag({
     content:
-      "html[data-contrast='more'] .tr-door input:focus-visible { outline-color: var(--brand-deep) !important; box-shadow: 0 0 0 2px var(--brand-deep) !important; }",
+      "html[data-contrast='more'] .tr-door input:focus-visible { outline-color: var(--on-brand) !important; box-shadow: 0 0 0 2px var(--on-brand) !important; }",
   });
   for (let index = 0; index < 4; index += 1) {
     await doors.nth(index).locator('xpath=following-sibling::label').click();
-    const { rings } = await measureColours(page, '.tr-hero');
+    const { rings } = await measureColours(page, '#hero');
     const weak = weakRings(rings);
     expect(weak, `door ${index} with a weak ring`).not.toEqual([]);
     expect(weak.join('\n')).toMatch(/input\.sr-only/);
