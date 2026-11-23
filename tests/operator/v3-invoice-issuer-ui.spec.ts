@@ -37,7 +37,7 @@ createRoot(document.getElementById('fixture')).render(<InvoiceIssuerForm tenant=
     Object.keys(result.metafile!.inputs).filter(
       (path) => path.includes('packages/') && !path.includes('node_modules'),
     ),
-  ).toEqual(['../../packages/auth/src/client.ts']);
+  ).toEqual(['packages/auth/src/client.ts']);
   const javascript = result.outputFiles[0].text;
   const documentResponse = await fetch('http://127.0.0.1:3200/');
   expect(documentResponse.status).toBe(200);
@@ -470,4 +470,18 @@ test('the screen fits a phone without sideways scrolling and keeps 44 px targets
   );
   for (const control of [saveButton(page), page.getByRole('button', { name: 'Back', exact: true })])
     expect((await control.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+});
+
+test('with the screen switch off the page and its data route do not exist', async ({ request }) => {
+  // The operator test server does not set CORRIDRA_INVOICE_ISSUER, which is the default everywhere.
+  const page = await request.get('/operator/invoice-issuer', { maxRedirects: 0 });
+  expect(page.status()).toBe(404);
+  expect(await page.text()).not.toContain('Invoice issuer');
+  const read = await request.get(`/operator/invoice-issuer/details?tenant=${tenant}`);
+  expect(read.status()).toBe(404);
+  expect(await read.json()).toEqual({ error: 'Not found' });
+  const write = await request.post(`/operator/invoice-issuer/details?tenant=${tenant}`, {
+    data: { commandId: tenant, expectedVersion: 1 },
+  });
+  expect(write.status()).toBe(404);
 });

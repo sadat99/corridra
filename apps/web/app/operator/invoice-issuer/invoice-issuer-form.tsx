@@ -364,6 +364,7 @@ export function InvoiceIssuerForm({ tenant }: { tenant: string }) {
     options: { area?: boolean; help?: string; autoComplete?: string } = {},
   ) => {
     const shared = {
+      id: `issuer-${field}`,
       name: field,
       value: answers[field],
       'aria-invalid': errors[field] ? (true as const) : undefined,
@@ -372,14 +373,15 @@ export function InvoiceIssuerForm({ tenant }: { tenant: string }) {
     };
     return (
       <div className="invoice-issuer-field">
-        <label className="field">
-          {label}
+        {/* The label sits beside its field, not around it: a textarea's value would otherwise join the label's words. */}
+        <div className="field">
+          <label htmlFor={`issuer-${field}`}>{label}</label>
           {options.area ? (
             <textarea rows={3} {...shared} onChange={(e) => set(field, e.target.value)} />
           ) : (
             <input {...shared} onChange={(e) => set(field, e.target.value)} />
           )}
-        </label>
+        </div>
         {options.help ? (
           <p id={`issuer-${field}-help`} className="invoice-issuer-help">
             {options.help}
@@ -498,9 +500,10 @@ export function InvoiceIssuerForm({ tenant }: { tenant: string }) {
               ))}
             </dl>
             <div className="invoice-issuer-field">
-              <label className="field">
-                Authenticator code
+              <div className="field">
+                <label htmlFor="issuer-code">Authenticator code</label>
                 <input
+                  id="issuer-code"
                   name="code"
                   autoComplete="one-time-code"
                   inputMode="numeric"
@@ -508,7 +511,7 @@ export function InvoiceIssuerForm({ tenant }: { tenant: string }) {
                   aria-invalid={errors.code ? true : undefined}
                   aria-describedby={described('code', 'issuer-code-help')}
                 />
-              </label>
+              </div>
               <p id="issuer-code-help" className="invoice-issuer-help">
                 Enter the six-digit code from your authenticator app. It is checked now, for this
                 save only.
