@@ -62,7 +62,7 @@ test('D-001 no step of the request form says draft', async ({ page }) => {
     expect(await mainText(page), `step ${step + 1}`).not.toMatch(/draft/i);
   }
   await expect(page.locator('.ux-draft-notice')).toHaveText(
-    'Your earlier answers from this tab are back.',
+    'Your earlier answers from this tab are back. Your saved choices take precedence over link suggestions.',
   );
 });
 

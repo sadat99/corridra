@@ -185,7 +185,7 @@ export const words: FormCatalog = {
   'form.message.draftLostReal': '无法恢复您已保存的回答。离开此标签页前，请保留一份需求副本。',
   'form.message.draftLostSample':
     '无法恢复您已保存的回答。表单仍可使用。离开此标签页前，请保留一份虚构需求的副本。',
-  'form.message.draftResumed': '您之前在此标签页中的回答已恢复。',
+  'form.message.draftResumed': '您之前在此标签页中的回答已恢复。您保存的选择优先于链接中的建议。',
   'form.message.draftNotResumed': '无法恢复您之前的回答。',
   'form.message.accountUnchecked': '无法检查账户状态。请登录或重试。',
   'form.message.pendingUnchecked': '无法检查已保存需求的状态。请重试。',

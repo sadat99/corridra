@@ -37,7 +37,9 @@ describe('D-001: no customer-readable "draft" in the request form words', () => 
     expect(readFileSync(resolve('apps/web/app/plan/intake.tsx'), 'utf8')).toContain(
       "'Nothing is sent until you check it. Nothing here is an offer, a quote or a promise.'",
     );
-    expect(words['form.message.draftResumed']).toBe('Your earlier answers from this tab are back.');
+    expect(words['form.message.draftResumed']).toBe(
+      'Your earlier answers from this tab are back. Your saved choices take precedence over link suggestions.',
+    );
     expect(words['form.action.clearDraft']).toBe('Clear Answers');
   });
 

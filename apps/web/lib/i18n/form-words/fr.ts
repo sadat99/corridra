@@ -199,7 +199,8 @@ export const words: FormCatalog = {
     'Vos réponses enregistrées n’ont pas pu être restaurées. Gardez une copie de votre demande avant de quitter cet onglet.',
   'form.message.draftLostSample':
     'Vos réponses enregistrées n’ont pas pu être restaurées. Le formulaire fonctionne toujours. Gardez une copie de votre demande fictive avant de quitter cet onglet.',
-  'form.message.draftResumed': 'Vos réponses précédentes de cet onglet sont de retour.',
+  'form.message.draftResumed':
+    'Vos réponses précédentes de cet onglet sont de retour. Vos choix enregistrés priment sur les suggestions des liens.',
   'form.message.draftNotResumed': 'Vos réponses précédentes n’ont pas pu être restaurées.',
   'form.message.accountUnchecked':
     'L’état du compte n’a pas pu être vérifié. Connectez-vous ou réessayez.',

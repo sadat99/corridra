@@ -195,7 +195,8 @@ export const words: FormCatalog = {
     'No se pudieron recuperar sus respuestas guardadas. Guarde una copia de su solicitud antes de salir de esta pestaña.',
   'form.message.draftLostSample':
     'No se pudieron recuperar sus respuestas guardadas. El formulario sigue funcionando. Guarde una copia de su solicitud inventada antes de salir de esta pestaña.',
-  'form.message.draftResumed': 'Sus respuestas anteriores de esta pestaña han vuelto.',
+  'form.message.draftResumed':
+    'Sus respuestas anteriores de esta pestaña han vuelto. Sus opciones guardadas tienen prioridad sobre las sugerencias de los enlaces.',
   'form.message.draftNotResumed': 'No se pudieron recuperar sus respuestas anteriores.',
   'form.message.accountUnchecked':
     'No se pudo comprobar el estado de la cuenta. Inicie sesión o inténtelo de nuevo.',

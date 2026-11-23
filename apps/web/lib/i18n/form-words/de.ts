@@ -197,7 +197,8 @@ export const words: FormCatalog = {
     'Ihre gespeicherten Angaben konnten nicht wiederhergestellt werden. Sichern Sie eine Kopie Ihrer Anfrage, bevor Sie diesen Tab verlassen.',
   'form.message.draftLostSample':
     'Ihre gespeicherten Angaben konnten nicht wiederhergestellt werden. Das Formular funktioniert weiter. Sichern Sie eine Kopie Ihrer erfundenen Anfrage, bevor Sie diesen Tab verlassen.',
-  'form.message.draftResumed': 'Ihre früheren Angaben aus diesem Tab sind wieder da.',
+  'form.message.draftResumed':
+    'Ihre früheren Angaben aus diesem Tab sind wieder da. Ihre gespeicherten Angaben haben Vorrang vor Vorschlägen aus Links.',
   'form.message.draftNotResumed': 'Ihre früheren Angaben konnten nicht wiederhergestellt werden.',
   'form.message.accountUnchecked':
     'Der Kontostatus konnte nicht geprüft werden. Melden Sie sich an oder versuchen Sie es erneut.',

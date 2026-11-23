@@ -204,7 +204,8 @@ export const formEn = {
     'Your saved answers could not be brought back. Keep a copy of your request before leaving this tab.',
   'form.message.draftLostSample':
     'Your saved answers could not be brought back. The form still works; keep a copy of your invented request before leaving this tab.',
-  'form.message.draftResumed': 'Your earlier answers from this tab are back.',
+  'form.message.draftResumed':
+    'Your earlier answers from this tab are back. Your saved choices take precedence over link suggestions.',
   'form.message.draftNotResumed': 'Your earlier answers could not be brought back.',
   'form.message.accountUnchecked': 'Account status could not be checked. Sign in or try again.',
   'form.message.pendingUnchecked': 'Saved request status could not be checked. Try again.',
