@@ -323,6 +323,8 @@ describe('every customer route reaches data through the session boundary', () =>
       'customer-data-cleanup.ts',
       // Offline: set_supplier reads the environment secret for the installer only (U3, ADR-064 amendment 17 Nov 2026).
       'customer-invoicing-real-supplier-secret.ts',
+      // Offline: the real intake owner change, run by the protected installer only (B11a, owner decision 23 Nov 2026).
+      'customer-real-intake-owner.ts',
       'customer-request-admission.ts',
       'customer-erasure-queue.ts',
       'customer-session.ts',

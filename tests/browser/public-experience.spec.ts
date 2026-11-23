@@ -240,7 +240,7 @@ test('/sell shows the EU route, the reverse direction and what is recorded', asy
     '/plan?marketCode=BD&job=buyers',
   );
   await expect(
-    reverse.getByRole('link', { name: 'Read the EU to Bangladesh scope' }),
+    reverse.getByRole('link', { name: 'Read the EU to Bangladesh route details' }),
   ).toHaveAttribute('href', '/corridors/bangladesh-eu');
   await expect(
     page.getByRole('region', { name: 'What we record for every introduction' }),
@@ -258,10 +258,9 @@ test('/enter-market and /trade-missions name their route and what is recorded', 
   await page.goto('/enter-market');
   await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
   await expect(page.getByText('The EU to Bangladesh', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Read the EU to Bangladesh scope' })).toHaveAttribute(
-    'href',
-    '/corridors/bangladesh-eu',
-  );
+  await expect(
+    page.getByRole('link', { name: 'Read the EU to Bangladesh route details' }),
+  ).toHaveAttribute('href', '/corridors/bangladesh-eu');
   await expect(
     page.getByRole('region', { name: 'What we record for every market visit' }),
   ).toBeVisible();
@@ -273,7 +272,7 @@ test('/enter-market and /trade-missions name their route and what is recorded', 
       .getByRole('complementary', { name: 'Route for this page' })
       .getByText('Bangladesh to China', { exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Read the China scope' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Read the China route details' })).toHaveAttribute(
     'href',
     '/corridors/bangladesh-china',
   );
