@@ -12,6 +12,9 @@ type Invitation = {
 };
 export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contributor' }) {
   const contributor = kind === 'contributor';
+  // Words a helper reads: "helper" for the person and "work password" for the password (glossary).
+  const who = contributor ? 'helper' : 'operator';
+  const secret = contributor ? 'work' : 'operator';
   const inFlight = useRef(false);
   const [failure, setFailure] = useState<'denied' | 'unavailable'>('denied');
   const [invite, setInvite] = useState<Invitation | null>(null),
@@ -36,7 +39,9 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
           setMessage(
             data.available
               ? ''
-              : `There is no current ${kind} invitation for this account. Ask your workspace owner to review access.`,
+              : kind === 'contributor'
+                ? 'There is no current helper invitation for this account. Ask the person who invited you to review access.'
+                : 'There is no current operator invitation for this account. Ask your workspace owner to review access.',
           );
         }
       })
@@ -56,7 +61,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
     const form = event.currentTarget,
       data = new FormData(form);
     if (data.get('password') !== data.get('confirm')) {
-      setMessage(`The ${kind} passwords must match.`);
+      setMessage(`The ${secret} passwords must match.`);
       return;
     }
     inFlight.current = true;
@@ -74,7 +79,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
       setDone(true);
       setMessage(
         contributor
-          ? 'Your contributor password is ready. Sign in separately and enroll your authenticator. Reviewed eligibility and a task assignment are still required.'
+          ? 'Your work password is ready. Sign in separately and enroll your authenticator. Reviewed eligibility and a task assignment are still required.'
           : 'Your operator password is ready. Sign in separately and enroll your authenticator before opening the workspace.',
       );
     } catch (e) {
@@ -85,7 +90,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
     }
   }
   return (
-    <section aria-label={`Your ${kind} invitation`}>
+    <section aria-label={`Your ${who} invitation`}>
       {message && (
         <AccessState
           kind={
@@ -127,12 +132,12 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
       )}
       {invite?.available && !done && (invite.role === 'contributor') === contributor && (
         <form method="post" className="operator-form" onSubmit={submit}>
-          <h2>Accept {invite.role} access</h2>
+          <h2>Accept {invite.role === 'contributor' ? 'helper' : invite.role} access</h2>
           {invite.expiresAt && <p>Invitation expires {displayDate(invite.expiresAt)}</p>}
           {invite.teamSessionActive && (
             <p role="alert" className="ux-session-warning">
               This browser is signed in to a Corridra team workspace. When you sign in with this new{' '}
-              {kind} account, that team session ends here. To keep both, finish this setup in a
+              {who} account, that team session ends here. To keep both, finish this setup in a
               private window or another browser.
             </p>
           )}
@@ -142,7 +147,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
               : 'This invitation gives access to one Corridra team workspace with the role shown above. Keep your password and authenticator recovery codes private.'}
           </p>
           <label className="field">
-            New {kind} password
+            New {secret} password
             <input
               type="password"
               name="password"
@@ -154,7 +159,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
             />
           </label>
           <label className="field">
-            Confirm {kind} password
+            Confirm {secret} password
             <input
               type="password"
               name="confirm"
@@ -166,7 +171,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
             />
           </label>
           <button className="primary-link" disabled={busy}>
-            {busy ? 'Setting Up…' : `Set ${contributor ? 'Contributor' : 'Operator'} Password`}
+            {busy ? 'Setting Up…' : `Set ${contributor ? 'Work' : 'Operator'} Password`}
           </button>
         </form>
       )}
@@ -175,9 +180,11 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
         <a
           className="primary-link"
           href={
-            contributor && invite?.workspaceId
-              ? '/operator/signin?next=' +
-                encodeURIComponent('/contributor?workspace=' + invite.workspaceId)
+            contributor
+              ? '/contributor/signin' +
+                (invite?.workspaceId
+                  ? '?next=' + encodeURIComponent('/contributor?workspace=' + invite.workspaceId)
+                  : '')
               : '/operator/signin'
           }
         >

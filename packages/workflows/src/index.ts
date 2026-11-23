@@ -16,9 +16,14 @@ export class OutboxDispatcher {
     const job = await this.claim(messageId, capabilityHash, leaseId);
     if (job.status !== 'CLAIMED') return job.status;
     try {
-      if (!['SYNTHETIC', 'MANUAL'].includes(job.channel ?? ''))
+      // ADR-090: EMAIL goes only to an adapter that declares the real lane; any other adapter refuses it as before.
+      const channel = job.channel ?? '';
+      if (
+        !['SYNTHETIC', 'MANUAL'].includes(channel) &&
+        !(channel === 'EMAIL' && this.adapter.email)
+      )
         throw new Error('Unsupported channel');
-      await this.adapter.deliver({ id: messageId, capabilityHash, leaseId });
+      await this.adapter.deliver({ id: messageId, capabilityHash, leaseId, channel });
       return (
         await this.pool.query("SELECT app.finish_communication($1,$2,$3,'DELIVERED') AS status", [
           messageId,

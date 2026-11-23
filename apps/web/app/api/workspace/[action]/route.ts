@@ -314,7 +314,10 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       meeting: () => s.meetings.command(ctx, input),
       dispatch: async () => {
         const started: string[] = [];
-        for (const job of await s.communications.pending(ctx)) {
+        // ADR-090: a real email is started only for the one message the staff member names. A dispatch without a
+        // message id starts the waiting sample messages only.
+        const one = z.object({ messageId: z.uuid().optional() }).parse(input ?? {}).messageId;
+        for (const job of await s.communications.pending(ctx, one)) {
           const runId = await communicationOrchestrator.start(job.id);
           await s.communications.started(ctx, job.id, runId);
           started.push(job.id);

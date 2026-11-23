@@ -199,7 +199,7 @@ import { CommercialMissionService } from '@corridra/missions/commercial';
 import { CorridorService } from '@corridra/missions/corridors';
 import { OperationsService } from '@corridra/missions/operations';
 import { CommunicationService } from '@corridra/communications';
-import { SyntheticChannel } from '@corridra/communications/adapters';
+import { OutreachChannel } from '@corridra/communications/adapters';
 import { OutboxDispatcher } from '@corridra/workflows';
 function createServices() {
   const config = readFoundationConfig();
@@ -990,7 +990,12 @@ function createServices() {
     operations: new OperationsService(runtimePool),
     opportunities: new OpportunityService(runtimePool),
     communications: new CommunicationService(runtimePool, config.AUTH_SECRET),
-    dispatcher: new OutboxDispatcher(runtimePool, new SyntheticChannel(runtimePool)),
+    // ADR-090: sample channels go down the sample lane; EMAIL goes down the real lane, which is off unless its
+    // switch is on.
+    dispatcher: new OutboxDispatcher(
+      runtimePool,
+      new OutreachChannel(runtimePool, config.AUTH_SECRET),
+    ),
     evidence: new EvidenceService(
       runtimePool,
       storage,

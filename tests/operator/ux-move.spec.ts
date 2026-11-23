@@ -189,7 +189,7 @@ const open = (page: Page, name: Case, extra = '') =>
 test('the cards show what is waiting for the person and who holds the rest', async ({ page }) => {
   await open(page, 'full');
   await expect(page.getByRole('heading', { name: 'Waiting for you', exact: true })).toBeVisible();
-  await expect(page.getByText('Send your draft request')).toBeVisible();
+  await expect(page.getByText('Send your request')).toBeVisible();
   // TC1: the unread reply is the Today card and one row opens beside it; the company link waits behind Show More,
   // still reachable.
   await expect(page.getByTestId('today-card')).toHaveCount(1);

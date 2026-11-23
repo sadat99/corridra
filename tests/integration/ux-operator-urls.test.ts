@@ -431,7 +431,7 @@ describe('signing in again from the workspace comes back to the same workspace a
       ],
       [
         'apps/web/app/operator/setup/setup-form.tsx',
-        "<a\n          className=\"primary-link\"\n          href={\n            contributor && invite?.workspaceId\n              ? '/operator/signin?next=' +\n                encodeURIComponent('/contributor?workspace=' + invite.workspaceId)\n              : '/operator/signin'\n          }\n        >\n          Sign in and Set Up Authenticator\n        </a>",
+        "<a\n          className=\"primary-link\"\n          href={\n            contributor\n              ? '/contributor/signin' +\n                (invite?.workspaceId\n                  ? '?next=' + encodeURIComponent('/contributor?workspace=' + invite.workspaceId)\n                  : '')\n              : '/operator/signin'\n          }\n        >\n          Sign in and Set Up Authenticator\n        </a>",
       ],
     ];
     for (const [path, link] of links) expect(read(path), path).toContain(link);

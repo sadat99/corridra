@@ -82,9 +82,10 @@ export const deferredControls: readonly DeferredControl[] = [
   },
   {
     id: 'OUTREACH',
-    name: 'Automated outreach',
-    risk: 'Contacting companies takes manual work, so it is slower.',
-    mitigation: 'Automated outreach stays off and is labelled as off.',
+    name: 'Real outreach by email',
+    risk: 'Real email to companies is in test mode first, so no introduction reaches a real company contact yet.',
+    mitigation:
+      'A staff member approves each send. It goes live only on the owner\'s word "live". Sample introductions stay sample.',
     whoActs: 'Account owner and legal reviewer',
   },
   {

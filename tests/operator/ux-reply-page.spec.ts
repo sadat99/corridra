@@ -384,7 +384,9 @@ test('an older link, the bare token, still opens the page in English', async ({ 
 test('a link without a usable token says so and sends nothing', async ({ page }) => {
   const sent = await open(page, { hash: 'l=zh' });
   await expect(
-    page.getByText('This private link is unavailable. Open the complete link you received.'),
+    page.getByText(
+      'This private link does not open. It may be incomplete, expired or replaced. Ask the person who sent it for a new link.',
+    ),
   ).toBeVisible();
   expect(sent).toHaveLength(0);
 });

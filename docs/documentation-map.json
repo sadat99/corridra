@@ -1694,6 +1694,11 @@
       "use": "Proposed 19 Nov 2026 on owner decisions relayed by Conductor; guided Connect AI over the existing model policy command, real workspaces may hold a model policy only, EU resolved server-side to stored country codes with the cap raised to 30, every runtime gate still a subset check; nothing built or installed"
     },
     {
+      "path": "docs/adr/0090-real-outreach.md",
+      "classification": "Architecture decision",
+      "use": "Proposed 23 Nov 2026 for the owner decision that opened real outreach; a real email lane beside the sample lane that cannot mix with it, off by default and in test mode by default, with recorded consent, opt-out, suppression, bounce handling, daily limits and staff approval before each send kept; live mode only on the owner's word; amends ADR-018 and ADR-069 forward"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v4 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"
