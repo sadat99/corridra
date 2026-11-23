@@ -37,3 +37,27 @@
   border-color: var(--brand);
   border-inline-start-width: 4px;
 }
+/* UI/UX.v4.1 L2: the one owned icon of a door, in a 44 px soft square before its words. Only a card that names an
+   icon takes this layout; every other card is unchanged. */
+.front-door-card[data-icon='true'] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  align-content: start;
+}
+.front-door-card .front-door-tile {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  color: var(--text-1);
+}
+@media (forced-colors: active) {
+  .front-door-card .front-door-tile {
+    border: 1px solid CanvasText;
+  }
+}

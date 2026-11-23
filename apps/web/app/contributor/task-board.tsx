@@ -3,8 +3,7 @@ import { ContributorSignout } from './signout';
 import { displayMoney } from '@corridra/domain/locale';
 import { formatDateTime } from '../../lib/ux/format';
 import { countryName } from '../../lib/ux/options';
-import { Flagged } from '../../components/ux/flag';
-import { placeMark } from '../../lib/ux/place-mark';
+import { Flagged, placeMark } from '../../components/ux/flag';
 
 // D11: one date and time style. CQ-61: plain words for the task state and places, never raw codes.
 const displayDate = (value: string) => formatDateTime(value);

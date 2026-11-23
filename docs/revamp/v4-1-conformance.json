@@ -702,7 +702,7 @@
       "wave": "C",
       "decisions": {
         "L1": "built",
-        "L2": "not_started",
+        "L2": "built",
         "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
@@ -722,7 +722,7 @@
         "docs/revamp/evidence/v41-c-2026-11-23/contributor-doors-off-after-390.jpg",
         "tests/integration/v41-c-helper-pages.test.ts"
       ],
-      "notes": "V4.1-C. L9: one Your next step card with the one primary action (the existing primary helper door, or the existing invitation link with the doors switch off) and Helper Sign-In beside it; the page still says a customer account does not grant assigned-task access. L1: the market and work country of a task go through Flagged. L2 not started: the two quiet door cards have no icon because components/front-door.tsx is shared and outside this unit. L3 n/a: the doors are links, not a held choice. L10 n/a. Built, not verified."
+      "notes": "V4.1-C. L9: one Your next step card with the one primary action (the existing primary helper door, or the existing invitation link with the doors switch off) and Helper Sign-In beside it; the page still says a customer account does not grant assigned-task access. L1: the market and work country of a task go through Flagged with the shared placeMark (a country code finds one of the nine flags; any other place shows its name only). L2: each helper door names one existing icon, drawn in a 44 px soft square beside its words (an additive, optional prop of the shared door list; a door without an icon renders the markup it always did). L3 n/a: the doors are links, not a held choice. L10 n/a. Built, not verified."
     },
     {
       "route": "/contributor/me",

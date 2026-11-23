@@ -21,53 +21,7 @@ const dashes = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`);
 const gone =
   'This private link has expired or was replaced. Ask the person who sent it for a new link.';
 
-describe('L1: a place name finds its mark, and never a new flag', () => {
-  it('gives the nine existing flags by code or by English name, the compass for a region, nothing otherwise', async () => {
-    const { placeMark } = await loadWeb('lib/ux/place-mark');
-    const { flagCodes } = await loadWeb('components/ux/flag');
-    for (const [value, mark] of [
-      ['BD', 'bd'],
-      ['Bangladesh', 'bd'],
-      ['CN', 'cn'],
-      ['China', 'cn'],
-      ['GB', 'gb'],
-      ['United Kingdom', 'gb'],
-      ['UK', 'gb'],
-      ['US', 'us'],
-      ['United States', 'us'],
-      ['USA', 'us'],
-      ['AU', 'au'],
-      ['Australia', 'au'],
-      ['ES', 'es'],
-      ['Spain', 'es'],
-      ['FR', 'fr'],
-      ['France', 'fr'],
-      ['IT', 'it'],
-      ['Italy', 'it'],
-      ['EU', 'eu'],
-      ['European Union', 'eu'],
-      ['  china ', 'cn'],
-      ['Key Asian Markets', 'region'],
-    ] as const)
-      expect(placeMark(value), value).toBe(mark);
-    // No flag file exists for these, and a place the policy does not name gets nothing. Never a guess.
-    for (const value of [
-      'DE',
-      'Germany',
-      'SG',
-      'Singapore',
-      'Taiwan',
-      'Hong Kong',
-      '',
-      'Chinatown',
-    ])
-      expect(placeMark(value), value).toBeNull();
-    expect(placeMark(undefined)).toBeNull();
-    const source = read('apps/web/lib/ux/place-mark.ts');
-    for (const code of source.match(/: '([a-z]{2})'/g) ?? [])
-      expect(flagCodes).toContain(code.slice(3, 5));
-  });
-
+describe('L1 on the private introduction', () => {
   it('the private introduction keeps its Country row as it was: its mark waits for a later unit', () => {
     // The Reply Page markup with its switch off is held by golden files (tests/integration/fixtures/buyer-steps-off),
     // and four existing browser harnesses bundle this page without the flag pictures. Both stay untouched here, so
@@ -136,6 +90,25 @@ describe('L8: a private introduction link that does not open', () => {
     expect(css).toMatch(/border-inline-start:\s*4px solid var\(--caution\)/);
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgb\(|hsl\(|gradient|backdrop-filter|box-shadow/);
     expect(css).not.toMatch(dashes);
+  });
+});
+
+describe('owner words: a recipient never reads a staff role name', () => {
+  it('the four lines that named the operator now name the Corridra team, and nothing else moved', () => {
+    const claim = 'Corridra team-reported context. No independent verification is asserted.';
+    expect(read('apps/web/app/buyer/introduction.tsx').split(claim)).toHaveLength(2);
+    expect(read('apps/web/app/buyer/reply-journey.tsx').split(claim)).toHaveLength(2);
+    const response = read('apps/web/app/buyer/recipient-response.tsx').replace(/\s+/g, ' ');
+    expect(response).toContain(
+      '{saved.sourceKind}. The Corridra team must review this declaration. No meeting, quotation approval or verification is inferred.',
+    );
+    expect(response).toContain(
+      "'This is my declaration for this request. I understand that the Corridra team will review it.'",
+    );
+    // The declaration is still one required checkbox named as before: only the box is sent, never its words.
+    expect(response).toContain('name="acknowledged"');
+    for (const file of ['introduction', 'reply-journey', 'recipient-response', 'stop-emails'])
+      expect(read(`apps/web/app/buyer/${file}.tsx`), file).not.toMatch(/\boperators?\b/i);
   });
 });
 

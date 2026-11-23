@@ -330,7 +330,7 @@ function ScopedIntroduction({
                   {value}
                   {label === 'Evidence highlights' && (
                     <p className="evidence-label">
-                      Operator-reported context. No independent verification is asserted.
+                      Corridra team-reported context. No independent verification is asserted.
                     </p>
                   )}
                 </dd>

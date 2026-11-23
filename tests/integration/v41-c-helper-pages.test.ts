@@ -96,6 +96,50 @@ describe('L9: one next step card with one primary action', () => {
   });
 });
 
+describe('L2: a helper door carries one owned icon, and every other door list is what it was', () => {
+  it('a door without an icon renders the markup it always rendered', async () => {
+    const { FrontDoor } = await loadWeb('components/front-door');
+    const { founderDoor } = await loadWeb('lib/front-doors');
+    expect(founderDoor.some((item: { icon?: string }) => item.icon)).toBe(false);
+    const html = render(ce(FrontDoor, { label: 'Founder areas', items: founderDoor }));
+    // The markup of main before this unit, written out card by card.
+    const esc = (text: string) => text.replace(/&/g, '&amp;').replace(/'/g, '&#x27;');
+    const before =
+      '<nav class="front-door" aria-label="Founder areas"><ul>' +
+      founderDoor
+        .map(
+          (item: { href: string; title: string; line: string; primary?: boolean }) =>
+            `<li><a class="front-door-card"${item.primary ? ' data-primary="true"' : ''} href="${item.href}">` +
+            `<b>${esc(item.title)}</b><span>${esc(item.line)}</span></a></li>`,
+        )
+        .join('') +
+      '</ul></nav>';
+    expect(html).toBe(before);
+    expect(html).not.toContain('front-door-tile');
+    expect(html).not.toContain('data-icon');
+  });
+
+  it('each helper door names one existing icon, drawn once in a tile hidden from a screen reader', async () => {
+    const { FrontDoor } = await loadWeb('components/front-door');
+    const { helperDoor } = await loadWeb('lib/front-doors');
+    const { iconPaths } = await loadWeb('components/corridra-icon');
+    for (const item of helperDoor) expect(Object.keys(iconPaths), item.id).toContain(item.icon);
+    const quiet = helperDoor.filter((item: { primary?: boolean }) => !item.primary);
+    const html = render(ce(FrontDoor, { label: 'Ways in for a helper', items: quiet }));
+    expect(html.match(/<span class="front-door-tile" aria-hidden="true"><svg/g)).toHaveLength(2);
+    expect(html.match(/<svg/g)).toHaveLength(2);
+    expect(html.match(/data-icon="true"/g)).toHaveLength(2);
+    // The words stay beside the icon: never an icon alone.
+    for (const item of quiet) expect(html).toContain(`<b>${item.title}</b>`);
+    const css = read('apps/web/components/front-door.css');
+    expect(css).toMatch(
+      /\.front-door-tile \{[^}]*inline-size: 2\.75rem;[^}]*block-size: 2\.75rem;/,
+    );
+    expect(css).toMatch(/\.front-door-tile \{[^}]*background: var\(--surface-subtle\)/);
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b|gradient|backdrop-filter/);
+  });
+});
+
 describe('L1: the places of a task carry their mark', () => {
   it('the market and the work country go through the shared flag component with their plain names', () => {
     const board = read('apps/web/app/contributor/task-board.tsx').replace(/\s+/g, ' ');
@@ -122,7 +166,7 @@ describe('the conformance ledger rows of the helper routes', () => {
     }[];
   };
   const row = (route: string) => ledger.routes.find((r) => r.route === route)!;
-  it('are assessed, and /contributor carries L9 and L1 as built with evidence', () => {
+  it('are assessed, and /contributor carries L9, L1 and L2 as built with evidence', () => {
     for (const route of [
       '/contributor',
       '/contributor/me',
@@ -135,6 +179,7 @@ describe('the conformance ledger rows of the helper routes', () => {
     }
     expect(row('/contributor').decisions.L9).toBe('built');
     expect(row('/contributor').decisions.L1).toBe('built');
+    expect(row('/contributor').decisions.L2).toBe('built');
     expect(row('/contributor').evidence.length).toBeGreaterThan(0);
   });
 });

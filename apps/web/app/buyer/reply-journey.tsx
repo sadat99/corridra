@@ -634,7 +634,7 @@ export function ReplyJourney({
                 <dd>
                   {data.introduction.capability}
                   <span className="reply-claim">
-                    Operator-reported context. No independent verification is asserted.
+                    Corridra team-reported context. No independent verification is asserted.
                   </span>
                 </dd>
               </div>
