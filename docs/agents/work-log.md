@@ -4785,4 +4785,6 @@ Preserved: closed real-world gates; owner-only installs, variables and switches;
 
 Next action: owner signed-in pass, then the owner switches CORRIDRA_AI_CONNECT_FORM on; ADR-087 U6 privacy wording to the owner first; Compare label column at 200% text with 3+ suppliers; With column needs holder data; read the Dependabot esbuild error before relying on PR 594.
 
-Tested head: 9e91cf7 (main); edits on claude/records-593.
+Added after the PR 593 records were written (same PR, conductor's evidence): PR 595 (peer session branch claude/trusting-goldberg-yx6xm0, head 50e11d9) merged as aae53aa after exact-head CI (23 success, CodeQL neutral), Codex clean and one independent review with no blocking finding. It changes `packages/auth/src/team-control.ts` and `tests/integration/ws-d-team-control.test.ts` only: invited members get the workspace's processing purpose in allowed_purposes. Review follow-ups recorded in the ledger: the test uses a synthetic tenant, and `packages/auth/src/operator-invitation.ts:93` has the same defect. Live sw.js has aae53aa (read 23 Nov). The peer session's report of one manual production membership repair is unverified here. The ledger header now says main aae53aa; older lines condensed again to fit the cap (all in the snapshot).
+
+Tested head: aae53aa (main); edits on claude/records-593.
