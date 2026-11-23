@@ -220,9 +220,9 @@ async function fillAll(page: Page, registered = true) {
   await next(page).click();
   await expect(stepHeading(page, 'Step 2 of 4: GST')).toBeVisible();
   if (registered) {
-    await page.getByLabel('Yes, GST registered', { exact: true }).check();
+    await page.getByText('Yes, GST registered', { exact: true }).click();
     await page.getByLabel('GST registration number', { exact: true }).fill(real.gstRegistrationNo);
-  } else await page.getByLabel('No, not GST registered', { exact: true }).check();
+  } else await page.getByText('No, not GST registered', { exact: true }).click();
   await next(page).click();
   await expect(stepHeading(page, 'Step 3 of 4: Payment')).toBeVisible();
   await page.getByLabel('Payment instructions', { exact: true }).fill(real.paymentInstructions);
@@ -287,13 +287,13 @@ test('each step checks its own answers before the next one opens', async ({ page
   await expect(stepHeading(page, 'Step 2 of 4: GST')).toBeVisible();
   await next(page).click();
   await expect(page.getByRole('alert')).toHaveText('Choose whether the company is GST registered.');
-  await page.getByLabel('Yes, GST registered', { exact: true }).check();
+  await page.getByText('Yes, GST registered', { exact: true }).click();
   await next(page).click();
   await expect(page.getByRole('alert')).toHaveText(
     'Enter the GST registration number, 3 to 60 characters.',
   );
   // Not registered asks for no number.
-  await page.getByLabel('No, not GST registered', { exact: true }).check();
+  await page.getByText('No, not GST registered', { exact: true }).click();
   await expect(page.getByLabel('GST registration number', { exact: true })).toHaveCount(0);
   await next(page).click();
   await expect(stepHeading(page, 'Step 3 of 4: Payment')).toBeVisible();

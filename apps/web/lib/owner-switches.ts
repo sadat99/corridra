@@ -309,6 +309,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'module',
   },
   {
+    name: 'CORRIDRA_INVOICE_ISSUER',
+    label: 'Invoice issuer screen',
+    line: 'Shows the Owner-only Invoice issuer screen, where the workspace owner types the company details printed on real invoices and confirms with an authenticator code. Needs the real invoices install. Saving there switches nothing on: real invoices keep their own switch and control.',
+    group: 'Money and pricing',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED',
     label: 'Simulated payment flow (madeup)',
     line: 'Lets real owners and admins try a made-up payment provider on their real invoices, and lets the team record made-up refunds. It never moves money and never changes an invoice. Needs real invoices on, the simulated payments install, and its control opened by the install job.',

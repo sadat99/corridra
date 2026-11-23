@@ -24,13 +24,8 @@ import type {
   SimulatedPayment,
   SimulatedPaymentsOverview,
 } from '@corridra/auth/customer-payments-simulated';
-import {
-  dateTimeText,
-  dayText,
-  unconfirmed,
-  type Outcome,
-  type Scope,
-} from '../service-requests/service-request-client';
+import { formatDate, formatDateTime } from '../../../lib/ux/format';
+import { unconfirmed, type Outcome, type Scope } from '../service-requests/service-request-client';
 
 export type {
   BillingEntitlement,
@@ -43,7 +38,19 @@ export type {
   Outcome,
   Scope,
 };
-export { dateTimeText, dayText, unconfirmed };
+export { unconfirmed };
+
+// Billing and invoice dates go through the shared formatter (lib/ux/format), so they read like every other date.
+// A period, issue, due, payment or credit date is a calendar day with no time: it is formatted in UTC so it shows as the
+// day it is, wherever the reader is ("23 Oct 2026").
+export function dayText(day: string | null) {
+  if (!day) return null;
+  return formatDate(day.slice(0, 10) + 'T00:00:00Z', { timeZone: 'UTC' }) || day;
+}
+// A moment (when something was recorded, or until when a step stays open) keeps its time and names its zone.
+export function dateTimeText(value: string) {
+  return formatDateTime(value) || value;
+}
 
 const endpoint = '/api/customer-billing';
 // Identity comes from the server session. These headers only let the server refuse a switched account.

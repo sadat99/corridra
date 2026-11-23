@@ -463,7 +463,11 @@ test('the runtime and auth logins reach no table and no private function, and hi
 });
 
 test('the rollback file removes the screen functions and keeps every saved version', async () => {
-  const before = (await entities()).map(({ owner_entered_by: _typed, ...row }) => row);
+  const before = (await entities()).map((row) => {
+    const kept = { ...row };
+    delete kept.owner_entered_by;
+    return kept;
+  });
   await s.f.owner.query(
     readFileSync(
       'packages/db/customer-invoicing-real-migrations/rollback/0003_drop_owner_issuer_details.sql',

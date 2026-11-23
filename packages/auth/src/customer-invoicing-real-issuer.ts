@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { DomainError, stepUpRequired } from '@corridra/domain';
-import { withTenant, type DatabaseClient, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  withTenant,
+  type DatabaseClient,
+  type DatabasePool,
+  type RequestContext,
+} from '@corridra/db';
 
 // ADR-091 (unit B8): the Invoice issuer screen. The owner of the real staff workspace types the details printed on every
 // real invoice (legal name, UEN, address, GST status and number, payment instructions, finance contact label) and saves
