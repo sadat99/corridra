@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import type { ProblemReportDetail } from '@corridra/auth/problem-reports';
 import './problem-reports.css';
-import { whenWords } from '../../app/account/workspace-lifecycle-client';
+import { formatDateTime } from '../../lib/ux/format';
 import {
   readFailure,
   readProblemReport,
@@ -151,7 +151,7 @@ export function ProblemReportDetailView({
           {report.history.map((entry, index) => (
             <li key={`${index}-${entry.createdAt}`}>
               <strong>{statusLabels[entry.state]}</strong>{' '}
-              <time dateTime={entry.createdAt}>{whenWords(entry.createdAt)}</time>
+              <time dateTime={entry.createdAt}>{formatDateTime(entry.createdAt)}</time>
               {entry.note ? (
                 <>
                   <br />

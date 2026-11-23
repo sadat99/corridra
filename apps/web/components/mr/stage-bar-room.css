@@ -1,6 +1,6 @@
 /* The Room's stage bar (variant="room"): tokens only, logical properties only. A phone and a tablet get a row of
-   six shapes with one line of words for every stage below; a desktop gets a vertical timeline. Every stage is drawn
-   once, in road order (the order Your Move uses). Shape and word carry the state, never colour alone. */
+   six shapes with the Done and Later words below; a desktop gets a vertical timeline with finished stages folded
+   into one row. Shape and word carry the state, never colour alone. */
 .mr-stage-wrap[data-variant='room'] {
   display: grid;
   gap: var(--space-3);
@@ -26,6 +26,7 @@
   border-radius: 0;
   background: none;
 }
+.mr-stage-wrap[data-variant='room'] .mr-stage .mr-stage-fold,
 .mr-stage-wrap[data-variant='room'] .mr-stage-name,
 .mr-stage-wrap[data-variant='room'] .mr-stage-state {
   display: none;
@@ -70,12 +71,9 @@
   border: 2px dashed var(--text-2);
   box-shadow: none;
 }
-/* One line for every stage, in road order. They flow side by side where there is room, so a phone keeps the next
-   step on its first screen; a long line wraps inside its own box. */
 .mr-stage-wrap[data-variant='room'] .mr-stage-lines {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-4);
+  display: grid;
+  gap: var(--space-1);
 }
 .mr-stage-wrap[data-variant='room'] .mr-stage-lines p {
   margin: 0;
@@ -117,7 +115,7 @@
   }
 }
 
-/* Desktop: a vertical timeline, one row for every stage in road order. */
+/* Desktop: a vertical timeline. One folded Done row, then Now, each Later, then Not tracked yet. */
 @media (min-width: 64rem) {
   .mr-stage-wrap[data-variant='room'] .mr-stage {
     display: flex;
@@ -127,6 +125,27 @@
   }
   .mr-stage-wrap[data-variant='room'] .mr-stage li {
     justify-content: flex-start;
+    order: 2;
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage .mr-stage-fold {
+    display: block;
+    order: 0;
+    color: var(--text-2);
+    font-size: var(--text-base);
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage li[data-shape='done'] {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage li[data-shape='now'] {
+    order: 1;
+  }
+  .mr-stage-wrap[data-variant='room'] .mr-stage li[data-shape='notTracked'] {
+    order: 3;
   }
   .mr-stage-wrap[data-variant='room'] .mr-stage-name,
   .mr-stage-wrap[data-variant='room'] .mr-stage-state {

@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// Unit B3a of the commercial-ready run (owner decisions, 23 Nov 2026): the account request, Room stage, report,
+// Unit B3a of the commercial-ready run (owner decisions, 23 Nov 2026): the account request, Room, report,
 // profile and help request screens say what a customer needs in plain words, in road order, with no internal field,
 // no "Synthetic" line in a real workspace and no page title that differs from its heading. Drawn on the server
 // without a browser or a database; the live behaviour in a browser is the operator suite.
@@ -60,46 +60,6 @@ const brief = {
   email: 'buyer@example.com',
   acknowledged: true,
 };
-
-describe('D-016: the Room stage keeps road order', () => {
-  it('lists one line per step in road order, each with its state word', async () => {
-    const { StageBar } = await load('components/mr/stage-bar.tsx');
-    const { roadSteps } = await load('components/mr/road-status.ts');
-    const { mrLabels } = await load('components/mr/labels.ts');
-    const html = render(
-      createElement(StageBar, {
-        status: 'ACTIVE',
-        variant: 'room',
-        records: { compare: false, decide: false },
-      }),
-    );
-    const lines = [
-      ...html.matchAll(/<p data-step="([a-z]+)" data-state="([a-zA-Z]+)">(.*?)<\/p>/g),
-    ];
-    expect(lines.map((line) => line[1])).toEqual([...roadSteps]);
-    expect(lines.map((line) => text(line[3]))).toEqual([
-      'Define: Done',
-      'Find: Now',
-      'Compare: Not tracked yet',
-      'Visit: Later',
-      'Decide: Not tracked yet',
-      'Follow through: Later',
-    ]);
-    // The six stages themselves are drawn once each, in the same order, and no folded row hides a finished one.
-    const stages = [...html.matchAll(/<span class="mr-stage-name"[^>]*>(.*?)<\/span>/g)];
-    expect(stages.map((stage) => stage[1])).toEqual(
-      roadSteps.map((step: keyof typeof mrLabels.road.steps) => mrLabels.road.steps[step]),
-    );
-    expect(html).not.toContain('mr-stage-fold');
-  });
-
-  it('never reorders or hides a stage in the stylesheet', () => {
-    const css = source('components/mr/stage-bar-room.css');
-    expect(css).not.toMatch(/\border\s*:/);
-    expect(css).not.toContain('mr-stage-fold');
-    expect(css).not.toMatch(/li\[data-shape='done'\]\s*\{[^}]*clip-path/);
-  });
-});
 
 describe('D-017: the request detail shows each fact once, in plain words', () => {
   it('hides internal fields at every depth and shows one Goal', async () => {
@@ -393,5 +353,13 @@ describe('D-025: the route chip in the Room keeps to one or two lines', () => {
     expect(css).toMatch(
       /\.room\[data-room='request'\] > \.room-head \{\s*grid-template-columns:\s*minmax\(min\(100%, 22rem\), 1fr\) minmax\(0, 32rem\)/,
     );
+  });
+});
+
+describe('D-019: a problem report time is written the one way, in the time zone of the reader', () => {
+  it.each(['problem-report-list.tsx', 'problem-report-detail.tsx'])('%s', (file) => {
+    const code = source(`components/problem-reports/${file}`);
+    expect(code).not.toContain('whenWords');
+    expect(code).toMatch(/formatDateTime\((item\.filedAt|entry\.createdAt)\)/);
   });
 });

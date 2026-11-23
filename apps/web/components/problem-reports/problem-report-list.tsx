@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { problemReportStatuses } from '@corridra/domain/problem-report';
 import type { ProblemReportListItem } from '@corridra/auth/problem-reports';
 import './problem-reports.css';
-import { whenWords } from '../../app/account/workspace-lifecycle-client';
+import { formatDateTime } from '../../lib/ux/format';
 import { EmptyState } from '../ux/empty-state';
 import { RowLink, RowList } from '../ux/row-list';
 import {
@@ -147,7 +147,7 @@ export function ProblemReportList({
             cells={[
               { name: listWords.columns.status, value: statusLabels[item.status], status: true },
               { name: listWords.columns.category, value: categoryWords[item.category].label },
-              { name: listWords.columns.filed, value: whenWords(item.filedAt) },
+              { name: listWords.columns.filed, value: formatDateTime(item.filedAt) },
             ]}
           />
         ))}
