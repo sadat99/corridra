@@ -108,6 +108,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'sourcing_workflow_pause',
     'ai_model_policy_real',
     'data_cleanup_inventory',
+    'real_intake_owner_apply',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
@@ -159,6 +160,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['sourcing_workflow_pause', u, u, u, u, u, u, u, u],
     ['ai_model_policy_real', u, u, u, u, u, u, u, u],
     ['data_cleanup_inventory', u, u, u, u, u, u, u, u],
+    ['real_intake_owner_apply', u, u, u, u, u, u, u, u],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
@@ -394,6 +396,55 @@ test('the data cleanup choice only lists, moves no other module and carries no r
     1,
   );
   assert.equal(Object.keys(declared).length, 24);
+});
+
+test('the real intake owner choice moves only its own action, carries a fixed reason and adds no input', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const steps = workflow.jobs.install.steps;
+  const env = steps.find((step) => step.name === 'Report or install the customer modules').env;
+  const guard = steps.find((step) => step.name?.startsWith('Verify exact revision')).if;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    const own = choice === 'real_intake_owner_apply';
+    assert.equal(
+      evaluate(env.REAL_INTAKE_OWNER_ACTION, inputs),
+      own ? 'apply' : 'unchanged',
+      choice,
+    );
+    const reason = evaluate(env.REAL_INTAKE_OWNER_REASON, inputs);
+    if (!own) assert.equal(reason, '', choice);
+    else {
+      // The installer requires 10 to 500 characters; the reason is fixed here and names the owner decision.
+      assert.ok(reason.length >= 10 && reason.length <= 500);
+      assert.match(reason, /Owner decision of 23 Nov 2026/);
+      assert.equal(evaluate(guard, inputs), true, 'the exact-head check must run');
+      for (const [name, value] of Object.entries(env))
+        if (name.endsWith('_ACTION') && name !== 'REAL_INTAKE_OWNER_ACTION')
+          assert.ok(
+            ['unchanged', 'no'].includes(String(evaluate(String(value), inputs))),
+            `${choice} must not move ${name}`,
+          );
+    }
+  }
+  // Applying stays behind the existing apply input: the default is the dry run.
+  assert.equal(declared.apply.default, 'no');
+  assert.deepEqual(
+    Object.keys(env).filter((name) => name.startsWith('REAL_INTAKE_OWNER_')),
+    ['REAL_INTAKE_OWNER_ACTION', 'REAL_INTAKE_OWNER_REASON'],
+  );
+  assert.equal(Object.keys(declared).length, 24);
+  assert.match(
+    declared.field_modules_action.description,
+    /real_intake_owner_apply \(B11a, owner decision 23 Nov 2026:[^)]*without apply it is a dry run[^)]*deletes nothing[^)]*only when the owner approves\)/,
+  );
 });
 
 test('the member notice choices install or deliver only that module and add no input', () => {
