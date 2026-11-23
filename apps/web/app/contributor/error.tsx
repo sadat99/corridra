@@ -6,14 +6,14 @@ import { AccessState } from '../../components/access-state';
 export default function ContributorError() {
   return (
     <WorkspaceShell
-      eyebrow="ASSIGNED EXECUTION WORK"
+      eyebrow="Assigned work"
       title="Assigned work is temporarily unavailable."
       compact
     >
       <AccessState kind="unavailable">
         <p>
-          A connection or page could not be loaded. Stored assignments remain subject to their
-          original scope when access recovers.
+          A connection or page could not be loaded. Your stored assignments are kept, and what you
+          can see stays the same when access recovers.
         </p>
       </AccessState>
       <a

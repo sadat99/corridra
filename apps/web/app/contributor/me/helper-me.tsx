@@ -149,7 +149,7 @@ export function HelperMe({ workspace }: { workspace: string }) {
           prefetch={false}
           className="text-link"
           href={
-            '/operator/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace)
+            '/contributor/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace)
           }
           target="_blank"
           rel="noopener noreferrer"

@@ -337,7 +337,9 @@ test('the helper Me page and Team Today with Stronger Colours: axe, height, the 
       for (const size of sizes) {
         await page.setViewportSize(size);
         await page.goto(`/contributor/me?workspace=${seed.tenantId}`);
-        await expect(page.getByRole('heading', { level: 1, name: 'Me.' })).toBeVisible();
+        await expect(
+          page.getByRole('heading', { level: 1, name: 'My Assigned Work' }),
+        ).toBeVisible();
         await expectWay(page, way);
         await expectCleanWithMenu(page, `Me, ${way}`, size.width, false);
         await page.goto('/operator');

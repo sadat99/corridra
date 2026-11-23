@@ -214,7 +214,7 @@ test('Sell Abroad follows the market, steps from 8 names to 5 worth meeting and 
     .locator('tbody tr');
   await expect(rows).toHaveCount(8);
   await expect(sell.getByText('Not checked yet')).toHaveCount(8);
-  await choose(sell.getByRole('radio', { name: /Checked against your brief/ }));
+  await choose(sell.getByRole('radio', { name: /Checked against your request/ }));
   await expect(sell.getByText('Worth meeting', { exact: true })).toHaveCount(2);
   await expect(sell.getByText('Not a fit', { exact: true })).toHaveCount(6);
   await choose(sell.getByRole('radio', { name: /Show companies outside/ }));
@@ -261,7 +261,7 @@ test('the fair calculator adds the numbers on the page, never converts and keeps
   await sell.getByLabel('People going').fill('1.5');
   await expect(sell.getByText('Use a whole number.')).toBeVisible();
   await expect(sell.getByLabel('People going')).toHaveAttribute('aria-invalid', 'true');
-  await expect(sell.getByRole('link', { name: 'Scope a Mission for This Fair' })).toHaveAttribute(
+  await expect(sell.getByRole('link', { name: 'Plan a Mission for This Fair' })).toHaveAttribute(
     'href',
     '/plan?job=buyers',
   );
@@ -300,7 +300,7 @@ test('the eight people (now on /how-it-works) work by keyboard as one tab group'
     'true',
   );
   await page.keyboard.press('End');
-  await expect(tabs.getByRole('tab', { name: 'Local contributor' })).toHaveAttribute(
+  await expect(tabs.getByRole('tab', { name: 'Local helper' })).toHaveAttribute(
     'aria-selected',
     'true',
   );

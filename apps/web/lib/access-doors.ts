@@ -49,7 +49,7 @@ export const accessDoors: readonly AccessDoor[] = [
       { id: 'viewer', label: 'Viewer' },
       { id: 'admin', label: 'Admin' },
       { id: 'founder', label: 'Founder (staff)' },
-      { id: 'helper', label: 'Helper (field contributor)' },
+      { id: 'helper', label: 'Helper (invited field helper)' },
     ],
   },
   {
@@ -312,7 +312,7 @@ export const linkDoorPage = {
     {
       id: 'report',
       icon: 'document' as AccessIconName,
-      title: 'A report or programme brief',
+      title: 'A report or programme summary',
       text: 'For a client or institution. Open the link in the message to read what was shared with you.',
     },
   ],

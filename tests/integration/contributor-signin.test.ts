@@ -95,9 +95,11 @@ describe('the helper door on the team page', () => {
     const team = teamDoorPage.cards.find((c: { id: string }) => c.id === 'team');
     expect(team.action).toMatchObject({ href: '/operator/signin', plainAnchor: true });
   });
-  it('keeps the invitation-bound sign-in links on the task page', () => {
+  it('keeps the invitation-bound sign-in links on the task page, now through the helper sign-in', () => {
     const task = read('apps/web/app/contributor/page.tsx');
-    expect(task.match(/'\/operator\/signin\?next=' \+ encodeURIComponent\(/g)).toHaveLength(2);
+    // B6a (D-054): both links carry the same workspace return and open the helper sign-in, not the staff one.
+    expect(task.match(/'\/contributor\/signin\?next=' \+\s+encodeURIComponent\(/g)).toHaveLength(2);
+    expect(task).not.toContain('/operator/signin');
     // The new link is a plain anchor (a full page load, KI-30), kept beside the invitation links.
     expect(task).toContain('<a className="text-link" href="/contributor/signin">');
     expect(task).toContain('href="/contributor/setup"');

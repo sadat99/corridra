@@ -141,7 +141,7 @@ test('helper sign-in fails closed without configuration, collects nothing and is
   const main = page.getByRole('main');
   await expect(page.getByRole('heading', { name: 'Your assigned tasks.' })).toBeVisible();
   await expect(main).toContainText(
-    'Assigned-task access is not configured in this environment. Keep the invitation supplied by your operator.',
+    'Assigned-task access is not configured in this environment. Keep the invitation supplied by the Corridra team.',
   );
   await expect(main.getByRole('link', { name: 'How assigned work works' })).toHaveAttribute(
     'href',

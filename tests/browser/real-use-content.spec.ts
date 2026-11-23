@@ -53,7 +53,7 @@ test('Privacy explains account data, private requests, retention and the deferre
     'Who is responsible',
     'Your account',
     'What a request contains',
-    'Drafts and account activation',
+    'Unsent requests and account activation',
     'Who can see the work',
     'Files and deferred scanning',
     'Retention and deletion requests',

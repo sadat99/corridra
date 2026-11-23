@@ -75,12 +75,12 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
       method="post"
       className="operator-form"
       onSubmit={submit}
-      aria-label={contributor ? 'Contributor sign-in' : 'Operator sign-in'}
+      aria-label={contributor ? 'Helper sign-in' : 'Operator sign-in'}
     >
       <h2 ref={heading} tabIndex={-1}>
         {stage === 'password'
           ? contributor
-            ? 'Use your contributor work account'
+            ? 'Use your helper work account'
             : 'Use your operator account'
           : stage === 'enrol'
             ? 'Set up your authenticator'
