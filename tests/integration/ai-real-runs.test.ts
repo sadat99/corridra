@@ -9,10 +9,8 @@ import { initialRoutes } from '../../packages/domain/src/corridors';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateNetworkRealUse } from '../../packages/db/src/network-real-use-migrate';
-import {
-  migrateAiModelPolicyReal,
-  migrateAiRealRuns,
-} from '../../packages/db/src/ai-model-policy-real-migrate';
+import { migrateAiModelPolicyReal } from '../../packages/db/src/ai-model-policy-real-migrate';
+import { migrateAiRealRuns } from '../../packages/db/src/ai-real-runs-migrate';
 import { IntelligenceService } from '../../packages/intelligence/src/service';
 import {
   SdkInferenceAdapter,
@@ -406,6 +404,25 @@ describe('open', () => {
     const before = { rows: await rows(), sent: requests.length };
     await expect(ai.run(f.ctx, command(missionId, policyId, c.claim))).rejects.toMatchObject({
       message: expect.stringContaining('Approved provider evaluation required in a real workspace'),
+    });
+    expect({ rows: await rows(), sent: requests.length }).toEqual(before);
+    // The same rule holds for an attempt, so a fallback evaluated on sample data only cannot serve the run either.
+    const run = (
+      await f.owner.query('SELECT id FROM app.ai_run WHERE tenant_id=$1 AND mission_id=$2', [
+        f.tenantA,
+        open.missionId,
+      ])
+    ).rows[0].id;
+    await expect(
+      rawContext(
+        f.runtime,
+        raw('operator'),
+        'INSERT INTO app.ai_attempt(id,tenant_id,run_id,policy_id,reserved_minor,created_by) VALUES($1,$2,$3,$4,1,app.actor_id())',
+        [randomUUID(), f.tenantA, run, policyId],
+      ),
+    ).rejects.toMatchObject({
+      code: '42501',
+      message: 'Approved provider evaluation required in a real workspace',
     });
     expect({ rows: await rows(), sent: requests.length }).toEqual(before);
   });

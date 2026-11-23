@@ -51,6 +51,7 @@ import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-chan
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-migrate';
 import { migrateAiModelPolicyReal } from '../packages/db/src/ai-model-policy-real-migrate';
+import { migrateAiRealRuns } from '../packages/db/src/ai-real-runs-migrate';
 import { migrateOutreachReal } from '../packages/db/src/outreach-real-migrate';
 import { configureSourcingWorkflow } from '../packages/auth/src/sourcing-workflow-configuration';
 import { migrateSupplySources } from '../packages/db/src/supply-source-migrate';
@@ -71,6 +72,7 @@ import {
   memberNoticeDispatcher,
 } from '../packages/db/src/member-notice-deliver';
 import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
+import { configureAiRealRuns } from '../packages/auth/src/ai-real-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
@@ -139,6 +141,12 @@ const v = z
     PROFILE_PICTURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     // ADR-089: real workspaces may hold a model policy only; AI inference stays off.
     AI_MODEL_POLICY_REAL_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    // ADR-091: AI runs, results and reviews in real workspaces. Install leaves the control closed; enable and pause need a reason.
+    AI_REAL_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    AI_REAL_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     OUTREACH_REAL_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_REPLY_METADATA_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_EXPORT_ACCESS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
@@ -346,6 +354,10 @@ if (v.PROFILE_PICTURE_ACTION !== 'unchanged' && !apply)
   throw new Error('Profile picture installation requires INSTALL_APPLY=yes');
 if (v.AI_MODEL_POLICY_REAL_ACTION !== 'unchanged' && !apply)
   throw new Error('AI model policy for real workspaces requires INSTALL_APPLY=yes');
+if (v.AI_REAL_ACTION !== 'unchanged' && !apply)
+  throw new Error('AI for real workspaces changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.AI_REAL_ACTION) && !v.AI_REAL_REASON)
+  throw new Error('AI for real workspaces changes require an explicit reason');
 if (v.OUTREACH_REAL_ACTION !== 'unchanged' && !apply)
   throw new Error('Real outreach installation requires INSTALL_APPLY=yes');
 if (v.VIEWER_REPLY_METADATA_ACTION !== 'unchanged' && !apply)
@@ -928,6 +940,24 @@ try {
       console.log(
         'AI model policy for real workspaces installed or already current (inference stays off)',
       );
+    }
+    // ADR-091 is never part of the base run. It lets real workspaces record AI runs, results and reviews behind one control
+    // that install leaves closed; enable and pause touch only that control and need a reason. It replaces three functions
+    // after hash checks and needs the real-use and network real-use modules installed first. Reached only through
+    // field_modules_action (ai_real_install, ai_real_enable, ai_real_pause), and only on the owner's word.
+    if (v.AI_REAL_ACTION !== 'unchanged') {
+      await migrateAiRealRuns(pool);
+      if (v.AI_REAL_ACTION === 'install')
+        console.log('AI for real workspaces installed or already current (control stays closed)');
+      else {
+        const result = await configureAiRealRuns(pool, {
+          enabled: v.AI_REAL_ACTION === 'enable',
+          reason: v.AI_REAL_REASON,
+        });
+        console.log(
+          `AI for real workspaces ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
     }
     // ADR-090 is never part of the base run. It adds the real email lane for introductions behind seven hash-guarded function
     // replacements. It sends nothing and turns nothing on: the switch stays off and the mode stays test. Needs the real-use

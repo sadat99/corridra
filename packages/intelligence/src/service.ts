@@ -344,6 +344,17 @@ export class IntelligenceService {
     const v = runCommand.parse(raw),
       hash = createHash('sha256').update(JSON.stringify(v)).digest('hex');
     const existing = await withTenant(this.pool, ctx, 'trust.write', async (t) => {
+      // ADR-091. A real workspace gets a plain answer while AI is off for it. The database refuses the insert in any case.
+      if (
+        (await isRealWorkspace(t)) &&
+        (await t.db.query("SELECT app.part4_enabled($1,'ai.enabled') AS enabled", [t.tenantId]))
+          .rows[0].enabled !== true
+      )
+        throw new DomainError(
+          'AI assistance is not switched on for this workspace.',
+          403,
+          'AI_REAL_OFF',
+        );
       const old = (
         await t.db.query('SELECT * FROM app.ai_run WHERE tenant_id=$1 AND id=$2', [
           t.tenantId,

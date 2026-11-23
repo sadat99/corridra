@@ -5,10 +5,8 @@ import { commercialFixture } from './commercial-fixture';
 import { configureAiRealRuns } from '../../packages/auth/src/ai-real-configuration';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateNetworkRealUse } from '../../packages/db/src/network-real-use-migrate';
-import {
-  migrateAiModelPolicyReal,
-  migrateAiRealRuns,
-} from '../../packages/db/src/ai-model-policy-real-migrate';
+import { migrateAiModelPolicyReal } from '../../packages/db/src/ai-model-policy-real-migrate';
+import { migrateAiRealRuns } from '../../packages/db/src/ai-real-runs-migrate';
 
 // ADR-091, the database side of the install. The second step of the family replaces exactly three functions after hash
 // checks, adds one control that starts closed and one function that reads it, and its rollback puts all three back.
@@ -70,6 +68,8 @@ const drift = (d: string) => {
   const cut = d.lastIndexOf('$function$');
   return d.slice(0, cut).replace(/\s*$/, ' /* drift */\n') + d.slice(cut);
 };
+// The extended protocol runs exactly one statement per call, so a file that passes through it is a single statement.
+const oneStatement = (text: string) => ({ text, queryMode: 'extended' as const });
 let prior: Awaited<ReturnType<typeof state>>;
 
 beforeAll(async () => {
@@ -276,7 +276,7 @@ test('the rollback is one statement with no commit of its own, so a caller can s
   const db = await f.owner.connect();
   try {
     await db.query('BEGIN');
-    await db.query({ text: rollbackFile(), queryMode: 'extended' });
+    await db.query(oneStatement(rollbackFile()));
     expect((await db.query('SELECT to_regprocedure($1) r', [marker])).rows[0].r).toBeNull();
     await db.query('ROLLBACK');
   } finally {
