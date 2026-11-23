@@ -91,7 +91,10 @@ const status = async (id: string) =>
     ])
   ).rows[0];
 beforeAll(async () => {
-  s = await realStaffFixture('https://issuer.outreach.test', secret);
+  s = await realStaffFixture(
+    'https://ep-real-outreach-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth',
+    secret,
+  );
   await migrateOutreachReal(owner());
   const a = new AccessService(s.f.runtime);
   await a.appendConfig(s.ctx, { key: 'communications.introductions', enabled: true });

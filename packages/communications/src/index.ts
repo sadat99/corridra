@@ -1,6 +1,7 @@
 import { createHash, createHmac } from 'node:crypto';
 import {
   purgeIntakeRateLimit,
+  rollback,
   withTenant,
   type DatabasePool,
   type RequestContext,
@@ -8,6 +9,7 @@ import {
 import { DomainError } from '@corridra/domain';
 import { buyerRequest, communicationCommand } from '@corridra/domain/access';
 import { decodeCursor, keysetPage, pageLimit } from '@corridra/domain/paging';
+import { unsubscribeToken, type OutreachEvent } from './real-outreach';
 export const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 export class CommunicationService {
   constructor(
@@ -31,10 +33,60 @@ export class CommunicationService {
     if (!r.rows[0].client || !r.rows[0].token || !r.rows[0].global)
       throw new DomainError('Too many requests. Try again in an hour.', 429);
   }
+  /**
+   * ADR-090. A private link of a real workspace is answered under that workspace's own processing purpose and is
+   * never labelled a sample. Without the real outreach module every link is a sample link, exactly as before.
+   */
+  private async realLink(tokenHash: string) {
+    const r = await this.pool.query<{ real: boolean | null }>(
+      "SELECT CASE WHEN to_regprocedure('app.outreach_link_real(text)') IS NULL THEN false ELSE (SELECT app.outreach_link_real($1)) END AS real",
+      [tokenHash],
+    );
+    return r.rows[0]?.real === true;
+  }
   async buyer(input: unknown) {
     const v = buyerRequest.parse(input);
+    if (!(await this.realLink(hash(v.token)))) return this.buyerAnswer(v);
+    const db = await this.pool.connect();
+    let rollbackError: Error | undefined;
+    try {
+      await db.query('BEGIN');
+      await db.query("SELECT set_config('corridra.purpose','commercial_qualification',true)");
+      const result = await this.buyerAnswer(v, db);
+      await db.query('COMMIT');
+      return v.action === 'read' && result && typeof result === 'object'
+        ? { ...result, synthetic: false }
+        : result;
+    } catch (error) {
+      rollbackError = await rollback(db);
+      throw error;
+    } finally {
+      db.release(rollbackError);
+    }
+  }
+  /** ADR-090. The opt-out link of one real message. It works with every switch off and can be repeated. */
+  async unsubscribe(token: string) {
+    if (!/^[a-f0-9]{64}$/.test(token)) return false;
+    const r = await this.pool.query<{ done: boolean }>(
+      "SELECT CASE WHEN to_regprocedure('app.outreach_unsubscribe(text)') IS NULL THEN false ELSE (SELECT app.outreach_unsubscribe($1)) END AS done",
+      [hash(token)],
+    );
+    return r.rows[0]?.done === true;
+  }
+  /** ADR-090. One verified provider notice, recorded once. Returns false for a repeat or an unknown message. */
+  async providerEvent(eventId: string, event: OutreachEvent) {
+    const r = await this.pool.query<{ done: boolean }>(
+      "SELECT CASE WHEN to_regprocedure('app.outreach_record_event(text,uuid,text,boolean)') IS NULL THEN false ELSE (SELECT app.outreach_record_event($1,$2,$3,$4)) END AS done",
+      [eventId, event.messageId, event.kind, event.hard],
+    );
+    return r.rows[0]?.done === true;
+  }
+  private async buyerAnswer(
+    v: ReturnType<typeof buyerRequest.parse>,
+    db: Pick<DatabasePool, 'query'> = this.pool,
+  ) {
     if (v.action === 'optout') {
-      const r = await this.pool.query('SELECT app.buyer_optout($1) AS result', [hash(v.token)]);
+      const r = await db.query('SELECT app.buyer_optout($1) AS result', [hash(v.token)]);
       if (!r.rows[0].result)
         throw new DomainError('This private link is unavailable or expired', 404);
       return { optedOut: true };
@@ -42,10 +94,11 @@ export class CommunicationService {
     if (v.action === 'detail-response') {
       const { token, responseId, action: _action, ...body } = v;
       void _action;
-      const r = await this.pool.query(
-        'SELECT app.recipient_detail_respond($1,$2,$3::jsonb) result',
-        [hash(token), responseId, JSON.stringify(body)],
-      );
+      const r = await db.query('SELECT app.recipient_detail_respond($1,$2,$3::jsonb) result', [
+        hash(token),
+        responseId,
+        JSON.stringify(body),
+      ]);
       if (!r.rows[0].result)
         throw new DomainError('This private link is unavailable or expired', 404);
       return r.rows[0].result;
@@ -53,18 +106,20 @@ export class CommunicationService {
     if (v.action === 'detail-revision') {
       const { token, responseId, expectedVersion, action: _action, ...body } = v;
       void _action;
-      const r = await this.pool.query(
-        'SELECT app.recipient_detail_revise($1,$2,$3,$4::jsonb) result',
-        [hash(token), responseId, expectedVersion, JSON.stringify(body)],
-      );
+      const r = await db.query('SELECT app.recipient_detail_revise($1,$2,$3,$4::jsonb) result', [
+        hash(token),
+        responseId,
+        expectedVersion,
+        JSON.stringify(body),
+      ]);
       if (!r.rows[0].result)
         throw new DomainError('This private link is unavailable or expired', 404);
       return r.rows[0].result;
     }
     const r =
       v.action === 'read'
-        ? await this.pool.query('SELECT app.recipient_detail_view($1) AS result', [hash(v.token)])
-        : await this.pool.query('SELECT app.buyer_decide($1,$2,$3,$4) AS result', [
+        ? await db.query('SELECT app.recipient_detail_view($1) AS result', [hash(v.token)])
+        : await db.query('SELECT app.buyer_decide($1,$2,$3,$4) AS result', [
             hash(v.token),
             v.responseId,
             v.decision,
@@ -311,6 +366,13 @@ export class CommunicationService {
             'INSERT INTO app.buyer_link(id,tenant_id,message_id,token_hash,created_by) VALUES($1,$2,$1,$3,$4)',
             [id, ctx.tenantId, hash(this.capability('buyer', id)), actorId],
           );
+          if (v.consent)
+            await db.query('SELECT app.outreach_record_consent($1,$2,$3,$4)', [
+              id,
+              v.consent.basis,
+              v.consent.note,
+              hash(unsubscribeToken(this.secret, id)),
+            ]);
           await db.query('SELECT app.queue_communication($1,$2)', [
             id,
             hash(this.dispatchCapability(id)),

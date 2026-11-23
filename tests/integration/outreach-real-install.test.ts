@@ -5,12 +5,16 @@ import { commercialFixture } from './commercial-fixture';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateOutreachReal } from '../../packages/db/src/outreach-real-migrate';
 
-// ADR-090, the database side of the install. Two functions are replaced once, each hash-guarded against the definition
-// migration 0009 installed, and one receipt check is widened. Everything else the module adds is new.
+// ADR-090, the database side of the install. Three functions are replaced once, each hash-guarded against the definition
+// it names, and one receipt check is widened. Everything else the module adds is new.
 let f: Awaited<ReturnType<typeof commercialFixture>>;
 const dir = 'packages/db/outreach-real-migrations';
 const file = '0001_real_outreach.sql';
-const replaced = ['app.guard_communication()', 'app.communication_allowed(uuid,boolean)'];
+const replaced = [
+  'app.guard_communication()',
+  'app.communication_allowed(uuid,boolean)',
+  'app.experience_outreach_rows_for(uuid,uuid[])',
+];
 const sha = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const definition = async (name: string) =>
   (await f.owner.query('SELECT pg_get_functiondef($1::regprocedure) d', [name])).rows[0]
@@ -67,7 +71,7 @@ test('a drifted prerequisite function stops the install and changes nothing', as
   }
 });
 
-test('the install replaces exactly two functions, widens one check, and a second run changes nothing', async () => {
+test('the install replaces exactly three functions, widens one check, and a second run changes nothing', async () => {
   const before = await functionHashes();
   expect(await providerCheck()).not.toContain('email');
   await migrateOutreachReal(f.owner);
@@ -112,7 +116,7 @@ test('the install replaces exactly two functions, widens one check, and a second
       ).toBe(false);
 });
 
-test('the rollback file restores both functions and the check to their 0009 definitions', async () => {
+test('the rollback file restores the three functions and the check to their earlier definitions', async () => {
   await f.owner.query(readFileSync(`${dir}/rollback/0001_restore.sql`, 'utf8'));
   expect(await providerCheck()).not.toContain('email');
   const restored = await functionHashes();
@@ -121,5 +125,8 @@ test('the rollback file restores both functions and the check to their 0009 defi
   );
   expect(restored.get('app.communication_allowed(uuid,boolean)')).toBe(
     'b0bd1d71e29456555852f9d041f377edf41d1f917d006f2ba0ca471678313b1e',
+  );
+  expect(restored.get('app.experience_outreach_rows_for(uuid,uuid[])')).toBe(
+    '2db8a86152ef0bda44a5bc6f1bc31d192a2cf29e741f610a95bd21e653ea438f',
   );
 });
