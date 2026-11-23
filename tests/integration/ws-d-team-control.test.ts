@@ -85,6 +85,28 @@ test('only the workspace owner with a fresh authenticator check can invite, and 
   expect(denied.rows[0].n).toBe(0);
 });
 
+test('an invited member gets the workspace processing purpose, so the workspace appears for them', async () => {
+  const created = await team.invite(f.users.owner.ctx, invite('purpose.member@example.invalid'));
+  // The purpose function only exists once the real-use module is installed; a core-only database
+  // keeps the column default, which is what the invitation must then store.
+  const installed = (
+    await f.owner.query(
+      "SELECT to_regprocedure('app.tenant_processing_purpose(uuid)') IS NOT NULL AS present",
+    )
+  ).rows[0].present as boolean;
+  const expected = installed
+    ? (await f.owner.query('SELECT app.tenant_processing_purpose($1) AS purpose', [f.tenantA]))
+        .rows[0].purpose
+    : 'synthetic_validation';
+  const row = (
+    await f.owner.query(
+      'SELECT allowed_purposes FROM app.membership WHERE tenant_id=$1 AND user_id=$2',
+      [f.tenantA, created.principalId],
+    )
+  ).rows[0];
+  expect(row.allowed_purposes).toEqual([expected]);
+});
+
 test('an invitation creates a pending member, a 7-day setup row and audit events; resend and cancel keep history', async () => {
   const created = await team.invite(f.users.owner.ctx, invite('new.member@example.invalid'));
   expect(created).toMatchObject({ role: 'operator', expiresInDays: 7 });

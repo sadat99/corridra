@@ -208,9 +208,27 @@ export class TeamControl {
     });
     try {
       await withTenant(this.runtime, ctx, 'members.manage', async (t) => {
+        // A member needs the workspace's own processing purpose or the workspace never appears for them
+        // (app.my_tenants). Real workspaces use commercial_qualification, synthetic ones the column
+        // default. A deployment without the real-use module has no such function, so it keeps the default.
+        const hasPurpose = (
+          await t.db.query(
+            "SELECT to_regprocedure('app.tenant_processing_purpose(uuid)') IS NOT NULL AS present",
+          )
+        ).rows[0]?.present;
+        const purpose: string | null = hasPurpose
+          ? ((await t.db.query('SELECT app.tenant_processing_purpose($1) AS purpose', [t.tenantId]))
+              .rows[0]?.purpose ?? null)
+          : null;
         await t.db.query(
-          'INSERT INTO app.membership(tenant_id,user_id,role,allowed_countries) VALUES($1,$2,$3,$4)',
-          [t.tenantId, pending.principalId, v.role, [pending.country]],
+          'INSERT INTO app.membership(tenant_id,user_id,role,allowed_countries,allowed_purposes) VALUES($1,$2,$3,$4,$5)',
+          [
+            t.tenantId,
+            pending.principalId,
+            v.role,
+            [pending.country],
+            [purpose ?? 'synthetic_validation'],
+          ],
         );
       });
     } catch (error) {
