@@ -143,8 +143,6 @@ describe('the customer auth proxy and sign-in with a code (D-015)', () => {
       [400, 'INVALID_OTP'],
       [400, 'OTP_EXPIRED'],
       [403, 'TOO_MANY_ATTEMPTS'],
-      [401, ''],
-      [422, 'VALIDATION_ERROR'],
     ] as const) {
       calls = [];
       replies['email-otp/check-verification-otp'] = {
@@ -159,6 +157,11 @@ describe('the customer auth proxy and sign-in with a code (D-015)', () => {
       // No account is ever created by code: the sign-in itself is not asked.
       expect(seen()).toEqual(['email-otp/check-verification-otp']);
     }
+    // An older provider body with the words and no code is read the same way.
+    calls = [];
+    replies['email-otp/check-verification-otp'] = { status: 400, body: { message: 'Invalid OTP' } };
+    const worded = await call('sign-in/email-otp', { body: code });
+    answers.push(`${worded.status} ${await worded.text()}`);
     expect(new Set(answers).size).toBe(1);
     expect(answers[0]).toBe('400 {"error":"Sign-in refused","code":"CODE_REFUSED"}');
     // A refusal by the sign-in itself, after a passed check, reads the same.
@@ -168,6 +171,62 @@ describe('the customer auth proxy and sign-in with a code (D-015)', () => {
     const late = await call('sign-in/email-otp', { body: code });
     expect(`${late.status} ${await late.text()}`).toBe(answers[0]);
     expect(late.headers.get('set-cookie')).toBeNull();
+  });
+
+  it('never calls a correct code wrong for a provider answer that is not about the code', async () => {
+    // A misconfigured or changed provider: not a refusal of this code, so the answer is "unavailable".
+    for (const [status, body] of [
+      [401, {}],
+      [403, { code: 'INVALID_ORIGIN', message: 'Invalid origin' }],
+      [403, {}],
+      [400, {}],
+      [400, { code: 'NOT_IMPLEMENTED' }],
+      [422, { code: 'VALIDATION_ERROR' }],
+      [409, { code: 'USER_NOT_FOUND' }],
+    ] as const) {
+      calls = [];
+      replies['email-otp/check-verification-otp'] = { status, body };
+      const response = await call('sign-in/email-otp', { body: code });
+      expect(response.status, `${status} ${JSON.stringify(body)}`).toBe(503);
+      expect(seen()).toEqual(['email-otp/check-verification-otp']);
+    }
+    // The same after a passed check, when the sign-in itself answers something else.
+    calls = [];
+    delete replies['email-otp/check-verification-otp'];
+    replies['sign-in/email-otp'] = {
+      status: 403,
+      body: { code: 'INVALID_ORIGIN' },
+      cookie: 'leak=1',
+    };
+    const late = await call('sign-in/email-otp', { body: code });
+    expect(late.status).toBe(503);
+    expect(late.headers.get('set-cookie')).toBeNull();
+  });
+
+  it('holds every refusal until a fixed floor after the request arrived', async () => {
+    vi.useFakeTimers();
+    try {
+      for (const refusal of ['USER_NOT_FOUND', 'INVALID_OTP']) {
+        replies['email-otp/check-verification-otp'] = { status: 400, body: { code: refusal } };
+        let settled: Response | null = null;
+        const pending = call('sign-in/email-otp', { body: code }).then((r) => (settled = r));
+        await vi.advanceTimersByTimeAsync(399);
+        expect(settled, refusal).toBeNull();
+        await vi.advanceTimersByTimeAsync(1);
+        await pending;
+        expect(settled!.status).toBe(400);
+      }
+      // A success is not held back.
+      delete replies['email-otp/check-verification-otp'];
+      replies['sign-in/email-otp'] = { status: 200, body: { token: 't' } };
+      let done: Response | null = null;
+      const signedIn = call('sign-in/email-otp', { body: code }).then((r) => (done = r));
+      await vi.advanceTimersByTimeAsync(5);
+      await signedIn;
+      expect(done!.status).toBe(200);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('says 429 for a provider rate limit and fails closed with 503 when the check is unavailable', async () => {
@@ -205,7 +264,7 @@ describe('the customer auth proxy and sign-in with a code (D-015)', () => {
     hold = null;
     replies['email-otp/check-verification-otp'] = 'throw';
     expect((await guess('person@example.invalid', '000005')).status).toBe(503);
-    replies['email-otp/check-verification-otp'] = { status: 400, body: {} };
+    replies['email-otp/check-verification-otp'] = { status: 400, body: { code: 'INVALID_OTP' } };
     expect((await guess('person@example.invalid', '000006')).status).toBe(400);
   });
 

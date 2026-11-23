@@ -20,9 +20,9 @@ const paths = new Set([
 // the provider's own check, server side only, and forwards the sign-in only when that check passes, with the
 // address and the code and nothing else: a code never creates an account.
 // One answer for every refusal (security review, 23 Nov 2026): a wrong code, an expired code, too many tries on
-// a code and an address with no account all get the same status and body, so the answer never says whether an
-// address has an account. A provider fault or no answer is 503 and a provider rate limit is 429; neither
-// depends on the address. One attempt per address runs at a time in this server process, so parallel guesses
+// a code and an address with no account all get the same status and body, no sooner than a fixed floor after the
+// request arrived, so neither the answer nor its timing says whether an address has an account. A provider
+// fault, an unrecognised refusal or no answer is 503 and a provider rate limit is 429; neither depends on the address. One attempt per address runs at a time in this server process, so parallel guesses
 // cannot race the provider's try counter here (other server instances are not covered by this).
 const codeSignIn = 'sign-in/email-otp';
 const codeCheck = 'email-otp/check-verification-otp';
@@ -64,14 +64,35 @@ const unavailable = () =>
     { error: 'Account service is unavailable. Please try again.' },
     { status: 503, headers },
   );
-const answered = (response: Response) =>
-  response.status === 429
-    ? tooMany()
-    : response.status >= 400 && response.status < 500 && response.status !== 404
-      ? refused()
-      : response.ok
-        ? null
-        : unavailable();
+// Only the provider's own answers about this code or this address become the one refusal: 400 with one of
+// these codes, or 403 for too many tries. Any other answer that is not a success (401, a refused origin, an
+// endpoint that is not there, a validation error) is a fault of the service or its settings, so it says
+// "unavailable": a customer is never told a correct code is wrong because the provider is misconfigured.
+const codeAnswers = new Set(['INVALID_OTP', 'OTP_EXPIRED', 'USER_NOT_FOUND']);
+async function answered(response: Response) {
+  if (response.ok) return null;
+  if (response.status === 429) return tooMany();
+  const reply = (await response.json().catch(() => null)) as {
+    code?: unknown;
+    message?: unknown;
+  } | null;
+  // An older provider body can carry the words without the code ("Invalid OTP").
+  const code =
+    typeof reply?.code === 'string'
+      ? reply.code
+      : typeof reply?.message === 'string'
+        ? reply.message.trim().toUpperCase().replace(/\s+/g, '_')
+        : '';
+  if (
+    (response.status === 400 && codeAnswers.has(code)) ||
+    (response.status === 403 && code === 'TOO_MANY_ATTEMPTS')
+  )
+    return refused();
+  return unavailable();
+}
+// Every refusal answers no sooner than this after the request arrived, so the time taken does not show
+// whether the provider stopped at "no account" or went on to compare the code.
+const refusalFloorMs = 400;
 const attempting = new Set<string>();
 async function signInByCode(
   request: Request,
@@ -79,6 +100,13 @@ async function signInByCode(
   email: string,
   otp: string,
 ) {
+  const arrived = Date.now();
+  const held = async (response: Response) => {
+    const left = refusalFloorMs - (Date.now() - arrived);
+    if (response.status === 400 && left > 0)
+      await new Promise((resolve) => setTimeout(resolve, left));
+    return response;
+  };
   const address = email.toLowerCase();
   if (attempting.has(address)) return tooMany();
   attempting.add(address);
@@ -88,13 +116,13 @@ async function signInByCode(
       .POST(toProvider(request, codeCheck, { email, type: 'sign-in', otp }), {
         params: Promise.resolve({ path: codeCheck.split('/') }),
       });
-    const stopped = answered(check);
-    if (stopped) return stopped;
+    const stopped = await answered(check);
+    if (stopped) return await held(stopped);
     const response = await auth.handler().POST(toProvider(request, codeSignIn, { email, otp }), {
       params: Promise.resolve({ path: codeSignIn.split('/') }),
     });
-    const failed = answered(response);
-    if (failed) return failed;
+    const failed = await answered(response);
+    if (failed) return await held(failed);
     response.headers.set('Cache-Control', 'no-store');
     return response;
   } finally {
