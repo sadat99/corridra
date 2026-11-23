@@ -160,6 +160,7 @@ export const words: FormCatalog = {
   'form.step.line': 'Étape {step} sur {total} : {name} · Ensuite : {next}',
   'form.step.lineLast': 'Étape {step} sur {total} : {name}',
   'form.action.cancel': 'Annuler',
+  'form.action.close': 'Fermer',
   'form.clear.title': 'Effacer vos réponses ?',
   'form.clear.body': 'Cela supprime tout ce que vous avez saisi dans cet onglet.',
 

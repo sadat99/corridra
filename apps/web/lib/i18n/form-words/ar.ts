@@ -154,6 +154,7 @@ export const words: FormCatalog = {
   'form.step.line': 'الخطوة {step} من {total}: {name} · التالي: {next}',
   'form.step.lineLast': 'الخطوة {step} من {total}: {name}',
   'form.action.cancel': 'إلغاء',
+  'form.action.close': 'إغلاق',
   'form.clear.title': 'هل تريد مسح إجاباتك؟',
   'form.clear.body': 'سيؤدي هذا إلى حذف كل ما أدخلته في علامة التبويب هذه.',
 

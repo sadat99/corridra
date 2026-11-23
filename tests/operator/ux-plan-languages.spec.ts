@@ -808,6 +808,12 @@ test.describe('with the form released', () => {
     await expect(form.locator('h2')).toHaveText(de['form.step.titleWhere']);
     await expect(form.locator('input[name="companyCountry"]')).toHaveValue('DE');
     await expect(form.getByRole('combobox').first()).toHaveValue('Deutschland');
+    // B2a (D-009): the confirm step's close button speaks the chosen language, and Escape keeps the answers.
+    await page.getByRole('button', { name: de['form.action.clearDraft'], exact: true }).click();
+    await expect(page.locator('dialog[open] .ux-dialog-close')).toHaveText(de['form.action.close']);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('dialog[open]')).toHaveCount(0);
+    await expect(form.locator('input[name="companyCountry"]')).toHaveValue('DE');
   });
 
   test('a draft that cannot be restored, resumed or saved says so in the chosen language', async ({

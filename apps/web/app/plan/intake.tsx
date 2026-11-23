@@ -1715,6 +1715,7 @@ function IntakeForm({
               open={clearAsking}
               onClose={() => setClearAsking(false)}
               title={say('form.clear.title')}
+              closeLabel={say('form.action.close')}
             >
               <p>
                 {say('form.clear.body') === formEn['form.clear.body']

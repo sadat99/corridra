@@ -149,6 +149,7 @@ export const words: FormCatalog = {
   'form.step.line': '第 {step} 步，共 {total} 步：{name} · 下一步：{next}',
   'form.step.lineLast': '第 {step} 步，共 {total} 步：{name}',
   'form.action.cancel': '取消',
+  'form.action.close': '关闭',
   'form.clear.title': '清除您的回答？',
   'form.clear.body': '这会删除您在此标签页中填写的所有内容。',
 

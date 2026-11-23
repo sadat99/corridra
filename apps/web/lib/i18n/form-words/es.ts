@@ -156,6 +156,7 @@ export const words: FormCatalog = {
   'form.step.line': 'Paso {step} de {total}: {name} · Siguiente: {next}',
   'form.step.lineLast': 'Paso {step} de {total}: {name}',
   'form.action.cancel': 'Cancelar',
+  'form.action.close': 'Cerrar',
   'form.clear.title': '¿Borrar sus respuestas?',
   'form.clear.body': 'Esto elimina todo lo que ha introducido en esta pestaña.',
 

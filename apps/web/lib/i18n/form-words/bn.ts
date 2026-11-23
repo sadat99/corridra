@@ -158,6 +158,7 @@ export const words: FormCatalog = {
   'form.step.line': '{total} ধাপের মধ্যে ধাপ {step}: {name} · এরপর: {next}',
   'form.step.lineLast': '{total} ধাপের মধ্যে ধাপ {step}: {name}',
   'form.action.cancel': 'বাতিল',
+  'form.action.close': 'বন্ধ করুন',
   'form.clear.title': 'আপনার উত্তরগুলো মুছবেন?',
   'form.clear.body': 'এতে এই ট্যাবে আপনার লেখা সবকিছু মুছে যাবে।',
 

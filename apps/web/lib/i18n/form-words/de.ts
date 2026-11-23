@@ -158,6 +158,7 @@ export const words: FormCatalog = {
   'form.step.line': 'Schritt {step} von {total}: {name} · Danach: {next}',
   'form.step.lineLast': 'Schritt {step} von {total}: {name}',
   'form.action.cancel': 'Abbrechen',
+  'form.action.close': 'Schließen',
   'form.clear.title': 'Ihre Angaben löschen?',
   'form.clear.body': 'Damit wird alles entfernt, was Sie in diesem Tab eingegeben haben.',
 

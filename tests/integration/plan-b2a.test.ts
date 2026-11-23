@@ -109,3 +109,27 @@ describe('D-007: the contact step does not ask an active account to activate', (
     );
   });
 });
+
+describe('D-009: the confirm step closes in the language of the form', () => {
+  it('passes the form word for Close to the shared dialog', () => {
+    expect(readFileSync(resolve('apps/web/app/plan/intake.tsx'), 'utf8')).toContain(
+      "closeLabel={say('form.action.close')}",
+    );
+  });
+
+  it('has its own word for Close in each of the six other languages', async () => {
+    expect(words['form.action.close']).toBe('Close');
+    const seen = new Set<string>();
+    for (const code of ['bn', 'zh', 'es', 'ar', 'fr', 'de']) {
+      const catalogue = (await load(`lib/i18n/form-words/${code}.ts`)).words as Record<
+        string,
+        string
+      >;
+      const word = catalogue['form.action.close'];
+      expect(word, code).toBeTruthy();
+      expect(word, code).not.toBe('Close');
+      seen.add(word);
+    }
+    expect(seen.size).toBe(6);
+  });
+});

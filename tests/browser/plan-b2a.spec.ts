@@ -113,6 +113,31 @@ test('D-009 Clear Answers asks first, Cancel keeps the answers and only the conf
   ).toBe('');
 });
 
+test('D-009 Escape closes the confirm step without clearing, and focus returns to Clear Answers', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openSaved(page, 1);
+  const clear = page.getByRole('button', { name: 'Clear Answers', exact: true });
+  await clear.click();
+  const dialog = page.getByRole('dialog', { name: 'Clear your answers?' });
+  await expect(dialog).toBeVisible();
+  // The close button carries the form's own word. This build offers English only; the six translated words are
+  // checked in tests/integration/plan-b2a.test.ts and, in German, in tests/operator/ux-plan-languages.spec.ts.
+  await expect(dialog.locator('.ux-dialog-close')).toHaveText('Close');
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(clear).toBeFocused();
+  await expect(page.locator('.plan-progress-line')).toHaveText(
+    'Step 2 of 5: Where · Next: Details',
+  );
+  expect(
+    await page.evaluate(
+      () => JSON.parse(sessionStorage.getItem('corridra-mission-draft') ?? '{}').draft?.offer,
+    ),
+  ).toBe(answers.offer);
+});
+
 for (const size of [
   { width: 1280, height: 537 },
   { width: 1280, height: 900 },

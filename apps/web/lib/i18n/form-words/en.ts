@@ -164,6 +164,7 @@ export const formEn = {
   'form.action.submit': 'Submit Mission Request',
   'form.action.clearDraft': 'Clear Answers',
   'form.action.cancel': 'Cancel',
+  'form.action.close': 'Close',
   'form.clear.title': 'Clear your answers?',
   'form.clear.body': 'This removes everything you entered in this tab.',
 
@@ -246,7 +247,7 @@ export const formEn = {
   'form.message.intakeUnavailable': 'Intake is unavailable',
   'form.message.activationNeeded': 'Finish account activation to submit your request',
   'form.message.checkFields': 'Check the highlighted fields',
-  'form.message.changed': 'This brief changed after submission. Start a new brief.',
+  'form.message.changed': 'This request changed after it was sent. Start a new request.',
   'form.message.intakeNotSaved': 'Intake could not be saved. Your input is still here.',
   'form.message.receiptExpired': 'Receipt unavailable or expired',
   'form.message.receiptUnavailable': 'Intake unavailable',
