@@ -63,7 +63,11 @@
 /* The notifications panel hangs from the header's end edge, under the header, and is never wider than the header:
    when the header row wraps (a narrow window or large text) the inbox button can sit away from the row's end, and a
    panel aligned to the button ran off the side of the window. The header is the frame, not the button. It is already
-   a positioned box where it is sticky; this is the fallback, at zero specificity so it can never override sticky. */
+   a positioned box where it is sticky; this is the fallback, at zero specificity so it can never override sticky.
+   From 64em the customer and team tools rows are size containers (customer-search.css, team-nav.css). A browser that
+   makes a size container the frame of a positioned child hangs the panel from that row instead; the row ends at the
+   header's end edge and the width and height below are taken from whichever box is the frame, so the panel stays
+   inside the window either way. */
 :where(.ux-app-header) {
   position: relative;
 }
