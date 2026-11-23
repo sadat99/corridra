@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
-import { displayDate, displayMoney } from '@corridra/domain/locale';
+import { displayMoney } from '@corridra/domain/locale';
+import { formatDateTime } from '../../lib/ux/format';
 
 type Summary = {
   id: string;
@@ -452,9 +453,9 @@ function Scoped({ tenant }: { tenant: string }) {
             {taxOptions.find(([k]) => k === detail.plan.taxTreatment)?.[1].toLowerCase()}.
             {detail.subscription.periodStart && detail.subscription.periodEnd
               ? ' Period ' +
-                displayDate(detail.subscription.periodStart) +
+                formatDateTime(detail.subscription.periodStart) +
                 ' until ' +
-                displayDate(detail.subscription.periodEnd) +
+                formatDateTime(detail.subscription.periodEnd) +
                 '.'
               : ''}
           </p>
@@ -467,9 +468,9 @@ function Scoped({ tenant }: { tenant: string }) {
             {detail.events.map((ev) => (
               <li key={ev.seq}>
                 {ev.kind.replace('_', ' ')} · {ev.actorKind} ·{' '}
-                <time dateTime={ev.at}>{ev.at.slice(0, 16).replace('T', ' ')} UTC</time>
+                <time dateTime={ev.at}>{formatDateTime(ev.at)}</time>
                 {ev.periodStart && ev.periodEnd
-                  ? ' · ' + displayDate(ev.periodStart) + ' until ' + displayDate(ev.periodEnd)
+                  ? ' · ' + formatDateTime(ev.periodStart) + ' until ' + formatDateTime(ev.periodEnd)
                   : ''}
                 {ev.endReason ? ' · ' + ev.endReason.replace('_', ' ') : ''}
                 {ev.customerNote ? ' · customer sees: ' + ev.customerNote : ''}

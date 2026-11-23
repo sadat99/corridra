@@ -170,7 +170,7 @@ export function teamPins(
  * that leads to them. Control Center and the owner page live under Settings.
  */
 export const settingsPlaces: readonly TeamPlace[] = [
-  { id: 'workspace-settings', label: 'Corridors and policies' },
+  { id: 'workspace-settings', label: 'Routes and policies' },
   { id: 'ops-center', label: 'Control Center' },
   { id: 'owner', label: 'Owner page' },
 ];

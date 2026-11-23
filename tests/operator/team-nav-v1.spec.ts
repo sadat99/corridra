@@ -150,7 +150,7 @@ test('an owner has Admin with its five and the Settings row holds the Owner page
   for (const name of ['Health', 'Readiness', 'Audit', 'People and access', 'Settings'])
     await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
   const row = page.getByRole('navigation', { name: 'In this section' });
-  for (const name of ['Corridors and policies', 'Control Center', 'Owner page'])
+  for (const name of ['Routes and policies', 'Control Center', 'Owner page'])
     await expect(row.getByRole('link', { name, exact: true })).toBeVisible();
   const axe = await new AxeBuilder({ page })
     .include('#workspace-navigation')

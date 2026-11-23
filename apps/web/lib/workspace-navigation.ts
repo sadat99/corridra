@@ -81,7 +81,7 @@ export const workspaceSections = [
   },
   {
     id: 'workspace-settings',
-    label: 'Corridors and policies',
+    label: 'Routes and policies',
     part: 'V2 1, 4–5',
     roles: ['owner', 'admin'],
   },

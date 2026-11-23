@@ -38,6 +38,7 @@ test('contributor setup explains verified access and does not collect uninvited 
     'href',
     '/contributor',
   );
+  await expect(page.getByLabel('New work password', { exact: true })).toHaveCount(0);
   await expect(page.getByLabel('New contributor password', { exact: true })).toHaveCount(0);
   for (const width of info.project.name === 'desktop' ? [1440, 1920] : [390, 768]) {
     await page.setViewportSize({ width, height: 1000 });

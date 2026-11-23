@@ -273,11 +273,11 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
     (await worker.request.get(origin + '/api/network/tasks?workspace=' + f.realTenant)).status(),
   ).toBe(401);
   await worker.goto(origin + '/contributor/setup');
-  await expect(worker.getByLabel('New contributor password', { exact: true })).toBeVisible();
+  await expect(worker.getByLabel('New work password', { exact: true })).toBeVisible();
   await inspect(worker, 'contributor-setup');
-  await worker.getByLabel('New contributor password', { exact: true }).fill(password);
-  await worker.getByLabel('Confirm contributor password', { exact: true }).fill(password);
-  await worker.getByRole('button', { name: 'Set Contributor Password', exact: true }).click();
+  await worker.getByLabel('New work password', { exact: true }).fill(password);
+  await worker.getByLabel('Confirm work password', { exact: true }).fill(password);
+  await worker.getByRole('button', { name: 'Set Work Password', exact: true }).click();
   await worker.getByRole('link', { name: 'Sign in and Set Up Authenticator' }).click();
   await worker.getByLabel('Email', { exact: true }).fill(email);
   await worker.getByLabel('Password', { exact: true }).fill(password);
