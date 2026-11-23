@@ -101,7 +101,7 @@ export function JourneySwitch({
             <ElsewhereCount counts={counts} mode={mode} />
           </Suspense>
         ) : null}
-        <CorridraIcon name="chevron" className="ux-journey-switch-chevron" />
+        <CorridraIcon name="chevron" size={16} className="ux-journey-switch-chevron" />
       </summary>
       <ul aria-label="Choose a journey">
         {journeyModes.map((choice) => (
