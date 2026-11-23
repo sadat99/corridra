@@ -395,3 +395,47 @@ for (const width of [390, 1440]) {
     expect(await scan()).toEqual([]);
   });
 }
+
+// D-023 (unit B3a): the Confirm step lists what was entered in steps 1 and 2, read only, with an Edit action for each.
+for (const width of [390, 768, 1440]) {
+  test(`the Confirm step lists steps 1 and 2 and no Edit action covers a fact, ${width} px`, async ({
+    page,
+  }) => {
+    await open(page, width, { height: width === 390 ? 844 : 900 });
+    await fillCompany(page);
+    await next(page).click();
+    await fillProfile(page);
+    await next(page).click();
+    await expect(title(page)).toHaveText('Step 3 of 3: Confirm');
+    const review = page.getByRole('region', { name: 'What you entered' });
+    await expect(review.locator('h3')).toHaveText(['Company', 'Profile']);
+    await expect(review.locator('dt')).toHaveText([
+      'Company name',
+      'Country',
+      'Website',
+      'Roles',
+      'Sectors',
+      'Company size',
+    ]);
+    await expect(review.locator('input, select, textarea')).toHaveCount(0);
+    const covered = await review.evaluate((el) => {
+      const boxes = (q: string) =>
+        Array.from(el.querySelectorAll(q)).map((node) => node.getBoundingClientRect());
+      const hit = (a: DOMRect, b: DOMRect) =>
+        a.left < b.right - 1 &&
+        b.left < a.right - 1 &&
+        a.top < b.bottom - 1 &&
+        b.top < a.bottom - 1;
+      return boxes('button').flatMap((button) =>
+        boxes('h3, .profile-review-facts > div').filter((fact) => hit(button, fact)),
+      ).length;
+    });
+    expect(covered).toBe(0);
+    // Edit goes back to that step with every answer kept.
+    const name = await page.locator('[id$="legalName"]').inputValue();
+    await review.getByRole('button', { name: 'Edit Company', exact: true }).click();
+    await expect(title(page)).toHaveText('Step 1 of 3: Company');
+    await expect(page.locator('[id$="legalName"]')).toHaveValue(name);
+    expect(name.length).toBeGreaterThan(0);
+  });
+}

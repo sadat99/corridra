@@ -406,9 +406,26 @@
   min-height: 1.75rem;
   font-size: var(--text-sm);
 }
+/* The route chip (D-025). It may take the whole row before its words wrap, and then keeps to two lines with a
+   little room above and below; the icon keeps its square and stays beside the words. */
+.room[data-room='request'] .room-route {
+  flex: 0 1 auto;
+  max-inline-size: 100%;
+  padding-block: calc(var(--space-1) / 2);
+  overflow-wrap: anywhere;
+}
 .room[data-room='request'] .room-route .corridra-icon {
+  flex: none;
   width: 1rem;
   height: 1rem;
+}
+/* Beside the stage timeline the tags, title and date keep a readable column (D-025): at the largest Text Size the
+   32rem timeline took the row and left them about 8rem, so the route chip wrapped to four lines. The timeline now
+   takes what is left, up to 32rem. */
+@media (min-width: 64rem) {
+  .room[data-room='request'] > .room-head {
+    grid-template-columns: minmax(min(100%, 22rem), 1fr) minmax(0, 32rem);
+  }
 }
 .room[data-room='request'] .room-head h2 {
   font-size: var(--text-h2);

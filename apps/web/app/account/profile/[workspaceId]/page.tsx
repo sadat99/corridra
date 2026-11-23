@@ -62,7 +62,8 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
           tabs={[
             {
               id: 'profile',
-              label: realCustomerInput() ? 'Company profile' : 'Sample company profile',
+              // The page title already says Company profile; the tab names what is in it (D-022).
+              label: realCustomerInput() ? 'About' : 'Sample profile',
               panel: (
                 <OrganisationProfile
                   subject={session.data.user.id}

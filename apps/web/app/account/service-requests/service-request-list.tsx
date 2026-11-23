@@ -5,7 +5,7 @@ import {
   basisText,
   callServiceApi,
   contextText,
-  dateTimeText,
+  helpDateTimeText,
   problemText,
   statusLabel,
   validCatalogue,
@@ -83,7 +83,7 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
     return () => task.current?.abort();
   }, [load]);
   return (
-    <section aria-label="Paid-service requests" className="account-compact">
+    <section aria-label="Help requests" className="account-compact">
       <p>
         Ask for paid local help from a place you already work in, such as a programme, a private
         request or an approved company. We send you a quote first. Accepting a quote records your
@@ -142,7 +142,7 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
                       </p>
                       <p>
                         {r.region} · updated{' '}
-                        <time dateTime={r.updatedAt}>{dateTimeText(r.updatedAt)}</time>
+                        <time dateTime={r.updatedAt}>{helpDateTimeText(r.updatedAt)}</time>
                       </p>
                     </li>
                   );

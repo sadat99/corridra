@@ -2240,6 +2240,54 @@ test('AC/1: the stage timeline is vertical on a desktop, folds the finished stag
   expect(card!.y + card!.height).toBeLessThan(844);
 });
 
+// D-025: at the largest Text Size (the root is 125 percent) the 32rem stage timeline left the tags, title and date
+// a narrow column, and the route chip took three or four lines. Beside the sidebar the Room is narrower than the
+// window, so the desktop case gives it 840 px. The chip keeps to one or two lines and its icon keeps its square.
+for (const width of [390, 1280]) {
+  test(`D-025: the route chip keeps to two lines at the largest text size, ${width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(
+      page,
+      {},
+      {
+        body: detail({
+          original: {
+            objective: 'Find customers or distributors',
+            experience: { schemaVersion: 1, companyCountry: 'BD', marketCode: 'GB' },
+          },
+        }),
+      },
+    );
+    await page.evaluate(() => document.documentElement.setAttribute('data-text-size', 'largest'));
+    await page.addStyleTag({
+      content: `html[data-text-size='largest']{font-size:125%} #fixture{max-width:${Math.min(width, 840)}px}`,
+    });
+    const chip = page.locator('.room-route');
+    await expect(chip).toHaveText('Bangladesh → United Kingdom');
+    const shape = await chip.evaluate((el) => {
+      const style = getComputedStyle(el);
+      const line = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
+      const box = el.getBoundingClientRect();
+      const icon = el.querySelector('.corridra-icon')!.getBoundingClientRect();
+      return {
+        lines: Math.round((box.height - 2) / line),
+        iconWidth: icon.width,
+        iconHeight: icon.height,
+        overflow: box.right > document.documentElement.clientWidth,
+      };
+    });
+    expect(shape.lines).toBeLessThanOrEqual(2);
+    expect(shape.overflow).toBe(false);
+    // The icon keeps its square: a flex row never squeezes it while the words wrap.
+    expect(Math.abs(shape.iconWidth - shape.iconHeight)).toBeLessThan(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+  });
+}
+
 test('AC/1: in forced colours the next-step card keeps a visible border and its button an outline', async ({
   page,
 }) => {

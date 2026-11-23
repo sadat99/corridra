@@ -5,7 +5,7 @@ import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { neonAuth } from '../../../lib/neon-auth';
 
-export function serviceRequestNotice(message: string, title = 'Paid-service requests'): ReactNode {
+export function serviceRequestNotice(message: string, title = 'Your help requests'): ReactNode {
   return (
     <WorkspaceShell eyebrow="YOUR ACCOUNT" title={title} compact>
       <p role="status">{message}</p>
@@ -20,11 +20,10 @@ export async function serviceRequestSession(): Promise<
   { subject: string; issuer: string } | { notice: ReactNode }
 > {
   if (!customerServiceRequestsEnabled())
-    return { notice: serviceRequestNotice('Paid-service requests are unavailable.') };
+    return { notice: serviceRequestNotice('Help requests are unavailable.') };
   const issuer = readNeonAuthConfig()?.NEON_AUTH_BASE_URL;
   const auth = neonAuth();
-  if (!issuer || !auth)
-    return { notice: serviceRequestNotice('Paid-service requests are unavailable.') };
+  if (!issuer || !auth) return { notice: serviceRequestNotice('Help requests are unavailable.') };
   const session = await auth.getSession({ query: { disableCookieCache: true } }).catch(() => null);
   if (!session || session.error)
     return {

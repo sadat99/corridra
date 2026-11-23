@@ -16,6 +16,7 @@ import { SubTabs } from '../../../components/ux/sub-tabs';
 import { translate } from '../../../lib/i18n/messages';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionHistory } from './decision-history';
+import { reportIntro, selfDeclaredResponse } from './report-words';
 import { SpecificationConfirmation } from './specification-confirmation';
 import { BookDownloads, createPendingBooks, type BookTarget } from './book-downloads';
 import { limitWords } from '../../../lib/account-limit';
@@ -311,13 +312,7 @@ function PrivateReport({
           Back to my saved commercial missions
         </a>
       )}
-      {!(member && realCustomerInput()) && (
-        <p>
-          {realCustomerInput()
-            ? 'Your submitted information. This is the operator-approved report scope, not automatic access to every company, contact, offer or participant record.'
-            : 'Sample data only. This is the operator-approved report scope, not automatic access to every company, contact, offer or participant record.'}{' '}
-        </p>
-      )}
+      {!(member && realCustomerInput()) && <p>{reportIntro(realCustomerInput())} </p>}
       {member && source && status === 'ready' && (
         <p>
           Saved by {source.label ?? 'a member of this workspace'}
@@ -541,8 +536,7 @@ function PrivateReport({
                                       }))
                                     }
                                   />{' '}
-                                  This is my self-declared response. Supporting documents must
-                                  follow the operator-controlled review process.
+                                  {selfDeclaredResponse}
                                 </label>
                               </fieldset>
                               <button

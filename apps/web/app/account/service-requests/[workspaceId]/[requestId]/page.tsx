@@ -6,7 +6,7 @@ import { serviceRequestSession } from '../../session';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
-  title: 'Paid-service requests | Corridra',
+  title: 'Help request | Corridra',
   robots: { index: false, follow: false },
 };
 export default async function Page({

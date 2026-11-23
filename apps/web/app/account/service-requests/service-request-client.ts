@@ -6,6 +6,7 @@ import type {
   ServiceStatus,
 } from '@corridra/auth/customer-service-requests';
 import { limitWords } from '../../../lib/account-limit';
+import { formatDate, formatDateTime } from '../../../lib/ux/format';
 
 export type { ServiceCatalogueEntry, ServiceRequestDetail, ServiceRequestSummary, ServiceStatus };
 export type Scope = { subject: string; issuer: string };
@@ -58,15 +59,15 @@ export async function callServiceApi<T>(
 export function unconfirmed(status: number | 'network' | 'malformed') {
   return typeof status === 'string' || (status >= 500 && status !== 503);
 }
-// Plain wording for every failure. The server never explains which rule fired, so neither do we.
+// Plain wording for every failure. The server never explains which rule fired, so neither do we: a refused value
+// says to check each field, in every workspace (the sample rule is written on the sample labels, not here).
 export function problemText(status: number | 'network' | 'malformed', doing: string): string {
   if (status === 401 || status === 403)
     return 'You no longer have access here, or your sign-in ended. Return to your account and try again.';
   if (status === 409)
     return 'That could not be saved because something has changed, or an open request for this service already exists here. Reload and check.';
-  if (status === 400)
-    return 'Some details need another look. Every text field must start with the word Synthetic.';
-  if (status === 503) return 'Paid-service requests are not switched on here.';
+  if (status === 400) return 'Some details need another look. Check each field and try again.';
+  if (status === 503) return 'Help requests are not switched on here.';
   if (status === 429) return limitWords;
   return 'Could not ' + doing + '. Check your connection and try again.';
 }
@@ -159,6 +160,8 @@ export function validDetail(value: unknown): value is ServiceRequestDetail {
     Number.isFinite(Date.parse(v.expiresAt))
   );
 }
+// Billing and invoices (app/account/billing) reuse the two functions below and their specs pin this wording, so they
+// are unchanged; those screens are outside unit B3a. Help requests use the two after them (the one date format).
 export function dayText(day: string | null) {
   if (!day) return null;
   const parsed = new Date(day.slice(0, 10) + 'T00:00:00Z');
@@ -183,4 +186,15 @@ export function dateTimeText(value: string) {
         hour: '2-digit',
         minute: '2-digit',
       }) + ' UTC';
+}
+/** A help request's calendar day, "24 Oct 2026". A day, not a moment: it reads the same in every time zone. */
+export function helpDayText(day: string | null) {
+  if (!day) return null;
+  const parsed = new Date(day.slice(0, 10) + 'T00:00:00Z');
+  return Number.isNaN(parsed.getTime()) ? day : formatDate(parsed, { timeZone: 'UTC' });
+}
+/** A help request's moment, "24 Oct 2026, 06:08 (Dhaka, UTC+6)", in the reader's time zone. */
+export function helpDateTimeText(value: string) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : formatDateTime(parsed);
 }

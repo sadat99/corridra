@@ -2,7 +2,7 @@
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { savedRequestBack, savedRequestHelper } from '../frame-copy';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { RefreshButton } from '../refresh-button';
 import {
   briefSchema,
@@ -13,8 +13,8 @@ import {
 import { displayMoney } from '@corridra/domain/locale';
 import { StatusChip } from '../../../components/ux/status-chip';
 import { customerStatusLabel } from '../../../lib/ux/customer-road';
-import { formatDate, formatDateTime } from '../../../lib/ux/format';
-import { groupFields, placeName, requestTitle } from '../request-words';
+import { formatDateTime } from '../../../lib/ux/format';
+import { requestFacts, requestTitle } from '../request-words';
 import { limitWords } from '../../../lib/account-limit';
 
 const displayDate = (value: string) => formatDateTime(value);
@@ -36,94 +36,41 @@ type Scope = {
   serviceRequestsEnabled?: boolean;
   /** The page frame shows the back link and the helper line; this section leaves them out. */
   framed?: boolean;
+  /** The request's Room. Shown only beside a request the person may read, never beside a refusal (D-034). */
+  roomHref?: string;
+  /** The email reminder card, drawn by the page. Shown only beside a request the person may read. */
+  nudge?: ReactNode;
 };
-const labels: Record<string, string> = {
-  objective: 'Goal',
-  market: 'Target market',
-  attendance: 'Visit planned',
-  startDate: 'Start date',
-  endDate: 'End date',
-  timezone: 'Time zone',
-  offer: 'Offering or requirement',
-  website: 'Website',
-  outcomes: 'Desired outcomes',
-  notes: 'Additional notes',
-  name: 'Contact name',
-  company: 'Company',
-  email: 'Contact email',
-  acknowledged: 'Privacy and request notice acknowledged',
-  experience: 'Commercial requirements',
-  companyCountry: 'Company country',
-  marketCode: 'Target country or trade bloc',
-  job: 'Type of work',
-  requirements: 'Requirements',
-  budgetMinor: 'Budget',
-  currency: 'Currency',
-  budgetBasis: 'Budget basis',
-  moq: 'Minimum order quantity (MOQ)',
-  oemOdm: 'Custom manufacturing (OEM / ODM)',
-  incoterm: 'Delivery term (Incoterm)',
-  machinery: 'Machinery requirements',
-};
-// Sentence case for any field without a written label (CQ-24): "Delivery window", never "Delivery Window".
-function label(key: string) {
-  const words = key.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
-  return labels[key] ?? words.charAt(0).toUpperCase() + words.slice(1);
-}
-// Country codes become names ("AZ" is shown as "Azerbaijan"); dates use one style (D11).
-const placeKeys = new Set(['market', 'marketCode', 'companyCountry']);
-function plain(key: string, item: unknown): string {
-  if (typeof item !== 'string') return String(item);
-  if (placeKeys.has(key)) return placeName(item);
-  if ((key === 'startDate' || key === 'endDate') && /^\d{4}-\d{2}-\d{2}$/.test(item))
-    return formatDate(`${item}T00:00:00Z`, { timeZone: 'UTC' });
-  return item;
-}
-/** CQ-24: the original brief in groups (Goal, Where, Details, Results, Contact), without internal fields. */
-function GroupedFields({ value }: { value: Record<string, unknown> }) {
+/** CQ-24 and D-017: the original brief in groups (Goal, Where, Details, Contact), each fact once, in plain words. */
+function RequestFacts({ value }: { value: Record<string, unknown> }) {
   return (
     <>
-      {groupFields(value).map((group) => (
+      {requestFacts(value).map((group) => (
         <section key={group.title} aria-label={group.title}>
           <h3>{group.title}</h3>
-          <OriginalFields value={Object.fromEntries(group.keys.map((key) => [key, value[key]]))} />
+          <dl className="ux-request-original">
+            {group.rows.map((row) => (
+              <div key={row.key} className="ux-fact-row">
+                <dt>
+                  <strong>{row.label}</strong>
+                </dt>
+                <dd style={{ marginInlineStart: 0, whiteSpace: 'pre-wrap' }}>
+                  {Array.isArray(row.value) ? (
+                    <ul>
+                      {row.value.map((entry, index) => (
+                        <li key={index}>{entry}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    row.value
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </section>
       ))}
     </>
-  );
-}
-function OriginalFields({ value }: { value: Record<string, unknown> }) {
-  return (
-    <dl className="ux-request-original">
-      {Object.entries(value).map(([key, item]) => (
-        <div key={key} className="ux-fact-row">
-          <dt>
-            <strong>{label(key)}</strong>
-          </dt>
-          <dd style={{ marginInlineStart: 0, whiteSpace: 'pre-wrap' }}>
-            {item && typeof item === 'object' && !Array.isArray(item) ? (
-              <OriginalFields value={item as Record<string, unknown>} />
-            ) : Array.isArray(item) ? (
-              <ul>
-                {item.map((entry, index) => (
-                  <li key={index}>{String(entry)}</li>
-                ))}
-              </ul>
-            ) : typeof item === 'boolean' ? (
-              item ? (
-                'Yes'
-              ) : (
-                'No'
-              )
-            ) : item === '' || item == null ? (
-              'Not provided'
-            ) : (
-              plain(key, item)
-            )}
-          </dd>
-        </div>
-      ))}
-    </dl>
   );
 }
 function checked(value: unknown, requestId: string): Detail {
@@ -165,6 +112,8 @@ function PrivateDetail({
   issuer,
   serviceRequestsEnabled = false,
   framed = false,
+  roomHref,
+  nudge,
 }: Scope) {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [status, setStatus] = useState('loading');
@@ -233,8 +182,46 @@ function PrivateDetail({
       document.removeEventListener('visibilitychange', visibility);
     };
   }, [read]);
+  return (
+    <RequestDetailView
+      status={status}
+      detail={detail}
+      requestId={requestId}
+      serviceRequestsEnabled={serviceRequestsEnabled}
+      framed={framed}
+      roomHref={roomHref}
+      nudge={nudge}
+      onRefresh={() => {
+        setDetail(null);
+        setStatus('loading');
+        read();
+      }}
+    />
+  );
+}
+/** What the person reads for each state of the request. No state of its own, so every state is drawn in a test. */
+export function RequestDetailView({
+  status,
+  detail,
+  requestId,
+  serviceRequestsEnabled = false,
+  framed = false,
+  roomHref,
+  nudge,
+  onRefresh,
+}: {
+  status: string;
+  detail: Detail | null;
+  requestId: string;
+  serviceRequestsEnabled?: boolean;
+  framed?: boolean;
+  roomHref?: string;
+  nudge?: ReactNode;
+  onRefresh: () => void;
+}) {
   const original = detail?.original;
   const requirements = original?.experience?.requirements;
+  const readable = status === 'ready' && !!detail?.available;
   return (
     <section aria-label="Private saved request" className="ux-request-page">
       {!framed && (
@@ -245,12 +232,22 @@ function PrivateDetail({
           <p> {savedRequestHelper} </p>
         </>
       )}
+      {readable && roomHref && (
+        <p>
+          <a className="text-link" href={roomHref}>
+            Open this request in its Room
+          </a>
+        </p>
+      )}
+      {readable && nudge}
       {status === 'loading' && <p role="status">Loading your saved request…</p>}
+      {/* A refusal is the whole answer: no Room link, no email card and no reference, so nothing here says whether
+          the request exists (D-034). */}
       {status === 'denied' && (
         <div role="alert">
           <p>Your private request access could not be confirmed. No request details are shown.</p>
-          <a className="text-link" href="/signin">
-            Sign in again
+          <a className="text-link" href={savedRequestBack.href}>
+            {savedRequestBack.label}
           </a>
         </div>
       )}
@@ -329,25 +326,20 @@ function PrivateDetail({
                     ({requirements.budgetBasis}). No currency conversion.
                   </p>
                 )}
-                <GroupedFields value={original as unknown as Record<string, unknown>} />
+                <RequestFacts value={original as unknown as Record<string, unknown>} />
               </details>
             )}
           </>
         ))}
       {status !== 'loading' && status !== 'denied' && (
-        <RefreshButton
-          label="request details"
-          onClick={() => {
-            setDetail(null);
-            setStatus('loading');
-            read();
-          }}
-        />
+        <RefreshButton label="request details" onClick={onRefresh} />
       )}
-      <details className="ux-journey-disclosure">
-        <summary>Request reference</summary>
-        <p>{requestId}</p>
-      </details>
+      {status !== 'denied' && (
+        <details className="ux-journey-disclosure">
+          <summary>Request reference</summary>
+          <p>{requestId}</p>
+        </details>
+      )}
     </section>
   );
 }

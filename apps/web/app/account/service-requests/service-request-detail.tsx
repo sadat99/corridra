@@ -10,8 +10,8 @@ import {
   callServiceApi,
   componentKindText,
   contextText,
-  dateTimeText,
-  dayText,
+  helpDateTimeText,
+  helpDayText,
   kindText,
   problemText,
   statusLabel,
@@ -311,9 +311,9 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
             <dt>Preferred dates</dt>
             <dd>
               {detail.need.preferredFrom
-                ? dayText(detail.need.preferredFrom) +
+                ? helpDayText(detail.need.preferredFrom) +
                   (detail.need.preferredTo
-                    ? ' to ' + dayText(detail.need.preferredTo)
+                    ? ' to ' + helpDayText(detail.need.preferredTo)
                     : ' or later')
                 : 'No preference'}
             </dd>
@@ -419,7 +419,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
               <p>
                 This is a quote, not an order. Nothing is charged, and billing is not switched on.
                 Valid until{' '}
-                <time dateTime={quote.validUntil}>{dateTimeText(quote.validUntil)}</time>.
+                <time dateTime={quote.validUntil}>{helpDateTimeText(quote.validUntil)}</time>.
               </p>
               <p>{quote.scope}</p>
               {quote.commercialArrangement && (
@@ -509,7 +509,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                 {money(detail.orderIntent.estimatedTotalMinor, detail.orderIntent.currency)}.
                 Accepted{' '}
                 <time dateTime={detail.orderIntent.acceptedAt}>
-                  {dateTimeText(detail.orderIntent.acceptedAt)}
+                  {helpDateTimeText(detail.orderIntent.acceptedAt)}
                 </time>
                 .
               </p>
@@ -713,7 +713,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                         {kindText[e.kind] ?? e.kind}
                         {e.quoteVersion ? ' (version ' + e.quoteVersion + ')' : ''}
                       </strong>{' '}
-                      · {e.by} · <time dateTime={e.at}>{dateTimeText(e.at)}</time>
+                      · {e.by} · <time dateTime={e.at}>{helpDateTimeText(e.at)}</time>
                       {e.note && (
                         <>
                           <br />
