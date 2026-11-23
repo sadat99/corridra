@@ -82,7 +82,7 @@ export const tools: readonly Tool[] = [
     route: '/account',
     href: '/account?view=work',
     label: 'See your workspaces and requests',
-    line: 'Workspaces, drafts and every request you sent.',
+    line: 'Workspaces, saved requests and every request you sent.',
     group: 'Missions',
   },
   {

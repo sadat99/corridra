@@ -1,0 +1,26 @@
+/* Source stamp (UI/UX.v4.1 L10). One 12 px Geist Mono label line with a small dot. Tokens only; words wrap. */
+.ux-source-stamp {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  color: var(--text-2);
+  font: 500 var(--text-xs) / 1.4 var(--font-mono);
+}
+.ux-source-stamp-dot {
+  flex: none;
+  inline-size: 0.375rem;
+  block-size: 0.375rem;
+  margin-block-start: calc((1.4em - 0.375rem) / 2);
+  border-radius: 50%;
+  background: currentColor;
+}
+.ux-source-stamp-words {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+@media (forced-colors: active) {
+  .ux-source-stamp-dot {
+    background: CanvasText;
+  }
+}

@@ -2465,7 +2465,9 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     reason,
   });
   await recipientPage.reload();
-  await expect(recipientPage.getByRole('status')).toContainText('unavailable or expired');
+  await expect(recipientPage.getByRole('status')).toContainText(
+    'This private link has expired or was replaced. Ask the person who sent it for a new link.',
+  );
   await clientPage.close();
   await recipientPage.close();
   await guestContext.close();

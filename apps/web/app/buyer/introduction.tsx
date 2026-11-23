@@ -12,6 +12,7 @@ import { RecipientResponse } from './recipient-response';
 import { ReplyJourney } from './reply-journey';
 import { parseReplyFragment } from '../../lib/reply-terms';
 import { replyHtmlLang, replyWords } from '../../lib/reply-words';
+import { linkGone } from '../delivery-view';
 type View = {
   capability?: string;
   role?: string;
@@ -31,6 +32,22 @@ const labels = {
   NEED_INFO: 'Need more information',
   NOT_RELEVANT: 'Not relevant',
 } as const;
+/**
+ * The words for a read or an answer that did not go through. A link the server refuses (signed out, not allowed,
+ * not found or gone) says the one shared line for a link that no longer opens. Any other failure keeps the reason
+ * the server gave, and a failure with no reason says what to do next.
+ */
+export function refusalWords(error: unknown, gone: string, whenUnknown: string): string {
+  if (accessDenied(error)) return gone;
+  return error instanceof Error && error.message ? error.message : whenUnknown;
+}
+/**
+ * The Reply Page keeps the failure words it has always had: the reason the error carries, whatever its kind, and
+ * the given words only for a failure that is not an error at all. Nothing here is new wording.
+ */
+export function replyFailureWords(error: unknown, whenNotAnError: string): string {
+  return error instanceof Error ? error.message : whenNotAnError;
+}
 export function BuyerIntroduction({
   replyPage = false,
   chineseReleased = false,
@@ -78,6 +95,13 @@ function ScopedIntroduction({
       : parsed;
   const linkToken = fragment ? fragment.token : capability;
   const words = replyWords[fragment?.language ?? 'en'];
+  // D-053: one line for a link that no longer opens, the same on every private page. The Reply Page keeps its own
+  // words in the language of the link (lib/reply-words.ts) and, for a failed read or answer, the reason as before.
+  const gone = replyPage ? words.unavailable : linkGone;
+  const failed = (error: unknown, whenUnknown: string, replyWhenNotAnError: string) =>
+    replyPage
+      ? replyFailureWords(error, replyWhenNotAnError)
+      : refusalWords(error, linkGone, whenUnknown);
   const [data, setData] = useState<View | null>(null),
     [message, setMessage] = useState(
       replyPage ? `${words.loading}…` : 'Loading your introduction…',
@@ -99,12 +123,7 @@ function ScopedIntroduction({
     token.current = linkToken;
     if (!/^[a-f0-9]{64}$/.test(token.current)) {
       Promise.resolve().then(() => {
-        if (active)
-          setMessage(
-            replyPage
-              ? words.unavailable
-              : 'This private link is unavailable. Open the complete link you received.',
-          );
+        if (active) setMessage(gone);
       });
       return () => {
         active = false;
@@ -129,7 +148,7 @@ function ScopedIntroduction({
         }
       })
       .catch((e) => {
-        if (active) setMessage(e.message);
+        if (active) setMessage(failed(e, 'Your introduction could not be opened. Try again.', ''));
       });
     return () => {
       active = false;
@@ -167,7 +186,13 @@ function ScopedIntroduction({
         setData(null);
         setPending(null);
       }
-      setMessage(e instanceof Error ? e.message : 'Your response could not be saved. Try again.');
+      setMessage(
+        failed(
+          e,
+          'Your response could not be saved. Try again.',
+          'Your response could not be saved. Try again.',
+        ),
+      );
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -196,7 +221,7 @@ function ScopedIntroduction({
         setData(null);
         setPending(null);
       }
-      setMessage(e instanceof Error ? e.message : 'Please try again.');
+      setMessage(failed(e, 'Your request could not be saved. Try again.', 'Please try again.'));
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -229,11 +254,7 @@ function ScopedIntroduction({
           onStop={() => void stopContact()}
           onAccessDenied={() => {
             setData(null);
-            setMessage(
-              replyPage
-                ? words.unavailable
-                : 'This private link is unavailable. Request a new reviewed link.',
-            );
+            setMessage(gone);
           }}
         />
       </section>
@@ -273,7 +294,7 @@ function ScopedIntroduction({
                 token={data.capability ?? ''}
                 onAccessDenied={() => {
                   setData(null);
-                  setMessage('This private link is unavailable. Request a new reviewed link.');
+                  setMessage(gone);
                 }}
                 allowQuotation={!!data.allowQuotation}
                 allowMeetingInterest={!!data.allowMeetingInterest}

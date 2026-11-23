@@ -361,7 +361,8 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
                           </p>
                           <p>{context.objective}</p>
                           <p>
-                            Fit: {context.fit.toLowerCase()} · {context.rationale}
+                            Fit: {(context.fit ?? 'not supplied').toLowerCase()} ·{' '}
+                            {context.rationale}
                           </p>
                           <p>Uncertainty: {context.uncertainty}</p>
                           <p>Evidence gaps: {context.gaps}</p>

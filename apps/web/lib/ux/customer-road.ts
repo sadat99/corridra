@@ -25,13 +25,14 @@ export type CustomerStatus = { label: string; tone: ChipTone };
 
 /**
  * D6: a request the customer has sent is never called a draft. `submitted` is true when the customer
- * has sent it (a receipt or a submitted request record exists); only an unsent guided draft is "Draft".
+ * has sent it (a receipt or a submitted request record exists); an unsent guided request is "Saved, not sent yet"
+ * (owner, 23 Nov 2026: a customer never reads "draft").
  */
 export function customerStatusLabel(status: string, submitted: boolean): CustomerStatus {
   if (status === 'DRAFT' || status === 'QUALIFICATION')
     return submitted
       ? { label: 'Received, waiting for review', tone: 'waiting' }
-      : { label: 'Draft', tone: 'neutral' };
+      : { label: 'Saved, not sent yet', tone: 'neutral' };
   if (status === 'ON_HOLD') return { label: 'Paused', tone: 'stopped' };
   if (status === 'CANCELLED') return { label: 'Cancelled', tone: 'stopped' };
   if (status === 'CLOSED') return { label: 'Finished', tone: 'done' };

@@ -114,7 +114,7 @@ describe('pickers', () => {
 describe('customer progress (D5, D6)', () => {
   test('a submitted request is never called a draft', () => {
     expect(customerStatusLabel('DRAFT', true).label).toBe('Received, waiting for review');
-    expect(customerStatusLabel('DRAFT', false).label).toBe('Draft');
+    expect(customerStatusLabel('DRAFT', false).label).toBe('Saved, not sent yet');
     expect(customerStatusLabel('MEETINGS', true).label).toBe('Visit');
   });
   test('the road has the six named steps', () => {
