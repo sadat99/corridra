@@ -154,9 +154,16 @@
   inline-size: var(--space-6);
   block-size: var(--space-6);
 }
+/* A narrow door at a large text size: the icon takes its own line, so the words keep the whole width. */
 @container (max-width: 16rem) {
-  .ux-door.has-icon .ux-door-dot {
-    grid-column: 1 / -1;
+  .ux-door.has-icon label {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-door.has-icon label > :not(.ux-door-tile, .ux-door-dot),
+  .ux-door.has-icon .ux-door-dot,
+  .ux-door-tile {
+    grid-column: 1;
+    grid-row: auto;
   }
 }
 
