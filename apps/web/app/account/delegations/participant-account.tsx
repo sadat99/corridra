@@ -9,8 +9,10 @@ import { ParticipantResults } from './participant-results';
 import { ParticipantPlace } from './participant-place';
 import { MyReminders } from './my-reminders';
 import { Fold } from '../fold';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { CorridraIcon } from '../../../components/corridra-icon';
+import { FieldError } from '../../../components/field-error';
+import { formatDateTime } from '../../../lib/ux/format';
 import { MenuButton, OverflowMenu } from '../../../components/ux/overflow-menu';
 import './participant-account.css';
 import { useParticipantView, type ParticipantScope } from './participant-client';
@@ -54,7 +56,10 @@ function ScopedAccount(
     [consent, setConsent] = useState(false),
     [reason, setReason] = useState(''),
     [withdrawAck, setWithdrawAck] = useState(false),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    // What is wrong with the invitation code as typed, said at its field.
+    [codeError, setCodeError] = useState('');
+  const codeErrorId = useId();
   const [withdrawTarget, setWithdrawTarget] = useState<string | null>(null);
   // The place and recorded fee status each registration's own section already read, kept only to word the home line.
   const [reads, setReads] = useState<
@@ -87,6 +92,7 @@ function ScopedAccount(
     setReason('');
     setWithdrawAck(false);
     setError('');
+    setCodeError('');
   }, []);
   const saved = useCallback((command: { action: string }) => {
     if (command.action === 'accept') {
@@ -104,6 +110,12 @@ function ScopedAccount(
   const [labelNote, setLabelNote] = useState('');
   const preview =
     view.result?.action === 'preview' && view.result.requestToken === token ? view.result : null;
+  // The refusal belongs to the code that was checked: once the code changes it no longer applies.
+  const codeMessage =
+    codeError ||
+    (view.result?.action === 'previewRefused' && view.result.requestToken === token
+      ? 'That code is not valid or has expired. Check it and try again.'
+      : '');
   useEffect(() => {
     const protect = (e: BeforeUnloadEvent) => {
       if (token || label || reason || view.pending) {
@@ -398,20 +410,18 @@ function ScopedAccount(
           {!view.pending && (
             <Fold
               summary={realCustomerInput() ? 'Check an invitation' : 'Inspect a sample invitation'}
-              open={!!preview}
+              open={!!preview || !!codeMessage}
             >
               <form
                 className="operator-form"
+                noValidate
                 onSubmit={(e) => {
                   e.preventDefault();
                   setError('');
+                  setCodeError('');
                   setConsent(false);
                   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) {
-                    setError(
-                      realCustomerInput()
-                        ? 'Enter the complete private invitation code.'
-                        : 'Enter the complete private sample invitation code.',
-                    );
+                    setCodeError('Enter the full code from your invitation.');
                     return;
                   }
                   void view.send({ action: 'preview', token });
@@ -433,12 +443,16 @@ function ScopedAccount(
                     minLength={43}
                     maxLength={43}
                     disabled={view.busy}
+                    aria-invalid={codeMessage ? true : undefined}
+                    aria-describedby={codeMessage ? codeErrorId : undefined}
                     onChange={(e) => {
                       setToken(e.target.value);
                       setConsent(false);
+                      setCodeError('');
                     }}
                   />
                 </label>
+                {codeMessage && <FieldError id={codeErrorId}>{codeMessage}</FieldError>}
                 <button
                   className={props.framed && preview ? 'text-link' : 'primary-link'}
                   disabled={view.busy}
@@ -478,8 +492,8 @@ function ScopedAccount(
                   <h3>{String(preview.name)}</h3>
                   <p>{String(preview.reportingPurpose)}</p>
                   <p>
-                    Invitation expires {String(preview.expiresAt)}. Registration records interest;
-                    eligibility, meetings and fees are not confirmed.
+                    Invitation expires {formatDateTime(String(preview.expiresAt))}. Registration
+                    records interest; eligibility, meetings and fees are not confirmed.
                   </p>
                   <label className="field">
                     {realCustomerInput() ? 'Display name' : 'Fictional display name'}{' '}

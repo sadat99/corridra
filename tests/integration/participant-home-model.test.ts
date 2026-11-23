@@ -117,8 +117,9 @@ describe('participant home lines', () => {
       text: 'Read and accept the changed terms',
     });
     const open = place({ enrolment: { status: 'NOT_APPLIED', position: null, reasons: [] } });
+    // D-045: a registered person is not told to apply again; the step is confirming the place.
     expect(homeLines({ registrationId: id, place: open, fees: null }).next?.text).toBe(
-      'Apply for a place',
+      'Confirm your place',
     );
     const full = place({
       enrolment: { status: 'NOT_APPLIED', position: null, reasons: [] },

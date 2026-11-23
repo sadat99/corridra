@@ -4818,3 +4818,13 @@ Preserved: D01-D06/D08, real payments and payouts closed; native language review
 Next action: merge R0, then B1, B2a, B3a, B4 per the run plan section 2.
 
 Tested head: 43c2bbc (main) plus working-tree edits on claude/sharp-davinci-69ui2s.
+
+## 23 Nov 2026: B4 programmes, delegations and invitations (PR 604)
+
+Scope: QA defects D-037 to D-048 on programme, delegation and invitation screens; sender display name "Corridra" for all customer mails (packages/auth/src/customer-auth-mail.ts); organiser named in invitations through the existing customer.collaborative_workspaces() read; D-045 option 1 wording ("Confirm your place", "Your place on this programme", "Confirm My Place"); shared CopyButton (components/ux/copy-button.tsx) added to the shared components table; invitation idempotency key kept stable per invitation. Evidence: docs/revamp/evidence/b4-programmes-2026-11-23/.
+
+Review: one corridra-reviewer pass on e09fc2c, verdict merge; should-fix items (idempotency key, runbook sender name) applied in this round. Not built (follow-up list): already-registered notice before the public Apply form; sample-only "Synthetic" prefix (moves to B7); first-run "Not stated yet" (publish schema requires it); invitation expiry shown in Dhaka time rather than the programme's zone.
+
+Preserved: no migration, no authority or RLS change, no code exposed to new readers; sample data never shown as real.
+
+Next action: Guardian merges PR 604 on green CI, verifies the deployment, then launches B11a.

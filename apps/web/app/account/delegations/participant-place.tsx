@@ -283,7 +283,7 @@ function ScopedPlace({ subject, issuer, registrationId, onRead }: Props) {
                   <li key={code}>{participantReason[code]}</li>
                 ))}
               </ul>
-              <p>You can update your organisation profile and apply again.</p>
+              <p>You can update your organisation profile and try again.</p>
             </>
           )}
           {data.terms && (
@@ -375,12 +375,16 @@ function ScopedPlace({ subject, issuer, registrationId, onRead }: Props) {
                     profileWorkspaceId: needsProfile ? profile : null,
                   },
                   data.placesAvailable
-                    ? 'Your application was received.'
+                    ? 'Your request for a place was received.'
                     : 'You are on the waiting list.',
                 );
               }}
             >
-              <h5>{status === 'NOT_APPLIED' ? 'Your place on this programme' : 'Apply again'}</h5>
+              <h5>
+                {status === 'NOT_APPLIED'
+                  ? 'Your place on this programme'
+                  : 'Confirm your place again'}
+              </h5>
               {full && <p role="status">This programme is full and has no waiting list.</p>}
               {!full && !data.placesAvailable && (
                 <p role="status">All places are taken. You can join the waiting list.</p>
@@ -417,7 +421,7 @@ function ScopedPlace({ subject, issuer, registrationId, onRead }: Props) {
               <button type="submit" className="primary-link" disabled={!applyReady}>
                 {!data.placesAvailable && data.waitlist
                   ? 'Join the Waiting List'
-                  : 'Apply for a Place'}
+                  : 'Confirm My Place'}
               </button>
             </form>
           )}

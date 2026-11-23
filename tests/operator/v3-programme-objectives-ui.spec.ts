@@ -297,7 +297,7 @@ test('permission denial removes original references,drafts and controls', async 
   await draft(page);
   await page.getByRole('button', { name: 'Update Shared Objective' }).click();
   await expect(
-    page.getByText('Access changed. Private details and drafts were cleared.'),
+    page.getByText('Access changed. Private details and unsaved text were cleared.'),
   ).toBeVisible();
   await expect(
     page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true }),
@@ -336,7 +336,9 @@ test('expiry and page hiding erase private snapshots and drafts', async ({ page 
   ).toBeVisible();
   await page.clock.fastForward(2000);
   await expect(
-    page.getByText('Private details and drafts were cleared. Reload to check current access.'),
+    page.getByText(
+      'Private details and unsaved text were cleared. Reload to check current access.',
+    ),
   ).toBeVisible();
   await expect(page.getByRole('link')).toHaveCount(0);
   await page.getByRole('button', { name: 'Reload Shared Objectives' }).click();
@@ -465,7 +467,9 @@ test('pagination does not extend the original private display deadline', async (
   await expect(page.getByText('Synthetic second objective', { exact: true })).toBeVisible();
   await page.clock.fastForward(1000);
   await expect(
-    page.getByText('Private details and drafts were cleared. Reload to check current access.'),
+    page.getByText(
+      'Private details and unsaved text were cleared. Reload to check current access.',
+    ),
   ).toBeVisible();
   await expect(page.getByText('Synthetic second objective', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('link')).toHaveCount(0);
@@ -494,7 +498,7 @@ test('unsaved draft prevents tool closure and uses a real interrupted-navigation
   expect(allowed).toBe(false);
   await expect(
     page.getByText(
-      'Your objective draft is unsaved. Save it or clear the text before closing these tools.',
+      'Your objective is unsaved. Save it or clear the text before closing these tools.',
     ),
   ).toBeVisible();
   const dialog = page.waitForEvent('dialog');
@@ -564,7 +568,9 @@ test('GAP-005 honours a30-minute server view lease beyond the old60-second cap a
   await expect(summary).toBeVisible();
   await page.clock.fastForward(29 * 60000);
   await expect(
-    page.getByText('Private details and drafts were cleared. Reload to check current access.'),
+    page.getByText(
+      'Private details and unsaved text were cleared. Reload to check current access.',
+    ),
   ).toBeVisible();
   await expect(summary).toHaveCount(0);
 });

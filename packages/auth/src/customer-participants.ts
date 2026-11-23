@@ -107,6 +107,10 @@ export type ParticipantInvitationMail = (input: {
   id: string;
   recipientEmail: string;
   token: string;
+  /** What the email says about the invitation. Each part is absent when it could not be read. */
+  programme?: string;
+  organiser?: string;
+  expiresAt?: string;
 }) => Promise<'sent' | 'not_sent' | 'off'>;
 export class CustomerParticipantService extends CustomerSessionBoundary {
   constructor(
@@ -135,16 +139,43 @@ export class CustomerParticipantService extends CustomerSessionBoundary {
   async command(input: unknown, subject?: string, issuer?: string) {
     const value = customerParticipantInput.parse(input);
     if (value.action === 'emailInvitation') {
-      const receipt = await this.transaction(
-        async (db) =>
-          (
+      const { receipt, facts } = await this.transaction(
+        async (db) => {
+          const receipt = (
             await db.query('SELECT customer.programme_invitation_email($1,$2,$3,$4) AS result', [
               value.invitationId,
               value.workspaceId,
               value.programmeId,
               sessionHash(value.token),
             ])
-          ).rows[0].result,
+          ).rows[0].result;
+          // What the email names: the programme and expiry as the recipient's own preview gives them, and the
+          // organiser's workspace name from the organiser's own workspace list. Both are existing reads under the
+          // same session. A refusal here never stops the email; the message then leaves that part out.
+          const facts: { programme?: string; organiser?: string; expiresAt?: string } = {};
+          await db.query('SAVEPOINT invitation_facts');
+          try {
+            const preview = (
+              await db.query('SELECT customer.programme_participant_preview($1) AS result', [
+                sessionHash(value.token),
+              ])
+            ).rows[0]?.result;
+            if (preview?.programmeId === value.programmeId) {
+              if (typeof preview.name === 'string') facts.programme = preview.name;
+              if (preview.expiresAt) facts.expiresAt = String(preview.expiresAt);
+            }
+            const workspace = (
+              await db.query('SELECT name FROM customer.collaborative_workspaces() WHERE id=$1', [
+                value.workspaceId,
+              ])
+            ).rows[0];
+            if (typeof workspace?.name === 'string') facts.organiser = workspace.name;
+            await db.query('RELEASE SAVEPOINT invitation_facts');
+          } catch {
+            await db.query('ROLLBACK TO SAVEPOINT invitation_facts');
+          }
+          return { receipt, facts };
+        },
         subject,
         issuer,
       );
@@ -156,6 +187,7 @@ export class CustomerParticipantService extends CustomerSessionBoundary {
             id: receipt.id,
             recipientEmail: receipt.recipientEmail,
             token: value.token,
+            ...facts,
           })) ?? 'not_sent';
       } catch {
         /* A failed email leaves the invitation usable. */
