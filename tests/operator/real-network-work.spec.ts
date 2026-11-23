@@ -116,7 +116,7 @@ test.beforeAll(async () => {
     const workspace=new URLSearchParams(location.search).get('workspace');
     const fixtureTenant=__NETWORK_TEST_TENANT__;
     const contributorReturnTo='/contributor?workspace='+encodeURIComponent(fixtureTenant);
-    createRoot(document.getElementById('fixture')).render(location.pathname==='/network-owner'?<ExecutionNetwork tenant={fixtureTenant} role="owner" workspaceName="Reviewed test workspace" onChooseWorkspace={()=>document.getElementById('fixture-workspace')?.focus()}/>:location.pathname==='/owner'?<ContributorInvitations tenant={fixtureTenant}/>:location.pathname==='/contributor/setup'?<SetupForm kind="contributor"/>:location.pathname==='/operator/signin'?<OperatorSignin returnTo={contributorReturnTo}/>:<TaskBoard workspace={workspace}/>);`,
+    createRoot(document.getElementById('fixture')).render(location.pathname==='/network-owner'?<ExecutionNetwork tenant={fixtureTenant} role="owner" workspaceName="Reviewed test workspace" onChooseWorkspace={()=>document.getElementById('fixture-workspace')?.focus()}/>:location.pathname==='/owner'?<ContributorInvitations tenant={fixtureTenant}/>:location.pathname==='/contributor/setup'?<SetupForm kind="contributor"/>:location.pathname==='/contributor/signin'?<OperatorSignin returnTo={contributorReturnTo}/>:<TaskBoard workspace={workspace}/>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -279,6 +279,12 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
   await worker.getByLabel('Confirm work password', { exact: true }).fill(password);
   await worker.getByRole('button', { name: 'Set Work Password', exact: true }).click();
   await worker.getByRole('link', { name: 'Sign in and Set Up Authenticator' }).click();
+  // A helper returns through the helper sign-in door, with the task page of the invited workspace as the return address.
+  await expect(worker).toHaveURL(
+    origin +
+      '/contributor/signin?next=' +
+      encodeURIComponent('/contributor?workspace=' + f.realTenant),
+  );
   await worker.getByLabel('Email', { exact: true }).fill(email);
   await worker.getByLabel('Password', { exact: true }).fill(password);
   await worker.getByRole('button', { name: 'Continue', exact: true }).click();
