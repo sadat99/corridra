@@ -4,7 +4,12 @@ import { readAuthMailConfig, sendWithResend } from '@corridra/auth/customer-auth
 import { missionMailApplicationEnabled } from '@corridra/auth/mission-mail';
 import { foundations } from './foundations';
 import { uxSwitchOn } from './ux-switches';
-import { buildNotificationEmail, emailDecision, inboxSafePayload } from './ux/notify-mail';
+import {
+  buildNotificationEmail,
+  emailDecision,
+  inboxSafePayload,
+  type InvitationFacts,
+} from './ux/notify-mail';
 
 // One notification service for every hand-off (commercial readiness program, D7 and 5.2).
 // Producers (WS-B, WS-C, WS-D) call notify(); WS-E owns the internals. It writes the inbox row and
@@ -31,7 +36,12 @@ export type NotifyInput = {
    * Lines for the email only, such as an invitation code. They are never stored in the inbox, and
    * secret-looking keys in `payload` are dropped from the inbox item too.
    */
-  emailOnly?: { lines?: string[]; link?: string };
+  emailOnly?: {
+    lines?: string[];
+    link?: string;
+    /** Participant invitations only: the programme, the organiser and when the code expires. */
+    invitation?: InvitationFacts;
+  };
 };
 
 export type NotifyResult = {
@@ -74,6 +84,7 @@ async function sendEmail(
         input.emailOnly?.link ??
         (typeof input.payload.href === 'string' ? input.payload.href : undefined),
       lines: input.emailOnly?.lines,
+      invitation: input.emailOnly?.invitation,
     });
     await sendWithResend({
       config,
@@ -93,6 +104,9 @@ export async function notifyParticipantInvitation(input: {
   id: string;
   recipientEmail: string;
   token: string;
+  programme?: string;
+  organiser?: string;
+  expiresAt?: string;
 }) {
   if (!notificationsOn()) return 'off' as const;
   const email = await sendEmail(
@@ -104,6 +118,11 @@ export async function notifyParticipantInvitation(input: {
       emailOnly: {
         lines: ['Your private invitation code: ' + input.token],
         link: '/account/delegations',
+        invitation: {
+          programme: input.programme,
+          organiser: input.organiser,
+          expiresAt: input.expiresAt,
+        },
       },
     },
     'participant-invitation:' + input.id,

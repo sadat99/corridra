@@ -58,8 +58,8 @@ export function readAuthMailConfig(env: NodeJS.ProcessEnv = process.env): AuthMa
   if (jwks.protocol !== 'https:' || jwks.username || jwks.password) return null;
   return {
     key: c.CUSTOMER_AUTH_MAIL_KEY,
-    // The comma in the display name needs quotes to stay one name.
-    from: `"Sadat, Corridra" <${c.CUSTOMER_AUTH_MAIL_FROM}>`,
+    // Every Corridra mail is from "Corridra", never from a person's name.
+    from: `Corridra <${c.CUSTOMER_AUTH_MAIL_FROM}>`,
     replyTo: c.CUSTOMER_AUTH_MAIL_REPLY_TO,
     jwksUrl: jwks.href,
     linkOrigins: [...new Set([base.origin, new URL(c.APP_ORIGIN).origin])],

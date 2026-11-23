@@ -76,13 +76,4 @@ describe('participant invitation email (D-037, D-038)', () => {
     );
     expect(quote.text).not.toContain(ignoreLine);
   });
-
-  test('the sender display name is Corridra, never a person', () => {
-    const sender = (mail as unknown as { notificationSender?: (from: string) => string })
-      .notificationSender;
-    expect(typeof sender).toBe('function');
-    expect(sender!('"Sadat, Corridra" <mail@example.test>')).toBe('Corridra <mail@example.test>');
-    expect(sender!('mail@example.test')).toBe('Corridra <mail@example.test>');
-    expect(sender!('Corridra <mail@example.test>')).toBe('Corridra <mail@example.test>');
-  });
 });

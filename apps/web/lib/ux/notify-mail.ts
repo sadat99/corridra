@@ -131,15 +131,6 @@ function invitationWords(facts: InvitationFacts | undefined) {
 }
 
 /**
- * The name people see as the sender of a notification mail: always "Corridra", never a person.
- * The address itself is kept exactly as configured.
- */
-export function notificationSender(from: string): string {
-  const address = (/<([^<>]+)>\s*$/.exec(from)?.[1] ?? from).trim();
-  return `Corridra <${address}>`;
-}
-
-/**
  * The message for one hand-off. `link` is a same-site path (made absolute with the application
  * origin) or an absolute link on that origin; anything else is dropped. `lines` are extra plain
  * lines that belong in the email only, such as an invitation code (never stored in the inbox).
