@@ -236,19 +236,17 @@ export default async function Page({
           <RequestsTabs
             requests={
               workspaceIssuer && (
-                <>
+                <Suspense fallback={<p role="status">Loading your work…</p>}>
                   {scoped ? <JourneyShowing mode={scoped} /> : null}
-                  <Suspense fallback={<p role="status">Loading your work…</p>}>
-                    <WorkList
-                      subject={data.user.id}
-                      issuer={workspaceIssuer}
-                      filter={workFilter}
-                      rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
-                      framed
-                      showAll={scoped ? <ShowEverything /> : undefined}
-                    />
-                  </Suspense>
-                </>
+                  <WorkList
+                    subject={data.user.id}
+                    issuer={workspaceIssuer}
+                    filter={workFilter}
+                    rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
+                    framed
+                    showAll={scoped ? <ShowEverything /> : undefined}
+                  />
+                </Suspense>
               )
             }
             workspaces={
