@@ -419,7 +419,7 @@ test.describe('phone width, switch on', () => {
 test.describe('the Next Move words, as the first row of the list', () => {
   const cases: [string, RegExp, string][] = [
     ['none', /New Request/, '/account?view=work#customer-workspaces'],
-    ['draft', /Finish Your Draft/, `/account/drafts/${workspace}?draft=d1`],
+    ['draft', /Finish Your Saved Request/, `/account/drafts/${workspace}?draft=d1`],
     ['quotes1', /Review 1 Quote\b/, '/account/service-requests/w/r1'],
     ['quotes3', /Review 3 Quotes/, '/account/service-requests'],
     ['partial', /Review 3\+ Quotes/, '/account/service-requests'],
@@ -473,7 +473,10 @@ test.describe('the Next Move words, as the first row of the list', () => {
   const orders: [string, string[]][] = [
     ['none', ['New Request', 'Get Help', 'Search', 'Meetings', 'Shortcuts']],
     ['failed', ['New Request', 'Get Help', 'Search', 'Meetings', 'Shortcuts']],
-    ['draft', ['Finish Your Draft', 'Get Help', 'Search', 'Meetings', 'Shortcuts', 'New Request']],
+    [
+      'draft',
+      ['Finish Your Saved Request', 'Get Help', 'Search', 'Meetings', 'Shortcuts', 'New Request'],
+    ],
     ['quotes1', ['Review 1 Quote', 'Get Help', 'Search', 'Meetings', 'Shortcuts', 'New Request']],
     ['partial', ['Review 3+ Quotes', 'Get Help', 'Search', 'Meetings', 'Shortcuts', 'New Request']],
     [
@@ -528,7 +531,7 @@ test.describe('the Next Move words, as the first row of the list', () => {
     await page.evaluate(() =>
       (window as unknown as { resolveSignals: () => void }).resolveSignals(),
     );
-    await expect(firstRow(page)).toHaveText(/Finish Your Draft/);
+    await expect(firstRow(page)).toHaveText(/Finish Your Saved Request/);
     // The pending list works: it is a real link.
     await mount(page, '/account', '?signals=pending');
     await openList(page);
