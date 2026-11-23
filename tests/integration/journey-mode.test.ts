@@ -183,6 +183,43 @@ describe('journey mode: the prompt on a request page', () => {
   });
 });
 
+describe('journey mode: the short request reference', () => {
+  it('comes from the list the sidebar already reads, only while journey modes are on', () => {
+    const reader = web('lib/work-items/request-reference.ts');
+    expect(reader).toContain('if (!journeyModesOn()) return undefined;');
+    // The same read as the sidebar counts, so the per-render cache gives one read for both.
+    expect(reader).toContain(
+      "loadWorkItems(subject, issuer, { rooms: uxSwitchOn('CORRIDRA_UX_ROAD') })",
+    );
+    expect(web('lib/work-items/journey-counts-server.ts')).toContain(
+      "rooms: uxSwitchOn('CORRIDRA_UX_ROAD'),",
+    );
+    expect(reader).toContain("item.kind === 'request' && item.id === requestId");
+    expect(reader).not.toMatch(/foundations|\.query\(|services\./);
+    // Switch off: the work item is exactly what it was.
+    expect(web('lib/work-items/load.ts')).toContain(
+      '...(journeyModesOn() && text(row.reference) ? { reference: text(row.reference)! } : {}),',
+    );
+  });
+
+  it('is drawn beside the title only when there is one, and only for a readable request', () => {
+    const room = web('app/account/rooms/[requestId]/room-view.tsx');
+    expect(room).toMatch(
+      /\{reference \? \(\s*<span className="room-route" data-request-reference>/,
+    );
+    expect(room.indexOf('data-request-reference')).toBeGreaterThan(
+      room.indexOf("state === 'ready' && detail?.available && detail.progress"),
+    );
+    const page = web('app/account/requests/request-detail.tsx');
+    expect(page).toMatch(
+      /\{reference \? \(\s*<p className="ux-hint" lang="en" data-request-reference>/,
+    );
+    expect(page.indexOf('data-request-reference')).toBeGreaterThan(
+      page.indexOf('The original request is no longer available.'),
+    );
+  });
+});
+
 describe('journey mode: the sidebar per mode', () => {
   const today = customerTabs({ companies: true, move: true });
   it('with no journey the five destinations are exactly today’s', () => {

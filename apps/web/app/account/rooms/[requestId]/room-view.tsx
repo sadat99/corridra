@@ -85,8 +85,11 @@ export function RoomView({
   hintClosed = false,
   unreadable = false,
   reportCount = 0,
+  reference,
 }: {
   requestId: string;
+  /** The request's short reference (RQ-000001), when the person's own list gave one. */
+  reference?: string;
   subject: string;
   issuer: string;
   link: RoomLink;
@@ -372,6 +375,11 @@ export function RoomView({
                 </span>
               ) : null}
               <ModeLabel real={realCustomerInput()} labels={labels.mode} />
+              {reference ? (
+                <span className="room-route" data-request-reference>
+                  {reference}
+                </span>
+              ) : null}
             </div>
             <h2 dir="auto">{title}</h2>
             <p className="room-meta">
