@@ -52,8 +52,8 @@ describe('the real intake owner install wiring', () => {
     const before = script.indexOf("await report(apply ? 'Before install'");
     const applyAt = script.indexOf('if (apply) {', before);
     const after = script.indexOf("await report('After install')");
-    const dry = script.indexOf('await changeRealIntakeOwner(pool, { apply: false');
-    const change = script.indexOf('await changeRealIntakeOwner(pool, {\n        apply: true');
+    const dry = script.search(/await changeRealIntakeOwner\(pool, \{\s*apply: false/);
+    const change = script.search(/await changeRealIntakeOwner\(pool, \{\s*apply: true/);
     expect(script.split('changeRealIntakeOwner(pool').length - 1).toBe(2);
     expect(dry).toBeGreaterThan(before);
     expect(dry).toBeLessThan(applyAt);
@@ -69,7 +69,15 @@ describe('the real intake owner install wiring', () => {
     );
     expect(install).toBeLessThan(change);
     // Only its safe lines are printed, and both calls pass the reason from the environment.
-    expect(script.slice(dry, dry + 120)).toContain('.lines.join(');
+    expect(script.slice(dry, dry + 400)).toContain(".lines.join('\\n')");
+    // The dry run also checks what an apply needs before it writes: the module's own prerequisites.
+    const preview = script.indexOf('await previewCustomerRealIntakeOwnerInstall(pool)');
+    expect(script.split('previewCustomerRealIntakeOwnerInstall(pool)').length - 1).toBe(1);
+    expect(preview).toBeGreaterThan(before);
+    expect(preview).toBeLessThan(applyAt);
+    expect(script.slice(preview, dry + 400)).toContain('apply would refuse: ');
+    expect(migrator).toContain("await db.query('BEGIN READ ONLY')");
+    expect(migrator).toContain('is not the text this module was written against');
     expect(script.slice(change, change + 200)).toContain("result.lines.join('\\n')");
     expect(script.split('reason: v.REAL_INTAKE_OWNER_REASON').length - 1).toBe(2);
   });

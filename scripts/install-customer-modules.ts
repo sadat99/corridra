@@ -98,7 +98,10 @@ import { migrateCustomerPaymentsSimulated } from '../packages/db/src/customer-pa
 import { configureSimulatedPayments } from '../packages/auth/src/customer-payments-simulated-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
 import { inventoryDataCleanup } from '../packages/auth/src/customer-data-cleanup';
-import { migrateCustomerRealIntakeOwner } from '../packages/db/src/customer-real-intake-owner-migrate';
+import {
+  migrateCustomerRealIntakeOwner,
+  previewCustomerRealIntakeOwnerInstall,
+} from '../packages/db/src/customer-real-intake-owner-migrate';
 import { changeRealIntakeOwner } from '../packages/auth/src/customer-real-intake-owner';
 import {
   assertNoneBehind,
@@ -522,10 +525,17 @@ try {
   // Real intake owner (B11a), dry run: without INSTALL_APPLY=yes it only reads, in a read-only transaction, and lists exactly
   // what an apply would change. It refuses (and the run fails) unless each name matches exactly one person. The log is public:
   // names and 8-character ids only, never an email address.
-  if (v.REAL_INTAKE_OWNER_ACTION === 'apply' && !apply)
+  if (v.REAL_INTAKE_OWNER_ACTION === 'apply' && !apply) {
+    // What an apply needs before it writes: the real-use schema current and app.submit_mission still the pinned text.
+    const install = await previewCustomerRealIntakeOwnerInstall(pool);
+    const plan = await changeRealIntakeOwner(pool, {
+      apply: false,
+      reason: v.REAL_INTAKE_OWNER_REASON,
+    });
     console.log(
-      `Real intake owner change, dry run\n${(await changeRealIntakeOwner(pool, { apply: false, reason: v.REAL_INTAKE_OWNER_REASON })).lines.join('\n')}`,
+      `Real intake owner change, dry run\n${install.refusal ? `apply would refuse: ${install.refusal}` : `module: ${install.state}`}\n${plan.lines.join('\n')}`,
     );
+  }
   if (apply) {
     // Each migrator runs at most once in this run, instead of once per module that depends on it (KI-51). Ended in the
     // finally below. migrateCustomerWorkspaceLifecycle and refreshCustomerWorkspaceLifecycle are deliberately not covered:

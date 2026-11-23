@@ -3,7 +3,11 @@ import { randomUUID } from 'node:crypto';
 import { realStaffFixture } from './real-staff-fixture';
 import { CustomerWorkspaceService } from '../../packages/auth/src/customer-workspaces';
 import { CustomerRequestService } from '../../packages/auth/src/customer-requests';
-import { migrateCustomerRealIntakeOwner } from '../../packages/db/src/customer-real-intake-owner-migrate';
+import {
+  migrateCustomerRealIntakeOwner,
+  previewCustomerRealIntakeOwnerInstall,
+} from '../../packages/db/src/customer-real-intake-owner-migrate';
+import { withTenant } from '../../packages/db/src/index';
 import { migrateNetworkRealUse } from '../../packages/db/src/network-real-use-migrate';
 import { configureNetworkRealUse } from '../../packages/auth/src/network-real-use-configuration';
 import {
@@ -206,7 +210,12 @@ describe('the real intake owner change', () => {
     const earlier = await requestOwner();
     expect(earlier.ownerId).toBe(s.f.users.owner!.id);
     firstRequest = earlier.requestId;
+    // What the installer's dry run reports about the module before and after it is installed.
+    expect(await previewCustomerRealIntakeOwnerInstall(s.f.owner)).toEqual({
+      state: 'would be installed',
+    });
     await migrateCustomerRealIntakeOwner(s.f.owner);
+    expect(await previewCustomerRealIntakeOwnerInstall(s.f.owner)).toEqual({ state: 'installed' });
     await migrateCustomerRealIntakeOwner(s.f.owner);
     expect((await requestOwner()).ownerId).toBe(s.f.users.owner!.id);
     expect((await state()).versions).toBe(0);
@@ -254,11 +263,24 @@ describe('the real intake owner change', () => {
     );
     const start = await state();
     await expect(run(true)).rejects.toThrow(
-      'The new owner needs an active account and the real processing purpose in the real workspace',
+      'The new owner needs an active account, the real processing purpose and an allowed operating country in the real workspace',
     );
     expect(await state()).toEqual(start);
     await asService(
       "UPDATE app.membership SET allowed_purposes=ARRAY['commercial_qualification'] WHERE tenant_id=$1 AND user_id=$2",
+      [s.intakeTenantId, founder],
+    );
+    // The offline network step needs the owner's operating country inside the membership's allowed countries.
+    await asService(
+      "UPDATE app.membership SET allowed_countries=ARRAY['ES'] WHERE tenant_id=$1 AND user_id=$2",
+      [s.intakeTenantId, founder],
+    );
+    const abroad = await state();
+    await expect(run(false)).rejects.toThrow(/an allowed operating country/);
+    await expect(run(true)).rejects.toThrow(/an allowed operating country/);
+    expect(await state()).toEqual(abroad);
+    await asService(
+      "UPDATE app.membership SET allowed_countries=ARRAY['DE','ES'] WHERE tenant_id=$1 AND user_id=$2",
       [s.intakeTenantId, founder],
     );
   }, 120000);
@@ -310,7 +332,7 @@ describe('the real intake owner change', () => {
     await setMember(s.f.users.owner!.id, 'viewer', false);
     const result = await run(false);
     expect(result.lines).toContain(
-      `owner check: configuration owner (${short(s.f.users.owner!.id)}) does not pass`,
+      `owner check: configuration owner (${short(s.f.users.owner!.id)}) does not pass: not an active owner or admin`,
     );
     expect(result.lines).toContain(
       `owner check: new owner Corridra founder (${short(founder)}) passes`,
@@ -331,6 +353,7 @@ describe('the real intake owner change', () => {
       `owner of new real requests: would change from the current owner (${short(s.f.users.owner!.id)}) to Corridra founder (${short(founder)})`,
       `owner check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
       `owner check: new owner Corridra founder (${short(founder)}) passes`,
+      'open work owned by the leaving members: missions 0, cases 0, opportunities 0',
       `member: would remove Synthetic operator (${short(s.f.users.operator!.id)}), role operator, from the real workspace only`,
       `member: would remove Synthetic reviewer (${short(s.f.users.reviewer!.id)}), role reviewer, from the real workspace only`,
       'nothing written (dry run)',
@@ -416,6 +439,7 @@ describe('the real intake owner change', () => {
       `owner of new real requests: already Corridra founder (${short(founder)})`,
       `owner check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
       `owner check: new owner Corridra founder (${short(founder)}) passes`,
+      'open work owned by the leaving members: missions 0, cases 0, opportunities 0',
       `member: Synthetic operator (${short(s.f.users.operator!.id)}) is already removed from the real workspace`,
       `member: Synthetic reviewer (${short(s.f.users.reviewer!.id)}) is already removed from the real workspace`,
       'unchanged',
@@ -477,5 +501,113 @@ describe('the real intake owner change', () => {
     expect(end.configuration).toBe(before.configuration);
     expect(end.destination).toBe(before.destination);
     expect(end.sample_memberships).toBe(before.sample_memberships);
+  }, 120000);
+});
+
+describe('the production shape: the configuration owner is one of the removed members and the founder is an admin', () => {
+  let admin: string;
+  beforeAll(async () => {
+    await s.f.close();
+    vi.unstubAllEnvs();
+    s = await realStaffFixture(issuer, 'real-intake-owner-fixture-secret');
+    workspaceId = (
+      await new CustomerWorkspaceService(
+        s.f.runtime,
+        s.f.auth,
+        options,
+        sessionFor('owner-alice'),
+      ).provision({ commandId: randomUUID(), name: 'Packaging company workspace' })
+    ).id;
+    // The fixture owner is the configuration owner. Here that person carries a removed member's name, another member
+    // keeps the workspace owned, and the founder is an admin, not an owner.
+    await rename(s.f.users.operator!.id, 'An earlier operator');
+    await rename(s.f.users.owner!.id, 'Synthetic operator');
+    await setMember(s.f.users.viewer!.id, 'owner', false);
+    admin = await addPerson('Corridra founder', 'admin');
+    await migrateCustomerRealIntakeOwner(s.f.owner);
+  }, 240000);
+
+  test('open requests owned by a leaving member stop the apply until staff reassign them, then the change lands', async () => {
+    const made = await requestOwner();
+    expect(made.ownerId).toBe(s.f.users.owner!.id);
+    const start = await state();
+    const dry = await run(false);
+    expect(dry.state).toBe('dry_run');
+    expect(dry.lines).toEqual([
+      `real workspace: Corridra request operations (${short(s.intakeTenantId)})`,
+      `owner of new real requests: would change from the current owner (${short(s.f.users.owner!.id)}) to Corridra founder (${short(admin)})`,
+      `owner check: configuration owner (${short(s.f.users.owner!.id)}) passes`,
+      `owner check: new owner Corridra founder (${short(admin)}) passes`,
+      'open work owned by the leaving members: missions 1, cases 0, opportunities 0',
+      'apply would refuse: Reassign these on the staff screens first',
+      `member: would remove Synthetic operator (${short(s.f.users.owner!.id)}), role owner, from the real workspace only`,
+      `member: would remove Synthetic reviewer (${short(s.f.users.reviewer!.id)}), role reviewer, from the real workspace only`,
+      'nothing written (dry run)',
+    ]);
+    await expect(run(true)).rejects.toThrow(
+      'Reassign these on the staff screens first: open missions 1, cases 0, opportunities 0 owned by the leaving members',
+    );
+    expect(await state()).toEqual(start);
+    // Staff reassign the open request on their own screen: a signed-in member, the mission guard and its audit event.
+    await withTenant(s.f.runtime, s.ctx, 'missions.manage', ({ db }) =>
+      db.query(
+        'UPDATE app.mission SET owner_id=$3,version=version+1 WHERE tenant_id=$1 AND owner_id=$2',
+        [s.intakeTenantId, s.f.users.owner!.id, admin],
+      ),
+    );
+    const before = await state();
+    const result = await run(true);
+    expect(result.state).toBe('applied');
+    expect(result.lines).toContain(
+      'open work owned by the leaving members: missions 0, cases 0, opportunities 0',
+    );
+    expect(result.lines.join('\n')).not.toMatch(/apply would refuse/);
+    const after = await state();
+    expect(after.versions).toBe(1);
+    expect(after.configuration).toBe(before.configuration);
+    expect(after.destination).toBe(before.destination);
+    expect(after.sample_memberships).toBe(before.sample_memberships);
+    expect(after.mission_owners).toBe(before.mission_owners);
+    for (const key of ['users', 'principals', 'customers', 'tenants', 'memberships', 'missions'])
+      expect(after[key], key).toBe(before[key]);
+    const removed = (
+      await s.f.owner.query(
+        `SELECT m.user_id,m.revoked_at IS NOT NULL AS revoked,t.synthetic FROM app.membership m
+         JOIN app.tenant t ON t.id=m.tenant_id WHERE m.user_id=ANY($1::uuid[]) ORDER BY t.synthetic,m.user_id`,
+        [[s.f.users.owner!.id, s.f.users.reviewer!.id].sort()],
+      )
+    ).rows;
+    expect(removed.map((row) => [row.revoked, row.synthetic])).toEqual([
+      [true, false],
+      [true, false],
+      [false, true],
+      [false, true],
+    ]);
+    // New real requests go to the founder although the configuration owner has left the real workspace.
+    expect((await requestOwner()).ownerId).toBe(admin);
+    const again = await run(true);
+    expect(again.state).toBe('unchanged');
+    expect(again.lines).toContain(
+      `owner check: configuration owner (${short(s.f.users.owner!.id)}) does not pass: not an active owner or admin`,
+    );
+  }, 180000);
+
+  test('the dry run says apply would refuse when the function is not the text the module was written against', async () => {
+    // Test database only: forget that the module is installed. The function is then already the replaced text, which is not
+    // the text the pinned hash names, so an install would stop at its hash check.
+    const kept = (
+      await s.f.owner.query('SELECT name,sha256 FROM customer_real_intake_owner_migrations.applied')
+    ).rows;
+    await s.f.owner.query('DELETE FROM customer_real_intake_owner_migrations.applied');
+    expect(await previewCustomerRealIntakeOwnerInstall(s.f.owner)).toEqual({
+      state: 'refused',
+      refusal: 'app.submit_mission is not the text this module was written against',
+    });
+    for (const row of kept)
+      await s.f.owner.query(
+        'INSERT INTO customer_real_intake_owner_migrations.applied(name,sha256) VALUES($1,$2)',
+        [row.name, row.sha256],
+      );
+    expect(await previewCustomerRealIntakeOwnerInstall(s.f.owner)).toEqual({ state: 'installed' });
   }, 120000);
 });

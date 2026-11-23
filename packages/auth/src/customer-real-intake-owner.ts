@@ -27,6 +27,7 @@ type Member = {
   revoked: boolean;
   real_purpose: boolean;
   disabled: boolean;
+  country_ok: boolean;
   name: string;
 };
 
@@ -82,7 +83,8 @@ export async function changeRealIntakeOwner(
       await db.query<Member>(
         `SELECT m.user_id,m.role,m.revoked_at IS NOT NULL AS revoked,
           'commercial_qualification'=ANY(m.allowed_purposes) AS real_purpose,
-          p.disabled_at IS NOT NULL AS disabled,u.name
+          p.disabled_at IS NOT NULL AS disabled,
+          p.operating_country=ANY(m.allowed_countries) AS country_ok,u.name
         FROM app.membership m JOIN identity.principal p ON p.id=m.user_id
         JOIN identity."user" u ON u.id=p.identity_id
         WHERE m.tenant_id=$1 ORDER BY m.user_id${value.apply ? ' FOR UPDATE OF m' : ''}`,
@@ -98,16 +100,24 @@ export async function changeRealIntakeOwner(
         `Expected exactly one active owner or admin named "${plan.owner}" in the real workspace, found ${owners.length}`,
       );
     const owner = owners[0]!;
-    // The test app.submit_mission applies to a recorded owner: without it real intake would refuse every request.
-    const passes = (member: Member | undefined) =>
-      !!member &&
-      !member.revoked &&
-      ['owner', 'admin'].includes(member.role) &&
-      member.real_purpose &&
-      !member.disabled;
-    if (!passes(owner))
+    // The test app.submit_mission applies to a recorded owner (without it real intake would refuse every request), plus the
+    // operating country rule of the offline network step, which reads the same owner.
+    const failures = (member: Member | undefined) => {
+      if (!member || member.revoked || !['owner', 'admin'].includes(member.role))
+        return ['not an active owner or admin'];
+      return [
+        ...(member.disabled ? ['account disabled'] : []),
+        ...(member.real_purpose ? [] : ['no real processing purpose']),
+        ...(member.country_ok ? [] : ['operating country not allowed']),
+      ];
+    };
+    const verdict = (member: Member | undefined) => {
+      const found = failures(member);
+      return found.length ? `does not pass: ${found.join(', ')}` : 'passes';
+    };
+    if (failures(owner).length)
       throw new Error(
-        'The new owner needs an active account and the real processing purpose in the real workspace',
+        'The new owner needs an active account, the real processing purpose and an allowed operating country in the real workspace',
       );
     const leaving = plan.remove.map((name) => {
       const named = members.filter((member) => member.name === name);
@@ -151,9 +161,35 @@ export async function changeRealIntakeOwner(
     // Whether each owner would pass the check real intake applies once an owner is recorded.
     const configurationOwner = members.find((member) => member.user_id === configuration.owner_id);
     lines.push(
-      `owner check: configuration owner (${short(configuration.owner_id)}) ${passes(configurationOwner) ? 'passes' : 'does not pass'}`,
-      `owner check: new owner ${plan.owner} (${short(owner.user_id)}) passes`,
+      `owner check: configuration owner (${short(configuration.owner_id)}) ${verdict(configurationOwner)}`,
+      `owner check: new owner ${plan.owner} (${short(owner.user_id)}) ${verdict(owner)}`,
     );
+    // Open work the leaving members still own. A staff update needs an owner who is an active member, and the staff screens
+    // then preselect another owner, so the work would move silently. Nothing here reassigns it: the mission guard accepts an
+    // owner change only from a signed-in member. The apply refuses until staff have reassigned it on their own screens.
+    const open = (
+      await db.query<{ missions: number; cases: number; opportunities: number }>(
+        `SELECT
+          (SELECT count(*) FROM app.mission m WHERE m.tenant_id=$1 AND m.owner_id=ANY($2::uuid[])
+            AND m.status NOT IN ('CLOSED','CANCELLED'))::int AS missions,
+          (SELECT count(*) FROM app.operations_case c WHERE c.tenant_id=$1 AND c.owner_id=ANY($2::uuid[])
+            AND c.state IN ('OPEN','BLOCKED') AND c.version=(SELECT max(v.version) FROM app.operations_case v
+            WHERE v.tenant_id=c.tenant_id AND v.key=c.key))::int AS cases,
+          (SELECT count(*) FROM app.opportunity o WHERE o.tenant_id=$1 AND o.owner_id=ANY($2::uuid[])
+            AND o.status<>'LOST')::int AS opportunities`,
+        [workspaceId, leaving.map((member) => member.user_id)],
+      )
+    ).rows[0]!;
+    const counts = `missions ${open.missions}, cases ${open.cases}, opportunities ${open.opportunities}`;
+    const blocked = toRemove.length > 0 && open.missions + open.cases + open.opportunities > 0;
+    lines.push(`open work owned by the leaving members: ${counts}`);
+    if (blocked) {
+      if (value.apply)
+        throw new Error(
+          `Reassign these on the staff screens first: open ${counts} owned by the leaving members`,
+        );
+      lines.push('apply would refuse: Reassign these on the staff screens first');
+    }
     for (const member of leaving)
       lines.push(
         member.revoked
