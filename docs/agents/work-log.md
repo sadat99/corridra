@@ -4828,3 +4828,13 @@ Review: one corridra-reviewer pass on e09fc2c, verdict merge; should-fix items (
 Preserved: no migration, no authority or RLS change, no code exposed to new readers; sample data never shown as real.
 
 Next action: Guardian merges PR 604 on green CI, verifies the deployment, then launches B11a.
+
+## 23 Nov 2026: B3a account requests, Room, reports, profile (PR 605)
+
+Scope: request detail shows each fact once and keeps the customer's own type of work (D-017); problem report dates through format.ts (D-019); D-021 to D-024; Room route chip fits at the largest text size, root cause the 32rem stage column (D-025); one way back and no Room link or reference until the request is readable (D-034); D-035; plain words on decisions and the service-request error; help-request refusal "Check each field and try again."; help-request dates through format.ts. D-016 not changed: the Room's grouped "Done" and "Later" lines are the owner-approved board (ui-direction.md:87).
+
+Review: one corridra-reviewer pass on 25553ad, verdict merge; the dropped type-of-work fact and the back-link wording fixed in this round. CI: operator (6) failed once on the KI-65 order-flaky pair (y-ux05-governance, zzz-v3-founder) and was re-run once.
+
+Not changed (follow-up): billing and invoice dates still read "23 October 2026" and "... UTC" (billing-client.ts re-exports the service-request date helpers); they move to format.ts in unit B8 with their specs. Sample-only "Synthetic" labels stay until B7.
+
+Next action: Guardian merges PR 605 on green CI and verifies the deployment.
