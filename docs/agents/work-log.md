@@ -4828,3 +4828,13 @@ Review: one corridra-reviewer pass on e09fc2c, verdict merge; should-fix items (
 Preserved: no migration, no authority or RLS change, no code exposed to new readers; sample data never shown as real.
 
 Next action: Guardian merges PR 604 on green CI, verifies the deployment, then launches B11a.
+
+## 23 Nov 2026: B2a plan flow (PR 602)
+
+Scope: /plan wording without "draft" (D-001) in all seven catalogues; summary stays sticky and the receipt check sits under the form from 1001 px (D-006); no Activate line for a signed-in, verified person (D-007); one translated step template (D-008); "Clear Answers" with a confirm through the shared dialog, Cancel focused by default, Escape cancels (D-009); one lowercase "(required)" marker (D-011); /plan errors on the shared ErrorSummary (D-012). Resumed notice: "Your earlier answers from this tab are back. Your saved choices take precedence over link suggestions." Storage keys, payload, ids and routes unchanged.
+
+Review: one corridra-reviewer pass on 7137c34, verdict merge; the dialog close label, an Escape test and the leftover "brief" sentence applied in this round. Accepted test changes: layout-budget-plan wide-screen case follows the receipt position (four checks, none loosened); verification A-2 locator reads "(required)" and still asserts required.
+
+Not verified: native review of the bn, zh, es, ar, fr, de words; screenshots at 768 and 1440; private-request mode still shows the Activate sentence. Follow-up: the UX gate samples one scroll position after 30 Tabs and is sensitive to the sticky header (focus can sit under the header); fix site-wide with scroll padding in the shared kit unit.
+
+Next action: Guardian merges PR 602 on green CI and verifies the deployment.
