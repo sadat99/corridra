@@ -108,6 +108,7 @@ describe('D-050: a customer time is written the one way, in the time zone of the
     'app/account/workspace-lifecycle.tsx',
     'app/account/workspace-lifecycle-dialogs.tsx',
     'app/account/account-closure.tsx',
+    'components/customer-closed-account.tsx',
   ];
   it.each(customerFiles)('%s uses formatDateTime and never a UTC formatter', (path) => {
     const code = source(path);

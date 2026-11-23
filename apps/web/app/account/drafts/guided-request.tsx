@@ -683,7 +683,7 @@ function Guided(scope: Scope) {
 
   if (!form)
     return (
-      <section aria-label="Guided saved requests" className="account-compact">
+      <section aria-label="Saved requests" className="account-compact">
         <p>
           {realCustomerInput()
             ? 'Start a request in a few questions, save it and come back later. What you enter is self-declared until the Corridra team checks it.'

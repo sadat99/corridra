@@ -12,10 +12,10 @@ import { AccountSignout } from '../app/account/signout';
 import {
   sessionHeaders,
   useLifecycleCommand,
-  whenWords,
   type SessionHeaders,
 } from '../app/account/workspace-lifecycle-client';
 import { LifecycleErrorLine } from '../app/account/lifecycle-error-line';
+import { formatDateTime } from '../lib/ux/format';
 import { ErasureDialog } from '../app/account/erasure-dialog';
 
 /** What a person with a closed account sees instead of the customer pages: the status, Reopen My Account, Sign Out. */
@@ -69,7 +69,7 @@ export function CustomerClosedAccount({
           {accountWords.closedHeading}
         </h1>
         {state.canUndo && state.undoUntil ? (
-          <p>{accountWords.closedUndo(whenWords(state.undoUntil))}</p>
+          <p>{accountWords.closedUndo(formatDateTime(state.undoUntil))}</p>
         ) : (
           <p>{accountWords.finalNotice}</p>
         )}

@@ -351,7 +351,7 @@ test('G5-10 the closed-account screen replaces the pages, shows the date, Reopen
   await expect(page.getByText('Customer pages')).toHaveCount(0);
   await expect(
     page.getByText(
-      'Your account is closed. You can undo this until 6 Dec 2026, 10:00 UTC. After that you cannot reopen it. Closing does not delete anything.',
+      'Your account is closed. You can undo this until 6 Dec 2026, 10:00 (UTC). After that you cannot reopen it. Closing does not delete anything.',
     ),
   ).toBeVisible();
   await expect(
