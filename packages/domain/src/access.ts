@@ -80,6 +80,19 @@ export const communicationCommand = z.discriminatedUnion('action', [
       templateId: z.uuid(),
       introduction,
       expiresAt: timestamp,
+      // ADR-090: the recorded basis for contacting a real person. Required by the database for a real workspace.
+      consent: z
+        .object({
+          basis: z.enum([
+            'CONSENT',
+            'LEGITIMATE_INTEREST',
+            'EXISTING_RELATIONSHIP',
+            'PUBLISHED_BUSINESS_CONTACT',
+          ]),
+          note: words(500),
+        })
+        .strict()
+        .optional(),
     })
     .strict(),
   z
