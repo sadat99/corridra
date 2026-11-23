@@ -266,8 +266,10 @@ describe('journey mode: Reports in a journey', () => {
     const tabs = web('app/account/reports-tabs.tsx');
     for (const what of ['Saved missions', 'Missions shared with you', 'Members’ reports'])
       expect(tabs).toContain(`<NotSortedByJourney what="${what}" />`);
-    const note = web('components/ux/journey-note.tsx');
+    const note = web('components/ux/journey-not-sorted.tsx');
     expect(note).toContain('{what} are not sorted by journey.');
+    // No router: the tabs are also drawn where there is none.
+    expect(note).not.toContain('next/navigation');
     expect(note).toMatch(
       /function NotSortedByJourney[^]*?if \(!mode \|\| mode === 'all'\) return null;/,
     );

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { NotSortedByJourney } from '../../components/ux/journey-note';
+import { NotSortedByJourney } from '../../components/ux/journey-not-sorted';
 import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 
 /**
