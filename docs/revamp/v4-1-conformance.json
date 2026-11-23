@@ -701,76 +701,85 @@
       "file": "apps/web/app/contributor/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "not_started",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
-        "L9": "not_started",
-        "L10": "not_assessed"
+        "L9": "built",
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "docs/revamp/evidence/v41-c-2026-11-23/contributor-after-320.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/contributor-after-390.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/contributor-after-768.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/contributor-after-1024.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/contributor-after-1440.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/contributor-after-1920.jpg",
+        "docs/revamp/evidence/v41-c-2026-11-23/contributor-doors-off-after-390.jpg",
+        "tests/integration/v41-c-helper-pages.test.ts"
+      ],
+      "notes": "V4.1-C. L9: one Your next step card with the one primary action (the existing primary helper door, or the existing invitation link with the doors switch off) and Helper Sign-In beside it; the page still says a customer account does not grant assigned-task access. L1: the market and work country of a task go through Flagged. L2 not started: the two quiet door cards have no icon because components/front-door.tsx is shared and outside this unit. L3 n/a: the doors are links, not a held choice. L10 n/a. Built, not verified."
     },
     {
       "route": "/contributor/me",
       "file": "apps/web/app/contributor/me/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-C. Assessed, no change. L1 n/a: no place name. L2 and L3 n/a: the text size and switches are settings, not a job, goal or door choice. L10 n/a."
     },
     {
       "route": "/contributor/setup",
       "file": "apps/web/app/contributor/setup/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-C. Assessed, no change. L1 n/a, L2 and L3 n/a (a form, no choice rows), L10 n/a. The page still says a customer account alone does not grant task access."
     },
     {
       "route": "/contributor/signin",
       "file": "apps/web/app/contributor/signin/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "n/a",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "V4.1-C. Assessed, no change. L1 n/a, L2 and L3 n/a (a sign-in form), L10 n/a."
     },
     {
       "route": "/corridors",

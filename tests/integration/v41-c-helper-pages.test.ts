@@ -100,14 +100,14 @@ describe('L1: the places of a task carry their mark', () => {
   it('the market and the work country go through the shared flag component with their plain names', () => {
     const board = read('apps/web/app/contributor/task-board.tsx').replace(/\s+/g, ' ');
     expect(board).toContain(
-      '<Flagged code={placeMark(task.disclosure.market)}>{place(task.disclosure.market)}</Flagged>',
+      '<Flagged code={placeMark(task.disclosure.market)}> {place(task.disclosure.market)} </Flagged>',
     );
     expect(board).toContain(
       '<Flagged code={placeMark(task.disclosure.workCountry)}> {place(task.disclosure.workCountry)} </Flagged>',
     );
-    // The line keeps its words and its order.
+    // The line keeps its words and its order: state, market, then the work country.
     expect(board).toMatch(
-      /\{words\(task\.status\)\} · <Flagged[^>]*>[^<]*<\/Flagged> · work country\{' '\}/,
+      /\{words\(task\.status\)\} ·\{' '\} <Flagged[^>]*>[^<]*<\/Flagged>\{' '\} · work country\{' '\} <Flagged/,
     );
   });
 });
