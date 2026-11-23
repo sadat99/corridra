@@ -28,26 +28,31 @@ function walk(dir, keep, out = []) {
 const isTest = (p) => /\.(test|spec)\.[cm]?[jt]sx?$/.test(p);
 const tsx = walk(web, (p) => p.endsWith('.tsx') && !isTest(p));
 const css = walk(web, (p) => p.endsWith('.css'));
+// Old rule: components only.
+const placeFiles = tsx.filter((p) => rel(p) !== 'apps/web/components/ux/flag.tsx');
 
 // Rule: a place name written in a component that does not use the shared flag component. The nine places the
 // flag policy covers, plus the EU, UK and US short forms. Prose that must stay unmarked carries `v4.1-prose` on its line.
 const PLACE =
   /\b(China|Bangladesh|Australia|United Kingdom|United States|European Union|Spain|France|Italy|EU|UK|US)\b/;
+/** The 1-based numbers of the lines of one source file that write a place name outside the flag component. */
+function placeNameLines(src) {
+  if (/ux\/flag['"]|from '\.\/flag'/.test(src)) return [];
+  const out = [];
+  src.split('\n').forEach((line, i) => {
+    const t = line.trim();
+    if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*') || t.startsWith('import '))
+      return;
+    if (line.includes('v4.1-prose')) return;
+    if (PLACE.test(line) && (/['"`]/.test(line) || line.includes('>'))) out.push(i + 1);
+  });
+  return out;
+}
 function placeNameCounts() {
   const out = {};
-  for (const p of tsx) {
+  for (const p of placeFiles) {
     const r = rel(p);
-    if (r === 'apps/web/components/ux/flag.tsx') continue;
-    const src = read(p);
-    if (/ux\/flag['"]|from '\.\/flag'/.test(src)) continue;
-    let n = 0;
-    for (const line of src.split('\n')) {
-      const t = line.trim();
-      if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*') || t.startsWith('import '))
-        continue;
-      if (line.includes('v4.1-prose')) continue;
-      if (PLACE.test(line) && (/['"`]/.test(line) || line.includes('>'))) n += 1;
-    }
+    const n = placeNameLines(read(p)).length;
     if (n) out[r] = n;
   }
   return out;
@@ -121,3 +126,51 @@ test('v4.1 place names are written through the flag component (ratchet)', () =>
 
 test('v4.1 stylesheets add no gradient or backdrop blur (ratchet)', () =>
   ratchet('gradientOrBlur', 'gradient or backdrop-filter uses'));
+
+// The counting rule itself, on small written cases (the limits found in the review of PR 599).
+const lines = (src) => placeNameLines(src.join('\n'));
+
+test('v4.1 place rule: JSX text on its own line is counted', () => {
+  assert.deepEqual(lines(['<strong>', '  Bangladesh', '</strong>']), [2]);
+  assert.deepEqual(
+    lines(['<p>', '  We open routes to China, the EU', '  and the UK', '</p>']),
+    [2, 3],
+  );
+});
+
+test('v4.1 place rule: a file that imports the flag component is still counted line by line', () => {
+  const src = [
+    "import { Flagged } from './ux/flag';",
+    '<Flagged code="bd">Bangladesh</Flagged>',
+    '<strong>China</strong>',
+    '<Flagged code="cn">',
+    '  China',
+    '</Flagged>',
+    "const from = { name: 'Bangladesh', mark: 'bd' };",
+    "const label = 'Bangladesh to China';",
+    '<Flagged code="bd">Bangladesh</Flagged> to China',
+  ];
+  assert.deepEqual(lines(src), [3, 8, 9]);
+});
+
+test('v4.1 place rule: comments, locale tags and country codes in code are not place names', () => {
+  const src = [
+    '// China and the EU have their own pages',
+    '{/* the older lead and',
+    '    the Spain link */}',
+    "const eu = market === 'EU' || company === 'EU';",
+    "const tag = 'en-US';",
+    "const pinned = ['EU', 'US'];",
+    "const url = 'https://example.test/a'; // to China",
+    "const shown = { label: 'EU' };",
+    "const wrong = { name: 'China', mark: null };",
+  ];
+  assert.deepEqual(lines(src), [8, 9]);
+});
+
+test('v4.1 place rule: words files under lib and content are scanned', () => {
+  const scanned = placeFiles.map(rel);
+  assert.ok(scanned.includes('apps/web/lib/i18n/form-words/en.ts'));
+  assert.ok(scanned.includes('apps/web/content/corridors.ts'));
+  assert.ok(!scanned.includes('apps/web/components/ux/flag.tsx'));
+});
