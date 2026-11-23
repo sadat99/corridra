@@ -4,9 +4,11 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { clearApplyIntent } from '../../../lib/programme-apply-intent';
 import '../../delegations/[address]/programme-page.css';
 import { pp } from '../../../lib/i18n/programme-pages';
+import { errorAfterChange, type NamedFields } from './form-error';
 import { customerHeaders, useCommandIds } from './pricing-client';
 import {
   type Application,
+  applicantRefusalWords,
   pageRequest,
   parseApplication,
   shortDay,
@@ -21,6 +23,35 @@ export type ApplyTarget = {
   open: boolean;
 };
 type Props = { subject: string; issuer: string; target: ApplyTarget | null; asked: boolean };
+type ApplyField = 'name' | 'statement' | 'consent';
+
+/** The first thing wrong with an application before it is sent, in plain words, or nothing. The server checks it
+ * again. */
+export function applicationProblem(
+  draft: { name: string; statement: string; consent: boolean },
+  sample: boolean,
+): string {
+  const label = draft.name.trim();
+  const words = draft.statement.trim();
+  if ([...label].length < (sample ? 11 : 2) || [...label].length > 120)
+    return pp('pp.apply.problem.name');
+  if ([...words].length < 10 || [...words].length > 1000) return pp('pp.apply.problem.statement');
+  if (sample && (!label.startsWith('Synthetic ') || !words.startsWith('Synthetic ')))
+    return pp('pp.apply.problem.sample');
+  if (/[\r\n]/.test(words)) return pp('pp.apply.problem.paragraph');
+  return draft.consent ? '' : pp('pp.apply.problem.consent');
+}
+// The fields each problem names, so its box goes when the person changes one of them (D-040).
+const problemFields: NamedFields<ApplyField> = {
+  [pp('pp.apply.problem.name')]: ['name'],
+  [pp('pp.apply.problem.statement')]: ['statement'],
+  [pp('pp.apply.problem.sample')]: ['name', 'statement'],
+  [pp('pp.apply.problem.paragraph')]: ['statement'],
+  [pp('pp.apply.problem.consent')]: ['consent'],
+};
+/** The form's error box after one field changed. A refusal from the server names no field, so it stays. */
+export const applyErrorAfterChange = (error: string, changed: ApplyField) =>
+  errorAfterChange(problemFields, error, changed);
 
 /** A person's own applications to programmes: send one, read the organiser's answer, join when invited, or take it
  * back. The organiser sees only the name and the statement written here. */
@@ -106,14 +137,8 @@ function Scoped({ subject, issuer, target, asked }: Props) {
     if (!target || writing.current) return;
     const label = name.trim();
     const words = statement.trim();
-    if ([...label].length < (sample ? 11 : 2) || [...label].length > 120)
-      return setError(pp('pp.apply.problem.name'));
-    if ([...words].length < 10 || [...words].length > 1000)
-      return setError(pp('pp.apply.problem.statement'));
-    if (sample && (!label.startsWith('Synthetic ') || !words.startsWith('Synthetic ')))
-      return setError(pp('pp.apply.problem.sample'));
-    if (/[\r\n]/.test(words)) return setError(pp('pp.apply.problem.paragraph'));
-    if (!consent) return setError(pp('pp.apply.problem.consent'));
+    const wrong = applicationProblem({ name, statement, consent }, sample);
+    if (wrong) return setError(wrong);
     writing.current = true;
     setBusy(true);
     setError('');
@@ -129,6 +154,7 @@ function Scoped({ subject, issuer, target, asked }: Props) {
         statement: words,
         consented: true,
       },
+      applicantRefusalWords,
     );
     writing.current = false;
     setBusy(false);
@@ -163,6 +189,7 @@ function Scoped({ subject, issuer, target, asked }: Props) {
         applicationId: item.id,
         ...(action === 'join' ? { consented: true } : { acknowledged: true }),
       },
+      applicantRefusalWords,
     );
     writing.current = false;
     setBusy(false);
@@ -204,7 +231,10 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                   name="application-name"
                   maxLength={120}
                   value={name}
-                  onChange={(event) => setName(event.target.value)}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    setError((shown) => applyErrorAfterChange(shown, 'name'));
+                  }}
                   autoComplete="organization"
                 />
                 <small>{pp('pp.apply.name.hint')}</small>
@@ -216,7 +246,10 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                   rows={4}
                   maxLength={1000}
                   value={statement}
-                  onChange={(event) => setStatement(event.target.value)}
+                  onChange={(event) => {
+                    setStatement(event.target.value);
+                    setError((shown) => applyErrorAfterChange(shown, 'statement'));
+                  }}
                 />
                 <small>{pp('pp.apply.statement.hint')}</small>
               </label>
@@ -224,7 +257,10 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                 <input
                   type="checkbox"
                   checked={consent}
-                  onChange={(event) => setConsent(event.target.checked)}
+                  onChange={(event) => {
+                    setConsent(event.target.checked);
+                    setError((shown) => applyErrorAfterChange(shown, 'consent'));
+                  }}
                 />{' '}
                 {pp('pp.apply.consent')}
               </label>

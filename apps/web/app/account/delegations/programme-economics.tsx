@@ -89,6 +89,12 @@ const text = (v: unknown, max: number): v is string =>
   typeof v === 'string' && v.length >= 1 && v.length <= max && !/[\u0000-\u001f\u007f]/u.test(v);
 const day = (v: unknown): v is string =>
   typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(v));
+/**
+ * What the correction reason box starts with: nothing in a real workspace, which writes its own reason; the sample
+ * words otherwise.
+ */
+export const correctionReasonStart = () =>
+  realCustomerInput() ? '' : 'Synthetic correction of an entry';
 function today() {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, '0');
@@ -226,7 +232,7 @@ function ScopedEconomics(props: Props) {
   const [confirm, setConfirm] = useState(false);
   const [correcting, setCorrecting] = useState<string | null>(null);
   const [fixDate, setFixDate] = useState(today());
-  const [fixText, setFixText] = useState('Synthetic correction of an entry');
+  const [fixText, setFixText] = useState(correctionReasonStart);
   const [fixConfirm, setFixConfirm] = useState(false);
   const active = useRef(true);
   const task = useRef<AbortController | null>(null);
@@ -480,6 +486,7 @@ function ScopedEconomics(props: Props) {
     if (!fixConfirm) return setError('Confirm the correction.');
     void post({ reverseOf: id, occurredOn: fixDate, description: fixText.trim() }, () => {
       setCorrecting(null);
+      setFixText(correctionReasonStart());
       setFixConfirm(false);
     });
   }

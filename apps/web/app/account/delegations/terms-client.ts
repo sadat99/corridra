@@ -31,7 +31,7 @@ export const reasonCodes = ['NO_PROFILE', 'ROLE', 'SECTOR', 'COUNTRY', 'SIZE', '
 // What the participant reads when a rule is not met. Codes only come from the database, never profile content.
 export const participantReason: Record<string, string> = {
   NO_PROFILE:
-    'We could not find an organisation profile for the workspace you chose. Add one in your account, then apply again.',
+    'We could not find an organisation profile for the workspace you chose. Add one in your account, then try again.',
   ROLE: "Your organisation's commercial role is not one this programme accepts.",
   SECTOR: "Your organisation's sectors do not match the sectors this programme accepts.",
   COUNTRY: "Your organisation's country is not one this programme accepts.",
@@ -366,3 +366,8 @@ export function failureText(e: unknown) {
 }
 export const syntheticOk = (v: string) =>
   realCustomerInput() ? v.trim().length >= 2 : /^Synthetic .{3,}/.test(v.trim());
+/** The line above the terms form. Only a sample workspace is told the first word, which the database asks of sample
+ * text. */
+export const termsVersionNote = () =>
+  'Each version is kept. A new version asks participants to accept it again.' +
+  (realCustomerInput() ? '' : ' Start each text with the word Synthetic.');

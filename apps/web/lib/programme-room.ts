@@ -2,6 +2,8 @@
 // regroups panels that already exist, so everything here is a reading of records the participants panel and the
 // programme projection already return. A step is marked from a record or it is a plain grey segment; nothing is
 // estimated.
+import { formatDate } from './ux/format';
+
 export const programmeRoadSteps = [
   { key: 'setup', label: 'Set up' },
   { key: 'invite', label: 'Invite' },
@@ -265,20 +267,8 @@ export type ChecklistFact = {
   note?: string;
 };
 
-function formatDay(iso: string, timezone: string): string {
-  const at = new Date(iso);
-  if (Number.isNaN(at.getTime())) return iso.slice(0, 10);
-  try {
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      timeZone: timezone,
-    }).format(at);
-  } catch {
-    return at.toISOString().slice(0, 10);
-  }
-}
+/** A programme day in the programme's own time zone, in the product's one date form. */
+const formatDay = (iso: string, timezone: string) => formatDate(iso, { timeZone: timezone });
 
 /**
  * The programme checklist: plain facts read from records the room already has, each one a value or "Not measured
