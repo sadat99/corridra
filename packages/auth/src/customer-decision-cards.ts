@@ -155,8 +155,9 @@ export class CustomerDecisionCardService extends CustomerSessionBoundary {
   ) {
     super(runtimePool, authPool, options, readSession);
   }
-  // In a real workspace a card can be read only while the public report link switch is on. While it is off nothing
-  // is offered or made, so no link is ever created that cannot open. Listing and withdrawing always work.
+  // In a real workspace a card opens for its reader while the public report link switch is on, and not otherwise.
+  // While it is off nothing is offered or made, so no link is ever created that cannot open. Listing and
+  // withdrawing always work.
   private realCardsClosed() {
     return this.options.dataMode === 'real' && !this.publicRealReports();
   }
