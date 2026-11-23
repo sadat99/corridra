@@ -250,17 +250,24 @@ describe('help request failures and dates', () => {
       expect(problemText(status, 'send the request')).not.toMatch(/Synthetic|Paid-service/);
   });
 
-  it('writes dates the one way, with the time zone on a time', async () => {
-    const { dayText, dateTimeText } = await load(
+  it('writes help request dates the one way, with the time zone on a time', async () => {
+    const { helpDayText, helpDateTimeText, dayText, dateTimeText } = await load(
       'app/account/service-requests/service-request-client.ts',
     );
     const { formatDateTime } = await load('lib/ux/format.ts');
-    expect(dayText('2026-10-24')).toBe('24 Oct 2026');
-    expect(dayText(null)).toBeNull();
-    expect(dayText('soon')).toBe('soon');
-    expect(dateTimeText('2026-10-24T00:08:00Z')).toBe(formatDateTime('2026-10-24T00:08:00Z'));
-    expect(dateTimeText('2026-10-24T00:08:00Z')).toMatch(/^24 Oct 2026, \d{2}:\d{2} \(/);
-    expect(dateTimeText('soon')).toBe('soon');
+    expect(helpDayText('2026-10-24')).toBe('24 Oct 2026');
+    expect(helpDayText(null)).toBeNull();
+    expect(helpDayText('soon')).toBe('soon');
+    expect(helpDateTimeText('2026-10-24T00:08:00Z')).toBe(formatDateTime('2026-10-24T00:08:00Z'));
+    expect(helpDateTimeText('2026-10-24T00:08:00Z')).toMatch(/^24 Oct 2026, \d{2}:\d{2} \(/);
+    expect(helpDateTimeText('soon')).toBe('soon');
+    // Billing and invoices reuse these two and are outside this unit: their wording does not move.
+    expect(dayText('2026-10-23')).toBe('23 October 2026');
+    expect(dateTimeText('2026-10-24T00:08:00Z')).toBe('24 October 2026 at 00:08 UTC');
+    for (const file of ['service-request-detail.tsx', 'service-request-list.tsx'])
+      expect(source(`app/account/service-requests/${file}`)).not.toMatch(
+        /[^p]dayText|[^p]dateTimeText|\bdayText|\bdateTimeText/,
+      );
   });
 });
 

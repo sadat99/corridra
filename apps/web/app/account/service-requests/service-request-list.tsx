@@ -5,7 +5,7 @@ import {
   basisText,
   callServiceApi,
   contextText,
-  dateTimeText,
+  helpDateTimeText,
   problemText,
   statusLabel,
   validCatalogue,
@@ -142,7 +142,7 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
                       </p>
                       <p>
                         {r.region} · updated{' '}
-                        <time dateTime={r.updatedAt}>{dateTimeText(r.updatedAt)}</time>
+                        <time dateTime={r.updatedAt}>{helpDateTimeText(r.updatedAt)}</time>
                       </p>
                     </li>
                   );

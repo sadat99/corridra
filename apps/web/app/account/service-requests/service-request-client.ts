@@ -160,13 +160,41 @@ export function validDetail(value: unknown): value is ServiceRequestDetail {
     Number.isFinite(Date.parse(v.expiresAt))
   );
 }
+// Billing and invoices (app/account/billing) reuse the two functions below and their specs pin this wording, so they
+// are unchanged; those screens are outside unit B3a. Help requests use the two after them (the one date format).
 export function dayText(day: string | null) {
   if (!day) return null;
   const parsed = new Date(day.slice(0, 10) + 'T00:00:00Z');
-  // A calendar day, not a moment: it reads the same in every time zone.
-  return Number.isNaN(parsed.getTime()) ? day : formatDate(parsed, { timeZone: 'UTC' });
+  return Number.isNaN(parsed.getTime())
+    ? day
+    : parsed.toLocaleDateString('en-GB', {
+        timeZone: 'UTC',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
 }
 export function dateTimeText(value: string) {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime())
+    ? value
+    : parsed.toLocaleString('en-GB', {
+        timeZone: 'UTC',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }) + ' UTC';
+}
+/** A help request's calendar day, "24 Oct 2026". A day, not a moment: it reads the same in every time zone. */
+export function helpDayText(day: string | null) {
+  if (!day) return null;
+  const parsed = new Date(day.slice(0, 10) + 'T00:00:00Z');
+  return Number.isNaN(parsed.getTime()) ? day : formatDate(parsed, { timeZone: 'UTC' });
+}
+/** A help request's moment, "24 Oct 2026, 06:08 (Dhaka, UTC+6)", in the reader's time zone. */
+export function helpDateTimeText(value: string) {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : formatDateTime(parsed);
 }
