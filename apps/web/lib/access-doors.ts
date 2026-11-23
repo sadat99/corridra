@@ -391,9 +391,7 @@ export const accessHelp = {
       links: [
         {
           href: contributor ? '/contributor/setup' : '/operator/setup',
-          text: contributor
-            ? 'Set up invited helper access'
-            : 'Set up invited operator access',
+          text: contributor ? 'Set up invited helper access' : 'Set up invited operator access',
         },
         { href: '/workspace', text: 'All workspaces and tools' },
         { href: '/signin', text: 'Customer account sign-in' },

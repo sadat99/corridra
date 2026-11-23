@@ -470,7 +470,10 @@ function Scoped({ tenant }: { tenant: string }) {
                 {ev.kind.replace('_', ' ')} · {ev.actorKind} ·{' '}
                 <time dateTime={ev.at}>{formatDateTime(ev.at)}</time>
                 {ev.periodStart && ev.periodEnd
-                  ? ' · ' + formatDateTime(ev.periodStart) + ' until ' + formatDateTime(ev.periodEnd)
+                  ? ' · ' +
+                    formatDateTime(ev.periodStart) +
+                    ' until ' +
+                    formatDateTime(ev.periodEnd)
                   : ''}
                 {ev.endReason ? ' · ' + ev.endReason.replace('_', ' ') : ''}
                 {ev.customerNote ? ' · customer sees: ' + ev.customerNote : ''}

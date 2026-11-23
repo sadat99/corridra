@@ -39,7 +39,7 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
           setMessage(
             data.available
               ? ''
-              : contributor
+              : kind === 'contributor'
                 ? 'There is no current helper invitation for this account. Ask the person who invited you to review access.'
                 : 'There is no current operator invitation for this account. Ask your workspace owner to review access.',
           );
