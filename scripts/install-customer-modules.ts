@@ -98,6 +98,7 @@ import { migrateCustomerPaymentsSimulated } from '../packages/db/src/customer-pa
 import { configureSimulatedPayments } from '../packages/auth/src/customer-payments-simulated-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
 import { inventoryDataCleanup } from '../packages/auth/src/customer-data-cleanup';
+import { reportQaDataRetire } from '../packages/auth/src/customer-qa-data-retire';
 import { migrateCustomerRealIntakeOwner } from '../packages/db/src/customer-real-intake-owner-migrate';
 import {
   changeRealIntakeOwner,
@@ -218,6 +219,9 @@ const v = z
     ),
     VIEW_AS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     DATA_CLEANUP_ACTION: z.enum(['unchanged', 'inventory']).default('unchanged'),
+    // B11b: where the QA test data stands and who retires each item on which screen. Read only, so it carries no reason and
+    // is refused together with INSTALL_APPLY=yes.
+    QA_DATA_RETIRE_ACTION: z.enum(['unchanged', 'report']).default('unchanged'),
     // B11a: the founder becomes the owner of new real requests and the two sample members leave the real workspace only.
     REAL_INTAKE_OWNER_ACTION: z.enum(['unchanged', 'apply']).default('unchanged'),
     REAL_INTAKE_OWNER_REASON: z.preprocess(
@@ -306,6 +310,10 @@ if (!['unchanged', 'install'].includes(v.SIMULATED_PAYMENTS_ACTION) && !v.SIMULA
   throw new Error('Simulated payments changes require an explicit reason');
 if (v.SIMULATED_PAYMENTS_ACTION === 'set_refund_window' && !v.SIMULATED_PAYMENTS_REFUND_DAYS)
   throw new Error('Setting the refund window needs the number of days');
+// The QA data retirement report (B11b) is read only and never shares a run with an install: refused here, before the
+// report and before any installer or migration runs.
+if (v.QA_DATA_RETIRE_ACTION !== 'unchanged' && apply)
+  throw new Error('The QA data retirement report is read only: run it without INSTALL_APPLY=yes');
 // No INSTALL_APPLY guard on purpose: without INSTALL_APPLY=yes this action is its own dry run and writes nothing.
 if (v.REAL_INTAKE_OWNER_ACTION === 'apply' && !v.REAL_INTAKE_OWNER_REASON)
   throw new Error('The real intake owner change requires an explicit reason');
@@ -521,6 +529,15 @@ try {
   if (v.DATA_CLEANUP_ACTION !== 'unchanged')
     console.log(
       `Data cleanup inventory (nothing written)\n${(await inventoryDataCleanup(pool)).lines.join('\n')}`,
+    );
+  // QA test data retirement (B11b, owner decision 23 Nov 2026), reached only through field_modules_action=qa_data_retire.
+  // Read only, and refused above together with INSTALL_APPLY=yes: every lifecycle that retires this data needs a signed-in person as its
+  // actor, so the people do it on the existing screens and this step lists how each item stands, who retires it and where.
+  // It refuses (and the run fails) unless each name matches exactly one record. The log is public: the fixed names and
+  // 8-character ids only. No user, identity or account is read by name, changed or deleted.
+  if (v.QA_DATA_RETIRE_ACTION !== 'unchanged')
+    console.log(
+      `QA test data retirement, read only (nothing written)\n${(await reportQaDataRetire(pool)).lines.join('\n')}`,
     );
   // Real intake owner (B11a), dry run: without INSTALL_APPLY=yes it only reads, in a read-only transaction, and lists exactly
   // what an apply would change. It refuses (and the run fails) unless each name matches exactly one person. The log is public:
