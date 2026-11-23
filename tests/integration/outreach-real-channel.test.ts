@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import {
   RealEmailChannel,
   outreachEventFrom,
+  plainAddress,
   realOutreachConfig,
   unsubscribeToken,
   verifyOutreachWebhook,
@@ -250,4 +251,53 @@ test('only bounces, complaints and deliveries of a tagged message become events,
     outreachEventFrom({ type: 'email.bounced', data: { tags: { corridra_message: 'x' } } }),
   ).toBeNull();
   expect(outreachEventFrom(null)).toBeNull();
+});
+
+test('the address check accepts and refuses what the earlier pattern did, and stays fast on hostile input', () => {
+  const earlier = /^[^\s@<>,]+@[^\s@<>,]+\.[^\s@<>,]+$/;
+  const cases = [
+    'a@b.c',
+    'sales@supplier.business.test',
+    'first.last+tag@sub.domain.example',
+    'a@.b.c',
+    'a@b..c',
+    'a@b.c.',
+    'a@.b',
+    'a@b.',
+    'a@b',
+    '@b.c',
+    'a@@b.c',
+    'a@b@c.d',
+    'a b@c.d',
+    'a@b c.d',
+    'a,b@c.d',
+    '<a@b.c>',
+    'a@b.c\n',
+    '',
+    '.',
+    '@',
+    '!@!.',
+    '!@!.!',
+  ];
+  for (const value of cases)
+    expect([value, plainAddress(value)]).toEqual([value, earlier.test(value)]);
+  expect(plainAddress(`${'a'.repeat(240)}@b.c`)).toBe(true);
+  expect(plainAddress(`${'a'.repeat(260)}@b.c`)).toBe(false);
+  const hostile = '!@!.' + '!.'.repeat(200000);
+  const started = performance.now();
+  expect(plainAddress(hostile)).toBe(false);
+  expect(plainAddress(hostile.slice(0, 254))).toBe(earlier.test(hostile.slice(0, 254)));
+  expect(
+    realOutreachConfig({
+      ...full,
+      REAL_OUTREACH_MAIL_FROM: hostile,
+      CORRIDRA_REAL_OUTREACH_TEST_RECIPIENTS: `${hostile},${recipient}`,
+    } as NodeJS.ProcessEnv).state,
+  ).toBe('unconfigured');
+  const listed = realOutreachConfig({
+    ...full,
+    CORRIDRA_REAL_OUTREACH_TEST_RECIPIENTS: `${hostile},${recipient}`,
+  } as NodeJS.ProcessEnv);
+  expect(listed.state === 'on' && [...listed.testRecipients]).toEqual([recipient]);
+  expect(performance.now() - started).toBeLessThan(500);
 });

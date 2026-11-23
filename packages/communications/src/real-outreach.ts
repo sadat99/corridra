@@ -20,7 +20,20 @@ export type OutreachConfig =
       globalLimit: number;
     };
 
-const address = /^[^\s@<>,]+@[^\s@<>,]+\.[^\s@<>,]+$/;
+/**
+ * A plain address check in one pass, with no backtracking: at most 254 characters, exactly one "@", no space, "<", ">"
+ * or ",", a non-empty name, and a domain with a dot that has a character on each side.
+ */
+export function plainAddress(value: string) {
+  if (value.length > 254) return false;
+  const at = value.indexOf('@');
+  if (at < 1 || at !== value.lastIndexOf('@')) return false;
+  for (const c of value) if (c === '<' || c === '>' || c === ',' || c.trim() === '') return false;
+  const domain = value.slice(at + 1);
+  // The same rule as before: some dot in the domain has at least one character on each side.
+  const dot = domain.indexOf('.', 1);
+  return dot !== -1 && dot < domain.length - 1;
+}
 const limit = (value: string | undefined, fallback: number, max: number) =>
   value && /^[1-9][0-9]{0,3}$/.test(value) && Number(value) <= max ? Number(value) : fallback;
 
@@ -38,8 +51,8 @@ export function realOutreachConfig(env: NodeJS.ProcessEnv = process.env): Outrea
     origin = env.APP_ORIGIN ?? '';
   if (
     key.length < 16 ||
-    !address.test(from) ||
-    !address.test(replyTo) ||
+    !plainAddress(from) ||
+    !plainAddress(replyTo) ||
     !/^https:\/\/[a-z0-9.-]+(:[0-9]+)?$/.test(origin) ||
     !outreachWebhookSecret(env)
   )
@@ -55,7 +68,7 @@ export function realOutreachConfig(env: NodeJS.ProcessEnv = process.env): Outrea
       (env.CORRIDRA_REAL_OUTREACH_TEST_RECIPIENTS ?? '')
         .split(',')
         .map((entry) => entry.trim().toLowerCase())
-        .filter((entry) => address.test(entry)),
+        .filter(plainAddress),
     ),
     workspaceLimit: limit(env.CORRIDRA_REAL_OUTREACH_DAILY_WORKSPACE_LIMIT, 20, 200),
     globalLimit: limit(env.CORRIDRA_REAL_OUTREACH_DAILY_GLOBAL_LIMIT, 100, 1000),
