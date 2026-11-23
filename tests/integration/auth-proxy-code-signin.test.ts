@@ -12,6 +12,7 @@ const origin = 'https://app.example.invalid';
 type Reply = { status: number; body: Record<string, unknown>; cookie?: string };
 type Call = { method: string; path: string; body: unknown; type?: string | null };
 let hold: Promise<void> | null = null;
+let urls: string[] = [];
 let calls: Call[] = [];
 let replies: Record<string, Reply | 'throw'> = {};
 
@@ -28,8 +29,10 @@ beforeEach(() => {
     CORRIDRA_CUSTOMER_CODE_SIGNIN: 'true',
   });
   hold = null;
+  urls = [];
   const answer = async (request: Request, context: { params: Promise<{ path: string[] }> }) => {
     const path = (await context.params).path.join('/');
+    urls.push(request.url);
     calls.push({
       method: request.method,
       path,
@@ -54,14 +57,14 @@ beforeEach(() => {
 
 async function call(
   path: string,
-  init: { method?: string; body?: string; origin?: string | null } = {},
+  init: { method?: string; body?: string; origin?: string | null; query?: string } = {},
 ) {
   const route = await import('../../apps/web/app/api/auth/[...all]/route');
   const method = init.method ?? 'POST';
   const headers = new Headers({ 'Content-Type': 'application/json' });
   const from = init.origin === undefined ? origin : init.origin;
   if (from) headers.set('Origin', from);
-  const request = new Request(`${origin}/api/auth/${path}`, {
+  const request = new Request(`${origin}/api/auth/${path}${init.query ?? ''}`, {
     method,
     headers,
     ...(method === 'GET' ? {} : { body: init.body ?? '{}' }),
@@ -99,6 +102,7 @@ describe('the customer auth proxy and sign-in with a code (D-015)', () => {
       cookie: 'session=abc; Path=/; HttpOnly',
     };
     const response = await call('sign-in/email-otp', {
+      query: '?callbackURL=https%3A%2F%2Fevil.example&x=1',
       body: JSON.stringify({
         email: 'Person@Example.invalid',
         otp: '123456',
@@ -123,6 +127,11 @@ describe('the customer auth proxy and sign-in with a code (D-015)', () => {
         body: { email: 'Person@Example.invalid', otp: '123456' },
         type: 'application/json',
       },
+    ]);
+    // Neither provider call carries the browser's query string.
+    expect(urls).toEqual([
+      `${origin}/api/auth/email-otp/check-verification-otp`,
+      `${origin}/api/auth/sign-in/email-otp`,
     ]);
   });
 
@@ -242,6 +251,23 @@ describe('the sign-up name rule at the proxy (D-028)', () => {
       expect(await response.json()).toEqual({ error: 'Name is not valid', code: 'INVALID_NAME' });
     }
     expect(calls).toEqual([]);
+  });
+  it('forwards the trimmed name, never the spaces or line ends around it, and no query string', async () => {
+    for (const [typed, kept] of [
+      ['\tAlice\n', 'Alice'],
+      ['A' + ' '.repeat(150), 'A'],
+      ['  ' + 'n'.repeat(100) + '  ', 'n'.repeat(100)],
+    ] as const) {
+      calls = [];
+      expect((await signUp(typed)).status, JSON.stringify(typed)).toBe(200);
+      expect(calls[0]!.body).toEqual({
+        name: kept,
+        email: 'person@example.invalid',
+        password: 'x'.repeat(14),
+      });
+    }
+    for (const name of ['Ali\u0007ce', 'Ali\u2028ce', '\u0000', ' \n\t '])
+      expect((await signUp(name)).status, JSON.stringify(name)).toBe(400);
   });
   it('forwards a name of 1 and of 100 characters unchanged', async () => {
     for (const name of ['A', 'n'.repeat(100), '\u{1F642}'.repeat(100)]) {

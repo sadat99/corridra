@@ -20,6 +20,11 @@
   top: 0;
   z-index: 40;
   background: var(--paper);
+  /* The bar sits inside the page's side padding. Two copies of its own fill, one each way, carry the solid
+     paper to both screen edges at the bar's own height, so nothing scrolls past beside it. */
+  box-shadow:
+    -50vw 0 0 0 var(--paper),
+    50vw 0 0 0 var(--paper);
 }
 @media (max-width: 700px) {
   .site-header.public-header {

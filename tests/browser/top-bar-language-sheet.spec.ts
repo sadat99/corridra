@@ -151,10 +151,11 @@ test('the phone top bar shows the orb, Listen, the language code and Menu, each 
   expect(await small(page)).toEqual([]);
   expect(Math.round((await bar.boundingBox())!.height)).toBe(60);
   expect(await sideways(page)).toBeLessThanOrEqual(0);
-  // Sticky with a light translucent fill: still at the top after a long scroll.
+  // Sticky with a solid fill (owner, 23 Nov 2026; it was a light translucent fill): still at the top after a long scroll.
   await page.evaluate(() => window.scrollTo(0, 1200));
   expect(Math.round((await bar.boundingBox())!.y)).toBe(0);
   expect(await bar.evaluate((el) => getComputedStyle(el).position)).toBe('sticky');
+  expect(await bar.evaluate((el) => getComputedStyle(el).backdropFilter)).toBe('none');
 });
 
 test('under 360 px Listen and the language move into the drawer; from 360 px they sit in the bar', async ({

@@ -38,9 +38,15 @@ function parsed(body: Buffer): Record<string, unknown> | null {
 }
 const text = (value: unknown, max: number) =>
   typeof value === 'string' && value.length >= 1 && value.length <= max ? value : null;
-function toProvider(request: Request, path: string, body: Record<string, unknown>) {
+function toProvider(
+  request: Request,
+  path: string,
+  body: Record<string, unknown>,
+  from = codeSignIn,
+) {
   const url = new URL(request.url);
-  url.pathname = url.pathname.slice(0, url.pathname.length - codeSignIn.length) + path;
+  url.pathname = url.pathname.slice(0, url.pathname.length - from.length) + path;
+  url.search = '';
   const forwardHeaders = new Headers(request.headers);
   forwardHeaders.delete('content-length');
   forwardHeaders.set('content-type', 'application/json');
@@ -138,14 +144,16 @@ async function handle(request: Request, context: { params: Promise<{ all: string
         body,
       });
       if (path === 'sign-up/email') {
-        // D-028: the same name rule as the account name route (1 to 100 characters, no control characters).
-        const name = parsed(body)?.name;
-        const trimmed = typeof name === 'string' ? name.trim() : '';
-        if (!trimmed || characters(trimmed) > 100 || personalTextRefused.test(trimmed))
+        // D-028: the same name rule as the account name route (1 to 100 characters, no control characters),
+        // and the trimmed name is what the provider receives, as that route stores it.
+        const input = parsed(body);
+        const trimmed = typeof input?.name === 'string' ? input.name.trim() : '';
+        if (!input || !trimmed || characters(trimmed) > 100 || personalTextRefused.test(trimmed))
           return Response.json(
             { error: 'Name is not valid', code: 'INVALID_NAME' },
             { status: 400, headers },
           );
+        forwarded = toProvider(request, path, { ...input, name: trimmed }, path);
       }
       if (path === codeSignIn) {
         const input = parsed(body);

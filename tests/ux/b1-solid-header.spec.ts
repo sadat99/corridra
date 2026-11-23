@@ -27,4 +27,31 @@ for (const width of [1280, 390])
     expect(before.position).toBe('sticky');
     await page.evaluate(() => window.scrollTo(0, 900));
     await expect.poll(async () => (await header.boundingBox())?.y).toBe(0);
+    // The fill reaches both screen edges: the bar sits inside the page's side padding, and one copy of its own
+    // fill each way (same colour, no blur, no vertical offset) is wide enough to cover the strip beside it.
+    const box = (await header.boundingBox())!;
+    const edges = await header.evaluate((node) => {
+      const style = getComputedStyle(node);
+      const shadows = style.boxShadow.split(/,(?![^(]*\))/).map((part) => {
+        const colour = /rgba?\([^)]*\)/.exec(part)?.[0] ?? '';
+        const [x, y, blur, spread] = part.replace(colour, '').trim().split(/\s+/).map(parseFloat);
+        return { colour, x, y, blur, spread };
+      });
+      return { fill: style.backgroundColor, shadows };
+    });
+    expect(edges.shadows).toHaveLength(2);
+    for (const shadow of edges.shadows) {
+      expect(shadow.colour).toBe(edges.fill);
+      expect([shadow.y, shadow.blur, shadow.spread]).toEqual([0, 0, 0]);
+    }
+    const reach = edges.shadows.map((shadow) => shadow.x).sort((one, two) => one - two);
+    expect(reach[0]).toBeLessThanOrEqual(-box.x);
+    expect(reach[1]).toBeGreaterThanOrEqual(width - (box.x + box.width));
+    // Both side strips are painted alike, edge to edge of the bar's height.
+    const strip = (x: number) =>
+      page.screenshot({ clip: { x, y: 8, width: 3, height: Math.floor(box.height) - 16 } });
+    if (box.x >= 4) expect((await strip(0)).equals(await strip(width - 3))).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
   });

@@ -9009,8 +9009,9 @@ main
     [role='tab']
   )
   + :is(a, button):is(.text-link, .primary-link, .secondary-link, .button, .button-secondary):not(
-    .ux-back
-  ):not([role='tab']):not(.ux-back, [role='tab']) {
+    .ux-back,
+    [role='tab']
+  ) {
   margin-inline: 0;
 }
 /* end B1 */
