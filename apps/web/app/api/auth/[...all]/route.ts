@@ -14,16 +14,18 @@ const paths = new Set([
   'request-password-reset',
   'reset-password',
 ]);
-// Sign in with a code (B1, 23 Nov 2026). The provider would create an account for an address that has none
-// (better-auth email-otp, sign-in handler), and such an account would skip the name and the privacy notice
-// of the sign-up page. So this proxy first asks the provider's own check, which answers USER_NOT_FOUND only
-// after a valid code and does not use the code up, and forwards the sign-in only when that check passes,
-// with the address and the code and nothing else. Any other answer fails closed. POST only. The browser
-// client keeps only the status of a refusal, so the two cases the form must tell apart get their own:
-// 409 for a right code with no account, 429 for too many tries (the provider says 403 for that).
+// Sign in with a code (B1, 23 Nov 2026). The path answers 404 unless CORRIDRA_CUSTOMER_CODE_SIGNIN is 'true'.
+// The provider would create an account for an address that has none (better-auth email-otp, sign-in handler),
+// and such an account would skip the name and the privacy notice of the sign-up page. So this proxy first asks
+// the provider's own check, server side only, and forwards the sign-in only when that check passes, with the
+// address and the code and nothing else: a code never creates an account.
+// One answer for every refusal (security review, 23 Nov 2026): a wrong code, an expired code, too many tries on
+// a code and an address with no account all get the same status and body, so the answer never says whether an
+// address has an account. A provider fault or no answer is 503 and a provider rate limit is 429; neither
+// depends on the address. One attempt per address runs at a time in this server process, so parallel guesses
+// cannot race the provider's try counter here (other server instances are not covered by this).
 const codeSignIn = 'sign-in/email-otp';
 const codeCheck = 'email-otp/check-verification-otp';
-const refusedByProvider = [400, 401, 403, 429];
 function parsed(body: Buffer): Record<string, unknown> | null {
   try {
     const value: unknown = JSON.parse(body.toString('utf8'));
@@ -41,7 +43,57 @@ function toProvider(request: Request, path: string, body: Record<string, unknown
   url.pathname = url.pathname.slice(0, url.pathname.length - codeSignIn.length) + path;
   const forwardHeaders = new Headers(request.headers);
   forwardHeaders.delete('content-length');
+  forwardHeaders.set('content-type', 'application/json');
   return new Request(url, { method: 'POST', headers: forwardHeaders, body: JSON.stringify(body) });
+}
+const refused = () =>
+  Response.json({ error: 'Sign-in refused', code: 'CODE_REFUSED' }, { status: 400, headers });
+const tooMany = () =>
+  Response.json(
+    { error: 'Too many requests', code: 'TOO_MANY_REQUESTS' },
+    { status: 429, headers },
+  );
+const unavailable = () =>
+  Response.json(
+    { error: 'Account service is unavailable. Please try again.' },
+    { status: 503, headers },
+  );
+const answered = (response: Response) =>
+  response.status === 429
+    ? tooMany()
+    : response.status >= 400 && response.status < 500 && response.status !== 404
+      ? refused()
+      : response.ok
+        ? null
+        : unavailable();
+const attempting = new Set<string>();
+async function signInByCode(
+  request: Request,
+  auth: NonNullable<ReturnType<typeof neonAuth>>,
+  email: string,
+  otp: string,
+) {
+  const address = email.toLowerCase();
+  if (attempting.has(address)) return tooMany();
+  attempting.add(address);
+  try {
+    const check = await auth
+      .handler()
+      .POST(toProvider(request, codeCheck, { email, type: 'sign-in', otp }), {
+        params: Promise.resolve({ path: codeCheck.split('/') }),
+      });
+    const stopped = answered(check);
+    if (stopped) return stopped;
+    const response = await auth.handler().POST(toProvider(request, codeSignIn, { email, otp }), {
+      params: Promise.resolve({ path: codeSignIn.split('/') }),
+    });
+    const failed = answered(response);
+    if (failed) return failed;
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
+  } finally {
+    attempting.delete(address);
+  }
 }
 async function handle(request: Request, context: { params: Promise<{ all: string[] }> }) {
   try {
@@ -54,7 +106,11 @@ async function handle(request: Request, context: { params: Promise<{ all: string
       );
     const all = (await context.params).all;
     const path = all.join('/');
-    if (!paths.has(path) || (path === codeSignIn && request.method !== 'POST'))
+    if (
+      !paths.has(path) ||
+      (path === codeSignIn &&
+        (request.method !== 'POST' || process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN !== 'true'))
+    )
       return Response.json({ error: 'Not found' }, { status: 404, headers });
     if (request.method !== 'GET' && request.headers.get('origin') !== config.APP_ORIGIN)
       return Response.json({ error: 'Request origin is not allowed' }, { status: 403, headers });
@@ -97,31 +153,7 @@ async function handle(request: Request, context: { params: Promise<{ all: string
         const otp = text(input?.otp, 12);
         if (!email || !otp)
           return Response.json({ error: 'Request is not valid' }, { status: 400, headers });
-        const check = await auth
-          .handler()
-          .POST(toProvider(request, codeCheck, { email, type: 'sign-in', otp }), {
-            params: Promise.resolve({ path: codeCheck.split('/') }),
-          });
-        if (!check.ok) {
-          const reply = (await check.json().catch(() => null)) as { code?: unknown } | null;
-          const code =
-            typeof reply?.code === 'string' && /^[A-Z_]{1,40}$/.test(reply.code) ? reply.code : '';
-          if (check.status === 400 && code === 'USER_NOT_FOUND')
-            return Response.json(
-              { error: 'Account required', code: 'ACCOUNT_REQUIRED' },
-              { status: 409, headers },
-            );
-          if (refusedByProvider.includes(check.status))
-            return Response.json(
-              { error: 'Sign-in refused', code },
-              { status: code === 'TOO_MANY_ATTEMPTS' ? 429 : check.status, headers },
-            );
-          return Response.json(
-            { error: 'Account service is unavailable. Please try again.' },
-            { status: 503, headers },
-          );
-        }
-        forwarded = toProvider(request, codeSignIn, { email, otp });
+        return await signInByCode(request, auth, email, otp);
       }
     }
     const response = await auth

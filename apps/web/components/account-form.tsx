@@ -29,25 +29,14 @@ function detail(error: unknown) {
   const e = (error ?? {}) as { status?: number; code?: string };
   return { status: e.status, code: String(e.code ?? '') };
 }
-// What a refused code sign-in says (D-015). Only a refused code reads as a wrong code. A missing route, a
-// service fault or no answer at all says the route is unavailable, so a correct code is never called wrong.
-// The identity client replaces the provider's error code with its own and keeps the status, so the status is
-// what is read: this application's proxy answers 429 for too many tries and 409 when the code was right but
-// no account uses the address (codes never create accounts).
-// Shown only after a correct code, so it tells nothing to a person who cannot read that mailbox. The form
-// adds the link to the sign-up page after it.
-const noAccountYet = 'No account uses this address yet.';
+// What a refused code sign-in says (D-015). A missing route, a service fault or no answer at all says the
+// route is unavailable, so a correct code is never called wrong for a fault. Every refusal reads the same
+// (security review, 23 Nov 2026): the words never say whether the address has an account. The identity client
+// keeps the status of a refusal and replaces its code, so the status is what is read.
 function codeSignInFailure(failure: { status?: number; code: string }) {
-  if (failure.code === 'TOO_MANY_ATTEMPTS' || failure.status === 429)
-    return 'Too many tries. Ask for a new code.';
-  if (failure.code === 'ACCOUNT_REQUIRED' || failure.status === 409) return noAccountYet;
-  if (
-    failure.code === 'INVALID_OTP' ||
-    failure.code === 'OTP_EXPIRED' ||
-    failure.status === 400 ||
-    failure.status === 401
-  )
-    return 'That code is wrong or has expired. Check it or ask for a new code.';
+  if (failure.status === 429) return 'Too many tries. Ask for a new code.';
+  if (failure.status === 400 || failure.status === 401)
+    return 'That code is wrong or has expired, or no account uses this address. Check it, ask for a new code, or create an account.';
   return 'Sign-in by code is unavailable right now. Use your password or try again in a few minutes.';
 }
 export function AccountForm({
@@ -394,14 +383,6 @@ export function AccountForm({
             <CorridraIcon name="close" className="access-error-icon" />
           )}
           {message}
-          {failed && message === noAccountYet && (
-            <>
-              {' '}
-              <Link prefetch={false} href={accessPath('/signup')}>
-                Create an account to continue.
-              </Link>
-            </>
-          )}
         </p>
       )}
       {!(sent && ['forgot', 'reset'].includes(mode)) && (
@@ -457,6 +438,11 @@ export function AccountForm({
             </p>
           )}
         </>
+      )}
+      {codeEnabled && viaCode && codeSent && (
+        <Link prefetch={false} className="text-link" href={accessPath('/signup')}>
+          Create an Account
+        </Link>
       )}
       {codeEnabled && viaCode && (
         <button

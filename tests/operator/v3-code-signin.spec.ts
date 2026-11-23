@@ -146,7 +146,7 @@ test('with the switch on a person can sign in with an emailed code and keep the 
     await code.fill('123456');
     await form.getByRole('button', { name: 'Sign In', exact: true }).click();
     await expect(form.getByRole('alert')).toHaveText(
-      'That code is wrong or has expired. Check it or ask for a new code.',
+      'That code is wrong or has expired, or no account uses this address. Check it, ask for a new code, or create an account.',
     );
     await expect(form.getByRole('alert')).toBeFocused();
     await expect(code).toHaveValue('123456');
@@ -237,7 +237,8 @@ test('a failed code sign-in says what really happened', async ({ page }) => {
     await code.fill('123456');
     const unavailable =
       'Sign-in by code is unavailable right now. Use your password or try again in a few minutes.';
-    const wrong = 'That code is wrong or has expired. Check it or ask for a new code.';
+    const wrong =
+      'That code is wrong or has expired, or no account uses this address. Check it, ask for a new code, or create an account.';
     const cases: [Reply, string][] = [
       [{ status: 404, body: { error: 'Not found' } }, unavailable],
       [{ status: 503, body: { error: 'Account service is unavailable.' } }, unavailable],
@@ -247,16 +248,13 @@ test('a failed code sign-in says what really happened', async ({ page }) => {
       [{ status: 400, body: { code: 'INVALID_OTP', message: 'Invalid OTP' } }, wrong],
       [{ status: 400, body: { code: 'OTP_EXPIRED', message: 'OTP expired' } }, wrong],
       [{ status: 401, body: {} }, wrong],
-      // The identity client keeps the status and drops the provider's code, so the proxy answers in statuses.
+      // The proxy gives one answer for a wrong code, an expired code and an address with no account.
+      [{ status: 400, body: { code: 'CODE_REFUSED', error: 'Sign-in refused' } }, wrong],
       [
-        { status: 429, body: { code: 'TOO_MANY_ATTEMPTS', error: 'Sign-in refused' } },
+        { status: 429, body: { code: 'TOO_MANY_REQUESTS', error: 'Too many requests' } },
         'Too many tries. Ask for a new code.',
       ],
       [{ status: 429, body: {} }, 'Too many tries. Ask for a new code.'],
-      [
-        { status: 409, body: { code: 'ACCOUNT_REQUIRED', error: 'Account required' } },
-        'No account uses this address yet. Create an account to continue.',
-      ],
     ];
     for (const [next, words] of cases) {
       reply = next;
@@ -265,15 +263,14 @@ test('a failed code sign-in says what really happened', async ({ page }) => {
       await expect(code).toHaveValue('123456');
       await expect(page).toHaveURL(/\/signin\?/);
     }
-    // The last case leaves the no-account sentence on screen: it links to the sign-up page and keeps the return target.
-    await expect(
-      form.getByRole('alert').getByRole('link', { name: 'Create an account to continue.' }),
-    ).toHaveAttribute('href', '/signup?returnTo=%2Fplan');
-    // A wrong code never shows that link.
-    reply = { status: 400, body: { code: 'INVALID_OTP', message: 'Invalid OTP' } };
-    await form.getByRole('button', { name: 'Sign In', exact: true }).click();
-    await expect(form.getByRole('alert')).toHaveText(wrong);
+    // The way to an account is always under the code form, whatever the answer was, and keeps the return target.
     await expect(form.getByRole('alert').getByRole('link')).toHaveCount(0);
+    await expect(
+      form.getByRole('link', { name: 'Create an Account', exact: true }).first(),
+    ).toHaveAttribute('href', '/signup?returnTo=%2Fplan');
+    await expect(
+      form.getByRole('link', { name: 'Create an Account', exact: true }).first(),
+    ).toBeVisible();
   } finally {
     server.kill('SIGTERM');
   }

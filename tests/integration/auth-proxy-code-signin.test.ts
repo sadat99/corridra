@@ -10,7 +10,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const web = createRequire(resolve('apps/web/package.json'));
 const origin = 'https://app.example.invalid';
 type Reply = { status: number; body: Record<string, unknown>; cookie?: string };
-type Call = { method: string; path: string; body: unknown };
+type Call = { method: string; path: string; body: unknown; type?: string | null };
+let hold: Promise<void> | null = null;
 let calls: Call[] = [];
 let replies: Record<string, Reply | 'throw'> = {};
 
@@ -24,14 +25,18 @@ beforeEach(() => {
     NEON_AUTH_BASE_URL: 'https://ep-b1-fixture.neonauth.eu-central-1.aws.neon.tech/neondb/auth',
     NEON_AUTH_COOKIE_SECRET: 'f'.repeat(64),
     APP_ORIGIN: origin,
+    CORRIDRA_CUSTOMER_CODE_SIGNIN: 'true',
   });
+  hold = null;
   const answer = async (request: Request, context: { params: Promise<{ path: string[] }> }) => {
     const path = (await context.params).path.join('/');
     calls.push({
       method: request.method,
       path,
       body: request.method === 'GET' ? null : JSON.parse(await request.text()),
+      type: request.headers.get('content-type'),
     });
+    if (hold) await hold;
     const reply = replies[path] ?? { status: 200, body: { success: true } };
     if (reply === 'throw') throw new Error('provider unreachable');
     return new Response(JSON.stringify(reply.body), {
@@ -68,6 +73,7 @@ async function call(
 const code = JSON.stringify({ email: 'Person@Example.invalid', otp: '123456' });
 
 describe('the customer auth proxy and sign-in with a code (D-015)', () => {
+  const seen = () => calls.map((c) => c.path);
   it('still answers 404 for a path that is not on the list, and never asks the provider', async () => {
     for (const path of ['update-user', 'sign-in/social', 'email-otp/check-verification-otp']) {
       const response = await call(path);
@@ -77,7 +83,16 @@ describe('the customer auth proxy and sign-in with a code (D-015)', () => {
     expect(calls).toEqual([]);
   });
 
-  it('accepts POST sign-in/email-otp: checks the code first, then forwards only the email and the code', async () => {
+  it('answers 404 while the switch is not exactly true, and never asks the provider', async () => {
+    for (const value of [undefined, '', 'false', 'TRUE', '1']) {
+      if (value === undefined) delete process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN;
+      else process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN = value;
+      expect((await call('sign-in/email-otp', { body: code })).status, String(value)).toBe(404);
+    }
+    expect(calls).toEqual([]);
+  });
+
+  it('a valid code for an existing account: checks first, then forwards only the email and the code as JSON', async () => {
     replies['sign-in/email-otp'] = {
       status: 200,
       body: { token: 't', user: { id: 'u' } },
@@ -100,57 +115,89 @@ describe('the customer auth proxy and sign-in with a code (D-015)', () => {
         method: 'POST',
         path: 'email-otp/check-verification-otp',
         body: { email: 'Person@Example.invalid', type: 'sign-in', otp: '123456' },
+        type: 'application/json',
       },
       {
         method: 'POST',
         path: 'sign-in/email-otp',
         body: { email: 'Person@Example.invalid', otp: '123456' },
+        type: 'application/json',
       },
     ]);
   });
 
-  it('never creates an account by code: an address with no account is refused before sign-in is asked', async () => {
-    replies['email-otp/check-verification-otp'] = {
-      status: 400,
-      body: { code: 'USER_NOT_FOUND', message: 'User not found' },
-    };
-    const response = await call('sign-in/email-otp', { body: code });
-    expect(response.status).toBe(409);
-    expect(await response.json()).toEqual({ code: 'ACCOUNT_REQUIRED', error: 'Account required' });
-    expect(response.headers.get('set-cookie')).toBeNull();
-    expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(calls.map((c) => c.path)).toEqual(['email-otp/check-verification-otp']);
-  });
-
-  it('passes a refused code back with its status and code only, and does not ask for the sign-in', async () => {
-    // The browser client keeps only the status, so too many tries (403 at the provider) is answered as 429.
-    for (const [status, refusal, answered] of [
-      [400, 'INVALID_OTP', 400],
-      [400, 'OTP_EXPIRED', 400],
-      [403, 'TOO_MANY_ATTEMPTS', 429],
-      [403, '', 403],
-      [429, '', 429],
+  it('gives one answer, byte for byte, for no account, a wrong code, an expired code and too many tries', async () => {
+    const answers: string[] = [];
+    // The older provider says USER_NOT_FOUND before it looks at the code; the newer one after a valid code.
+    for (const [status, refusal] of [
+      [400, 'USER_NOT_FOUND'],
+      [400, 'INVALID_OTP'],
+      [400, 'OTP_EXPIRED'],
+      [403, 'TOO_MANY_ATTEMPTS'],
+      [401, ''],
+      [422, 'VALIDATION_ERROR'],
     ] as const) {
       calls = [];
       replies['email-otp/check-verification-otp'] = {
         status,
         body: { code: refusal, message: 'Provider words that must not be shown' },
+        cookie: 'leak=1',
       };
       const response = await call('sign-in/email-otp', { body: code });
-      expect(response.status, refusal).toBe(answered);
-      expect(await response.json()).toEqual({ code: refusal, error: 'Sign-in refused' });
-      expect(calls.map((c) => c.path)).toEqual(['email-otp/check-verification-otp']);
+      expect(response.headers.get('set-cookie'), refusal).toBeNull();
+      expect(response.headers.get('cache-control')).toBe('no-store');
+      answers.push(`${response.status} ${await response.text()}`);
+      // No account is ever created by code: the sign-in itself is not asked.
+      expect(seen()).toEqual(['email-otp/check-verification-otp']);
     }
+    expect(new Set(answers).size).toBe(1);
+    expect(answers[0]).toBe('400 {"error":"Sign-in refused","code":"CODE_REFUSED"}');
+    // A refusal by the sign-in itself, after a passed check, reads the same.
+    calls = [];
+    delete replies['email-otp/check-verification-otp'];
+    replies['sign-in/email-otp'] = { status: 400, body: { code: 'INVALID_OTP' }, cookie: 'leak=1' };
+    const late = await call('sign-in/email-otp', { body: code });
+    expect(`${late.status} ${await late.text()}`).toBe(answers[0]);
+    expect(late.headers.get('set-cookie')).toBeNull();
   });
 
-  it('fails closed when the check itself is unavailable', async () => {
+  it('says 429 for a provider rate limit and fails closed with 503 when the check is unavailable', async () => {
+    replies['email-otp/check-verification-otp'] = { status: 429, body: {} };
+    expect((await call('sign-in/email-otp', { body: code })).status).toBe(429);
     for (const reply of [{ status: 404, body: {} }, { status: 500, body: {} }, 'throw'] as const) {
       calls = [];
       replies['email-otp/check-verification-otp'] = reply;
       const response = await call('sign-in/email-otp', { body: code });
       expect(response.status).toBe(503);
-      expect(calls.map((c) => c.path)).toEqual(['email-otp/check-verification-otp']);
+      expect(seen()).toEqual(['email-otp/check-verification-otp']);
     }
+  });
+
+  it('runs one attempt per address at a time: parallel guesses do not reach the provider', async () => {
+    let release = () => {};
+    hold = new Promise<void>((done) => (release = done));
+    replies['email-otp/check-verification-otp'] = { status: 400, body: { code: 'INVALID_OTP' } };
+    const guess = (email: string, otp: string) =>
+      call('sign-in/email-otp', { body: JSON.stringify({ email, otp }) });
+    const first = guess('Person@Example.invalid', '000001');
+    await vi.waitFor(() => expect(calls).toHaveLength(1));
+    const parallel = await Promise.all(
+      ['000002', '000003', '000004'].map((otp) => guess('person@example.INVALID', otp)),
+    );
+    expect(parallel.map((r) => r.status)).toEqual([429, 429, 429]);
+    expect(calls).toHaveLength(1);
+    // Another address is not held up.
+    const other = guess('other@example.invalid', '000001');
+    await vi.waitFor(() => expect(calls).toHaveLength(2));
+    release();
+    expect((await first).status).toBe(400);
+    expect((await other).status).toBe(400);
+    // The address is free again once its attempt has ended, also after a provider failure.
+    hold = null;
+    replies['email-otp/check-verification-otp'] = 'throw';
+    expect((await guess('person@example.invalid', '000005')).status).toBe(503);
+    replies['email-otp/check-verification-otp'] = { status: 400, body: {} };
+    expect((await guess('person@example.invalid', '000006')).status).toBe(400);
   });
 
   it('keeps the same origin, size, method and shape checks as the other paths', async () => {
@@ -205,6 +252,7 @@ describe('the sign-up name rule at the proxy (D-028)', () => {
           method: 'POST',
           path: 'sign-up/email',
           body: { name, email: 'person@example.invalid', password: 'x'.repeat(14) },
+          type: 'application/json',
         },
       ]);
     }
