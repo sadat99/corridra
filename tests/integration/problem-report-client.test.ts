@@ -161,9 +161,9 @@ describe('what a person reads for each answer while removing their words', () =>
 
 describe('the removed count comes only from the answer', () => {
   test.each([
-    [2, 'Words removed from 2 reports.'],
-    [1, 'Words removed from 1 report.'],
-    [0, 'You have no words left to remove.'],
+    [2, 'Text removed from 2 problem reports.'],
+    [1, 'Text removed from 1 problem report.'],
+    [0, 'You have no text left to remove.'],
   ])('%i removed says %s', async (removed, line) => {
     const reply = await removeOwnWords(
       headers,

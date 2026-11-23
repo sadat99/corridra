@@ -3,7 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 // Room stage variant (Wave 2 unit 05): `variant="room"` adds the stage heading, a shape and word per stage and
-// the Done and Later lines from the same marker and records; left out, the markup is the one every other screen draws.
+// one line per stage in road order (unit B3a, D-016) from the same marker and records; left out, the markup is the
+// one every other screen draws.
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (
   type: unknown,
@@ -35,7 +36,7 @@ describe('StageBar room variant', () => {
     expect(html).toContain('<p class="mr-stage-line">Stage: <b>Visit</b></p>');
   });
 
-  it('adds the step heading and the Done, Later and Not tracked yet lines from the marker and records', async () => {
+  it('adds the step heading and one line per stage, in road order, from the marker and records', async () => {
     const { StageBar } = await load('components/mr/stage-bar.tsx');
     const html = render(
       createElement(StageBar, {
@@ -46,9 +47,9 @@ describe('StageBar room variant', () => {
     );
     expect(html).toContain('data-variant="room"');
     expect(text(html)).toContain('Step 2 of 6: Find');
-    expect(text(html)).toContain('Done: Define');
-    expect(text(html)).toContain('Later: Visit, Follow through');
-    expect(text(html)).toContain('Not tracked yet: Compare, Decide');
+    expect(text(html)).toContain(
+      'Define: DoneFind: NowCompare: Not tracked yetVisit: LaterDecide: Not tracked yetFollow through: Later',
+    );
     expect(html.match(/aria-current="step"/g)).toHaveLength(1);
     expect(html).toContain('Find, Now');
     expect(html).toContain('Define, Done');
@@ -65,8 +66,8 @@ describe('StageBar room variant', () => {
         records: { compare: true, decide: false },
       }),
     );
-    expect(text(html)).toContain('Not tracked yet: Decide');
-    expect(text(html)).not.toMatch(/Later:/);
+    expect(text(html)).toContain('Decide: Not tracked yet');
+    expect(text(html)).not.toMatch(/: Later/);
     expect(html).toMatch(/data-state="grey" data-shape="notTracked"/);
   });
 

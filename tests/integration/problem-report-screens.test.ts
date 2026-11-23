@@ -99,7 +99,7 @@ describe('while problem reports are not offered (a probe is false)', () => {
         '<form',
         '<textarea',
         'Send Problem Report',
-        'Remove the Words',
+        'Remove the Text',
         'Loading',
       ]) {
         expect(html, live).not.toContain(live);
@@ -119,8 +119,8 @@ describe('while problem reports are offered (both probes hold)', () => {
     expect(html).toContain('data-tab="more"');
     expect(html).toContain('data-title="Your problem reports"');
     expect(html).toContain('Loading…');
-    expect(html).toContain('Remove the words of my reports');
-    expect(html).toContain('Remove the Words of My Reports');
+    expect(html).toContain('Remove the text of my problem reports');
+    expect(html).toContain('Remove the Text of My Problem Reports');
     expect(html).not.toContain('not available yet');
   });
   test('the form opens on step 1 with the three fields, and "This page" is the one the person came from', async () => {
@@ -236,8 +236,8 @@ describe('removing the words', () => {
     );
     expect(html).toContain('<details>');
     expect(html).not.toContain('<details open');
-    expect(html).toContain('Remove the words of your reports?');
-    expect(html).not.toMatch(/Words removed from|no words left/);
+    expect(html).toContain('Remove the text of your problem reports?');
+    expect(html).not.toMatch(/Text removed from|no text left/);
     // The dialog body is drawn only once it is open.
     expect(html).not.toContain('This cannot be undone.');
   });

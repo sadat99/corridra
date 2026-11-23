@@ -51,20 +51,16 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
       title="Your saved request"
       frame={{ back: savedRequestBack, helper: savedRequestHelper }}
     >
-      {uxSwitchOn('CORRIDRA_UX_ROAD') && (
-        <p>
-          <a className="text-link" href={`/account/rooms/${parsed.data}`}>
-            Open this request in its Room
-          </a>
-        </p>
-      )}
-      {customerNotificationsEnabled() && <EmailNudge />}
+      {/* The Room link and the email card belong to a request the person may read; the detail draws them only
+          then, so a refusal stands alone (D-034). */}
       <CustomerRequestDetail
         requestId={parsed.data}
         subject={session.data.user.id}
         issuer={issuer}
         serviceRequestsEnabled={customerServiceRequestsEnabled()}
         framed
+        roomHref={uxSwitchOn('CORRIDRA_UX_ROAD') ? `/account/rooms/${parsed.data}` : undefined}
+        nudge={customerNotificationsEnabled() && <EmailNudge />}
       />
     </CustomerShell>
   );

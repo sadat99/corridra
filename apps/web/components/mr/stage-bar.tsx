@@ -9,7 +9,6 @@ import {
   statusToRoadStep,
   type RoadRecords,
   type RoadStep,
-  type RoadStepState,
 } from './road-status';
 
 type RoadLabels = typeof mrLabels.road;
@@ -42,7 +41,7 @@ export function StageBar({
   /** A short fact that follows the stage on the same line ("8 companies shortlisted"). */
   note?: string;
   /**
-   * `room`: the Room's stage heading, a shape and a word for every stage, and "Done: ..." and "Later: ..." lines.
+   * `room`: the Room's stage heading, a shape and a word for every stage, and one line for every stage in road order.
    * Left out, the bar is exactly as every other screen draws it.
    */
   variant?: 'room';
@@ -58,16 +57,6 @@ export function StageBar({
         : labels.asides[marker.reason]
       : null;
   if (variant === 'room') {
-    const names = (state: RoadStepState) =>
-      roadSteps
-        .filter((step) => states[step] === state)
-        .map((step) => labels.steps[step])
-        .join(labels.join);
-    const lines: { state: RoadStepState; words: string }[] = (
-      ['done', 'later', 'notTracked'] as const
-    )
-      .map((state) => ({ state, words: names(state) }))
-      .filter((line) => line.words);
     return (
       <div className="mr-stage-wrap" data-variant="room">
         {marker.kind === 'marker' ? (
@@ -83,11 +72,6 @@ export function StageBar({
           </h3>
         ) : null}
         <ol className="mr-stage" aria-label={name ?? labels.title}>
-          {names('done') ? (
-            <li className="mr-stage-fold" aria-hidden="true">
-              {labels.states.done}: <b>{names('done')}</b>
-            </li>
-          ) : null}
           {roadSteps.map((step: RoadStep) => {
             const state = states[step];
             const shown = state === 'notTracked' ? 'grey' : state;
@@ -117,9 +101,9 @@ export function StageBar({
           })}
         </ol>
         <div className="mr-stage-lines" aria-hidden="true">
-          {lines.map((line) => (
-            <p key={line.state} data-state={line.state}>
-              {labels.states[line.state]}: <b>{line.words}</b>
+          {roadSteps.map((step: RoadStep) => (
+            <p key={step} data-step={step} data-state={states[step]}>
+              <b>{labels.steps[step]}</b>: {labels.states[states[step]]}
             </p>
           ))}
         </div>

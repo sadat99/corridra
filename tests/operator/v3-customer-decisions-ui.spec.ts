@@ -183,7 +183,7 @@ test('unapproved,withdrawn,unavailable and malformed histories never invent outc
   for (const [payload, message] of [
     [
       { resourceId: resource, state: 'NOT_APPROVED', synthetic: true, decisions: [] },
-      'No commercial decision disclosure has been approved',
+      'The Corridra team has not approved any decision for you to see yet',
     ],
     [
       { resourceId: resource, state: 'SOURCE_UNAVAILABLE', synthetic: true, decisions: [] },

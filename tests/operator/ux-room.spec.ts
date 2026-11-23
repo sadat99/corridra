@@ -310,9 +310,15 @@ test('shows who and what the request is, where it stands and what the team said'
   await expect(stage.locator('[aria-current="step"]')).toContainText('Visit');
   await expect(stage.locator('li[data-shape]')).toHaveCount(6);
   await expect(page.locator('.room-stage').getByText('Step 4 of 6:')).toBeVisible();
-  await expect(page.locator('.mr-stage-lines')).toContainText('Done: Define, Find, Compare');
-  await expect(page.locator('.mr-stage-lines')).toContainText('Later: Follow through');
-  await expect(page.locator('.mr-stage-lines')).toContainText('Not tracked yet: Decide');
+  // One line for every stage, in road order (the order Your Move uses).
+  await expect(page.locator('.mr-stage-lines p')).toHaveText([
+    'Define: Done',
+    'Find: Done',
+    'Compare: Done',
+    'Visit: Now',
+    'Decide: Not tracked yet',
+    'Follow through: Later',
+  ]);
   await expect(page.getByText('Meetings are being arranged for November.')).toBeVisible();
   await expect(page.getByText('We have shortlisted three suppliers.')).toHaveCount(0);
   await page.getByRole('button', { name: /Read Every Reply/ }).click();
@@ -570,8 +576,9 @@ test('without lenses there is no lens control, and without a report the Road doe
   // Without a report Compare is not lit: only Define and Find, the stages before Visit, are done.
   const stage = page.locator('.room-stage .mr-stage');
   await expect(stage.locator('li[data-state="done"]')).toHaveCount(2);
-  await expect(page.locator('.mr-stage-lines')).toContainText('Not tracked yet: Compare, Decide');
-  await expect(page.locator('.mr-stage-lines')).not.toContainText('Done: Define, Find, Compare');
+  await expect(page.locator('.mr-stage-lines')).toContainText('Compare: Not tracked yet');
+  await expect(page.locator('.mr-stage-lines')).toContainText('Decide: Not tracked yet');
+  await expect(page.locator('.mr-stage-lines')).not.toContainText('Compare: Done');
 });
 
 // Source follow-ups 1 and 3 (S63): a machinery mission says which offer leaves out commissioning, and each quote carries the date it
@@ -2206,27 +2213,27 @@ test('AC/1: the next-step card is navy, its muted text reads at 4.5:1 and it has
   await expect(buttons).toHaveCSS('outline-style', 'solid');
 });
 
-test('AC/1: the stage timeline is vertical on a desktop, folds the finished stages, and the card stays first on a phone', async ({
+test('AC/1: the stage timeline is vertical on a desktop, in road order, and the card stays first on a phone', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page);
   const items = page.locator('.room-stage .mr-stage li[data-shape]');
   await expect(items).toHaveCount(6);
-  // One folded Done row, then the current stage, each later stage, then what is not tracked yet.
-  const rows = await page
-    .locator('.room-stage .mr-stage > li:not([data-shape="done"])')
-    .evaluateAll((els) =>
-      els
-        .map((el) => ({ y: el.getBoundingClientRect().y, text: el.textContent ?? '' }))
-        .sort((a, b) => a.y - b.y)
-        .map((row) => row.text),
-    );
+  // One row for every stage, in road order (the order Your Move uses): nothing is folded or moved.
+  const rows = await page.locator('.room-stage .mr-stage > li').evaluateAll((els) =>
+    els
+      .map((el) => ({ y: el.getBoundingClientRect().y, text: el.textContent ?? '' }))
+      .sort((a, b) => a.y - b.y)
+      .map((row) => row.text),
+  );
   expect(rows).toEqual([
-    'Done: Define, Find, Compare',
+    expect.stringMatching(/^DefineDone/),
+    expect.stringMatching(/^FindDone/),
+    expect.stringMatching(/^CompareDone/),
     expect.stringMatching(/^VisitNow/),
-    expect.stringMatching(/^Follow throughLater/),
     expect.stringMatching(/^DecideNot tracked yet/),
+    expect.stringMatching(/^Follow throughLater/),
   ]);
   await expect(page.locator('.room-stage .mr-stage [aria-current="step"]')).toContainText('Visit');
   await expect(page.locator('.room-stage .mr-stage-heading')).toContainText('Step 4 of 6: Visit');
@@ -2239,6 +2246,54 @@ test('AC/1: the stage timeline is vertical on a desktop, folds the finished stag
   const card = await page.locator('.room-next').boundingBox();
   expect(card!.y + card!.height).toBeLessThan(844);
 });
+
+// D-025: at the largest Text Size (the root is 125 percent) the 32rem stage timeline left the tags, title and date
+// a narrow column, and the route chip took three or four lines. Beside the sidebar the Room is narrower than the
+// window, so the desktop case gives it 840 px. The chip keeps to one or two lines and its icon keeps its square.
+for (const width of [390, 1280]) {
+  test(`D-025: the route chip keeps to two lines at the largest text size, ${width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(
+      page,
+      {},
+      {
+        body: detail({
+          original: {
+            objective: 'Find customers or distributors',
+            experience: { schemaVersion: 1, companyCountry: 'BD', marketCode: 'GB' },
+          },
+        }),
+      },
+    );
+    await page.evaluate(() => document.documentElement.setAttribute('data-text-size', 'largest'));
+    await page.addStyleTag({
+      content: `html[data-text-size='largest']{font-size:125%} #fixture{max-width:${Math.min(width, 840)}px}`,
+    });
+    const chip = page.locator('.room-route');
+    await expect(chip).toHaveText('Bangladesh → United Kingdom');
+    const shape = await chip.evaluate((el) => {
+      const style = getComputedStyle(el);
+      const line = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
+      const box = el.getBoundingClientRect();
+      const icon = el.querySelector('.corridra-icon')!.getBoundingClientRect();
+      return {
+        lines: Math.round((box.height - 2) / line),
+        iconWidth: icon.width,
+        iconHeight: icon.height,
+        overflow: box.right > document.documentElement.clientWidth,
+      };
+    });
+    expect(shape.lines).toBeLessThanOrEqual(2);
+    expect(shape.overflow).toBe(false);
+    // The icon keeps its square: a flex row never squeezes it while the words wrap.
+    expect(Math.abs(shape.iconWidth - shape.iconHeight)).toBeLessThan(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+  });
+}
 
 test('AC/1: in forced colours the next-step card keeps a visible border and its button an outline', async ({
   page,
@@ -2537,10 +2592,11 @@ test('in Arabic at 320 the Room reads right to left, keeps the new English words
   );
   expect(outside).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  // The colon stays with the English run, and the Done line joins names with the Arabic comma.
+  // The colon stays with the English run, and every stage has its own line, in road order.
   await expect(page.locator('.mr-stage-heading bdi[lang="en"]')).toHaveAttribute('dir', 'ltr');
   await expect(page.locator('.mr-stage-heading bdi[lang="en"]')).toHaveText(/^Step 4 of 6:$/);
-  await expect(page.locator('.mr-stage-lines p').first()).toContainText('،');
+  await expect(page.locator('.mr-stage-lines p')).toHaveCount(6);
+  await expect(page.locator('.mr-stage-lines p').first()).toHaveAttribute('data-step', 'define');
   expect(await pillProblems(page)).toEqual([]);
   // The six shapes keep one row and the lens tabs stay one row above 23rem and two by two below it.
   const lensRows = await page

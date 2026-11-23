@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { formatMoment, formatUtcDay } from '../../../lib/ux/format';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionCardPanel } from './decision-card-panel';
+import { decisionsNotApproved, decisionsSourceUnavailable, reviewedLine } from './report-words';
 import { limitWords } from '../../../lib/account-limit';
 const record = z
   .object({
@@ -159,22 +160,12 @@ function PrivateHistory({
           Return to your account
         </a>
       )}
-      {data?.state === 'NOT_APPROVED' && (
-        <p>
-          No commercial decision disclosure has been approved. This does not mean no decisions
-          exist.
-        </p>
-      )}
-      {data?.state === 'SOURCE_UNAVAILABLE' && (
-        <p>
-          Approved decision sources are unavailable. Ask your operator to review the disclosure.
-        </p>
-      )}
+      {data?.state === 'NOT_APPROVED' && <p>{decisionsNotApproved}</p>}
+      {data?.state === 'SOURCE_UNAVAILABLE' && <p>{decisionsSourceUnavailable}</p>}
       {data?.state === 'APPROVED' && (
         <>
           <p className="evidence-label">
-            Synthetic reviewed disclosure · version {data.version}. Access expires{' '}
-            {formatMoment(data.expiresAt)}.
+            {reviewedLine(data.version)} Access expires {formatMoment(data.expiresAt)}.
           </p>
           {!data.decisions.length && (
             <p>No decisions are included in the current approved revision.</p>

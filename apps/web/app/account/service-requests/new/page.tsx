@@ -7,7 +7,7 @@ import { ServiceRequestSourcePicker } from '../source-picker';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
-  title: 'Paid-service requests | Corridra',
+  title: 'Request help | Corridra',
   robots: { index: false, follow: false },
 };
 const query = z.object({

@@ -94,3 +94,65 @@
     grid-column: 1 / -1;
   }
 }
+/* The Confirm step lists what was entered in steps 1 and 2, read only, with one Edit action for each step (D-023).
+   It is compact on purpose: the step name and its Edit action share a row and the facts flow as short pairs, so the
+   step stays inside the signed-in page budget (phone 1.5 screens, desktop 1). */
+.profile-review {
+  display: grid;
+  gap: var(--space-2) var(--space-5);
+}
+.profile-review-group {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.profile-review-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+.profile-review-head h3 {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+.profile-review-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+.profile-review-facts > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-1);
+  min-width: 0;
+}
+.profile-review-facts dt {
+  color: var(--text-2);
+}
+.profile-review-facts dt::after {
+  content: ':';
+}
+.profile-review-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 48rem) {
+  .profile-review {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* The Edit action keeps its 44 px target; the row is one line tall and the target reaches above and below it. */
+  .profile-review-head {
+    flex-wrap: nowrap;
+    block-size: 1.5rem;
+  }
+}
+@media (max-width: 47.99rem) {
+  .profile-review-head > button {
+    min-height: 44px;
+  }
+}

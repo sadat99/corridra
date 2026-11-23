@@ -13,6 +13,7 @@ import {
 } from '../../../lib/organisation-link-replies';
 import { onDeviceClock } from '../../../lib/server-clock';
 import { ReplyError, loadReason, withReason } from '../../../lib/load-reason';
+import { formatDate } from '../../../lib/ux/format';
 
 const evidenceKinds = [
   ['REGISTRATION_STATEMENT', 'Registration statement'],
@@ -23,7 +24,7 @@ const evidenceKinds = [
 const evidenceLimit = 8;
 type Found = LinkFound;
 type View = LinkView;
-const day = (value: string) => new Date(value).toISOString().slice(0, 10);
+const day = (value: string) => formatDate(value);
 
 export function CompanyLink(props: { subject: string; issuer: string; workspaceId: string }) {
   const { subject, issuer, workspaceId } = props;

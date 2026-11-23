@@ -122,16 +122,16 @@ export const detailWords = {
 } as const;
 
 export const removalWords = {
-  summary: 'Remove the words of my reports',
-  button: 'Remove the Words of My Reports',
-  title: 'Remove the words of your reports?',
-  body: 'This removes what you wrote in all your problem reports. We keep the reference, the category, the dates, our replies and the status. This cannot be undone. Reports you file later keep their words until you remove them again.',
-  confirm: 'Remove Words',
-  keep: 'Keep Words',
+  summary: 'Remove the text of my problem reports',
+  button: 'Remove the Text of My Problem Reports',
+  title: 'Remove the text of your problem reports?',
+  body: 'This removes what you wrote in all your problem reports. We keep the reference, the category, the dates, our replies and the status. This cannot be undone. Reports you file later keep their text until you remove it again.',
+  confirm: 'Remove Text',
+  keep: 'Keep Text',
   done: (count: number) =>
     count === 0
-      ? 'You have no words left to remove.'
-      : `Words removed from ${count} ${count === 1 ? 'report' : 'reports'}.`,
+      ? 'You have no text left to remove.'
+      : `Text removed from ${count} ${count === 1 ? 'problem report' : 'problem reports'}.`,
 } as const;
 
 export const failureWords = {
@@ -146,11 +146,10 @@ export const failureWords = {
     'Your problem report was not sent. Try again in a few minutes. What you wrote is still here.',
   forbidden: 'You cannot report a problem from this account. Nothing was sent.',
   closed:
-    'Your account is closed, so you cannot file a problem report. Nothing was sent. You can still read your problem reports and remove their words.',
+    'Your account is closed, so you cannot file a problem report. Nothing was sent. You can still read your problem reports and remove their text.',
   returnCustomer: 'Return to Your Account',
   returnTeam: 'Return to Today',
   readForbidden: 'You cannot read problem reports from this account.',
-  removalFailed:
-    'Your words were not removed. Check your connection or try again in a few minutes.',
-  removalForbidden: 'You cannot remove words from this account. Nothing was changed.',
+  removalFailed: 'Your text was not removed. Check your connection or try again in a few minutes.',
+  removalForbidden: 'You cannot remove text from this account. Nothing was changed.',
 } as const;

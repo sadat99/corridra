@@ -51,6 +51,64 @@ function firstInvalid(form: HTMLFormElement, from: number, to: number) {
   }
   return null;
 }
+/**
+ * The Confirm step's read-only list of what the person entered in steps 1 and 2 (D-023), so they confirm what they
+ * can see. Each group has its own Edit action, which goes back to that step with every answer kept.
+ */
+export function ProfileReview({ draft, onEdit }: { draft: Draft; onEdit: (step: number) => void }) {
+  const sectors = draft.sectors
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const groups: [string, [string, string][]][] = [
+    [
+      stepNames[0],
+      [
+        ['Company name', draft.legalName.trim() || 'Not provided'],
+        [
+          'Country',
+          draft.countryCode ? countryName(draft.countryCode.toUpperCase()) : 'Not provided',
+        ],
+        ['Website', draft.website.trim() || 'Not provided'],
+      ],
+    ],
+    [
+      stepNames[1],
+      [
+        [
+          'Roles',
+          draft.commercialRoles
+            .map((r) => roleOptions.find(([value]) => value === r)?.[1] ?? r)
+            .join(', ') || 'Not provided',
+        ],
+        ['Sectors', sectors.length ? sectors.join(', ') : 'Not provided'],
+        ['Company size', draft.sizeBand ? `${draft.sizeBand} people` : 'Not provided'],
+      ],
+    ],
+  ];
+  return (
+    <section className="profile-review" aria-label="What you entered">
+      {groups.map(([name, facts], n) => (
+        <div key={name} className="profile-review-group">
+          <div className="profile-review-head">
+            <h3>{name}</h3>
+            <button type="button" className="text-link" onClick={() => onEdit(n)}>
+              Edit {name}
+            </button>
+          </div>
+          <dl className="profile-review-facts">
+            {facts.map(([label, value]) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+    </section>
+  );
+}
 type Details = {
   legalName: string;
   countryCode: string;
@@ -639,6 +697,8 @@ export function OrganisationProfile(props: {
                 </select>
               </div>
             </Step>
+            {/* Above the Confirm step's own controls, so the step still holds one to three of them. */}
+            {steps && shown === lastStep && <ProfileReview draft={draft} onEdit={move} />}
             <Step n={2} on={steps} shown={shown}>
               <div>
                 <label htmlFor={id + 'summary'}>
