@@ -45,6 +45,7 @@ import { migrateReplyReview } from '../../packages/db/src/recipient-reply-review
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerProblemReports } from '../../packages/db/src/customer-problem-report-migrate';
+import { migrateCustomerRequestReferences } from '../../packages/db/src/customer-request-reference-migrate';
 import { migrateCustomerProgrammeErasure } from '../../packages/db/src/customer-programme-erasure-migrate';
 import { migrateCounterpartyChanges } from '../../packages/db/src/counterparty-change-migrate';
 import { migrateSupplySources } from '../../packages/db/src/supply-source-migrate';
@@ -90,6 +91,7 @@ export const localInstallers: Installer[] = [
   ['programme projections', migrateCustomerProgrammeProjections],
   ['trip and supplier books', migrateCustomerBooks],
   ['decision cards', migrateCustomerDecisionCards],
+  ['request references', migrateCustomerRequestReferences],
   ['real-use schema', migrateCustomerRealUse],
   ['request withdrawal', migrateCustomerRequestWithdrawal],
   ['programme lifecycle', migrateCustomerProgrammeLifecycle],
