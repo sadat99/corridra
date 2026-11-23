@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
-import { displayDate, displayMoney } from '@corridra/domain/locale';
+import { displayMoney } from '@corridra/domain/locale';
+import { formatDate, formatDateTime } from '../../lib/ux/format';
 
 type Summary = {
   id: string;
@@ -139,6 +140,8 @@ function plainError(status: number | null, sample: boolean | null = null) {
             : 'Check the details. Every note starts with Synthetic, prices are whole minor units and a plan states every limit once.'
           : 'This could not be completed. Try again.';
 }
+/** A billing period start or end is a calendar date ("YYYY-MM-DD"): show that day, with no time and no zone shift. */
+export const billingPeriodDate = (value: string) => formatDate(value, { timeZone: 'UTC' });
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function CustomerBilling({ tenant }: { tenant: string }) {
@@ -452,9 +455,9 @@ function Scoped({ tenant }: { tenant: string }) {
             {taxOptions.find(([k]) => k === detail.plan.taxTreatment)?.[1].toLowerCase()}.
             {detail.subscription.periodStart && detail.subscription.periodEnd
               ? ' Period ' +
-                displayDate(detail.subscription.periodStart) +
+                billingPeriodDate(detail.subscription.periodStart) +
                 ' until ' +
-                displayDate(detail.subscription.periodEnd) +
+                billingPeriodDate(detail.subscription.periodEnd) +
                 '.'
               : ''}
           </p>
@@ -467,9 +470,12 @@ function Scoped({ tenant }: { tenant: string }) {
             {detail.events.map((ev) => (
               <li key={ev.seq}>
                 {ev.kind.replace('_', ' ')} · {ev.actorKind} ·{' '}
-                <time dateTime={ev.at}>{ev.at.slice(0, 16).replace('T', ' ')} UTC</time>
+                <time dateTime={ev.at}>{formatDateTime(ev.at)}</time>
                 {ev.periodStart && ev.periodEnd
-                  ? ' · ' + displayDate(ev.periodStart) + ' until ' + displayDate(ev.periodEnd)
+                  ? ' · ' +
+                    billingPeriodDate(ev.periodStart) +
+                    ' until ' +
+                    billingPeriodDate(ev.periodEnd)
                   : ''}
                 {ev.endReason ? ' · ' + ev.endReason.replace('_', ' ') : ''}
                 {ev.customerNote ? ' · customer sees: ' + ev.customerNote : ''}

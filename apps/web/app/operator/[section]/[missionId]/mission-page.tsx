@@ -435,7 +435,7 @@ function AssignRoute({
   if (!packs.length)
     return (
       <p>
-        No reviewed route packs yet. An owner adds one under Corridors and policies, then it shows
+        No reviewed route packs yet. An owner adds one under Routes and settings, then it shows
         here.
       </p>
     );

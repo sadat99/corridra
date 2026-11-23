@@ -711,7 +711,7 @@ test('helper sign-in uses helper words and its return lands on the task page, ne
       await expect(main).toContainText('Your customer account does not grant');
       await expect(main).not.toContainText(/operator account|OPERATOR ACCESS/);
       await expect(
-        main.getByRole('link', { name: 'Set up invited contributor access' }),
+        main.getByRole('link', { name: 'Set up invited helper access' }),
       ).toHaveAttribute('href', '/contributor/setup');
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     });

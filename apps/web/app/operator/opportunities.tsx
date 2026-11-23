@@ -572,7 +572,11 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
             panel: (
               <>
                 <h3>Mission yield</h3>
-                <p>Scope: {mission ? 'Selected mission' : 'All accessible missions'}.</p>
+                <p>
+                  {mission
+                    ? 'What you can see: the selected mission.'
+                    : 'What you can see: all missions you can open.'}
+                </p>
                 <div className="detail-grid">
                   <div className="detail-card">
                     <h4>Activity and access</h4>
@@ -585,7 +589,8 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                       meetings held
                     </p>
                     <p>
-                      {data.activity.rfqs} RFQs · {data.activity.samples} sample records
+                      {data.activity.rfqs} price requests (RFQs) · {data.activity.samples} sample
+                      records
                     </p>
                   </div>
                   <div className="detail-card">

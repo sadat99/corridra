@@ -24,7 +24,7 @@ export default async function Page({ searchParams }: { searchParams: Search }) {
   const available = !!foundations() && !!operatorRecoveryMailer();
   return (
     <WorkspaceShell
-      eyebrow={helper ? 'ASSIGNED EXECUTION WORK' : 'OPERATOR ACCESS'}
+      eyebrow={helper ? 'Assigned work' : 'OPERATOR ACCESS'}
       title={helper ? 'Reset your work password.' : 'Reset your operator password.'}
       compact
     >

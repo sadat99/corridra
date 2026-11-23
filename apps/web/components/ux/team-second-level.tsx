@@ -1,7 +1,7 @@
 'use client';
 // The second level of the Team shell (Navigation v1): the places inside the current sidebar item,
 // as a row of links under the page header. At most five. A single place shows no row. Settings
-// shows its own three (Corridors and policies, Control Center, Owner page). Counts are not shown
+// shows its own three (Routes and settings, Control Center, Owner page). Counts are not shown
 // until a real count exists for a place; no number is invented. Owner: S4.
 import './team-nav.css';
 import Link from 'next/link';

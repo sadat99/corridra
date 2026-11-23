@@ -14,6 +14,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from 'react';
+import { formatDateTime } from '../../lib/ux/format';
 import { useFormDraft } from '../../lib/ux/use-form-draft';
 import { machineryFields, missionCatalogue } from '@corridra/domain/commercial-missions';
 import { parseMoney, formatMoney, currency } from '@corridra/domain/opportunities';
@@ -1093,9 +1094,8 @@ export function CommercialMission({
                 </h3>
                 <p className="reply-review-note">
                   Prefilled from a reviewed supplier reply. Reply version {bound.seen}, offer
-                  revision {bound.revision}, received{' '}
-                  {bound.observedAt.slice(0, 16).replace('T', ' ')} UTC. Check every value, then
-                  save.{' '}
+                  revision {bound.revision}, received {formatDateTime(bound.observedAt)}. Check
+                  every value, then save.{' '}
                   <a
                     className="text-link"
                     href={`/operator/delivery?workspace=${encodeURIComponent(tenant)}&reply=${bound.responseId}`}
