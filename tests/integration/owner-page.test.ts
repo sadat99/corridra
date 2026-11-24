@@ -6,6 +6,8 @@ import { ownerGaps, gapSignal } from '../../apps/web/lib/owner-gaps';
 import {
   chooseOwnerTenant,
   ownerCapable,
+  ownerIssuerLink,
+  ownerIssuerLinkLabel,
   ownerPageAccess,
   ownerPageEnabled,
 } from '../../apps/web/lib/owner-access';
@@ -368,5 +370,38 @@ describe('installation-only records are distinct from application switches', () 
     expect(switchRegistry.some((entry) => entry.name.includes('COMMERCIAL_ARRANGEMENT'))).toBe(
       false,
     );
+  });
+});
+
+describe('the link to the Invoice issuer screen (ADR-092 addendum)', () => {
+  const on = { CORRIDRA_INVOICE_ISSUER: 'true' } as unknown as NodeJS.ProcessEnv;
+  const id = '11111111-1111-4111-8111-111111111111';
+  it('is offered to the workspace owner while the screen is switched on, for the chosen workspace', () => {
+    expect(ownerIssuerLinkLabel).toBe('Invoice issuer details');
+    expect(ownerIssuerLink({ id, role: 'owner' }, on)).toBe(
+      '/operator/invoice-issuer?workspace=' + id,
+    );
+  });
+  it('is not offered while the switch is anything but exactly "true"', () => {
+    for (const value of [undefined, '', 'false', 'TRUE', '1', ' true', 'true '])
+      expect(
+        ownerIssuerLink({ id, role: 'owner' }, {
+          CORRIDRA_INVOICE_ISSUER: value,
+        } as unknown as NodeJS.ProcessEnv),
+        String(value),
+      ).toBeNull();
+  });
+  it('is never offered to an admin or any other role, even with the screen on', () => {
+    for (const role of ['admin', 'operator', 'reviewer', 'viewer', 'Owner', ''])
+      expect(ownerIssuerLink({ id, role }, on), role).toBeNull();
+  });
+  it('is the one thing the Owner page renders the link from, with the fixed label', () => {
+    const page = readFileSync(join(root, 'apps/web/app/operator/owner/page.tsx'), 'utf8');
+    expect(page).toContain('const issuerLink = ownerIssuerLink(tenant);');
+    expect(page).toMatch(
+      /\{issuerLink \? \(\s*<p>\s*<Link prefetch=\{false\} className="text-link" href=\{issuerLink\}>\s*\{ownerIssuerLinkLabel\}\s*<\/Link>\s*<\/p>\s*\) : null\}/,
+    );
+    // No other address of the screen and no second copy of the label on the page.
+    expect(page).not.toMatch(/invoice-issuer|Invoice issuer details/);
   });
 });

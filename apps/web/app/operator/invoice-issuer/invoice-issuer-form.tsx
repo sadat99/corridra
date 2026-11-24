@@ -56,9 +56,18 @@ const neededText: Record<string, string> = {
   gst_registration_no: 'GST registration number',
   payment_instructions: 'payment instructions',
   finance_label: 'finance contact label',
-  gst_rate_bps: 'tax rate (set by the install step, not on this screen)',
+  gst_rate_bps: 'tax rate (set from your GST answer when you save)',
 };
 const neededOrder = Object.keys(neededText);
+// ADR-092 addendum: the tax rate is never typed. The database derives it from the GST answer and says here what each
+// answer writes; null (or absent, before that install) means this screen leaves the rate as it is.
+function rateLine(view: IssuerView, registered: boolean): string | null {
+  const bps = registered ? view.fixed.rateWhenRegisteredBps : view.fixed.rateWhenNotRegisteredBps;
+  if (typeof bps !== 'number') return null;
+  return registered
+    ? `${bps / 100}% ${view.fixed.taxLabel}, the Singapore standard rate`
+    : `${bps / 100}%, no ${view.fixed.taxLabel} is charged`;
+}
 const lengths: Record<Exclude<Field, 'gstRegistered' | 'code'>, [number, number, string]> = {
   legalName: [2, 120, 'Enter the legal name, 2 to 120 characters.'],
   uen: [3, 60, 'Enter the company registration number (UEN), 3 to 60 characters.'],
@@ -393,6 +402,7 @@ export function InvoiceIssuerForm({ tenant }: { tenant: string }) {
       </div>
     );
   };
+  const taxRate = rateLine(view, answers.gstRegistered === 'yes');
   const summary: [string, string][] = [
     ['Legal name', answers.legalName.trim()],
     ['Company registration number (UEN)', answers.uen.trim()],
@@ -401,6 +411,7 @@ export function InvoiceIssuerForm({ tenant }: { tenant: string }) {
     ...(answers.gstRegistered === 'yes'
       ? ([['GST registration number', answers.gstRegistrationNo.trim()]] as [string, string][])
       : []),
+    ...(taxRate ? ([['Tax rate on invoices', taxRate]] as [string, string][]) : []),
     ['Payment instructions', answers.paymentInstructions.trim()],
     ['Finance contact label', answers.financeLabel.trim()],
   ];
@@ -471,9 +482,16 @@ export function InvoiceIssuerForm({ tenant }: { tenant: string }) {
             {errors.gstRegistered ? (
               <FieldError id="issuer-gstRegistered-error">{errors.gstRegistered}</FieldError>
             ) : null}
+            {answers.gstRegistered === 'no' && rateLine(view, false) ? (
+              <p className="invoice-issuer-help">
+                Invoices will show a tax rate of {rateLine(view, false)}.
+              </p>
+            ) : null}
             {answers.gstRegistered === 'yes'
               ? text('gstRegistrationNo', 'GST registration number', {
-                  help: `Invoices show ${view.fixed.taxLabel} at ${view.fixed.gstRateBps / 100}%. The rate is set by the install step.`,
+                  help: rateLine(view, true)
+                    ? `Invoices will show ${rateLine(view, true)}. You do not type the rate.`
+                    : `Invoices show ${view.fixed.taxLabel} at ${view.fixed.gstRateBps / 100}%. The rate is set by the install step.`,
                 })
               : null}
           </>

@@ -9,11 +9,16 @@ import { dataCleanupKeepList } from './customer-data-cleanup';
 // session of the owner, organiser, participant or sender, and closing a problem report needs a staff owner or admin with a
 // fresh authenticator check. An offline step has no such session, and making one up would record a person as doing
 // something they did not do. So the people retire the data on the existing screens, and this step is the honest preview
-// before and the proof after: it finds each target by exact name, refuses unless exactly one matches, says how each one
-// stands now, and prints one checklist line per step in an order that is safe.
+// before and the proof after: it finds each target by exact name, says for each one whether it was found, not found or
+// found more than once, and only when every target is found exactly once says how each one stands now and prints one
+// checklist line per step in an order that is safe. A target that does not resolve never stops the report (B8b, after
+// the production dry run of 24 Nov 2026 stopped at the request): the report then lists what the QA workspace holds, so
+// the next run shows what exists, and gives no checklist, so nothing can be retired from a guess.
 //
-// Its output is printed in public Actions logs: the fixed names below and 8-character ids only, never an email address
-// and never a name read from the database.
+// Its output is printed in public Actions logs: the fixed names below and 8-character ids only, never an address of a
+// person and never a name read from the database. The one exception is the request list of the QA workspace itself,
+// shown only when the request target does not resolve: the objective and market of each request there, shortened, with
+// anything that looks like an address or a link left out.
 export type QaDataRetirePlan = {
   workspace: string;
   /** The QA workspace existed when the owner decided: a same-named workspace made later is never it. */
@@ -59,9 +64,20 @@ export type QaRetireStep = {
   screen: string;
   action: string;
 };
+export type QaTargetStatus = 'found' | 'not found' | 'more than one' | 'not checked';
+export type QaRetireTarget = {
+  kind: 'workspace' | 'programme' | 'request' | 'problem report';
+  label: string;
+  status: QaTargetStatus;
+  /** How many records matched; null when the target was not checked. */
+  matches: number | null;
+};
 export type QaDataRetireReport = {
-  state: 'all retired' | 'still to retire';
-  /** In the order the checklist gives them. */
+  /** 'targets not resolved': at least one target was not found exactly once, so there are no steps and no checklist. */
+  state: 'all retired' | 'still to retire' | 'targets not resolved';
+  /** Every planned target, in the order they are looked up. */
+  targets: QaRetireTarget[];
+  /** In the order the checklist gives them. Empty unless every target resolved exactly once. */
   steps: QaRetireStep[];
   lines: string[];
   checklist: string[];
@@ -79,16 +95,33 @@ const modules: [string, string][] = [
   ['customer_private.problem_report', 'problem reports'],
 ];
 
-async function one<T extends Record<string, unknown>>(
+type Found<T> = { status: 'found' | 'not found' | 'more than one'; matches: number; row: T | null };
+// Never throws on a count: zero or several matches are an answer, not a failure.
+async function find<T extends Record<string, unknown>>(
   db: DatabaseClient,
-  what: string,
   sql: string,
   params: unknown[],
-): Promise<T> {
+): Promise<Found<T>> {
   const found = await db.query<T>(sql, params);
-  if (found.rowCount !== 1)
-    throw new Error(`Expected exactly one ${what}, found ${found.rowCount}`);
-  return found.rows[0]!;
+  const matches = found.rowCount ?? found.rows.length;
+  return matches === 1
+    ? { status: 'found', matches, row: found.rows[0]! }
+    : { status: matches === 0 ? 'not found' : 'more than one', matches, row: null };
+}
+const unchecked = { status: 'not checked' as const, matches: null, row: null };
+// Text a customer typed, made safe for a public log: one line, shortened, and never an address or a link.
+export function shown(value: string | null, max: number) {
+  if (value === null || !value.trim()) return '(empty)';
+  const text = value.replace(/\s+/g, ' ').trim();
+  // An address, a link, a bare domain (name.tld) or a run of seven or more digits (a phone or account number, with
+  // spaces, plus or hyphen inside) hides the whole value: a place name needs none of them.
+  if (
+    /@|:\/\/|www\./i.test(text) ||
+    /\b[a-z0-9-]+(\.[a-z0-9-]+)+(\/|\b)/i.test(text) ||
+    /\d(?:[\s+-]*\d){6,}/.test(text)
+  )
+    return '(hidden)';
+  return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
 async function read(db: DatabaseClient, plan: QaDataRetirePlan): Promise<QaDataRetireReport> {
@@ -112,55 +145,162 @@ async function read(db: DatabaseClient, plan: QaDataRetirePlan): Promise<QaDataR
   // One report at a time, so two runs never interleave their lines. An advisory lock writes nothing.
   await db.query("SELECT pg_advisory_xact_lock(hashtext('corridra:qa-data-retire'))");
 
-  // Every workspace of that name counts, so two are refused whichever is older. The one match must also have existed at
-  // the owner decision: a workspace a customer names the same way later is never taken for the QA one.
-  const workspace = await one<{ id: string; archived: boolean; existed: boolean }>(
+  // Every workspace of that name counts, so two are never resolved whichever is older. The one match must also have
+  // existed at the owner decision: a workspace a customer names the same way later is never taken for the QA one.
+  const named = await find<{ id: string; archived: boolean; existed: boolean }>(
     db,
-    `workspace named "${plan.workspace}"`,
     `SELECT t.id::text AS id,customer_private.workspace_archived(t.id) AS archived,
       w.created_at<$2::timestamptz AS existed
     FROM app.tenant t JOIN customer.workspace w ON w.tenant_id=t.id WHERE t.name=$1`,
     [plan.workspace, plan.workspaceCreatedBefore],
   );
-  if (!workspace.existed)
-    throw new Error(
-      `The workspace named "${plan.workspace}" was created after the owner decision, so it is not the QA workspace`,
-    );
-  const programme = await one<{ id: string; archived: boolean }>(
-    db,
-    `programme named "${plan.programme}" in the workspace "${plan.workspace}"`,
-    `SELECT c.id::text AS id,c.archived FROM customer_private.programme_current c
-    JOIN customer_private.programme_creation pc ON pc.programme_id=c.id AND pc.workspace_id=c.tenant_id
-    WHERE c.tenant_id=$1 AND c.name=$2`,
-    [workspace.id, plan.programme],
-  );
+  const late = named.row !== null && !named.row.existed;
+  const workspace = late ? null : named.row;
+  const programmeFound = workspace
+    ? await find<{ id: string; archived: boolean }>(
+        db,
+        `SELECT c.id::text AS id,c.archived FROM customer_private.programme_current c
+        JOIN customer_private.programme_creation pc ON pc.programme_id=c.id AND pc.workspace_id=c.tenant_id
+        WHERE c.tenant_id=$1 AND c.name=$2`,
+        [workspace.id, plan.programme],
+      )
+    : unchecked;
   // Only within the QA workspace. The brief is read for the two fields the title is made from and nothing else.
-  const request = await one<{ id: string; withdrawn: boolean; revoked: boolean; status: string }>(
-    db,
-    `request "${plan.request.title}" in the workspace "${plan.workspace}"`,
-    `SELECT o.id::text AS id,customer_private.request_withdrawn(o.id) AS withdrawn,
-      EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=o.id) AS revoked,m.status
-    FROM customer_private.owned_request o
-    JOIN app.mission_intake i ON i.tenant_id=o.mission_tenant_id AND i.id=o.mission_id
-    JOIN app.mission m ON m.tenant_id=o.mission_tenant_id AND m.id=o.mission_id
-    WHERE o.workspace_id=$1 AND i.brief->>'objective'=$2
-      AND coalesce(NULLIF(btrim(i.brief->>'market'),''),NULLIF(btrim(i.brief->>'marketCode'),''))=ANY($3::text[])`,
-    [workspace.id, plan.request.objective, [...plan.request.markets]],
+  const requestFound = workspace
+    ? await find<{ id: string; withdrawn: boolean; revoked: boolean; status: string }>(
+        db,
+        `SELECT o.id::text AS id,customer_private.request_withdrawn(o.id) AS withdrawn,
+          EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=o.id) AS revoked,m.status
+        FROM customer_private.owned_request o
+        JOIN app.mission_intake i ON i.tenant_id=o.mission_tenant_id AND i.id=o.mission_id
+        JOIN app.mission m ON m.tenant_id=o.mission_tenant_id AND m.id=o.mission_id
+        WHERE o.workspace_id=$1 AND i.brief->>'objective'=$2
+          AND coalesce(NULLIF(btrim(i.brief->>'market'),''),NULLIF(btrim(i.brief->>'marketCode'),''))=ANY($3::text[])`,
+        [workspace.id, plan.request.objective, [...plan.request.markets]],
+      )
+    : unchecked;
+  // The report counts as QA test data only when a member of the QA workspace filed it, now or in the past. Without the
+  // QA workspace that cannot be told, so the report is not looked up at all.
+  const reportFound = workspace
+    ? await find<{ id: string; state: string | null; qa: boolean }>(
+        db,
+        `SELECT p.id::text AS id,
+          (SELECT x.state FROM customer_private.problem_report_status_event x WHERE x.report_id=p.id
+            ORDER BY x.seq DESC LIMIT 1) AS state,
+          p.reporter_kind='customer' AND (EXISTS(SELECT FROM customer.membership m
+              WHERE m.tenant_id=$2 AND m.principal_id=p.customer_principal_id)
+            OR EXISTS(SELECT FROM customer_private.workspace_member w
+              WHERE w.tenant_id=$2 AND w.principal_id=p.customer_principal_id)) AS qa
+        FROM customer_private.problem_report p WHERE p.reference=$1`,
+        [plan.problemReport, workspace.id],
+      )
+    : unchecked;
+  const targets: QaRetireTarget[] = [
+    {
+      kind: 'workspace',
+      label: `workspace "${plan.workspace}"`,
+      status: late ? 'not found' : named.status,
+      matches: late ? 0 : named.matches,
+    },
+    {
+      kind: 'programme',
+      label: `programme "${plan.programme}"`,
+      status: programmeFound.status,
+      matches: programmeFound.matches,
+    },
+    {
+      kind: 'request',
+      label: `request "${plan.request.title}"`,
+      status: requestFound.status,
+      matches: requestFound.matches,
+    },
+    {
+      kind: 'problem report',
+      label: `problem report ${plan.problemReport}`,
+      status: reportFound.status,
+      matches: reportFound.matches,
+    },
+  ];
+  const targetLines = targets.map(
+    (target) =>
+      `target ${target.label}: ${target.status}${
+        target.status === 'more than one' ? ` (${target.matches} match)` : ''
+      }${
+        target.status === 'not checked'
+          ? ', it is looked up inside the QA workspace'
+          : target.kind === 'workspace' && late
+            ? ', a workspace of that name was made after the owner decision, so it is not the QA workspace'
+            : ''
+      }`,
   );
-  // The report counts as QA test data only when a member of the QA workspace filed it, now or in the past.
-  const report = await one<{ id: string; state: string | null; qa: boolean }>(
-    db,
-    `problem report ${plan.problemReport}`,
-    `SELECT p.id::text AS id,
-      (SELECT x.state FROM customer_private.problem_report_status_event x WHERE x.report_id=p.id
-        ORDER BY x.seq DESC LIMIT 1) AS state,
-      p.reporter_kind='customer' AND (EXISTS(SELECT FROM customer.membership m
-          WHERE m.tenant_id=$2 AND m.principal_id=p.customer_principal_id)
-        OR EXISTS(SELECT FROM customer_private.workspace_member w
-          WHERE w.tenant_id=$2 AND w.principal_id=p.customer_principal_id)) AS qa
-    FROM customer_private.problem_report p WHERE p.reference=$1`,
-    [plan.problemReport, workspace.id],
-  );
+  const programme = programmeFound.row;
+  const request = requestFound.row;
+  const report = reportFound.row;
+  if (!workspace || !programme || !request || !report) {
+    const unresolved = targets.filter((target) => target.status !== 'found').length;
+    const lines = [...targetLines];
+    // What the QA workspace holds, so the next run shows what exists. Only when the request is the open question.
+    if (workspace && !request) {
+      const held = (
+        await db.query<{
+          id: string;
+          objective: string | null;
+          market: string | null;
+          status: string;
+          withdrawn: boolean;
+        }>(
+          `SELECT left(o.id::text,8) AS id,i.brief->>'objective' AS objective,
+            coalesce(NULLIF(btrim(i.brief->>'market'),''),NULLIF(btrim(i.brief->>'marketCode'),'')) AS market,
+            m.status,customer_private.request_withdrawn(o.id) AS withdrawn
+          FROM customer_private.owned_request o
+          LEFT JOIN app.mission_intake i ON i.tenant_id=o.mission_tenant_id AND i.id=o.mission_id
+          JOIN app.mission m ON m.tenant_id=o.mission_tenant_id AND m.id=o.mission_id
+          WHERE o.workspace_id=$1 ORDER BY o.created_at,o.id LIMIT 51`,
+          [workspace.id],
+        )
+      ).rows;
+      lines.push(
+        `requests in the workspace "${plan.workspace}" (${short(workspace.id)}): ${
+          held.length > 50 ? 'the first 50' : held.length
+        }`,
+        ...held
+          .slice(0, 50)
+          .map(
+            (row) =>
+              `request ${row.id}: objective "${shown(row.objective, 60)}", market "${shown(row.market, 40)}", status ${row.status}${row.withdrawn ? ', withdrawn' : ''}`,
+          ),
+      );
+      // The same title sent by a member of the QA workspace into another workspace: one total, and nothing that names
+      // or points at another workspace.
+      const elsewhere = (
+        await db.query<{ n: number }>(
+          `SELECT count(*)::int AS n
+          FROM customer_private.owned_request o
+          JOIN app.mission_intake i ON i.tenant_id=o.mission_tenant_id AND i.id=o.mission_id
+          WHERE o.workspace_id<>$1 AND i.brief->>'objective'=$2
+            AND coalesce(NULLIF(btrim(i.brief->>'market'),''),NULLIF(btrim(i.brief->>'marketCode'),''))=ANY($3::text[])
+            AND EXISTS(SELECT FROM customer.membership m WHERE m.tenant_id=$1 AND m.principal_id=o.principal_id)`,
+          [workspace.id, plan.request.objective, [...plan.request.markets]],
+        )
+      ).rows[0]!.n;
+      lines.push(
+        `the same title, sent by a member of the QA workspace into another workspace: ${elsewhere} (never a target: the plan names the QA workspace only)`,
+      );
+    }
+    return {
+      state: 'targets not resolved',
+      targets,
+      steps: [],
+      lines: [
+        ...lines,
+        `${unresolved} of ${targets.length} targets not resolved exactly once`,
+        'No checklist: nothing is to be retired until every target is found exactly once.',
+        'kept, never touched: every user, identity, sign-in and customer account',
+        'Nothing was written, changed or deleted.',
+      ],
+      checklist: [],
+    };
+  }
   const registrations = (
     await db.query<{ id: string; withdrawn: boolean | null }>(
       `SELECT r.id::text AS id,v.withdrawn FROM customer_private.programme_registration r
@@ -309,6 +449,7 @@ async function read(db: DatabaseClient, plan: QaDataRetirePlan): Promise<QaDataR
   ).rows;
   const pending = steps.filter((step) => step.state === 'still to retire');
   const lines = [
+    ...targetLines,
     ...steps.map((step) => `${step.label} (${step.id}): ${step.state}, ${step.detail}`),
     `company profile "${plan.companyProfile}": kept, no lifecycle${
       profiles === null
@@ -337,6 +478,7 @@ async function read(db: DatabaseClient, plan: QaDataRetirePlan): Promise<QaDataR
   ];
   return {
     state: pending.length ? 'still to retire' : 'all retired',
+    targets,
     steps,
     lines: [
       ...lines,

@@ -22,6 +22,8 @@ import { founderDoor, withWorkspace } from '../../../lib/front-doors';
 import {
   chooseOwnerTenant,
   ownerCapable,
+  ownerIssuerLink,
+  ownerIssuerLinkLabel,
   ownerPageAccess,
   ownerPageEnabled,
 } from '../../../lib/owner-access';
@@ -91,6 +93,8 @@ export default async function Page({
   const groups = describeSwitches();
   const activation = founderActivation();
   const deployment = activation.environment.deployment;
+  // Owner only, and only while the Invoice issuer screen is switched on.
+  const issuerLink = ownerIssuerLink(tenant);
   return (
     <WorkspaceShell eyebrow="OWNER PAGE" title="What is on and off." className="ux-owner">
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
@@ -260,6 +264,13 @@ export default async function Page({
                 <p className="owner-note">{activation.note}</p>
                 <section aria-labelledby="owner-switches" className="owner-section">
                   <h2 id="owner-switches">What is on and off</h2>
+                  {issuerLink ? (
+                    <p>
+                      <Link prefetch={false} className="text-link" href={issuerLink}>
+                        {ownerIssuerLinkLabel}
+                      </Link>
+                    </p>
+                  ) : null}
                   {groups.map((group) => (
                     <details key={group.group} className="owner-group">
                       <summary>

@@ -31,3 +31,17 @@ export function chooseOwnerTenant(tenants: OwnerTenant[], requested?: string) {
   const capable = ownerCapable(tenants);
   return capable.find((tenant) => tenant.id === requested) ?? capable[0];
 }
+
+/**
+ * The Owner page link to the Invoice issuer screen (ADR-092 addendum). Offered only to the owner of the chosen
+ * workspace, and only while CORRIDRA_INVOICE_ISSUER is exactly "true": an admin is never shown a link to a screen that
+ * would refuse them, and with the switch off the screen does not exist, so its address is not shown either.
+ */
+export const ownerIssuerLinkLabel = 'Invoice issuer details';
+export function ownerIssuerLink(
+  tenant: Pick<OwnerTenant, 'id' | 'role'>,
+  env: NodeJS.ProcessEnv = process.env,
+): string | null {
+  if (env.CORRIDRA_INVOICE_ISSUER !== 'true' || tenant.role !== 'owner') return null;
+  return '/operator/invoice-issuer?workspace=' + encodeURIComponent(tenant.id);
+}
