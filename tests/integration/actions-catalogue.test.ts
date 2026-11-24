@@ -114,7 +114,7 @@ describe('action catalogue shape', () => {
       expect(entry.label).not.toMatch(/[\u2014\u2013]/);
     }
     const byId = Object.fromEntries(actionCatalogue.map((e) => [e.id, e.label]));
-    expect(byId.continue_draft).toBe('Open Your Workspaces to Pick Up a Draft');
+    expect(byId.continue_draft).toBe('Open Your Workspaces to Pick Up a Saved Request');
     expect(byId.explain_blocked).toBe('Open Your Requests to See What Is Waiting');
     expect(byId.explain_blocked).not.toMatch(/why|explain/i);
   });
