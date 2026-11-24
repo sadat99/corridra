@@ -266,6 +266,7 @@ test('installing is repeatable, refuses a changed history, leaves the control cl
     '0001_real_invoicing.sql',
     '0002_payment_approval_and_reversal.sql',
     '0003_owner_issuer_details.sql',
+    '0004_issuer_tax_rate.sql',
   ]);
   expect(
     (await s.f.owner.query('SELECT count(*)::int n FROM customer_private.real_invoicing_control'))

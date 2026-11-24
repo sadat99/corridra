@@ -130,11 +130,14 @@ export const aiConnectionRows: readonly AiConnectionRow[] = [
       'packages/intelligence/src/service.ts:insertPolicy (one app.ai_model_policy INSERT, no other write)',
   },
   {
-    // No provider call, no ai.enabled config_version; ai_run stays sample-only in real workspaces.
+    // The save itself: no provider call and no ai.enabled config_version, in any workspace and in either state below.
+    // Real workspaces after ADR-091 (which amends ADR-089 decision 5): a control that starts closed, then the owner's
+    // own ai.enabled setting written after the first opening. While either is off no run can start. Once both are on
+    // a later run can use the connection, and the checks named in the on-state sentence still refuse or bound it.
     id: 'run',
     icon: 'lock',
     sourceNote:
-      'docs/adr/0089-guided-ai-connection-and-real-workspace-model-policy.md:Decision 5, and packages/db/migrations/0026_governed_intelligence.sql:34 (app.part4_enabled), packages/db/ai-model-policy-real-migrations/0001_real_workspace_model_policy.sql:22 (app.guard_ai, ai_run sample-only)',
+      'packages/intelligence/src/service.ts:insertPolicy (one app.ai_model_policy INSERT, no provider call, no config_version write), and docs/adr/0091-ai-assistance-in-real-workspaces.md:Decision 5. Off: packages/db/ai-model-policy-real-migrations/0002_real_workspace_runs.sql:51-54 (app.ai_real_runs_open, closed with no row), 0002_real_workspace_runs.sql:111-116 (app.part4_enabled, ai.enabled true in a real workspace only while the control is open and the setting was written after the first opening), packages/intelligence/src/service.ts:run (AI_REAL_OFF, 403). On: packages/db/migrations/0026_governed_intelligence.sql:39 (app.ai_run_authorized, route pack names the policy, no email address or phone number in a cited statement), 0002_real_workspace_runs.sql:69 (APPROVED_PROVIDER evaluation in a real workspace), 0002_real_workspace_runs.sql:72 and packages/intelligence/src/index.ts:161-163 (contact details and long numbers refuse the run), 0002_real_workspace_runs.sql:92 (per run cost limit, daily budget, two attempts), 0002_real_workspace_runs.sql:106 (review by owner, admin, operator or reviewer with a fresh authenticator check)',
   },
 ];
 

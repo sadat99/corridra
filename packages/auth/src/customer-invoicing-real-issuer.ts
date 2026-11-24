@@ -87,8 +87,16 @@ export type IssuerView = {
   // Database names of the fields that are still made up. Their values are never sent.
   madeupFields: string[];
   details: IssuerDetails;
-  // Set by the install step, shown for information only.
-  fixed: { country: string; taxLabel: string; gstRateBps: number; paymentTermsDays: number };
+  // Carried from the version in force, shown for information only. The two "rateWhen" values are the tax rate a save
+  // writes for each GST answer (ADR-092 addendum): null when the screen leaves the rate alone, absent before that install.
+  fixed: {
+    country: string;
+    taxLabel: string;
+    gstRateBps: number;
+    paymentTermsDays: number;
+    rateWhenRegisteredBps?: number | null;
+    rateWhenNotRegisteredBps?: number | null;
+  };
   realInvoicesOpen: boolean;
   synthetic: false;
 };

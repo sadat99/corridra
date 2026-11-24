@@ -6,8 +6,10 @@
 -- The applied line is removed so a later install puts the change back.
 DROP FUNCTION app.real_invoicing_issuer_save(uuid,jsonb);
 DROP FUNCTION app.real_invoicing_issuer_view();
+-- The tax rate rule of 0004 (ADR-092 addendum) belongs to the same two functions, so it goes with them when installed.
+DROP FUNCTION IF EXISTS customer_private.real_invoicing_issuer_rate(customer_private.real_invoicing_entity,boolean);
 DROP FUNCTION customer_private.real_invoicing_issuer_owner(boolean);
 DROP FUNCTION customer_private.real_invoicing_issuer_madeup(customer_private.real_invoicing_entity);
 DROP TABLE customer_private.real_invoicing_issuer_command;
 ALTER TABLE customer_private.real_invoicing_entity DROP COLUMN owner_entered_by;
-DELETE FROM customer_invoicing_real_migrations.applied WHERE name='0003_owner_issuer_details.sql';
+DELETE FROM customer_invoicing_real_migrations.applied WHERE name IN ('0003_owner_issuer_details.sql','0004_issuer_tax_rate.sql');
