@@ -6,7 +6,14 @@ import { WorkspaceControls } from './workspace-controls';
 import { WorkspaceAudit } from './workspace-audit';
 import { Operations } from './operations';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+} from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
 import { RoleNavigation } from '../../components/role-navigation';
 import { WorkspaceAreaBar, panelFor } from '../../components/workspace-area-bar';
@@ -45,6 +52,7 @@ import { useOperatorFlags } from './operator-flags';
 import { deskStatusPlace } from '../../lib/ux/page-pattern';
 import { EvidencePanel } from './evidence-panel';
 import { publishTeamContext } from '../../lib/ux/team-context';
+import { TeamDeskV41Context, publishTeamSwitcher } from '../../lib/ux/team-desk-v41';
 import { forgetDeviceRecents } from '../../lib/ux/palette-recents';
 import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 type RecordRow = OperatorRecordRow;
@@ -421,6 +429,32 @@ function TenantWorkspace({
       setBusy(false);
     }
   }
+  // Toolbar: one guarded way to change workspace, used by the select here and by the one menu v3 draws.
+  function chooseTenant(next: string) {
+    if (
+      edited.current &&
+      !window.confirm(
+        'Switch workspace? Unsaved entries in this workspace will be cleared. Stay here to finish or copy them first.',
+      )
+    )
+      return;
+    switchTenant(next);
+  }
+  const menuV3 = useContext(TeamDeskV41Context);
+  const chooseRef = useRef(chooseTenant);
+  useEffect(() => {
+    chooseRef.current = chooseTenant;
+  });
+  useEffect(() => {
+    if (!menuV3) return;
+    publishTeamSwitcher({
+      workspaces: tenants.map((entry) => ({ id: entry.id, name: entry.name })),
+      current: tenant,
+      busy,
+      choose: (next) => chooseRef.current(next),
+    });
+    return () => publishTeamSwitcher(null);
+  }, [menuV3, tenants, tenant, busy]);
   return (
     <div
       className="ux-workspace-body"
@@ -428,45 +462,39 @@ function TenantWorkspace({
         if ((event.target as HTMLElement).closest('form')) edited.current = true;
       }}
     >
-      <div className="operator-toolbar">
-        <label className="field">
-          Workspace
-          <select
-            id="operator-workspace-select"
-            disabled={busy}
-            value={tenant}
-            onChange={(e) => {
-              if (
-                edited.current &&
-                !window.confirm(
-                  'Switch workspace? Unsaved entries in this workspace will be cleared. Stay here to finish or copy them first.',
-                )
-              )
-                return;
-              switchTenant(e.target.value);
-            }}
-          >
-            {tenants.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        {/* The start page stays one tap away: nothing else on a signed-in staff workspace links to it. On a phone it
-            shows its icon only (the words stay its name), so the three links share one row. */}
-        <Link prefetch={false} className="text-link operator-toolbar-compact" href="/workspace">
-          <OperatorIcon name="grid" />{' '}
-          <span className="operator-toolbar-words">All Workspaces</span>
-        </Link>
-        {/* Staff stay in staff space (ADR-020): the access help every staff role can open is the Authenticator section. */}
-        <Link prefetch={false} className="text-link" href="#workspace-authenticator">
-          <OperatorIcon name="help" /> Sign-In and Access Help
-        </Link>
-        <button className="text-link" disabled={busy} onClick={signOut}>
-          <OperatorIcon name="exit" /> Sign Out
-        </button>
-      </div>
+      {/* Team desk v4.1: the workspace switch is at the top of the menu, and Help and Sign Out are in the header menus. */}
+      {menuV3 ? null : (
+        <div className="operator-toolbar">
+          <label className="field">
+            Workspace
+            <select
+              id="operator-workspace-select"
+              disabled={busy}
+              value={tenant}
+              onChange={(e) => chooseTenant(e.target.value)}
+            >
+              {tenants.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {/* The start page stays one tap away: nothing else on a signed-in staff workspace links to it. On a phone it
+              shows its icon only (the words stay its name), so the three links share one row. */}
+          <Link prefetch={false} className="text-link operator-toolbar-compact" href="/workspace">
+            <OperatorIcon name="grid" />{' '}
+            <span className="operator-toolbar-words">All Workspaces</span>
+          </Link>
+          {/* Staff stay in staff space (ADR-020): the access help every staff role can open is the Authenticator section. */}
+          <Link prefetch={false} className="text-link" href="#workspace-authenticator">
+            <OperatorIcon name="help" /> Sign-In and Access Help
+          </Link>
+          <button className="text-link" disabled={busy} onClick={signOut}>
+            <OperatorIcon name="exit" /> Sign Out
+          </button>
+        </div>
+      )}
       {data &&
         (realWorkspace ? (
           // Team desk v4.1: this line is shown on the Status pages only.
