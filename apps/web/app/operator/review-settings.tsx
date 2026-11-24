@@ -7,6 +7,11 @@ import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback'
 import { DateTimeInput } from '../../components/ux/date-time-input';
 import { readJson, withStepUp } from '../../lib/ux/step-up';
 import { ConnectAiForm } from './connect-ai-form';
+import { StatusBadge } from '../../components/access-state';
+import { ShowMoreList } from '../../components/ux/show-more';
+import { CountryName, countryName } from './country-name';
+import { useOperatorFlags } from './operator-flags';
+import './settings-routes.css';
 type Catalogue = {
   routes: { id: string; origin_market: string; destination_market: string }[];
   packs: {
@@ -78,6 +83,72 @@ const words = (code: string) => {
   return text ? text[0].toUpperCase() + text.slice(1) : code;
 };
 
+const packTones = {
+  DRAFT: 'neutral',
+  TESTING: 'info',
+  LIMITED: 'info',
+  ACTIVE: 'positive',
+  PAUSED: 'caution',
+} as const;
+/**
+ * Team desk v4.1 (unit D17): the routes of the workspace, first on the page, each with the state of its newest
+ * pack. Read only, from the catalogue the page already loads. A route without a pack says so and nothing more:
+ * route and qualification stay two steps (decision 3), so no line here ties one to the other.
+ */
+function RouteList({ catalogue, failed }: { catalogue: Catalogue | null; failed: boolean }) {
+  return (
+    <div className="settings-routes">
+      <h2 id="settings-routes-heading">Routes</h2>
+      {!catalogue ? (
+        <p className="ux-panel-empty">
+          {failed
+            ? 'Routes are unavailable. Refresh reviewed configuration to try again.'
+            : 'Loading routes…'}
+        </p>
+      ) : !catalogue.routes.length ? (
+        <p className="ux-panel-empty">
+          No route yet. Open Create a directional corridor route below to add the first one.
+        </p>
+      ) : (
+        <ShowMoreList limit={5} noun="routes" className="settings-routes-list">
+          {catalogue.routes.map((route) => {
+            const pack = catalogue.packs
+              .filter((item) => item.route_id === route.id)
+              .reduce<Catalogue['packs'][number] | null>(
+                (newest, item) => (!newest || item.version > newest.version ? item : newest),
+                null,
+              );
+            return (
+              <li key={route.id}>
+                <span className="settings-route-name">
+                  <CountryName code={route.origin_market} size="row" />{' '}
+                  <span className="settings-route-to">to</span>{' '}
+                  <CountryName code={route.destination_market} size="row" />
+                </span>
+                <span className="settings-route-pack">
+                  {pack ? (
+                    <>
+                      <StatusBadge
+                        tone={packTones[pack.status as keyof typeof packTones] ?? 'neutral'}
+                      >
+                        {packStatuses.find(([value]) => value === pack.status)?.[1] ??
+                          words(pack.status)}
+                      </StatusBadge>{' '}
+                      <span className="settings-route-version">Pack version {pack.version}</span>
+                    </>
+                  ) : (
+                    <StatusBadge tone="unknown">No pack yet</StatusBadge>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ShowMoreList>
+      )}
+    </div>
+  );
+}
+
 /**
  * Guided "Add route pack" form (CQ-66). The server builds the reviewed pack command with
  * createRoutePack; nobody types JSON. Shown only when CORRIDRA_ROUTE_PACK_FORM is on: the server
@@ -96,6 +167,8 @@ function RoutePackForm({
   onShownChange: (shown: boolean) => void;
 }) {
   const [available, setAvailable] = useState(false);
+  // Team desk v4.1: a route is named by its places, not by their codes. The value sent stays the route id.
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [routeId, setRouteId] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -176,7 +249,9 @@ function RoutePackForm({
               <option value="">Choose a route</option>
               {catalogue.routes.map((route) => (
                 <option key={route.id} value={route.id}>
-                  {route.origin_market} to {route.destination_market}
+                  {deskV41
+                    ? `${countryName(route.origin_market)} to ${countryName(route.destination_market)}`
+                    : `${route.origin_market} to ${route.destination_market}`}
                 </option>
               ))}
             </select>
@@ -262,7 +337,10 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
     [next, setNext] = useState(''),
     [drafts, setDrafts] = useState<Partial<Record<Command, string>>>({}),
     [aiConnectShown, setAiConnectShown] = useState(false),
-    [routePackShown, setRoutePackShown] = useState(false);
+    [routePackShown, setRoutePackShown] = useState(false),
+    [catalogueFailed, setCatalogueFailed] = useState(false);
+  // Team desk v4.1 (unit D17): routes first with their pack state; the page title and purpose line say the rest.
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   // Section numbers follow what is drawn. With Connect AI off they are what they always were (Advanced 04, references 05,
   // whether or not Add route pack is shown as 03); with it on it takes the next number and the later sections move up one
   // only when Add route pack is also shown, so no number repeats.
@@ -294,7 +372,9 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
         if (active) setCatalogue(value);
       })
       .catch((e) => {
-        if (active) setMessage(e.message);
+        if (!active) return;
+        setMessage(e.message);
+        setCatalogueFailed(true);
       });
     return () => {
       active = false;
@@ -339,6 +419,22 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
       setMessage('Enter one valid JSON object. Your draft has been retained.');
     }
   }
+  const settingsHead = (
+    <div className="ux-settings-head">
+      <p>
+        Owner and admin reviews use existing versioned commands. Source, country, currency,
+        permission and authenticator checks still apply. Use only records and actions approved for
+        this workspace.
+      </p>
+      <div className="workspace-links">
+        <a href="#workspace-navigation">Back to workspace sections</a>
+        <a href="#workspace-sources">Find source references</a>
+        <a href="#workspace-authenticator">Confirm your authenticator</a>
+        {role === 'owner' && <a href="#workspace-controls">Workspace switches</a>}
+        {next && <a href={next}>Continue to the related workspace</a>}
+      </div>
+    </div>
+  );
   return (
     <section
       data-operator-workbench
@@ -347,43 +443,38 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
       className="operator-section workspace-panel"
       aria-label="Corridor and policy settings"
     >
-      <PanelHeading
-        title="Corridors and reviewed policies"
-        eyebrow="Settings and access"
-        icon="globe"
-        description="Prepare mission templates, define a route and review the policies that govern its use."
-      />
-      <OperatorWorkbench
-        label="Reviewed configuration sections"
-        sections={[
-          { label: 'Mission templates', heading: 'Prepare commercial mission templates' },
-          { label: 'Directional route', heading: 'Create a directional corridor route' },
-          // Listed only while the Connect AI section is drawn (its switch on), so the panel is otherwise unchanged.
-          ...(aiConnectShown ? [{ label: 'Connect AI', heading: 'Connect an AI Provider' }] : []),
-          {
-            label: 'Source rights and model policies',
-            heading: 'Advanced (developers): versioned policy review',
-          },
-          {
-            label: 'Pinned configuration references',
-            heading: 'Current route packs and definition references',
-          },
-        ]}
-      />
-      <div className="ux-settings-head">
-        <p>
-          Owner and admin reviews use existing versioned commands. Source, country, currency,
-          permission and authenticator checks still apply. Use only records and actions approved for
-          this workspace.
-        </p>
-        <div className="workspace-links">
-          <a href="#workspace-navigation">Back to workspace sections</a>
-          <a href="#workspace-sources">Find source references</a>
-          <a href="#workspace-authenticator">Confirm your authenticator</a>
-          {role === 'owner' && <a href="#workspace-controls">Workspace switches</a>}
-          {next && <a href={next}>Continue to the related workspace</a>}
-        </div>
-      </div>
+      {deskV41 ? (
+        <RouteList catalogue={catalogue} failed={catalogueFailed} />
+      ) : (
+        <>
+          <PanelHeading
+            title="Corridors and reviewed policies"
+            eyebrow="Settings and access"
+            icon="globe"
+            description="Prepare mission templates, define a route and review the policies that govern its use."
+          />
+          <OperatorWorkbench
+            label="Reviewed configuration sections"
+            sections={[
+              { label: 'Mission templates', heading: 'Prepare commercial mission templates' },
+              { label: 'Directional route', heading: 'Create a directional corridor route' },
+              // Listed only while the Connect AI section is drawn (its switch on), so the panel is otherwise unchanged.
+              ...(aiConnectShown
+                ? [{ label: 'Connect AI', heading: 'Connect an AI Provider' }]
+                : []),
+              {
+                label: 'Source rights and model policies',
+                heading: 'Advanced (developers): versioned policy review',
+              },
+              {
+                label: 'Pinned configuration references',
+                heading: 'Current route packs and definition references',
+              },
+            ]}
+          />
+          {settingsHead}
+        </>
+      )}
       <p role="status" aria-live="polite">
         {message}
       </p>
@@ -558,14 +649,16 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
               <ul>
                 {catalogue.routes.map((route) => (
                   <li key={route.id}>
-                    {route.origin_market} → {route.destination_market} · {route.id}
+                    <CountryName code={route.origin_market} /> {deskV41 ? 'to' : '→'}{' '}
+                    <CountryName code={route.destination_market} /> · {route.id}
                   </li>
                 ))}
               </ul>
               <ul>
                 {catalogue.packs.map((p) => (
                   <li key={p.id}>
-                    {p.origin_market} → {p.destination_market} · {p.status} · version {p.version}
+                    <CountryName code={p.origin_market} /> {deskV41 ? 'to' : '→'}{' '}
+                    <CountryName code={p.destination_market} /> · {p.status} · version {p.version}
                     <p>
                       Route: {p.route_id} · Pack: {p.id}
                     </p>
@@ -617,6 +710,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
           )}
         </details>
       </div>
+      {deskV41 ? settingsHead : null}
     </section>
   );
 }
