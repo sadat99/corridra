@@ -120,7 +120,7 @@ const places: Record<DeskPlaceId, { title?: string; purpose: string }> = {
   },
   'supply-dnc': {
     title: 'Do Not Contact',
-    purpose: 'The companies the team must not contact, and the reason for each block.',
+    purpose: 'The companies Corridra must not contact.',
   },
   'supply-mission': {
     title: 'Supply Candidates',

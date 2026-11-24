@@ -420,7 +420,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
     }
   }
   const settingsHead = (
-    <div className="ux-settings-head">
+    <div className={deskV41 ? 'ux-settings-head settings-head-desk' : 'ux-settings-head'}>
       <p>
         Owner and admin reviews use existing versioned commands. Source, country, currency,
         permission and authenticator checks still apply. Use only records and actions approved for

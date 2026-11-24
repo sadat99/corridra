@@ -211,6 +211,7 @@ test.describe('Settings (D17)', () => {
           (link) => `${link.getAttribute('href')} ${link.textContent}`,
         ),
         words: panel.querySelector('.ux-settings-head > p')?.textContent,
+        note: panel.querySelectorAll('.ux-settings-head').length,
         counts: panel.querySelector('.ux-settings-counts')?.textContent,
       }));
     };
@@ -354,6 +355,9 @@ test.describe('Settings (D17)', () => {
     test(`switch on: Settings fits ${width} px and is axe clean`, async ({ page }) => {
       await openWorkspace(page, '/operator/settings', { v41: true, width });
       await expect(settings(page).locator('.settings-routes li')).toHaveCount(3);
+      // The standing note keeps a readable measure on every width (it was a narrow column at 1024 px).
+      const note = await settings(page).locator('.ux-settings-head > p').boundingBox();
+      expect(note!.width).toBeGreaterThanOrEqual(Math.min(width - 96, 400));
       await noSidewaysScroll(page);
       await axeClean(page);
     });
@@ -573,7 +577,7 @@ test.describe('Supply (D19)', () => {
     {
       path: '/operator/supply/do-not-contact',
       title: 'Do Not Contact',
-      purpose: 'The companies the team must not contact, and the reason for each block.',
+      purpose: 'The companies Corridra must not contact.',
     },
     {
       path: `/operator/supply/missions/${fixtureMission}`,
@@ -611,6 +615,17 @@ test.describe('Supply (D19)', () => {
         expect(after.replace(/<dt>Country<\/dt><dd>.*?<\/dd>/, '<dt>Country</dt><dd>ES</dd>')).toBe(
           before,
         );
+      } else if (entry.title === 'Do Not Contact') {
+        // The sentence that is now the purpose line is said once; the rest of the intro stays.
+        const first = 'Companies Corridra must not contact. A block stops';
+        expect(before).toContain(first);
+        expect(
+          after.replace(
+            '<p class="supply-quiet">A block stops',
+            `<p class="supply-quiet">${first}`,
+          ),
+        ).toBe(before);
+        await expect(page.getByText('Companies Corridra must not contact.')).toHaveCount(1);
       } else expect(after).toBe(before);
     });
 

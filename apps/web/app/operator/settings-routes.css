@@ -53,3 +53,13 @@
     flex-basis: 100%;
   }
 }
+/* With the pattern on the standing note and its links close the panel: the note first, then the links, each on
+   the full width (the two-column head squeezed the note into a narrow column at 1024 px). */
+.ux-operator-home .ux-workspace-body .ux-settings-head.settings-head-desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+.ux-operator-home .ux-workspace-body .ux-settings-head.settings-head-desk > p {
+  max-inline-size: 70ch;
+}
