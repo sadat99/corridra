@@ -637,6 +637,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_JOURNEY_MODES',
+    label: 'Journey switcher in the sidebar',
+    line: 'Signed-in customer pages get one control named Journey at the top of the sidebar, with Everything, Sourcing, Organising and Selling. While a journey is chosen, Home, Requests, Meetings and delivered reports show that journey only, each with one line that leads back to Everything. Companies stays whole and says it is shared across all your journeys; saved, shared and members’ report lists stay whole and say they are not sorted by journey, and so does a report whose request no journey claims. A request opened from another journey offers to switch. It also shows a request’s short reference beside its title. It works only when the new signed-in frame (CORRIDRA_UX_SHELLS_V2) and Your Move (CORRIDRA_UX_MOVE) are on as well. It stores one display choice in the browser, reads nothing new and opens no access.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_UX_PROGRAMME',
     label: 'Programme Room',
     line: 'Groups every programme panel into one room per programme. Nothing is removed.',

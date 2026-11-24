@@ -19,6 +19,7 @@ import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { CustomerProgrammes } from '../customer-programmes';
+import { JourneyMismatchNote } from '../../../../components/ux/journey-mismatch-note';
 import { ProgrammeRoomStyles } from '../programme-room-styles';
 import { programmeBack } from '../../frame-copy';
 import '../programme-frame.css';
@@ -74,6 +75,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         )
       }
     >
+      <JourneyMismatchNote family="ORGANISE" subject="programme" />
       {uxSwitchOn('CORRIDRA_UX_PROGRAMME') && <ProgrammeRoomStyles />}
       <CustomerProgrammes
         contextEnabled={customerProgrammeContextEnabled()}

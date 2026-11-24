@@ -25,6 +25,8 @@ export type WorkItem = {
   atKind: 'updated' | 'created';
   /** An existing route for this record. */
   href: string;
+  /** A request's short reference (RQ-000001), carried only while journey modes are on and the list gave one. */
+  reference?: string;
 };
 
 export type WorkList = {

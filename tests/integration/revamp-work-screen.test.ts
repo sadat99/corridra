@@ -357,3 +357,16 @@ describe('the Journey column', () => {
     for (const value of workFilters) expect(html).toContain(`value="${value}"`);
   });
 });
+
+describe('work screen: the kind of each row', () => {
+  it('never reads "draft" (owner, 23 Nov 2026): an unsent guided request is a saved request', async () => {
+    const { kindWords } = await import('../../apps/web/lib/work-items/view');
+    expect(kindWords).toEqual({
+      draft: 'Saved request',
+      request: 'Request',
+      programme: 'Programme',
+      service_request: 'Service request',
+    });
+    for (const words of Object.values(kindWords)) expect(words).not.toMatch(/draft/i);
+  });
+});

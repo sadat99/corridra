@@ -13,6 +13,7 @@ import {
   workStatusWords,
   type WorkFilter,
 } from '../../lib/work-items/view';
+import type { ReactNode } from 'react';
 import type { WorkFamily, WorkItem, WorkList as WorkListData } from '../../lib/work-items/types';
 import { formatDate } from '../../lib/ux/format';
 import { RowLink } from '../../components/ux/row-list';
@@ -76,9 +77,12 @@ export function WorkListView({
   list,
   filter,
   framed = false,
+  showAll,
 }: {
   list: WorkListData;
   filter: WorkFilter;
+  /** Journey modes only: the way back to everything, in place of the Show all link (which the mode would undo). */
+  showAll?: ReactNode;
   /** The page frame already names this list (its tab and title), so the heading is for assistive technology only. */
   framed?: boolean;
 }) {
@@ -148,9 +152,11 @@ export function WorkListView({
           {state === 'filtered-empty' ? (
             <p className="work-note">
               No {workFilterLabels[filter]} work.{' '}
-              <Link prefetch={false} className="text-link" href={here('all')}>
-                Show all
-              </Link>
+              {showAll ?? (
+                <Link prefetch={false} className="text-link" href={here('all')}>
+                  Show all
+                </Link>
+              )}
             </p>
           ) : (
             <WorkRows>
@@ -187,18 +193,21 @@ export async function WorkList({
   filter,
   rooms,
   framed,
+  showAll,
 }: {
   subject: string;
   issuer: string;
   filter: WorkFilter;
   rooms: boolean;
   framed?: boolean;
+  showAll?: ReactNode;
 }) {
   return (
     <WorkListView
       list={await loadWorkItems(subject, issuer, { rooms })}
       filter={filter}
       framed={framed}
+      showAll={showAll}
     />
   );
 }
