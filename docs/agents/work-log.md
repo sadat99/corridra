@@ -5105,3 +5105,35 @@ Open follow-ups, untouched by this PR:
 
 - ADR-090, 091 and 092: each Status line still reads "Proposed 23 November 2026" and `docs/adr/README.md` has no index line for them (read by the scribe on this branch). For the owner or an ADR author.
 - Register drift: `docs/revamp/v4-1-conformance.json` and `docs/documentation-map.md` have no `Document status:` line and no row in `docs/PLAN_STATUS.md`. `docs/agents/conductor/SKILL.md` has no register row; the scribe's read found a `Document status: CURRENT` line on its line 1, where the Guardian review reported none, so that point is left for whoever repairs the register.
+
+## 24 Nov 2026: D1 Begin Qualification under the session purpose (PR 635)
+
+Team desk v4.1 Phase 1, unit D1 (Class A), placed by Guardian 49 (session_0187kU9um92VEoZR8PyZvvmT); builder session_0187kU9tYhPpzbFGqE5xJXLn (Fable 5.2, medium, on the owner's word in the Guardian session 24 Nov 2026: "all builders must be in fable 5.2 medium").
+
+Change: the qualify step in packages/missions writes app.source_record and app.claim under the purpose withTenant resolved for the session, not the purpose the caller sent. In a real workspace the website sends the sample purpose and withTenant swaps the session to the workspace's own, so the old rows were refused (42501, shown as "Access denied"). No RLS rule, migration or grant changed. packages/auth/src/operator-invitation.ts states the workspace purpose explicitly as defence in depth, guarded by to_regprocedure and has_function_privilege so it never refuses an invitation that worked before; both callers accept sample workspaces only, so behaviour is unchanged. packages/auth/src/bootstrap.ts is unchanged (sample workspaces only).
+
+Proof: the two real-workspace qualify tests fail on d7d55c0 with "new row violates row-level security policy for table source_record" and pass on the PR; sample-workspace, other-tenant refusal, retry and invitation tests pass. CI green on the exact head. Review: two independent reviewers and a security review, zero blocking.
+
+Not verified: a signed-in Begin Qualification on the live site. The 11 live missions are untouched; reassigning them stays an owner step.
+
+Follow-up placed: unit D1b (staff inbox, packages/communications/src/inbox.ts, same defect class, found in D1's audit). Open: withTenant accepts any caller purpose other than the sample one and relies on RLS can_access (pre-existing, not made worse).
+
+## 24 Nov 2026: D1b staff inbox under the workspace purpose (PR 637)
+
+Team desk v4.1 Phase 1, unit D1b (Class A), placed by Guardian 49 (session_0187kU9um92VEoZR8PyZvvmT) after D1's audit and two reviewers found the same defect class; builder session_0187kU9uG44XhxQ2ttYSfYWt.
+
+Change: packages/communications/src/inbox.ts, staff branch of run(), resolves the session purpose with the same rule as withTenant (real use on and the sample purpose sent: the workspace's own purpose), skipped for the account-wide inbox with no workspace selected. Before, a staff record into a real workspace's inbox (team and helper invitation notices) was refused ("Workspace access denied"); list and mark never depended on purpose. No RLS rule, migration or grant changed; customer path untouched.
+
+Proof: the real-workspace record test and the purpose-decides case fail on d7d55c0 and pass on the PR; sample, other-tenant, flag-off and no-workspace guards pass. Two independent reviewers and a security review, zero blocking.
+
+Follow-up: the purpose rule now lives in three places (packages/db withTenant, packages/network, packages/communications); one exported helper in packages/db would stop drift.
+
+## 24 Nov 2026: D2 refusal reference and step-up in place (PR 636)
+
+Team desk v4.1 Phase 1, unit D2 (Class B), placed by Guardian 49 (session_0187kU9um92VEoZR8PyZvvmT); builder session_0187kU9uhyGuhJ4TdcrMQ9BR. Merged by Guardian 50.
+
+Change: /api/workspace/[action] answers a database refusal with a fixed sentence that says what to do and ends in a short reference (first eight characters of the correlation id); every error body carries `reference`, and each 403, 409, 503 and 500 leaves one JSON log line with the full correlation id and no message text. One shared table from database code to status and words lives in apps/web/lib/staff-db-error.ts; staffRefusal answers exactly as before. DomainError sentences reach the page word for word; the mission forms add " Quote reference REF." for 403, 409 and 5xx. The queue and mission page ask for the authenticator code in place through the existing withStepUp and StepUpDialog, keep typed values and resend the same command once. No migration, RLS rule or grant changed.
+
+Proof: tests/integration/d2-refusal-reference.test.ts (12 of 17 fail on d7d55c0 for the intended reason) and tests/operator/d2-refusal-reference.spec.ts (6 of 10 fail on d7d55c0: no in-place code check, double submit) pass on the PR. Code review and design audit, one fix round (8d61805) checked by the Guardian, zero open findings. CI green on the exact head.
+
+Follow-up: other /api/workspace screens show the reference for product-written refusals only in JSON, not on the page.

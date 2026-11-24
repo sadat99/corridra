@@ -128,17 +128,30 @@ export class InboxService {
     const db = await this.pool.connect();
     try {
       await db.query('BEGIN');
-      if (who.kind === 'staff')
+      if (who.kind === 'staff') {
+        // The same resolution as the tenant transaction in @corridra/db: a real workspace runs under its own
+        // processing purpose. An account-wide inbox has no selected workspace, so there is nothing to resolve.
+        const purpose =
+          process.env.CORRIDRA_REAL_USE_ENABLED === 'true' &&
+          who.ctx.purpose === 'synthetic_validation' &&
+          who.ctx.tenantId !== ''
+            ? (
+                await db.query<{ purpose: string }>(
+                  'SELECT app.tenant_processing_purpose($1) AS purpose',
+                  [who.ctx.tenantId],
+                )
+              ).rows[0].purpose
+            : who.ctx.purpose;
         await db.query(
           "SELECT set_config('corridra.session_hash',$1,true),set_config('corridra.tenant_id',$2,true),set_config('corridra.purpose',$3,true),set_config('corridra.correlation_id',$4,true),set_config('corridra.causation_id',$4,true)",
           [
             sessionHash(who.ctx.token),
             who.ctx.tenantId,
-            who.ctx.purpose,
+            purpose,
             who.ctx.correlationId ?? randomUUID(),
           ],
         );
-      else
+      } else
         await db.query("SELECT set_config('corridra.customer_proof_hash',$1,true)", [
           who.proofHash,
         ]);
