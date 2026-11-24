@@ -45,7 +45,13 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   expect((await signIn).status()).toBe(200);
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
-  await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(seed.tenantId);
+  // Open the seeded workspace by its address, not through the picker. The server draws the picker before the page's
+  // script takes it over, so a choice made in that moment is lost, and the workspace list has no fixed order, so the
+  // page then stays on whichever workspace happened to come first (KI-65: it was the viewer workspace).
+  const picker = page.getByRole('combobox', { name: 'Workspace', exact: true });
+  await expect(page.getByRole('heading', { name: 'Your workspace.', exact: true })).toBeVisible();
+  await page.goto(`/operator?workspace=${seed.tenantId}`);
+  await expect(picker).toHaveValue(seed.tenantId);
   await openSection(page, 'workspace-navigation');
   await page
     .locator('#workspace-navigation')
@@ -435,8 +441,11 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   }
   // Reload the actual authorized membership list, then enter the restricted workspace.
   await page.reload();
+  await expect(picker.locator(`option[value="${other}"]`)).toHaveCount(1);
   page.once('dialog', (d) => d.accept());
-  await page.getByRole('combobox', { name: 'Workspace', exact: true }).selectOption(other);
+  // By its address, for the same reason as above.
+  await page.goto(`/operator?workspace=${other}`);
+  await expect(picker).toHaveValue(other);
   await openSection(page, 'workspace-navigation');
   await page
     .locator('#workspace-navigation')
