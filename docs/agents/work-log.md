@@ -5105,3 +5105,15 @@ Open follow-ups, untouched by this PR:
 
 - ADR-090, 091 and 092: each Status line still reads "Proposed 23 November 2026" and `docs/adr/README.md` has no index line for them (read by the scribe on this branch). For the owner or an ADR author.
 - Register drift: `docs/revamp/v4-1-conformance.json` and `docs/documentation-map.md` have no `Document status:` line and no row in `docs/PLAN_STATUS.md`. `docs/agents/conductor/SKILL.md` has no register row; the scribe's read found a `Document status: CURRENT` line on its line 1, where the Guardian review reported none, so that point is left for whoever repairs the register.
+
+## 24 Nov 2026: D1 Begin Qualification under the session purpose (PR 635)
+
+Team desk v4.1 Phase 1, unit D1 (Class A), placed by Guardian 49 (session_0187kU9um92VEoZR8PyZvvmT); builder session_0187kU9tYhPpzbFGqE5xJXLn (Fable 5.2, medium, on the owner's word in the Guardian session 24 Nov 2026: "all builders must be in fable 5.2 medium").
+
+Change: the qualify step in packages/missions writes app.source_record and app.claim under the purpose withTenant resolved for the session, not the purpose the caller sent. In a real workspace the website sends the sample purpose and withTenant swaps the session to the workspace's own, so the old rows were refused (42501, shown as "Access denied"). No RLS rule, migration or grant changed. packages/auth/src/operator-invitation.ts states the workspace purpose explicitly as defence in depth, guarded by to_regprocedure and has_function_privilege so it never refuses an invitation that worked before; both callers accept sample workspaces only, so behaviour is unchanged. packages/auth/src/bootstrap.ts is unchanged (sample workspaces only).
+
+Proof: the two real-workspace qualify tests fail on d7d55c0 with "new row violates row-level security policy for table source_record" and pass on the PR; sample-workspace, other-tenant refusal, retry and invitation tests pass. CI green on the exact head. Review: two independent reviewers and a security review, zero blocking.
+
+Not verified: a signed-in Begin Qualification on the live site. The 11 live missions are untouched; reassigning them stays an owner step.
+
+Follow-up placed: unit D1b (staff inbox, packages/communications/src/inbox.ts, same defect class, found in D1's audit). Open: withTenant accepts any caller purpose other than the sample one and relies on RLS can_access (pre-existing, not made worse).

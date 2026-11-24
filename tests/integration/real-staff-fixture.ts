@@ -52,8 +52,8 @@ export async function realStaffFixture(issuer: string, secret: string) {
     { scan: unexpected },
   );
   const research = new CounterpartyService(f.runtime);
-  // A real mission arrives through a staff programme import, as in production, then moves to targeting.
-  async function mission(label = 'Machinery participant') {
+  // A real mission as it arrives through a staff programme import, as in production: still a draft at version 1.
+  async function draft(label = 'Machinery participant') {
     const programme = await delivery.programme(ctx, {
       commandId: randomUUID(),
       name: 'Supplier visits ' + randomUUID().slice(0, 8),
@@ -89,7 +89,11 @@ export async function realStaffFixture(issuer: string, secret: string) {
       counts: preview.counts,
       acknowledged: true,
     });
-    const missionId = confirmed.rows[0].missionId as string;
+    return confirmed.rows[0].missionId as string;
+  }
+  // The same mission moved on to targeting.
+  async function mission(label = 'Machinery participant') {
+    const missionId = await draft(label);
     for (const [i, action] of ['qualify', 'activate', 'targeting'].entries())
       await missions.command(ctx, {
         id: missionId,
@@ -177,5 +181,16 @@ export async function realStaffFixture(issuer: string, secret: string) {
       claimId: claim.id as string,
     };
   }
-  return { f, ctx, intakeTenantId, missions, delivery, evidence, research, mission, target };
+  return {
+    f,
+    ctx,
+    intakeTenantId,
+    missions,
+    delivery,
+    evidence,
+    research,
+    draft,
+    mission,
+    target,
+  };
 }
