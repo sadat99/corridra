@@ -5127,3 +5127,13 @@ Change: packages/communications/src/inbox.ts, staff branch of run(), resolves th
 Proof: the real-workspace record test and the purpose-decides case fail on d7d55c0 and pass on the PR; sample, other-tenant, flag-off and no-workspace guards pass. Two independent reviewers and a security review, zero blocking.
 
 Follow-up: the purpose rule now lives in three places (packages/db withTenant, packages/network, packages/communications); one exported helper in packages/db would stop drift.
+
+## 24 Nov 2026: D2 refusal reference and step-up in place (PR 636)
+
+Team desk v4.1 Phase 1, unit D2 (Class B), placed by Guardian 49 (session_0187kU9um92VEoZR8PyZvvmT); builder session_0187kU9uhyGuhJ4TdcrMQ9BR. Merged by Guardian 50.
+
+Change: /api/workspace/[action] answers a database refusal with a fixed sentence that says what to do and ends in a short reference (first eight characters of the correlation id); every error body carries `reference`, and each 403, 409, 503 and 500 leaves one JSON log line with the full correlation id and no message text. One shared table from database code to status and words lives in apps/web/lib/staff-db-error.ts; staffRefusal answers exactly as before. DomainError sentences reach the page word for word; the mission forms add " Quote reference REF." for 403, 409 and 5xx. The queue and mission page ask for the authenticator code in place through the existing withStepUp and StepUpDialog, keep typed values and resend the same command once. No migration, RLS rule or grant changed.
+
+Proof: tests/integration/d2-refusal-reference.test.ts (12 of 17 fail on d7d55c0 for the intended reason) and tests/operator/d2-refusal-reference.spec.ts (6 of 10 fail on d7d55c0: no in-place code check, double submit) pass on the PR. Code review and design audit, one fix round (8d61805) checked by the Guardian, zero open findings. CI green on the exact head.
+
+Follow-up: other /api/workspace screens show the reference for product-written refusals only in JSON, not on the page.
