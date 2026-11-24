@@ -455,3 +455,41 @@ test('no menu jump on load: a workspace page keeps the room of the switch before
   );
   await expect(mission.locator('.ux-team-menu-switch')).toHaveCount(0);
 });
+
+// Owner rule, 24 Nov 2026: "Avoid unnecessary repetition of navigation links on a single screen". The menu is the
+// one global path, so each destination has one link in it, and what moved into it is not also drawn in the page.
+test('one link per destination: no address twice in the menu, and the page does not repeat what moved into it', async ({
+  page,
+}) => {
+  const hrefs = (scope: string) =>
+    page
+      .locator(`${scope} a[href]`)
+      .evaluateAll((links) => links.map((link) => link.getAttribute('href') ?? ''));
+  for (const query of [
+    'v41=on&supply=on&reports=on&role=owner',
+    'v41=on&supply=on&role=owner',
+    'v41=on&supply=on&role=admin',
+    'v41=on&supply=on&role=operator',
+    'v41=on&supply=on&role=reviewer',
+    'v41=on&supply=on&role=viewer',
+    'v41=on&supply=on&role=owner&urls=off',
+  ]) {
+    await open(page, query);
+    const menu = await hrefs('#workspace-navigation');
+    expect(menu.length).toBeGreaterThan(5);
+    expect(new Set(menu).size, `no address twice in the menu (${query})`).toBe(menu.length);
+  }
+  // With the workspace mounted: the switch, All Workspaces, Help and Sign Out are no longer in the page, so the
+  // page holds no second link to the list of workspaces, no second workspace select and no second tab row.
+  await answerWorkspace(page);
+  await open(page, 'v41=on&mount=on&supply=on', { width: 1440 }, '/operator/missions');
+  await expect(page.locator('select#operator-workspace-select')).toHaveCount(1);
+  expect((await hrefs('.ux-leftnav-page')).filter((href) => href === '/workspace')).toEqual([]);
+  expect(
+    (await hrefs('#workspace-navigation')).filter((href) => href === '/workspace'),
+  ).toHaveLength(1);
+  await expect(
+    page.locator('.ux-leftnav-page').getByRole('button', { name: 'Sign Out' }),
+  ).toHaveCount(0);
+  await expect(page.locator('nav.ux-team-second')).toHaveCount(0);
+});
