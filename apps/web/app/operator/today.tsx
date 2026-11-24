@@ -1001,9 +1001,9 @@ function DecisionRegion({
     // Follow-ups and meetings to rebook are handled in one place, so they share one tile and one link.
     today.work !== null && (queues.followUps !== 0 || queues.reschedule !== 0) ? (
       <li key="meetings" data-tone={queues.followUps ? 'late' : undefined}>
-        <a href="#workspace-meetings">
+        <a className="ux-today41-pairs" href="#workspace-meetings">
           {queues.followUps ? (
-            <>
+            <span className="ux-today41-pair">
               <strong>{followUpsCapped ? `${queues.followUps}+` : queues.followUps}</strong>
               <span>
                 {plural(
@@ -1012,15 +1012,15 @@ function DecisionRegion({
                   'follow-ups past their due date',
                 )}
               </span>
-            </>
+            </span>
           ) : null}
           {queues.reschedule ? (
-            <>
+            <span className="ux-today41-pair">
               <strong>{meetingsCapped ? `${queues.reschedule}+` : queues.reschedule}</strong>
               <span>
                 {plural(queues.reschedule, 'meeting needs a new time', 'meetings need a new time')}
               </span>
-            </>
+            </span>
           ) : null}
         </a>
       </li>

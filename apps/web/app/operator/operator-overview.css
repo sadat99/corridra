@@ -1935,6 +1935,18 @@
   margin: 0;
   box-shadow: 0 0 0 1px var(--line);
 }
+/* The meetings tile holds two counts for one place: side by side, each a number over its words, one link. */
+.ux-operator-home .ux-today41 .ux-today41-queues a.ux-today41-pairs {
+  flex-flow: row wrap;
+  gap: var(--space-1) var(--space-6);
+}
+.ux-operator-home .ux-today41 .ux-today41-queues .ux-today41-pair {
+  display: flex;
+  flex: 1 1 8rem;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
 /* The queue tiles follow the region's own width, in rem so larger text is counted: two to a row in a narrow region,
    one to a row in a very narrow one or with large text. */
 @container (max-width: 48rem) {
@@ -1949,6 +1961,10 @@
 }
 /* From 768 px the pill and its date share one line and the column heading names the date. */
 @media (min-width: 768px) {
+  /* Blocks 24 px apart at every width, so the page as it opens fits one desktop screen. */
+  .ux-operator-home .ux-today41 {
+    gap: var(--space-6);
+  }
   .ux-today41-table .ux-today41-when {
     display: inline;
     margin: 0;

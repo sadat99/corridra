@@ -174,7 +174,8 @@ async function open(page: Page, scenario: Scenario, query = '/?v41=on') {
     return route.fulfill({ json: { items, nextAfter: null } });
   });
   await page.goto(origin + query);
-  await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toBeVisible();
+  // Off, the Start card's heading ends in a full stop; on, the closed row is titled without one.
+  await expect(page.getByRole('heading', { name: /^Start with a mission\.?$/ })).toBeVisible();
 }
 const decide = (page: Page) => page.getByRole('region', { name: 'Needs your decision' });
 const waiting = (page: Page) => page.getByRole('region', { name: 'Waiting on others' });
@@ -504,8 +505,15 @@ test('switch on: no address is linked twice in the page body, and no menu place 
     '#problem-report-queue',
     '#workspace-settings',
   ]);
-  // Menu places are not repeated as plain links in the body.
-  await expect(page.locator('main a[href="#workspace-missions"]')).toHaveCount(0);
+  // The one link to Missions in the body is the action that starts a mission, inside the closed Start row.
+  await expect(page.locator('main a[href="#workspace-missions"]')).toHaveCount(1);
+  await expect(
+    page
+      .getByRole('region', { name: 'Start with a mission' })
+      .getByRole('link', { name: 'Start a Mission' }),
+  ).toHaveAttribute('href', '#workspace-missions');
+  // The shortcuts and administration links that repeat menu places are gone from the body.
+  await expect(page.locator('main nav.workspace-navigation')).toHaveCount(0);
 });
 
 test('switch off and on at 320, 390, 768, 1024, 1440 and 1920: off is unchanged, on has no sideways scroll, 44 px targets and is axe clean', async ({
@@ -594,7 +602,8 @@ test('switch on: page length as it opens, in screens (docs/agents/ui-direction.m
     await page.unrouteAll();
   }
   console.log(`Team Today v4.1 page length in screens: ${JSON.stringify(lengths)}`);
-  // A phone may run to two screens.
+  // Desktop fits one screen; a phone may run to two.
+  expect(lengths['1440x900']).toBeLessThanOrEqual(1);
   expect(lengths['390x844']).toBeLessThanOrEqual(2);
 });
 

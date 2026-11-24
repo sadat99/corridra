@@ -76,6 +76,8 @@ export async function startPagePatternFixture(root = resolve('.')) {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    // Flag images are served by the site, not bundled: a workspace tree that draws them still builds here.
+    external: ['/flags/*'],
     write: false,
     outdir: 'out',
     loader: { '.css': 'css', '.woff2': 'empty' },

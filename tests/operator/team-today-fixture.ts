@@ -94,7 +94,7 @@ export async function startTodayFixture(root = resolve('.')) {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
-    // The flag pictures are static files the fixture serves itself (see /flags/ below), not modules to bundle.
+    // Flag images are served by the site, not bundled: a workspace tree that draws them still builds here.
     external: ['/flags/*'],
     write: false,
     outdir: 'out',
