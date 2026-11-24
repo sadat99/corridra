@@ -1,5 +1,5 @@
 'use client';
-import { SubTabs, openSubTab } from '../../components/ux/sub-tabs';
+import { SubTabs, openSubTab, type SubTab } from '../../components/ux/sub-tabs';
 import { PhoneFold } from '../../components/phone-fold';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import {
@@ -10,6 +10,10 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import type { ImportRow } from '@corridra/delivery/import';
 import { DeliveryExperience } from './delivery-experience';
+import { EmptyState } from '../../components/ux/empty-state';
+import { takeMissionHint } from './mission-hint';
+import { useOperatorFlags } from './operator-flags';
+import './report-list.css';
 import { DateTimeInput } from '../../components/ux/date-time-input';
 import { bodyNotAvailable } from '../../lib/body-access';
 import { formatDateTime } from '../../lib/ux/format';
@@ -99,6 +103,9 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     >(null),
     [privateLink, setPrivateLink] = useState(''),
     [signInNeeded, setSignInNeeded] = useState(false);
+  // Team desk v4.1 (unit D13): the one list of reports, and the mission a mission page asked for.
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
+  const [missionsLoaded, setMissionsLoaded] = useState(false);
   const [missions, setMissions] = useState<MissionChoice[]>([]),
     [missionId, setMissionId] = useState(''),
     [missionOffset, setMissionOffset] = useState(0),
@@ -181,6 +188,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
             ),
           );
           setMissionTotal(value.total);
+          setMissionsLoaded(true);
         }
       })
       .catch((e) => {
@@ -208,6 +216,17 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       active = false;
     };
   }, [endpoint, missionId, revision]);
+  // D13: a link from a mission page names a mission (`?mission=<id>`). It is only a hint to choose from what
+  // this page already lists: the mission is chosen when it is among the missions read here, once per page load.
+  // An id that is malformed, unknown or from another workspace chooses nothing and says nothing.
+  useEffect(() => {
+    if (!deskV41 || !data || !missionsLoaded) return;
+    const asked = takeMissionHint('workspace-delivery', window.location);
+    if (!asked) return;
+    const listed =
+      data.participants.some((p) => p.mission_id === asked) || missions.some((m) => m.id === asked);
+    if (listed) setMissionId((current) => current || asked);
+  }, [deskV41, data, missionsLoaded, missions]);
   async function action(action: string, input: Record<string, unknown>) {
     const key = `${action}:${JSON.stringify(input)}`;
     let commandId = pending.current.get(key);
@@ -414,36 +433,52 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   const manages = ['owner', 'admin', 'operator'].includes(data.role),
     shares = ['owner', 'admin'].includes(data.role);
   const publications = data.publications.filter((p) => !p.revoked);
-  return (
-    <section
-      data-operator-workbench
-      className="delivery-ops detail-card"
-      ref={formRootRef}
-      onChangeCapture={onChangeCapture}
-      onResetCapture={onResetCapture}
-    >
-      <h2>Client and programme delivery</h2>
-      <OperatorWorkbench
-        label="Publication and reporting sections"
-        sections={[
-          { label: 'Programmes', heading: 'Create programme' },
-          { label: 'Participants', heading: 'Participants' },
-          { label: 'Publication', heading: 'Review client publication' },
-          { label: 'Private scope', heading: 'Share approved view' },
-          { label: 'Access and requests', heading: 'Access and requests' },
-        ]}
-      />
-      <p>
-        {realCustomerInput()
-          ? 'Create a programme, review every intake row, then share only approved mission information. Use the participant contact details supplied for this work.'
-          : 'Create a programme, review every intake row, then share only approved mission information. This is a sample workspace, so participant addresses must be made up and end in .invalid.'}
-      </p>
-      <p role="status" aria-label="Delivery status">
-        {message}
-      </p>
-      <button disabled={busy} onClick={() => void act(async () => {})}>
-        Refresh Delivery
-      </button>
+  // D13: every report read for this scope, withdrawn ones included, or only those of the mission in view.
+  const reports = missionId
+    ? data.publications.filter((p) => p.mission_id === missionId)
+    : data.publications;
+  const missionName =
+    data.participants.find((p) => p.mission_id === missionId)?.company ?? chosen?.company;
+  const reportsTab: SubTab = {
+    id: 'reports',
+    label: `Reports (${data.publications.length})`,
+    panel: (
+      <>
+        <h3>Reports</h3>
+        {missionId && (
+          <p className="ux-report-scope">
+            Showing reports for {missionName ?? 'the chosen mission'}.{' '}
+            <button type="button" className="text-link" onClick={() => setMissionId('')}>
+              Show All Missions
+            </button>
+          </p>
+        )}
+        {reports.length === 0 ? (
+          <EmptyState icon="document">
+            {missionId
+              ? 'No report has been approved for this mission yet. Approve one in the Publication tab.'
+              : 'No report has been approved yet. Approve one in the Publication tab.'}
+          </EmptyState>
+        ) : (
+          <ul className="ux-report-list" aria-label="Reports">
+            {reports.map((p) => (
+              <li key={p.id}>
+                <span>
+                  {p.copy.company}: {p.copy.title}
+                </span>
+                <span className="ux-status" data-tone={p.revoked ? 'unknown' : 'positive'}>
+                  {p.revoked ? 'Withdrawn' : 'Approved'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    ),
+  };
+  // Team desk v4.1: these belong to the Programmes tab; the Reports list follows the header.
+  const programmeControls = (
+    <>
       <label className="operator-select-field">
         Programme
         <select
@@ -483,14 +518,49 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
           Next Programmes
         </button>
       </p>
+    </>
+  );
+  return (
+    <section
+      data-operator-workbench
+      className="delivery-ops detail-card"
+      ref={formRootRef}
+      onChangeCapture={onChangeCapture}
+      onResetCapture={onResetCapture}
+    >
+      <h2>Client and programme delivery</h2>
+      <OperatorWorkbench
+        label="Publication and reporting sections"
+        sections={[
+          { label: 'Programmes', heading: 'Create programme' },
+          { label: 'Participants', heading: 'Participants' },
+          { label: 'Publication', heading: 'Review client publication' },
+          { label: 'Private scope', heading: 'Share approved view' },
+          { label: 'Access and requests', heading: 'Access and requests' },
+        ]}
+      />
+      <p>
+        {realCustomerInput()
+          ? 'Create a programme, review every intake row, then share only approved mission information. Use the participant contact details supplied for this work.'
+          : 'Create a programme, review every intake row, then share only approved mission information. This is a sample workspace, so participant addresses must be made up and end in .invalid.'}
+      </p>
+      <p role="status" aria-label="Delivery status">
+        {message}
+      </p>
+      <button disabled={busy} onClick={() => void act(async () => {})}>
+        Refresh Delivery
+      </button>
+      {deskV41 ? null : programmeControls}
       <SubTabs
         label="Delivery sections"
         tabs={[
+          ...(deskV41 ? [reportsTab] : []),
           {
             id: 'programmes',
             label: 'Programmes',
             panel: (
               <>
+                {deskV41 ? programmeControls : null}
                 {manages && (
                   <details>
                     <summary>Create programme</summary>
