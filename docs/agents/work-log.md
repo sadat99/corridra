@@ -5117,3 +5117,13 @@ Proof: the two real-workspace qualify tests fail on d7d55c0 with "new row violat
 Not verified: a signed-in Begin Qualification on the live site. The 11 live missions are untouched; reassigning them stays an owner step.
 
 Follow-up placed: unit D1b (staff inbox, packages/communications/src/inbox.ts, same defect class, found in D1's audit). Open: withTenant accepts any caller purpose other than the sample one and relies on RLS can_access (pre-existing, not made worse).
+
+## 24 Nov 2026: D1b staff inbox under the workspace purpose (PR 637)
+
+Team desk v4.1 Phase 1, unit D1b (Class A), placed by Guardian 49 (session_0187kU9um92VEoZR8PyZvvmT) after D1's audit and two reviewers found the same defect class; builder session_0187kU9uG44XhxQ2ttYSfYWt.
+
+Change: packages/communications/src/inbox.ts, staff branch of run(), resolves the session purpose with the same rule as withTenant (real use on and the sample purpose sent: the workspace's own purpose), skipped for the account-wide inbox with no workspace selected. Before, a staff record into a real workspace's inbox (team and helper invitation notices) was refused ("Workspace access denied"); list and mark never depended on purpose. No RLS rule, migration or grant changed; customer path untouched.
+
+Proof: the real-workspace record test and the purpose-decides case fail on d7d55c0 and pass on the PR; sample, other-tenant, flag-off and no-workspace guards pass. Two independent reviewers and a security review, zero blocking.
+
+Follow-up: the purpose rule now lives in three places (packages/db withTenant, packages/network, packages/communications); one exported helper in packages/db would stop drift.
