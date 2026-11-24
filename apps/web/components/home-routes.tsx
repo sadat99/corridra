@@ -137,7 +137,6 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
             width={533}
             height={511}
             unoptimized
-            priority
           />
         </div>
         <fieldset className="tr-doors">

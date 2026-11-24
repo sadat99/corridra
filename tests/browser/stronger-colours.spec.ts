@@ -179,11 +179,9 @@ test('the choice is never sent to a server: no cookie and no request carries it'
 // November 2026) the hero band holds the headline only; the doors and the first action sit below it on the light
 // surface and are measured there.
 const navyRegions = '.guide-footer, .guide-band, .tr-hero, .tr-navy, .tr-reaction, .tr-result';
-const navyEdges = [
-  '.tr-hero .primary-link',
-  '.tr-navy .primary-link',
-  '.guide-footer .guide-footer-actions .primary-link',
-];
+const navyEdges = ['.tr-navy .primary-link', '.guide-footer .guide-footer-actions .primary-link'];
+// The home's first action left the navy band with the doors (UI/UX.v4.1 L4). It is still measured, where it now is.
+const heroPrimary = '#hero .tr-start .primary-link';
 
 for (const way of ['the saved choice', 'the device setting'] as const) {
   for (const width of widths) {
@@ -270,6 +268,12 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
     expect(edges.map((row) => row.element).join('\n')).toMatch(/primary-link/);
     expect(weakEdges(edges)).toEqual([]);
     for (const row of edges) expect(row.backdrop, row.element).toBe('rgb(20 36 56)');
+    // The hero's first action, on the light surface: the same two limits, and it is really the element measured.
+    const { edges: heroEdges } = await measureColours(page, '#hero', [heroPrimary]);
+    expect(heroEdges).toHaveLength(1);
+    expect(heroEdges[0].element).toMatch(/primary-link/);
+    expect(weakEdges(heroEdges)).toEqual([]);
+    expect(heroEdges[0].backdrop).not.toBe('rgb(20 36 56)');
   });
 }
 
@@ -280,7 +284,7 @@ test('without the white edge the same controls are only 1.91 to 1 on navy, so th
   await open(page, '/', 1440);
   await page.addStyleTag({
     content:
-      "html[data-contrast='more'] :is(.tr-hero .primary-link, .tr-navy .primary-link, .guide-footer .guide-footer-actions .primary-link) { border-color: var(--action) !important; }",
+      "html[data-contrast='more'] :is(.tr-navy .primary-link, .guide-footer .guide-footer-actions .primary-link) { border-color: var(--action) !important; }",
   });
   const { edges } = await measureColours(page, navyRegions, navyEdges);
   expect(weakEdges(edges)).toHaveLength(edges.length);

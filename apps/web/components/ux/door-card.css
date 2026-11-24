@@ -174,8 +174,10 @@
   background: var(--surface-1);
   color: var(--text-1);
 }
+/* Hover darkens the edge in the neutral text colour, never the selected colour, so a hovered door does not read as
+   the chosen one. */
 .ux-door.is-light label:hover {
-  border-color: var(--selected);
+  border-color: var(--text-2);
 }
 .ux-door.is-light :is(.ux-door-side, .ux-door-route, .ux-door-text) {
   color: var(--text-2);
