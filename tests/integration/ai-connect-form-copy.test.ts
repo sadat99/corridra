@@ -89,6 +89,8 @@ const allLines = () => [
   changeFact('OpenAI', 3),
   savedText('OpenAI', 1),
   savedText('OpenAI', 4),
+  savedText('OpenAI', 1, true),
+  savedText('OpenAI', 4, true),
   reviewSummary('OpenAI', 'gpt-test', 2),
   fallbackOption('Google', 'gemini-test', 2),
   progressLine(0),
@@ -163,10 +165,26 @@ describe('the owner-approved words, exactly', () => {
       'This is the first version of the OpenAI connection. No route pack is pinned to an earlier version.',
     );
     expect(words.beforeSave.moneyFact).toBe('No. This saves settings only. No money moves.');
-    expect(words.beforeSave.runReal).toBe(
-      'No. This save runs no AI and does not switch it on. No AI run is possible in a real workspace yet.',
+    // A real workspace has two states since ADR-091. Off: no run can start. On: the save still runs nothing, and the
+    // sentence names what a later run must pass.
+    expect(words.beforeSave.runRealOff).toBe(
+      'No. This save runs no AI and does not switch it on. AI is off for this workspace, so no AI run can start here.',
+    );
+    expect(words.beforeSave.runRealOn).toBe(
+      'No. This save runs no AI and does not switch it on. AI is already on for this workspace. A later run can use this connection only if the route pack of the request names it and the evaluation status is Approved provider. A run is refused if a cited statement holds an email address or a phone number. The cost cap and the daily budget still apply. A person must review every result.',
     );
     expect(words.beforeSave.runSample).toBe('No. This save runs no AI and does not switch it on.');
+    for (const fact of [words.beforeSave.runRealOff, words.beforeSave.runRealOn])
+      expect(fact.startsWith(words.beforeSave.runSample)).toBe(true);
+    expect(JSON.stringify(words.beforeSave)).not.toContain(
+      'No AI run is possible in a real workspace yet',
+    );
+    // The on-state sentence uses the form's own names for the evaluation status and the two limits.
+    expect(words.beforeSave.runRealOn).toContain(words.evaluation.APPROVED_PROVIDER.label);
+    const form = read('apps/web/app/operator/connect-ai-form.tsx');
+    expect(form).toContain('words.beforeSave.runRealOn');
+    expect(form).toContain('words.beforeSave.runRealOff');
+    expect(form).not.toMatch(/beforeSave\.runReal(?!On|Off)/);
   });
   it('names owners and admins as the people who can connect', () => {
     expect(words.deniedHeading).toBe('Only owners and admins can do this');
@@ -177,6 +195,23 @@ describe('the owner-approved words, exactly', () => {
       'Version 2 of the Google connection is saved. AI is not switched on. This save ran no AI and moved no money. Route packs pinned to version 1 no longer use AI.',
     );
     expect(savedText('Google', 1)).not.toContain('Route packs');
+    expect(savedText('Google', 1)).toBe(
+      'Version 1 of the Google connection is saved. AI is not switched on. This save ran no AI and moved no money.',
+    );
+    // With AI already on for the workspace the page never says it is off (ADR-091).
+    expect(words.success.headingOn).toBe('Saved, AI was already on');
+    expect(savedText('Google', 2, true)).toBe(
+      'Version 2 of the Google connection is saved. AI was already on for this workspace, and this save did not change that. This save ran no AI and moved no money. A run starts only when a person starts one, and it must pass the checks. Route packs pinned to version 1 no longer use AI.',
+    );
+    expect(savedText('Google', 1, true)).toBe(
+      'Version 1 of the Google connection is saved. AI was already on for this workspace, and this save did not change that. This save ran no AI and moved no money. A run starts only when a person starts one, and it must pass the checks.',
+    );
+    for (const text of [savedText('Google', 1, true), savedText('Google', 2, true)])
+      expect(text).not.toContain('not switched on');
+    expect(savedText('Google', 2, false)).toBe(savedText('Google', 2));
+    const page = read('apps/web/app/operator/connect-ai-form.tsx');
+    expect(page).toContain('savedText(saved.provider, saved.version, saved.aiOn)');
+    expect(page).toContain('saved.aiOn ? words.success.headingOn : words.success.heading');
   });
   it('names a step for each of the nine and a label for each of the twelve tasks', () => {
     expect(stepNames).toHaveLength(9);
@@ -339,35 +374,55 @@ describe('Before You Save and the switch-off page', () => {
     expect(aiConnectionRows.map((r) => r.id)).toEqual(['change', 'money', 'run']);
     expect(aiConnectionRows.map((r) => r.icon)).toEqual(['document', 'shield', 'lock']);
     for (const row of aiConnectionRows) expect(row.sourceNote.length, row.id).toBeGreaterThan(20);
+    // The run row cites the record that opened AI in real workspaces and both states, and every file it names exists.
+    const run = aiConnectionRows[2].sourceNote;
+    expect(run).toContain('docs/adr/0091-ai-assistance-in-real-workspaces.md:Decision 5');
+    expect(run).toContain('0002_real_workspace_runs.sql:51-54 (app.ai_real_runs_open');
+    expect(run).toContain('0002_real_workspace_runs.sql:111-116 (app.part4_enabled');
+    expect(run).not.toContain('sample-only');
+    for (const path of run.match(/(?:docs|packages)\/[\w./-]+\.(?:sql|ts|md)/g) ?? [])
+      expect(read(path).length, path).toBeGreaterThan(0);
+    const step = read(
+      'packages/db/ai-model-policy-real-migrations/0002_real_workspace_runs.sql',
+    ).split('\n');
+    expect(step[50]).toContain('CREATE FUNCTION app.ai_real_runs_open()');
+    expect(step[110]).toContain('CREATE OR REPLACE FUNCTION app.part4_enabled');
+    expect(step[68]).toContain('APPROVED_PROVIDER');
+    expect(step[71]).toContain('may be a phone number');
+    expect(step[91]).toContain('daily_budget_minor');
+    expect(step[105]).toContain('AI review authority required');
     expect(aiConnectionRecordedFact.sourceNote.length).toBeGreaterThan(20);
     expect(Object.keys(beforeSendRows).sort()).toEqual(['evidenceReply', 'recipientReply']);
   });
   it('draws the three rows and the recorded line with no control', async () => {
     const { BeforeSend } = await loadWeb('components/before-send.tsx');
-    const html = render(
-      ce(BeforeSend, {
-        surface: 'aiConnection',
-        heading: words.beforeSave.heading,
-        rows: {
-          change: { question: words.beforeSave.change, fact: changeFact('OpenAI', 1) },
-          money: { question: words.beforeSave.money, fact: words.beforeSave.moneyFact },
-          run: { question: words.beforeSave.run, fact: words.beforeSave.runReal },
-        },
-        recorded: words.beforeSave.recorded,
-      }),
-    );
-    expect(html).toContain('aria-label="Before you save"');
-    expect(html.match(/class="before-send-row"/g)).toHaveLength(3);
-    for (const line of [
-      words.beforeSave.change,
-      words.beforeSave.money,
-      words.beforeSave.run,
-      words.beforeSave.moneyFact,
-      words.beforeSave.runReal,
-      words.beforeSave.recorded,
-    ])
-      expect(html).toContain(line);
-    expect(html).not.toMatch(/<(button|input|select|textarea|a)\b|onclick|style=/i);
+    // Both real workspace states (ADR-091) draw the same three rows; only the run fact differs.
+    for (const runFact of [words.beforeSave.runRealOff, words.beforeSave.runRealOn]) {
+      const html = render(
+        ce(BeforeSend, {
+          surface: 'aiConnection',
+          heading: words.beforeSave.heading,
+          rows: {
+            change: { question: words.beforeSave.change, fact: changeFact('OpenAI', 1) },
+            money: { question: words.beforeSave.money, fact: words.beforeSave.moneyFact },
+            run: { question: words.beforeSave.run, fact: runFact },
+          },
+          recorded: words.beforeSave.recorded,
+        }),
+      );
+      expect(html).toContain('aria-label="Before you save"');
+      expect(html.match(/class="before-send-row"/g)).toHaveLength(3);
+      for (const line of [
+        words.beforeSave.change,
+        words.beforeSave.money,
+        words.beforeSave.run,
+        words.beforeSave.moneyFact,
+        runFact,
+        words.beforeSave.recorded,
+      ])
+        expect(html).toContain(line);
+      expect(html).not.toMatch(/<(button|input|select|textarea|a)\b|onclick|style=/i);
+    }
   });
   it('draws nothing before the read answers, so with the switch off the panel is what it was', async () => {
     const { ConnectAiForm } = await loadWeb('app/operator/connect-ai-form.tsx');
