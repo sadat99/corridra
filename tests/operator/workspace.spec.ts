@@ -480,7 +480,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(research.getByRole('status')).toHaveText('Research saved.');
   await research
     .getByLabel('Shortlist mission')
-    .selectOption({ label: 'Browser Mission Test Company · ACTIVE' });
+    .selectOption({ label: 'Browser Mission Test Company · Active' });
   const targetCard = research.locator('.research-evidence').filter({
     has: page.getByRole('heading', { name: 'Synthetic Browser Distributor A', exact: true }),
   });
@@ -3040,7 +3040,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await expect(reviewerPage.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
     await openSection(reviewerPage, 'workspace-network');
     const networkPanel = reviewerPage
-      .getByRole('region', { name: 'Execution network' })
+      .getByRole('region', { name: 'Corridra Network' })
       .locator('article')
       .filter({ hasText: 'Review only the disclosed synthetic machine capacity statement.' });
     // The task list starts closed behind its summary (L21): open it first.
@@ -3078,7 +3078,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     // CQ-59: the message now appears next to the form that caused it (scoped feedback).
     await expect(
       reviewerPage
-        .getByRole('region', { name: 'Execution network' })
+        .getByRole('region', { name: 'Corridra Network' })
         .getByText(/Receipt not confirmed\./)
         .first(),
     ).toBeVisible();

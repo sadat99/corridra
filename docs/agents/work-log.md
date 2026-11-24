@@ -5137,3 +5137,13 @@ Change: /api/workspace/[action] answers a database refusal with a fixed sentence
 Proof: tests/integration/d2-refusal-reference.test.ts (12 of 17 fail on d7d55c0 for the intended reason) and tests/operator/d2-refusal-reference.spec.ts (6 of 10 fail on d7d55c0: no in-place code check, double submit) pass on the PR. Code review and design audit, one fix round (8d61805) checked by the Guardian, zero open findings. CI green on the exact head.
 
 Follow-up: other /api/workspace screens show the reference for product-written refusals only in JSON, not on the page.
+
+## 24 Nov 2026: D2b desk words and order (PR 638)
+
+Team desk v4.1 Phase 1, unit D2b (Class B), placed by Guardian 49 (session_0187kU9um92VEoZR8PyZvvmT); builder session_0187kU9tueUXFHMbYbAEbJWM. Merged by Guardian 50; last unit of Phase 1.
+
+Change: the shortlist chooser shows "Company · plain stage label" through the existing stageLabel, never the stored status code; the network screen says helper and assigned work instead of contributor and Execution Work, and its region is named "Corridra Network" (the nav label in workspace-navigation.ts stays "Execution network", follow-up); invitations say "set a work password"; the country list is sorted by displayed name after hydration, codes and stored values unchanged. Copy and order only: handlers, field names, payloads, /contributor addresses and kind 'contributor' unchanged.
+
+Proof: the new shortlist test, tests/operator/d2b-country-options.spec.ts and the helper-word assertions fail on d7d55c0 and pass on the PR. Design audit PASS with two should-fix items, both applied; code review, zero findings. CI green on the exact head.
+
+Follow-up: operations.tsx and workspace-controls.tsx still say Execution network or contributor; the reference-picker fallback says 'Contributor'; long select labels wrap.

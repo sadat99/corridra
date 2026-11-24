@@ -111,8 +111,8 @@ const labels: Record<string, string> = {
 const pickerFields: Record<string, { kind: PickerKind; label: string; hint: string }> = {
   principalId: {
     kind: 'contributor',
-    label: 'Contributor',
-    hint: 'People who accepted a contributor invitation in this workspace.',
+    label: 'Helper',
+    hint: 'People who accepted a helper invitation in this workspace.',
   },
   eligibilitySourceId: {
     kind: 'source',
@@ -292,8 +292,7 @@ export function ExecutionNetwork({
       } catch {
         show(
           'success',
-          receipt +
-            ' The list did not refresh. Refresh execution work instead of submitting again.',
+          receipt + ' The list did not refresh. Refresh assigned work instead of submitting again.',
         );
       }
     } catch (e) {
@@ -410,12 +409,12 @@ export function ExecutionNetwork({
     <section
       className="detail-card ux-governance-panel ux-network"
       data-operator-workbench
-      aria-label="Execution network"
+      aria-label="Corridra Network"
     >
       <header className="ux-network-heading">
         <div>
           <p className="label">CORRIDRA NETWORK</p>
-          <h2>Commercial execution work</h2>
+          <h2>Assigned work</h2>
           <p>Invite the right person. Define the work. Review the evidence.</p>
         </div>
         <span className="ux-network-state">
@@ -464,7 +463,7 @@ export function ExecutionNetwork({
         </aside>
       )}
       <OperatorWorkbench
-        label="Execution work sections"
+        label="Assigned work sections"
         sections={[
           { label: 'Tasks and decisions', heading: 'Current disclosed tasks' },
           {
@@ -473,7 +472,7 @@ export function ExecutionNetwork({
           },
           ...(admin
             ? [
-                { label: 'Contributor invitations', heading: 'Invite a contributor' },
+                { label: 'Helper invitations', heading: 'Invite a helper' },
                 {
                   label: 'Eligibility and status',
                   heading: 'Current private work profiles',
@@ -513,7 +512,7 @@ export function ExecutionNetwork({
                         .finally(() => setBusy(false));
                     }}
                   >
-                    Refresh Execution Work
+                    Refresh Assigned Work
                   </button>
                   <a href="#workspace-missions">Open missions</a>
                   <a href="#workspace-sources">Open sources and claims</a>
@@ -923,14 +922,14 @@ export function ExecutionNetwork({
             ? [
                 {
                   id: 'network-invite',
-                  label: 'Invite a Contributor',
+                  label: 'Invite a Helper',
                   panel: (
                     <>
                       <ContributorInvitations tenant={tenant} />
                       <HelperInterestList tenant={tenant} role={role} />
                       {admin && (
                         <details>
-                          <summary>Review an invited contributor profile</summary>
+                          <summary>Review an invited helper profile</summary>
                           <p>
                             The identity must already be invited with an authenticator. This review
                             creates no tenant membership. Choose the eligibility evidence from your

@@ -158,9 +158,9 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
     }
   }
   return (
-    <section className="detail-card ux-network-invitations" aria-label="Contributor invitations">
+    <section className="detail-card ux-network-invitations" aria-label="Helper invitations">
       <p className="label">01 · INVITE</p>
-      <h3>Invite a contributor</h3>
+      <h3>Invite a helper</h3>
       <p role="status" aria-live="polite">
         {message}
       </p>
@@ -178,7 +178,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
           </a>
         </div>
       )}
-      {!data && !readError && <p>Loading contributor invitations…</p>}
+      {!data && !readError && <p>Loading helper invitations…</p>}
       {data?.installed && !data.enabled && (
         <p>
           Invitations are paused in this workspace. You can prepare the fields below, but cannot
@@ -196,27 +196,27 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
         className="ux-invitation-body"
       >
         {data && !data.installed && (
-          <p>Contributor invitation setup awaits the protected Network installation.</p>
+          <p>Helper invitation setup awaits the protected Network installation.</p>
         )}
         <p>
           We send the invitation to their Corridra inbox and by email when email is switched on.
-          They verify their email, set a contributor password and set up an authenticator. An
-          invitation gives no team membership and no task.
+          They verify their email, set a work password and set up an authenticator. An invitation
+          gives no team membership and no task.
         </p>
         <div className="ux-invitation-flow">
           <form className="operator-form" method="post" onSubmit={(event) => void save(event)}>
             <fieldset disabled={busy}>
               <legend>New reviewed invitation</legend>
               <label className="field">
-                Contributor name
+                Helper name
                 <input name="name" required maxLength={80} autoComplete="off" />
               </label>
               <label className="field">
-                Contributor email
+                Helper email
                 <input name="email" type="email" required maxLength={254} autoComplete="off" />
               </label>
               <label className="field">
-                Contributor operating country
+                Helper operating country
                 <select
                   name="operatingCountry"
                   required
@@ -247,7 +247,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                 className="primary-link"
                 disabled={busy || !data?.enabled || !data.countries.length}
               >
-                {busy ? 'Sending…' : 'Send Contributor Invitation'}
+                {busy ? 'Sending…' : 'Send Helper Invitation'}
               </button>
               <ActionFeedback
                 scope="contributor-invite"
@@ -261,7 +261,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
             className="ux-invitation-steps"
             fold="always"
           >
-            <aside className="ux-invitation-guide" aria-label="Contributor onboarding steps">
+            <aside className="ux-invitation-guide" aria-label="Helper onboarding steps">
               <h4>What happens next</h4>
               <ol>
                 <li>
@@ -291,7 +291,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
         {data?.installed && !data.countries.length && (
           <p role="alert">
             No operating country is available in your reviewed scope. Ask your workspace owner to
-            review your country access before inviting a contributor.
+            review your country access before inviting a helper.
           </p>
         )}
         <div className="workspace-links ux-invitation-links">
@@ -299,13 +299,10 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
             className="text-link"
             type="button"
             onClick={() =>
-              void copy(
-                new URL('/contributor/setup', location.origin).href,
-                'Contributor setup link',
-              )
+              void copy(new URL('/contributor/setup', location.origin).href, 'Helper setup link')
             }
           >
-            Copy Contributor Setup Link
+            Copy Helper Setup Link
           </button>
           <button
             className="text-link"
@@ -358,9 +355,9 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
                     <button
                       className="text-link"
                       type="button"
-                      onClick={() => void copy(item.principalId, 'Contributor reference')}
+                      onClick={() => void copy(item.principalId, 'Helper reference')}
                     >
-                      Copy Contributor Reference for Eligibility Review
+                      Copy Helper Reference for Eligibility Review
                     </button>
                     {['AWAITING_SETUP', 'EXPIRED'].includes(item.state) && (
                       <form
