@@ -12,8 +12,11 @@ import { SubmissionFailure } from '../../components/retained-submission';
 import { displayDate } from '@corridra/domain/locale';
 import { formatDate } from '../../lib/ux/format';
 import { ownerName, type Owner } from './missions';
+import { useOperatorFlags } from './operator-flags';
+import './desk-helpers-status-team.css';
 import { missionHref } from './[section]/[missionId]/mission-labels';
 import { placeName } from '../account/request-words';
+import { RouteLine, placeMark } from '../../components/ux/flag';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { formatMoney, currency } from '@corridra/domain/opportunities';
 import {
@@ -251,6 +254,7 @@ export function Operations({
     ? section
     : 'ops-dashboard';
   const admin = ['owner', 'admin'].includes(role);
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [dashboard, setDashboard] = useState<Dashboard | null>(null),
     [controls, setControls] = useState<Controls | null>(null),
     [catalogue, setCatalogue] = useState<Catalogue | null>(null),
@@ -518,7 +522,9 @@ export function Operations({
       onResetCapture={onResetCapture}
     >
       <div className="ops-heading">
-        <h2>Global operations</h2>
+        {/* Team desk v4.1 (D15): the page title is Status and the segment names the page, so this heading
+            stays for screen readers only and the page keeps its outline. */}
+        <h2 className={deskV41 ? 'sr-only' : undefined}>Global operations</h2>
         <button
           className="button button-secondary"
           disabled={busy}
@@ -751,9 +757,29 @@ export function Operations({
                                   {typeof m.origin_market === 'string' &&
                                   m.origin_market &&
                                   typeof m.destination_market === 'string' &&
-                                  m.destination_market
-                                    ? `${placeName(m.origin_market)} to ${placeName(m.destination_market)}`
-                                    : 'No route yet'}
+                                  m.destination_market ? (
+                                    deskV41 ? (
+                                      // Team desk v4.1 (D15, UI/UX.v4.1 L1): each place has its mark
+                                      // before its name; a place with no flag shows its name only.
+                                      <RouteLine
+                                        from={{
+                                          name: placeName(m.origin_market),
+                                          mark: placeMark(m.origin_market),
+                                        }}
+                                        to={[
+                                          {
+                                            name: placeName(m.destination_market),
+                                            mark: placeMark(m.destination_market),
+                                          },
+                                        ]}
+                                        word="to"
+                                      />
+                                    ) : (
+                                      `${placeName(m.origin_market)} to ${placeName(m.destination_market)}`
+                                    )
+                                  ) : (
+                                    'No route yet'
+                                  )}
                                   {' · '}Owner:{' '}
                                   {ownerName(
                                     dashboard.owners,
@@ -1763,9 +1789,13 @@ export function Operations({
             },
           ]}
         />
-        <a className="text-link" href="#workspace-navigation">
-          Return to workspace navigation
-        </a>
+        {/* Team desk v4.1 (D15): the menu and the segments are the way around; the list this link opens
+            is not on the page with the team shell on. */}
+        {deskV41 ? null : (
+          <a className="text-link" href="#workspace-navigation">
+            Return to workspace navigation
+          </a>
+        )}
       </section>
     </section>
   );
