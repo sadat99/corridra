@@ -874,13 +874,18 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select {
   min-width: 0;
   min-height: 44px;
   margin: 0;
-  padding-inline: var(--space-3) var(--space-8);
+  padding-inline: var(--space-3) var(--space-2);
   border: 1px solid var(--ac-border-strong);
   border-radius: var(--radius-sm);
   background-color: var(--ac-paper);
   color: var(--ac-ink);
-  font-size: var(--text-sm);
+  font-family: inherit;
+  font-size: var(--text-base);
   font-weight: 600;
+}
+/* The room of the label line, the gap and the 44 px control, kept while the workspace list is on its way. */
+nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch[data-pending='true'] {
+  min-height: calc(var(--text-xs) * 1.6 + var(--space-1) + 44px);
 }
 nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
   outline: 3px solid var(--ac-paper);

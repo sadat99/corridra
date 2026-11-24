@@ -416,3 +416,34 @@ test('switch on, workspace mounted: no second tab bar, no toolbar; the switch is
   expect(asked).toBe(1);
   await expect(select).toHaveValue(secondTenant);
 });
+
+test('no menu jump on load: a workspace page keeps the room of the switch before the workspace has published it', async ({
+  page,
+}) => {
+  const headingTop = () =>
+    page
+      .locator('#workspace-navigation .ux-team-menu-heading')
+      .first()
+      .evaluate((el) => Math.round(el.getBoundingClientRect().top));
+  // The workspace never mounts here, so this is the menu as the server render and the first paint draw it.
+  const pending = await open(page, 'v41=on', { width: 1440 }, '/operator/missions');
+  await expect(pending.locator('.ux-team-menu-switch[data-pending]')).toHaveCount(1);
+  await expect(pending.locator('select')).toHaveCount(0);
+  const before = await headingTop();
+  await answerWorkspace(page);
+  const loaded = await open(page, 'v41=on&mount=on', { width: 1440 }, '/operator/missions');
+  await expect(loaded.locator('select#operator-workspace-select')).toHaveCount(1);
+  await expect(loaded.locator('.ux-team-menu-switch[data-pending]')).toHaveCount(0);
+  expect(await headingTop()).toBe(before);
+  const select = loaded.locator('select#operator-workspace-select');
+  // A form control at 16 px in the menu's own face, with its full name as a tooltip when it is cut short.
+  expect(await select.evaluate((el) => getComputedStyle(el).fontSize)).toBe('16px');
+  expect(await select.evaluate((el) => getComputedStyle(el).fontFamily)).toBe(
+    await loaded.evaluate((el) => getComputedStyle(el).fontFamily),
+  );
+  await expect(select).toHaveAttribute('title', 'Synthetic request operations');
+  // A team page that never mounts the workspace keeps no empty room.
+  await page.unrouteAll();
+  const other = await open(page, 'v41=on&supply=on', { width: 1440 }, '/operator/supply');
+  await expect(other.locator('.ux-team-menu-switch')).toHaveCount(0);
+});

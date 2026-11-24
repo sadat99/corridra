@@ -209,6 +209,7 @@ function TeamMenuV3({
               id="operator-workspace-select"
               disabled={switcher.busy}
               value={switcher.current}
+              title={switcher.workspaces.find((w) => w.id === switcher.current)?.name}
               onChange={(event) => switcher.choose(event.target.value)}
             >
               {switcher.workspaces.map((entry) => (
@@ -218,7 +219,11 @@ function TeamMenuV3({
               ))}
             </select>
           </div>
-        ) : null}
+        ) : plain ? null : (
+          // A workspace page whose workspace has not published its list yet (the server render and the first
+          // paint): the room the control takes is kept, so the menu below does not move when it arrives.
+          <div className="ux-team-menu-switch" data-pending="true" aria-hidden="true" />
+        )}
         <a href="/workspace" title="All Workspaces">
           <OperatorIcon name="grid" />
           <span>{english(locale, 'All Workspaces')}</span>
