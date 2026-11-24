@@ -85,8 +85,8 @@ test('switch on: four groups, every item one plain link, no expander and no numb
   expect(await href('Today')).toBe(`/operator${w}`);
   expect(await href('Missions')).toBe(`/operator/missions${w}`);
   expect(await href('Meetings')).toBe(`/operator/meetings${w}`);
-  // Report a Problem is offered in this fixture address (reports=on): Inbox opens on the Problem reports tab.
-  expect(await href('Inbox')).toBe(`/operator/settings${w}&tab=settings-reports`);
+  // Unit D18: Inbox is a page of its own; it opens on its first list.
+  expect(await href('Inbox')).toBe(`/operator/inbox${w}`);
   expect(await href('Companies')).toBe(`/operator/research${w}`);
   expect(await href('Helpers')).toBe(`/operator/network${w}`);
   expect(await href('Supply')).toBe(`/operator/supply${w}`);
@@ -107,9 +107,7 @@ test('switch on, section addresses off: the old # links, workspace kept', async 
   const href = (name: string) =>
     sidebar.getByRole('link', { name, exact: true }).getAttribute('href');
   expect(await href('Missions')).toBe(`/operator?workspace=${fixtureTenant}#workspace-missions`);
-  expect(await href('Inbox')).toBe(
-    `/operator?workspace=${fixtureTenant}&tab=settings-erasure#workspace-settings`,
-  );
+  expect(await href('Inbox')).toBe(`/operator/inbox?workspace=${fixtureTenant}`);
 });
 
 test('each role sees only what it may open; Supply only while its pages exist', async ({
@@ -180,9 +178,11 @@ test('the lit item follows the address: a segment lights its item, a queue tab l
   expect(await lit('/operator/supply')).toEqual(['Supply', 'page']);
   expect(await lit('/operator/supply/missions/abc')).toEqual(['Supply', 'true']);
   expect(await lit('/operator/settings')).toEqual(['Settings', 'page']);
-  expect(await lit('/operator/settings?tab=settings-erasure')).toEqual(['Inbox', 'page']);
+  expect(await lit('/operator/inbox')).toEqual(['Inbox', 'page']);
+  expect(await lit('/operator/inbox?tab=erasure')).toEqual(['Inbox', 'page']);
+  // An old address of a queue inside Settings still lights Inbox (the workspace sends it on to the Inbox page).
+  expect(await lit('/operator/settings?tab=settings-erasure')).toEqual(['Inbox', 'true']);
   expect(await lit('/operator#workspace-commercial')).toEqual(['Money', 'page']);
-  // Report a Problem is not offered here, so Inbox's own address is the erasure tab; another queue tab is inside it.
   expect(await lit('/operator/settings?tab=settings-reports')).toEqual(['Inbox', 'true']);
   // A tab chosen on the page changes ?tab= without a page load; the menu follows it.
   await page.evaluate(() => {

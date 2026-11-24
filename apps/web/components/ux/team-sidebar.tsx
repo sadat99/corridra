@@ -15,8 +15,8 @@ import { translate } from '../../lib/i18n/messages';
 import { subscribeToHash } from '../../lib/address-store';
 import { sectionForSlug } from '../../lib/operator-urls';
 import { currentTeamSection } from '../../lib/ux/shells';
+import { inboxPath } from '../../lib/ux/team-inbox';
 import {
-  inboxLeadTab,
   itemForPlace,
   menuGroupsFor,
   menuItemForAddress,
@@ -165,7 +165,7 @@ function TeamMenuV3({
 }: {
   urls: boolean;
   supply: boolean;
-  /** Report a Problem is offered: Inbox then opens on the Problem reports tab. */
+  /** Report a Problem is offered (the Inbox page then has its Problem reports list). */
   problemReports: boolean;
 }) {
   const language = useLanguage();
@@ -253,7 +253,7 @@ function TeamMenuV3({
                   item.special === 'supply'
                     ? pathname === supplyPath
                     : item.special === 'inbox'
-                      ? new URLSearchParams(search).get('tab') === inboxLeadTab(options)
+                      ? pathname === inboxPath
                       : lead === place && !/^\/operator\/[^/]+\/[^/]+/.test(pathname);
                 const current = lit !== item.key ? undefined : own ? 'page' : 'true';
                 return (

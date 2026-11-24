@@ -375,9 +375,8 @@ test.describe('Settings (D17)', () => {
   test('switch on: no address is linked twice on the Settings page', async ({ page }) => {
     await openWorkspace(page, '/operator/settings', { v41: true });
     await expect(settings(page).locator('.settings-routes li')).toHaveCount(3);
-    // The old second row of links (nav.ux-team-second) is hidden with the switch on by unit D3, inside
-    // team-second-level.tsx; until that unit is in, it is left out here.
-    const hrefs = await noRepeatedLinks(page, 'main#main a[href]:not(nav.ux-team-second a)');
+    const hrefs = await noRepeatedLinks(page);
+    await expect(page.locator('main#main nav.ux-team-second')).toHaveCount(0);
     // No "Back to" link and no link to a menu place inside the Settings panel.
     expect(
       await settings(page)
@@ -439,6 +438,13 @@ test.describe('Inbox (D18)', () => {
     await expect(page.locator('main#main nav.ux-desk-segments')).toHaveCount(0);
     await expect(page.locator('main#main nav.ux-team-second')).toHaveCount(0);
     await expect(tabs.nth(0)).toHaveAttribute('aria-selected', 'true');
+    // The menu (unit D3) leads here and lights Inbox as the page in view, with no number beside it.
+    const menu = page.locator('#workspace-navigation');
+    const item = menu.getByRole('link', { name: 'Inbox', exact: true });
+    await expect(item).toHaveAttribute('href', `/operator/inbox?workspace=${fixtureTenant}`);
+    await expect(item).toHaveAttribute('aria-current', 'page');
+    await expect(menu.locator('[aria-current]')).toHaveCount(1);
+    expect(await menu.innerText()).not.toMatch(/\d/);
     // The list in view is open under its tab, and the page opens at the top.
     await expect(page.locator('#problem-report-queue')).toHaveAttribute('open', '');
     await expect(page.getByRole('button', { name: 'Load Problem Reports' })).toBeVisible();
@@ -456,9 +462,9 @@ test.describe('Inbox (D18)', () => {
     for (const part of [
       heading(page),
       page.getByRole('tablist', { name: 'Inbox lists' }),
-      page.locator('.ux-team-sidebar, nav[aria-label="Team"]').first(),
+      page.locator('#workspace-navigation'),
     ])
-      if (await part.count()) expect(await part.innerText()).not.toMatch(/\d/);
+      expect(await part.innerText()).not.toMatch(/\d/);
     // The lists work as they did: Load reads the list and its own figures follow.
     await page.getByRole('button', { name: 'Load Problem Reports' }).click();
     await expect(page.getByText('RP-000001')).toBeVisible();

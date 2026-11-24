@@ -114,7 +114,7 @@ export async function startP5cFixture(root = resolve('.')) {
         <LanguageProvider offered={[{code:'en',draft:false}]}>
           <div className="site-shell">
             <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
-            <TeamFrame urls ownerPage={ownerPage} problemReports={flag('reports') !== 'off'}>
+            <TeamFrame urls ownerPage={ownerPage} problemReports={flag('reports') !== 'off'} deskV41={v41} supply>
               {page}
             </TeamFrame>
             <SiteFooterPlace realUse={false} shells/>
