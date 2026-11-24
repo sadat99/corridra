@@ -205,7 +205,7 @@ test('the drawer lists the five choices, then Sign In, Start a Request and Help 
   expect(await small(page)).toEqual([]);
 });
 
-test('the language sheet lists each language in its own script with its code, and says six of seven are drafts', async ({
+test('the language sheet lists each language in its own script with its code, and carries no translation note', async ({
   page,
 }) => {
   await open(page, 390);
@@ -226,9 +226,10 @@ test('the language sheet lists each language in its own script with its code, an
     await expect(
       sheet.getByRole('button', { name: new RegExp(`${code}\\s*${name}`) }),
     ).toBeVisible();
-  await expect(
-    sheet.getByText('Six of seven are draft translations. Native review pending.'),
-  ).toBeVisible();
+  // Owner, 23 November 2026: a translated page carries no note at all. Every language here is offered as unreviewed,
+  // the case that used to add "Six of seven are draft translations. Native review pending." and a "draft" word.
+  await expect(sheet.getByText(/draft|native review|translation/i)).toHaveCount(0);
+  for (const row of await rows.all()) expect(await row.locator('small').count()).toBe(0);
   // The sheet sits at the bottom of the window.
   const box = (await sheet.boundingBox())!;
   await expect
