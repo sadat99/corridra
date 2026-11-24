@@ -162,6 +162,20 @@ const job = {
   description: 'Invented sourcing job',
   version: 1,
 };
+// The scoped read behind the Replies tab, empty: that tab belongs to another unit and is only walked here.
+const experience = {
+  organisations: [],
+  contexts: [],
+  agenda: [],
+  requirements: [],
+  targets: [],
+  targetOutreach: null,
+  quotations: [],
+  links: [],
+  rfqs: [],
+  disclosures: [],
+  responses: [],
+};
 type Answer = { status: number; json: unknown; delay?: number };
 const saved: Answer = { status: 201, json: { ok: true } };
 const stepUp: Answer = {
@@ -180,6 +194,8 @@ async function open(
   const sent: { path: string; body: Record<string, unknown> }[] = [];
   const codes: string[] = [];
   const reads: string[] = [];
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -222,15 +238,37 @@ async function open(
                 assessments: [],
               }
             : url.pathname === '/api/workspace/commercial-mission'
-              ? { assignments: [], quotations: [], targets: [] }
-              : {};
+              ? {
+                  role: shape.role ?? 'owner',
+                  mission: { id: mission, version: 3, created_at: '2026-11-17T07:00:00Z' },
+                  assignments: [],
+                  requirements: [],
+                  assessments: [],
+                  rfqs: [],
+                  quotations: [],
+                  decisions: [],
+                  schedules: [],
+                  meetings: [],
+                  targets: [],
+                  owners: [],
+                  comparison: [],
+                }
+              : url.pathname === '/api/workspace/delivery' && url.searchParams.get('action')
+                ? experience
+                : url.pathname === '/api/workspace/delivery'
+                  ? { role: shape.role ?? 'owner', participants: [], publications: [], owners: [] }
+                  : url.pathname === '/api/workspace/meetings'
+                    ? { meetings: [], meetingsTotal: 0, next: null }
+                    : url.pathname === '/api/workspace/shortlist'
+                      ? { targets: [], total: 0 }
+                      : {};
     return route.fulfill({ json });
   });
   await page.goto(`${origin}/?desk=${desk ? 'on' : 'off'}${moves ? '&moves=on' : ''}`);
   await expect(
     page.getByRole('heading', { level: 2, name: 'Invented Machinery Co' }),
   ).toBeVisible();
-  return { sent, codes, reads };
+  return { sent, codes, reads, errors };
 }
 
 const next = (page: Page) => page.getByRole('region', { name: 'Next step' });
@@ -740,6 +778,106 @@ test('D7 on a phone: the reply, route and step dialogs all keep their one action
     version: 1,
     reason: 'Invented reason for the route',
   });
+});
+
+// Owner rule, 24 Nov 2026: no navigation link twice on one screen. With the switch on, every tab of the mission
+// page is walked and every a[href] under <main> is collected: no address appears twice, the list of missions is
+// reached by the one crumb only, and a place the menu already holds (Meetings, Reports) is named in words, not
+// linked again. Named exceptions: none on the tabs this unit owns. The Companies and Quotes tabs keep one link
+// each that opens a section on this mission (the address carries the mission); they belong to the unit that
+// builds those tabs and are only checked here for not repeating.
+const tabNames = [
+  'Overview',
+  'Requirements',
+  'Companies',
+  'Quotes',
+  'Meetings',
+  'Delivery',
+  'Replies',
+  'History',
+] as const;
+const hrefs = (page: Page) =>
+  page
+    .locator('main a[href]')
+    .evaluateAll((links) =>
+      links.map((link) => (link as HTMLAnchorElement).getAttribute('href') ?? ''),
+    );
+const missionsList = `/operator?workspace=${tenant}#workspace-missions`;
+
+test('D6 on: no navigation address appears twice on any tab, and the menu places are not linked again', async ({
+  page,
+}) => {
+  const { errors } = await open(page, true);
+  await expect(page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link')).toHaveText([
+    'Missions',
+  ]);
+  for (const name of tabNames) {
+    await page.getByRole('tab', { name, exact: true }).click();
+    expect(errors, name).toEqual([]);
+    await expect(page.getByRole('tabpanel')).toBeVisible();
+    expect(errors, name).toEqual([]);
+    // The tab's own reads have settled before the links are collected.
+    await page.waitForLoadState('networkidle');
+    const found = await hrefs(page);
+    expect(errors, name).toEqual([]);
+    expect(
+      found.filter((href, index) => found.indexOf(href) !== index),
+      name,
+    ).toEqual([]);
+    expect(
+      found.filter((href) => href === missionsList),
+      name,
+    ).toHaveLength(1);
+    // A bare menu place (a section address with no mission in it) is never linked from the page body.
+    expect(
+      found.filter(
+        (href) => href !== missionsList && /#workspace-/.test(href) && !/[?&]mission=/.test(href),
+      ),
+      name,
+    ).toEqual([]);
+  }
+  await page.getByRole('tab', { name: 'Meetings', exact: true }).click();
+  await expect(page.locator('[data-menu-place="meetings"]')).toHaveText(
+    'Schedule and record meetings under Meetings in the menu.',
+  );
+  await page.getByRole('tab', { name: 'Delivery', exact: true }).click();
+  await expect(page.locator('[data-menu-place="delivery"]')).toHaveText(
+    'Write, approve and share a report under Reports in the menu.',
+  );
+});
+
+test('D6 on: a mission that cannot be read keeps the one crumb and adds no second link to the list', async ({
+  page,
+}) => {
+  await page.route('**/api/**', (route) =>
+    route.fulfill({ status: 404, json: { error: 'Mission not found' } }),
+  );
+  await page.goto(`${origin}/?desk=on`);
+  await expect(page.getByRole('alert')).toHaveText('Mission not found');
+  expect(await hrefs(page)).toEqual([missionsList]);
+  await expect(page.getByRole('link', { name: 'Back to all missions' })).toHaveCount(0);
+});
+
+test('D6 off: the links of the page are the ones it always had', async ({ page }) => {
+  await open(page, false);
+  await expect(page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link')).toHaveText([
+    'All missions',
+  ]);
+  await page.getByRole('tab', { name: 'Meetings', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Introductions and meetings' })).toHaveAttribute(
+    'href',
+    `/operator?workspace=${tenant}#workspace-meetings`,
+  );
+  await page.getByRole('tab', { name: 'Delivery', exact: true }).click();
+  await expect(
+    page.getByRole('link', { name: 'Write, approve and share a report' }),
+  ).toHaveAttribute('href', `/operator?workspace=${tenant}#workspace-delivery`);
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+  await page.route('**/api/**', (route) =>
+    route.fulfill({ status: 404, json: { error: 'Mission not found' } }),
+  );
+  await page.goto(`${origin}/?desk=off`);
+  await expect(page.getByRole('link', { name: 'Back to all missions' })).toBeVisible();
 });
 
 // Page length on the Overview tab with disclosures closed, off and on, in this fixture (no team shell around

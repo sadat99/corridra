@@ -177,10 +177,13 @@ export function MissionPage({
   if (!data)
     return (
       <div className="mission-page">
+        {desk && <MissionCrumb tenant={tenant} workspaceName={workspaceName} />}
         <p role={failure ? 'alert' : 'status'}>{failure || 'Loading the mission…'}</p>
-        <a className="text-link" href={sectionHref(tenant, 'missions')}>
-          Back to all missions
-        </a>
+        {!desk && (
+          <a className="text-link" href={sectionHref(tenant, 'missions')}>
+            Back to all missions
+          </a>
+        )}
       </div>
     );
   const m = data.missions[0]!;
@@ -195,12 +198,16 @@ export function MissionPage({
   );
   return (
     <div className="mission-page">
-      <nav aria-label="Breadcrumb">
-        <a className="text-link" href={sectionHref(tenant, 'missions')}>
-          All missions
-        </a>{' '}
-        · {workspaceName}
-      </nav>
+      {desk ? (
+        <MissionCrumb tenant={tenant} workspaceName={workspaceName} />
+      ) : (
+        <nav aria-label="Breadcrumb">
+          <a className="text-link" href={sectionHref(tenant, 'missions')}>
+            All missions
+          </a>{' '}
+          · {workspaceName}
+        </nav>
+      )}
       <header className="mission-page-summary">
         <h2>{m.brief.company}</h2>
         <p>
@@ -710,6 +717,47 @@ function useRead<T>(url: string, revision = 0) {
   return { value, error };
 }
 
+/**
+ * Team desk v4.1 (owner rule, 24 Nov 2026: no navigation link twice on one screen): the mission page is one
+ * level under Missions, so it has one crumb, and that crumb is the page's only link to the list. It stands in
+ * every state of the page, so no "Back to" link repeats it.
+ */
+function MissionCrumb({ tenant, workspaceName }: { tenant: string; workspaceName: string }) {
+  return (
+    <nav aria-label="Breadcrumb">
+      <a className="text-link" href={sectionHref(tenant, 'missions')}>
+        Missions
+      </a>{' '}
+      · {workspaceName}
+    </nav>
+  );
+}
+
+/**
+ * Where the work of a tab is done when that place is in the menu. On the team desk v4.1 the menu is the one
+ * path to a place, so the tab names the place in words; off, it is the link it always was.
+ */
+function MenuPlace({
+  tenant,
+  slug,
+  label,
+  words,
+}: {
+  tenant: string;
+  slug: string;
+  label: string;
+  words: string;
+}) {
+  const { teamDeskV41 } = useOperatorFlags();
+  return teamDeskV41 ? (
+    <p className="guide-hint" data-menu-place={slug}>
+      {words}
+    </p>
+  ) : (
+    <SectionLink tenant={tenant} slug={slug} label={label} />
+  );
+}
+
 function Loading({ error, children }: { error: string; children?: ReactNode }) {
   return <p role={error ? 'alert' : 'status'}>{error || children || 'Loading…'}</p>;
 }
@@ -988,7 +1036,12 @@ function Meetings({ tenant, missionId }: { tenant: string; missionId: string }) 
       ) : (
         <p>No meetings for this mission yet.</p>
       )}
-      <SectionLink tenant={tenant} slug="meetings" label="Introductions and meetings" />
+      <MenuPlace
+        tenant={tenant}
+        slug="meetings"
+        label="Introductions and meetings"
+        words="Schedule and record meetings under Meetings in the menu."
+      />
     </>
   );
 }
@@ -1030,7 +1083,12 @@ function Delivery({ tenant, missionId }: { tenant: string; missionId: string }) 
       ) : (
         <p>No reports approved for this mission yet.</p>
       )}
-      <SectionLink tenant={tenant} slug="delivery" label="Write, approve and share a report" />
+      <MenuPlace
+        tenant={tenant}
+        slug="delivery"
+        label="Write, approve and share a report"
+        words="Write, approve and share a report under Reports in the menu."
+      />
     </>
   );
 }
