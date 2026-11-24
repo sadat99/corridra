@@ -503,6 +503,31 @@ for (const width of [320, 390, 768, 1440]) {
   });
 }
 
+// KI-65: a tab that becomes, or stops being, the current one takes its colours at once. With a colour transition a
+// contrast check that lands inside those 160 ms reads white on a half-faded fill (seen as 4.13 to 1 in a full run).
+test('the current tab of the customer navigation changes colour at once, with no transition', async ({
+  page,
+}) => {
+  await open(page, 'full');
+  const running = await page.evaluate(() => {
+    const tabs = Array.from(document.querySelectorAll<HTMLElement>('nav.guide-tabs a'));
+    const current = tabs.find((tab) => tab.getAttribute('aria-current') === 'page')!;
+    const other = tabs.find((tab) => tab !== current)!;
+    // Reading a computed value makes the browser settle the style, so a transition starts from it.
+    void getComputedStyle(other).color;
+    current.removeAttribute('aria-current');
+    other.setAttribute('aria-current', 'page');
+    void getComputedStyle(other).color;
+    return {
+      tabs: tabs.length,
+      becoming: other.getAnimations().length,
+      leaving: current.getAnimations().length,
+    };
+  });
+  expect(running.tabs).toBeGreaterThan(1);
+  expect(running).toMatchObject({ becoming: 0, leaving: 0 });
+});
+
 test('speaks the chosen language, says which language the region is in and mirrors right to left', async ({
   page,
 }) => {
