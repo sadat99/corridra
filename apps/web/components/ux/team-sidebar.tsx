@@ -34,6 +34,11 @@ import {
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
 import {
+  readServerTeamSwitcher,
+  readTeamSwitcher,
+  subscribeTeamSwitcher,
+} from '../../lib/ux/team-desk-v41';
+import {
   readPinCounts,
   readServerPinCounts,
   subscribePinCounts,
@@ -100,6 +105,11 @@ function TeamMenuV3({ urls, supply }: { urls: boolean; supply: boolean }) {
     readTeamContext,
     readServerTeamContext,
   );
+  const switcher = useSyncExternalStore(
+    subscribeTeamSwitcher,
+    readTeamSwitcher,
+    readServerTeamSwitcher,
+  );
   const base = useId();
   const cut = address.indexOf('#');
   const search = cut < 0 ? address : address.slice(0, cut);
@@ -119,11 +129,31 @@ function TeamMenuV3({ urls, supply }: { urls: boolean; supply: boolean }) {
       data-menu="v3"
       aria-label={t('wse.team.nav')}
     >
-      {/* The workspace switch sits at the top of the menu: the page that lists every workspace the person belongs to. */}
-      <a className="ux-team-menu-workspace" href="/workspace" title="All Workspaces">
-        <OperatorIcon name="grid" />
-        <span>{english('All Workspaces')}</span>
-      </a>
+      {/* The workspace switch sits at the top of the menu. The loaded workspace publishes its list and its own
+          guarded change (the unsaved-entries question); a page that does not mount it leaves only the link. */}
+      <div className="ux-team-menu-workspace">
+        {switcher ? (
+          <div className="ux-team-menu-switch" lang={locale !== 'en' ? 'en' : undefined}>
+            <label htmlFor="operator-workspace-select">Workspace</label>
+            <select
+              id="operator-workspace-select"
+              disabled={switcher.busy}
+              value={switcher.current}
+              onChange={(event) => switcher.choose(event.target.value)}
+            >
+              {switcher.workspaces.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+        <a href="/workspace" title="All Workspaces">
+          <OperatorIcon name="grid" />
+          <span>{english('All Workspaces')}</span>
+        </a>
+      </div>
       {menuGroupsFor(role, options).map((group) => {
         const heading = `${base}-${group.key}`;
         return (

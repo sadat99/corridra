@@ -327,6 +327,23 @@ describe('the switch', () => {
     expect(sidebar).toMatch(
       /deskV41 \? \(\s*<TeamMenuV3[^:]+: \(\s*<TeamSidebarV1 \{\.\.\.legacy\} \/>/,
     );
+    // The second tab bar and the workspace toolbar go only under the value the frame provides (false by default).
+    expect(read('lib/ux/team-desk-v41.ts')).toContain(
+      'export const TeamDeskV41Context = createContext(false);',
+    );
+    expect(read('components/ux/team-frame.tsx')).toContain(
+      '<TeamDeskV41Context.Provider value={deskV41}>',
+    );
+    expect(read('components/ux/team-second-level.tsx')).toContain('if (deskV41) return null;');
+    const workspace = read('app/operator/workspace.tsx');
+    expect(workspace).toMatch(/\{deskV41 \? null : \(\s*<div className="operator-toolbar">/);
+    // One guarded change of workspace, shared by the toolbar select and the one in the menu; one id.
+    expect(workspace).toContain('onChange={(e) => chooseTenant(e.target.value)}');
+    expect(workspace).toContain('choose: (next) => chooseRef.current(next),');
+    expect(workspace.match(/Switch workspace\? Unsaved entries/g)).toHaveLength(1);
+    expect(workspace.match(/id="operator-workspace-select"/g)).toHaveLength(1);
+    expect(sidebar.match(/id="operator-workspace-select"/g)).toHaveLength(1);
+    expect(sidebar).toContain('onChange={(event) => switcher.choose(event.target.value)}');
     // The legacy maps are the objects they were.
     expect(teamMap.map((entry) => entry.label)).toEqual([
       'Today',

@@ -852,7 +852,36 @@ nav.ux-team-sidebar[data-menu='v3'] a[aria-current],
 }
 /* The workspace switch: the first row of the menu, set apart from the groups by a line. */
 nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-workspace {
-  border: 1px solid var(--ac-surface-navy-hover);
+  display: grid;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--ac-surface-navy-hover);
+}
+nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch {
+  display: grid;
+  gap: var(--space-1);
+  padding-inline: var(--space-3);
+  color: color-mix(in srgb, var(--ac-paper) 76%, var(--ac-navy));
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.6;
+}
+nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding-inline: var(--space-3) var(--space-8);
+  border: 1px solid var(--ac-border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--ac-paper);
+  color: var(--ac-ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
+  outline: 3px solid var(--ac-paper);
+  outline-offset: 2px;
 }
 @media (forced-colors: active) {
   nav.ux-team-sidebar[data-menu='v3'] a[aria-current] {
@@ -922,6 +951,12 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-workspace {
   }
   .ux-leftnav-panel:has(nav[data-menu='v3']) .ux-leftnav-collapse:focus-visible {
     outline-color: var(--ac-paper);
+  }
+  /* Icons only: the select needs its words, so the rail keeps the link to every workspace and hides the select. */
+  .ux-leftnav-frame[data-collapsed='true']
+    nav.ux-team-sidebar[data-menu='v3']
+    .ux-team-menu-switch {
+    display: none;
   }
   /* Icons only: a group's name is kept for screen readers and a line marks where each group starts. */
   .ux-leftnav-frame[data-collapsed='true']

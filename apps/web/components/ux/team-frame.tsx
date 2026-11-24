@@ -10,6 +10,7 @@ import { useLanguage } from '../language-provider';
 import { localeMeta } from '../../lib/i18n/locales';
 import { subscribeToHash } from '../../lib/address-store';
 import { teamSidebarShown } from '../../lib/ux/shells';
+import { TeamDeskV41Context } from '../../lib/ux/team-desk-v41';
 import { publishTeamFlags } from '../../lib/ux/team-flags';
 import { LeftNavFrame } from './left-nav';
 import { setLeftNavOpen } from './left-nav-store';
@@ -59,7 +60,7 @@ export function TeamFrame({
   if (!shown) return <>{children}</>;
   const meta = localeMeta[locale];
   return (
-    <>
+    <TeamDeskV41Context.Provider value={deskV41}>
       <LeftNavFrame
         navId="workspace-navigation"
         lang={meta.html}
@@ -86,6 +87,6 @@ export function TeamFrame({
       </LeftNavFrame>
       <TeamPalette urls={urls} ownerPage={ownerPage} desk={desk} />
       <StepUpDialog />
-    </>
+    </TeamDeskV41Context.Provider>
   );
 }

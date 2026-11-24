@@ -12,8 +12,11 @@ import { basename, resolve } from 'node:path';
 //   ?role=owner  the person's role in the workspace (default owner); ?role=none leaves it unknown
 //   ?urls=off    section addresses off (`#` links)
 //   ?tall=on     a page body three screens tall
+//   ?mount=on    the real workspace is mounted with two workspaces (its reads are answered by the caller with
+//                page.route), with the second tab bar line the team pages have, so the toolbar and that bar can be seen
 // The pathname is the browser's own, so /operator/settings?tab=settings-erasure is that address.
 export const fixtureTenant = '00000000-0000-4000-8000-0000000000a1';
+export const secondTenant = '00000000-0000-4000-8000-0000000000a2';
 
 const faces = [
   ['--font-newsreader', 'newsreader-latin-variable.woff2', '200 800'],
@@ -39,6 +42,9 @@ export async function startMenuFixture(root = resolve('.')) {
       import{TeamFrame}from ${source('apps/web/components/ux/team-frame.tsx')};
       import{TeamContextPublisher}from ${source('apps/web/components/ux/team-context-publisher.tsx')};
       import{WorkspaceShell}from ${source('apps/web/components/workspace-shell.tsx')};
+      import{TeamSecondLevel}from ${source('apps/web/components/ux/team-second-level.tsx')};
+      import{OperatorFlags}from ${source('apps/web/app/operator/operator-flags.tsx')};
+      import{Workspace}from ${source('apps/web/app/operator/workspace.tsx')};
       import{SiteFooterPlace}from ${source('apps/web/components/site-footer-place.tsx')};
       import ${source('apps/web/app/operator/operator-overview.css')};
       const query = new URLSearchParams(location.search);
@@ -51,7 +57,15 @@ export async function startMenuFixture(root = resolve('.')) {
             <TeamFrame urls={query.get('urls') !== 'off'} ownerPage={false} problemReports={on('reports')}
               desk={on('desk')} deskV41={on('v41')} supply={on('supply')}>
               <WorkspaceShell eyebrow="TEAM WORKSPACE" title="Today" className="ux-operator-home">
-                {role === 'none' ? null : <TeamContextPublisher tenant=${JSON.stringify(fixtureTenant)} role={role}/>}
+                {on('mount') ? (
+                  <>
+                    <TeamSecondLevel urls={query.get('urls') !== 'off'} ownerPage={false} desk={on('desk')}/>
+                    <OperatorFlags replyReview={false}>
+                      <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:role},{id:${JSON.stringify(secondTenant)},name:'Second workspace',role:role}]}
+                        initialTenant=${JSON.stringify(fixtureTenant)} shellsV2 desk={on('desk')}/>
+                    </OperatorFlags>
+                  </>
+                ) : role === 'none' ? null : <TeamContextPublisher tenant=${JSON.stringify(fixtureTenant)} role={role}/>}
                 <p>Fixture page.</p>
                 {on('tall') ? <div data-fixture-tall="" style={{height:'300vh'}}/> : null}
               </WorkspaceShell>

@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs';
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { fixtureTenant, startMenuFixture } from './team-menu-v3-fixture';
+import { fixtureTenant, secondTenant, startMenuFixture } from './team-menu-v3-fixture';
 
 // Menu v3 (team desk v4.1 unit D3) in a browser, with the real stylesheets (the menu fixture): four labelled groups
 // of plain links, no expander, no second list and no number; the bar is navy to the window's edge and scrolls with
@@ -308,4 +308,104 @@ test('phone drawer: opens as a dialog, Escape closes it and returns focus, keybo
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Sections', exact: true })).toBeFocused();
+});
+
+/** The reads the mounted workspace makes, answered as an empty sample workspace. */
+async function answerWorkspace(page: Page, role = 'owner') {
+  await page.route('**/api/**', (route) =>
+    route.fulfill({ status: 404, json: { error: 'Not part of this fixture' } }),
+  );
+  await page.route('**/api/team-work/flags', (route) =>
+    route.fulfill({ json: { missionsV2: true } }),
+  );
+  await page.route('**/api/workspace/workspace?*', (route) =>
+    route.fulfill({
+      json: {
+        purpose: 'synthetic_validation',
+        uploadsConfigured: false,
+        scanMode: 'bypass',
+        role,
+        sources: [],
+        claims: [],
+        evidence: [],
+        facts: [],
+      },
+    }),
+  );
+  await page.route('**/api/workspace/config?*', (route) => route.fulfill({ json: [] }));
+  await page.route('**/api/notifications?*', (route) => route.fulfill({ json: [] }));
+}
+
+test('switch off, workspace mounted: the toolbar and the second tab bar are where they were', async ({
+  page,
+}) => {
+  await answerWorkspace(page);
+  await open(page, 'mount=on&desk=on', { width: 1440 }, '/operator/missions');
+  const toolbar = page.locator('.operator-toolbar');
+  await expect(toolbar.locator('select#operator-workspace-select')).toHaveCount(1);
+  await expect(toolbar.getByRole('link', { name: 'All Workspaces' })).toHaveCount(1);
+  await expect(toolbar.getByRole('link', { name: 'Sign-In and Access Help' })).toHaveCount(1);
+  await expect(toolbar.getByRole('button', { name: 'Sign Out' })).toHaveCount(1);
+  await expect(page.locator('#workspace-navigation select')).toHaveCount(0);
+  await expect(page.locator('nav.ux-team-second')).toHaveCount(1);
+});
+
+test('switch on, workspace mounted: no second tab bar, no toolbar; the switch is at the top of the menu and still asks before clearing entries', async ({
+  page,
+}) => {
+  await answerWorkspace(page);
+  const sidebar = await open(
+    page,
+    'v41=on&mount=on&desk=on',
+    { width: 1440 },
+    '/operator/missions',
+  );
+  await expect(page.locator('nav.ux-team-second')).toHaveCount(0);
+  await expect(page.locator('.operator-toolbar')).toHaveCount(0);
+  // One control with the id it always had, now the first thing in the menu.
+  const select = page.locator('select#operator-workspace-select');
+  await expect(select).toHaveCount(1);
+  await expect(sidebar.getByLabel('Workspace', { exact: true })).toHaveValue(fixtureTenant);
+  expect(await select.locator('option').allInnerTexts()).toEqual([
+    'Synthetic request operations',
+    'Second workspace',
+  ]);
+  expect(
+    await sidebar.evaluate(
+      (nav) => nav.querySelector('select, a')?.id === 'operator-workspace-select',
+    ),
+  ).toBe(true);
+  await expect(sidebar.getByRole('link', { name: 'All Workspaces' })).toHaveAttribute(
+    'href',
+    '/workspace',
+  );
+  // Sign Out and the Authenticator stay reachable from the header's account menu.
+  await page.getByRole('button', { name: 'Account menu' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Sign Out' })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Authenticator' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  const box = (await select.boundingBox())!;
+  expect(box.height).toBeGreaterThanOrEqual(44);
+  if (shots) await page.screenshot({ path: `${shots}menu-on-1440-mounted.png` });
+  const results = await new AxeBuilder({ page }).include('.ux-leftnav-rail').analyze();
+  expect(results.violations.map((v) => v.id)).toEqual([]);
+
+  // Nothing typed: the change happens without a question.
+  let asked = 0;
+  page.on('dialog', (dialog) => {
+    asked += 1;
+    void dialog.dismiss();
+  });
+  await select.selectOption(secondTenant);
+  await expect(select).toHaveValue(secondTenant);
+  expect(asked).toBe(0);
+  // After an entry in a form of the workspace, the same question as before; staying keeps the workspace.
+  await page.evaluate(() => {
+    window.location.hash = '#workspace-research';
+  });
+  const field = page.locator('.ux-workspace-body form:visible').locator('input:visible').first();
+  await field.fill('Invented entry');
+  await select.selectOption(fixtureTenant);
+  expect(asked).toBe(1);
+  await expect(select).toHaveValue(secondTenant);
 });
