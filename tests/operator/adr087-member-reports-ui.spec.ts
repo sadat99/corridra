@@ -184,6 +184,8 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
+    // The flag stylesheet names its pictures by their public path; they are served files, not bundled ones.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
