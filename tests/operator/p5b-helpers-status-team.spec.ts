@@ -231,6 +231,8 @@ test('Helpers, switch off: the body is the one the desk has today', async ({ pag
   await expect(panel.locator('.ux-example-tag')).toHaveCount(0);
   await expect(panel.getByRole('link', { name: 'Open assigned task access' })).toBeVisible();
   await expect(panel.getByRole('link', { name: 'Back to workspace sections' })).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Open missions' })).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Open sources and claims' })).toBeVisible();
   await panel.getByRole('tab', { name: 'Invite a Helper' }).click();
   await expect(panel.getByText('01 · INVITE', { exact: true })).toBeVisible();
   await expect(panel.getByRole('link', { name: 'Network access and work overview' })).toBeVisible();
@@ -259,8 +261,15 @@ test('Helpers, switch on: one title, the state word on the left edge, no label a
   const access = panel.getByRole('link', { name: 'Open Assigned Task Access' });
   await expect(access).toBeVisible();
   expect(await access.getAttribute('href')).toMatch(/^\/contributor\?workspace=/);
-  // The link to a list that is not on the page with the team shell on is gone.
+  // The link to a list that is not on the page with the team shell on is gone, and so are the links to
+  // places the menu already has. The authenticator check has no menu entry and keeps its one link.
   await expect(panel.locator('a[href="#workspace-navigation"]')).toHaveCount(0);
+  await expect(panel.getByRole('link', { name: 'Open missions' })).toHaveCount(0);
+  await expect(panel.getByRole('link', { name: 'Open sources and claims' })).toHaveCount(0);
+  await expect(panel.getByRole('link', { name: 'Verify current access' })).toHaveAttribute(
+    'href',
+    '#workspace-authenticator',
+  );
   await panel.getByRole('tab', { name: 'Invite a Helper' }).click();
   await expect(panel.getByText('01 · INVITE', { exact: true })).toHaveCount(0);
   await expect(panel.getByRole('heading', { name: 'Invite a helper' })).toBeVisible();
@@ -396,6 +405,94 @@ test('Status: a route in the next actions has each place mark before its name wi
   // The mission link and the rest of the line are as they were.
   await expect(row.getByRole('link', { name: 'Invented Machinery Co' })).toBeVisible();
   await expect(row).toContainText('Owner:');
+});
+
+const dashboardTabs = ['Summary', 'Next actions', 'Money', 'Records and notes'];
+
+test('Status, switch off: Operations and Dashboard both draw the four dashboard tabs, as today', async ({
+  page,
+}) => {
+  for (const slug of ['operations', 'dashboard']) {
+    await open(page, `/operator/${slug}`, { v41: false });
+    await expect(
+      page.getByRole('tablist', { name: 'Dashboard sections' }).getByRole('tab'),
+    ).toHaveText(dashboardTabs);
+  }
+  await page.getByRole('tab', { name: 'Next actions' }).click();
+  await expect(page.getByRole('link', { name: 'Open mission review queue' })).toHaveAttribute(
+    'href',
+    '#workspace-missions',
+  );
+  await open(page, '/operator/health', { v41: false });
+  await expect(
+    page.locator('#ops-health').getByRole('link', { name: 'Mission operations' }),
+  ).toHaveAttribute('href', '#workspace-missions');
+});
+
+test('Status, switch on: Operations has the summary, next actions and records; Dashboard has the money', async ({
+  page,
+}) => {
+  await open(page, '/operator/operations', { v41: true });
+  const tabs = page.getByRole('tablist', { name: 'Dashboard sections' }).getByRole('tab');
+  await expect(tabs).toHaveText(['Summary', 'Next actions', 'Records and notes']);
+  await expect(page.locator('#ops-dashboard .operations-metrics').first()).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Corridra fee revenue and delivery economics' }),
+  ).toHaveCount(0);
+  // Each tab still opens its own content.
+  await tabs.nth(1).click();
+  await expect(
+    page.getByRole('heading', { name: 'Recorded next actions on this page' }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open mission review queue' })).toHaveCount(0);
+
+  await open(page, '/operator/dashboard', { v41: true });
+  // One part alone is drawn as its content: no row of tabs with a single tab in it.
+  await expect(page.getByRole('tablist', { name: 'Dashboard sections' })).toHaveCount(0);
+  await expect(page.locator('#ops-dashboard [role="tab"]')).toHaveCount(0);
+  await expect(page.locator('#ops-dashboard .ux-desk-lone-tab')).toBeVisible();
+  await expect(page.locator('#ops-dashboard .ops-money').first()).toBeVisible();
+  await expect(page.locator('#ops-dashboard .operations-metrics')).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: 'Recorded next actions on this page' }),
+  ).toHaveCount(0);
+  // The filters and the scope line are on both pages.
+  await expect(page.getByText('Filter the records (10 filters)')).toBeVisible();
+  await expect(page.getByText('Invented scope line.')).toBeVisible();
+});
+
+test('Status, switch on: nothing is lost by the split, every dashboard part is on one of the two pages', async ({
+  page,
+}) => {
+  const parts = (target: Page) =>
+    target
+      .locator('#ops-dashboard')
+      .evaluate((node) =>
+        Array.from(
+          node.querySelectorAll('h4, summary, table caption, [aria-label]:not([role="tablist"])'),
+        ).map((part) => part.getAttribute('aria-label') || part.textContent?.trim() || ''),
+      );
+  await open(page, '/operator/dashboard', { v41: false });
+  const before = new Set(await parts(page));
+  await open(page, '/operator/operations', { v41: true });
+  const operations = await parts(page);
+  await open(page, '/operator/dashboard', { v41: true });
+  const dashboard = await parts(page);
+  const after = new Set([...operations, ...dashboard]);
+  expect(before.size).toBeGreaterThan(8);
+  // The tab row itself is the only thing not drawn on Dashboard; every heading, fold and table is kept.
+  for (const part of before) expect(after.has(part), `kept: ${part}`).toBe(true);
+});
+
+test('Status, switch on: Health names the other places in plain words, with no second link to a menu place', async ({
+  page,
+}) => {
+  await open(page, '/operator/health', { v41: true });
+  const health = page.locator('#ops-health');
+  await expect(health).toContainText(
+    'Continue manual missions in Mission operations, review failed drafts in AI assistance, inspect contributor disputes in Execution network and retry publication through Delivery.',
+  );
+  await expect(health.locator('a[href^="#workspace-"]')).toHaveCount(0);
 });
 
 test('Status: field names and ids are the same with the switch off and on', async ({ page }) => {
@@ -549,4 +646,133 @@ test('switch on: touch targets in the Helpers empty state and the Audit action a
   await open(page, '/operator/network', { v41: true, width: 390, height: 844 });
   const access = page.getByRole('link', { name: 'Open Assigned Task Access' });
   expect((await access.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+});
+
+// One link per destination (owner rule, 24 November 2026) ----------------------------------------------
+
+// A `#section` link and the section's own address are one destination.
+const sectionWords: Record<string, string> = {
+  'workspace-missions': 'missions',
+  'workspace-research': 'research',
+  'workspace-meetings': 'meetings',
+  'workspace-commercial': 'commercial',
+  'workspace-delivery': 'delivery',
+  'workspace-sources': 'sources',
+  'workspace-evidence': 'evidence',
+  'workspace-ai': 'assistance',
+  'workspace-network': 'network',
+  'workspace-operations': 'operations',
+  'ops-dashboard': 'dashboard',
+  'ops-center': 'control-center',
+  'ops-health': 'health',
+  'ops-gates': 'readiness',
+  'workspace-settings': 'settings',
+  'workspace-audit': 'audit',
+  'workspace-authenticator': 'authenticator',
+  'workspace-controls': 'controls',
+};
+/**
+ * The destinations of the links in view inside <main>, one entry per link. Named exceptions, both owned by
+ * unit D3 (menu v3) and outside these bodies: the workspace row (workspace chooser, access help, sign out)
+ * and the second row of links under the title, which D3 removes.
+ */
+const destinationsInView = (page: Page) =>
+  page.locator('main#main').evaluate((main, words) => {
+    const exceptions = '.operator-toolbar, nav.ux-team-second';
+    return Array.from(main.querySelectorAll<HTMLAnchorElement>('a[href]'))
+      .filter((link) => !link.closest(exceptions))
+      .filter((link) => {
+        const box = link.getBoundingClientRect();
+        return box.width > 0 && box.height > 0 && getComputedStyle(link).visibility !== 'hidden';
+      })
+      .map((link) => {
+        const href = link.getAttribute('href') ?? '';
+        if (href.startsWith('#')) {
+          const word = words[href.slice(1)];
+          return word ? `/operator/${word}` : href;
+        }
+        const url = new URL(href, location.origin);
+        return url.pathname + url.hash;
+      });
+  }, sectionWords);
+const menuPlaces = [
+  '/operator',
+  ...['missions', 'meetings', 'research', 'network', 'commercial', 'delivery'].map(
+    (word) => `/operator/${word}`,
+  ),
+];
+
+for (const [slug, body] of places) {
+  test(`switch on: /operator/${slug} links each destination once and repeats no menu place`, async ({
+    page,
+  }) => {
+    await open(page, `/operator/${slug}`, { v41: true, tasks: slug === 'network' ? [task] : [] });
+    if (slug === 'audit')
+      await page.getByRole('button', { name: 'Load Access and Recent Changes' }).click();
+    if (slug === 'controls')
+      await page.getByRole('button', { name: 'Load Workspace Members' }).click();
+    // The screen as it opens, then each tab of the body in turn: every state is one screen.
+    const tabs = page.locator(`${body} [role="tab"]:visible`);
+    const states = [null, ...(await tabs.evaluateAll((nodes) => nodes.map((_, index) => index)))];
+    let seen = 0;
+    for (const state of states) {
+      if (state !== null) await tabs.nth(state).click();
+      const destinations = await destinationsInView(page);
+      seen += destinations.length;
+      const twice = destinations.filter((value, index) => destinations.indexOf(value) !== index);
+      expect(twice, `a destination linked twice (state ${state ?? 'open'})`).toEqual([]);
+      // The menu is the one path to a menu place. The segments name sibling pages; nothing else does.
+      const inBody = await page.locator(body).evaluate((node, words) => {
+        return Array.from(node.querySelectorAll<HTMLAnchorElement>('a[href]'))
+          .filter((link) => link.getBoundingClientRect().width > 0)
+          .map((link) => {
+            const href = link.getAttribute('href') ?? '';
+            const word = href.startsWith('#') ? words[href.slice(1)] : undefined;
+            return word ? `/operator/${word}` : href.split('?')[0];
+          });
+      }, sectionWords);
+      for (const place of menuPlaces)
+        expect(inBody, `no link to ${place} in the body`).not.toContain(place);
+      expect(
+        inBody.filter((href) =>
+          /^\/operator\/(operations|dashboard|health|readiness|audit|controls)$/.test(href),
+        ),
+        'sibling pages are reached by the segments only',
+      ).toEqual([]);
+      await expect(
+        page.locator(`${body} a`).filter({ hasText: /^Back to|^Return to/ }),
+      ).toHaveCount(0);
+    }
+    // The page does have links (the segments at least, where it has them), so the check is not empty.
+    if (slug !== 'network') expect(seen).toBeGreaterThan(0);
+  });
+}
+
+// The link back to the section list under every workspace panel: one owner for all seven (this unit).
+const panelsWithBackLink = [
+  'missions',
+  'research',
+  'meetings',
+  'commercial',
+  'delivery',
+  'assistance',
+  'network',
+];
+test('the link back to the section list: under each panel with the switch off, on no page with it on', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  for (const slug of panelsWithBackLink) {
+    await open(page, `/operator/${slug}`, { v41: false });
+    const back = page.locator('main#main a[href="#workspace-navigation"]:visible');
+    await expect(back, `off: /operator/${slug}`).toHaveCount(1);
+    await expect(back).toHaveText('Back to workspace sections');
+    await expect(back).toHaveClass('text-link');
+    await open(page, `/operator/${slug}`, { v41: true });
+    await expect(
+      page.locator('main#main a[href="#workspace-navigation"]'),
+      `on: /operator/${slug}`,
+    ).toHaveCount(0);
+    await expect(page.getByText('Back to workspace sections')).toHaveCount(0);
+  }
 });
