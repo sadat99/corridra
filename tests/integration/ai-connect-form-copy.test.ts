@@ -89,6 +89,8 @@ const allLines = () => [
   changeFact('OpenAI', 3),
   savedText('OpenAI', 1),
   savedText('OpenAI', 4),
+  savedText('OpenAI', 1, true),
+  savedText('OpenAI', 4, true),
   reviewSummary('OpenAI', 'gpt-test', 2),
   fallbackOption('Google', 'gemini-test', 2),
   progressLine(0),
@@ -193,6 +195,23 @@ describe('the owner-approved words, exactly', () => {
       'Version 2 of the Google connection is saved. AI is not switched on. This save ran no AI and moved no money. Route packs pinned to version 1 no longer use AI.',
     );
     expect(savedText('Google', 1)).not.toContain('Route packs');
+    expect(savedText('Google', 1)).toBe(
+      'Version 1 of the Google connection is saved. AI is not switched on. This save ran no AI and moved no money.',
+    );
+    // With AI already on for the workspace the page never says it is off (ADR-091).
+    expect(words.success.headingOn).toBe('Saved, AI was already on');
+    expect(savedText('Google', 2, true)).toBe(
+      'Version 2 of the Google connection is saved. AI was already on for this workspace, and this save did not change that. This save ran no AI and moved no money. A run starts only when a person starts one, and it must pass the checks. Route packs pinned to version 1 no longer use AI.',
+    );
+    expect(savedText('Google', 1, true)).toBe(
+      'Version 1 of the Google connection is saved. AI was already on for this workspace, and this save did not change that. This save ran no AI and moved no money. A run starts only when a person starts one, and it must pass the checks.',
+    );
+    for (const text of [savedText('Google', 1, true), savedText('Google', 2, true)])
+      expect(text).not.toContain('not switched on');
+    expect(savedText('Google', 2, false)).toBe(savedText('Google', 2));
+    const page = read('apps/web/app/operator/connect-ai-form.tsx');
+    expect(page).toContain('savedText(saved.provider, saved.version, saved.aiOn)');
+    expect(page).toContain('saved.aiOn ? words.success.headingOn : words.success.heading');
   });
   it('names a step for each of the nine and a label for each of the twelve tasks', () => {
     expect(stepNames).toHaveLength(9);

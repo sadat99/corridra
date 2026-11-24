@@ -300,7 +300,7 @@ test('a team member who is not an owner or admin sees only that owners and admin
   await expect(box.locator('input, select, textarea')).toHaveCount(0);
 });
 
-for (const [state, realAiOn, fact] of [
+for (const [state, aiOn, fact] of [
   [
     'off',
     false,
@@ -313,7 +313,7 @@ for (const [state, realAiOn, fact] of [
   ],
 ] as const)
   test(`a real workspace with AI ${state} says before Save what can run`, async ({ page }) => {
-    await open(page, { read: () => ({ json: options({ realWorkspace: true, realAiOn }) }) });
+    await open(page, { read: () => ({ json: options({ realWorkspace: true, aiOn }) }) });
     await walk(page);
     const facts = flow(page).getByRole('group', { name: 'Before you save' });
     await expect(facts.locator('.before-send-row').nth(2).locator('p').nth(1)).toHaveText(fact);
@@ -327,6 +327,24 @@ for (const [state, realAiOn, fact] of [
       document.documentElement.clientWidth,
     ]);
     expect(width[0]).toBeLessThanOrEqual(width[1]);
+    await save(page);
+    const box = page.locator('details.connect-ai');
+    if (aiOn) {
+      await expect(page.getByRole('heading', { name: 'Saved, AI was already on' })).toBeFocused();
+      await expect(box).toContainText(
+        'Version 1 of the Anthropic connection is saved. AI was already on for this workspace, and this save did not change that. This save ran no AI and moved no money. A run starts only when a person starts one, and it must pass the checks.',
+      );
+      await expect(box).not.toContainText('not switched on');
+    } else {
+      await expect(page.getByRole('heading', { name: 'Saved, not switched on' })).toBeFocused();
+      await expect(box).toContainText(
+        'Version 1 of the Anthropic connection is saved. AI is not switched on. This save ran no AI and moved no money.',
+      );
+      await expect(box).not.toContainText('already on');
+    }
+    expect(await new AxeBuilder({ page }).include('details.connect-ai').analyze()).toMatchObject({
+      violations: [],
+    });
   });
 
 test('a real workspace without the module says why and offers no Save', async ({ page }) => {

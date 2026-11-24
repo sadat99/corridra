@@ -281,7 +281,7 @@ describe('installed and closed', () => {
     const before = await rows();
     expect(await gate()).toBe(false);
     // The Connect AI form is told the same thing, so its Before You Save fact says no run can start here.
-    expect(await ai.connectOptions(f.ctx)).toMatchObject({ realWorkspace: true, realAiOn: false });
+    expect(await ai.connectOptions(f.ctx)).toMatchObject({ realWorkspace: true, aiOn: false });
     await expect(ai.run(f.ctx, command(missionId, policyId, c.claim))).rejects.toMatchObject({
       status: 403,
       code: 'AI_REAL_OFF',
@@ -334,7 +334,7 @@ describe('open', () => {
     await expect(f.owner.query('UPDATE app.ai_real_control SET enabled=false')).rejects.toThrow();
     // The workspace setting was switched on before the control was opened. It never counts: nothing goes live on opening.
     expect(await gate()).toBe(false);
-    expect(await ai.connectOptions(f.ctx)).toMatchObject({ realWorkspace: true, realAiOn: false });
+    expect(await ai.connectOptions(f.ctx)).toMatchObject({ realWorkspace: true, aiOn: false });
     const before = { rows: await rows(), sent: requests.length };
     await expect(
       ai.run(f.ctx, command(open.missionId, open.policyId, open.claim)),
@@ -365,7 +365,7 @@ describe('open', () => {
     await access.appendConfig(f.users.owner.ctx, { key: 'ai.enabled', enabled: true });
     expect(await gate()).toBe(true);
     // Only now does the Connect AI form say that AI is already on for this workspace.
-    expect(await ai.connectOptions(f.ctx)).toMatchObject({ realWorkspace: true, realAiOn: true });
+    expect(await ai.connectOptions(f.ctx)).toMatchObject({ realWorkspace: true, aiOn: true });
     // A member of another workspace never sees the gate as open.
     await expect(
       rawContext(
@@ -769,7 +769,7 @@ describe('paused', () => {
     expect(await control(false)).toEqual({ enabled: false, changed: true });
     const before = { rows: await rows(), sent: requests.length };
     expect(await gate()).toBe(false);
-    expect(await ai.connectOptions(f.ctx)).toMatchObject({ realWorkspace: true, realAiOn: false });
+    expect(await ai.connectOptions(f.ctx)).toMatchObject({ realWorkspace: true, aiOn: false });
     await expect(ai.run(f.ctx, command(missionId, policyId, c.claim))).rejects.toMatchObject({
       code: 'AI_REAL_OFF',
     });
