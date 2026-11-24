@@ -19,8 +19,9 @@
 --
 -- Not covered here, on purpose: what a later module owns or fingerprints (the workspace name and the workspace
 -- invitation command, the participant invitation label and display label with their two CHECK constraints, public
--- programme page text, billing notes). Each needs its own additive migration in its own module; changing them here
--- would make that module refuse to install on a fresh database.
+-- programme page text, billing notes). Changing them here would make that module refuse to install on a fresh
+-- database. They are covered by customer-workspace-lifecycle-migrations/0010_sample_first_word_late.sql, which the
+-- installer runs after this module and repeats on every run.
 --
 -- Rollback (additive, nothing to restore): run this file's two loops with the replacement reversed, that is
 --   replace(def, '~ ''^(Synthetic|Sample) ''', '~~ ''Synthetic %''') for the constraints (again NOT VALID) and
