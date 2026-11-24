@@ -180,7 +180,16 @@ describe('the shared report body of /client and /programme', () => {
     const { MissionExperienceView } = await loadWeb('app/mission-experience-view');
     return render(ce(MissionExperienceView, { experience: e }));
   };
-  const words = (html: string) => html.replace(/<[^>]+>/g, '');
+  /** The words a reader sees: every tag removed, repeated until nothing more is removed. */
+  const words = (html: string) => {
+    let text = html;
+    let before: string;
+    do {
+      before = text;
+      text = text.replace(/<[^>]*>/g, '');
+    } while (text !== before);
+    return text;
+  };
 
   it('a shortlist country has its flag before the name, inside the same heading', async () => {
     const html = await draw(experience('China'));
