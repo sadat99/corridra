@@ -118,6 +118,9 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
+    // The plan summary draws flags (UI/UX.v4.1 L1). Files under public/ are served by Next at the site root, so
+    // the fixture leaves the flag addresses as they are instead of bundling them.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
@@ -372,6 +375,7 @@ async function walk(
  *    its markup, and the added toggle words "Read the Test Notice". Its words are otherwise compared as before.
  * 2. The example request summary: its facts sit in a disclosure whose line holds the heading and a count. Allowed: its
  *    markup, the second copy of the heading and the count ", N of 3 chosen". Its words are otherwise compared as before.
+ *    Since UI/UX.v4.1 L1 a place name in it also has a decorative flag picture before it (allowed: that picture only).
  * Everything outside those two regions must be byte for byte the baseline's, and the real and private notices are
  * not on the allowlist at all (their markup is compared in full, as it is part of `rest`).
  */
@@ -397,7 +401,12 @@ function allowed(html: string) {
   return {
     rest,
     noticeAttributes: attributes(notice),
-    summaryAttributes: attributes(summary),
+    // UI/UX.v4.1 L1 (23 Nov 2026): a place name in the summary has its flag before it. The flag is a decorative
+    // picture (`<img class="ux-flag" ... alt="" aria-hidden="true">`) beside the written name, so exactly that
+    // picture is taken out before the labels are compared; every other attribute in the summary is still compared.
+    summaryAttributes: attributes(
+      summary.replace(/<img class="ux-flag" [^>]*\balt="" aria-hidden="true"[^>]*>/g, ''),
+    ),
     notice: words(notice)
       .replace(' Read the Test Notice ', ' ')
       .replace(/ Read the Test Notice$/, ''),

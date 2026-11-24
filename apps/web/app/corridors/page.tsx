@@ -52,18 +52,26 @@ export default function Page() {
           <h2 id="directions-title" className="sr-only">
             Explore a route
           </h2>
-          {/* Owner decisions 17 and 18 Nov 2026, routes and markets and the step 2 board: six rows of the same size,
-              weight and action in this order. Each name has its flag, or the compass mark for
-              Key Asian Markets, beside it and never alone (UI/UX.v4 flag policy). */}
-          <ul>
-            {destinationRows.map((row) => (
+          {/* Owner decisions 17 and 18 Nov 2026 (routes and markets) and UI/UX.v4.1 L5 (23 Nov 2026): one numbered
+              list of six rows of the same size in the locked order. Each row has its 40 px mark (a flag, or the
+              compass mark for Key Asian Markets) before the written name, the word Open and one quiet link. */}
+          <ol className="guide-direction-list">
+            {destinationRows.map((row, index) => (
               <li key={row.key} className="guide-direction-row">
+                <span className="guide-direction-n" aria-hidden="true">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
                 <div className="guide-direction-text">
                   <h3>
-                    <Flagged code={row.mark}>{row.name}</Flagged>
+                    <Flagged code={row.mark} size="row">
+                      {row.name}
+                    </Flagged>
                   </h3>
                   <p>{row.tagline}</p>
                 </div>
+                <span className="guide-direction-open guide-tag" data-tone="positive">
+                  Open
+                </span>
                 <Link
                   prefetch={false}
                   id={`route-${row.key}`}
@@ -75,7 +83,7 @@ export default function Page() {
                 </Link>
               </li>
             ))}
-          </ul>
+          </ol>
           <div className="guide-other-route">
             <div>
               <h3>Another route?</h3>

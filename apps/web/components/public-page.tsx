@@ -3,6 +3,7 @@ import { Arrow } from './arrow';
 import { CorridraIcon } from './corridra-icon';
 import { SubTabs } from './ux/sub-tabs';
 import { FactLabel } from './fact-label';
+import { RouteLine } from './ux/flag';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { PublicPageContent } from '../content/public-pages';
@@ -178,7 +179,9 @@ export function PublicPage({
         {content.route && (
           <aside className="guide-route" aria-label="Route for this page">
             <p className="label">The route this page is about</p>
-            <strong>{content.route.label}</strong>
+            <strong>
+              <RouteLine from={content.route.places[0]} to={[content.route.places[1]]} word="to" />
+            </strong>
             <Link prefetch={false} className="text-link" href={content.route.href}>
               {content.route.linkLabel} <Arrow />
             </Link>

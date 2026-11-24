@@ -264,3 +264,128 @@
     width: 100%;
   }
 }
+
+/* ===== UI/UX.v4.1 L5 (owner lock, 23 November 2026): the six destinations as one numbered list. One box holds the
+   rows; a row has its number, a 40 px mark, the name and its line, the word Open and one quiet link. No row is a box
+   of its own and no link is a boxed button. Tokens only. */
+.ux-public .guide-routes .guide-directions ol.guide-direction-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* The edge of the one box is drawn inside it, so the list adds no rule across the page. */
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+.ux-public .guide-routes .guide-directions ol.guide-direction-list > li.guide-direction-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-2) var(--space-5);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.ux-public .guide-routes .guide-directions ol.guide-direction-list > li.guide-direction-row + li {
+  border-block-start: 1px solid var(--line);
+}
+.guide-direction-n {
+  min-inline-size: 1.5rem;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+}
+/* The 40 px mark is written in the heading with its name (the shared flag component), and drawn in a column of its
+   own beside the name and its line, centred on the two. */
+.guide-direction-list .guide-direction-text {
+  position: relative;
+  min-block-size: 1.6875rem;
+  padding-inline-start: calc(2.5rem + var(--space-4));
+}
+.guide-direction-list .guide-direction-text h3 .ux-flagged {
+  display: block;
+}
+.guide-direction-list .guide-direction-text :is(.ux-flag, .ux-region-mark).is-row {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 0;
+  transform: translateY(-50%);
+}
+.guide-direction-list .guide-direction-open {
+  justify-self: end;
+}
+/* Quiet: a text link with its underline and a 44 px target, never a boxed button. */
+.ux-public
+  .guide-routes
+  .guide-directions
+  ol.guide-direction-list
+  > li.guide-direction-row
+  > a.text-link {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  justify-self: end;
+  gap: var(--space-2);
+  min-block-size: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--action);
+  font-size: var(--text-base);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  white-space: normal;
+}
+.ux-public
+  .guide-routes
+  .guide-directions
+  ol.guide-direction-list
+  > li.guide-direction-row
+  > a.text-link:hover {
+  background: transparent;
+  color: var(--action-hover);
+}
+/* A narrow row wraps instead of shrinking: number, words and Open share the first line while they fit, the link takes
+   its own line, and at a very large text size each part takes the width it needs. Rows stay one height. */
+@media (max-width: 600px) {
+  .ux-public .guide-routes .guide-directions ol.guide-direction-list > li.guide-direction-row {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    align-content: center;
+    gap: 0 var(--space-3);
+    padding: var(--space-2) var(--space-3);
+  }
+  .guide-direction-list .guide-direction-text {
+    flex: 1 1 8rem;
+    min-inline-size: 0;
+    padding-inline-start: calc(2.5rem + var(--space-3));
+  }
+  .guide-direction-list :is(.guide-direction-n, .guide-direction-open) {
+    flex: none;
+    max-inline-size: 100%;
+  }
+  .ux-public
+    .guide-routes
+    .guide-directions
+    ol.guide-direction-list
+    > li.guide-direction-row
+    > a.text-link {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+}
