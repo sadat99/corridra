@@ -341,3 +341,31 @@ test('a further run changes nothing, and billing notes accept both words', async
   expect(await ok(billing, ['Synthetic note about the plan'])).toBe(true);
   expect(await ok(billing, ['Note about the plan for you'])).toBe(false);
 });
+
+test('file 0010 stops the install, changing nothing, when a function is neither the reviewed text nor already widened', async () => {
+  const signature = 'customer.workspace_lifecycle_command(uuid,text,jsonb)';
+  const widened = late.all.functions.find((r) => r.signature === signature)!.definition as string;
+  // A text nobody reviewed: the old comparison is back and one line was added by hand.
+  const unknown = widened
+    .split("!~ '^(Synthetic|Sample) '")
+    .join("NOT LIKE 'Synthetic %'")
+    .replace(/\nBEGIN\n/, '\nBEGIN\n -- edited by hand\n');
+  expect(unknown).not.toBe(widened);
+  expect(unknown).toContain('-- edited by hand');
+  await f.owner.query(unknown);
+  try {
+    const edited = await snapshot();
+    await expect(migrateCustomerWorkspaceLifecycle(f.owner)).rejects.toThrow(
+      `Sample first word prerequisite function differs: ${signature}. Review it and widen its first-word comparison`,
+    );
+    expect(await snapshot()).toEqual(edited);
+    expect(edited.functions.find((r) => r.signature === signature)!.definition).toContain(
+      "NOT LIKE 'Synthetic %'",
+    );
+  } finally {
+    await f.owner.query(widened);
+  }
+  expect(await snapshot()).toEqual(late.all);
+  await migrateCustomerWorkspaceLifecycle(f.owner);
+  expect(await snapshot()).toEqual(late.all);
+});
