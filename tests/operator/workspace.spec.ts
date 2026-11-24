@@ -480,7 +480,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await expect(research.getByRole('status')).toHaveText('Research saved.');
   await research
     .getByLabel('Shortlist mission')
-    .selectOption({ label: 'Browser Mission Test Company · ACTIVE' });
+    .selectOption({ label: 'Browser Mission Test Company · Active' });
   const targetCard = research.locator('.research-evidence').filter({
     has: page.getByRole('heading', { name: 'Synthetic Browser Distributor A', exact: true }),
   });
