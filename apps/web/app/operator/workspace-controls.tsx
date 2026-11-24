@@ -8,6 +8,7 @@ import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback'
 import { formatDateTime } from '../../lib/ux/format';
 import { readJson, withStepUp } from '../../lib/ux/step-up';
 import { useOperatorFlags } from './operator-flags';
+import './desk-helpers-status-team.css';
 
 const roleNames: Record<string, string> = {
   owner: 'Owner',
@@ -439,7 +440,9 @@ export function WorkspaceControls({
       <header className="ux-controls-heading">
         <div>
           {teamDeskV41 ? null : <p className="eyebrow">Workspace settings</p>}
-          <h2>Workspace controls</h2>
+          {/* Team desk v4.1 (D16): the page title is Team and access; this heading stays for screen
+              readers only. Nothing about members, roles or the authenticator rule changes. */}
+          <h2 className={teamDeskV41 ? 'sr-only' : undefined}>Workspace controls</h2>
           <p>
             Manage member access and available tools for <strong>{workspaceName}</strong>.
           </p>

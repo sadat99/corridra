@@ -17,3 +17,15 @@
 .ux-desk-frame .ux-helpers-example .ux-example-tag {
   margin-inline-end: var(--space-2);
 }
+
+/* Audit: the one primary action sits on the left edge, under the line that says what it does. */
+.ux-desk-frame .ux-audit-toolbar {
+  flex-flow: column nowrap;
+  align-items: flex-start;
+}
+/* Audit: a membership state is a status word, never the action fill. */
+.ux-desk-frame .ux-audit-members .ux-record-state.is-active {
+  color: var(--brand-deep);
+  background: var(--ac-surface-selected);
+  border-color: var(--ac-border-strong);
+}
