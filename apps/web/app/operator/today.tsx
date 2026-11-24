@@ -1202,7 +1202,7 @@ export function TodayPanel({
   desk?: boolean;
 }) {
   // Team desk v4.1: read on the server only with the team shell on, and handed down with the other team flags.
-  const deskV41 = useOperatorFlags().teamDeskV41;
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [today, setToday] = useState<Today | null>(null);
   // Why the list could not be read: the person's role, too many requests, or anything else (an
   // unavailable service or no connection). Each gets its own words and a retry where one helps.

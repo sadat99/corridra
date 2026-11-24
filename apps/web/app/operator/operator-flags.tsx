@@ -14,7 +14,7 @@ export function OperatorFlags({
   replyReview: boolean;
   /** CORRIDRA_SUPPLY_SOURCES: the Companies panel then offers a link to the supply source screens. */
   supplySources?: boolean;
-  /** CORRIDRA_UX_TEAM_DESK_V41 with the team shell on: the team desk v4.1 screens. */
+  /** CORRIDRA_UX_TEAM_DESK_V41: the team desk v4.1 screens (docs/revamp/specs/team-desk-v4-1.md). */
   teamDeskV41?: boolean;
   children: ReactNode;
 }) {
