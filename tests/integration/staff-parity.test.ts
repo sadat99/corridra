@@ -57,6 +57,8 @@ const reserved = [
   'problem-reports',
   'supply',
   'invoice-issuer',
+  // Team desk v4.1 unit D18: the Inbox is a page of its own (not found with CORRIDRA_UX_TEAM_DESK_V41 off).
+  'inbox',
 ];
 const root = join(__dirname, '../../apps/web');
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
