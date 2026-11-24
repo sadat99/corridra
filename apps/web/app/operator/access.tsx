@@ -1,6 +1,7 @@
 'use client';
 import { SubTabs } from '../../components/ux/sub-tabs';
 import { notSentWords } from './contact-not-sent';
+import { canSendOne, deliveryNoteWords, sendOneBody } from './outreach-send';
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
@@ -52,6 +53,8 @@ type Message = {
   /** CRUD G11: true when an opt-out this reader may read covers an address in the contact's chain (installed only). */
   contact_opted_out?: boolean;
   last_error?: string | null;
+  /** ADR-090: the test-mode note of a delivered real email, present only when real outreach is installed. */
+  delivery_note?: string | null;
 };
 type Comms = {
   role: string;
@@ -685,8 +688,15 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                     Dispatch Pending Introductions
                   </button>
                 )}
+                {manage && (
+                  <p>
+                    This starts waiting sample introductions only. A real email is sent one at a
+                    time with Send This Email on its own card.
+                  </p>
+                )}
                 {comms.messages.map((m) => {
                   const notSent = notSentWords(m);
+                  const note = deliveryNoteWords(m);
                   return (
                     <article className="detail-card introduction-card" key={m.id}>
                       <h4>{m.presentation.company}</h4>
@@ -697,7 +707,21 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                         {m.revoked ? 'Link revoked.' : ''}
                         {notSent && ` ${notSent}`}
                       </p>
+                      {note && <p>Delivery note: {note}.</p>}
                       <p>Link expires {formatDateTime(m.expires_at)}.</p>
+                      {manage && canSendOne(m) && (
+                        <p>
+                          <button
+                            className="secondary-link"
+                            disabled={busy}
+                            aria-label={`Send This Email to ${m.presentation.company}`}
+                            onClick={() => void act('dispatch', sendOneBody(m))}
+                          >
+                            Send This Email
+                          </button>{' '}
+                          One click sends this one email only.
+                        </p>
+                      )}
                       {manage && !m.revoked && (
                         <form
                           className="operator-form"
