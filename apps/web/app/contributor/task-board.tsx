@@ -3,6 +3,7 @@ import { ContributorSignout } from './signout';
 import { displayMoney } from '@corridra/domain/locale';
 import { formatDateTime } from '../../lib/ux/format';
 import { countryName } from '../../lib/ux/options';
+import { Flagged, placeMark } from '../../components/ux/flag';
 
 // D11: one date and time style. CQ-61: plain words for the task state and places, never raw codes.
 const displayDate = (value: string) => formatDateTime(value);
@@ -257,8 +258,14 @@ function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boole
           <p className="label">EXACT ASSIGNMENT · VERSION {task.version}</p>
           <h2>{words(task.disclosure.kind)}</h2>
           <p>
-            {words(task.status)} · {place(task.disclosure.market)} · work country{' '}
-            {place(task.disclosure.workCountry)}
+            {words(task.status)} ·{' '}
+            <Flagged code={placeMark(task.disclosure.market)}>
+              {place(task.disclosure.market)}
+            </Flagged>{' '}
+            · work country{' '}
+            <Flagged code={placeMark(task.disclosure.workCountry)}>
+              {place(task.disclosure.workCountry)}
+            </Flagged>
           </p>
           <p>{task.disclosure.instructions}</p>
           <dl>
