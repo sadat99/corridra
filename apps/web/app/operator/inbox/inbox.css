@@ -5,3 +5,63 @@
   gap: var(--space-4);
   min-inline-size: 0;
 }
+/* A problem report row: from 48 rem its moves sit at the end of the line of facts, so two reports and the
+   filter fit one screen at 1440 by 900. What opens under the row (the details, the note form) takes the full
+   width. */
+@media (min-width: 48rem) {
+  /* The rows take the width of the page; the words above them keep a reading measure. */
+  .inbox-lists .pr-queue {
+    max-width: none;
+  }
+  .inbox-lists .pr-queue > p {
+    max-width: 48rem;
+  }
+  .inbox-lists .pr-queue-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: var(--space-4);
+  }
+  .inbox-lists .pr-queue-row > .pr-facts {
+    grid-column: 1;
+    grid-row: 1;
+    align-items: center;
+    min-block-size: 2.75rem;
+  }
+  .inbox-lists .pr-queue-row > .pr-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .inbox-lists .pr-queue-row > :not(.pr-facts, .pr-actions) {
+    grid-column: 1 / -1;
+  }
+}
+/* On a phone the facts stack; each keeps its own width, so a badge is not stretched across the row. */
+@media (max-width: 30rem) {
+  .inbox-lists .pr-facts {
+    align-items: flex-start;
+  }
+}
+/* On a phone the moves of a report share one line, each half the width, instead of one full-width button each. */
+@media (max-width: 47.99rem) {
+  .inbox-lists .pr-queue-row > .pr-actions {
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+  }
+  .inbox-lists .pr-queue-row > .pr-actions > button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: var(--space-2);
+    white-space: nowrap;
+  }
+}
+/* On a phone the rows sit a little closer, so two reports with the filter stay inside two screens at 320 px. */
+@media (max-width: 30rem) {
+  .inbox-lists .pr-queue,
+  .inbox-lists .pr-queue-rows {
+    gap: var(--space-3);
+  }
+  .inbox-lists .pr-queue-row {
+    gap: var(--space-2);
+    padding-block-start: var(--space-3);
+  }
+}

@@ -5,6 +5,9 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { CorridraIcon } from '../../../components/corridra-icon';
 import { ModeLabel } from '../../../components/mr/mode-label';
 import { isNotInstalled, refusalWords, supplyGet } from '../../../lib/supply-screens';
+import Link from 'next/link';
+import '../../../components/ux/ux-kit.css';
+import { useOperatorFlags } from '../operator-flags';
 import { readFailureKind, readFailureWords } from '../read-failure';
 
 export type Loaded<T> = {
@@ -113,7 +116,37 @@ export function PersonalDataLine() {
 export const sourceLabelLine =
   'Source-reported. These details are as stated by the source. Corridra has not verified them.';
 export function SourceLabelLine() {
-  return <p className="supply-quiet">{sourceLabelLine}</p>;
+  // Team desk v4.1: the line takes the width of the column, like the line above it. Off, as it was.
+  const { teamDeskV41 } = useOperatorFlags();
+  return (
+    <p className={teamDeskV41 ? 'supply-quiet supply-wide' : 'supply-quiet'}>{sourceLabelLine}</p>
+  );
+}
+
+/**
+ * The way back on a Supply page deeper than one level (team desk v4.1): the shared breadcrumb pattern, each
+ * earlier level a link and the page in view named last, marked as the current page and not a link.
+ */
+export function SupplyCrumbs({ trail }: { trail: { label: string; href?: string }[] }) {
+  return (
+    <nav className="ux-kit-crumbs" aria-label="Breadcrumb">
+      <ol>
+        {trail.map((item, index) => (
+          <li key={item.label}>
+            {item.href && index < trail.length - 1 ? (
+              <Link prefetch={false} href={item.href}>
+                {item.label}
+              </Link>
+            ) : (
+              <span aria-current={index === trail.length - 1 ? 'page' : undefined}>
+                {item.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
 }
 
 /** A step form's heading takes focus when the step changes (guided rule: focus moves to the question). */

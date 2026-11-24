@@ -1005,24 +1005,35 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
   }
 }
 
-/* Team desk v4.1, phone header (owner review, 24 Nov 2026): with menu v3 the team header is one row inside
-   60 px on a phone, down to 320 px. The menu button, the mark, the mode label and the three tools keep their
-   44 px targets; the side gutter, the room between them and the label's padding give way, and the label is the
-   one part that may shorten before the row would ever scroll sideways. Off, the header wraps as it did. */
-@media (max-width: 479.98px) {
+/* Team desk v4.1, header below 1024 px (owner review, 24 Nov 2026): with menu v3 the team header is one row
+   inside 60 px, from 320 px up to where the wide header starts. The menu button, the mark, the mode label and the
+   tools keep their 44 px targets and never wrap. Below 480 px the row also runs to the edges of the screen (the
+   shell's 24 px gutter is given back, with a 4 px gutter of its own, which leaves 10 px to spare at 320 px), the
+   room between the parts and the label's padding give way, and the label is the one part that may shorten before
+   the row would ever scroll sideways. Off, the header wraps as it did. */
+@media (max-width: 1023.98px) {
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header {
     flex-wrap: nowrap;
-    gap: var(--space-1);
-    /* The row runs to the edges of the screen (the shell's 24 px gutter is given back) with a 4 px gutter of
-       its own, which leaves 10 px to spare at 320 px. */
-    width: auto;
     min-height: 60px;
-    margin-inline: calc(-1 * var(--space-6));
     padding-block: var(--space-2) calc(var(--space-2) - 1px);
-    padding-inline: var(--space-1);
   }
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header > * {
     flex: none;
+  }
+  .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-app-tools {
+    flex-wrap: nowrap;
+  }
+  /* The shell name gives its room to the row, as it already does on a phone; the mode label stays. */
+  .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-app-name {
+    display: none;
+  }
+}
+@media (max-width: 479.98px) {
+  .site-shell:has(nav[data-menu='v3']) > .ux-app-header {
+    gap: var(--space-1);
+    width: auto;
+    margin-inline: calc(-1 * var(--space-6));
+    padding-inline: var(--space-1);
   }
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-app-status {
     flex: 0 1 auto;
@@ -1034,7 +1045,6 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
     text-overflow: ellipsis;
   }
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-app-tools {
-    flex-wrap: nowrap;
     gap: 0;
   }
 }

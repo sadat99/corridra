@@ -68,7 +68,7 @@ export function InboxLists({
     {
       id: 'erasure',
       label: 'Erasure requests',
-      aliases: ['settings-erasure'],
+      aliases: ['settings-erasure', 'erasure-queue-title'],
       panel: <ErasureQueue tenant={tenant} role={role} problemReports={problemReports} />,
     },
     ...(programmeApplications
@@ -86,7 +86,8 @@ export function InboxLists({
           {
             id: 'helpers',
             label: 'Helper interest',
-            panel: <HelperInterestList tenant={tenant} role={role} />,
+            // The register already answered that it is installed, so the list does not ask again.
+            panel: <HelperInterestList tenant={tenant} role={role} installed />,
           },
         ]
       : []),

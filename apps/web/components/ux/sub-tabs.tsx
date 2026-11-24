@@ -127,6 +127,18 @@ export function SubTabs({
       element.focus({ preventScroll: true });
   }, [active]);
 
+  // Where the tab row scrolls sideways (a narrow screen with the desk page pattern), the chosen tab is brought
+  // into view inside the row. The page itself is never scrolled, and a row that fits is left alone.
+  useEffect(() => {
+    const row = list.current;
+    const tab = row?.querySelector<HTMLElement>(`[data-tab="${CSS.escape(active)}"]`);
+    if (!row || !tab || row.scrollWidth <= row.clientWidth) return;
+    const rowBox = row.getBoundingClientRect();
+    const tabBox = tab.getBoundingClientRect();
+    if (tabBox.left < rowBox.left || tabBox.right > rowBox.right)
+      row.scrollLeft += tabBox.left - rowBox.left - (rowBox.width - tabBox.width) / 2;
+  }, [active]);
+
   const select = useCallback(
     (id: string) => {
       const url = new URL(window.location.href);
@@ -216,7 +228,17 @@ export function SegmentLinks({
   if (segments.length < 2) return null;
   return (
     <nav className="ux-desk-segments" aria-label={label} lang="en">
-      <ul>
+      {/* On a narrow screen the row scrolls sideways; the page in view is then brought into the row's view. */}
+      <ul
+        ref={(row) => {
+          const current = row?.querySelector<HTMLElement>('[aria-current="page"]');
+          if (!row || !current || row.scrollWidth <= row.clientWidth) return;
+          const rowBox = row.getBoundingClientRect();
+          const box = current.getBoundingClientRect();
+          if (box.left < rowBox.left || box.right > rowBox.right)
+            row.scrollLeft += box.left - rowBox.left - (rowBox.width - box.width) / 2;
+        }}
+      >
         {segments.map((segment) => (
           <li key={segment.id}>
             <a href={segment.href} aria-current={segment.current ? 'page' : undefined}>

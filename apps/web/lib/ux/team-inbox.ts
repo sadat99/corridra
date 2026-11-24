@@ -24,7 +24,7 @@ const tabOfSettingsTab = new Map<string, InboxTabId>([
   ['settings-applications', 'applications'],
 ]);
 /** An element inside a list that an old `#` link names. The link keeps its `#` part and lands on the element. */
-const elementAddresses = [
+export const inboxElementAddresses = [
   'problem-report-queue',
   'erasure-queue-title',
   'programme-application-queue',
@@ -49,7 +49,7 @@ export function inboxHrefForOldAddress(address: {
   workspace: string;
 }): string | null {
   const { fragment, settingsTab, workspace } = address;
-  if ((elementAddresses as readonly string[]).includes(fragment))
+  if ((inboxElementAddresses as readonly string[]).includes(fragment))
     return inboxHref(workspace) + '#' + fragment;
   const tab = tabOfSettingsTab.get(fragment) ?? tabOfSettingsTab.get(settingsTab ?? '');
   return tab ? inboxHref(workspace, tab) : null;

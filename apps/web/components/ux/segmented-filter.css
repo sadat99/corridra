@@ -55,3 +55,18 @@
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
+/* Team desk v4.1 page pattern, below 30 rem: the choices are separate chips with room between them, so a row
+   that wraps does not leave half a joined bar. Scoped to the desk frame; elsewhere the filter is as it was. */
+@media (max-width: 29.99rem) {
+  .ux-desk-frame .ux-segments-row {
+    gap: var(--space-2);
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+  .ux-desk-frame .ux-segment,
+  .ux-desk-frame .ux-segment + .ux-segment {
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+  }
+}

@@ -74,6 +74,16 @@ const markup = (page: Page, selector: string) =>
       .replace(/_r_[0-9a-z]+_/g, '_r_')
       .trim(),
   );
+/** The page under its header, without the head line of a Supply page (the breadcrumb row), folded like `markup`. */
+const bodyMarkup = (page: Page) =>
+  page.locator('main#main').evaluate((main) => {
+    const copy = main.cloneNode(true) as HTMLElement;
+    copy.querySelectorAll(':scope > header, .supply-head').forEach((part) => part.remove());
+    return copy.innerHTML
+      .replace(/\s+/g, ' ')
+      .replace(/_r_[0-9a-z]+_/g, '_r_')
+      .trim();
+  });
 const listReads = (world: World) =>
   world.asked.filter(
     (line) =>
@@ -237,13 +247,20 @@ test.describe('Settings (D17)', () => {
       '#workspace-controls Workspace switches',
     ]);
     expect(on.links).toEqual([]);
-    expect({ ...on, links: off.links }).toEqual(off);
-    expect(on.summaries).toEqual([
+    // The numbers count what is drawn with the switch on, so none is skipped; off they are what they were.
+    expect(off.summaries).toEqual([
       '01 Prepare commercial mission templates',
       '02 Create a directional corridor route',
       '04 Advanced (developers): versioned policy review',
       '05 Current route packs and definition references',
     ]);
+    expect(on.summaries).toEqual([
+      '01 Prepare commercial mission templates',
+      '02 Create a directional corridor route',
+      '03 Advanced (developers): versioned policy review',
+      '04 Current route packs and definition references',
+    ]);
+    expect({ ...on, links: off.links, summaries: off.summaries }).toEqual(off);
   });
 
   test('switch on: creating a route sends what it always sent', async ({ page }) => {
@@ -458,6 +475,12 @@ test.describe('Inbox (D18)', () => {
     await expect(page.getByRole('tab', { name: 'Helper interest' })).toBeVisible();
     await page.waitForLoadState('networkidle');
     expect(listReads(world)).toEqual([]);
+    // The helper interest register is asked once whether it is installed, not once by the page and once by the list.
+    await page.getByRole('tab', { name: 'Helper interest' }).click();
+    await expect(page.locator('#helper-interest-list')).toHaveAttribute('open', '');
+    await page.waitForLoadState('networkidle');
+    expect(world.asked.filter((line) => line.includes('view=installed'))).toHaveLength(1);
+    await page.getByRole('tab', { name: 'Problem reports' }).click();
     // No number in the title, the purpose line, a tab or the menu.
     for (const part of [
       heading(page),
@@ -658,35 +681,73 @@ test.describe('Supply (D19)', () => {
       await expect(heading(page).locator('h1')).toHaveText(entry.title);
       await expect(heading(page).locator('p.label')).toHaveText('TEAM WORKSPACE');
       await expect(heading(page).locator('.ux-frame-helper')).toHaveCount(0);
-      const before = await markup(page, 'main#main > :not(header)');
+      const before = await bodyMarkup(page);
+      const headBefore = await page.locator('.supply-head').count();
+      if (headBefore) {
+        // Off: the way back as it was, and the link to Do Not Contact on every page under Supply Sources.
+        await expect(
+          page.locator('.supply-head nav[aria-label="Breadcrumb"] a.text-link').first(),
+        ).toHaveText('Supply Sources');
+        await expect(page.locator('.supply-head nav.ux-kit-crumbs')).toHaveCount(0);
+        await expect(
+          page.locator('.supply-head').getByRole('link', { name: 'Do Not Contact' }),
+        ).toHaveCount(1);
+      }
       await open(page, entry.path, { v41: true });
       await expect(heading(page).locator('h1')).toHaveText(entry.title);
       await expect(heading(page).locator('p.label')).toHaveCount(0);
       await expect(heading(page).locator('.ux-frame-helper')).toHaveText(entry.purpose);
       await expect(page.locator('h1')).toHaveCount(1);
-      // Under the header the page is the one it was. On the candidate page the country code alone becomes its
-      // mark and name (UI/UX.v4.1 L1); nothing else differs.
-      const after = await markup(page, 'main#main > :not(header)');
+      // Under the header and the head line the page is the one it was, but for three named things: the country
+      // code alone becomes its mark and name (UI/UX.v4.1 L1), the source label line takes the column's width, and
+      // the first sentence of the Do Not Contact intro is the purpose line.
+      const after = await bodyMarkup(page);
+      const first = 'Companies Corridra must not contact. A block stops';
+      expect(
+        after
+          .replace(/<dt>Country<\/dt><dd>.*?<\/dd>/, '<dt>Country</dt><dd>ES</dd>')
+          .replace(
+            'class="supply-quiet supply-wide">Source-reported.',
+            'class="supply-quiet">Source-reported.',
+          )
+          .replace('<p class="supply-quiet">A block stops', `<p class="supply-quiet">${first}`),
+      ).toBe(before);
       if (entry.title === 'Candidate') {
         const country = page.locator('dt:text-is("Country") + dd');
         await expect(country).toHaveText('Spain');
         await expect(country.locator('img.ux-flag[data-flag="es"]')).toHaveCount(1);
         expect(before).toContain('<dt>Country</dt><dd>ES</dd>');
-        expect(after.replace(/<dt>Country<\/dt><dd>.*?<\/dd>/, '<dt>Country</dt><dd>ES</dd>')).toBe(
-          before,
-        );
-      } else if (entry.title === 'Do Not Contact') {
-        // The sentence that is now the purpose line is said once; the rest of the intro stays.
-        const first = 'Companies Corridra must not contact. A block stops';
+      }
+      if (entry.title === 'Do Not Contact') {
         expect(before).toContain(first);
-        expect(
-          after.replace(
-            '<p class="supply-quiet">A block stops',
-            `<p class="supply-quiet">${first}`,
-          ),
-        ).toBe(before);
         await expect(page.getByText('Companies Corridra must not contact.')).toHaveCount(1);
-      } else expect(after).toBe(before);
+        await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toHaveCount(0);
+      } else {
+        // The shared breadcrumb pattern: an ordered list, each earlier level a link, the page in view last and
+        // marked as the current page. Do Not Contact is linked from Supply Sources only.
+        const crumbs = page.locator(
+          '.supply-head > nav.ux-kit-crumbs[aria-label="Breadcrumb"] > ol > li',
+        );
+        const trail =
+          entry.title === 'Candidate'
+            ? ['Supply Sources', 'Supply Candidates', 'Candidate']
+            : ['Supply Sources', 'Supply Candidates'];
+        await expect(crumbs).toHaveText(trail);
+        await expect(crumbs.locator('a')).toHaveText(trail.slice(0, -1));
+        await expect(crumbs.first().locator('a')).toHaveAttribute(
+          'href',
+          `/operator/supply?workspace=${fixtureTenant}`,
+        );
+        await expect(crumbs.last().locator('[aria-current="page"]')).toHaveText(entry.title);
+        await expect(crumbs.last().locator('a')).toHaveCount(0);
+        await expect(
+          page.locator('main#main').getByRole('link', { name: 'Do Not Contact' }),
+        ).toHaveCount(0);
+        for (const box of await crumbs
+          .locator('a')
+          .evaluateAll((links) => links.map((link) => link.getBoundingClientRect().height)))
+          expect(box).toBeGreaterThanOrEqual(44);
+      }
     });
 
   test('switch on: no address is linked twice on a Supply page', async ({ page }) => {
@@ -786,4 +847,207 @@ test.describe('Team header on a phone (owner review, 24 Nov 2026)', () => {
         .evaluate((el) => getComputedStyle(el).flexWrap),
     ).toBe('wrap');
   });
+});
+
+test.describe('Design audit of 24 Nov 2026 (switch on)', () => {
+  const screens = (page: Page, height: number) =>
+    page.evaluate((h) => document.documentElement.scrollHeight / h, height);
+  /** Whether every box sits on one line: each starts after the one before it and none is lower than the first. */
+  const oneRow = (boxes: { x: number; y: number; width: number; height: number }[]) =>
+    boxes.every(
+      (box, index) =>
+        Math.abs(box.y + box.height / 2 - (boxes[0]!.y + boxes[0]!.height / 2)) <= box.height / 2 &&
+        (index === 0 || box.x >= boxes[index - 1]!.x + boxes[index - 1]!.width - 1),
+    );
+  const boxes = (page: Page, selector: string) =>
+    page.locator(selector).evaluateAll((parts) =>
+      parts.map((part) => {
+        const box = part.getBoundingClientRect();
+        return { x: box.x, y: box.y, width: box.width, height: box.height };
+      }),
+    );
+
+  test('Settings: "to" stays with its destination, the counts are one line below 40 rem, two phone screens at most', async ({
+    page,
+  }) => {
+    await openWorkspace(page, '/operator/settings', { v41: true, width: 320, height: 844 });
+    await expect(settings(page).locator('.settings-routes li')).toHaveCount(3);
+    // The word "to" and the destination are one unbreakable part of the row.
+    for (const end of await boxes(page, '.settings-route-end')) expect(end.height).toBeLessThan(40);
+    expect(
+      await page
+        .locator('.settings-route-end')
+        .first()
+        .evaluate((el) => getComputedStyle(el).whiteSpace),
+    ).toBe('nowrap');
+    // The three counts read as text on a line, not as three tiles.
+    const counts = await boxes(page, '.ux-settings-counts > div');
+    expect(counts).toHaveLength(3);
+    for (const count of counts) expect(count.height).toBeLessThan(28);
+    expect(
+      await page
+        .locator('.ux-settings-counts > div')
+        .first()
+        .evaluate((el) => {
+          const style = getComputedStyle(el);
+          return [style.flexDirection, style.borderTopWidth, style.paddingTop];
+        }),
+    ).toEqual(['row', '0px', '0px']);
+    expect(await screens(page, 844)).toBeLessThanOrEqual(2);
+    await openWorkspace(page, '/operator/settings', { v41: true, width: 390, height: 844 });
+    await expect(settings(page).locator('.settings-routes li')).toHaveCount(3);
+    expect(await screens(page, 844)).toBeLessThanOrEqual(2);
+    // From 40 rem the counts are the tiles they were.
+    await openWorkspace(page, '/operator/settings', { v41: true, width: 768, height: 1024 });
+    await expect(settings(page).locator('.ux-settings-counts')).toBeVisible();
+    expect((await boxes(page, '.ux-settings-counts > div'))[0]!.height).toBeGreaterThan(40);
+  });
+
+  test('Inbox: the moves of a report sit on its line of facts from 48 rem, and a phone keeps two screens', async ({
+    page,
+  }) => {
+    await open(page, '/operator/inbox', { v41: true, width: 1440, height: 900 });
+    await page.getByRole('button', { name: 'Load Problem Reports' }).click();
+    await expect(page.getByText('RP-000002')).toBeVisible();
+    const rows = page.locator('.pr-queue-row');
+    await expect(rows).toHaveCount(2);
+    for (const row of await rows.all()) {
+      const facts = (await row.locator('.pr-facts').boundingBox())!;
+      const moves = (await row.locator('.pr-actions').boundingBox())!;
+      // Same line: the moves start at the top of the facts and to their right.
+      expect(Math.abs(moves.y - facts.y)).toBeLessThanOrEqual(2);
+      expect(moves.x).toBeGreaterThanOrEqual(facts.x + facts.width - 1);
+    }
+    // Two reports with the filter fit the screen: the list ends above the bottom of a 900 px window.
+    const last = (await rows.last().boundingBox())!;
+    expect(last.y + last.height).toBeLessThanOrEqual(900);
+    // On a phone the facts stack at their own width (a badge is not stretched) and the page is two screens at most.
+    for (const width of [320, 390]) {
+      await open(page, '/operator/inbox', { v41: true, width, height: 844 });
+      await page.getByRole('button', { name: 'Load Problem Reports' }).click();
+      await expect(page.getByText('RP-000002')).toBeVisible();
+      const row = page.locator('.pr-queue-row').first();
+      const facts = (await row.locator('.pr-facts').boundingBox())!;
+      const badge = (await row.locator('.pr-facts .ux-badge').boundingBox())!;
+      expect(badge.width).toBeLessThan(facts.width / 2);
+      expect(oneRow(await boxes(page, '.pr-queue-row:first-child > .pr-actions > button'))).toBe(
+        true,
+      );
+      expect(await screens(page, 844), `${width} px`).toBeLessThanOrEqual(2);
+      await noSidewaysScroll(page);
+    }
+  });
+
+  test('Supply Sources: the one link out sits at the end of the tab row line, and a disclosure shows that it opens', async ({
+    page,
+  }) => {
+    for (const width of [1440, 390, 320]) {
+      await open(page, '/operator/supply', { v41: true, width, height: 844 });
+      await expect(page.getByText('Trade register of Spain')).toBeVisible();
+      const row = (await page.getByRole('tablist', { name: 'Supply sections' }).boundingBox())!;
+      const link = (await page.getByRole('link', { name: 'Do Not Contact' }).boundingBox())!;
+      // On the row's own line, after the row, at the end of the content column.
+      const middle = link.y + link.height / 2;
+      expect(middle, `${width} px`).toBeGreaterThan(row.y);
+      expect(middle, `${width} px`).toBeLessThan(row.y + row.height);
+      expect(link.x, `${width} px`).toBeGreaterThanOrEqual(row.x + row.width - 1);
+      const column = (await page.locator('.supply-hub-desk').boundingBox())!;
+      expect(Math.abs(link.x + link.width - (column.x + column.width))).toBeLessThanOrEqual(1);
+      await noSidewaysScroll(page);
+    }
+    const summary = page.locator('.supply-disclosure > summary').first();
+    const marker = () =>
+      summary.evaluate((el) => getComputedStyle(el, '::after').content.replace(/"/g, ''));
+    expect(await marker()).toBe('+');
+    await summary.click();
+    expect(await marker()).toBe('−');
+  });
+
+  test('below 30 rem: a filter is separate chips, and tabs and segments stay one row that scrolls inside itself', async ({
+    page,
+  }) => {
+    await open(page, '/operator/inbox', { v41: true, width: 320, height: 844 });
+    await expect(page.getByRole('tab', { name: 'Helper interest' })).toBeAttached();
+    // The filter: chips with room between them and a border each.
+    const chips = await boxes(page, '.ux-segments-row > .ux-segment');
+    expect(chips.length).toBe(5);
+    const firstLine = chips.filter((chip) => Math.abs(chip.y - chips[0]!.y) < 4);
+    expect(firstLine.length).toBeGreaterThan(1);
+    expect(firstLine[1]!.x - (firstLine[0]!.x + firstLine[0]!.width)).toBeGreaterThanOrEqual(8);
+    expect(
+      await page.locator('.ux-segments-row').evaluate((el) => getComputedStyle(el).borderTopWidth),
+    ).toBe('0px');
+    // The tabs: one row, wider than the screen, scrolling inside itself; the page does not scroll sideways.
+    const list = page.getByRole('tablist', { name: 'Inbox lists' });
+    expect(oneRow(await boxes(page, '[role="tablist"] > [role="tab"]'))).toBe(true);
+    expect(await list.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+    expect((await list.boundingBox())!.height).toBeLessThanOrEqual(52);
+    await noSidewaysScroll(page);
+    // The chosen tab is brought into view inside the row, by the pointer, the keyboard or the address.
+    const inView = (name: string) =>
+      page.getByRole('tab', { name }).evaluate((tab) => {
+        const row = tab.parentElement!.getBoundingClientRect();
+        const box = tab.getBoundingClientRect();
+        return box.left >= row.left - 1 && box.right <= row.right + 1;
+      });
+    expect(await inView('Problem reports')).toBe(true);
+    await open(page, '/operator/inbox', {
+      v41: true,
+      width: 320,
+      height: 844,
+      query: 'tab=helpers',
+    });
+    await expect(page.getByRole('tab', { name: 'Helper interest' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect.poll(() => inView('Helper interest')).toBe(true);
+    await page.getByRole('tab', { name: 'Helper interest' }).focus();
+    await page.keyboard.press('Home');
+    await expect(page.getByRole('tab', { name: 'Problem reports' })).toBeFocused();
+    await expect.poll(() => inView('Problem reports')).toBe(true);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    await axeClean(page);
+    // The segments of a grouped page: one row, the page in view inside it.
+    await openWorkspace(page, '/operator/control-center', { v41: true, width: 320, height: 844 });
+    const segments = page.getByRole('navigation', { name: 'Settings pages' });
+    expect(oneRow(await boxes(page, 'nav.ux-desk-segments li'))).toBe(true);
+    // One row of 44 px links with its frame, never two.
+    expect((await segments.boundingBox())!.height).toBeLessThan(88);
+    await expect
+      .poll(() =>
+        segments.locator('a[aria-current="page"]').evaluate((link) => {
+          const row = link.closest('ul')!.getBoundingClientRect();
+          const box = link.getBoundingClientRect();
+          return box.left >= row.left - 1 && box.right <= row.right + 1;
+        }),
+      )
+      .toBe(true);
+    await noSidewaysScroll(page);
+    // From 30 rem the tabs wrap as they did.
+    await open(page, '/operator/inbox', { v41: true, width: 600, height: 844 });
+    expect(
+      await page
+        .getByRole('tablist', { name: 'Inbox lists' })
+        .evaluate((el) => getComputedStyle(el).flexWrap),
+    ).toBe('wrap');
+  });
+
+  for (const width of [600, 768, 1000])
+    test(`the team header is one row inside 60 px at ${width} px`, async ({ page }) => {
+      await open(page, '/operator/inbox', { v41: true, width, height: 900 });
+      await expect(page.getByRole('tab', { name: 'Problem reports' })).toBeVisible();
+      const bar = (await page.locator('.site-shell > .ux-app-header').boundingBox())!;
+      expect(bar.height).toBeLessThanOrEqual(60);
+      for (const part of await boxes(
+        page,
+        '.site-shell > .ux-app-header > :is(a, button, .ux-app-status), .site-shell > .ux-app-header > .ux-app-tools > *',
+      )) {
+        if (!part.width) continue;
+        expect(part.y).toBeGreaterThanOrEqual(bar.y);
+        expect(part.y + part.height).toBeLessThanOrEqual(bar.y + bar.height);
+        expect(part.x + part.width).toBeLessThanOrEqual(width);
+      }
+      await noSidewaysScroll(page);
+    });
 });

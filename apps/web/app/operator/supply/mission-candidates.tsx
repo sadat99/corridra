@@ -14,7 +14,9 @@ import {
   ReadFailure,
   useLoad,
   useScreenState,
+  SupplyCrumbs,
 } from './supply-ui';
+import { useOperatorFlags } from '../operator-flags';
 
 export type ActiveSource = {
   id: string;
@@ -34,6 +36,7 @@ export function MissionCandidates({
   role: string;
   missionId: string;
 }) {
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const screen = useScreenState(tenant, missionId);
   const candidates = useLoad<{ candidates: Candidate[] }>(
     () => supplyGet(tenant, 'candidates', { mission: missionId }),
@@ -70,22 +73,34 @@ export function MissionCandidates({
   return (
     <section aria-labelledby="supply-candidates-heading">
       <div className="supply-head">
-        <nav aria-label="Breadcrumb">
-          <Link prefetch={false} className="text-link" href={withWorkspace(supplyBase, tenant)}>
-            Supply Sources
-          </Link>
-        </nav>
+        {deskV41 ? (
+          <SupplyCrumbs
+            trail={[
+              { label: 'Supply Sources', href: withWorkspace(supplyBase, tenant) },
+              { label: 'Supply Candidates' },
+            ]}
+          />
+        ) : (
+          <nav aria-label="Breadcrumb">
+            <Link prefetch={false} className="text-link" href={withWorkspace(supplyBase, tenant)}>
+              Supply Sources
+            </Link>
+          </nav>
+        )}
         <h2 id="supply-candidates-heading">Candidates for {name}</h2>
         {profile ? <p className="supply-quiet">Profile version {profile.version}</p> : null}
-        <p className="supply-head-end">
-          <Link
-            prefetch={false}
-            className="text-link"
-            href={withWorkspace(`${supplyBase}/do-not-contact`, tenant)}
-          >
-            Do Not Contact
-          </Link>
-        </p>
+        {/* Team desk v4.1: Do Not Contact is linked once, from Supply Sources, not from every page under it. */}
+        {deskV41 ? null : (
+          <p className="supply-head-end">
+            <Link
+              prefetch={false}
+              className="text-link"
+              href={withWorkspace(`${supplyBase}/do-not-contact`, tenant)}
+            >
+              Do Not Contact
+            </Link>
+          </p>
+        )}
       </div>
       <PausedNotice paused={paused} />
       {screen.error ? <ReadFailure error={screen.error} onRetry={screen.reload} /> : null}

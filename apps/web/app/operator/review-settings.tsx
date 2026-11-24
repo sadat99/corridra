@@ -122,8 +122,11 @@ function RouteList({ catalogue, failed }: { catalogue: Catalogue | null; failed:
               <li key={route.id}>
                 <span className="settings-route-name">
                   <CountryName code={route.origin_market} size="row" />{' '}
-                  <span className="settings-route-to">to</span>{' '}
-                  <CountryName code={route.destination_market} size="row" />
+                  {/* "to" stays with its destination when the row wraps on a narrow screen. */}
+                  <span className="settings-route-end">
+                    <span className="settings-route-to">to</span>{' '}
+                    <CountryName code={route.destination_market} size="row" />
+                  </span>
                 </span>
                 <span className="settings-route-pack">
                   {pack ? (
@@ -346,7 +349,14 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
   // only when Add route pack is also shown, so no number repeats.
   const step = (n: number) => String(n).padStart(2, '0');
   const aiStep = routePackShown ? 4 : 3;
-  const advancedStep = aiConnectShown && routePackShown ? 5 : 4;
+  // Team desk v4.1: the numbers count what is drawn, so none is skipped (Advanced is 03 with no pack form and no
+  // Connect AI). Off, they are what they always were.
+  const advancedStep = deskV41
+    ? 3 + Number(routePackShown) + Number(aiConnectShown)
+    : aiConnectShown && routePackShown
+      ? 5
+      : 4;
+  // Team desk v4.1: the numbers count what is drawn, so none is skipped (01, 02, 03 with no pack form and no Connect AI).
   const request = useCallback(
     async (action: string, input?: unknown) => {
       const r = await fetch(
@@ -450,7 +460,11 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
       data-operator-workbench
       id="workspace-settings"
       tabIndex={-1}
-      className="operator-section workspace-panel"
+      className={
+        deskV41
+          ? 'operator-section workspace-panel settings-desk'
+          : 'operator-section workspace-panel'
+      }
       aria-label="Corridor and policy settings"
     >
       {deskV41 ? (

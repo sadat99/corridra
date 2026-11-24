@@ -5,7 +5,7 @@
 // grants access: a place is listed only for a role that may open it, and the server still decides.
 // Owner: S4.
 import { sectionAllowedFor, teamSectionHref, workspaceQuery } from './shells';
-import { inboxHref } from './team-inbox';
+import { inboxElementAddresses, inboxHref } from './team-inbox';
 import { workspaceSections } from '../workspace-navigation';
 import { teamProblemReportsPath } from './team-help';
 
@@ -427,7 +427,8 @@ export type MenuOptions = { supply?: boolean; problemReports?: boolean };
 
 /** The Settings sub-tabs that hold the queues (SubTabs ids in app/operator/workspace.tsx) and the old `#` addresses inside them. */
 export const inboxTabs = ['settings-erasure', 'settings-reports', 'settings-applications'] as const;
-const inboxFragments = ['problem-report-queue', 'erasure-queue-title', ...inboxTabs] as const;
+/** The old `#` addresses of the queues: the elements (one list with the Inbox page, team-inbox.ts) and the tabs. */
+const inboxFragments = [...inboxElementAddresses, ...inboxTabs] as const;
 export const supplyPath = '/operator/supply';
 
 /**

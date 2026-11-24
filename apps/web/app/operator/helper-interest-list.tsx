@@ -18,12 +18,23 @@ import {
 // Owners and admins read the helper interest register and delete an entry on request (ADR-0085). Nothing else: no edit, no
 // export, no message. The panel does not exist while the database module is not installed. The server and the database
 // decide who may read or delete, with a fresh authenticator check.
-export function HelperInterestList({ tenant, role }: { tenant: string; role: string }) {
-  return canReadHelperInterest(role) ? <Panel key={tenant} tenant={tenant} /> : null;
+export function HelperInterestList({
+  tenant,
+  role,
+  installed = false,
+}: {
+  tenant: string;
+  role: string;
+  /** The caller already asked the register and it is installed (the Inbox page), so it is not asked twice. */
+  installed?: boolean;
+}) {
+  return canReadHelperInterest(role) ? (
+    <Panel key={tenant} tenant={tenant} known={installed} />
+  ) : null;
 }
 
-function Panel({ tenant }: { tenant: string }) {
-  const [installed, setInstalled] = useState(false);
+function Panel({ tenant, known }: { tenant: string; known: boolean }) {
+  const [installed, setInstalled] = useState(known);
   const [rows, setRows] = useState<HelperInterestRow[]>([]);
   const [page, setPage] = useState<{ total: number; nextOffset: number | null } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -33,6 +44,7 @@ function Panel({ tenant }: { tenant: string }) {
   const run = useRef(0);
 
   useEffect(() => {
+    if (known) return undefined;
     let live = true;
     void helperInterestInstalled(tenant).then((yes) => {
       if (live) setInstalled(yes);
@@ -40,7 +52,7 @@ function Panel({ tenant }: { tenant: string }) {
     return () => {
       live = false;
     };
-  }, [tenant]);
+  }, [tenant, known]);
 
   async function load(offset: number) {
     if (busy) return;

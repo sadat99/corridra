@@ -135,3 +135,26 @@
     outline-offset: -2px;
   }
 }
+/* Team desk v4.1 page pattern, below 30 rem: the tabs and the segments stay one row and scroll sideways inside
+   it (the chosen one is brought into view), so a page keeps one row under its title. Scoped to the desk frame;
+   elsewhere tabs wrap as they did. */
+@media (max-width: 29.99rem) {
+  .ux-desk-frame .ux-subtabs-list,
+  .ux-desk-frame .ux-desk-segments ul {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+  .ux-desk-frame .ux-subtabs-tab,
+  .ux-desk-frame .ux-desk-segments li {
+    flex: none;
+  }
+  .ux-desk-frame .ux-subtabs-tab,
+  .ux-desk-frame .ux-desk-segments a {
+    max-width: none;
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+}
