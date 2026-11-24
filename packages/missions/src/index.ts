@@ -309,7 +309,7 @@ export class MissionService {
   command(ctx: RequestContext, input: unknown) {
     const v = missionCommand.parse(input),
       h = digest(JSON.stringify(v));
-    return withTenant(this.pool, ctx, 'missions.manage', async ({ db, actorId }) => {
+    return withTenant(this.pool, ctx, 'missions.manage', async ({ db, actorId, purpose }) => {
       const {
         rows: [m],
       } = await db.query('SELECT * FROM app.mission WHERE tenant_id=$1 AND id=$2 FOR UPDATE', [
@@ -411,7 +411,9 @@ export class MissionService {
             ctx.tenantId,
             `Mission intake ${v.id}; notice ${i.notice_version}`,
             i.created_at,
-            ctx.purpose,
+            // The purpose withTenant resolved for this session, never the one the caller sent: a real workspace
+            // refuses a row written under the sample purpose the website always sends.
+            purpose,
             i.retention_until,
             actorId,
           ],
@@ -420,7 +422,7 @@ export class MissionService {
           rows: [claim],
         } = await db.query(
           `INSERT INTO app.claim(tenant_id,source_id,statement,classification,purpose,created_by) VALUES($1,$2,$3,'INTERNAL',$4,$5) RETURNING id`,
-          [ctx.tenantId, source.id, i.brief.offer, ctx.purpose, actorId],
+          [ctx.tenantId, source.id, i.brief.offer, purpose, actorId],
         );
         await db.query(
           'UPDATE app.commercial_intent SET claim_id=$3 WHERE tenant_id=$1 AND mission_id=$2',
