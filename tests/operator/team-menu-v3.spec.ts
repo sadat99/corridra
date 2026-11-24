@@ -1,0 +1,311 @@
+import { mkdirSync } from 'node:fs';
+import { test, expect, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { fixtureTenant, startMenuFixture } from './team-menu-v3-fixture';
+
+// Menu v3 (team desk v4.1 unit D3) in a browser, with the real stylesheets (the menu fixture): four labelled groups
+// of plain links, no expander, no second list and no number; the bar is navy to the window's edge and scrolls with
+// the page; each role sees only what it may open; the icon rail and the phone drawer keep working; and with the
+// switch off the sidebar is the one it was.
+let fixture: Awaited<ReturnType<typeof startMenuFixture>>;
+test.beforeAll(async () => {
+  fixture = await startMenuFixture();
+});
+test.afterAll(async () => {
+  await fixture.close();
+});
+
+const widths = [320, 390, 768, 1024, 1440, 1920] as const;
+// Screenshots are written only when asked for (D3_SHOTS=1), into the untracked work/ folder.
+const shots = process.env.D3_SHOTS ? 'work/d3/' : null;
+if (shots) mkdirSync(shots, { recursive: true });
+
+async function open(
+  page: Page,
+  query: string,
+  size: { width: number; height?: number } = { width: 1440 },
+  path = '/operator',
+) {
+  await page.setViewportSize({ width: size.width, height: size.height ?? 900 });
+  const [address = '', hash] = path.split('#') as [string, string | undefined];
+  await page.goto(
+    `${fixture.origin}${address}${address.includes('?') ? '&' : '?'}${query}${hash === undefined ? '' : '#' + hash}`,
+  );
+  const sidebar = page.locator('#workspace-navigation');
+  if (size.width < 1024) await page.getByRole('button', { name: 'Sections', exact: true }).click();
+  await expect(sidebar).toBeVisible();
+  await page.mouse.move(Math.round(size.width * 0.7), 450);
+  return sidebar;
+}
+const names = (page: Page, group: string) =>
+  page.getByRole('group', { name: group, exact: true }).getByRole('link').allInnerTexts();
+
+test('switch off: the sidebar is the one it was (no group headings, the Admin expander, no workspace row)', async ({
+  page,
+}) => {
+  for (const query of ['role=owner', 'role=owner&desk=on&reports=on']) {
+    const sidebar = await open(page, query);
+    await expect(sidebar).not.toHaveAttribute('data-menu', /.*/);
+    await expect(sidebar.locator('details.ux-team-group')).toHaveCount(1);
+    await expect(sidebar.locator('.ux-team-menu-heading')).toHaveCount(0);
+    await expect(sidebar.getByRole('link', { name: 'All Workspaces' })).toHaveCount(0);
+    await expect(sidebar.getByRole('link', { name: 'Inbox' })).toHaveCount(0);
+  }
+  await expect(page.locator('#workspace-navigation .ux-team-pins')).toHaveCount(1);
+  // The bar keeps its own scroll and its fixed place, as before.
+  expect(
+    await page.locator('.ux-leftnav-rail').evaluate((el) => getComputedStyle(el).position),
+  ).toBe('fixed');
+});
+
+test('switch on: four groups, every item one plain link, no expander and no number', async ({
+  page,
+}) => {
+  const sidebar = await open(page, 'v41=on&supply=on&reports=on&desk=on');
+  await expect(sidebar).toHaveAttribute('data-menu', 'v3');
+  expect(await sidebar.locator('.ux-team-menu-heading').allInnerTexts()).toEqual([
+    'Work',
+    'People and companies',
+    'Results',
+    'Admin',
+  ]);
+  expect(await names(page, 'Work')).toEqual(['Today', 'Missions', 'Meetings', 'Inbox']);
+  expect(await names(page, 'People and companies')).toEqual(['Companies', 'Helpers', 'Supply']);
+  expect(await names(page, 'Results')).toEqual(['Money', 'Reports']);
+  expect(await names(page, 'Admin')).toEqual(['Team and access', 'Settings', 'Status']);
+  await expect(sidebar.locator('details, summary, .ux-team-pins, .ux-team-pin-count')).toHaveCount(
+    0,
+  );
+  // No digit anywhere in the menu: Inbox carries no count (decision 5).
+  expect(await sidebar.innerText()).not.toMatch(/\d/);
+  const href = (name: string) =>
+    sidebar.getByRole('link', { name, exact: true }).getAttribute('href');
+  const w = `?workspace=${fixtureTenant}`;
+  expect(await href('All Workspaces')).toBe('/workspace');
+  expect(await href('Today')).toBe(`/operator${w}`);
+  expect(await href('Missions')).toBe(`/operator/missions${w}`);
+  expect(await href('Meetings')).toBe(`/operator/meetings${w}`);
+  expect(await href('Inbox')).toBe(`/operator/settings${w}&tab=settings-erasure`);
+  expect(await href('Companies')).toBe(`/operator/research${w}`);
+  expect(await href('Helpers')).toBe(`/operator/network${w}`);
+  expect(await href('Supply')).toBe(`/operator/supply${w}`);
+  expect(await href('Money')).toBe(`/operator/commercial${w}`);
+  expect(await href('Reports')).toBe(`/operator/delivery${w}`);
+  expect(await href('Team and access')).toBe(`/operator/controls${w}`);
+  expect(await href('Settings')).toBe(`/operator/settings${w}`);
+  expect(await href('Status')).toBe(`/operator/operations${w}`);
+  await expect(sidebar.getByRole('link', { name: 'Today', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(sidebar.locator('[aria-current]')).toHaveCount(1);
+});
+
+test('switch on, section addresses off: the old # links, workspace kept', async ({ page }) => {
+  const sidebar = await open(page, 'v41=on&urls=off');
+  const href = (name: string) =>
+    sidebar.getByRole('link', { name, exact: true }).getAttribute('href');
+  expect(await href('Missions')).toBe(`/operator?workspace=${fixtureTenant}#workspace-missions`);
+  expect(await href('Inbox')).toBe(
+    `/operator?workspace=${fixtureTenant}&tab=settings-erasure#workspace-settings`,
+  );
+});
+
+test('each role sees only what it may open; Supply only while its pages exist', async ({
+  page,
+}) => {
+  const seen = async (query: string) =>
+    (await open(page, `v41=on&${query}`)).locator('.ux-team-menu-group a').allInnerTexts();
+  expect(await seen('role=operator&supply=on')).toEqual([
+    'Today',
+    'Missions',
+    'Meetings',
+    'Companies',
+    'Helpers',
+    'Supply',
+    'Money',
+    'Reports',
+    'Settings',
+    'Status',
+  ]);
+  // An operator's Settings is Assistance, the one place of Settings that role may open.
+  expect(
+    await page
+      .locator('#workspace-navigation')
+      .getByRole('link', { name: 'Settings', exact: true })
+      .getAttribute('href'),
+  ).toBe(`/operator/assistance?workspace=${fixtureTenant}`);
+  expect(await seen('role=viewer')).toEqual([
+    'Today',
+    'Missions',
+    'Meetings',
+    'Companies',
+    'Money',
+    'Reports',
+  ]);
+  await expect(page.getByRole('group', { name: 'Admin', exact: true })).toHaveCount(0);
+  expect(await seen('role=owner')).not.toContain('Supply');
+  expect(await seen('role=none&supply=on')).toEqual([
+    'Today',
+    'Missions',
+    'Meetings',
+    'Companies',
+    'Money',
+    'Reports',
+  ]);
+});
+
+test('the lit item follows the address: a segment lights its item, a queue tab lights Inbox', async ({
+  page,
+}) => {
+  const lit = async (path: string) => {
+    const sidebar = await open(page, 'v41=on&supply=on', { width: 1440 }, path);
+    await expect(sidebar.locator('[aria-current]')).toHaveCount(1);
+    const link = sidebar.locator('[aria-current]');
+    return [await link.innerText(), await link.getAttribute('aria-current')];
+  };
+  expect(await lit('/operator/missions')).toEqual(['Missions', 'page']);
+  expect(await lit('/operator/missions/abc')).toEqual(['Missions', 'true']);
+  expect(await lit('/operator/sources')).toEqual(['Companies', 'true']);
+  expect(await lit('/operator/evidence')).toEqual(['Companies', 'true']);
+  expect(await lit('/operator/network')).toEqual(['Helpers', 'page']);
+  expect(await lit('/operator/audit')).toEqual(['Team and access', 'true']);
+  expect(await lit('/operator/assistance')).toEqual(['Settings', 'true']);
+  expect(await lit('/operator/control-center')).toEqual(['Settings', 'true']);
+  expect(await lit('/operator/owner')).toEqual(['Settings', 'true']);
+  expect(await lit('/operator/health')).toEqual(['Status', 'true']);
+  expect(await lit('/operator/readiness')).toEqual(['Status', 'true']);
+  expect(await lit('/operator/dashboard')).toEqual(['Status', 'true']);
+  expect(await lit('/operator/supply')).toEqual(['Supply', 'page']);
+  expect(await lit('/operator/supply/missions/abc')).toEqual(['Supply', 'page']);
+  expect(await lit('/operator/settings')).toEqual(['Settings', 'page']);
+  expect(await lit('/operator/settings?tab=settings-erasure')).toEqual(['Inbox', 'page']);
+  expect(await lit('/operator#workspace-commercial')).toEqual(['Money', 'page']);
+  expect(await lit('/operator/settings?tab=settings-reports')).toEqual(['Inbox', 'page']);
+  // A tab chosen on the page changes ?tab= without a page load; the menu follows it.
+  await page.evaluate(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'settings-policies');
+    window.history.replaceState(window.history.state, '', url);
+    document.body.click();
+  });
+  await expect(page.locator('#workspace-navigation [aria-current]')).toHaveText('Settings');
+  // The Authenticator is reached from the avatar menu: nothing in the sidebar is lit.
+  const sidebar = await open(page, 'v41=on', { width: 1440 }, '/operator/authenticator');
+  await expect(sidebar.locator('[aria-current]')).toHaveCount(0);
+});
+
+test('the bar is navy to the edge and scrolls with the page', async ({ page }) => {
+  const sidebar = await open(page, 'v41=on&supply=on&tall=on', { width: 1440, height: 700 });
+  const facts = () =>
+    page.evaluate(() => {
+      const nav = document.querySelector('#workspace-navigation') as HTMLElement;
+      const rail = document.querySelector('.ux-leftnav-rail') as HTMLElement;
+      const first = nav.querySelector('a') as HTMLElement;
+      return {
+        railPosition: getComputedStyle(rail).position,
+        navOverflow: getComputedStyle(nav).overflowY,
+        navScrolls: nav.scrollHeight > nav.clientHeight + 1,
+        top: first.getBoundingClientRect().top,
+        railLeft: rail.getBoundingClientRect().left,
+        column: getComputedStyle(document.querySelector('.site-shell')!, '::before')
+          .backgroundColor,
+        nav: getComputedStyle(nav).backgroundColor,
+        brand: getComputedStyle(document.querySelector('.ux-app-header .brand')!).backgroundColor,
+        pageLeft: (
+          document.querySelector('.ux-leftnav-page') as HTMLElement
+        ).getBoundingClientRect().left,
+        railRight: rail.getBoundingClientRect().right,
+      };
+    });
+  const before = await facts();
+  expect(before.railPosition).toBe('static');
+  expect(before.navOverflow).toBe('visible');
+  expect(before.navScrolls).toBe(false);
+  expect(before.railLeft).toBe(0);
+  // One navy: the painted column, the menu and the brand corner are the same colour.
+  expect(before.column).toBe(before.nav);
+  expect(before.brand).toBe(before.nav);
+  expect(before.pageLeft).toBeGreaterThanOrEqual(before.railRight);
+  await page.evaluate(() => window.scrollTo(0, 300));
+  const after = await facts();
+  expect(Math.round(before.top - after.top)).toBe(300);
+  // The last item is reachable by scrolling the page at a short window: nothing is cut off inside the bar.
+  await sidebar.getByRole('link', { name: 'Status', exact: true }).scrollIntoViewIfNeeded();
+  await expect(sidebar.getByRole('link', { name: 'Status', exact: true })).toBeInViewport();
+});
+
+for (const width of widths)
+  test(`${width} px: no sideways scroll, 44 px targets, axe clean, switch on and off`, async ({
+    page,
+  }) => {
+    for (const state of ['on', 'off'] as const) {
+      const query = state === 'on' ? 'v41=on&supply=on&reports=on' : 'desk=on&reports=on';
+      const sidebar = await open(page, query, { width });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        ),
+      ).toBeLessThanOrEqual(0);
+      if (state === 'on')
+        for (const link of await sidebar.getByRole('link').all()) {
+          const box = (await link.boundingBox())!;
+          expect(box.height).toBeGreaterThanOrEqual(44);
+          expect(box.width).toBeGreaterThanOrEqual(44);
+        }
+      if (shots) await page.screenshot({ path: `${shots}menu-${state}-${width}.png` });
+      if (state === 'on') {
+        const results = await new AxeBuilder({ page }).include('.ux-leftnav-rail').analyze();
+        expect(results.violations.map((v) => v.id)).toEqual([]);
+      }
+    }
+  });
+
+test('icons only: every item keeps its name and a 44 px target; group names stay for screen readers', async ({
+  page,
+}) => {
+  await page.addInitScript(() => window.localStorage.setItem('corridra.leftnav.collapsed', 'true'));
+  const sidebar = await open(page, 'v41=on&supply=on');
+  await expect(page.locator('.ux-leftnav-frame')).toHaveAttribute('data-collapsed', 'true');
+  for (const link of await sidebar.getByRole('link').all()) {
+    const box = (await link.boundingBox())!;
+    expect(Math.round(box.width)).toBeGreaterThanOrEqual(44);
+    expect(Math.round(box.height)).toBeGreaterThanOrEqual(44);
+    expect(await link.getAttribute('title')).toBeTruthy();
+  }
+  await expect(page.getByRole('group', { name: 'People and companies', exact: true })).toHaveCount(
+    1,
+  );
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+  if (shots) await page.screenshot({ path: `${shots}menu-on-1440-collapsed.png` });
+  const results = await new AxeBuilder({ page }).include('.ux-leftnav-rail').analyze();
+  expect(results.violations.map((v) => v.id)).toEqual([]);
+});
+
+test('phone drawer: opens as a dialog, Escape closes it and returns focus, keyboard reaches every item', async ({
+  page,
+}) => {
+  const sidebar = await open(page, 'v41=on&supply=on', { width: 390, height: 844 });
+  await expect(page.getByRole('dialog', { name: 'Team sections' })).toBeVisible();
+  const count = await sidebar.getByRole('link').count();
+  expect(count).toBe(13);
+  // Close menu, then the thirteen links, in order.
+  await expect(page.getByRole('button', { name: 'Close menu' })).toBeFocused();
+  for (let index = 0; index < count; index += 1) {
+    await page.keyboard.press('Tab');
+    await expect(sidebar.getByRole('link').nth(index)).toBeFocused();
+    expect(
+      await sidebar
+        .getByRole('link')
+        .nth(index)
+        .evaluate((el) => getComputedStyle(el).outlineStyle),
+    ).not.toBe('none');
+  }
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Sections', exact: true })).toBeFocused();
+});

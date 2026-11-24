@@ -17,6 +17,10 @@ import { sectionForSlug } from '../../lib/operator-urls';
 import { currentTeamSection } from '../../lib/ux/shells';
 import {
   itemForPlace,
+  menuGroupsFor,
+  menuItemForAddress,
+  menuItemHref,
+  menuPlacesFor,
   placeHref,
   teamItemsFor,
   teamPins,
@@ -44,18 +48,143 @@ const translated: Partial<
   meetings: 'wse.team.meetings',
 };
 
-export function TeamSidebar({
-  urls,
-  desk = false,
-  problemReports = false,
-}: {
+type SidebarProps = {
   urls: boolean;
   ownerPage?: boolean;
   /** CORRIDRA_UX_OPERATOR_DESK: five groups, Settings and checks, and the pinned queues. */
   desk?: boolean;
   /** Report a Problem is offered: only then is its queue pinned. */
   problemReports?: boolean;
-}) {
+  /** CORRIDRA_UX_TEAM_DESK_V41: menu v3. Off, the sidebar is the one above this switch, unchanged. */
+  deskV41?: boolean;
+  /** CORRIDRA_SUPPLY_SOURCES: the Supply Sources pages exist, so menu v3 may list Supply. */
+  supply?: boolean;
+};
+
+/** The team sidebar: menu v3 behind CORRIDRA_UX_TEAM_DESK_V41, otherwise the sidebar as it was. */
+export function TeamSidebar({ deskV41 = false, supply = false, ...legacy }: SidebarProps) {
+  return deskV41 ? (
+    <TeamMenuV3 urls={legacy.urls} supply={supply} />
+  ) : (
+    <TeamSidebarV1 {...legacy} />
+  );
+}
+
+// The whole address after the path, for the item that is lit. The Settings sub-tabs change ?tab= without a page load
+// or an event (history.replaceState), so the address is read again after a click or a key inside the page.
+function subscribeToAddress(notify: () => void) {
+  const later = () => window.setTimeout(notify, 0);
+  const stopHash = subscribeToHash(notify);
+  document.addEventListener('click', later);
+  document.addEventListener('keyup', later);
+  return () => {
+    stopHash();
+    document.removeEventListener('click', later);
+    document.removeEventListener('keyup', later);
+  };
+}
+const readAddress = () => window.location.search + window.location.hash;
+const readServerAddress = () => '';
+
+/**
+ * Menu v3 (team desk v4.1, decision 1): Work, People and companies, Results, Admin. Every item is one link; there is
+ * no second level and no expander. Which item a role sees and where it leads is lib/ux/team-map.ts (`menuV3`); the
+ * addresses are the ones every earlier link used. Inbox shows no number (decision 5): this menu reads no queue.
+ */
+function TeamMenuV3({ urls, supply }: { urls: boolean; supply: boolean }) {
+  const { t, locale } = useLanguage();
+  const pathname = usePathname() ?? '/operator';
+  const address = useSyncExternalStore(subscribeToAddress, readAddress, readServerAddress);
+  const { tenant, role } = useSyncExternalStore(
+    subscribeTeamContext,
+    readTeamContext,
+    readServerTeamContext,
+  );
+  const base = useId();
+  const cut = address.indexOf('#');
+  const search = cut < 0 ? address : address.slice(0, cut);
+  const hash = cut < 0 ? '' : address.slice(cut);
+  const place = (currentTeamSection(pathname, hash, sectionForSlug) || 'home') as TeamPlaceId;
+  const options = { supply };
+  const lit = menuItemForAddress({ place, pathname, search, hash }, role, options);
+  // As in the sidebar before it: a section word on a page that is not the workspace is a full page change.
+  const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
+  const english = (text: string): ReactNode =>
+    locale !== 'en' ? <span lang="en">{text}</span> : text;
+  return (
+    <nav
+      id="workspace-navigation"
+      tabIndex={-1}
+      className="ux-team-sidebar ux-team-menu"
+      data-menu="v3"
+      aria-label={t('wse.team.nav')}
+    >
+      {/* The workspace switch sits at the top of the menu: the page that lists every workspace the person belongs to. */}
+      <a className="ux-team-menu-workspace" href="/workspace" title="All Workspaces">
+        <OperatorIcon name="grid" />
+        <span>{english('All Workspaces')}</span>
+      </a>
+      {menuGroupsFor(role, options).map((group) => {
+        const heading = `${base}-${group.key}`;
+        return (
+          <div
+            key={group.key}
+            className="ux-team-menu-group"
+            role="group"
+            aria-labelledby={heading}
+          >
+            <p id={heading} className="ux-team-menu-heading">
+              {english(group.label)}
+            </p>
+            <ul>
+              {group.items.map((item) => {
+                const key = translated[item.key as TeamItem['key']];
+                const text = key ? t(key) : item.label;
+                const words =
+                  locale !== 'en' && (!key || text === translate('en', key)) ? english(text) : text;
+                const target = menuItemHref(item, role, urls, tenant);
+                const lead = menuPlacesFor(item, role)[0]?.id;
+                // "page" on the item whose own page is open; "true" when a segment or a page inside it is open.
+                const current =
+                  lit !== item.key
+                    ? undefined
+                    : item.special ||
+                        (lead === place && !/^\/operator\/[^/]+\/[^/]+/.test(pathname))
+                      ? ('page' as const)
+                      : ('true' as const);
+                const content = (
+                  <>
+                    <OperatorIcon name={item.icon} />
+                    <span>{words}</span>
+                  </>
+                );
+                return (
+                  <li key={item.key}>
+                    {plain || item.special || target.includes('#') ? (
+                      <a href={target} title={text} aria-current={current}>
+                        {content}
+                      </a>
+                    ) : (
+                      <Link prefetch={false} href={target} title={text} aria-current={current}>
+                        {content}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
+function TeamSidebarV1({
+  urls,
+  desk = false,
+  problemReports = false,
+}: Omit<SidebarProps, 'deskV41' | 'supply'>) {
   const { t, locale } = useLanguage();
   const pathname = usePathname() ?? '/operator';
   const hash = useSyncExternalStore(

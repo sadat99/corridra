@@ -24,6 +24,8 @@ export function TeamFrame({
   ownerPage,
   problemReports,
   desk = false,
+  deskV41 = false,
+  supply = false,
 }: {
   children: ReactNode;
   urls: boolean;
@@ -32,6 +34,10 @@ export function TeamFrame({
   problemReports: boolean;
   /** CORRIDRA_UX_OPERATOR_DESK: five groups and pinned queues. Off, the sidebar is Navigation v1 as it was. */
   desk?: boolean;
+  /** CORRIDRA_UX_TEAM_DESK_V41: menu v3 (four groups, no second level). Off, nothing here changes. */
+  deskV41?: boolean;
+  /** CORRIDRA_SUPPLY_SOURCES: the Supply Sources pages exist, so menu v3 may list Supply. */
+  supply?: boolean;
 }) {
   const pathname = usePathname();
   const { locale, t } = useLanguage();
@@ -71,6 +77,8 @@ export function TeamFrame({
             ownerPage={ownerPage}
             desk={desk}
             problemReports={problemReports}
+            deskV41={deskV41}
+            supply={supply}
           />
         }
       >

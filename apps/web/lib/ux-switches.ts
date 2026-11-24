@@ -34,6 +34,8 @@ export const uxSwitchNames = [
   'CORRIDRA_UX_BEFORE_SEND',
   // Buyer reply in steps (owner approved 20 Nov 2026): the step line, choice rows and the consent step order inside the reply page. Needs CORRIDRA_REPLY_PAGE. Presentation only.
   'CORRIDRA_UX_BUYER_STEPS',
+  // Team desk v4.1 (owner approved 24 Nov 2026): menu v3, one page pattern and the desk screens of docs/revamp/specs/team-desk-v4-1.md phases 2 to 5. Presentation only.
+  'CORRIDRA_UX_TEAM_DESK_V41',
   'CORRIDRA_NOTIFICATIONS_V2',
   'CORRIDRA_TEAM_INVITES',
   'CORRIDRA_ROUTE_PACK_FORM',
