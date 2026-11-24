@@ -11,6 +11,7 @@ import { initialLensFor } from '../../../../lib/room';
 import { loadRoomLink } from '../../../../lib/room-loader';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { memberAccessForPage } from '../../../../lib/foundations';
+import { requestReference } from '../../../../lib/work-items/request-reference';
 import { RoomView } from './room-view';
 
 export const dynamic = 'force-dynamic';
@@ -93,6 +94,7 @@ export default async function Page({
         trip={uxSwitchOn('CORRIDRA_UX_TRIP')}
         memberAccess={(await memberAccessForPage()).memberAccess}
         initialLens={initialLens}
+        reference={await requestReference(session.subject, session.issuer, parsed.data)}
       />
     </CustomerShell>
   );

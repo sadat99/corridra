@@ -1,0 +1,179 @@
+/* The Journey switcher at the top of the signed-in sidebar (journey-modes.md 3.4). Tokens only. An inline
+   disclosure: the choices open in the flow of the list, so the drawer and the icons-only bar need nothing special.
+   There is no movement here at all, so reduced motion has nothing to switch off. */
+.ux-journey-switch {
+  margin-block-end: var(--space-2);
+  border: 0.0625rem solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-1);
+}
+/* The signed-in sidebar shares `nav.ux-team-sidebar` with the team bar, whose rules paint every summary and every
+   span inside one for a navy bar (team-nav.css). The selectors below carry the customer list's own classes so the
+   switcher keeps ink on a light surface in every state. */
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav .ux-journey-switch > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: var(--space-1) var(--space-3);
+  border-radius: inherit;
+  background: none;
+  color: var(--ink);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+.ux-journey-switch > summary::-webkit-details-marker {
+  display: none;
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav .ux-journey-switch > summary:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav .ux-journey-switch > summary:focus-visible,
+.ux-journey-switch button:focus-visible {
+  outline: 0.1875rem solid var(--focus);
+  outline-offset: 0.125rem;
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav .ux-journey-switch > summary span {
+  color: inherit;
+}
+.ux-leftnav-panel
+  nav.ux-team-sidebar.ux-customer-nav
+  .ux-journey-switch
+  > summary
+  .ux-journey-switch-kicker {
+  color: var(--text-3);
+}
+.ux-journey-switch > summary > .ux-rail-label {
+  display: grid;
+  min-width: 0;
+}
+.ux-journey-switch-kicker {
+  font-size: var(--text-xs);
+  line-height: 1.3;
+}
+.ux-journey-switch-name {
+  overflow: hidden;
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav .ux-journey-switch .ux-leftnav-count {
+  flex: none;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-weight: 600;
+}
+.ux-leftnav-panel
+  nav.ux-team-sidebar.ux-customer-nav
+  .ux-journey-switch
+  button[aria-current='true']
+  .ux-leftnav-count {
+  background: var(--surface-1);
+  color: var(--brand);
+}
+.ux-journey-switch-chevron {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--text-3);
+  transform: rotate(90deg);
+}
+.ux-journey-switch .ux-leftnav-count + .ux-journey-switch-chevron {
+  margin-inline-start: 0;
+}
+.ux-journey-switch[open] .ux-journey-switch-chevron {
+  transform: rotate(-90deg);
+}
+.ux-journey-switch > ul {
+  margin: 0;
+  padding: 0 var(--space-1) var(--space-1);
+  list-style: none;
+}
+.ux-journey-switch button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-weight: 500;
+  text-align: start;
+  cursor: pointer;
+}
+.ux-journey-switch button:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.ux-journey-switch button[aria-current='true'] {
+  background: var(--selected-surface);
+  color: var(--brand);
+  font-weight: 600;
+}
+/* Everything has no journey colour: a ring instead of a filled dot. */
+.ux-journey-switch .ux-customer-nav-dot[data-everything] {
+  border: 0.125rem solid var(--text-3);
+  background: none;
+}
+@media (forced-colors: active) {
+  .ux-journey-switch,
+  .ux-journey-switch .ux-customer-nav-dot[data-everything] {
+    border-color: CanvasText;
+  }
+  .ux-journey-switch button[aria-current='true'] {
+    outline: 0.125rem solid Highlight;
+  }
+}
+/* Icons-only bar: the dot alone; the name is kept for assistive technology and shown beside the bar on hover and
+   focus, exactly as the Help row's is (customer-rail.css). Opening the disclosure widens the bar first
+   (left-nav.tsx). */
+@media (min-width: 64rem) {
+  .ux-leftnav-frame[data-collapsed='true']
+    .ux-leftnav-panel
+    nav.ux-team-sidebar.ux-customer-nav
+    .ux-journey-switch
+    > summary {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  [data-collapsed='true'] .ux-journey-switch > summary > .ux-rail-label {
+    display: block;
+  }
+  [data-collapsed='true'] .ux-journey-switch-chevron {
+    display: none;
+  }
+  .ux-leftnav-frame[data-collapsed='true']
+    .ux-leftnav-panel
+    nav.ux-team-sidebar.ux-customer-nav
+    .ux-journey-switch
+    > summary[data-tip='on']
+    > .ux-rail-label {
+    position: fixed;
+    inset-inline-start: var(--tip-x, 0);
+    inset-block-start: var(--tip-y, 0);
+    z-index: 70;
+    display: flex;
+    gap: var(--space-1);
+    align-items: baseline;
+    width: auto;
+    height: auto;
+    margin-inline-start: var(--tip-gap, 0.5rem);
+    padding: var(--space-1) var(--space-2);
+    overflow: visible;
+    clip: auto;
+    border: 0.0625rem solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-2);
+    color: var(--text-1);
+    white-space: nowrap;
+    transform: translateY(-50%);
+  }
+}

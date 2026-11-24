@@ -11,6 +11,7 @@ import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { foundations } from '../foundations';
+import { journeyModesOn } from '../ux/journey-modes-on';
 import { movePageCap, moveWorkspaceCap } from '../move-constants';
 import { followPages } from '../move-pages';
 import { requestTitle } from '../../app/account/request-words';
@@ -267,6 +268,8 @@ async function readWorkItems(
         at: text(row.createdAt) ?? '',
         atKind: 'created',
         href: options.rooms ? `/account/rooms/${seg(id)}` : `/account/requests/${seg(id)}`,
+        // The short reference the requests list already carries. With journey modes off the item is as it was.
+        ...(journeyModesOn() && text(row.reference) ? { reference: text(row.reference)! } : {}),
       });
     });
   }
