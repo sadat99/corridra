@@ -41,7 +41,9 @@ describe('the decision card switch', () => {
   it('is described in plain words: who, what, what it needs and that what was seen cannot be recalled', () => {
     const line = entry().line;
     expect(line).not.toMatch(/[\u2013\u2014]/);
-    expect(line).toMatch(/owners or admins of a sample workspace/);
+    expect(line).toBe(
+      'Lets customers who are owners or admins of a workspace create read-only links to one reviewed decision. A sample workspace needs saved reports and decisions on, its database module installed and the recorded privacy review. A real workspace also needs the real decision cards install, real use open and the signed-in report switch on; its links open without sign-in only while the public report link switch is on. A link can be withdrawn, but what was seen cannot be recalled.',
+    );
     expect(line).toMatch(/read-only links to one reviewed decision/);
     expect(line).toMatch(/database module installed/);
     expect(line).toMatch(/privacy review/);

@@ -77,7 +77,7 @@ const LEFTOVERS = [
 /** Text the rule does not cover, with the reason. Exact counts, so a customer word cannot hide in these files. */
 const OUTSIDE_RULE = [
   // Staff screens that live outside app/operator. Operator is a real staff role and is named to staff.
-  ['apps/web/lib/owner-switches.ts', 9, 'the owner-only switches screen'],
+  ['apps/web/lib/owner-switches.ts', 1, 'the owner-only switches screen names the Operator desk'],
   ['apps/web/lib/owner-gaps.ts', 2, 'the owner-only gaps screen'],
   ['apps/web/components/founder-overview.tsx', 3, 'the owner-only overview'],
   ['apps/web/components/ux/team-utility-menus.tsx', 1, 'the staff menu names the staff role'],

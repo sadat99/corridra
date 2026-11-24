@@ -128,3 +128,25 @@ describe('a translated page carries no note', () => {
     }
   });
 });
+
+// The standing proof of the split: each catalogue, hashed whole (sorted key and words pairs). At L0 these are the
+// catalogues of main before the split, less the two removed note keys and plus the two site keys. A language unit
+// replaces only its own line; a change to English moves every line, and the PR says so.
+const catalogueHash: Record<(typeof localeCodes)[number], string> = {
+  en: '740e09b81b1df71d',
+  bn: 'c0444f0550859601',
+  zh: 'fd8a2d2080ed34b7',
+  es: 'bc821d76e0de0588',
+  ar: 'e25005985a94ad37',
+  fr: 'af3fc3bcdb2176b3',
+  de: '86bbb7f520f33915',
+};
+
+describe('each catalogue is exactly the recorded one', () => {
+  it.each(localeCodes)('%s', (code) => {
+    const pairs = [...keys].sort().map((key) => [key, catalogs[code][key]]);
+    expect(createHash('sha256').update(JSON.stringify(pairs)).digest('hex').slice(0, 16)).toBe(
+      catalogueHash[code],
+    );
+  });
+});

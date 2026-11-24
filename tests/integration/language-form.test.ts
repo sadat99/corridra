@@ -228,7 +228,7 @@ describe('the owner page', () => {
       kind: 'flag',
     });
     expect(form.line).toBe(
-      'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages with reviewed text, and that rule holds only while Show draft languages (CORRIDRA_LANGUAGES_PREVIEW) stays unset on the public deployment. The privacy notice says the hosting service can see which language’s words file a browser loads while this is set. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
+      'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages offered, and that rule holds only while Show every language (CORRIDRA_LANGUAGES_PREVIEW) stays unset on the public deployment. The privacy notice says the hosting service can see which language’s words file a browser loads while this is set. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
     );
     // What the line says the privacy notice says is what the notice shows while the same release is on.
     const notice = read('apps/web/app/privacy/page.tsx');
@@ -239,9 +239,9 @@ describe('the owner page', () => {
     // The form line names the reviewed-languages row and the draft-languages row by the labels the owner sees.
     expect(
       switchRegistry.find((entry) => entry.name === 'CORRIDRA_LANGUAGES_REVIEWED')?.label,
-    ).toBe('Languages with reviewed text');
+    ).toBe('Languages offered');
     expect(switchRegistry.find((entry) => entry.name === 'CORRIDRA_LANGUAGES_PREVIEW')?.label).toBe(
-      'Show draft languages',
+      'Show every language',
     );
   });
 

@@ -112,7 +112,7 @@ export const switchRegistry: SwitchEntry[] = [
   },
   {
     name: 'CORRIDRA_CUSTOMER_MISSION_DRAFTS_ENABLED',
-    label: 'Guided request drafts',
+    label: 'Saved guided requests',
     line: 'Saves answers while a customer fills in a request.',
     group: 'Accounts and requests',
     kind: 'module',
@@ -374,8 +374,8 @@ export const switchRegistry: SwitchEntry[] = [
   },
   {
     name: 'CORRIDRA_LANGUAGES_REVIEWED',
-    label: 'Languages with reviewed text',
-    line: 'Codes of the languages a native speaker has reviewed, for example bn,zh,es. Only these appear in the language chip. English is always there. Needs a new deploy.',
+    label: 'Languages offered',
+    line: "Codes of the languages shown in the language chooser, for example bn,zh,es. English is always there. Listing a language is the owner's decision to show it and does not record a native review. Needs a new deploy.",
     group: 'Accounts and requests',
     kind: 'setting',
   },
@@ -389,14 +389,14 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_LANGUAGES_FORM',
     label: 'Request form in the chosen language',
-    line: 'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages with reviewed text, and that rule holds only while Show draft languages (CORRIDRA_LANGUAGES_PREVIEW) stays unset on the public deployment. The privacy notice says the hosting service can see which language’s words file a browser loads while this is set. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
+    line: 'Shows the request form at /plan in the language a person chose. Write true for every language, or a list such as es,de for only those. Unset, the form reads in English whatever language is chosen. It is separate from the home page switch: setting one never sets the other. Privacy, consent and notice sentences stay in English, and the signed-in private request form stays English. A language also needs to be in Languages offered, and that rule holds only while Show every language (CORRIDRA_LANGUAGES_PREVIEW) stays unset on the public deployment. The privacy notice says the hosting service can see which language’s words file a browser loads while this is set. Set it only after the owner has recorded a review of the form words of each language. Needs a new deploy.',
     group: 'Accounts and requests',
     kind: 'flag',
   },
   {
     name: 'CORRIDRA_LANGUAGES_PREVIEW',
-    label: 'Show draft languages',
-    line: 'Shows every draft language in the language chip, marked as a draft, so you can read them before a reviewer has. Keep it off for the public. Needs a new deploy.',
+    label: 'Show every language',
+    line: 'Shows all six other languages in the language chooser, with no mark, including any not listed in Languages offered. No native review is recorded for them. Needs a new deploy.',
     group: 'Accounts and requests',
     kind: 'flag',
   },
@@ -447,8 +447,8 @@ export const switchRegistry: SwitchEntry[] = [
   },
   {
     name: 'CORRIDRA_AI_ENABLED',
-    label: 'AI drafts',
-    line: 'Allows AI draft tools. AI never decides access, money or facts.',
+    label: 'AI assistance',
+    line: "Allows AI assistance for the team. A real workspace also needs the real AI control opened by the install job, a provider key, its processing locations and the workspace's own AI setting. AI never decides access, money or facts.",
     group: 'Safety and checks',
     kind: 'flag',
   },
@@ -611,7 +611,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_SHARE_CARD',
     label: 'Decision card',
-    line: 'Lets customers who are owners or admins of a sample workspace create read-only links to one reviewed decision. Needs saved reports and decisions on, its database module installed and the recorded privacy review. A link can be withdrawn, but what was seen cannot be recalled.',
+    line: 'Lets customers who are owners or admins of a workspace create read-only links to one reviewed decision. A sample workspace needs saved reports and decisions on, its database module installed and the recorded privacy review. A real workspace also needs the real decision cards install, real use open and the signed-in report switch on; its links open without sign-in only while the public report link switch is on. A link can be withdrawn, but what was seen cannot be recalled.',
     group: 'Delivery',
     kind: 'flag',
   },
@@ -716,7 +716,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_UX_SHELLS_V2',
     label: 'One app frame per role',
-    line: 'Customers, the team and contributors each get their own frame without the public header; the team gets a left sidebar.',
+    line: 'Customers, the team and helpers each get their own frame without the public header; the team gets a left sidebar.',
     group: 'Team access',
     kind: 'flag',
   },
@@ -858,7 +858,7 @@ function resolve(
   const languages = languageReleases[entry.name];
   if (languages) {
     // `true` or a list of language codes: the row names the languages the setting releases. It does not read
-    // Languages with reviewed text, so a released language reaches visitors only if the language chip also offers
+    // Languages offered, so a released language reaches visitors only if the language chip also offers
     // it; the form row's line tells the owner so.
     const released = languages(env);
     if (released.length === 0) return off;
