@@ -89,6 +89,12 @@ const OUTSIDE_RULE = [
     1,
     'a staff picker, used only under app/operator',
   ],
+  // `sourceNote` lines name the code that proves a preview fact. No component reads the field, so no screen shows it.
+  [
+    'apps/web/lib/consequence-preview.ts',
+    1,
+    'a sourceNote for developers on a staff Connect AI row, never drawn',
+  ],
   // Phrases a person may type into the action search. They are matched against what is typed and never shown.
   ['apps/web/lib/actions/catalogue.ts', 10, 'search phrases a person types, never shown'],
 ];
