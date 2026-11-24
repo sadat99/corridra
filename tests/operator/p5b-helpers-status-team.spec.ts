@@ -69,6 +69,9 @@ async function open(page: Page, path: string, options: Options) {
   await page.route('**/api/workspace/config?*', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/notifications?*', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/picker/**', (route) => route.fulfill({ json: [] }));
+  await page.route('**/api/helper-interest?*', (route) =>
+    route.fulfill({ json: { installed: true } }),
+  );
   await page.route('**/api/workspace/network?*', (route) =>
     route.fulfill({
       json: {
@@ -219,6 +222,8 @@ async function expectReadersOnly(page: Page, name: string) {
 const namesAndIds = (page: Page, selector: string) =>
   page.locator(selector).evaluate((region) =>
     Array.from(region.querySelectorAll('[name], [id]'))
+      // The helper interest list moves to the Inbox with the switch on; it has its own test here.
+      .filter((node) => !node.closest('details.receipt-disclosure'))
       // Ids React makes for a tab or a label differ on every load and are not part of any payload.
       .map((node) => `${node.getAttribute('name') ?? ''}|${node.id}`)
       .filter((value) => !/[:«»]|\|_r_|^\|$/.test(value)),
@@ -340,6 +345,21 @@ test('Helpers, switch on, paused: the state word and the paused note both show',
   await expect(state).toHaveAttribute('data-tone', 'caution');
   await expect(panel.getByRole('complementary', { name: 'Network readiness' })).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Choose Workspace' })).toBeVisible();
+});
+
+test('Helpers: the helper interest list is drawn here with the switch off and not with it on', async ({
+  page,
+}) => {
+  // With the switch on the Inbox is its one home, so Helpers does not draw a second copy.
+  await open(page, '/operator/network', { v41: false });
+  const panel = page.locator('#workspace-network');
+  await panel.getByRole('tab', { name: 'Invite a Helper' }).click();
+  await expect(panel.locator('details.receipt-disclosure')).toHaveCount(1);
+  await expect(panel.locator('details.receipt-disclosure')).toBeVisible();
+  await open(page, '/operator/network', { v41: true });
+  await panel.getByRole('tab', { name: 'Invite a Helper' }).click();
+  await expect(panel.getByRole('heading', { name: 'Invite a helper' })).toBeVisible();
+  await expect(panel.locator('details.receipt-disclosure')).toHaveCount(0);
 });
 
 test('Helpers: field names and ids are the same with the switch off and on', async ({ page }) => {

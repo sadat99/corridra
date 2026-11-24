@@ -99,8 +99,6 @@ export async function startTodayFixture(root = resolve('.')) {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css', '.woff2': 'empty' },
-    // The flag stylesheet names its pictures by their public path; they are served files, not bundled ones.
-    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',

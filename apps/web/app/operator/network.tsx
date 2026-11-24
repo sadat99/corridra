@@ -968,7 +968,8 @@ export function ExecutionNetwork({
                   panel: (
                     <>
                       <ContributorInvitations tenant={tenant} />
-                      <HelperInterestList tenant={tenant} role={role} />
+                      {/* Team desk v4.1: helper interest has one home, the Inbox, so it is not drawn here. */}
+                      {teamDeskV41 ? null : <HelperInterestList tenant={tenant} role={role} />}
                       {admin && (
                         <details>
                           <summary>Review an invited helper profile</summary>
