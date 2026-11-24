@@ -446,3 +446,11 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Fix (test only, assertion unchanged):** after the resize the test lets two animation frames pass, so the resized layout starts the animation, then waits for `finished` on every animation of the done tick paths only (`[data-shape="done"] .corridra-icon path`). No fixed sleep and no range; the offset is still expected to be exactly 0. The tick animation itself is unchanged.
 - **Proof:** that one test with `--repeat-each 30` on the fixed spec: 30 of 30 passed (local container, 24 November 2026). No failing baseline was reproduced locally before the change, so this is the result after the fix, not a before and after rate.
 - **If it recurs:** record the run id, the job, the width and the received offset here and reopen this entry before touching the test. Never loosen the assertion to a range or add a fixed sleep to make it pass.
+
+### KI-67 A random id could fail the "no rate in the event" check in `customer-invoicing-real-issuer.test.ts` (fixed 24 November 2026)
+
+- **Seen:** reported by the Guardian from PR 641, job `integration (1)`, on 24 November 2026; the run id was not recorded here. `tests/integration/customer-invoicing-real-issuer.test.ts`, test of the owner save that writes the tax rate: `expect(JSON.stringify(event)).not.toMatch(/900|700/)` failed.
+- **Cause:** the event payload holds `initiator_id`, a random UUID. The check searched the whole serialised payload, so an id that happened to contain `900` or `700` failed it. The payload carries no rate; the product was right.
+- **Fix (test only, intent unchanged):** `initiator_id` is taken out and asserted to be the owner's id, the remaining keys are asserted to be exactly `changedFields`, `initiator_kind`, `madeupFieldsLeft`, `synthetic` and `version`, and the search for `900` or `700` runs on those. `initiator_id` is the only id in the payload (`packages/db/customer-invoicing-real-migrations/0003_owner_issuer_details.sql` and `0004_issuer_tax_rate.sql`).
+- **Proof:** the file passes 22 of 22 locally after the change. The failure depends on a random value and was not reproduced locally before the change.
+- **If it recurs:** a new field with a random value was added to the payload; the exact key list fails first and names it.

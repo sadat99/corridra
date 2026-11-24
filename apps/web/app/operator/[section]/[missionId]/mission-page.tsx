@@ -12,6 +12,8 @@ import { CommercialMission } from '../../commercial-mission';
 import { DeliveryExperience } from '../../delivery-experience';
 import { ShowMore } from '../../show-more';
 import { MissionMoves } from '../../mission-moves';
+import { MissionQuotes } from '../../mission-quotes';
+import { MissionReplies } from '../../mission-replies';
 import { WithdrawalNote } from '../../mission-withdrawal-note';
 import {
   MissionActionForm,
@@ -495,7 +497,19 @@ export function MissionPage({
             </>
           )}
           {tab === 'companies' && <Companies tenant={tenant} missionId={m.id} />}
-          {tab === 'quotes' && (
+          {tab === 'quotes' && desk && (
+            <MissionQuotes
+              tenant={tenant}
+              missionId={m.id}
+              role={data.role}
+              brief={m.brief}
+              revision={revision}
+              onRecord={() => choose('requirements')}
+              moneyHref={sectionHref(tenant, 'commercial', m.id)}
+              reportsHref={sectionHref(tenant, 'delivery', m.id)}
+            />
+          )}
+          {tab === 'quotes' && !desk && (
             <Quotes
               tenant={tenant}
               missionId={m.id}
@@ -505,7 +519,19 @@ export function MissionPage({
           )}
           {tab === 'meetings' && <Meetings tenant={tenant} missionId={m.id} />}
           {tab === 'delivery' && <Delivery tenant={tenant} missionId={m.id} />}
-          {tab === 'replies' && (
+          {tab === 'replies' && desk && (
+            <MissionReplies
+              missionId={m.id}
+              replies={data.replies}
+              canReply={manage}
+              busy={busy}
+              onSend={(body, replyId) =>
+                act('mission-reply', { id: m.id, body, replyId }, 'Reply posted.')
+              }
+              reportsHref={sectionHref(tenant, 'delivery', m.id)}
+            />
+          )}
+          {tab === 'replies' && !desk && (
             <>
               <h3>Replies</h3>
               <h4>Receipt replies to the customer</h4>

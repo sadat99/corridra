@@ -1137,7 +1137,7 @@
         "L10": "not_assessed"
       },
       "evidence": [],
-      "notes": ""
+      "notes": "Team desk v4.1 Phase 5 (P5a, 24 Nov 2026, code read and tests/operator/p5a-meetings-money-reports.spec.ts): Meetings (D11), Money (D12) and Reports (D13) assessed behind CORRIDRA_UX_TEAM_DESK_V41. None of the three shows a place name as a label (Meetings lists stored jurisdiction codes only), a guided choice set or a sourced fact with a date, so L1 to L3 and L10 do not apply to them. The row stays not_assessed until every section of this route is assessed."
     },
     {
       "route": "/operator/[section]/[missionId]",

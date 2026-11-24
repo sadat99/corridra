@@ -1,0 +1,36 @@
+/* Team desk v4.1, unit D13: the one list of reports on the Reports page. A row is the report's name with its
+   status word in a badge at the end; on a phone the badge drops under the name. Rows are at least 44 px. Tokens
+   only; selectors repeat a class because the workspace panel styles every list and paragraph inside it. */
+.ux-report-list.ux-report-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ux-report-list.ux-report-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  min-block-size: 2.75rem;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  overflow-wrap: anywhere;
+}
+.ux-report-list.ux-report-list > li + li {
+  border-block-start: 1px solid var(--line);
+}
+.ux-report-list.ux-report-list > li > span:first-child {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+  color: var(--text-1);
+  font: 400 var(--text-base) / 1.5 var(--font-ui);
+}
+.ux-report-scope.ux-report-scope {
+  margin: 0;
+  color: var(--text-2);
+}

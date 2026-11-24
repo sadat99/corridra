@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import {
   replyGaps,
   replyReviewReasons,
@@ -26,6 +26,7 @@ import {
 import { useReplyPrefill } from '../../lib/ux/use-reply-prefill';
 import { replyLinkSuffix, type ReplyLanguage } from '../../lib/reply-terms';
 import { bodyNotAvailable } from '../../lib/body-access';
+import { formatDateTime } from '../../lib/ux/format';
 import { useOperatorFlags } from './operator-flags';
 import './reply-review.css';
 import './reply-handoff.css';
@@ -52,6 +53,8 @@ export function ReplyReview({
   responses,
   disclosures,
   onRefresh,
+  desk = false,
+  companies,
 }: {
   tenant: string;
   role: string;
@@ -59,6 +62,15 @@ export function ReplyReview({
   disclosures: Disclosure[];
   /** Loads the workspace's replies again, so a card shows the answer as it is now. */
   onRefresh?: () => Promise<void>;
+  /**
+   * Team desk v4.1 (unit D8, CORRIDRA_UX_TEAM_DESK_V41): the mission's Quotes tab sets the replies beside
+   * what the customer asked for. The heading is shorter and each card names the company the link was
+   * made for where the caller knows it, with the link id left out. The three actions, who may use them and
+   * what they send are the same.
+   */
+  desk?: boolean;
+  /** The company each recipient link was made for, by link id. Used only with `desk`. */
+  companies?: Record<string, string>;
 }) {
   const { replyReview } = useOperatorFlags();
   const [reviews, setReviews] = useState<StoredReview[]>([]);
@@ -95,12 +107,16 @@ export function ReplyReview({
   if (!replyReview || responses.length === 0) return null;
   const canReview = ['owner', 'admin'].includes(role);
   return (
-    <section className="reply-review" aria-label="Review supplier replies">
-      <h3>Review supplier replies</h3>
+    <section
+      className="reply-review"
+      aria-label={desk ? 'Replies to review' : 'Review supplier replies'}
+      data-desk={desk ? 'true' : undefined}
+    >
+      {desk ? <h4>Replies to review</h4> : <h3>Review supplier replies</h3>}
       <p className="reply-review-note">
-        Each reply is set beside the requirement the supplier was shown. The gaps are the ones the
-        comparison engine reports. A decision here changes what the team does next; it does not send
-        anything to a customer.
+        {desk
+          ? 'A decision here changes what the team does next. It does not send anything to a customer.'
+          : 'Each reply is set beside the requirement the supplier was shown. The gaps are the ones the comparison engine reports. A decision here changes what the team does next; it does not send anything to a customer.'}
       </p>
       {unavailable && <p role="status">Reply review is not installed or not available here.</p>}
       {open === false && (
@@ -116,6 +132,7 @@ export function ReplyReview({
               key={reply.id}
               reply={reply}
               reviews={reviews.filter((r) => r.responseId === reply.id)}
+              sender={desk ? (companies?.[reply.link_id] ?? '') : undefined}
             />
           ) : (
             <ReplyCard
@@ -126,6 +143,7 @@ export function ReplyReview({
               }
               reviews={reviews.filter((r) => r.responseId === reply.id)}
               tenant={tenant}
+              sender={desk ? (companies?.[reply.link_id] ?? '') : undefined}
               canRecord={['owner', 'admin', 'operator'].includes(role)}
               canAct={canReview && open === true && !unavailable}
               onChanged={reload}
@@ -147,17 +165,31 @@ function ReplyHeader({
   reply,
   state,
   ineligible,
+  sender,
 }: {
   reply: Reply;
   state: ReviewState;
   ineligible: boolean;
+  /** Desk only: the company the link was made for ('' when not known). Undefined keeps the link id line. */
+  sender?: string;
 }) {
   return (
     <header>
-      <p className="reply-review-meta">
-        Recipient link {reply.link_id.slice(0, 8)}
-        {reply.created_at ? ` · received ${displayDate(reply.created_at)}` : ''} · Self-declared
-      </p>
+      {sender === undefined ? (
+        <p className="reply-review-meta">
+          Recipient link {reply.link_id.slice(0, 8)}
+          {reply.created_at ? ` · received ${displayDate(reply.created_at)}` : ''} · Self-declared
+        </p>
+      ) : (
+        <>
+          <h5 id={`reply-title-${reply.id}`} className="reply-review-title">
+            {sender ? `From ${sender}` : 'Supplier reply'}
+          </h5>
+          <p className="reply-review-meta">
+            {reply.created_at ? `Received ${formatDateTime(reply.created_at)} · ` : ''}Self-declared
+          </p>
+        </>
+      )}
       {state.final ? (
         <p className="reply-review-state" data-state={state.final.decision}>
           {state.final.decision === 'PUBLISH'
@@ -185,14 +217,50 @@ function ReplyHeader({
 }
 
 /** A reply whose words this role may not read (staff viewer, ADR-087 U1): that it exists and its review state only. */
-function WithheldReply({ reply, reviews }: { reply: Reply; reviews: StoredReview[] }) {
+function WithheldReply({
+  reply,
+  reviews,
+  sender,
+}: {
+  reply: Reply;
+  reviews: StoredReview[];
+  sender?: string;
+}) {
   return (
-    <li className="reply-review-card" id={`reply-${reply.id}`}>
-      <ReplyHeader reply={reply} state={reviewState(reviews)} ineligible={false} />
+    <Card id={reply.id} desk={sender !== undefined}>
+      <ReplyHeader reply={reply} state={reviewState(reviews)} ineligible={false} sender={sender} />
       <section aria-label="The reply">
-        <h4>The reply</h4>
+        {sender !== undefined ? <h6>The reply</h6> : <h4>The reply</h4>}
         <p>{bodyNotAvailable}</p>
       </section>
+    </Card>
+  );
+}
+
+/**
+ * One reply in the list. On the desk (D8) each card is its own region named by its heading, so the list
+ * item holds an article; elsewhere the list item is the card, as it has always been.
+ */
+function Card({
+  id,
+  desk,
+  cardRef,
+  children,
+}: {
+  id: string;
+  desk: boolean;
+  cardRef?: Ref<HTMLLIElement>;
+  children: ReactNode;
+}) {
+  return desk ? (
+    <li id={`reply-${id}`} ref={cardRef}>
+      <article className="reply-review-card" aria-labelledby={`reply-title-${id}`}>
+        {children}
+      </article>
+    </li>
+  ) : (
+    <li className="reply-review-card" id={`reply-${id}`} ref={cardRef}>
+      {children}
     </li>
   );
 }
@@ -202,12 +270,14 @@ function ReplyCard({
   requirement,
   reviews,
   tenant,
+  sender,
   canRecord,
   canAct,
   onChanged,
   onStale,
 }: {
   reply: Reply & { body: NonNullable<Reply['body']> };
+  sender?: string;
   requirement?: string;
   reviews: StoredReview[];
   tenant: string;
@@ -318,19 +388,44 @@ function ReplyCard({
   const ineligible = published && canRecord && prefill.kind === 'ineligible';
   const han = (text: string) => (/\p{Script=Han}/u.test(text) ? 'zh' : undefined);
 
+  const desk = sender !== undefined;
+  // Desk: the card's own title is an h5, so the headings inside it sit one level under it.
+  const Heading = desk ? 'h6' : 'h4';
+  const termList = quotation?.terms ? (
+    <dl className="reply-review-terms">
+      {replyTermNames.map((key) => {
+        const value = quotation.terms?.[key];
+        const missing = gaps.missing.includes(key);
+        return (
+          <div key={key} data-gap={missing ? 'true' : undefined}>
+            <dt>{termLabels[key]}</dt>
+            <dd lang={value ? han(value) : undefined}>
+              {termText(key, value, quotation.currency ?? '')}
+            </dd>
+            {missing && <dd className="reply-review-flag">Engine: missing</dd>}
+          </div>
+        );
+      })}
+    </dl>
+  ) : null;
+  const stated = replyTermNames.filter((key) => quotation?.terms?.[key] !== undefined).length;
+  // Desk (D8): the one cobalt action of the card follows the engine's verdict. Elsewhere the buttons are as they were.
+  const publishClass = desk ? (gaps.comparable ? 'primary-link' : 'secondary-link') : undefined;
+  const askClass = desk && !gaps.comparable ? 'primary-link' : 'secondary-link';
+
   return (
-    <li className="reply-review-card" id={`reply-${reply.id}`} ref={card}>
-      <ReplyHeader reply={reply} state={state} ineligible={ineligible} />
+    <Card id={reply.id} desk={desk} cardRef={card}>
+      <ReplyHeader reply={reply} state={state} ineligible={ineligible} sender={sender} />
 
       <div className="reply-review-columns">
         <section aria-label="Requirement shown to the supplier">
-          <h4>What the supplier was shown</h4>
+          <Heading>What the supplier was shown</Heading>
           <p lang={requirement ? han(requirement) : undefined}>
             {requirement ?? 'The shared requirement is not available.'}
           </p>
         </section>
         <section aria-label="The reply">
-          <h4>The reply</h4>
+          <Heading>The reply</Heading>
           <p lang={han(String(reply.body.body ?? ''))}>{String(reply.body.body ?? '')}</p>
           {!!reply.revision && (
             <p className="reply-review-note">
@@ -350,29 +445,24 @@ function ReplyCard({
 
       {quotation?.terms ? (
         <section aria-label="Quotation term by term">
-          <h4>
+          <Heading>
             Quotation term by term ({quotation.currency}){' '}
             {gaps.comparable ? (
               <span className="reply-review-ok">Comparable on supplied terms</span>
             ) : (
               <span className="reply-review-gap">Not comparable yet</span>
             )}
-          </h4>
-          <dl className="reply-review-terms">
-            {replyTermNames.map((key) => {
-              const value = quotation.terms?.[key];
-              const missing = gaps.missing.includes(key);
-              return (
-                <div key={key} data-gap={missing ? 'true' : undefined}>
-                  <dt>{termLabels[key]}</dt>
-                  <dd lang={value ? han(value) : undefined}>
-                    {termText(key, value, quotation.currency ?? '')}
-                  </dd>
-                  {missing && <dd className="reply-review-flag">Engine: missing</dd>}
-                </div>
-              );
-            })}
-          </dl>
+          </Heading>
+          {desk ? (
+            <details className="reply-review-history">
+              <summary>
+                Terms: {stated} stated, {replyTermNames.length - stated} not stated
+              </summary>
+              {termList}
+            </details>
+          ) : (
+            termList
+          )}
           {gaps.expired && <p className="reply-review-flag">Engine: the quote has expired.</p>}
           {gaps.inconsistentTotal && (
             <p className="reply-review-flag">
@@ -417,7 +507,7 @@ function ReplyCard({
 
       {prepared && (
         <div className="reply-review-prepared">
-          <h4>Prepared quotation</h4>
+          <Heading>Prepared quotation</Heading>
           {canRecord && (
             <div className="reply-handoff-status" role="status">
               {prefill.kind === 'loading' && <p>Checking whether this reply can be prepared.</p>}
@@ -473,12 +563,17 @@ function ReplyCard({
         <div className="reply-review-actions">
           {mode === null && (
             <div className="reply-review-buttons">
-              <button type="button" disabled={busy} onClick={() => void send('PUBLISH')}>
+              <button
+                type="button"
+                className={publishClass}
+                disabled={busy}
+                onClick={() => void send('PUBLISH')}
+              >
                 Publish: Prepare As a Quotation
               </button>
               <button
                 type="button"
-                className="secondary-link"
+                className={askClass}
                 disabled={busy}
                 onClick={() => setMode('ask')}
               >
@@ -589,6 +684,6 @@ function ReplyCard({
         </div>
       )}
       {message && <p role="status">{message}</p>}
-    </li>
+    </Card>
   );
 }

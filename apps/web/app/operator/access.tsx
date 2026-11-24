@@ -1,12 +1,16 @@
 'use client';
-import { SubTabs } from '../../components/ux/sub-tabs';
+import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 import { notSentWords } from './contact-not-sent';
 import { canSendOne, deliveryNoteWords, sendOneBody } from './outreach-send';
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useOperatorFlags } from './operator-flags';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { usePathname } from 'next/navigation';
+import { subscribeToHash } from '../../lib/address-store';
+import { deskPrimarySlotId } from '../../components/ux/desk-segments';
 import {
   contactPurpose,
   meetingTransitions,
@@ -16,6 +20,9 @@ import {
 } from '@corridra/domain/access';
 import { formatDateTime } from '../../lib/ux/format';
 import { ShowMore } from './show-more';
+import { Dialog } from '../../components/ux/dialog';
+import { meetingColumns, meetingStatusTone } from './meeting-columns';
+import './meeting-board.css';
 /** Plain label for a stored delivery channel code. The stored code never changes. */
 function channelLabel(channel: string) {
   if (channel === 'SYNTHETIC') return 'Recorded receipt (no email sent)';
@@ -183,6 +190,27 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
     [buyerPath, setBuyerPath] = useState(''),
     [target, setTarget] = useState('');
   const retry = useRef(new Map<string, string>());
+  // Team desk v4.1: "Propose Meeting" is the one primary action of the page. It sits in the header's slot, which
+  // exists only while the Meetings page is the one on show, and opens the propose form in the shared dialog.
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null),
+    [proposing, setProposing] = useState(false),
+    [proposed, setProposed] = useState(false);
+  // The header follows the address, so the slot is looked for again whenever the path or the `#` part changes.
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!deskV41) return;
+    const find = () => setHeaderSlot(document.getElementById(deskPrimarySlotId));
+    find();
+    // The header follows the address; look again once it has redrawn for the new one.
+    let timer = 0;
+    const unsubscribe = subscribeToHash(() => {
+      timer = window.setTimeout(find, 0);
+    });
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [deskV41, pathname]);
   const [defaults] = useState(() => ({
     tomorrow: utcField(),
     week: utcField(new Date(Date.now() + 7 * 86400000).toISOString()),
@@ -334,16 +362,18 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       setBusy(false);
     }
   }
+  /** Sends a form. Resolves true once it is saved, so a form shown in a dialog can close itself. */
   function submit(
     e: FormEvent<HTMLFormElement>,
     build: (f: FormData) => Record<string, unknown>,
     endpoint = 'communication',
-  ) {
+  ): Promise<boolean> {
     e.preventDefault();
     try {
-      void act(endpoint, build(new FormData(e.currentTarget)));
+      return act(endpoint, build(new FormData(e.currentTarget)));
     } catch {
       setMessage('Check the dates and submitted values.');
+      return Promise.resolve(false);
     }
   }
   if (!comms || !meetings)
@@ -378,6 +408,82 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   const manage = ['owner', 'admin', 'operator'].includes(comms.role),
     approve = ['owner', 'admin'].includes(comms.role),
     selected = comms.targets.find((t) => t.id === target);
+  // Team desk v4.1: this sentence is about introductions, so it sits in the Introductions tab.
+  const channelNote = (
+    <p>
+      Each introduction goes out through the channel its approved policy names. Manual handoff
+      records that a team member passed it on themselves. Recorded receipt keeps the receipt in
+      Corridra and sends no email. Owners turn on introductions and dispatch in Workspace controls.
+    </p>
+  );
+  const proposeForm = (
+    <form
+      className="operator-form detail-card"
+      aria-label="Propose meeting"
+      onSubmit={(e) => {
+        setProposed(true);
+        void submit(
+          e,
+          (f) => ({
+            action: 'propose',
+            messageId: field(f, 'messageId'),
+            title: field(f, 'title'),
+            brief: field(f, 'brief'),
+            participants: field(f, 'participants')
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean),
+            ownerId: field(f, 'ownerId'),
+            nextAction: field(f, 'nextAction'),
+            dueAt: timestamp(f, 'dueAt'),
+            reason: field(f, 'reason'),
+          }),
+          'meeting',
+        ).then((saved) => {
+          if (saved) setProposing(false);
+        });
+      }}
+    >
+      {deskV41 ? null : <h3>Propose a meeting</h3>}
+      <label className="field">
+        Meeting introduction
+        <select name="messageId" required>
+          {comms.messages.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.presentation.company} ({m.decision ?? 'no response'})
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        Meeting title
+        <input name="title" required minLength={3} maxLength={160} />
+      </label>
+      <label className="field">
+        Meeting brief
+        <textarea name="brief" required minLength={3} maxLength={2000} />
+      </label>
+      <label className="field">
+        Meeting participants, one per line
+        <textarea name="participants" required maxLength={1200} />
+      </label>
+      <Ownership owners={meetings.owners} />
+      <button className="primary-link" disabled={busy}>
+        Propose Meeting
+      </button>
+    </form>
+  );
+  /** Team desk v4.1: the Meetings page opens on its board; introductions and follow-up stay sibling tabs. */
+  const boardFirst = (tabs: SubTab[]) =>
+    deskV41
+      ? [
+          ...tabs.filter((tab) => tab.id === 'access-meetings'),
+          ...tabs.filter((tab) => tab.id !== 'access-meetings'),
+        ]
+      : tabs;
+  const allShown =
+    !meetings.next &&
+    (meetings.meetingsTotal === null || meetings.meetings.length >= meetings.meetingsTotal);
   return (
     <section className="operator-section">
       <div className="section-heading">
@@ -395,20 +501,16 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       >
         Refresh Access and Meetings
       </button>
-      <p>
-        Each introduction goes out through the channel its approved policy names. Manual handoff
-        records that a team member passed it on themselves. Recorded receipt keeps the receipt in
-        Corridra and sends no email. Owners turn on introductions and dispatch in Workspace
-        controls.
-      </p>
+      {deskV41 ? null : channelNote}
       <SubTabs
         label="Introductions and meetings sections"
-        tabs={[
+        tabs={boardFirst([
           {
             id: 'access-introductions',
             label: `Introductions (${comms.messages.length})`,
             panel: (
               <>
+                {deskV41 ? channelNote : null}
                 <details>
                   <summary>Approved communication policy and templates</summary>
                   <ul>
@@ -843,60 +945,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             label: `Meetings (${meetings.meetings.length})`,
             panel: (
               <>
-                {manage && (
+                {manage && !deskV41 && (
                   <PhoneFold summary="Propose a meeting" fold="always">
-                    <form
-                      className="operator-form detail-card"
-                      aria-label="Propose meeting"
-                      onSubmit={(e) =>
-                        submit(
-                          e,
-                          (f) => ({
-                            action: 'propose',
-                            messageId: field(f, 'messageId'),
-                            title: field(f, 'title'),
-                            brief: field(f, 'brief'),
-                            participants: field(f, 'participants')
-                              .split('\n')
-                              .map((s) => s.trim())
-                              .filter(Boolean),
-                            ownerId: field(f, 'ownerId'),
-                            nextAction: field(f, 'nextAction'),
-                            dueAt: timestamp(f, 'dueAt'),
-                            reason: field(f, 'reason'),
-                          }),
-                          'meeting',
-                        )
-                      }
-                    >
-                      <h3>Propose a meeting</h3>
-                      <label className="field">
-                        Meeting introduction
-                        <select name="messageId" required>
-                          {comms.messages.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.presentation.company} ({m.decision ?? 'no response'})
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="field">
-                        Meeting title
-                        <input name="title" required minLength={3} maxLength={160} />
-                      </label>
-                      <label className="field">
-                        Meeting brief
-                        <textarea name="brief" required minLength={3} maxLength={2000} />
-                      </label>
-                      <label className="field">
-                        Meeting participants, one per line
-                        <textarea name="participants" required maxLength={1200} />
-                      </label>
-                      <Ownership owners={meetings.owners} />
-                      <button className="primary-link" disabled={busy}>
-                        Propose Meeting
-                      </button>
-                    </form>
+                    {proposeForm}
                   </PhoneFold>
                 )}
                 <h3>Meeting itinerary</h3>
@@ -904,17 +955,50 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                   Times below show both the meeting timezone and your browser timezone. Briefs and
                   outcomes stay private to authorized operators.
                 </p>
-                {meetings.meetings.map((m) => (
-                  <MeetingCard
-                    key={`${m.id}-${m.version}`}
-                    meeting={m}
-                    data={meetings}
-                    response={comms.messages.find((c) => c.id === m.message_id)}
-                    manage={manage}
-                    busy={busy}
-                    submit={submit}
-                  />
-                ))}
+                {deskV41 ? (
+                  <div className="ux-meeting-board">
+                    {meetingColumns.map((column) => {
+                      const cards = meetings.meetings.filter((m) =>
+                        column.statuses.includes(m.status),
+                      );
+                      return (
+                        <BoardColumn
+                          key={column.id}
+                          id={column.id}
+                          title={column.title}
+                          count={allShown ? `${cards.length}` : `${cards.length} shown`}
+                        >
+                          {cards.length === 0 && <p className="ux-meeting-none">No meetings.</p>}
+                          {cards.map((m) => (
+                            <MeetingCard
+                              key={`${m.id}-${m.version}`}
+                              meeting={m}
+                              data={meetings}
+                              response={comms.messages.find((c) => c.id === m.message_id)}
+                              manage={manage}
+                              busy={busy}
+                              submit={submit}
+                              board
+                              message={message}
+                            />
+                          ))}
+                        </BoardColumn>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  meetings.meetings.map((m) => (
+                    <MeetingCard
+                      key={`${m.id}-${m.version}`}
+                      meeting={m}
+                      data={meetings}
+                      response={comms.messages.find((c) => c.id === m.message_id)}
+                      manage={manage}
+                      busy={busy}
+                      submit={submit}
+                    />
+                  ))
+                )}
                 <ShowMore
                   shown={meetings.meetings.length}
                   total={meetings.meetingsTotal}
@@ -990,8 +1074,63 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
               </>
             ),
           },
-        ]}
+        ])}
       />
+      {deskV41 && manage && headerSlot?.isConnected
+        ? createPortal(
+            <button
+              type="button"
+              className="primary-link"
+              onClick={() => {
+                setProposed(false);
+                setProposing(true);
+              }}
+            >
+              Propose Meeting
+            </button>,
+            headerSlot,
+          )
+        : null}
+      {deskV41 && manage && (
+        <Dialog
+          open={proposing}
+          onClose={() => setProposing(false)}
+          title="Propose Meeting"
+          keepMounted
+          locked={busy}
+        >
+          {proposeForm}
+          {proposed && !busy && message && <p role="alert">{message}</p>}
+        </Dialog>
+      )}
+    </section>
+  );
+}
+/**
+ * One column of the Meetings board (team desk v4.1, unit D11). From 40rem it is a heading over its cards. On a
+ * phone it is a closed disclosure that shows its count, so five columns do not make a page five screens long.
+ * The heading and the disclosure line are never shown together.
+ */
+function BoardColumn({
+  id,
+  title,
+  count,
+  children,
+}: {
+  id: string;
+  title: string;
+  /** "2", or "25 shown" while more meetings are still to be loaded. */
+  count: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="ux-meeting-column" aria-label={`${title} (${count})`}>
+      <PhoneFold summary={`${title} (${count})`}>
+        <h4 id={`meeting-column-${id}`}>
+          {title} ({count})
+        </h4>
+        {children}
+      </PhoneFold>
     </section>
   );
 }
@@ -1002,6 +1141,8 @@ function MeetingCard({
   manage,
   busy,
   submit,
+  board = false,
+  message = '',
 }: {
   meeting: Meeting;
   data: Meetings;
@@ -1012,16 +1153,19 @@ function MeetingCard({
     e: FormEvent<HTMLFormElement>,
     build: (f: FormData) => Record<string, unknown>,
     endpoint?: string,
-  ) => void;
+  ) => Promise<boolean>;
+  /** Team desk v4.1 (unit D11): the short card of a board column; its change form opens in the shared dialog. */
+  board?: boolean;
+  /** The page's status words, repeated inside the open dialog, where the page behind it is not read out. */
+  message?: string;
 }) {
   const transitions = meetingTransitions[m.status],
     [status, setStatus] = useState<MeetingStatus>(transitions[0] ?? m.status);
-  return (
-    <article className="detail-card meeting-card">
-      <h4>{m.title}</h4>
-      <p>
-        State: {plain(m.status)}. Version {m.version}.
-      </p>
+  const [changing, setChanging] = useState(false),
+    [sent, setSent] = useState(false);
+  const Title = board ? 'h5' : 'h4';
+  const brief = (
+    <>
       <p>{m.brief}</p>
       <p>
         Participants:{' '}
@@ -1030,164 +1174,234 @@ function MeetingCard({
           .map((p) => p.name)
           .join(', ')}
       </p>
-      {m.starts_at && m.ends_at && m.timezone && (
-        <p>
-          {localWallTime(m.starts_at, m.timezone)} to {localWallTime(m.ends_at, m.timezone)} (
-          {m.timezone}). Your time: {formatDateTime(m.starts_at)} to {formatDateTime(m.ends_at)}.
-          Location: {m.location}.
-        </p>
-      )}
-      {data.outcomes
-        .filter((o) => o.meeting_id === m.id)
-        .map((o) => (
-          <p key={o.id}>
-            Operator-observed {o.status}: {o.summary}
-          </p>
-        ))}
-      {manage && transitions.length > 0 && (
-        <form
-          className="operator-form"
-          aria-label={`Update meeting ${m.title}`}
-          onSubmit={(e) =>
-            submit(
-              e,
-              (f) => ({
-                action: 'transition',
-                id: m.id,
-                version: m.version,
-                status,
-                reason: field(f, 'reason'),
-                ownerId: field(f, 'ownerId'),
-                nextAction: field(f, 'nextAction'),
-                dueAt: timestamp(f, 'dueAt'),
-                ...(status === 'ACCEPTED'
-                  ? {
-                      acceptance: field(f, 'acceptance'),
-                      ...(f.get('useResponse') === 'on' && response?.response_id
-                        ? { responseId: response.response_id }
-                        : {}),
-                    }
-                  : {}),
-                ...(status === 'SCHEDULED'
-                  ? {
-                      schedule: {
-                        startsAt: field(f, 'startsAt'),
-                        endsAt: field(f, 'endsAt'),
-                        localStart: field(f, 'localStart'),
-                        localEnd: field(f, 'localEnd'),
-                        timezone: field(f, 'timezone'),
-                        location: field(f, 'location'),
-                      },
-                    }
-                  : {}),
-                ...(['HELD', 'NO_SHOW'].includes(status) ? { outcome: field(f, 'outcome') } : {}),
-              }),
-              'meeting',
-            )
-          }
-        >
+    </>
+  );
+  const outcomes = data.outcomes
+    .filter((o) => o.meeting_id === m.id)
+    .map((o) => (
+      <p key={o.id}>
+        Operator-observed {o.status}: {o.summary}
+      </p>
+    ));
+  const form = manage && transitions.length > 0 && (
+    <form
+      className="operator-form"
+      aria-label={`Update meeting ${m.title}`}
+      onSubmit={(e) => {
+        setSent(true);
+        void submit(
+          e,
+          (f) => ({
+            action: 'transition',
+            id: m.id,
+            version: m.version,
+            status,
+            reason: field(f, 'reason'),
+            ownerId: field(f, 'ownerId'),
+            nextAction: field(f, 'nextAction'),
+            dueAt: timestamp(f, 'dueAt'),
+            ...(status === 'ACCEPTED'
+              ? {
+                  acceptance: field(f, 'acceptance'),
+                  ...(f.get('useResponse') === 'on' && response?.response_id
+                    ? { responseId: response.response_id }
+                    : {}),
+                }
+              : {}),
+            ...(status === 'SCHEDULED'
+              ? {
+                  schedule: {
+                    startsAt: field(f, 'startsAt'),
+                    endsAt: field(f, 'endsAt'),
+                    localStart: field(f, 'localStart'),
+                    localEnd: field(f, 'localEnd'),
+                    timezone: field(f, 'timezone'),
+                    location: field(f, 'location'),
+                  },
+                }
+              : {}),
+            ...(['HELD', 'NO_SHOW'].includes(status) ? { outcome: field(f, 'outcome') } : {}),
+          }),
+          'meeting',
+        ).then((saved) => {
+          if (saved) setChanging(false);
+        });
+      }}
+    >
+      <label className="field">
+        Next meeting state
+        <select value={status} onChange={(e) => setStatus(e.target.value as MeetingStatus)}>
+          {transitions.map((t) =>
+            board ? (
+              <option key={t} value={t}>
+                {plain(t)}
+              </option>
+            ) : (
+              <option key={t}>{t}</option>
+            ),
+          )}
+        </select>
+      </label>
+      <Ownership owners={data.owners} meeting={m} />
+      {status === 'ACCEPTED' && (
+        <>
           <label className="field">
-            Next meeting state
-            <select value={status} onChange={(e) => setStatus(e.target.value as MeetingStatus)}>
-              {transitions.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
+            Acceptance source
+            <textarea
+              name="acceptance"
+              required
+              minLength={3}
+              maxLength={1000}
+              defaultValue={
+                response?.decision === 'INTERESTED'
+                  ? 'Buyer selected Interested on this private introduction.'
+                  : ''
+              }
+            />
           </label>
-          <Ownership owners={data.owners} meeting={m} />
-          {status === 'ACCEPTED' && (
-            <>
-              <label className="field">
-                Acceptance source
-                <textarea
-                  name="acceptance"
-                  required
-                  minLength={3}
-                  maxLength={1000}
-                  defaultValue={
-                    response?.decision === 'INTERESTED'
-                      ? 'Buyer selected Interested on this private introduction.'
-                      : ''
-                  }
-                />
-              </label>
-              {response?.decision === 'INTERESTED' && (
-                <label className="check-field">
-                  <input type="checkbox" name="useResponse" defaultChecked />
-                  Attribute acceptance to this buyer response
-                </label>
-              )}
-            </>
-          )}
-          {status === 'SCHEDULED' && (
-            <>
-              <p>
-                Enter local wall times and absolute timestamps with explicit offsets. They must
-                agree with the selected timezone. For repeated daylight-saving times, the offset
-                selects the intended occurrence.
-              </p>
-              <label className="field">
-                Meeting timezone
-                <input name="timezone" required defaultValue={m.timezone ?? 'Europe/Madrid'} />
-              </label>
-              <label className="field">
-                Local meeting start
-                <input
-                  name="localStart"
-                  type="datetime-local"
-                  required
-                  defaultValue={m.local_start ?? ''}
-                />
-              </label>
-              <label className="field">
-                Local meeting end
-                <input
-                  name="localEnd"
-                  type="datetime-local"
-                  required
-                  defaultValue={m.local_end ?? ''}
-                />
-              </label>
-              <DateTimeField label="Meeting start" name="startsAt" initial={m.starts_at} required />
-              <DateTimeField label="Meeting end" name="endsAt" initial={m.ends_at} required />
-              <label className="field">
-                Meeting location
-                <input
-                  name="location"
-                  required
-                  minLength={3}
-                  maxLength={500}
-                  defaultValue={m.location ?? ''}
-                />
-              </label>
-            </>
-          )}
-          {['HELD', 'NO_SHOW'].includes(status) && (
-            <label className="field">
-              Observed meeting outcome
-              <textarea name="outcome" required minLength={3} maxLength={2000} />
+          {response?.decision === 'INTERESTED' && (
+            <label className="check-field">
+              <input type="checkbox" name="useResponse" defaultChecked />
+              Attribute acceptance to this buyer response
             </label>
           )}
-          <button className="primary-link" disabled={busy}>
-            Record Meeting Change
-          </button>
-        </form>
+        </>
       )}
-      <details>
-        <summary>Meeting history</summary>
-        <ul>
-          {data.history
-            .filter((h) => h.meeting_id === m.id)
-            .map((h) => (
-              <li key={h.id}>
-                {h.action}: {h.details.command.reason}
-                {h.details.previous?.startsAt
-                  ? ` Previous schedule: ${h.details.previous.startsAt} (${h.details.previous.timezone}).`
-                  : ''}
-              </li>
-            ))}
-        </ul>
-      </details>
+      {status === 'SCHEDULED' && (
+        <>
+          <p>
+            Enter local wall times and absolute timestamps with explicit offsets. They must agree
+            with the selected timezone. For repeated daylight-saving times, the offset selects the
+            intended occurrence.
+          </p>
+          <label className="field">
+            Meeting timezone
+            <input name="timezone" required defaultValue={m.timezone ?? 'Europe/Madrid'} />
+          </label>
+          <label className="field">
+            Local meeting start
+            <input
+              name="localStart"
+              type="datetime-local"
+              required
+              defaultValue={m.local_start ?? ''}
+            />
+          </label>
+          <label className="field">
+            Local meeting end
+            <input
+              name="localEnd"
+              type="datetime-local"
+              required
+              defaultValue={m.local_end ?? ''}
+            />
+          </label>
+          <DateTimeField label="Meeting start" name="startsAt" initial={m.starts_at} required />
+          <DateTimeField label="Meeting end" name="endsAt" initial={m.ends_at} required />
+          <label className="field">
+            Meeting location
+            <input
+              name="location"
+              required
+              minLength={3}
+              maxLength={500}
+              defaultValue={m.location ?? ''}
+            />
+          </label>
+        </>
+      )}
+      {['HELD', 'NO_SHOW'].includes(status) && (
+        <label className="field">
+          Observed meeting outcome
+          <textarea name="outcome" required minLength={3} maxLength={2000} />
+        </label>
+      )}
+      <button className="primary-link" disabled={busy}>
+        Record Meeting Change
+      </button>
+    </form>
+  );
+  const schedule = m.starts_at && m.ends_at && m.timezone && (
+    <p>
+      {localWallTime(m.starts_at, m.timezone)} to {localWallTime(m.ends_at, m.timezone)} (
+      {m.timezone}). Your time: {formatDateTime(m.starts_at)} to {formatDateTime(m.ends_at)}.
+      Location: {m.location}.
+    </p>
+  );
+  const history = (
+    <details>
+      <summary>Meeting history</summary>
+      <ul>
+        {data.history
+          .filter((h) => h.meeting_id === m.id)
+          .map((h) => (
+            <li key={h.id}>
+              {h.action}: {h.details.command.reason}
+              {h.details.previous?.startsAt
+                ? ` Previous schedule: ${h.details.previous.startsAt} (${h.details.previous.timezone}).`
+                : ''}
+            </li>
+          ))}
+      </ul>
+    </details>
+  );
+  // The board card: title, the exact status word, the next step and one control. Everything else about the
+  // meeting (brief, participants, times, outcomes, the change form and the history) is in the dialog it opens.
+  if (board) {
+    const control = form ? 'Update Meeting' : 'View Meeting';
+    return (
+      <article className="detail-card meeting-card">
+        <Title>{m.title}</Title>
+        <p>
+          <span className="ux-status" data-tone={meetingStatusTone(m.status)}>
+            {plain(m.status)}
+          </span>{' '}
+          Version {m.version}.
+        </p>
+        <p>
+          Next: {m.next_action} ·{' '}
+          {data.owners.find((o) => o.user_id === m.owner_id)?.name ?? 'Not assigned'} · due{' '}
+          {formatDateTime(m.due_at)}
+        </p>
+        <button
+          type="button"
+          className="secondary-link"
+          aria-label={`${control} ${m.title}`}
+          onClick={() => {
+            setSent(false);
+            setChanging(true);
+          }}
+        >
+          {control}
+        </button>
+        <Dialog
+          open={changing}
+          onClose={() => setChanging(false)}
+          title={control}
+          keepMounted
+          locked={busy}
+        >
+          {brief}
+          {schedule}
+          {outcomes}
+          {form}
+          {sent && !busy && message && <p role="alert">{message}</p>}
+          {history}
+        </Dialog>
+      </article>
+    );
+  }
+  return (
+    <article className="detail-card meeting-card">
+      <Title>{m.title}</Title>
+      <p>
+        State: {plain(m.status)}. Version {m.version}.
+      </p>
+      {brief}
+      {schedule}
+      {outcomes}
+      {form}
+      {history}
     </article>
   );
 }
