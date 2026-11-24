@@ -14,7 +14,6 @@ import { ShowMore } from '../../show-more';
 import { MissionMoves } from '../../mission-moves';
 import { MissionQuotes } from '../../mission-quotes';
 import { MissionReplies } from '../../mission-replies';
-import { useOperatorFlags } from '../../operator-flags';
 import { WithdrawalNote } from '../../mission-withdrawal-note';
 import {
   MissionActionForm,
@@ -115,7 +114,6 @@ export function MissionPage({
   const panelHeading = useRef<HTMLHeadingElement>(null),
     trigger = useRef<HTMLButtonElement | null>(null),
     sending = useRef(false);
-  const { teamDeskV41 } = useOperatorFlags();
   const q = `tenant=${encodeURIComponent(tenant)}`;
   const load = useCallback(
     () => read<Queue>(`/api/team-work/mission?${q}&id=${missionId}`),
@@ -499,7 +497,7 @@ export function MissionPage({
             </>
           )}
           {tab === 'companies' && <Companies tenant={tenant} missionId={m.id} />}
-          {tab === 'quotes' && teamDeskV41 && (
+          {tab === 'quotes' && desk && (
             <MissionQuotes
               tenant={tenant}
               missionId={m.id}
@@ -511,7 +509,7 @@ export function MissionPage({
               reportsHref={sectionHref(tenant, 'delivery', m.id)}
             />
           )}
-          {tab === 'quotes' && !teamDeskV41 && (
+          {tab === 'quotes' && !desk && (
             <Quotes
               tenant={tenant}
               missionId={m.id}
@@ -521,7 +519,7 @@ export function MissionPage({
           )}
           {tab === 'meetings' && <Meetings tenant={tenant} missionId={m.id} />}
           {tab === 'delivery' && <Delivery tenant={tenant} missionId={m.id} />}
-          {tab === 'replies' && teamDeskV41 && (
+          {tab === 'replies' && desk && (
             <MissionReplies
               missionId={m.id}
               replies={data.replies}
@@ -533,7 +531,7 @@ export function MissionPage({
               reportsHref={sectionHref(tenant, 'delivery', m.id)}
             />
           )}
-          {tab === 'replies' && !teamDeskV41 && (
+          {tab === 'replies' && !desk && (
             <>
               <h3>Replies</h3>
               <h4>Receipt replies to the customer</h4>
