@@ -446,4 +446,12 @@ test('no menu jump on load: a workspace page keeps the room of the switch before
   await page.unrouteAll();
   const other = await open(page, 'v41=on&supply=on', { width: 1440 }, '/operator/supply');
   await expect(other.locator('.ux-team-menu-switch')).toHaveCount(0);
+  // Nor does a mission page, which sits below a section address and never publishes the switch.
+  const mission = await open(
+    page,
+    'v41=on',
+    { width: 1440 },
+    '/operator/missions/123e4567-e89b-42d3-a456-426614174000',
+  );
+  await expect(mission.locator('.ux-team-menu-switch')).toHaveCount(0);
 });

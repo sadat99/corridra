@@ -219,9 +219,10 @@ function TeamMenuV3({
               ))}
             </select>
           </div>
-        ) : plain ? null : (
+        ) : plain || /^\/operator\/[^/]+\/[^/]+/.test(pathname) ? null : (
           // A workspace page whose workspace has not published its list yet (the server render and the first
-          // paint): the room the control takes is kept, so the menu below does not move when it arrives.
+          // paint): the room the control takes is kept, so the menu below does not move when it arrives. A
+          // mission page (an address below a section) never mounts the workspace, so it keeps no room.
           <div className="ux-team-menu-switch" data-pending="true" aria-hidden="true" />
         )}
         <a href="/workspace" title="All Workspaces">
