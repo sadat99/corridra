@@ -46,6 +46,7 @@ import {
   type RegionRowView,
 } from './today-desk-parts';
 import { useOperatorFlags } from './operator-flags';
+import { Flagged, placeMark } from '../../components/ux/flag';
 import { missionHref, stageLabel } from './[section]/[missionId]/mission-labels';
 
 type Meeting = {
@@ -850,6 +851,16 @@ function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void
 // Team desk v4.1 (CORRIDRA_UX_TEAM_DESK_V41, owner approved 24 Nov 2026): Today as two regions. Every number and row
 // comes from the reads above; nothing new is read and nothing is written.
 
+/** A mission's line as drawn: the market keeps its mark before its name (UI/UX.v4.1 L1); other places show the name only. */
+function missionShown(mission: MissionPage['missions'][number]) {
+  return (
+    <>
+      {mission.brief.objective} ·{' '}
+      <Flagged code={placeMark(mission.brief.market)}>{mission.brief.market}</Flagged>
+    </>
+  );
+}
+
 /** The other queues that need a decision: each number, or null when its read failed or was not made. */
 function decisionCounts(today: Today) {
   const { team, work, problemReports: reports, erasure } = today;
@@ -911,6 +922,7 @@ function DecisionRegion({
         ...shared,
         reference: shortReference(row.mission.reference),
         what: `${row.mission.brief.objective} · ${row.mission.brief.market}`,
+        shown: missionShown(row.mission),
         group: row.mission.brief.company,
         href: missionPages ? missionHref(row.mission.id, tenant) : '#workspace-missions',
       };
@@ -1120,6 +1132,7 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
         key: mission.id,
         reference: shortReference(mission.reference),
         what: `${mission.brief.objective} · ${mission.brief.market}`,
+        shown: missionShown(mission),
         group: mission.brief.company,
         chip: <span className="ux-desk-chip">{stageLabel(mission.status)}</span>,
         when: <time dateTime={mission.due_at}>{formatDate(mission.due_at)}</time>,

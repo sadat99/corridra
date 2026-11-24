@@ -89,6 +89,8 @@ export type RegionRowView = {
   /** The short request reference, only when a read carried it. */
   reference: string | null;
   what: string;
+  /** The same words as drawn, where a place name carries its mark before it (UI/UX.v4.1 L1). */
+  shown?: ReactNode;
   /** The company of a mission, or what kind of thing the row is. */
   group: string;
   /** The late pill, the stage or nothing. */
@@ -146,38 +148,40 @@ export function RegionTable({
           </tr>
         </thead>
         <tbody role="rowgroup">
-          {views.map(({ key, reference, what, group, chip, when, whenWord, href }, index) => (
-            <tr key={key} role="row" hidden={!all && index >= firstRows}>
-              <th scope="row" role="rowheader" className="ux-desk-what">
-                {reference ? <span className="ux-today41-reference">{reference}</span> : null}
-                <span>{what}</span>
-                <span className="ux-desk-mission-inline">{group}</span>
-              </th>
-              <td role="cell" className="ux-desk-col-mission">
-                {group}
-              </td>
-              <td role="cell" className="ux-desk-due">
-                {chip}
-                <span className="ux-today41-when">
-                  <span className="ux-today41-when-word">{whenWord} </span>
-                  {when}
-                </span>
-              </td>
-              <td role="cell">
-                <a
-                  className={
-                    primary && index === 0
-                      ? 'primary-link ux-today41-review'
-                      : 'text-link ux-today41-review'
-                  }
-                  href={href}
-                  aria-label={`${action} ${reference ? `${reference}, ` : ''}${what}, ${group}`}
-                >
-                  {action}
-                </a>
-              </td>
-            </tr>
-          ))}
+          {views.map(
+            ({ key, reference, what, shown, group, chip, when, whenWord, href }, index) => (
+              <tr key={key} role="row" hidden={!all && index >= firstRows}>
+                <th scope="row" role="rowheader" className="ux-desk-what">
+                  {reference ? <span className="ux-today41-reference">{reference}</span> : null}
+                  <span>{shown ?? what}</span>
+                  <span className="ux-desk-mission-inline">{group}</span>
+                </th>
+                <td role="cell" className="ux-desk-col-mission">
+                  {group}
+                </td>
+                <td role="cell" className="ux-desk-due">
+                  {chip}
+                  <span className="ux-today41-when">
+                    <span className="ux-today41-when-word">{whenWord} </span>
+                    {when}
+                  </span>
+                </td>
+                <td role="cell">
+                  <a
+                    className={
+                      primary && index === 0
+                        ? 'primary-link ux-today41-review'
+                        : 'text-link ux-today41-review'
+                    }
+                    href={href}
+                    aria-label={`${action} ${reference ? `${reference}, ` : ''}${what}, ${group}`}
+                  >
+                    {action}
+                  </a>
+                </td>
+              </tr>
+            ),
+          )}
         </tbody>
       </table>
     </div>

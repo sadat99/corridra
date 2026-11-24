@@ -219,6 +219,9 @@ test('switch on: Today has the two regions, the headline says what to do, and ea
   await expect(rows.nth(0).locator('.ux-desk-chip[data-tone="late"]')).toHaveText('Late, 36 days');
   await expect(rows.nth(1).locator('.ux-desk-chip[data-tone="late"]')).toHaveText('Late, 3 days');
   await expect(rows.nth(2).locator('.ux-desk-chip[data-tone="new"]')).toHaveText('New');
+  // UI/UX.v4.1 L1: the market keeps its mark before its name; the flag is decorative, the name is written.
+  await expect(rows.nth(0).locator('.ux-flagged img[data-flag="cn"]')).toHaveCount(1);
+  await expect(rows.nth(0).locator('.ux-flagged')).toHaveText('China');
   // One primary Review, in the first row; the rest are the quiet link. Same address as the row always opened.
   await expect(decide(page).locator('a.primary-link')).toHaveCount(1);
   await expect(rows.nth(0).locator('a.primary-link')).toHaveText('Review');
