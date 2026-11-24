@@ -62,6 +62,9 @@
   "/network": {},
   "/operator": {},
   "/operator/forgot-password": {},
+  "/operator/invoice-issuer": {
+    "unavailable": 6
+  },
   "/operator/owner": {
     "unavailable": 6
   },

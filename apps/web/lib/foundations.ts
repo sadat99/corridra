@@ -66,6 +66,7 @@ import { CustomerRealInvoicingService } from '@corridra/auth/customer-invoicing-
 import { CustomerSimulatedPaymentsService } from '@corridra/auth/customer-payments-simulated';
 import { CustomerSimulatedPaymentsStaffService } from '@corridra/delivery/customer-payments-simulated-staff';
 import { CustomerRealInvoicingStaffService } from '@corridra/delivery/customer-invoicing-real-staff';
+import { InvoiceIssuerService } from '@corridra/auth/customer-invoicing-real-issuer';
 import { CustomerServiceStaffService } from '@corridra/delivery/customer-service-staff';
 import { CustomerBillingStaffService } from '@corridra/delivery/customer-billing-staff';
 import { CustomerInvoicingStaffService } from '@corridra/delivery/customer-invoicing-staff';
@@ -704,6 +705,7 @@ function createServices() {
     ),
     customerInvoicingStaff: new CustomerInvoicingStaffService(runtimePool),
     customerRealInvoicingStaff: new CustomerRealInvoicingStaffService(runtimePool),
+    invoiceIssuer: new InvoiceIssuerService(runtimePool),
     customerSimulatedPaymentsStaff: new CustomerSimulatedPaymentsStaffService(runtimePool),
     customerSimulatedPayments: new CustomerSimulatedPaymentsService(
       runtimePool,

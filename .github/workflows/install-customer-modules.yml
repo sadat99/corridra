@@ -129,7 +129,7 @@ on:
         required: false
         default: ''
       real_invoicing_action:
-        description: 'Optional ADR-064 operation for real invoices (billing stage 2). Install changes nothing for anyone and seeds the supplier details with made-up fields marked; enable opens the database side only; set_supplier writes new supplier details from the REAL_INVOICING_SUPPLIER_JSON secret of the customer-modules-install environment (never an input; the run log shows only field names, the version and a count); allow_single_approver lets one person prepare and approve (recorded with the reason); require_second_approver restores the default.'
+        description: 'Optional ADR-064 operation for real invoices (billing stage 2). Install changes nothing for anyone, seeds the supplier details with made-up fields marked and adds the database side of the Owner-only Invoice issuer screen (ADR-092); enable opens the database side only; set_supplier writes new supplier details from the REAL_INVOICING_SUPPLIER_JSON secret of the customer-modules-install environment (never an input; the run log shows only field names, the version and a count); allow_single_approver lets one person prepare and approve (recorded with the reason); require_second_approver restores the default.'
         type: choice
         options:
           [
