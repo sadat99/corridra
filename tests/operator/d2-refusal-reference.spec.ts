@@ -12,7 +12,7 @@ import { resolve } from 'node:path';
 // with its reference. D2_ROOT bundles another checkout (a worktree of the old commit) in the same frame,
 // which is how the step-up cases were shown to fail before the change. D2_SHOTS names a folder for the
 // screenshots at the six widths. `shells: false` leaves the code check out of the page, as the team pages are
-// while CORRIDRA_UX_SHELLS_V2 is off (the team frame mounts it): the form then says the kept line instead.
+// while CORRIDRA_UX_SHELLS_V2 is off (the team frame mounts it): the form then shows the server's own words.
 const root = resolve(process.env.D2_ROOT ?? '.');
 const tenant = '00000000-0000-4000-8000-0000000000a1';
 const mission = '00000000-0000-4000-8000-0000000000b2';
@@ -22,7 +22,8 @@ const owner = {
   role: 'owner',
 };
 const reference = '7F3A9C2E';
-const refusal = `You cannot make this change in this workspace. Ask a workspace owner and quote reference ${reference}.`;
+const refusal = `This change was not allowed in this workspace. Check you are in the right workspace, or ask a workspace owner. Quote reference ${reference}.`;
+const serverAsk = 'Verify your authenticator again to continue';
 const keptLine = 'Confirm your authenticator code to finish this. Your changes are kept.';
 const databaseWords = /row-level security|violates|permission denied|source_record|constraint/i;
 
@@ -285,18 +286,59 @@ for (const where of ['queue', 'mission'] as const) {
     await expectKept(form);
   });
 
-  test(`D2 ${where}: with the team shell switch off there is no code check; the form is kept and says so`, async ({
+  test(`D2 ${where}: with the team shell switch off there is no code check; the form is kept and shows the server's own words`, async ({
     page,
   }) => {
     const { sent, form } = await open(page, where, [stepUp, saved], false);
     await fill(form);
     await save(form).click();
-    await expect(page.getByText(keptLine)).toBeVisible();
+    await expect(page.getByText(serverAsk)).toBeVisible();
+    await expect(page.getByText(keptLine)).toHaveCount(0);
     await expect(codeCheck(page)).toHaveCount(0);
     await expectKept(form);
     await expect(save(form)).toBeEnabled();
     expect(sent).toHaveLength(1);
     expect(await axe(page)).toEqual([]);
+  });
+
+  test(`D2 ${where}: a refusal written by the product keeps its words and gains the reference on the page`, async ({
+    page,
+  }) => {
+    const { form } = await open(page, where, [
+      { status: 403, json: { error: 'Access denied', correlationId: 'invented', reference } },
+    ]);
+    await fill(form);
+    await save(form).click();
+    await expect(page.getByText(`Access denied. Quote reference ${reference}.`)).toBeVisible();
+    await expectKept(form);
+    // A sentence that already ends with a stop gets no second one, and 401 and 400 are shown as sent.
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+    const stale = await open(page, where, [
+      {
+        status: 409,
+        json: {
+          error: 'Mission changed; refresh and retry.',
+          correlationId: 'invented',
+          reference,
+        },
+      },
+    ]);
+    await fill(stale.form);
+    await save(stale.form).click();
+    await expect(
+      page.getByText(`Mission changed; refresh and retry. Quote reference ${reference}.`),
+    ).toBeVisible();
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+    const bad = await open(page, where, [
+      {
+        status: 400,
+        json: { error: 'Check the submitted values', correlationId: 'invented', reference },
+      },
+    ]);
+    await fill(bad.form);
+    await save(bad.form).click();
+    await expect(page.getByText('Check the submitted values', { exact: true })).toBeVisible();
+    await expect(page.locator('main')).not.toContainText(reference);
   });
 
   test(`D2 ${where}: a refused change shows what to do with its reference, keeps the form and shows no database words`, async ({
@@ -384,9 +426,9 @@ for (const width of [320, 390, 768, 1024, 1440, 1920]) {
       const plain = await open(page, where, [stepUp, saved], false);
       await fill(plain.form);
       await save(plain.form).click();
-      const kept = page.getByText(keptLine);
-      await expect(kept).toBeVisible();
-      await kept.scrollIntoViewIfNeeded();
+      const asked2 = page.getByText(serverAsk);
+      await expect(asked2).toBeVisible();
+      await asked2.scrollIntoViewIfNeeded();
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         width,
       );

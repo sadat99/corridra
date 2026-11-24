@@ -14,7 +14,7 @@ import { missionStatus } from '@corridra/domain/missions';
 import { formatDate, formatDateTime } from '../../lib/ux/format';
 import './[section]/[missionId]/mission-page.css';
 import { readFailureKind, readFailureWords } from './read-failure';
-import { readJson, withStepUp } from '../../lib/ux/step-up';
+import { ActionError, isStepUpRequired, stepUpEvent, withStepUp } from '../../lib/ux/step-up';
 import {
   actionLabel,
   isOverdue,
@@ -92,14 +92,74 @@ export const ownerName = (
 ) => owners.find((o) => o.user_id === id)?.name ?? (id ? 'Former team member' : 'Not assigned');
 
 /**
+ * Reads one answer of the workspace API. A refusal is thrown with the server's words; for 403, 409 and
+ * 5xx the short reference the answer carries is added when the words do not already end with it, so the
+ * person always has something to quote (unit D2). 400, 401 and 404 are shown exactly as sent.
+ */
+export async function workspaceAnswer(response: Response) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the workspace API answers several shapes
+  let body: any = null;
+  try {
+    body = await response.json();
+  } catch {
+    body = null;
+  }
+  if (response.ok) return body;
+  const words =
+    typeof body?.error === 'string' && body.error
+      ? body.error
+      : 'The request could not be completed.';
+  const reference = typeof body?.reference === 'string' ? body.reference : '';
+  const quoted =
+    reference &&
+    !words.includes(reference) &&
+    (response.status === 403 || response.status === 409 || response.status >= 500);
+  throw new ActionError(
+    quoted ? `${words}${/[.!?]$/.test(words) ? '' : '.'} Quote reference ${reference}.` : words,
+    response.status,
+    typeof body?.code === 'string' ? body.code : undefined,
+  );
+}
+
+/**
+ * Runs one change under the in-place authenticator check (withStepUp): a fresh-code refusal opens the
+ * check, and the same change is sent once more after it. Where no check is on the page to answer (the
+ * team shell switch is off), the server's own refusal is shown, as it was before this unit.
+ */
+export async function withCodeCheck<T>(send: () => Promise<T>): Promise<T> {
+  let refused: unknown = null;
+  let answered = false;
+  // The check, when mounted, listens from the moment the page loads, so it has already answered by the
+  // time this later listener runs.
+  const seen = (event: Event) => {
+    answered = event.defaultPrevented;
+  };
+  window.addEventListener(stepUpEvent, seen);
+  try {
+    return await withStepUp(async () => {
+      try {
+        return await send();
+      } catch (error) {
+        if (isStepUpRequired(error)) refused ??= error;
+        throw error;
+      }
+    });
+  } catch (error) {
+    if (refused && error !== refused && !answered && isStepUpRequired(error)) throw refused;
+    throw error;
+  } finally {
+    window.removeEventListener(stepUpEvent, seen);
+  }
+}
+
+/**
  * POSTs one mission command to the existing workspace API and throws the server's message. A refusal that
  * needs a fresh authenticator check opens the code check in place and sends the same body once more after
  * it (unit D2); the form behind it stays mounted, so nothing typed is lost.
  */
 export async function missionRequest(tenant: string, action: string, body: unknown) {
-  return withStepUp(async () =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the workspace API answers several shapes
-    readJson<any>(
+  return withCodeCheck(async () =>
+    workspaceAnswer(
       await fetch(`/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -397,8 +457,7 @@ export function Missions({
   }).toString();
   async function request(action: string, body?: unknown) {
     const send = async () =>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the workspace API answers several shapes
-      readJson<any>(
+      workspaceAnswer(
         await fetch(
           `/api/workspace/${action}?${query}`,
           body === undefined
@@ -411,7 +470,7 @@ export function Missions({
         ),
       );
     // A change that needs a fresh authenticator check asks for the code in place, then is sent once more.
-    return body === undefined ? send() : withStepUp(send);
+    return body === undefined ? send() : withCodeCheck(send);
   }
   useEffect(() => {
     let active = true;

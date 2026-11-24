@@ -6,22 +6,43 @@
 const unsafe =
   /permission denied|violates|row-level security|relation "|table "|column "|schema "|constraint|policy|\bfunction\b|\bsyntax\b/i;
 
+/**
+ * The one table from a database code to a status and fixed words. Both refusal helpers below read it, so
+ * the same code never means two things on two team routes.
+ */
+const table: Record<string, { status: 400 | 403 | 409; message: string }> = {
+  '42501': { status: 403, message: 'Access denied' },
+  '23514': { status: 409, message: 'That change is not allowed' },
+  '23505': { status: 409, message: 'That already exists' },
+  '22007': { status: 400, message: 'Check the values and try again' },
+  '22008': { status: 400, message: 'Check the values and try again' },
+  '22P02': { status: 400, message: 'Check the values and try again' },
+};
+const codeOf = (error: unknown) => {
+  const raw = (error as { code?: unknown } | null)?.code;
+  return typeof raw === 'string' && /^[0-9A-Z]{5}$/.test(raw) ? raw : '';
+};
+
 export function staffRefusal(error: unknown): { status: number; message: string } | null {
-  const e = error as { code?: unknown; message?: unknown } | null;
-  const code = typeof e?.code === 'string' ? e.code : '';
-  const message =
+  const e = error as { message?: unknown } | null;
+  const row = table[codeOf(error)];
+  if (!row) return null;
+  // A short, plain message written by one of our own functions is passed on for a refused or disallowed
+  // change; anything that reads like the database's own words is replaced by the fixed ones.
+  const written =
     typeof e?.message === 'string' &&
     e.message.length > 0 &&
     e.message.length <= 160 &&
     !unsafe.test(e.message)
       ? e.message
       : null;
-  if (code === '42501') return { status: 403, message: message ?? 'Access denied' };
-  if (code === '23514') return { status: 409, message: message ?? 'That change is not allowed' };
-  if (code === '23505') return { status: 409, message: 'That already exists' };
-  if (['22007', '22008', '22P02'].includes(code))
-    return { status: 400, message: 'Check the values and try again' };
-  return null;
+  return {
+    status: row.status,
+    message:
+      codeOf(error) === '42501' || codeOf(error) === '23514'
+        ? (written ?? row.message)
+        : row.message,
+  };
 }
 
 /** The short reference a refused person can quote: the first eight characters of the request's correlation id. */
@@ -30,40 +51,45 @@ export function refusalReference(correlationId: string) {
 }
 
 /**
- * The workspace route's answer to a failure it did not write itself (team desk v4.1, unit D2). Same rule
- * as above: the database's own words never leave the server. Every message here is fixed, says what to do
- * and ends with the reference, so the person can quote it and the team can find the log line by it.
- * `write` picks "make this change" or "open this"; `replyPath` keeps ADR-081 (a reply function that is
- * not installed is "unavailable", never a plain 500).
+ * The workspace route's answer to a failure it did not write itself (team desk v4.1, unit D2): the shared
+ * table above, plus the reference, plus what only that route has. No message of the error is ever passed
+ * on here, so the database's words cannot leave the server; every refusal says what to do and ends with
+ * the reference, which finds the log line. `replyPath` keeps ADR-081 (a reply function that is not
+ * installed is "unavailable", never a plain 500).
  */
 export function workspaceRefusal(
   error: unknown,
   reference: string,
-  { write, replyPath }: { write: boolean; replyPath: boolean },
-): { status: 403 | 409 | 500 | 503; message: string; code: string } {
-  const raw = (error as { code?: unknown } | null)?.code;
-  const code = typeof raw === 'string' && /^[0-9A-Z]{5}$/.test(raw) ? raw : 'UNKNOWN';
+  { replyPath }: { replyPath: boolean },
+): { status: 400 | 403 | 409 | 500 | 503; message: string; code: string } {
+  const code = codeOf(error) || 'UNKNOWN';
   if (replyPath && ['42883', '42P01', '3F000'].includes(code))
     return {
       status: 503,
       code,
       message: `This is not available right now. Try again later. If it continues, quote reference ${reference}.`,
     };
-  if (['23514', '23503', '23505', 'P0001', '54000'].includes(code))
+  if (['23503', 'P0001', '54000'].includes(code))
     return {
       status: 409,
       code,
       message: `The record or policy changed. Check its status and refresh before retrying. If it is refused again, quote reference ${reference}.`,
     };
-  if (code === '42501')
+  const row = table[code];
+  if (!row)
     return {
-      status: 403,
+      status: 500,
       code,
-      message: `You cannot ${write ? 'make this change' : 'open this'} in this workspace. Ask a workspace owner and quote reference ${reference}.`,
+      message: `The request could not be completed. Try again. If it fails again, quote reference ${reference}.`,
     };
+  if (row.status === 400) return { status: 400, code, message: row.message };
   return {
-    status: 500,
+    status: row.status,
     code,
-    message: `The request could not be completed. Try again. If it fails again, quote reference ${reference}.`,
+    // A refused write or read is not always a question of role: row-level rules refuse owners too.
+    message:
+      code === '42501'
+        ? `This change was not allowed in this workspace. Check you are in the right workspace, or ask a workspace owner. Quote reference ${reference}.`
+        : `${row.message}. Quote reference ${reference}.`,
   };
 }

@@ -9,6 +9,7 @@ import { DomainError, stepUpRequired } from '../../packages/domain/src/index';
 const state = vi.hoisted(() => ({
   session: { token: 'staff-token' } as null | { token: string },
   fails: null as null | (() => unknown),
+  unavailable: false,
   commands: 0,
 }));
 const service = () => {
@@ -17,19 +18,23 @@ const service = () => {
   return { ok: true };
 };
 vi.mock('../../apps/web/lib/foundations', () => ({
-  foundations: () => ({
-    ready: Promise.resolve(),
-    config: { APP_ORIGIN: 'https://corridra.example.invalid' },
-    provider: { getSession: async () => state.session },
-    access: { config: async () => [] },
-    missions: { command: async () => service(), queue: async () => service() },
-    commercialMissions: { replyPrefill: async () => service() },
-  }),
+  foundations: () =>
+    state.unavailable
+      ? null
+      : {
+          ready: Promise.resolve(),
+          config: { APP_ORIGIN: 'https://corridra.example.invalid' },
+          provider: { getSession: async () => state.session },
+          access: { config: async () => [] },
+          missions: { command: async () => service(), queue: async () => service() },
+          commercialMissions: { replyPrefill: async () => service() },
+        },
 }));
 vi.mock('../../apps/web/lib/communication-orchestrator', () => ({
   communicationOrchestrator: () => null,
 }));
 vi.mock('../../apps/web/lib/notify', () => ({ notify: async () => undefined }));
+import { staffRefusal, workspaceRefusal } from '../../apps/web/lib/staff-db-error';
 import * as route from '../../apps/web/app/api/workspace/[action]/route';
 
 const tenant = '11111111-1111-4111-8111-111111111111';
@@ -59,11 +64,14 @@ beforeEach(() => {
   vi.restoreAllMocks();
   state.session = { token: 'staff-token' };
   state.fails = null;
+  state.unavailable = false;
   state.commands = 0;
   errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
 describe('D2 a refused change says what to do and carries a reference', () => {
+  const denied = (reference?: string) =>
+    `This change was not allowed in this workspace. Check you are in the right workspace, or ask a workspace owner. Quote reference ${reference}.`;
   test('42501 answers 403 with the new words and the reference, and logs the code with the correlation id', async () => {
     state.fails = rls;
     const response = await command();
@@ -73,9 +81,8 @@ describe('D2 a refused change says what to do and carries a reference', () => {
     expect(body.correlationId).toBe(correlationId);
     expect(body.reference).toBe(correlationId.slice(0, 8).toUpperCase());
     expect(body.reference).toMatch(/^[0-9A-F]{8}$/);
-    expect(body.error).toBe(
-      `You cannot make this change in this workspace. Ask a workspace owner and quote reference ${body.reference}.`,
-    );
+    expect(body.error).toBe(denied(body.reference));
+    // The log line holds the whole correlation id, so the eight characters a person quotes find it.
     expect(logged(errors)).toEqual([
       {
         event: 'foundation_request_refused',
@@ -87,27 +94,29 @@ describe('D2 a refused change says what to do and carries a reference', () => {
     ]);
   });
 
-  test('a refused read says "open", never "change"', async () => {
+  test('a refused read gets the same words, which do not assume a role', async () => {
     state.fails = rls;
     const response = await call('missions', 'GET');
     expect(response.status).toBe(403);
     const body = (await response.json()) as Body;
-    expect(body.error).toBe(
-      `You cannot open this in this workspace. Ask a workspace owner and quote reference ${body.reference}.`,
-    );
+    expect(body.error).toBe(denied(body.reference));
   });
 
+  const changed =
+    'The record or policy changed. Check its status and refresh before retrying. If it is refused again, quote reference ';
+  const failed =
+    'The request could not be completed. Try again. If it fails again, quote reference ';
   test.each([
-    ['23514', 409, 'foundation_request_refused'],
-    ['23503', 409, 'foundation_request_refused'],
-    ['23505', 409, 'foundation_request_refused'],
-    ['P0001', 409, 'foundation_request_refused'],
-    ['54000', 409, 'foundation_request_refused'],
-    ['XX000', 500, 'foundation_request_failed'],
-    [undefined, 500, 'foundation_request_failed'],
+    ['23514', 409, 'foundation_request_refused', 'That change is not allowed. Quote reference '],
+    ['23505', 409, 'foundation_request_refused', 'That already exists. Quote reference '],
+    ['23503', 409, 'foundation_request_refused', changed],
+    ['P0001', 409, 'foundation_request_refused', changed],
+    ['54000', 409, 'foundation_request_refused', changed],
+    ['XX000', 500, 'foundation_request_failed', failed],
+    [undefined, 500, 'foundation_request_failed', failed],
   ] as const)(
     'database code %s answers %i with a reference and one log line',
-    async (code, status, event) => {
+    async (code, status, event, words) => {
       state.fails = code
         ? pg(code, `relation "customer_private.mission" violates check constraint "mission_ck"`)
         : () => new TypeError('Cannot read properties of undefined (reading "rows")');
@@ -116,17 +125,42 @@ describe('D2 a refused change says what to do and carries a reference', () => {
       const body = (await response.json()) as Body;
       const correlationId = response.headers.get('X-Corridra-Request-ID')!;
       expect(body.reference).toBe(correlationId.slice(0, 8).toUpperCase());
-      expect(body.error).toContain(`quote reference ${body.reference}.`);
-      expect(body.error).toMatch(
-        status === 409
-          ? /^The record or policy changed\. Check its status and refresh before retrying\. /
-          : /^The request could not be completed\. Try again\. /,
-      );
+      expect(body.error).toBe(`${words}${body.reference}.`);
       expect(logged(errors)).toEqual([
         { event, code: code ?? 'UNKNOWN', status, correlationId, reference: body.reference },
       ]);
     },
   );
+
+  test.each(['22007', '22008', '22P02'])(
+    'a value the database cannot read (%s) is a 400 as on the other team routes, not logged',
+    async (code) => {
+      state.fails = pg(code, 'invalid input syntax for type uuid: "x"');
+      const response = await command();
+      expect(response.status).toBe(400);
+      expect(((await response.json()) as Body).error).toBe('Check the values and try again');
+      expect(errors).not.toHaveBeenCalled();
+    },
+  );
+
+  test('a workspace that is not configured answers 503 with what to do and the reference', async () => {
+    state.unavailable = true;
+    const response = await command();
+    expect(response.status).toBe(503);
+    const body = (await response.json()) as Body;
+    expect(body.error).toBe(
+      `Operator workspace is unavailable. Try again later. If it continues, quote reference ${body.reference}.`,
+    );
+    expect(logged(errors)).toEqual([
+      {
+        event: 'foundation_request_failed',
+        code: 'UNAVAILABLE',
+        status: 503,
+        correlationId: response.headers.get('X-Corridra-Request-ID'),
+        reference: body.reference,
+      },
+    ]);
+  });
 
   test('a missing reply function answers 503 with a reference and is logged', async () => {
     state.fails = pg('42883', 'function customer_private.reply_prefill(uuid) does not exist');
@@ -239,12 +273,56 @@ describe('D2 no database text reaches the page', () => {
   });
 });
 
+describe('D2 one table for both team refusal helpers', () => {
+  const error = (code: string, message = 'new row violates row-level security policy') =>
+    Object.assign(new Error(message), { code });
+  test('the same code gives the same status in both', () => {
+    for (const code of ['42501', '23514', '23505', '22007', '22008', '22P02'])
+      expect(workspaceRefusal(error(code), 'ABCDEF12', { replyPath: false }).status).toBe(
+        staffRefusal(error(code))!.status,
+      );
+  });
+  test('staffRefusal answers exactly as before this unit', () => {
+    expect(staffRefusal(error('42501'))).toEqual({ status: 403, message: 'Access denied' });
+    expect(staffRefusal(error('42501', 'Verify your authenticator again to continue'))).toEqual({
+      status: 403,
+      message: 'Verify your authenticator again to continue',
+    });
+    expect(staffRefusal(error('23514', 'At most five open Moves per request'))).toEqual({
+      status: 409,
+      message: 'At most five open Moves per request',
+    });
+    expect(staffRefusal(error('23514'))).toEqual({
+      status: 409,
+      message: 'That change is not allowed',
+    });
+    expect(staffRefusal(error('23505', 'A short plain line'))).toEqual({
+      status: 409,
+      message: 'That already exists',
+    });
+    expect(staffRefusal(error('22P02', 'bad'))).toEqual({
+      status: 400,
+      message: 'Check the values and try again',
+    });
+    expect(staffRefusal(error('23503'))).toBeNull();
+    expect(staffRefusal(error('P0001'))).toBeNull();
+    expect(staffRefusal(new Error('no code'))).toBeNull();
+  });
+  test('the workspace helper never passes on a message, even a short plain one', () => {
+    const refusal = workspaceRefusal(error('42501', 'A short plain line'), 'ABCDEF12', {
+      replyPath: false,
+    });
+    expect(refusal.message).not.toContain('A short plain line');
+  });
+});
+
 describe('D2 mission forms ask for the code in place (source contract)', () => {
   const missions = readFileSync('apps/web/app/operator/missions.tsx', 'utf8');
   const page = readFileSync('apps/web/app/operator/[section]/[missionId]/mission-page.tsx', 'utf8');
-  test('mission commands go through withStepUp and read refusals with readJson', () => {
+  test('mission commands go through the code check built on withStepUp', () => {
     expect(missions).toMatch(/import \{[^}]*\bwithStepUp\b[^}]*\} from '..\/..\/lib\/ux\/step-up'/);
-    expect(missions).toMatch(/export async function missionRequest[\s\S]{0,200}withStepUp\(/);
+    expect(missions).toMatch(/export async function withCodeCheck[\s\S]{0,900}withStepUp\(/);
+    expect(missions).toMatch(/export async function missionRequest[\s\S]{0,200}withCodeCheck\(/);
     expect(page).toContain('missionRequest(tenant, action, body)');
   });
   test('the purpose the website sends is untouched by this unit (unit D1 owns the cause)', () => {

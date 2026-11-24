@@ -29,7 +29,11 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         }),
       );
       return Response.json(
-        { error: 'Operator workspace is unavailable', correlationId, reference },
+        {
+          error: `Operator workspace is unavailable. Try again later. If it continues, quote reference ${reference}.`,
+          correlationId,
+          reference,
+        },
         { status: 503, headers },
       );
     }
@@ -375,7 +379,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         ? { status: error.status, message: error.message, code: error.code ?? 'DOMAIN' }
         : error instanceof z.ZodError || error instanceof SyntaxError
           ? { status: 400, message: 'Check the submitted values', code: 'INPUT' }
-          : workspaceRefusal(error, reference, { write: request.method !== 'GET', replyPath });
+          : workspaceRefusal(error, reference, { replyPath });
     if ([403, 409, 500, 503].includes(refusal.status))
       console.error(
         JSON.stringify({
