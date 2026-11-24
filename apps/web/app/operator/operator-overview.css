@@ -1834,6 +1834,113 @@
   }
 }
 
+/* Team desk v4.1 Today (CORRIDRA_UX_TEAM_DESK_V41, owner approved 24 Nov 2026). Two bounded regions, "Needs your
+   decision" and "Waiting on others", on the desk table above. Each region has one cobalt Review button in its first
+   row; later rows carry the quiet link. Region headings 18 px at 600, the reference 14 px in the mono face, every
+   Review 44 px tall. */
+.ux-operator-home .ux-today41 .ux-today41-region {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+.ux-operator-home .ux-today41 .ux-today41-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  min-height: 3.5rem;
+  padding: 0 var(--space-4);
+}
+.ux-operator-home .ux-today41 .ux-today41-head h3 {
+  margin: 0;
+  font: 600 var(--text-lg) / 1.3 var(--font-ui);
+}
+.ux-operator-home .ux-today41 .ux-today41-lead {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-operator-home .ux-today41 .ux-segments {
+  padding: 0 var(--space-4) var(--space-3);
+}
+.ux-today41-table .ux-today41-reference {
+  display: block;
+  color: var(--text-2);
+  font: 400 var(--text-sm) / 1.3 var(--font-mono);
+}
+.ux-today41-table .ux-desk-due .ux-desk-chip + time {
+  margin-top: var(--space-1);
+}
+.ux-operator-home .ux-today41-table a.ux-today41-review {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  font-size: var(--text-base);
+}
+.ux-operator-home .ux-today41-table a.primary-link.ux-today41-review {
+  padding: 0 var(--space-4);
+  color: var(--paper);
+}
+.ux-operator-home .ux-today41 .ux-desk-part-failure {
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.ux-operator-home .ux-today41 .ux-today41-queues {
+  border-width: 1px 0 0;
+  border-radius: 0;
+  background: transparent;
+}
+.ux-operator-home .ux-today41 .ux-today41-queues li {
+  box-shadow: 0 0 0 1px var(--line);
+}
+/* Up to 768 px a row stacks: what it is on the first line, then the pill and date beside its Review. The table keeps
+   its roles in the markup, so a screen reader still reads rows and cells. */
+@media (max-width: 767.98px) {
+  .ux-today41-table,
+  .ux-today41-table tbody {
+    display: block;
+  }
+  .ux-today41-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ux-today41-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    height: auto;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ux-today41-table tbody tr[hidden] {
+    display: none;
+  }
+  .ux-today41-table tbody :is(th, td) {
+    border-bottom: 0;
+    padding-block: var(--space-1);
+  }
+  .ux-today41-table tbody th {
+    grid-column: 1 / -1;
+  }
+  .ux-today41-table .ux-desk-due {
+    white-space: normal;
+  }
+}
+@media (forced-colors: active) {
+  .ux-operator-home .ux-today41 .ux-today41-region {
+    border-color: CanvasText;
+  }
+}
+
 /* Signal Desk density (AC/1): the Delivery list reads as a dense table with a quiet header fill, exceptions stay in the
    columns they already have. Scoped to the workspace body; column order, headers and row actions are unchanged. */
 /* Staff page budget (L21, owner 13 November 2026: desktop at most one screen, phone at most two, disclosures closed).

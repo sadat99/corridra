@@ -15,6 +15,10 @@ import {
   deskRows,
   deskSentence,
   deskTotals,
+  deskHeadline,
+  shortReference,
+  shownLine,
+  waitingMissions,
   type MissionPage,
   type NeedsFilter,
   type DeskRow,
@@ -32,7 +36,16 @@ import {
 import { ageWords } from '../../lib/problem-report-queue';
 import { readFailureKind, readFailureWords, type ReadFailureKind } from './read-failure';
 import { clearPinCounts, publishPinCounts } from '../../lib/ux/team-pin-counts';
-import { DeskFold, DeskTable, PartFailure, type DeskRowView } from './today-desk-parts';
+import {
+  DeskChip,
+  DeskFold,
+  DeskTable,
+  PartFailure,
+  RegionTable,
+  type DeskRowView,
+  type RegionRowView,
+} from './today-desk-parts';
+import { useOperatorFlags } from './operator-flags';
 import { missionHref, stageLabel } from './[section]/[missionId]/mission-labels';
 
 type Meeting = {
@@ -829,6 +842,342 @@ function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void
   );
 }
 
+// Team desk v4.1 (CORRIDRA_UX_TEAM_DESK_V41, owner approved 24 Nov 2026): Today as two regions. Every number and row
+// comes from the reads above; nothing new is read and nothing is written.
+
+/** The other queues that need a decision: each number, or null when its read failed or was not made. */
+function decisionCounts(today: Today) {
+  const { team, work, problemReports: reports, erasure } = today;
+  const counted = (name: keyof Omit<TeamCounts, 'unavailable'>) =>
+    team ? (team.unavailable?.includes(name) ? null : team[name]) : null;
+  return {
+    replies: counted('repliesToReview'),
+    quotes: counted('acceptedQuotesNotStarted'),
+    services: counted('serviceRequestsToQuote'),
+    followUps: work ? work.lateFollowUps.length : null,
+    reschedule: work ? work.reschedule.length : null,
+    reports: reports ? reports.count : null,
+    // Overdue erasure requests are rows of the table; the rest of the open ones are counted here.
+    erasure: erasure ? Math.max(0, erasure.count - erasure.rows.length) : null,
+  };
+}
+
+/** The sum behind the headline's "queues below", or null when a queue this role reads could not be read. */
+function otherDecisions(today: Today): number | null {
+  const counts = decisionCounts(today);
+  const unread =
+    today.teamFailure !== null ||
+    today.workFailure !== null ||
+    (today.team?.unavailable?.length ?? 0) > 0 ||
+    (today.erasureRead && today.erasure === null) ||
+    (today.erasure?.atLeast ?? false);
+  if (unread) return null;
+  return Object.values(counts).reduce<number>((sum, value) => sum + (value ?? 0), 0);
+}
+
+/** "Needs your decision": new requests, late missions and overdue erasure requests, then the other queues. */
+function DecisionRegion({
+  today,
+  list,
+  totals,
+  tenant,
+  onRetry,
+}: {
+  today: Today;
+  list: DeskRow[];
+  totals: ReturnType<typeof deskTotals>;
+  tenant: string;
+  onRetry: () => void;
+}) {
+  const { filter, all, setAll, choose } = useNeedsFilter();
+  const missionPages = useMissionPages();
+  const tableId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-decide`;
+  const views: RegionRowView[] = deskFilter(list, filter).map((row) => {
+    const shared = {
+      key: row.key,
+      chip: <DeskChip row={row} observedAt={today.observedAt} />,
+      when: <time dateTime={row.dueAt}>{formatDate(row.dueAt)}</time>,
+    };
+    if (row.mission)
+      return {
+        ...shared,
+        reference: shortReference(row.mission.reference),
+        what: `${row.mission.brief.objective} · ${row.mission.brief.market}`,
+        group: row.mission.brief.company,
+        href: missionPages ? missionHref(row.mission.id, tenant) : '#workspace-missions',
+      };
+    return {
+      ...shared,
+      reference: null,
+      what: `Erasure request ${row.reference ?? ''}`.trim(),
+      group: 'Erasure Requests',
+      href: '#workspace-settings',
+    };
+  });
+  const extra = today.erasure?.rows.length ?? 0;
+  const counts: Record<NeedsFilter, { count: number; exact: boolean }> = {
+    all: { count: totals.count, exact: totals.exact },
+    new: { count: today.fresh.total, exact: true },
+    overdue: { count: today.overdue.total + extra, exact: true },
+  };
+  const label = (option: NeedsFilter) =>
+    counts[option].exact ? counts[option].count : `${counts[option].count}+`;
+  const empty =
+    filter === 'new'
+      ? 'No new requests to review.'
+      : filter === 'overdue'
+        ? 'Nothing is past its due date.'
+        : 'No new requests and nothing past its due date.';
+  const more = shownLine(views.length, counts[filter]);
+  const queues = decisionCounts(today);
+  const erasureFailed = today.erasureRead && today.erasure === null;
+  // A queue is listed when it holds something or could not be counted: a zero is not a decision.
+  const queue = (
+    key: string,
+    value: number | null,
+    read: boolean,
+    href: string,
+    one: string,
+    many: string,
+    tone?: string,
+  ) =>
+    read && value !== 0 ? (
+      <WaitingItem
+        key={key}
+        href={href}
+        value={value ?? 'Not available'}
+        tone={value === null ? 'unavailable' : tone}
+        words={plural(value, one, many)}
+      />
+    ) : null;
+  const items = [
+    queue(
+      'replies',
+      queues.replies,
+      today.team !== null,
+      '#workspace-delivery',
+      'reply to review',
+      'replies to review',
+    ),
+    queue(
+      'services',
+      queues.services,
+      today.team !== null,
+      /* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */
+      '#billing-services',
+      'paid-service request to quote',
+      'paid-service requests to quote',
+    ),
+    queue(
+      'quotes',
+      queues.quotes,
+      today.team !== null,
+      '#workspace-commercial',
+      'accepted quote not started',
+      'accepted quotes not started',
+    ),
+    queue(
+      'follow-ups',
+      queues.followUps,
+      today.work !== null,
+      '#workspace-meetings',
+      'follow-up past its due date',
+      'follow-ups past their due date',
+      'late',
+    ),
+    queue(
+      'reschedule',
+      queues.reschedule,
+      today.work !== null,
+      '#workspace-meetings',
+      'meeting needs a new time',
+      'meetings need a new time',
+    ),
+    queue(
+      'reports',
+      queues.reports,
+      today.problemReports !== null,
+      '#problem-report-queue',
+      'problem report open',
+      'problem reports open',
+    ),
+    queue(
+      'erasure',
+      queues.erasure,
+      today.erasure !== null,
+      '#workspace-settings',
+      'more erasure request open',
+      'more erasure requests open',
+    ),
+  ].filter((item) => item !== null);
+  return (
+    <section className="ux-needs ux-today41-region" aria-labelledby="today-decide-title">
+      <header className="ux-today41-head">
+        <h3 id="today-decide-title">Needs your decision</h3>
+      </header>
+      {list.length > 0 && (
+        <SegmentedFilter<NeedsFilter>
+          label="Show"
+          value={filter}
+          onChange={choose}
+          options={[
+            { value: 'all', label: 'All', count: label('all') },
+            { value: 'new', label: 'New', count: label('new') },
+            { value: 'overdue', label: 'Past due', count: label('overdue') },
+          ]}
+        />
+      )}
+      {views.length === 0 ? (
+        <p className="ux-needs-empty">{empty}</p>
+      ) : (
+        <RegionTable
+          views={views}
+          firstRows={firstRows}
+          all={all}
+          tableId={tableId}
+          caption="New requests and late work, latest first"
+          whenHeading="Due"
+        />
+      )}
+      {views.length > firstRows && (
+        <button
+          type="button"
+          className="text-link ux-desk-toggle ux-needs-more"
+          aria-expanded={all}
+          aria-controls={tableId}
+          onClick={() => setAll((value) => !value)}
+        >
+          {all ? 'Show Fewer' : `Show ${views.length - firstRows} More`}
+        </button>
+      )}
+      {more && <p className="ux-today-more">{more}</p>}
+      {erasureFailed && (
+        <PartFailure part="Erasure Requests" kind="unavailable" onRetry={onRetry} />
+      )}
+      {today.teamFailure && (
+        <PartFailure part="Replies and quotes" kind={today.teamFailure} onRetry={onRetry} />
+      )}
+      {today.workFailure && (
+        <PartFailure part="Meetings and follow-ups" kind={today.workFailure} onRetry={onRetry} />
+      )}
+      {items.length > 0 && (
+        <ul className="ux-today-tiles ux-today41-queues" aria-label="Also needs your decision">
+          {items}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/** "Waiting on others": open missions that are on time and the meetings of the next 7 days. */
+function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
+  const [all, setAll] = useState(false);
+  const [why, setWhy] = useState(false);
+  const missionPages = useMissionPages();
+  const tableId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-waiting`;
+  const meetings = (today.work?.upcoming ?? []).filter(
+    (m): m is Meeting & { starts_at: string } => m.starts_at !== null,
+  );
+  const views = [
+    ...waitingMissions(today.open, today.fresh, today.overdue, today.observedAt).map((mission) => ({
+      at: Date.parse(mission.due_at),
+      view: {
+        key: mission.id,
+        reference: shortReference(mission.reference),
+        what: `${mission.brief.objective} · ${mission.brief.market}`,
+        group: mission.brief.company,
+        chip: <span className="ux-desk-chip">{stageLabel(mission.status)}</span>,
+        when: (
+          <>
+            <span className="sr-only">due </span>
+            <time dateTime={mission.due_at}>{formatDate(mission.due_at)}</time>
+          </>
+        ),
+        href: missionPages ? missionHref(mission.id, tenant) : '#workspace-missions',
+      } satisfies RegionRowView,
+    })),
+    ...meetings.map((meeting) => ({
+      at: Date.parse(meeting.starts_at),
+      view: {
+        key: `meeting:${meeting.id}`,
+        reference: null,
+        what: meeting.title,
+        group: meeting.location?.trim() ? meeting.location : 'Place not entered',
+        chip: <span className="ux-desk-chip">Meeting</span>,
+        when: <time dateTime={meeting.starts_at}>{formatDateTime(meeting.starts_at)}</time>,
+        href: '#workspace-meetings',
+      } satisfies RegionRowView,
+    })),
+  ]
+    .sort((a, b) => a.at - b.at || (a.view.key < b.view.key ? -1 : 1))
+    .map((item) => item.view);
+  const without = meetings.filter((m) => !m.location || m.location.trim() === '').length;
+  return (
+    <section className="ux-needs ux-today41-region" aria-labelledby="today-waiting-title">
+      <header className="ux-today41-head">
+        <h3 id="today-waiting-title">Waiting on others</h3>
+        <span className="ux-desk-open-missions">
+          <a className="text-link" href="#workspace-missions">
+            Open Missions
+          </a>
+          <span>{today.open.total} open</span>
+        </span>
+      </header>
+      {views.length === 0 ? (
+        <p className="ux-needs-empty">Nothing is waiting on anyone else.</p>
+      ) : (
+        <>
+          <p className="ux-today41-lead">On time. Nothing to decide here yet.</p>
+          <RegionTable
+            views={views}
+            firstRows={firstRows}
+            all={all}
+            tableId={tableId}
+            caption="Open missions that are on time and meetings in the next 7 days, soonest first"
+            whenHeading="When"
+          />
+        </>
+      )}
+      {views.length > firstRows && (
+        <button
+          type="button"
+          className="text-link ux-desk-toggle ux-needs-more"
+          aria-expanded={all}
+          aria-controls={tableId}
+          onClick={() => setAll((value) => !value)}
+        >
+          {all ? 'Show Fewer' : `Show ${views.length - firstRows} More`}
+        </button>
+      )}
+      {today.open.missions.length < today.open.total && (
+        <p className="ux-today-more">
+          Not every open mission is listed here. The full list is in Missions.
+        </p>
+      )}
+      {today.work?.partial && (
+        <p className="ux-today-more">
+          Meeting and follow-up counts cover the {readLimit} earliest of each, by date. The meetings
+          section lists them all.
+        </p>
+      )}
+      {without > 0 && (
+        <p className="ux-today-more ux-desk-place">
+          Place not entered for {without} of {meetings.length} meetings.{' '}
+          <button
+            type="button"
+            className="text-link ux-desk-toggle"
+            aria-expanded={why}
+            onClick={() => setWhy((value) => !value)}
+          >
+            Why
+          </button>
+          {why && <span role="note"> No place was entered when the meeting was booked.</span>}
+        </p>
+      )}
+    </section>
+  );
+}
+
 /**
  * The first thing an operator sees: what needs a person now, taken from the same lists that are
  * mounted below. It never blocks the workspace if a read fails. `start` is the workspace's own start
@@ -852,6 +1201,8 @@ export function TodayPanel({
   /** CORRIDRA_UX_OPERATOR_DESK: Today as one table with Also waiting and This week as collapsed rows. */
   desk?: boolean;
 }) {
+  // Team desk v4.1: read on the server only with the team shell on, and handed down with the other team flags.
+  const deskV41 = useOperatorFlags().teamDeskV41;
   const [today, setToday] = useState<Today | null>(null);
   // Why the list could not be read: the person's role, too many requests, or anything else (an
   // unavailable service or no connection). Each gets its own words and a retry where one helps.
@@ -958,6 +1309,51 @@ export function TodayPanel({
       (work.upcoming.length === 0 &&
         work.reschedule.length === 0 &&
         work.lateFollowUps.length === 0));
+  if (deskV41) {
+    const list = today
+      ? deskRows(today.fresh, today.overdue, today.erasure?.rows ?? [], today.observedAt)
+      : [];
+    const erasureUnread = !!today && today.erasureRead && today.erasure === null;
+    const totals = today
+      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
+      : null;
+    return (
+      <section className="ux-today ux-desk ux-today41" aria-labelledby="today-title">
+        <header className="operator-today-heading">
+          <h2 id="today-title">Today</h2>
+          {today && !failure && totals && (
+            <p className="ux-desk-sentence">{deskHeadline(totals, otherDecisions(today))}</p>
+          )}
+        </header>
+        {failure ? (
+          <div role="status" className="ux-today-state">
+            <p>Today&apos;s list could not be loaded. {readFailureWords(failure)}</p>
+            {failure !== 'denied' && (
+              <button type="button" className="text-link ux-desk-toggle" onClick={retry}>
+                Try Again
+              </button>
+            )}
+          </div>
+        ) : !today || !totals ? (
+          <p role="status" aria-live="polite" className="ux-today-state">
+            Loading today&apos;s list.
+          </p>
+        ) : (
+          <>
+            <DecisionRegion
+              today={today}
+              list={list}
+              totals={totals}
+              tenant={tenant}
+              onRetry={retry}
+            />
+            <WaitingRegion today={today} tenant={tenant} />
+          </>
+        )}
+        {start}
+      </section>
+    );
+  }
   if (desk) {
     const list = today
       ? deskRows(today.fresh, today.overdue, today.erasure?.rows ?? [], today.observedAt)

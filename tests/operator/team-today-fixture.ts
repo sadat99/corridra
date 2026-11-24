@@ -60,8 +60,10 @@ export async function startTodayFixture(root = resolve('.')) {
       const applications = flag('applications') === 'on';
       // ?role=operator is a team member who may not see the problem report or erasure queues. Default owner.
       const role = flag('role') ?? 'owner';
+      // ?v41=on is the team desk v4.1 switch read on the server and handed down with the team flags. Off or missing, nothing changes.
+      const v41 = shells && flag('v41') === 'on';
       const workspace = (
-        <OperatorFlags replyReview={false}>
+        <OperatorFlags replyReview={false} teamDeskV41={v41}>
           <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:role}]}
             initialTenant=${JSON.stringify(fixtureTenant)} shellsV2={shells} problemReports={reports} programmeApplications={applications}/>
         </OperatorFlags>

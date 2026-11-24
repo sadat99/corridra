@@ -8,6 +8,8 @@ export type TodayMission = {
   status: string;
   due_at: string;
   brief: { company: string; objective: string; market: string };
+  /** The short request reference (RQ-000001), only when the mission read itself carries one. */
+  reference?: unknown;
 };
 /** One page of a mission read: the rows returned and the server's total for the same filter. */
 export type MissionPage = { missions: TodayMission[]; total: number };
@@ -279,4 +281,71 @@ export function deskFilter(rows: DeskRow[], filter: NeedsFilter): DeskRow[] {
   if (filter === 'new') return rows.filter((row) => row.fresh);
   if (filter === 'overdue') return rows.filter((row) => row.late);
   return rows;
+}
+
+// Team desk v4.1 (CORRIDRA_UX_TEAM_DESK_V41, owner approved 24 Nov 2026): Today as two regions, "Needs your decision"
+// and "Waiting on others". Same reads and the same set as the desk above; only the words and the grouping change.
+
+/** The shape of a short request reference (PR 617: RQ- and the number, six digits or more). */
+const referenceShape = /^RQ-\d{1,12}$/;
+/** The reference a read carried, or null. Nothing is ever made up from an id. */
+export function shortReference(value: unknown): string | null {
+  return typeof value === 'string' && referenceShape.test(value) ? value : null;
+}
+
+/**
+ * The headline: what to do first. It never gives a lower bound as a number: when a read was not whole it names the
+ * place that holds the full list instead. `others` is the sum of the other queues that need a decision (replies,
+ * quotes, follow-ups and so on), or null when one of them could not be read.
+ */
+export function deskHeadline({ count, late, exact }: DeskTotals, others: number | null): string {
+  if (count === 0) {
+    if (!exact)
+      return 'Erasure requests could not be checked just now. Try again before you rely on this page.';
+    if (others === null)
+      return 'No new request and nothing late. Some queues could not be checked.';
+    return others > 0
+      ? 'No new request and nothing late. Work through the queues below.'
+      : 'Nothing needs your decision now.';
+  }
+  if (!exact)
+    return late > 0
+      ? 'Start with the late ones at the top. This page did not load every one; the full list is in Missions.'
+      : 'Start at the top. This page did not load every one; the full list is in Missions.';
+  const lead = `${count} ${count === 1 ? 'thing needs' : 'things need'} your decision.`;
+  if (late === 0) return `${lead} ${count === 1 ? 'Review it today.' : 'Start at the top.'}`;
+  if (count === 1) return `${lead} It is late, so review it first.`;
+  return `${lead} Start with the ${late === 1 ? 'one that is' : `${late} that are`} late.`;
+}
+
+/** The line under a region's rows when more exist than were loaded. Never a lower bound as a number. */
+export function shownLine(shown: number, total: { count: number; exact: boolean }): string | null {
+  if (shown >= total.count) return null;
+  return total.exact
+    ? `Showing ${shown} of ${total.count}. The full list is in Missions.`
+    : `Showing ${shown}. More are in Missions.`;
+}
+
+/**
+ * Open missions that need no decision now: not a new request and not past due at the moment read. They come from
+ * the open read the page already makes, soonest due first.
+ */
+export function waitingMissions(
+  open: MissionPage,
+  fresh: MissionPage,
+  overdue: MissionPage,
+  observedAt: string,
+): TodayMission[] {
+  const needs = new Set([...fresh.missions, ...overdue.missions].map((mission) => mission.id));
+  const now = Date.parse(observedAt);
+  return open.missions
+    .filter(
+      (mission) =>
+        !needs.has(mission.id) && mission.status !== 'DRAFT' && Date.parse(mission.due_at) >= now,
+    )
+    .sort((a, b) => {
+      const due = Date.parse(a.due_at) - Date.parse(b.due_at);
+      if (due !== 0) return due;
+      return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
 }
