@@ -106,7 +106,7 @@ export const realInvoicingStaffOffMessage = 'Invoices are not switched on for re
 // D3 (commercial readiness program): while any supplier detail printed on a real document is made up, a real invoice or
 // credit note cannot be issued. Sample invoices and the (madeup) payment simulation are separate and stay available.
 export const madeupSupplierMessage =
-  'Real invoices are blocked until the company details are real. Replace every supplier detail marked (madeup), such as the UEN, GST number and bank account, then try again.';
+  'Real invoices are refused until the issuer details are complete. The workspace owner types them on the Invoice issuer screen and confirms with an authenticator code. Then try again.';
 export type SupplierDetails = Record<string, unknown> & { madeupFields?: unknown };
 /** Names of the supplier details that are made up: listed as made up, or containing the text "(madeup)". */
 export function madeupSupplierFields(supplier: SupplierDetails | null | undefined): string[] {
