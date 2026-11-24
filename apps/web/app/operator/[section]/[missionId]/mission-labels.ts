@@ -127,3 +127,185 @@ export function latestHandover<T extends HandoverSource>(history: T[]) {
 export function missionHref(missionId: string, tenant: string) {
   return `/operator/missions/${missionId}?workspace=${encodeURIComponent(tenant)}`;
 }
+
+// Team desk v4.1, units D6 and D7 (behind CORRIDRA_UX_TEAM_DESK_V41). The one step a stage offers next, the
+// fields each mission action asks for, and one line saying what the change does and what the customer will
+// then read. The commands, their names and their payloads are the ones the server already accepts.
+export type MissionStep = { action: string; label: string; lead: string };
+
+const steps: Record<string, MissionStep> = {
+  DRAFT: {
+    action: 'qualify',
+    label: 'Begin Qualification',
+    lead: 'Read the request, then begin qualification.',
+  },
+  QUALIFICATION: {
+    action: 'activate',
+    label: 'Activate Mission',
+    lead: 'When the requirement is checked, activate the mission.',
+  },
+  ACTIVE: {
+    action: 'targeting',
+    label: 'Begin Finding Companies',
+    lead: 'Start choosing which companies to approach.',
+  },
+  TARGETING: {
+    action: 'outreach',
+    label: 'Begin Introductions',
+    lead: 'When the shortlist is ready, begin introductions.',
+  },
+  OUTREACH: {
+    action: 'meetings',
+    label: 'Begin Meetings',
+    lead: 'When a company agrees to talk, begin meetings.',
+  },
+  MEETINGS: {
+    action: 'followup',
+    label: 'Begin Follow-Up',
+    lead: 'When the meetings are held, begin follow-up.',
+  },
+  FOLLOW_UP: {
+    action: 'pipeline',
+    label: 'Begin Commercial Follow-Through',
+    lead: 'When a commercial step opens, begin commercial follow-through.',
+  },
+  COMMERCIAL_PIPELINE: {
+    action: 'close',
+    label: 'Close Mission',
+    lead: 'When the work is resolved, close the mission.',
+  },
+  ON_HOLD: {
+    action: 'resume',
+    label: 'Resume Mission',
+    lead: 'This mission is paused. Resume it when work can continue.',
+  },
+};
+
+/** The one step this stage offers next, or null when the mission is closed or cancelled. */
+export function nextStep(status: string): MissionStep | null {
+  return steps[status] ?? null;
+}
+
+/** What the Next step card says when no step is waiting. */
+export function restingLine(status: string) {
+  return status === 'CANCELLED'
+    ? 'This mission was cancelled. No step is waiting.'
+    : status === 'CLOSED'
+      ? 'This mission is closed. No step is waiting.'
+      : 'No step is recorded for this stage.';
+}
+
+const pausable = [
+  'QUALIFICATION',
+  'ACTIVE',
+  'TARGETING',
+  'OUTREACH',
+  'MEETINGS',
+  'FOLLOW_UP',
+  'COMMERCIAL_PIPELINE',
+];
+export const canPause = (status: string) => pausable.includes(status);
+
+const actionTitles: Record<string, string> = {
+  assign: 'Update Mission Details',
+  pause: 'Pause Mission',
+  cancel: 'Cancel Mission',
+};
+
+/** The words on the button that opens an action and on its dialog. */
+export function actionTitle(action: string) {
+  return (
+    actionTitles[action] ??
+    Object.values(steps).find((step) => step.action === action)?.label ??
+    plainCode(action)
+  );
+}
+
+export const missionFields = [
+  'owner',
+  'nextAction',
+  'dueAt',
+  'marketCode',
+  'targetProfile',
+] as const;
+export type MissionField = (typeof missionFields)[number];
+
+const askedFor: Record<string, readonly MissionField[]> = {
+  assign: missionFields,
+  qualify: ['marketCode', 'targetProfile', 'nextAction', 'dueAt'],
+  pause: [],
+  cancel: [],
+  close: [],
+};
+
+/**
+ * The fields one action asks for. Every command still carries all of them: a field that is not asked for is
+ * sent with the value the mission already holds. A value the server would refuse as too short (no next
+ * action, no target profile yet) is always asked for, so no action can be sent with a gap nobody can see.
+ */
+export function stepFields(
+  action: string,
+  m: { next_action?: string | null; target_profile?: string | null },
+): MissionField[] {
+  const asked = new Set<MissionField>(askedFor[action] ?? ['nextAction', 'dueAt']);
+  if ((m.next_action ?? '').trim().length < 3) asked.add('nextAction');
+  if ((m.target_profile ?? '').trim().length < 3) asked.add('targetProfile');
+  return missionFields.filter((field) => asked.has(field));
+}
+
+const resultingStage: Record<string, string> = {
+  qualify: 'QUALIFICATION',
+  activate: 'ACTIVE',
+  targeting: 'TARGETING',
+  outreach: 'OUTREACH',
+  meetings: 'MEETINGS',
+  followup: 'FOLLOW_UP',
+  pipeline: 'COMMERCIAL_PIPELINE',
+  close: 'CLOSED',
+  pause: 'ON_HOLD',
+  cancel: 'CANCELLED',
+};
+
+/** What a customer reads for one stage: the Road step and its line, in the words their own page uses. */
+export type CustomerView = { step: string | null; words: string };
+
+/**
+ * One line for an action: what changes on the mission, and what the customer will then read. `customer` turns a
+ * stage into the customer's own words (the Road), so this never states something their page does not say.
+ */
+export function stepStatement(
+  action: string,
+  status: string,
+  customer: (stage: string) => CustomerView,
+): { changes: string; customer: string } {
+  if (action === 'assign')
+    return {
+      changes:
+        'This updates the owner, next action, due date, market and target profile on the team record.',
+      customer: 'The stage the customer sees stays the same.',
+    };
+  if (action === 'resume')
+    return {
+      changes: 'The mission returns to the stage it was paused from.',
+      customer: 'The customer sees that stage again in place of the paused note.',
+    };
+  const stage = resultingStage[action];
+  if (!stage)
+    return {
+      changes: 'This records a change on the mission.',
+      customer: 'The stage the customer sees stays the same.',
+    };
+  const view = customer(stage);
+  return {
+    changes: `The stage changes from ${stageLabel(status)} to ${stageLabel(stage)}.`,
+    customer: `The customer will see: ${view.step ? `${view.step}. ` : ''}${view.words}`,
+  };
+}
+
+/** Decision 3: the route is shown in every action, and beginning qualification never needs one. */
+export function routeLine(routeLabel: string | null | undefined, action: string) {
+  const state = routeLabel ? `Route: ${routeLabel}.` : 'Route: not assigned yet.';
+  return action === 'qualify' && !routeLabel
+    ? `${state} You can begin qualification without a route.`
+    : state;
+}

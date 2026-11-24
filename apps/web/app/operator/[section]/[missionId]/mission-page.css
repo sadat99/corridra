@@ -121,3 +121,102 @@
 .mission-actions button {
   min-height: 44px;
 }
+
+/* Team desk v4.1, units D6 and D7 (CORRIDRA_UX_TEAM_DESK_V41): the stage bar, the Next step card and the
+   customer panel above the tabs, and the facts at the top of an action dialog. Tokens only. */
+.mission-desk {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.mission-desk > * {
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .mission-desk {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+  .mission-desk > .mr-stage-wrap {
+    grid-column: 1 / -1;
+  }
+}
+.mission-next,
+.mission-customer {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  padding: var(--space-4);
+}
+.mission-next {
+  border-color: var(--border-strong);
+}
+.mission-next h3,
+.mission-customer h3,
+.mission-next p,
+.mission-customer p {
+  margin: 0;
+}
+.mission-next h3:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.mission-next .primary-link,
+.mission-more summary {
+  min-height: 44px;
+}
+.mission-more {
+  width: 100%;
+}
+.mission-more summary {
+  display: inline-flex;
+  align-items: center;
+  color: var(--action);
+  font-weight: 600;
+  cursor: pointer;
+}
+.mission-more summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.mission-more .mission-actions {
+  margin-top: var(--space-2);
+}
+.mission-customer dl {
+  display: grid;
+  gap: var(--space-1) var(--space-4);
+  width: 100%;
+  margin: 0;
+}
+.mission-customer dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.mission-customer dd {
+  margin: 0 0 var(--space-2);
+  overflow-wrap: anywhere;
+}
+@media (min-width: 480px) {
+  .mission-customer dl {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+  .mission-customer dd {
+    margin-bottom: 0;
+  }
+}
+.mission-step-facts {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-2);
+  font-size: var(--text-sm);
+}
+.mission-step-facts p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

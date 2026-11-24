@@ -84,6 +84,7 @@ export default async function Page({
           missionId={missionId}
           replyId={isUuid(reply) ? reply : undefined}
           moveRecords={customerMovesEnabled()}
+          desk={uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}
         />
       </OperatorFlags>
     </WorkspaceShell>
