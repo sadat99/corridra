@@ -140,7 +140,7 @@ function TenantWorkspace({
   problemReports: boolean;
   programmeApplications: boolean;
 }) {
-  const { supplySources, deskV41 } = useOperatorFlags();
+  const { supplySources, teamDeskV41: deskV41 } = useOperatorFlags();
   const edited = useRef(false);
   const memberCommand = useRef<{ key: string; id: string } | null>(null);
   const hash = useSyncExternalStore(

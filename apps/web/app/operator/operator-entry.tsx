@@ -100,11 +100,15 @@ export async function OperatorEntry({
         (frame ? ' ' + frame.className : '')
       }
     >
-      {deskV41 ? (
-        (frame?.segments ?? (
-          <TeamPageSegments urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')} ownerPage={ownerPage} />
-        ))
-      ) : shellsV2 ? (
+      {deskV41
+        ? (frame?.segments ?? (
+            <TeamPageSegments
+              urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
+              ownerPage={ownerPage}
+            />
+          ))
+        : null}
+      {shellsV2 ? (
         <TeamSecondLevel
           urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
           ownerPage={ownerPage}
@@ -114,7 +118,7 @@ export async function OperatorEntry({
       <OperatorFlags
         replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
         supplySources={uxSwitchOn('CORRIDRA_SUPPLY_SOURCES')}
-        deskV41={deskV41}
+        teamDeskV41={shellsV2 && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}
       >
         <Workspace
           tenants={tenants}

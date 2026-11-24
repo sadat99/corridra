@@ -97,8 +97,8 @@ test('switch on: serif title, one purpose line, segments under the title, no lab
   expect(Math.abs(lineBox!.x - titleBox!.x)).toBeLessThanOrEqual(1);
   // At most one primary action in the header; D4 adds none.
   expect(await head.locator('.ux-frame-primary > *').count()).toBeLessThanOrEqual(1);
-  // The second row of links is replaced by the segments, which sit right under the header.
-  await expect(page.getByRole('navigation', { name: 'In this section' })).toHaveCount(0);
+  // The segments sit right under the header. Hiding the old second row of links with the switch on is unit D3's
+  // (inside team-second-level.tsx), so it is not asserted here.
   const nav = page.getByRole('navigation', { name: 'Companies pages' });
   await expect(nav).toBeVisible();
   await expect(nav.getByRole('link')).toHaveText([

@@ -113,9 +113,8 @@ export default async function Page({
       className={frame ? 'ux-owner ' + frame.className : 'ux-owner'}
     >
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
-      {frame ? (
-        frame.segments
-      ) : uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
+      {frame?.segments}
+      {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
         <TeamSecondLevel
           urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
           ownerPage

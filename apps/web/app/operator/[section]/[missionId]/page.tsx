@@ -68,7 +68,7 @@ export default async function Page({
       </WorkspaceShell>
     );
   const tenant = chosen.id;
-  // Team desk v4.1: no label above the title and no second row of links.
+  // Team desk v4.1: no label above the title.
   const deskV41 = uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41');
   return (
     <WorkspaceShell
@@ -77,14 +77,17 @@ export default async function Page({
       className={deskV41 ? 'ux-operator-home ' + deskFrameClass : 'ux-operator-home'}
     >
       <TeamContextPublisher tenant={tenant} role={chosen.role} />
-      {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && !deskV41 ? (
+      {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
         <TeamSecondLevel
           urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
           ownerPage={false}
           desk={uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
         />
       ) : null}
-      <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')} deskV41={deskV41}>
+      <OperatorFlags
+        replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
+        teamDeskV41={uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}
+      >
         <MissionPage
           tenant={tenant}
           workspaceName={tenants.find((t) => t.id === tenant)?.name ?? ''}

@@ -175,7 +175,7 @@ function Ownership({ owners, meeting }: { owners: Owner[]; meeting?: Meeting }) 
   );
 }
 export function ControlledAccess({ tenant, revision }: { tenant: string; revision: number }) {
-  const { deskV41 } = useOperatorFlags();
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [comms, setComms] = useState<Comms | null>(null),
     [meetings, setMeetings] = useState<Meetings | null>(null),
     [message, setMessage] = useState(''),

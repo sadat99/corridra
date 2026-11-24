@@ -440,7 +440,7 @@ export function Missions({
   moveRecords?: boolean;
 }) {
   const { ref: formRootRef, onChangeCapture, onResetCapture, confirmChange } = useFormChangeGuard();
-  const { deskV41 } = useOperatorFlags();
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [queue, setQueue] = useState<Queue | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),

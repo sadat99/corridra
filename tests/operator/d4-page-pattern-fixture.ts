@@ -66,8 +66,9 @@ export async function startPagePatternFixture(root = resolve('.')) {
                 lead={frame?.lead}
                 className={(heading === 'Today' ? 'ux-operator-home ux-titled-today' : 'ux-operator-home') + (frame ? ' ' + frame.className : '')}
               >
-                {frame ? frame.segments : <TeamSecondLevel urls ownerPage={ownerPage}/>}
-                <OperatorFlags replyReview={false} deskV41={v41}>
+                {frame?.segments}
+                <TeamSecondLevel urls ownerPage={ownerPage}/>
+                <OperatorFlags replyReview={false} teamDeskV41={v41}>
                   <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:role}]}
                     initialTenant=${JSON.stringify(fixtureTenant)} initialSection={section} shellsV2 ownerPage={ownerPage}/>
                 </OperatorFlags>

@@ -234,8 +234,8 @@ describe('switch off, every header is the one it was', () => {
     );
   });
   test('the client flag is off by default, so a screen outside the team shell keeps its jump links', () => {
-    expect(read('app/operator/operator-flags.tsx')).toContain('deskV41: false');
-    expect(read('app/operator/operator-flags.tsx')).toContain('deskV41 = false');
+    expect(read('app/operator/operator-flags.tsx')).toContain('teamDeskV41: false');
+    expect(read('app/operator/operator-flags.tsx')).toContain('teamDeskV41 = false');
     expect(read('components/operator-workbench.tsx')).toContain('if (deskV41) return null;');
   });
 });

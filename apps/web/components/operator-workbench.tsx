@@ -16,7 +16,7 @@ export function OperatorWorkbench({
   const [shown, setShown] = useState(false);
   const listId = useId();
   // Team desk v4.1: a page opens at the top with its segments under the title, and the jump links are gone.
-  const { deskV41 } = useOperatorFlags();
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   function open(heading: string) {
     const root = nav.current?.closest('[data-operator-workbench]');
     const target = Array.from(root?.querySelectorAll<HTMLElement>('h2,h3,h4,summary') ?? []).find(

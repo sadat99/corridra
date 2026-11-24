@@ -13,7 +13,7 @@ export function PanelHeading({
   eyebrow?: string;
 }) {
   // Team desk v4.1: no label above a heading. Every caller is a client screen inside the workspace.
-  const { deskV41 } = useOperatorFlags();
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   return (
     <header className="ux-panel-heading">
       <span className="ux-panel-heading-icon">
