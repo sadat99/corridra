@@ -54,6 +54,8 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
+    // The flag stylesheet names its pictures by their public path; they are served files, not bundled ones.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
@@ -389,6 +391,66 @@ test('a link without a usable token says so and sends nothing', async ({ page })
     ),
   ).toBeVisible();
   expect(sent).toHaveLength(0);
+});
+
+// Retry reloads the page, so it belongs to a read that has failed. While the first read is still on its way the
+// page shows its loading line alone, in the language of the link.
+for (const [language, hash, loadingLine] of [
+  ['English', `t=${token}`, 'Loading your introduction…'],
+  ['Chinese', `t=${token}&l=zh`, '正在加载您的介绍…'],
+] as const)
+  test(`Retry is hidden while the page is loading and shown after the read fails (${language})`, async ({
+    page,
+  }) => {
+    let release = () => {};
+    const held = new Promise<void>((done) => (release = done));
+    let reads = 0;
+    await page.route('**/api/buyer', async (route) => {
+      reads += 1;
+      await held;
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'The introduction could not be read. Please try again.' }),
+      });
+    });
+    await page.goto(`${origin}/#${hash}`);
+    const retry = page.getByRole('button', { name: 'Retry Private Introduction' });
+    await expect(page.getByText(loadingLine, { exact: true })).toBeVisible();
+    await expect.poll(() => reads).toBe(1);
+    await expect(retry).toHaveCount(0);
+    release();
+    await expect(retry).toBeVisible();
+    await expect(page.getByText(loadingLine, { exact: true })).toHaveCount(0);
+    expect(reads).toBe(1);
+  });
+
+test('Retry is not shown once the introduction has opened', async ({ page }) => {
+  await open(page);
+  await expect(
+    page.getByRole('heading', { name: 'Would this company be relevant to you?' }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retry Private Introduction' })).toHaveCount(0);
+});
+
+// UI/UX.v4.1 L1: the country has its flag before its written name, drawn by the shared component at 22 px.
+test('the Country row has its flag before the name', async ({ page }) => {
+  await open(page);
+  await page.getByText('About this introduction').click();
+  const row = page.locator('dl div').filter({ has: page.getByText('Country', { exact: true }) });
+  await expect(row.locator('dd')).toHaveText('Spain');
+  const mark = row.locator('img[data-flag="es"]');
+  await expect(mark).toHaveCount(1);
+  await expect(mark).toHaveAttribute('aria-hidden', 'true');
+  expect(await mark.evaluate((el) => getComputedStyle(el).inlineSize)).toBe('22px');
+  expect(
+    await mark.evaluate(
+      (el) =>
+        el.compareDocumentPosition(el.parentElement!.querySelector('span')!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ),
+  ).toBeTruthy();
+  await expect(page.locator('img[data-flag]')).toHaveCount(1);
 });
 
 test('with the switch off the older form and its words are what the page shows', async ({

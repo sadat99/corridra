@@ -22,14 +22,22 @@ const gone =
   'This private link has expired or was replaced. Ask the person who sent it for a new link.';
 
 describe('L1 on the private introduction', () => {
-  it('the private introduction keeps its Country row as it was: its mark waits for a later unit', () => {
-    // The Reply Page markup with its switch off is held by golden files (tests/integration/fixtures/buyer-steps-off),
-    // and four existing browser harnesses bundle this page without the flag pictures. Both stay untouched here, so
-    // the row is unchanged and the ledger says L1 is not started on /buyer.
+  it('the private introduction has the mark on its Country row, through the shared component', () => {
+    // The mark arrived with its own unit (tests/integration/l1-country-mark.test.ts holds the drawn markup): the
+    // golden files with a Country row were re-captured and the browser harnesses leave the flag pictures as served
+    // files. The rows themselves are the same three, each still reading the stored country.
     const intro = read('apps/web/app/buyer/introduction.tsx');
     const journey = read('apps/web/app/buyer/reply-journey.tsx');
-    expect(intro).not.toContain('Flagged');
-    expect(journey).not.toContain('Flagged');
+    expect(intro.match(/<Flagged code=\{placeMark\(value\)\}>\{value\}<\/Flagged>/g)).toHaveLength(
+      1,
+    );
+    expect(
+      journey.match(/<Flagged code=\{placeMark\(value\)\}>\{value\}<\/Flagged>/g),
+    ).toHaveLength(2);
+    for (const source of [intro, journey]) {
+      expect(source).toContain("import { Flagged, placeMark } from '../../components/ux/flag';");
+      expect(source).not.toContain('/flags/');
+    }
     expect(intro.match(/\['Country', data\.introduction\.country\]/g)).toHaveLength(1);
     expect(journey.match(/\['Country', data\.introduction\.country\]/g)).toHaveLength(2);
   });
@@ -173,7 +181,7 @@ describe('the conformance ledger rows of the recipient routes', () => {
     }[];
   };
   const row = (route: string) => ledger.routes.find((r) => r.route === route)!;
-  it('are assessed, and /buyer carries L8 as built with evidence and L1 as not started', () => {
+  it('are assessed, and /buyer carries L8 and L1 as built with evidence', () => {
     for (const route of [
       '/buyer',
       '/client',
@@ -187,7 +195,12 @@ describe('the conformance ledger rows of the recipient routes', () => {
       expect(row(route).notes, route).not.toMatch(dashes);
     }
     expect(row('/buyer').decisions.L8).toBe('built');
-    expect(row('/buyer').decisions.L1).toBe('not_started');
+    expect(row('/buyer').decisions.L1).toBe('built');
+    expect(row('/buyer').evidence).toContain('tests/integration/l1-country-mark.test.ts');
+    for (const route of ['/client', '/programme']) {
+      expect(row(route).decisions.L1, route).toBe('built');
+      expect(row(route).evidence, route).toContain('tests/integration/l1-country-mark.test.ts');
+    }
     expect(row('/buyer').evidence.length).toBeGreaterThan(0);
   });
 });

@@ -639,7 +639,7 @@
       "file": "apps/web/app/buyer/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_started",
+        "L1": "built",
         "L2": "n/a",
         "L3": "n/a",
         "L4": "n/a",
@@ -658,16 +658,18 @@
         "docs/revamp/evidence/v41-c-2026-11-23/buyer-unavailable-after-1440.jpg",
         "docs/revamp/evidence/v41-c-2026-11-23/buyer-unavailable-after-1920.jpg",
         "docs/revamp/evidence/v41-c-2026-11-23/buyer-stop-unavailable-after-390.jpg",
-        "tests/integration/v41-c-recipient-links.test.ts"
+        "tests/integration/v41-c-recipient-links.test.ts",
+        "tests/integration/l1-country-mark.test.ts",
+        "tests/operator/ux-reply-page.spec.ts"
       ],
-      "notes": "V4.1-C. L8: the card takes a caution edge, the shared refusal line (D-053, words unchanged) a lock, Retry Private Introduction is the one primary action and the existing help links stay; the stop page (/buyer?stop=1) marks a link that does not open the same way, with one retry (Try Again) and one help link. L1 not started: the Country row has no mark yet. The Reply Page markup with its switch off is held by golden files (tests/integration/fixtures/buyer-steps-off) and four existing browser harnesses bundle this page and cannot load the flag stylesheet; changing either needs its own unit. L2 and L3 n/a: the three answers act at once and each already has one icon beside its words; no job, goal or door choice here. L10 n/a: the page shows no fact with a dated source. Built, not verified: no axe or signed journey evidence in the row yet."
+      "notes": "V4.1-C. L8: the card takes a caution edge, the shared refusal line (D-053, words unchanged) a lock, Retry Private Introduction is the one primary action and the existing help links stay; the stop page (/buyer?stop=1) marks a link that does not open the same way, with one retry (Try Again) and one help link. L1 built: the Country row of the Reply Page (steps on and off) and of the earlier introduction page has its flag before the written name through the shared Flagged component; a place outside the nine flags shows its name only. Eight golden files with a Country row were re-captured (answer, declined, pending and shared, in en and zh) and the browser harnesses leave the flag pictures as served files. Retry Private Introduction now shows only after the first read has ended without the page, in every link language. L1 not verified: no six-width screenshots or signed journey evidence. L2 and L3 n/a: the three answers act at once and each already has one icon beside its words; no job, goal or door choice here. L10 n/a: the page shows no fact with a dated source. Built, not verified: no axe or signed journey evidence in the row yet."
     },
     {
       "route": "/client",
       "file": "apps/web/app/client/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_started",
+        "L1": "built",
         "L2": "n/a",
         "L3": "n/a",
         "L4": "n/a",
@@ -678,8 +680,8 @@
         "L9": "n/a",
         "L10": "n/a"
       },
-      "evidence": [],
-      "notes": "V4.1-C. L1 not started: the shared report body (app/mission-experience-view.tsx) writes a shortlist country without a mark; that file also serves staff screens and is outside this unit. L2 and L3 n/a: no choice rows. L10 n/a: the report keeps its existing source and claim labels, which are trust labels, not a source stamp. The meeting time now uses formatDateTime in the meeting time zone. The refusal line is unchanged."
+      "evidence": ["tests/integration/l1-country-mark.test.ts"],
+      "notes": "V4.1-C. L1 built: the shared report body (app/mission-experience-view.tsx) writes each shortlist country with its flag before the written name through the shared Flagged component; a place outside the nine flags shows its name only. The same body serves the account and staff report screens, which take the mark with it. L1 not verified: no six-width screenshots or signed journey evidence. L2 and L3 n/a: no choice rows. L10 n/a: the report keeps its existing source and claim labels, which are trust labels, not a source stamp. The meeting time now uses formatDateTime in the meeting time zone. The refusal line is unchanged."
     },
     {
       "route": "/coming-soon",
@@ -1470,7 +1472,7 @@
       "file": "apps/web/app/programme/page.tsx",
       "wave": "C",
       "decisions": {
-        "L1": "not_started",
+        "L1": "built",
         "L2": "n/a",
         "L3": "n/a",
         "L4": "n/a",
@@ -1481,8 +1483,8 @@
         "L9": "n/a",
         "L10": "n/a"
       },
-      "evidence": [],
-      "notes": "V4.1-C. L1 not started: the shared report body (app/mission-experience-view.tsx) writes a shortlist country without a mark; that file also serves staff screens and is outside this unit. L2 and L3 n/a: no choice rows. L10 n/a: the report keeps its existing source and claim labels, which are trust labels, not a source stamp. The meeting time now uses formatDateTime in the meeting time zone. The refusal line is unchanged."
+      "evidence": ["tests/integration/l1-country-mark.test.ts"],
+      "notes": "V4.1-C. L1 built: the shared report body (app/mission-experience-view.tsx) writes each shortlist country with its flag before the written name through the shared Flagged component; a place outside the nine flags shows its name only. The same body serves the account and staff report screens, which take the mark with it. L1 not verified: no six-width screenshots or signed journey evidence. L2 and L3 n/a: no choice rows. L10 n/a: the report keeps its existing source and claim labels, which are trust labels, not a source stamp. The meeting time now uses formatDateTime in the meeting time zone. The refusal line is unchanged."
     },
     {
       "route": "/pulse/mute/[requestId]",
