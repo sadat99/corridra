@@ -57,7 +57,10 @@ describe('the switch', () => {
     );
     expect(read('app/operator/operator-flags.tsx')).toContain('teamDeskV41 = false');
     const today = read('app/operator/today.tsx');
-    expect(today).toContain('useOperatorFlags()');
+    expect(today).toContain('const { teamDeskV41: deskV41 } = useOperatorFlags();');
+    // A queue this role reads and could not read is never an all-clear, and a capped read is never exact.
+    expect(today).toContain('(today.problemReportsRead && today.problemReports === null)');
+    expect(today).toContain('(today.work?.partial ?? false)');
     // Off, the two earlier bodies are untouched: the desk branch and the first Today still render as written.
     expect(today).toContain('if (desk) {');
     expect(today).toContain('aria-label="Counts"');
@@ -82,10 +85,10 @@ describe('the headline', () => {
 
   test('never claims an all-clear while another queue waits or could not be read', () => {
     expect(deskHeadline(totals(0, 0), 3)).toBe(
-      'No new request and nothing late. Work through the queues below.',
+      'No new requests and nothing late. Work through the lists below.',
     );
     expect(deskHeadline(totals(0, 0), null)).toBe(
-      'No new request and nothing late. Some queues could not be checked.',
+      'No new requests and nothing late. Some lists could not be checked.',
     );
     expect(deskHeadline(totals(0, 0, false), 0)).toContain('could not be checked');
   });
@@ -103,7 +106,7 @@ describe('the headline', () => {
             if (!exact) expect(words).not.toMatch(/\d/);
           }
     expect(deskHeadline(totals(60, 50, false), 0)).toBe(
-      'Start with the late ones at the top. This page did not load every one; the full list is in Missions.',
+      'Start with the late ones at the top. Not all of them loaded here. See Missions for the full list.',
     );
     expect(shownLine(50, { count: 60, exact: false })).toBe('Showing 50. More are in Missions.');
     expect(shownLine(5, { count: 9, exact: true })).toBe(

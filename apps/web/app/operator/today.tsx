@@ -95,6 +95,8 @@ type Today = {
   erasure: ErasureTile | null;
   /** The role reads the erasure queue (so a null `erasure` means the read failed, not that it was not asked). */
   erasureRead: boolean;
+  /** The role reads the problem report queue (so a null `problemReports` means the read failed). */
+  problemReportsRead: boolean;
 };
 
 const week = 7 * 24 * 60 * 60 * 1000;
@@ -870,7 +872,9 @@ function otherDecisions(today: Today): number | null {
     today.workFailure !== null ||
     (today.team?.unavailable?.length ?? 0) > 0 ||
     (today.erasureRead && today.erasure === null) ||
-    (today.erasure?.atLeast ?? false);
+    (today.erasure?.atLeast ?? false) ||
+    (today.problemReportsRead && today.problemReports === null) ||
+    (today.work?.partial ?? false);
   if (unread) return null;
   return Object.values(counts).reduce<number>((sum, value) => sum + (value ?? 0), 0);
 }
@@ -897,6 +901,7 @@ function DecisionRegion({
       key: row.key,
       chip: <DeskChip row={row} observedAt={today.observedAt} />,
       when: <time dateTime={row.dueAt}>{formatDate(row.dueAt)}</time>,
+      whenWord: 'Due',
     };
     if (row.mission)
       return {
@@ -910,7 +915,7 @@ function DecisionRegion({
       ...shared,
       reference: null,
       what: `Erasure request ${row.reference ?? ''}`.trim(),
-      group: 'Erasure Requests',
+      group: 'Erasure requests',
       href: '#workspace-settings',
     };
   });
@@ -928,26 +933,29 @@ function DecisionRegion({
       : filter === 'overdue'
         ? 'Nothing is past its due date.'
         : 'No new requests and nothing past its due date.';
-  const more = shownLine(views.length, counts[filter]);
+  const more = shownLine(all ? views.length : Math.min(views.length, firstRows), counts[filter]);
   const queues = decisionCounts(today);
   const erasureFailed = today.erasureRead && today.erasure === null;
+  const reportsFailed = today.problemReportsRead && today.problemReports === null;
+  // A capped read gives a lower bound, so its numbers carry a plus sign and never pose as exact.
+  const capped = today.work?.partial ?? false;
+  const { problemReports: reports, erasure } = today;
   // A queue is listed when it holds something or could not be counted: a zero is not a decision.
   const queue = (
     key: string,
     value: number | null,
     read: boolean,
     href: string,
-    one: string,
-    many: string,
-    tone?: string,
+    words: ReactNode,
+    options: { tone?: string; plus?: boolean } = {},
   ) =>
     read && value !== 0 ? (
       <WaitingItem
         key={key}
         href={href}
-        value={value ?? 'Not available'}
-        tone={value === null ? 'unavailable' : tone}
-        words={plural(value, one, many)}
+        value={value === null ? 'Not available' : options.plus ? `${value}+` : value}
+        tone={value === null ? 'unavailable' : options.tone}
+        words={words}
       />
     ) : null;
   const items = [
@@ -956,8 +964,7 @@ function DecisionRegion({
       queues.replies,
       today.team !== null,
       '#workspace-delivery',
-      'reply to review',
-      'replies to review',
+      plural(queues.replies, 'reply to review', 'replies to review'),
     ),
     queue(
       'services',
@@ -965,49 +972,61 @@ function DecisionRegion({
       today.team !== null,
       /* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */
       '#billing-services',
-      'paid-service request to quote',
-      'paid-service requests to quote',
+      plural(queues.services, 'paid-service request to quote', 'paid-service requests to quote'),
     ),
     queue(
       'quotes',
       queues.quotes,
       today.team !== null,
       '#workspace-commercial',
-      'accepted quote not started',
-      'accepted quotes not started',
+      plural(queues.quotes, 'accepted quote not started', 'accepted quotes not started'),
     ),
     queue(
       'follow-ups',
       queues.followUps,
       today.work !== null,
       '#workspace-meetings',
-      'follow-up past its due date',
-      'follow-ups past their due date',
-      'late',
+      plural(queues.followUps, 'follow-up past its due date', 'follow-ups past their due date'),
+      { tone: 'late', plus: capped },
     ),
     queue(
       'reschedule',
       queues.reschedule,
       today.work !== null,
       '#workspace-meetings',
-      'meeting needs a new time',
-      'meetings need a new time',
+      plural(queues.reschedule, 'meeting needs a new time', 'meetings need a new time'),
+      { plus: capped },
     ),
     queue(
       'reports',
-      queues.reports,
-      today.problemReports !== null,
+      reports?.count ?? null,
+      reports !== null,
       '#problem-report-queue',
-      'problem report open',
-      'problem reports open',
+      reports
+        ? plural(reports.count, 'problem report open', 'problem reports open') +
+            (reports.oldestDays !== null && reports.count > 0
+              ? `, oldest waiting ${ageWords(reports.oldestDays).replace(' ago', '')}`
+              : '')
+        : null,
     ),
     queue(
       'erasure',
-      queues.erasure,
-      today.erasure !== null,
+      erasure?.count ?? null,
+      erasure !== null,
       '#workspace-settings',
-      'more erasure request open',
-      'more erasure requests open',
+      erasure ? (
+        <>
+          {plural(erasure.count, 'erasure request open', 'erasure requests open')}
+          {erasure.overdue > 0 ? `, ${erasure.overdue} overdue` : ''}
+          {erasure.nearestDueAt ? (
+            <>
+              , nearest due{' '}
+              <time dateTime={erasure.nearestDueAt}>{formatDate(erasure.nearestDueAt)}</time>
+            </>
+          ) : null}
+        </>
+      ) : null,
+      { tone: erasure && erasure.overdue > 0 ? 'late' : undefined, plus: erasure?.atLeast },
     ),
   ].filter((item) => item !== null);
   return (
@@ -1037,6 +1056,8 @@ function DecisionRegion({
           tableId={tableId}
           caption="New requests and late work, latest first"
           whenHeading="Due"
+          action="Review"
+          primary
         />
       )}
       {views.length > firstRows && (
@@ -1052,8 +1073,9 @@ function DecisionRegion({
       )}
       {more && <p className="ux-today-more">{more}</p>}
       {erasureFailed && (
-        <PartFailure part="Erasure Requests" kind="unavailable" onRetry={onRetry} />
+        <PartFailure part="Erasure requests" kind="unavailable" onRetry={onRetry} />
       )}
+      {reportsFailed && <PartFailure part="Problem reports" kind="unavailable" onRetry={onRetry} />}
       {today.teamFailure && (
         <PartFailure part="Replies and quotes" kind={today.teamFailure} onRetry={onRetry} />
       )}
@@ -1065,11 +1087,16 @@ function DecisionRegion({
           {items}
         </ul>
       )}
+      {capped && (
+        <p className="ux-today-more">
+          Follow-ups and meetings that need a new time cover the {readLimit} earliest of each.
+        </p>
+      )}
     </section>
   );
 }
 
-/** "Waiting on others": open missions that are on time and the meetings of the next 7 days. */
+/** "Waiting on others": open missions that are on time and the meetings of the next 7 days, as one closed row. */
 function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
   const [all, setAll] = useState(false);
   const [why, setWhy] = useState(false);
@@ -1087,12 +1114,8 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
         what: `${mission.brief.objective} · ${mission.brief.market}`,
         group: mission.brief.company,
         chip: <span className="ux-desk-chip">{stageLabel(mission.status)}</span>,
-        when: (
-          <>
-            <span className="sr-only">due </span>
-            <time dateTime={mission.due_at}>{formatDate(mission.due_at)}</time>
-          </>
-        ),
+        when: <time dateTime={mission.due_at}>{formatDate(mission.due_at)}</time>,
+        whenWord: 'Due',
         href: missionPages ? missionHref(mission.id, tenant) : '#workspace-missions',
       } satisfies RegionRowView,
     })),
@@ -1102,9 +1125,17 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
         key: `meeting:${meeting.id}`,
         reference: null,
         what: meeting.title,
-        group: meeting.location?.trim() ? meeting.location : 'Place not entered',
-        chip: <span className="ux-desk-chip">Meeting</span>,
-        when: <time dateTime={meeting.starts_at}>{formatDateTime(meeting.starts_at)}</time>,
+        group: 'Meeting',
+        chip: null,
+        when: (
+          <>
+            <time dateTime={meeting.starts_at}>{formatDateTime(meeting.starts_at)}</time>
+            <span className="ux-today41-place">
+              {meeting.location?.trim() ? meeting.location : 'Place not entered'}
+            </span>
+          </>
+        ),
+        whenWord: 'Starts',
         href: '#workspace-meetings',
       } satisfies RegionRowView,
     })),
@@ -1112,17 +1143,21 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
     .sort((a, b) => a.at - b.at || (a.view.key < b.view.key ? -1 : 1))
     .map((item) => item.view);
   const without = meetings.filter((m) => !m.location || m.location.trim() === '').length;
+  // The closed row says how many are listed, or that a part could not be read: never blank, never a false zero.
+  const summary =
+    today.workFailure !== null
+      ? 'Partly not available'
+      : today.open.missions.length < today.open.total
+        ? 'On time'
+        : `${views.length} on time`;
   return (
-    <section className="ux-needs ux-today41-region" aria-labelledby="today-waiting-title">
-      <header className="ux-today41-head">
-        <h3 id="today-waiting-title">Waiting on others</h3>
-        <span className="ux-desk-open-missions">
-          <a className="text-link" href="#workspace-missions">
-            Open Missions
-          </a>
-          <span>{today.open.total} open</span>
-        </span>
-      </header>
+    <DeskFold title="Waiting on others" summary={summary}>
+      <p className="ux-desk-open-missions">
+        <a className="text-link" href="#workspace-missions">
+          Open Missions
+        </a>
+        <span>{today.open.total} open in total</span>
+      </p>
       {views.length === 0 ? (
         <p className="ux-needs-empty">Nothing is waiting on anyone else.</p>
       ) : (
@@ -1135,6 +1170,7 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
             tableId={tableId}
             caption="Open missions that are on time and meetings in the next 7 days, soonest first"
             whenHeading="When"
+            action="Open"
           />
         </>
       )}
@@ -1154,11 +1190,8 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
           Not every open mission is listed here. The full list is in Missions.
         </p>
       )}
-      {today.work?.partial && (
-        <p className="ux-today-more">
-          Meeting and follow-up counts cover the {readLimit} earliest of each, by date. The meetings
-          section lists them all.
-        </p>
+      {today.workFailure && (
+        <p className="ux-today-more">Meetings could not be read, so none are listed here.</p>
       )}
       {without > 0 && (
         <p className="ux-today-more ux-desk-place">
@@ -1174,7 +1207,7 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
           {why && <span role="note"> No place was entered when the meeting was booked.</span>}
         </p>
       )}
-    </section>
+    </DeskFold>
   );
 }
 
@@ -1266,6 +1299,7 @@ export function TodayPanel({
           problemReports: reportsTile,
           erasure,
           erasureRead: reads.erasure,
+          problemReportsRead: reads.problemReports,
           observedAt: new Date(now).toISOString(),
         });
         setFailure(null);

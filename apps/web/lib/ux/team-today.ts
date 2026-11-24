@@ -303,15 +303,15 @@ export function deskHeadline({ count, late, exact }: DeskTotals, others: number 
     if (!exact)
       return 'Erasure requests could not be checked just now. Try again before you rely on this page.';
     if (others === null)
-      return 'No new request and nothing late. Some queues could not be checked.';
+      return 'No new requests and nothing late. Some lists could not be checked.';
     return others > 0
-      ? 'No new request and nothing late. Work through the queues below.'
+      ? 'No new requests and nothing late. Work through the lists below.'
       : 'Nothing needs your decision now.';
   }
   if (!exact)
     return late > 0
-      ? 'Start with the late ones at the top. This page did not load every one; the full list is in Missions.'
-      : 'Start at the top. This page did not load every one; the full list is in Missions.';
+      ? 'Start with the late ones at the top. Not all of them loaded here. See Missions for the full list.'
+      : 'Start at the top. Not all of them loaded here. See Missions for the full list.';
   const lead = `${count} ${count === 1 ? 'thing needs' : 'things need'} your decision.`;
   if (late === 0) return `${lead} ${count === 1 ? 'Review it today.' : 'Start at the top.'}`;
   if (count === 1) return `${lead} It is late, so review it first.`;

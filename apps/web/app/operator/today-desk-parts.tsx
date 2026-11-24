@@ -93,14 +93,16 @@ export type RegionRowView = {
   group: string;
   /** The late pill, the stage or nothing. */
   chip: ReactNode;
-  /** The date cell: a due date or a meeting time. */
+  /** The date cell: a due date or a meeting time, and a meeting's place. */
   when: ReactNode;
+  /** The word before the date on a phone, where the column heading is not shown: "Due" or "Starts". */
+  whenWord: string;
   href: string;
 };
 
 /**
- * One region's rows. The first row carries the region's one primary Review button; every later row has the quiet
- * one. Rows past `firstRows` stay in the table, hidden until Show More.
+ * One region's rows. With `primary`, the first row carries the page's one primary button and every later row the
+ * quiet link; without it every row is quiet. Rows past `firstRows` stay in the table, hidden until Show More.
  */
 export function RegionTable({
   views,
@@ -109,6 +111,8 @@ export function RegionTable({
   tableId,
   caption,
   whenHeading,
+  action,
+  primary = false,
 }: {
   views: RegionRowView[];
   firstRows: number;
@@ -116,6 +120,10 @@ export function RegionTable({
   tableId: string;
   caption: string;
   whenHeading: string;
+  /** The word on each row's link: "Review" where a decision is due, "Open" where it is not. */
+  action: string;
+  /** Only the region that needs a decision passes this: one cobalt button on the page. */
+  primary?: boolean;
 }) {
   return (
     <div className="ux-desk-scroll">
@@ -138,7 +146,7 @@ export function RegionTable({
           </tr>
         </thead>
         <tbody role="rowgroup">
-          {views.map(({ key, reference, what, group, chip, when, href }, index) => (
+          {views.map(({ key, reference, what, group, chip, when, whenWord, href }, index) => (
             <tr key={key} role="row" hidden={!all && index >= firstRows}>
               <th scope="row" role="rowheader" className="ux-desk-what">
                 {reference ? <span className="ux-today41-reference">{reference}</span> : null}
@@ -150,17 +158,22 @@ export function RegionTable({
               </td>
               <td role="cell" className="ux-desk-due">
                 {chip}
-                {when}
+                <span className="ux-today41-when">
+                  <span className="ux-today41-when-word">{whenWord} </span>
+                  {when}
+                </span>
               </td>
               <td role="cell">
                 <a
                   className={
-                    index === 0 ? 'primary-link ux-today41-review' : 'text-link ux-today41-review'
+                    primary && index === 0
+                      ? 'primary-link ux-today41-review'
+                      : 'text-link ux-today41-review'
                   }
                   href={href}
-                  aria-label={`Review ${reference ? `${reference}, ` : ''}${what}, ${group}`}
+                  aria-label={`${action} ${reference ? `${reference}, ` : ''}${what}, ${group}`}
                 >
-                  Review
+                  {action}
                 </a>
               </td>
             </tr>

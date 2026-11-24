@@ -54,6 +54,8 @@ type Scenario = {
   teamStatus?: number;
   meetings?: unknown;
   erasure?: unknown[];
+  /** The problem report queue answer; missing, the read is refused (503). */
+  problemReports?: unknown;
 };
 const fresh: Row = { id: id(1), status: 'DRAFT', company: 'Sample Towels Ltd', dueAt: inDays(4) };
 const late36: Row = {
@@ -160,7 +162,9 @@ async function open(page: Page, scenario: Scenario, query = '/?v41=on') {
         }),
   );
   await page.route('**/api/workspace/problem-reports?*', (route) =>
-    route.fulfill({ status: 503, json: { error: 'Sample' } }),
+    scenario.problemReports
+      ? route.fulfill({ json: scenario.problemReports })
+      : route.fulfill({ status: 503, json: { error: 'Sample' } }),
   );
   await page.route('**/api/workspace/customer-erasure-queue?*', (route) => {
     const status = new URL(route.request().url()).searchParams.get('status');
@@ -174,6 +178,9 @@ async function open(page: Page, scenario: Scenario, query = '/?v41=on') {
 }
 const decide = (page: Page) => page.getByRole('region', { name: 'Needs your decision' });
 const waiting = (page: Page) => page.getByRole('region', { name: 'Waiting on others' });
+/** "Waiting on others" is a closed row; this opens it. */
+const showWaiting = (page: Page) =>
+  waiting(page).getByRole('button', { name: 'Show Waiting on others' }).click();
 const headline = (page: Page) => page.locator('.ux-today41 .ux-desk-sentence');
 async function axe(page: Page) {
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -237,14 +244,22 @@ test('switch on: Today has the two regions, the headline says what to do, and ea
   await expect(queues.getByRole('link', { name: '1 meeting needs a new time' })).toBeVisible();
   await expect(queues.getByText('accepted quote')).toHaveCount(0);
 
-  // Waiting on others: open missions that are on time and the coming meeting, soonest first, none of the three above.
+  // Waiting on others is a closed row that says how many are on time. Open: the coming meeting and the open missions
+  // that are on time, soonest first, none of the three above, each with the quiet Open link.
+  await expect(waiting(page)).toContainText('3 on time');
+  await expect(waiting(page).locator('tbody tr').first()).toBeHidden();
+  await showWaiting(page);
   const others = waiting(page).locator('tbody tr');
   await expect(others).toHaveCount(3);
   await expect(others.nth(0)).toContainText('Sample buyer introduction');
+  await expect(others.nth(0)).toContainText('Sample meeting room');
+  await expect(others.nth(0).locator('.ux-desk-chip')).toHaveCount(0);
   await expect(others.nth(1)).toContainText('Sample Ceramics Co');
   await expect(others.nth(2)).toContainText('Sample Leather Co');
-  await expect(waiting(page).locator('a.primary-link')).toHaveCount(1);
-  await expect(others.nth(0).locator('a.primary-link')).toHaveText('Review');
+  await expect(others.nth(0).getByRole('link')).toHaveAccessibleName(
+    'Open Sample buyer introduction, Meeting',
+  );
+  await expect(others.nth(1).locator('a.text-link')).toHaveText('Open');
   await expect(others.nth(1).locator('a.text-link')).toHaveAttribute(
     'href',
     `/operator/missions/${id(11)}?workspace=${tenant}`,
@@ -253,7 +268,9 @@ test('switch on: Today has the two regions, the headline says what to do, and ea
     'href',
     '#workspace-missions',
   );
-  await expect(waiting(page).getByText('5 open')).toBeVisible();
+  await expect(waiting(page).getByText('5 open in total')).toBeVisible();
+  // One cobalt button on the whole page: Review in the first row that needs a decision.
+  await expect(page.locator('.ux-today41 a.primary-link')).toHaveCount(1);
   // No reference is invented: these reads carry none, so none is shown.
   await expect(page.locator('.ux-today41-reference')).toHaveCount(0);
   await expect(page.locator('.ux-today')).not.toContainText(/at least/i);
@@ -284,7 +301,7 @@ test('switch on: a count that rests on an unfinished read is never said as "at l
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, { ...busy, totals: { fresh: 1, overdue: 60, open: 80 } });
   await expect(headline(page)).toHaveText(
-    'Start with the late ones at the top. This page did not load every one; the full list is in Missions.',
+    'Start with the late ones at the top. Not all of them loaded here. See Missions for the full list.',
   );
   await expect(decide(page).getByText('Showing 3. More are in Missions.')).toBeVisible();
   await expect(page.locator('.ux-today')).not.toContainText(/at least/i);
@@ -303,6 +320,8 @@ test('switch on: with nothing waiting the page says so, and a failed read is nam
   await expect(
     decide(page).getByText('No new requests and nothing past its due date.'),
   ).toBeVisible();
+  await expect(waiting(page)).toContainText('0 on time');
+  await showWaiting(page);
   await expect(waiting(page).getByText('Nothing is waiting on anyone else.')).toBeVisible();
   await expect(page.locator('.ux-today41 a.primary-link')).toHaveCount(0);
   expect(await axe(page)).toEqual([]);
@@ -310,10 +329,80 @@ test('switch on: with nothing waiting the page says so, and a failed read is nam
 
   await open(page, { ...quiet, teamStatus: 503 });
   await expect(headline(page)).toHaveText(
-    'No new request and nothing late. Some queues could not be checked.',
+    'No new requests and nothing late. Some lists could not be checked.',
   );
   await expect(decide(page).getByRole('button', { name: 'Try Again' })).toBeVisible();
   await expect(decide(page).getByText('replies to review')).toHaveCount(0);
+});
+
+test('switch on: a problem report queue that could not be read is never an all-clear', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // Report a Problem is offered and the owner reads its queue; the read is refused.
+  await open(page, quiet, '/?v41=on&reports=on');
+  await expect(headline(page)).not.toHaveText('Nothing needs your decision now.');
+  await expect(headline(page)).toHaveText(
+    'No new requests and nothing late. Some lists could not be checked.',
+  );
+  await expect(decide(page).getByText(/Problem reports/)).toBeVisible();
+  await expect(decide(page).getByRole('button', { name: 'Try Again' })).toBeVisible();
+  await expect(decide(page).getByText('problem reports open')).toHaveCount(0);
+});
+
+test('switch on: a capped meetings read is a lower bound, shown with a plus sign and never as an all-clear', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, { ...quiet, meetings: { ...meetings, next: 'more', followupsNext: 'more' } });
+  await expect(headline(page)).toHaveText(
+    'No new requests and nothing late. Some lists could not be checked.',
+  );
+  const queues = decide(page).getByRole('list', { name: 'Also needs your decision' });
+  await expect(queues.getByRole('link', { name: '1+ follow-up past its due date' })).toBeVisible();
+  await expect(queues.getByRole('link', { name: '1+ meeting needs a new time' })).toBeVisible();
+  await expect(
+    decide(page).getByText(
+      'Follow-ups and meetings that need a new time cover the 50 earliest of each.',
+    ),
+  ).toBeVisible();
+});
+
+test('switch on: the problem report and erasure tiles keep their detail words', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const erasure = (n: number, daysLeft: number) => ({
+    id: id(700 + n),
+    reference: `ER-00000${n}`,
+    requestedAt: daysAgo(30 - daysLeft),
+    dueAt: inDays(daysLeft),
+    daysLeft,
+    status: 'received',
+  });
+  await open(
+    page,
+    {
+      ...quiet,
+      problemReports: {
+        counts: { received: 2, in_review: 1, resolved: 4, closed: 0 },
+        oldestReceivedAt: daysAgo(6),
+        items: [],
+      },
+      erasure: [erasure(1, -3), erasure(2, 4)],
+    },
+    '/?v41=on&reports=on',
+  );
+  const queues = decide(page).getByRole('list', { name: 'Also needs your decision' });
+  await expect(
+    queues.getByRole('link', { name: /3 problem reports open, oldest waiting 6 days/ }),
+  ).toHaveAttribute('href', '#problem-report-queue');
+  await expect(
+    queues.getByRole('link', { name: /2 erasure requests open, 1 overdue, nearest due/ }),
+  ).toHaveAttribute('href', '#workspace-settings');
+  // The overdue request is also a row of the table, with the words in sentence case.
+  await expect(decide(page).locator('tbody tr')).toHaveCount(1);
+  await expect(decide(page).locator('tbody tr')).toContainText('Erasure requests');
 });
 
 test('switch off and on at 320, 390, 768, 1024, 1440 and 1920: off is unchanged, on has no sideways scroll, 44 px targets and is axe clean', async ({
@@ -338,17 +427,72 @@ test('switch off and on at 320, 390, 768, 1024, 1440 and 1920: off is unchanged,
 
     await open(page, busy);
     await expect(decide(page).locator('tbody tr')).toHaveCount(3);
-    await expect(waiting(page).locator('tbody tr')).toHaveCount(3);
     await page.evaluate(() => document.fonts.ready);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
-      `sideways scroll at ${width}`,
-    ).toBeLessThanOrEqual(0);
+    const sideways = () =>
+      page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    // As it opens: Waiting on others closed.
+    expect(await sideways(), `sideways scroll at ${width}`).toBeLessThanOrEqual(0);
     expect(await smallTargets(page), `small targets at ${width}`).toEqual([]);
     expect(await axe(page), `axe at ${width}`).toEqual([]);
     await page.screenshot({ path: `${shots}/on-${width}.png`, fullPage: true });
+    // And with Waiting on others open.
+    await showWaiting(page);
+    await expect(waiting(page).locator('tbody tr')).toHaveCount(3);
+    expect(await sideways(), `sideways scroll at ${width}, open`).toBeLessThanOrEqual(0);
+    expect(await smallTargets(page), `small targets at ${width}, open`).toEqual([]);
+    expect(await axe(page), `axe at ${width}, open`).toEqual([]);
+    await page.screenshot({ path: `${shots}/on-open-${width}.png`, fullPage: true });
+    if (width === 320) {
+      // 200% text at 320 px: nothing in the headline or the two regions is pushed off the side. (The team header and
+      // the Start card already run wide at this size with the switch off; neither is part of this page body.)
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = '200%';
+      });
+      const wide = await page.evaluate(() =>
+        Array.from(
+          document.querySelectorAll(
+            '.ux-desk-sentence, :is(.ux-today41-region, .ux-today41 .ux-desk-fold) *',
+          ),
+        )
+          // The column headings are hidden from view on a phone (kept for screen readers), so they take no room.
+          .filter((element) => !element.closest('thead'))
+          .filter((element) => (element as HTMLElement).offsetParent !== null)
+          .filter((element) => element.getBoundingClientRect().right > window.innerWidth + 1)
+          .map((element) => `${element.tagName}.${element.getAttribute('class') ?? ''}`),
+      );
+      expect(wide, 'Today wider than the window at 320 with 200% text').toEqual([]);
+      await page.screenshot({ path: `${shots}/on-open-320-text-200.png`, fullPage: true });
+    }
     await page.unrouteAll();
   }
+});
+
+test('switch on: page length as it opens, in screens (docs/agents/ui-direction.md, page length)', async ({
+  page,
+}) => {
+  const lengths: Record<string, number> = {};
+  for (const [width, height] of [
+    [1440, 900],
+    [1024, 768],
+    [390, 844],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await open(page, busy);
+    await expect(decide(page).locator('tbody tr')).toHaveCount(3);
+    await page.evaluate(() => document.fonts.ready);
+    lengths[`${width}x${height}`] =
+      Math.round(
+        (await page.evaluate(
+          () =>
+            (document.querySelector('footer')!.getBoundingClientRect().bottom + window.scrollY) /
+            window.innerHeight,
+        )) * 100,
+      ) / 100;
+    await page.unrouteAll();
+  }
+  console.log(`Team Today v4.1 page length in screens: ${JSON.stringify(lengths)}`);
+  // A phone may run to two screens.
+  expect(lengths['390x844']).toBeLessThanOrEqual(2);
 });
 
 test('switch on with the team shell off changes nothing: the switch needs the team shell', async ({
