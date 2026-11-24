@@ -12,6 +12,7 @@ Written 24 Nov 2026 against main `b4d43f1`. Built from the code and from a read 
 - On how far to follow them: "the person who provided this doesn't have 100% context, so u must conisder the proposal, take inspiration and adopt to maximum possible extent."
 - On scope: "we need to align with v4.1, and what we updated in last 30 PRs, but definitely fixing all that still issue".
 - On the five choices: "all recommended options in desk choices. finalize the updated plan effectively first."
+- On starting: "merge the plan and start phase 1." and "implementation shall be done via existing Corridra Guardian as per its policy". The answers to the three questions are in section 9.
 
 UI/UX.v4.1 lists the signed-in set, Operator Today included, as not locked. The last line above is the owner decision for the team desk. It is added to "Current locked decisions" in `docs/agents/ui-direction.md` by the PR that ships the first visible unit (D3), not by this plan.
 
@@ -95,8 +96,12 @@ New tests fail on the old code. Checks through `node scripts/gate.mjs`: format:c
 
 A Guardian run is live on this repository (the commercial-ready run; Guardian 42 at the last work-log entry). It owns the ledger, the work log and the lanes table, and its units have touched `app/operator/**`. Units here start only after that Guardian places them in the lanes table. This plan adds no ledger or work-log entry of its own.
 
-## 9. Open questions for the owner (asked once, together, before the live steps)
+## 9. Owner answers (24 November 2026, verbatim, first hand in the same session)
 
-1. Which launch routes get a pack first. The locked route order is China, EU, UK, US, Australia, Key Asian Markets, from Bangladesh.
-2. Where real companies come from before launch: staff research entered by hand, or an import through Supply.
-3. Who owns the 11 live missions after the owner switch.
+The three questions were asked once, together. The owner's message: "merge the plan and start phase 1."
+
+1. Which launch routes get a route pack first, from Bangladesh: "China, EU, UK, US". Australia and Key Asian Markets follow later.
+2. Where real companies come from before launch: "Staff Research." No import is planned for launch.
+3. Who owns the 11 live missions once the owner switch is installed: "Whoever is needed." The Guardian proposes the owner per mission when it prepares that live step.
+
+On who builds: "implementation shall be done via existing Corridra Guardian as per its policy". Section 8 stands: the live Guardian places, launches, reviews and merges every unit.
