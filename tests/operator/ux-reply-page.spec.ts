@@ -437,7 +437,7 @@ test('Retry is not shown once the introduction has opened', async ({ page }) => 
 test('the Country row has its flag before the name', async ({ page }) => {
   await open(page);
   await page.getByText('About this introduction').click();
-  const row = page.locator('.reply-facts div').filter({ hasText: 'Country' });
+  const row = page.locator('dl div').filter({ has: page.getByText('Country', { exact: true }) });
   await expect(row.locator('dd')).toHaveText('Spain');
   const mark = row.locator('img[data-flag="es"]');
   await expect(mark).toHaveCount(1);

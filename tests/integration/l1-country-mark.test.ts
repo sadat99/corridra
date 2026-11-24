@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { MissionExperience } from '../../packages/delivery/src/report';
-import { flagCodes, placeMark } from '../../apps/web/components/ux/flag';
 
 // UI/UX.v4.1 L1 (owner lock, 23 November 2026): a place name that stands as a label has its mark before it, by the
 // existing flag policy. This file holds the country mark on the buyer pages (/buyer) and in the shared report body
@@ -18,8 +17,15 @@ const loadWeb = async (path: string) => await import(/* @vite-ignore */ `../../a
 const flag = (code: string) =>
   `<span class="ux-flagged"><img class="ux-flag" src="/flags/${code}.svg" width="22" height="15" alt="" aria-hidden="true" data-flag="${code}" decoding="async"/>`;
 
+type FlagModule = {
+  flagCodes: readonly string[];
+  placeMark: (code: string | null | undefined) => string | null;
+};
+const flagModule = async () => (await loadWeb('components/ux/flag')) as FlagModule;
+
 describe('the mark for a stored place', () => {
-  it('still reads the codes the forms hold', () => {
+  it('still reads the codes the forms hold', async () => {
+    const { placeMark } = await flagModule();
     expect(placeMark('BD')).toBe('bd');
     expect(placeMark('eu')).toBe('eu');
     expect(placeMark('JP')).toBeNull();
@@ -28,8 +34,9 @@ describe('the mark for a stored place', () => {
     expect(placeMark(undefined)).toBeNull();
     expect(placeMark('')).toBeNull();
   });
-  it('reads the written English name of each of the nine, and nothing else', () => {
-    const names: Record<(typeof flagCodes)[number], string> = {
+  it('reads the written English name of each of the nine, and nothing else', async () => {
+    const { flagCodes, placeMark } = await flagModule();
+    const names: Record<string, string> = {
       bd: 'Bangladesh',
       cn: 'China',
       eu: 'European Union',
@@ -40,6 +47,7 @@ describe('the mark for a stored place', () => {
       fr: 'France',
       it: 'Italy',
     };
+    expect([...flagCodes].sort()).toEqual(Object.keys(names).sort());
     for (const code of flagCodes) expect(placeMark(names[code])).toBe(code);
     expect(placeMark('  spain ')).toBe('es');
     expect(placeMark('BANGLADESH')).toBe('bd');
@@ -102,7 +110,9 @@ describe('the buyer pages', () => {
     for (const language of ['en', 'zh'] as const)
       it(`the Reply Page Country row has its flag before the name (steps ${steps ? 'on' : 'off'}, ${language})`, async () => {
         const html = await draw('Bangladesh', { steps, language });
-        expect(html).toContain(`<dt>Country</dt><dd>${flag('bd')}<span>Bangladesh</span></span></dd>`);
+        expect(html).toContain(
+          `<dt>Country</dt><dd>${flag('bd')}<span>Bangladesh</span></span></dd>`,
+        );
         expect(html.match(/data-flag=/g)).toHaveLength(1);
       });
   it('reads a stored country code the same way and still writes what is stored', async () => {
@@ -127,8 +137,8 @@ describe('the buyer pages', () => {
   it('the earlier introduction page marks its Country row with the shared component', () => {
     const page = read('apps/web/app/buyer/introduction.tsx');
     expect(page).toContain("from '../../components/ux/flag'");
-    expect(page).toMatch(
-      /label === 'Country' \? \(\s*<Flagged code=\{placeMark\(value\)\}>\{value\}<\/Flagged>/,
+    expect(page).toContain(
+      "{label === 'Country' ? <Flagged code={placeMark(value)}>{value}</Flagged> : value}",
     );
   });
   it('no buyer file draws a flag of its own', () => {
@@ -175,10 +185,7 @@ describe('the shared report body of /client and /programme', () => {
   it('a shortlist country has its flag before the name, inside the same heading', async () => {
     const html = await draw(experience('China'));
     expect(html).toContain(
-      `<h4><span lang="zh">Zhejiang Jingwei</span> (${flag('cn')}<span>China</span></span>)</h4>`.replace(
-        '<span lang="zh">',
-        '<span>',
-      ),
+      `<h4><span>Zhejiang Jingwei</span> (${flag('cn')}<span>China</span></span>)</h4>`,
     );
     expect(html.match(/data-flag=/g)).toHaveLength(1);
   });

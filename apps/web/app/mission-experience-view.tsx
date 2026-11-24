@@ -4,6 +4,7 @@ import { CompareLens } from '../components/compare-lens';
 import { quoteCardsFrom, referenceLine } from '../lib/quote-cards';
 import { visitKindWord } from '../lib/visit-kinds';
 import { StatusBadge } from '../components/access-state';
+import { Flagged, placeMark } from '../components/ux/flag';
 import { useId, useState } from 'react';
 import type { AgendaItem, MissionExperience } from '@corridra/delivery/report';
 import {
@@ -226,7 +227,7 @@ export function MissionExperienceView({
           <article key={t.id}>
             <h4>
               <span lang={/\p{Script=Han}/u.test(t.company) ? 'zh' : undefined}>{t.company}</span> (
-              {t.country})
+              <Flagged code={placeMark(t.country)}>{t.country}</Flagged>)
             </h4>
             <p>
               {lowerWords(t.fit, 'fit not supplied')} · {t.rationale}
