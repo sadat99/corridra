@@ -25,3 +25,17 @@
     padding: var(--space-4);
   }
 }
+
+/* UI/UX.v4.1 L1: the route label above the headline, each place with its mark. The places wrap as whole pairs and a
+   long name may break inside its own box, so the label fits a narrow screen at the largest text size. */
+.ux-public .guide-page-hero .label.guide-corridor-places {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.ux-public .guide-page-hero .label.guide-corridor-places .ux-flagged {
+  max-inline-size: 100%;
+}

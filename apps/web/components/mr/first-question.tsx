@@ -17,9 +17,9 @@ const words: Record<PictureKey, { label: MessageKey; hint: MessageKey }> = {
 };
 
 /**
- * The first question as five pictures. Each is a real radio button with an icon, a short label and
- * one line of help, so the choice is never colour alone and works with a keyboard and a screen
- * reader. It only chooses a start: every job type stays selectable below it.
+ * The first question as five rows (UI/UX.v4.1 L6). Each is a real radio button with one owned icon, a
+ * short label and one line of help, so the choice is never colour alone and works with a keyboard
+ * and a screen reader. It only chooses a start: every job type stays selectable below it.
  */
 export function FirstQuestion({
   value,
@@ -44,14 +44,16 @@ export function FirstQuestion({
               checked={value === picture.key}
               onChange={() => onChoose(picture.key)}
             />
-            <CorridraIcon name={picture.icon} />
+            {/* UI/UX.v4.1 L2: the one owned icon of the choice, in a 44 px soft square. */}
+            <span className="mr-fq-tile" aria-hidden="true">
+              <CorridraIcon name={picture.icon} />
+            </span>
             <span>
               <b>{say(words[picture.key].label)}</b>
               <small>{say(words[picture.key].hint)}</small>
             </span>
-            <span className="mr-fq-check" aria-hidden="true">
-              <CorridraIcon name="check" />
-            </span>
+            {/* UI/UX.v4.1 L3: a hollow radio until the row is chosen, then a filled one. */}
+            <span className="mr-fq-check" aria-hidden="true" />
           </label>
         ))}
       </div>

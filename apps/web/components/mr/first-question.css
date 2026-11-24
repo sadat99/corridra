@@ -86,3 +86,60 @@
 .mr-fq-card[data-checked='true'] b {
   font-weight: 600;
 }
+
+/* ===== UI/UX.v4.1 L6 with L2 and L3 (owner lock, 23 November 2026), for the first question only (`.mr-fq`); another
+   form that borrows the card classes is unchanged. Goal rows sit one under the other. Each has one owned icon in a
+   44 px soft square and a radio that is hollow until the row is chosen. A chosen row has a 2 px selected edge (the
+   second pixel is drawn inside, so the row keeps its size), the selected fill and a filled radio. */
+.mr-fq .mr-fq-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.mr-fq-tile {
+  display: grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  color: var(--text-1);
+}
+.mr-fq-tile svg {
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+}
+.mr-fq .mr-fq-check {
+  inline-size: var(--space-5);
+  block-size: var(--space-5);
+  background: var(--surface-1);
+}
+.mr-fq .mr-fq-card[data-checked='true'] {
+  border-color: var(--selected);
+  box-shadow: inset 0 0 0 1px var(--selected);
+}
+.mr-fq .mr-fq-card[data-checked='true'] .mr-fq-tile {
+  background: var(--selected-surface);
+  box-shadow: inset 0 0 0 1px var(--selected);
+}
+.mr-fq .mr-fq-card[data-checked='true'] .mr-fq-check {
+  border-color: var(--selected);
+  background: var(--surface-1);
+}
+.mr-fq .mr-fq-card[data-checked='true'] .mr-fq-check::after {
+  content: '';
+  inline-size: var(--space-2);
+  block-size: var(--space-2);
+  border-radius: 50%;
+  background: var(--selected);
+}
+@media (forced-colors: active) {
+  .mr-fq .mr-fq-card[data-checked='true'] {
+    border-color: Highlight;
+    box-shadow: inset 0 0 0 1px Highlight;
+  }
+  .mr-fq-tile {
+    border: 1px solid ButtonText;
+  }
+  .mr-fq .mr-fq-card[data-checked='true'] .mr-fq-check::after {
+    background: ButtonText;
+  }
+}
