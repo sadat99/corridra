@@ -129,7 +129,7 @@
   white-space: normal;
 }
 .ux-start .ux-start-signin .ux-start-actions {
-  gap: var(--space-1) var(--space-4);
+  gap: var(--space-3) var(--space-4);
 }
 @media (min-width: 1000px) {
   .ux-start .ux-start-signin ul {
