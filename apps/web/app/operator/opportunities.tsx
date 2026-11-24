@@ -2,10 +2,12 @@
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { operatorSignInPath } from '../../lib/workspace-navigation';
-import { SubTabs } from '../../components/ux/sub-tabs';
+import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { missionHintNote, takeMissionHint } from './mission-hint';
+import { useOperatorFlags } from './operator-flags';
+import './money-figures.css';
 import {
   currencies,
   formatMoney,
@@ -90,6 +92,22 @@ type Data = {
   meetingFollowups: { id: string; owner_id: string; next_action: string; due_at: string }[];
 };
 const fieldDate = (v: string) => new Date(v).toISOString();
+/**
+ * Team desk v4.1 (unit D12): the five amounts shown first, per currency, from the totals the page already
+ * reads. Exact stored amounts in their own currency; nothing is added up across currencies or converted.
+ */
+const moneyFigures = [
+  ['Proposals', 'proposal_minor'],
+  ['Commitments', 'commitment_minor'],
+  ['Recorded contracts', 'contract_minor'],
+  ['Invoiced', 'invoice_minor'],
+  ['Confirmed cash', 'confirmed_cash_minor'],
+] as const;
+/** Team desk v4.1 (unit D12): the list comes first, then follow-up, then the yield detail. Ids are unchanged. */
+const listFirst = <T extends { id: string }>(tabs: T[]): T[] =>
+  ['commercial-opportunities', 'commercial-followup', 'commercial-yield'].flatMap((id) =>
+    tabs.filter((tab) => tab.id === id),
+  );
 const fromField = (v: FormDataEntryValue | null) => {
   const d = new Date(String(v));
   if (Number.isNaN(d.getTime())) throw new Error('Choose a valid date and time');
@@ -353,6 +371,7 @@ function RecordForm({
   );
 }
 export function CommercialProgress({ tenant, revision }: { tenant: string; revision: number }) {
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [data, setData] = useState<Data | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -563,9 +582,27 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
         </button>
       </div>
       {missionNote && <p role="note">{missionHintNote}</p>}
+      {deskV41 && (
+        <div className="ux-money-figures" role="group" aria-label="Recorded amounts">
+          {data.totals.length === 0 ? (
+            <p>No commercial amounts recorded.</p>
+          ) : (
+            data.totals.map((t) => (
+              <dl key={t.currency} aria-label={`${t.currency} amounts`}>
+                {moneyFigures.map(([label, key]) => (
+                  <div key={key}>
+                    <dt>{label}</dt>
+                    <dd>{formatMoney(t[key], t.currency)}</dd>
+                  </div>
+                ))}
+              </dl>
+            ))
+          )}
+        </div>
+      )}
       <SubTabs
         label="Commercial progress sections"
-        tabs={[
+        tabs={(deskV41 ? listFirst : (tabs: SubTab[]) => tabs)([
           {
             id: 'commercial-yield',
             label: 'Mission yield',
@@ -617,7 +654,9 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                   </div>
                 </div>
                 {data.totals.length === 0 ? (
-                  <p>No commercial amounts recorded.</p>
+                  deskV41 ? null : (
+                    <p>No commercial amounts recorded.</p>
+                  )
                 ) : (
                   data.totals.map((t) => (
                     <div
@@ -626,16 +665,23 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                       aria-label={`${t.currency} commercial totals`}
                     >
                       <h4>{t.currency} amounts</h4>
-                      <p>
-                        Proposals: {formatMoney(t.proposal_minor, t.currency)} · Commitments:{' '}
-                        {formatMoney(t.commitment_minor, t.currency)}
-                      </p>
-                      <p>
-                        Recorded contracts: {formatMoney(t.contract_minor, t.currency)} · Invoiced:{' '}
-                        {formatMoney(t.invoice_minor, t.currency)}
-                      </p>
+                      {/* With the pattern on, the five figures above the tabs already show these four. */}
+                      {deskV41 ? null : (
+                        <>
+                          <p>
+                            Proposals: {formatMoney(t.proposal_minor, t.currency)} · Commitments:{' '}
+                            {formatMoney(t.commitment_minor, t.currency)}
+                          </p>
+                          <p>
+                            Recorded contracts: {formatMoney(t.contract_minor, t.currency)} ·
+                            Invoiced: {formatMoney(t.invoice_minor, t.currency)}
+                          </p>
+                        </>
+                      )}
                       <p>Reported receipts: {formatMoney(t.reported_cash_minor, t.currency)}</p>
-                      <p>Confirmed cash: {formatMoney(t.confirmed_cash_minor, t.currency)}</p>
+                      {deskV41 ? null : (
+                        <p>Confirmed cash: {formatMoney(t.confirmed_cash_minor, t.currency)}</p>
+                      )}
                       <p>
                         Repeat cash within confirmed cash:{' '}
                         {formatMoney(t.repeat_cash_minor, t.currency)}
@@ -1070,7 +1116,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
               </>
             ),
           },
-        ]}
+        ])}
       />
     </section>
   );
