@@ -49,6 +49,7 @@ import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
 import { useOperatorFlags } from './operator-flags';
+import { deskStatusPlace } from '../../lib/ux/page-pattern';
 import { EvidencePanel } from './evidence-panel';
 import { publishTeamContext } from '../../lib/ux/team-context';
 import { TeamDeskV41Context, publishTeamSwitcher } from '../../lib/ux/team-desk-v41';
@@ -147,7 +148,7 @@ function TenantWorkspace({
   problemReports: boolean;
   programmeApplications: boolean;
 }) {
-  const { supplySources } = useOperatorFlags();
+  const { supplySources, teamDeskV41: deskV41 } = useOperatorFlags();
   const edited = useRef(false);
   const memberCommand = useRef<{ key: string; id: string } | null>(null);
   const hash = useSyncExternalStore(
@@ -334,6 +335,8 @@ function TenantWorkspace({
     }
     if (target) openFoldsAround(target);
     const land = () => {
+      // Team desk v4.1: a section opened by its own address (no # part) opens at the top, under its title.
+      if (deskV41 && destination?.id === sectionId && !window.location.hash) return;
       destination?.scrollIntoView();
       destination?.focus({ preventScroll: true });
     };
@@ -362,7 +365,7 @@ function TenantWorkspace({
     });
     watch.observe(holder, { childList: true, subtree: true });
     return () => watch.disconnect();
-  }, [loaded, fragment, sectionId, sectionAllowed]);
+  }, [loaded, fragment, sectionId, sectionAllowed, deskV41]);
   async function retryRead() {
     setBusy(true);
     setMessage('');
@@ -494,12 +497,15 @@ function TenantWorkspace({
       )}
       {data &&
         (realWorkspace ? (
-          <p role="note" className="operator-scope-note">
-            <OperatorIcon name="lock" /> Use authorized records for this workspace.{' '}
-            {data.scanMode === 'bypass'
-              ? 'Evidence scanning is deferred; unscanned files are marked as bypassed.'
-              : 'Evidence follows this workspace’s scanning controls.'}
-          </p>
+          // Team desk v4.1: this line is shown on the Status pages only.
+          deskV41 && !deskStatusPlace(sectionId) ? null : (
+            <p role="note" className="operator-scope-note">
+              <OperatorIcon name="lock" /> Use authorized records for this workspace.{' '}
+              {data.scanMode === 'bypass'
+                ? 'Evidence scanning is deferred; unscanned files are marked as bypassed.'
+                : 'Evidence follows this workspace’s scanning controls.'}
+            </p>
+          )
         ) : (
           <p className="ux-testmode" role="note">
             Preview workspace: use made-up records here, never real customer details.

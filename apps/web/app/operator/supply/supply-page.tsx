@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { TeamContextPublisher } from '../../../components/ux/team-context-publisher';
+import { deskFrameClass } from '../../../components/ux/desk-frame';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
 import { uxSwitchOn } from '../../../lib/ux-switches';
@@ -27,7 +28,13 @@ export async function SupplyPage({
   signedIn: (tenant: string, role: string) => ReactNode;
 }) {
   if (!uxSwitchOn('CORRIDRA_SUPPLY_SOURCES')) notFound();
-  const eyebrow = uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? 'TEAM WORKSPACE' : 'OPERATOR WORKSPACE';
+  // Team desk v4.1: no label above the title. Off, the header is as it was.
+  const deskV41 = uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41');
+  const eyebrow = deskV41
+    ? undefined
+    : uxSwitchOn('CORRIDRA_UX_SHELLS_V2')
+      ? 'TEAM WORKSPACE'
+      : 'OPERATOR WORKSPACE';
   const s = foundations();
   if (!s)
     return (
@@ -53,7 +60,7 @@ export async function SupplyPage({
       </WorkspaceShell>
     );
   return (
-    <WorkspaceShell eyebrow={eyebrow} title={title}>
+    <WorkspaceShell eyebrow={eyebrow} title={title} className={deskV41 ? deskFrameClass : ''}>
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
       <SupplyModeLine real={realUseEnabled()} />
       {signedIn(tenant.id, tenant.role)}
