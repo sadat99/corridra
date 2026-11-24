@@ -2,7 +2,7 @@
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench, useFormChangeGuard } from '../../components/operator-workbench';
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
 import { StatusChip } from '../../components/ux/status-chip';
 import type { MissionBrief } from '@corridra/domain/missions';
@@ -30,6 +30,7 @@ import {
   stepStatement,
   type CustomerView,
 } from './[section]/[missionId]/mission-labels';
+import type { ReactNode } from 'react';
 export type Mission = {
   id: string;
   status: string;
