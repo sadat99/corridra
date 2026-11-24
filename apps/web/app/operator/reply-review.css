@@ -127,3 +127,122 @@
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: var(--space-2);
 }
+
+/* Team desk v4.1, units D8 and D9 (CORRIDRA_UX_TEAM_DESK_V41): the Quotes and Replies tabs of one mission.
+   Tokens only. Nothing here applies while the switch is off: these classes are drawn only by the two
+   panels the switch turns on. */
+.mission-quotes,
+.mission-replies {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+.mission-quotes > *,
+.mission-replies > * {
+  min-inline-size: 0;
+}
+.mission-quotes :is(h3, h4, p),
+.mission-replies :is(h3, h4, p) {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.mission-quotes-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.mission-quotes-columns > * {
+  min-inline-size: 0;
+}
+@media (min-width: 1024px) {
+  .mission-quotes-columns {
+    grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  }
+  .mission-quotes-asked {
+    position: sticky;
+    inset-block-start: var(--space-4);
+  }
+}
+.mission-quotes-asked,
+.mission-quotes-recorded,
+.mission-quotes-replies > section,
+.mission-replies > section {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.mission-quotes-asked dl {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+.mission-quotes-asked dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.mission-quotes-asked dd {
+  margin: 0 0 var(--space-2);
+  overflow-wrap: anywhere;
+}
+.mission-quotes-recorded ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: var(--space-4);
+}
+.mission-quotes-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.mission-quotes-links > *,
+.mission-replies-delegation > .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+.mission-timeline {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mission-timeline > li {
+  display: grid;
+  gap: var(--space-1);
+  padding-inline-start: var(--space-3);
+  border-inline-start: 3px solid var(--border-strong);
+}
+.mission-timeline > li p {
+  white-space: pre-wrap;
+}
+.mission-timeline-meta {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.mission-replies-delegation > .text-link {
+  justify-self: start;
+}
+/* Desk: the term list runs in columns where there is room, so one reply fits far less height. */
+.reply-review[data-desk='true'] .reply-review-terms {
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  column-gap: var(--space-4);
+}
+.reply-review[data-desk='true'] {
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.reply-review[data-desk='true'] .reply-review-card {
+  background: var(--paper);
+}
+.reply-review[data-desk='true'] h4 {
+  margin: 0;
+}

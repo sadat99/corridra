@@ -7,6 +7,9 @@ import { CommercialMission } from '../../commercial-mission';
 import { DeliveryExperience } from '../../delivery-experience';
 import { ShowMore } from '../../show-more';
 import { MissionMoves } from '../../mission-moves';
+import { MissionQuotes } from '../../mission-quotes';
+import { MissionReplies } from '../../mission-replies';
+import { useOperatorFlags } from '../../operator-flags';
 import { WithdrawalNote } from '../../mission-withdrawal-note';
 import {
   MissionActionForm,
@@ -70,6 +73,7 @@ export function MissionPage({
   const panelHeading = useRef<HTMLHeadingElement>(null),
     trigger = useRef<HTMLButtonElement | null>(null),
     sending = useRef(false);
+  const { teamDeskV41 } = useOperatorFlags();
   const q = `tenant=${encodeURIComponent(tenant)}`;
   const load = useCallback(
     () => read<Queue>(`/api/team-work/mission?${q}&id=${missionId}`),
@@ -274,7 +278,18 @@ export function MissionPage({
             </>
           )}
           {tab === 'companies' && <Companies tenant={tenant} missionId={m.id} />}
-          {tab === 'quotes' && (
+          {tab === 'quotes' && teamDeskV41 && (
+            <MissionQuotes
+              tenant={tenant}
+              missionId={m.id}
+              role={data.role}
+              brief={m.brief}
+              revision={revision}
+              onRecord={() => choose('requirements')}
+              moneyHref={sectionHref(tenant, 'commercial', m.id)}
+            />
+          )}
+          {tab === 'quotes' && !teamDeskV41 && (
             <Quotes
               tenant={tenant}
               missionId={m.id}
@@ -284,7 +299,19 @@ export function MissionPage({
           )}
           {tab === 'meetings' && <Meetings tenant={tenant} missionId={m.id} />}
           {tab === 'delivery' && <Delivery tenant={tenant} missionId={m.id} />}
-          {tab === 'replies' && (
+          {tab === 'replies' && teamDeskV41 && (
+            <MissionReplies
+              missionId={m.id}
+              replies={data.replies}
+              canReply={manage}
+              busy={busy}
+              onSend={(body, replyId) =>
+                act('mission-reply', { id: m.id, body, replyId }, 'Reply posted.')
+              }
+              reportsHref={sectionHref(tenant, 'delivery')}
+            />
+          )}
+          {tab === 'replies' && !teamDeskV41 && (
             <>
               <h3>Replies</h3>
               <h4>Receipt replies to the customer</h4>

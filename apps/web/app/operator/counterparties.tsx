@@ -18,6 +18,7 @@ import {
 import { readJson } from '../../lib/ux/step-up';
 import { bodyNotAvailable } from '../../lib/body-access';
 import type { IngestWarning } from '@corridra/domain/counterparties';
+import { useOperatorFlags } from './operator-flags';
 type Row = { id: string; [key: string]: unknown };
 type Organisation = Row & {
   name: string;
@@ -52,18 +53,32 @@ const txt = (r: Row, key: string) => String(r[key] ?? '');
 // ADR-087 U1r: a staff viewer receives the statement of a quotation-linked claim as null (residue: quotationLinkedClaimSql).
 const statement = (r: Row) => (r.statement === null ? bodyNotAvailable : txt(r, 'statement'));
 const when = (v: unknown) => (v ? new Date(String(v)).toLocaleString() : 'Not recorded');
+// Team desk v4.1, unit D10 (CORRIDRA_UX_TEAM_DESK_V41). A record name in a list is kept to one short line, and
+// a mission whose request has no company name is named in words, never by its id.
+const shortName = (value: string, limit = 60) =>
+  value.length > limit ? `${value.slice(0, limit - 1).trimEnd()}…` : value;
+const missionName = (m: Row, desk: boolean) =>
+  desk
+    ? txt(m, 'company_name') === m.id
+      ? 'Unnamed mission'
+      : shortName(txt(m, 'company_name'))
+    : txt(m, 'company_name');
+/** The stages in which a company can be added to a mission's shortlist, as the form has always offered them. */
+const shortlistStages = ['ACTIVE', 'TARGETING'];
 function Field({
   label,
   name,
   defaultValue = '',
   required = true,
   type = 'text',
+  minLength,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
   required?: boolean;
   type?: string;
+  minLength?: number;
 }) {
   if (type === 'datetime-local')
     return (
@@ -82,6 +97,7 @@ function Field({
         type={type}
         defaultValue={defaultValue}
         required={required}
+        minLength={minLength}
         maxLength={type === 'email' ? 200 : 1000}
       />
     </label>
@@ -94,6 +110,8 @@ function Select({
   empty = 'Choose a record',
   labelKey = 'locator',
   required = true,
+  defaultValue,
+  optionLabel,
 }: {
   label: string;
   name: string;
@@ -101,16 +119,20 @@ function Select({
   empty?: string;
   labelKey?: string;
   required?: boolean;
+  /** Desk only: the row chosen when the list is first drawn. */
+  defaultValue?: string;
+  /** Desk only: the words for one row, in place of the plain `labelKey` text. */
+  optionLabel?: (row: Row) => string;
 }) {
   const id = useId();
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
-      <select id={id} name={name} required={required}>
+      <select id={id} name={name} required={required} defaultValue={defaultValue}>
         <option value="">{empty}</option>
         {rows.map((r) => (
           <option key={r.id} value={r.id}>
-            {txt(r, labelKey)}
+            {optionLabel ? optionLabel(r) : txt(r, labelKey)}
           </option>
         ))}
       </select>
@@ -126,6 +148,7 @@ export function Counterparties({
   missionRevision?: number;
   purpose?: string;
 }) {
+  const { teamDeskV41: desk } = useOperatorFlags();
   const [catalogue, setCatalogue] = useState<{
       role: string;
       total: number;
@@ -330,7 +353,7 @@ export function Counterparties({
   const [validDefault] = useState(() => new Date(Date.now() + 29 * 86400000).toISOString());
   const ownerName = (id: unknown) =>
     (owners.find((o) => o.id === id)?.name as string | undefined) ??
-    `a team member (id ${String(id ?? '').slice(0, 8)})`;
+    (desk ? 'a former team member' : `a team member (id ${String(id ?? '').slice(0, 8)})`);
   const changeContext: ChangeContext = {
     role: detail?.role ?? catalogue?.role ?? '',
     changes: detail?.changes ?? { installed: false, open: false },
@@ -347,6 +370,9 @@ export function Counterparties({
     },
   };
   const changesInstalled = changeContext.changes.installed;
+  // D10: the mission the address named (or the one chosen in the shortlist list) is the mission being added to.
+  const deskMission = desk ? missions.find((m) => m.id === mission) : undefined;
+  const addable = missions.filter((m) => shortlistStages.includes(txt(m, 'status')));
   const publicSources = sources.filter(
     (s) => s.classification === 'PUBLIC' && s.kind === 'public_record',
   );
@@ -372,6 +398,15 @@ export function Counterparties({
         Research manually, keep the sources and explain the fit. A company record, certificate or
         strong fit assessment does not verify a commercial claim.
       </p>
+      {desk && deskMission && (
+        <p data-desk-mission>
+          Adding companies to <strong>{missionName(deskMission, true)}</strong> ·{' '}
+          {stageLabel(txt(deskMission, 'status'))}.{' '}
+          {shortlistStages.includes(txt(deskMission, 'status'))
+            ? 'Open a company below, then give the reason it belongs on this mission.'
+            : `A company can be added once this mission is at ${shortlistStages.map((s) => stageLabel(s)).join(' or ')}.`}
+        </p>
+      )}
       <p role="status" aria-live="polite" aria-label="Research status">
         {message}
       </p>
@@ -607,7 +642,8 @@ export function Counterparties({
               {detail.identities.map((i) => (
                 <article className="research-evidence" key={i.id}>
                   <strong>
-                    {txt(i, 'name')} · {txt(i, 'country')} · Original record {i.id.slice(0, 8)}
+                    {txt(i, 'name')} · {txt(i, 'country')}
+                    {desk ? '' : ` · Original record ${i.id.slice(0, 8)}`}
                   </strong>
                   <p>
                     {txt(i, 'status')} · {txt(i, 'domain')} · {txt(i, 'identifier_type')}:{' '}
@@ -1024,18 +1060,22 @@ export function Counterparties({
                   >
                     <fieldset disabled={busy}>
                       <Select
+                        key={desk ? `mission:${mission}` : undefined}
                         label="Target mission"
                         name="missionId"
-                        rows={missions.filter((m) =>
-                          ['ACTIVE', 'TARGETING'].includes(txt(m, 'status')),
-                        )}
+                        rows={addable}
                         labelKey="company_name"
+                        defaultValue={
+                          desk && addable.some((m) => m.id === mission) ? mission : undefined
+                        }
+                        optionLabel={desk ? (m) => missionName(m, true) : undefined}
                       />
                       <Select
                         label="Target relationship"
                         name="relationshipId"
                         rows={relations}
                         labelKey="note"
+                        optionLabel={desk ? (r) => shortName(txt(r, 'note')) : undefined}
                       />
                       <Select
                         label="Optional target contact"
@@ -1044,7 +1084,7 @@ export function Counterparties({
                         labelKey="name"
                         required={false}
                       />
-                      <AssessmentFields attrs={attrs} validDefault={validDefault} />
+                      <AssessmentFields attrs={attrs} validDefault={validDefault} desk={desk} />
                       <button>Add Mission Target</button>
                     </fieldset>
                   </form>
@@ -1072,7 +1112,7 @@ export function Counterparties({
               <option value="">Choose a mission</option>
               {missions.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {txt(m, 'company_name')} · {stageLabel(txt(m, 'status'))}
+                  {missionName(m, desk)} · {stageLabel(txt(m, 'status'))}
                 </option>
               ))}
             </select>
@@ -1179,6 +1219,7 @@ export function Counterparties({
                           }))}
                           validDefault={validDefault}
                           initial={t}
+                          desk={desk}
                         />
                         <button>Save Fit Assessment</button>
                       </fieldset>
@@ -1197,10 +1238,13 @@ function AssessmentFields({
   attrs,
   validDefault,
   initial,
+  desk = false,
 }: {
   attrs: Row[];
   validDefault: string;
   initial?: Row;
+  /** D10: the reason is asked for in plain words and must be at least the three characters the server accepts. */
+  desk?: boolean;
 }) {
   return (
     <>
@@ -1236,9 +1280,10 @@ function AssessmentFields({
         </p>
       </fieldset>
       <Field
-        label="Fit rationale"
+        label={desk ? 'Reason this company belongs on the mission' : 'Fit rationale'}
         name="rationale"
         defaultValue={initial ? txt(initial, 'rationale') : ''}
+        minLength={desk ? 3 : undefined}
       />
       <Field
         label="Remaining uncertainty"

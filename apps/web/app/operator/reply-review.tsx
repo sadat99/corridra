@@ -52,6 +52,8 @@ export function ReplyReview({
   responses,
   disclosures,
   onRefresh,
+  desk = false,
+  companies,
 }: {
   tenant: string;
   role: string;
@@ -59,6 +61,15 @@ export function ReplyReview({
   disclosures: Disclosure[];
   /** Loads the workspace's replies again, so a card shows the answer as it is now. */
   onRefresh?: () => Promise<void>;
+  /**
+   * Team desk v4.1 (unit D8, CORRIDRA_UX_TEAM_DESK_V41): the mission's Quotes tab sets the replies beside
+   * what the customer asked for. The heading is shorter and each card names the company the link was
+   * made for where the caller knows it, with the link id left out. The three actions, who may use them and
+   * what they send are the same.
+   */
+  desk?: boolean;
+  /** The company each recipient link was made for, by link id. Used only with `desk`. */
+  companies?: Record<string, string>;
 }) {
   const { replyReview } = useOperatorFlags();
   const [reviews, setReviews] = useState<StoredReview[]>([]);
@@ -95,8 +106,12 @@ export function ReplyReview({
   if (!replyReview || responses.length === 0) return null;
   const canReview = ['owner', 'admin'].includes(role);
   return (
-    <section className="reply-review" aria-label="Review supplier replies">
-      <h3>Review supplier replies</h3>
+    <section
+      className="reply-review"
+      aria-label={desk ? 'Replies to review' : 'Review supplier replies'}
+      data-desk={desk ? 'true' : undefined}
+    >
+      {desk ? <h4>Replies to review</h4> : <h3>Review supplier replies</h3>}
       <p className="reply-review-note">
         Each reply is set beside the requirement the supplier was shown. The gaps are the ones the
         comparison engine reports. A decision here changes what the team does next; it does not send
@@ -116,6 +131,7 @@ export function ReplyReview({
               key={reply.id}
               reply={reply}
               reviews={reviews.filter((r) => r.responseId === reply.id)}
+              sender={desk ? (companies?.[reply.link_id] ?? '') : undefined}
             />
           ) : (
             <ReplyCard
@@ -126,6 +142,7 @@ export function ReplyReview({
               }
               reviews={reviews.filter((r) => r.responseId === reply.id)}
               tenant={tenant}
+              sender={desk ? (companies?.[reply.link_id] ?? '') : undefined}
               canRecord={['owner', 'admin', 'operator'].includes(role)}
               canAct={canReview && open === true && !unavailable}
               onChanged={reload}
@@ -147,15 +164,22 @@ function ReplyHeader({
   reply,
   state,
   ineligible,
+  sender,
 }: {
   reply: Reply;
   state: ReviewState;
   ineligible: boolean;
+  /** Desk only: the company the link was made for ('' when not known). Undefined keeps the link id line. */
+  sender?: string;
 }) {
   return (
     <header>
       <p className="reply-review-meta">
-        Recipient link {reply.link_id.slice(0, 8)}
+        {sender === undefined
+          ? `Recipient link ${reply.link_id.slice(0, 8)}`
+          : sender
+            ? `From ${sender}`
+            : 'Supplier reply'}
         {reply.created_at ? ` · received ${displayDate(reply.created_at)}` : ''} · Self-declared
       </p>
       {state.final ? (
@@ -185,10 +209,18 @@ function ReplyHeader({
 }
 
 /** A reply whose words this role may not read (staff viewer, ADR-087 U1): that it exists and its review state only. */
-function WithheldReply({ reply, reviews }: { reply: Reply; reviews: StoredReview[] }) {
+function WithheldReply({
+  reply,
+  reviews,
+  sender,
+}: {
+  reply: Reply;
+  reviews: StoredReview[];
+  sender?: string;
+}) {
   return (
     <li className="reply-review-card" id={`reply-${reply.id}`}>
-      <ReplyHeader reply={reply} state={reviewState(reviews)} ineligible={false} />
+      <ReplyHeader reply={reply} state={reviewState(reviews)} ineligible={false} sender={sender} />
       <section aria-label="The reply">
         <h4>The reply</h4>
         <p>{bodyNotAvailable}</p>
@@ -202,12 +234,14 @@ function ReplyCard({
   requirement,
   reviews,
   tenant,
+  sender,
   canRecord,
   canAct,
   onChanged,
   onStale,
 }: {
   reply: Reply & { body: NonNullable<Reply['body']> };
+  sender?: string;
   requirement?: string;
   reviews: StoredReview[];
   tenant: string;
@@ -320,7 +354,7 @@ function ReplyCard({
 
   return (
     <li className="reply-review-card" id={`reply-${reply.id}`} ref={card}>
-      <ReplyHeader reply={reply} state={state} ineligible={ineligible} />
+      <ReplyHeader reply={reply} state={state} ineligible={ineligible} sender={sender} />
 
       <div className="reply-review-columns">
         <section aria-label="Requirement shown to the supplier">
@@ -473,7 +507,13 @@ function ReplyCard({
         <div className="reply-review-actions">
           {mode === null && (
             <div className="reply-review-buttons">
-              <button type="button" disabled={busy} onClick={() => void send('PUBLISH')}>
+              <button
+                type="button"
+                // Desk (D8): the one primary action of the card is the cobalt one.
+                className={sender === undefined ? undefined : 'primary-link'}
+                disabled={busy}
+                onClick={() => void send('PUBLISH')}
+              >
                 Publish: Prepare As a Quotation
               </button>
               <button
