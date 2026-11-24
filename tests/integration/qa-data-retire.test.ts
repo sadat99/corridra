@@ -21,6 +21,7 @@ import { CustomerParticipantService } from '../../packages/auth/src/customer-par
 import {
   qaDataRetirePlan,
   reportQaDataRetire,
+  shown,
   type QaDataRetirePlan,
   type QaDataRetireReport,
 } from '../../packages/auth/src/customer-qa-data-retire';
@@ -284,7 +285,7 @@ describe('before anything is retired', () => {
       expect.stringMatching(
         /^request [0-9a-f]{8}: objective "Sell in a new market", market "Spain", status DRAFT$/,
       ),
-      'the same title, sent by a member of the QA workspace into another workspace: none',
+      'the same title, sent by a member of the QA workspace into another workspace: 0 (never a target: the plan names the QA workspace only)',
       '1 of 4 targets not resolved exactly once',
       'No checklist: nothing is to be retired until every target is found exactly once.',
       'kept, never touched: every user, identity, sign-in and customer account',
@@ -324,6 +325,93 @@ describe('before anything is retired', () => {
     // resolves again; the extra request stays in the workspace untouched (three requests from here on).
     plan.request = { ...plan.request, markets: ['CN'] };
     expect((await report()).state).toBe('still to retire');
+  });
+
+  test('text a customer typed is hidden from the public log when it holds an address, a link, a domain or a number', () => {
+    for (const value of [
+      'pat@example.invalid',
+      'see https://example.invalid/x',
+      'ftp://files',
+      'www.example',
+      'WWW.Example.invalid',
+      'example.invalid',
+      'China, example.co/path',
+      'shop.example-site.invalid',
+      'call 5550100',
+      '+880 1711-000 000',
+      '65 6555 0100',
+      'account 072-123456-7',
+    ])
+      expect(shown(value, 60), value).toBe('(hidden)');
+    // A place name, a code and a short number stay readable; an empty value says so; a long one is cut.
+    expect(shown('China', 40)).toBe('China');
+    expect(shown('CN', 40)).toBe('CN');
+    expect(shown('  Guangdong   and\nZhejiang ', 40)).toBe('Guangdong and Zhejiang');
+    expect(shown('Top 20 cities, 2027', 40)).toBe('Top 20 cities, 2027');
+    expect(shown(null, 40)).toBe('(empty)');
+    expect(shown('   ', 40)).toBe('(empty)');
+    expect(shown('a'.repeat(70), 60)).toBe('a'.repeat(60) + '...');
+  });
+
+  test('the request list is capped at 50 rows and hides unsafe text in the report itself', async () => {
+    // The list query is answered with 51 made-up rows, so the cap and the printing are tested on the real report path
+    // without sending 51 requests. Every other statement goes to the database unchanged.
+    const unsafe = [
+      'pat@example.invalid',
+      'https://example.invalid',
+      'www.example',
+      'example.invalid',
+      '+65 6555 0100',
+    ];
+    const rows = Array.from({ length: 51 }, (_, index) => ({
+      id: index.toString(16).padStart(8, '0'),
+      objective: 'Source suppliers',
+      market: unsafe[index] ?? `Market ${index}`,
+      status: 'DRAFT',
+      withdrawn: index === 5,
+    }));
+    const many: DatabasePool = {
+      query: f.owner.query.bind(f.owner),
+      end: f.owner.end.bind(f.owner),
+      connect: async () => {
+        const client = await f.owner.connect();
+        return new Proxy(client, {
+          get(target, key, receiver) {
+            if (key !== 'query') return Reflect.get(target, key, receiver);
+            return (text: unknown, ...rest: unknown[]) =>
+              typeof text === 'string' && text.includes('LIMIT 51')
+                ? Promise.resolve({ rows, rowCount: rows.length })
+                : Reflect.apply(target.query, target, [text, ...rest]);
+          },
+        });
+      },
+    } as DatabasePool;
+    const result = await reportQaDataRetire(many, {
+      ...plan,
+      request: {
+        title: 'Find customers in Spain',
+        objective: 'Find customers',
+        markets: ['Spain'],
+      },
+    });
+    expect(result.state).toBe('targets not resolved');
+    const listed = result.lines.filter((line) => /^request [0-9a-f]{8}: /.test(line));
+    expect(listed).toHaveLength(50);
+    expect(result.lines).toContain(
+      `requests in the workspace "Synthetic QA-Organiser Workspace" (${workspaceId.slice(0, 8)}): the first 50`,
+    );
+    expect(listed.slice(0, 5)).toEqual(
+      [0, 1, 2, 3, 4].map(
+        (index) =>
+          `request 0000000${index}: objective "Source suppliers", market "(hidden)", status DRAFT`,
+      ),
+    );
+    expect(listed[5]).toBe(
+      'request 00000005: objective "Source suppliers", market "Market 5", status DRAFT, withdrawn',
+    );
+    // The 51st row is never printed.
+    expect(result.lines.join('\n')).not.toMatch(/00000032|Market 50/);
+    expect(result.lines.join('\n')).not.toMatch(/@|example|6555/);
   });
 
   test('a missing programme or problem report is named while the request still resolves', async () => {

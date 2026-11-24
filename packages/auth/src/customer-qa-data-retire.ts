@@ -110,10 +110,17 @@ async function find<T extends Record<string, unknown>>(
 }
 const unchecked = { status: 'not checked' as const, matches: null, row: null };
 // Text a customer typed, made safe for a public log: one line, shortened, and never an address or a link.
-function shown(value: string | null, max: number) {
+export function shown(value: string | null, max: number) {
   if (value === null || !value.trim()) return '(empty)';
   const text = value.replace(/\s+/g, ' ').trim();
-  if (/@|:\/\/|www\./i.test(text)) return '(hidden)';
+  // An address, a link, a bare domain (name.tld) or a run of seven or more digits (a phone or account number, with
+  // spaces, plus or hyphen inside) hides the whole value: a place name needs none of them.
+  if (
+    /@|:\/\/|www\./i.test(text) ||
+    /\b[a-z0-9-]+(\.[a-z0-9-]+)+(\/|\b)/i.test(text) ||
+    /\d(?:[\s+-]*\d){6,}/.test(text)
+  )
+    return '(hidden)';
   return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
@@ -263,25 +270,21 @@ async function read(db: DatabaseClient, plan: QaDataRetirePlan): Promise<QaDataR
               `request ${row.id}: objective "${shown(row.objective, 60)}", market "${shown(row.market, 40)}", status ${row.status}${row.withdrawn ? ', withdrawn' : ''}`,
           ),
       );
-      // The same title sent by a member of the QA workspace into another workspace: counted, never listed.
+      // The same title sent by a member of the QA workspace into another workspace: one total, and nothing that names
+      // or points at another workspace.
       const elsewhere = (
-        await db.query<{ id: string; n: number }>(
-          `SELECT left(o.workspace_id::text,8) AS id,count(*)::int AS n
+        await db.query<{ n: number }>(
+          `SELECT count(*)::int AS n
           FROM customer_private.owned_request o
           JOIN app.mission_intake i ON i.tenant_id=o.mission_tenant_id AND i.id=o.mission_id
           WHERE o.workspace_id<>$1 AND i.brief->>'objective'=$2
             AND coalesce(NULLIF(btrim(i.brief->>'market'),''),NULLIF(btrim(i.brief->>'marketCode'),''))=ANY($3::text[])
-            AND EXISTS(SELECT FROM customer.membership m WHERE m.tenant_id=$1 AND m.principal_id=o.principal_id)
-          GROUP BY 1 ORDER BY 1`,
+            AND EXISTS(SELECT FROM customer.membership m WHERE m.tenant_id=$1 AND m.principal_id=o.principal_id)`,
           [workspace.id, plan.request.objective, [...plan.request.markets]],
         )
-      ).rows;
+      ).rows[0]!.n;
       lines.push(
-        elsewhere.length
-          ? `the same title, sent by a member of the QA workspace into another workspace: ${elsewhere
-              .map((row) => `${row.n} in workspace ${row.id}`)
-              .join(', ')} (not a target: the plan names the QA workspace only)`
-          : 'the same title, sent by a member of the QA workspace into another workspace: none',
+        `the same title, sent by a member of the QA workspace into another workspace: ${elsewhere} (never a target: the plan names the QA workspace only)`,
       );
     }
     return {

@@ -429,7 +429,8 @@ test('D3 lifts once the owner has saved complete details', async () => {
       billToName: 'Dhaka Imports Limited',
       billToAddress: 'House 12, Road 5, Gulshan, Dhaka 1212, Bangladesh',
     }),
-  ).rejects.not.toMatchObject({ code: 'MADEUP_SUPPLIER_DETAILS' });
+    // Past the made-up guard: the database now answers about the subscription, which this fixture made up.
+  ).rejects.toMatchObject({ code: '42501', message: 'Subscription unavailable' });
 });
 
 test('a made-up mark on the tax rate is cleared by one owner save, which writes the rate from the GST answer', async () => {
@@ -495,7 +496,8 @@ test('with the tax rate written by the owner save, D3 no longer refuses a real i
       billToName: 'Dhaka Imports Limited',
       billToAddress: 'House 12, Road 5, Gulshan, Dhaka 1212, Bangladesh',
     }),
-  ).rejects.not.toMatchObject({ code: 'MADEUP_SUPPLIER_DETAILS' });
+    // Past the made-up guard: the database now answers about the subscription, which this fixture made up.
+  ).rejects.toMatchObject({ code: '42501', message: 'Subscription unavailable' });
 });
 
 test('the protected secret path of ADR-064 still writes a version after an owner save, and the owner can save over it', async () => {
@@ -643,6 +645,37 @@ test('an issuer outside Singapore GST keeps its rate and its mark', async () => 
   expect(await latest()).toMatchObject({ version: 14, country: 'SG', placeholder_fields: [] });
 });
 
+test('a mark on a rate that is already the standard one is cleared by a save that changes nothing else', async () => {
+  // The owner saves the restored details, so the version in force is owner entered.
+  expect(await save()).toMatchObject({ state: 'saved', version: 15, complete: true });
+  // The fixture marks the rate on a copy of that version: same values, same owner, the rate already 900.
+  await s.f.owner.query(
+    `INSERT INTO customer_private.real_invoicing_entity(version,legal_name,address,country,uen,gst_registered,gst_registration_no,tax_label,
+      gst_rate_bps,payment_terms_days,payment_instructions,finance_label,approver_principal_id,placeholder_fields,executor_id,reason,owner_entered_by)
+     SELECT 16,legal_name,address,country,uen,gst_registered,gst_registration_no,tax_label,gst_rate_bps,payment_terms_days,
+      payment_instructions,finance_label,approver_principal_id,'{gst_rate_bps}',executor_id,'Fixture: the standard rate marked as made up',owner_entered_by
+     FROM customer_private.real_invoicing_entity WHERE version=15`,
+  );
+  expect(await latest()).toMatchObject({
+    version: 16,
+    gst_rate_bps: 900,
+    placeholder_fields: ['gst_rate_bps'],
+    owner_entered_by: s.f.users.owner.id,
+  });
+  expect(await service.view(owner())).toMatchObject({ version: 16, complete: false });
+  // No value differs, yet the save is not "unchanged": the mark is the change, and it is named.
+  const saved = await save();
+  expect(saved).toMatchObject({ state: 'saved', version: 17, complete: true, madeupFields: [] });
+  expect(saved.changedFields).toEqual(['gstRateBps']);
+  expect(await latest()).toMatchObject({
+    version: 17,
+    gst_rate_bps: 900,
+    placeholder_fields: [],
+  });
+  // And now the same details again really are unchanged.
+  expect(await save()).toMatchObject({ state: 'unchanged', version: 17 });
+});
+
 test('the runtime and auth logins reach no table and no private function, and history cannot be rewritten', async () => {
   for (const pool of [s.f.runtime, s.f.auth]) {
     await expect(
@@ -715,5 +748,5 @@ test('the rollback file removes the screen functions and keeps every saved versi
   await expect(service.view(owner())).rejects.toMatchObject({ status: 503 });
   // The staff side still works on the saved versions.
   const staff = new CustomerRealInvoicingStaffService(s.f.runtime, () => true);
-  expect((await staff.pending(owner())).supplier).toMatchObject({ version: 14 });
+  expect((await staff.pending(owner())).supplier).toMatchObject({ version: 17 });
 });
