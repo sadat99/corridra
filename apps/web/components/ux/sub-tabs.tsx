@@ -232,14 +232,17 @@ export function SegmentLinks({
   segments: readonly { id: string; label: string; href: string; current: boolean }[];
 }) {
   const row = useRef<HTMLUListElement>(null);
+  // The page in view is known only once the address and the role are read in the browser, so the row is moved
+  // when that page is first known or changes, and at no other redraw: a row the reader has scrolled stays put.
+  const current =
+    segments.length < 2 ? '' : (segments.find((segment) => segment.current)?.id ?? '');
   useEffect(() => {
     bringIntoRow(row.current, row.current?.querySelector<HTMLElement>('[aria-current="page"]'));
-  }, []);
+  }, [current]);
   if (segments.length < 2) return null;
   return (
     <nav className="ux-desk-segments" aria-label={label} lang="en">
-      {/* On a narrow screen the row scrolls sideways; the page in view is brought into the row's view once, when
-          the row is first drawn, so a later redraw never moves a row the reader has scrolled. */}
+      {/* On a narrow screen the row scrolls sideways; the page in view is then brought into the row's view. */}
       <ul ref={row}>
         {segments.map((segment) => (
           <li key={segment.id}>
