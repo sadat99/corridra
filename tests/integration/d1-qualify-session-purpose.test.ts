@@ -138,10 +138,10 @@ test('a staff invitation is refused in a real workspace and stores the workspace
     role: 'operator',
     operatingCountry: 'BD',
   });
-  for (const purpose of [websitePurpose, s.ctx.purpose])
-    await expect(
-      inviteOperator(s.f.owner, { ...s.ctx, purpose }, invitation('real-refused@example.invalid')),
-    ).rejects.toThrow('An active owner with fresh MFA must approve the invitation');
+  // One pass is enough: inviteOperator sets the sample purpose itself and never reads the caller's.
+  await expect(
+    inviteOperator(s.f.owner, s.ctx, invitation('real-refused@example.invalid')),
+  ).rejects.toThrow('An active owner with fresh MFA must approve the invitation');
   expect(
     (
       await s.f.owner.query(
@@ -164,4 +164,18 @@ test('a staff invitation is refused in a real workspace and stores the workspace
       workspace_purpose: websitePurpose,
     },
   ]);
+});
+
+// The lookup above is guarded by this exact expression. A role without EXECUTE on the function (the real-use
+// module grants it to the runtime role only) gets false and keeps the sample purpose instead of a refusal. That
+// role cannot reach the invitation at all today (no access to schema app), so the guard is shown on its own.
+test('the invitation purpose lookup is skipped for a database role that may not run it', async () => {
+  const guard =
+    "SELECT coalesce(has_function_privilege(to_regprocedure('app.tenant_processing_purpose(uuid)')::oid,'EXECUTE'),false) AS present,coalesce(has_function_privilege(to_regprocedure('app.no_such_function(uuid)')::oid,'EXECUTE'),false) AS absent";
+  expect((await s.f.auth.query(guard)).rows[0]).toEqual({ present: false, absent: false });
+  expect((await s.f.runtime.query(guard)).rows[0]).toEqual({ present: true, absent: false });
+  expect((await s.f.owner.query(guard)).rows[0]).toEqual({ present: true, absent: false });
+  await expect(
+    s.f.auth.query('SELECT app.tenant_processing_purpose($1)', [s.f.tenantA]),
+  ).rejects.toMatchObject({ code: '42501' });
 });

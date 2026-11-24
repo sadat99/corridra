@@ -91,10 +91,12 @@ async function insertPending(
   );
   // The member gets the workspace's own processing purpose, stated here and not left to the column default
   // (as team-control.ts does). Both callers accept sample workspaces only, so the value is unchanged today.
-  // A deployment without the real-use module has no such function and keeps the sample purpose.
+  // A deployment without the real-use module has no such function, and a database role without EXECUTE on it
+  // (the module grants it to the runtime role only) cannot call it: both keep the sample purpose, so this
+  // lookup never refuses an invitation that worked before.
   const hasPurpose = (
     await db.query(
-      "SELECT to_regprocedure('app.tenant_processing_purpose(uuid)') IS NOT NULL AS present",
+      "SELECT coalesce(has_function_privilege(to_regprocedure('app.tenant_processing_purpose(uuid)')::oid,'EXECUTE'),false) AS present",
     )
   ).rows[0]?.present;
   const purpose: string | null = hasPurpose
