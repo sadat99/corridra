@@ -119,7 +119,10 @@ vi.mock('../../apps/web/lib/foundations', () => ({
 }));
 describe('Reports in a journey: the Delivered list', () => {
   const draw = async (props: Record<string, unknown>) => {
-    const { DeliveredReports } = await import('../../apps/web/app/account/delivered-reports');
+    const path = '../../apps/web/app/account/delivered-reports';
+    const { DeliveredReports } = (await import(/* @vite-ignore */ path)) as {
+      DeliveredReports: (props: never) => Promise<unknown>;
+    };
     return renderToStaticMarkup(
       await DeliveredReports({ subject: 's', issuer: 'i', showEmpty: true, ...props } as never),
     );
