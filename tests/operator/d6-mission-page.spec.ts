@@ -111,6 +111,8 @@ type Shape = {
   targetProfile?: string | null;
   routeLabel?: string | null;
   replies?: { id: string; mission_id: string; body: string; created_at?: string }[];
+  /** One reviewed route pack with one mission job, so the Assign Route form is drawn. */
+  pack?: boolean;
 };
 const queue = (shape: Shape) => ({
   role: shape.role ?? 'owner',
@@ -146,6 +148,20 @@ const queue = (shape: Shape) => ({
     },
   ],
 });
+const pack = {
+  id: '00000000-0000-4000-8000-0000000000a7',
+  status: 'ACTIVE',
+  origin_market: 'BD',
+  destination_market: 'CN',
+  version: 1,
+  configuration: { missionTypes: ['sourcing'] },
+};
+const job = {
+  id: '00000000-0000-4000-8000-0000000000a8',
+  key: 'sourcing',
+  description: 'Invented sourcing job',
+  version: 1,
+};
 type Answer = { status: number; json: unknown; delay?: number };
 const saved: Answer = { status: 201, json: { ok: true } };
 const stepUp: Answer = {
@@ -198,7 +214,13 @@ async function open(
               ],
             }
           : url.pathname === '/api/workspace/mission-catalogue'
-            ? { routes: [], packs: [], types: [], requirements: [], assessments: [] }
+            ? {
+                routes: [],
+                packs: shape.pack ? [pack] : [],
+                types: shape.pack ? [job] : [],
+                requirements: [],
+                assessments: [],
+              }
             : url.pathname === '/api/workspace/commercial-mission'
               ? { assignments: [], quotations: [], targets: [] }
               : {};
@@ -674,6 +696,51 @@ for (const width of [320, 390, 768, 1024, 1440, 1920]) {
     if (shots) await page.screenshot({ path: `${shots}/dialog-refused-${width}.png` });
   });
 }
+
+test('D7 on a phone: the reply, route and step dialogs all keep their one action pinned in the bottom action area', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const { sent } = await open(page, true, { pack: true });
+  const pinned = async (name: string, action: string) => {
+    const button = actionDialog(page, name).locator('form.operator-form > button.primary-link');
+    await expect(button).toHaveText(action);
+    await expect(button).toHaveCSS('position', 'sticky');
+    await expect(button).toBeInViewport({ ratio: 1 });
+    const box = (await button.boundingBox())!;
+    expect(box.height).toBeGreaterThanOrEqual(60);
+    const frame = (await actionDialog(page, name).boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(frame.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(frame.x + frame.width);
+  };
+  await next(page).getByRole('button', { name: 'Begin Qualification' }).click();
+  await pinned('Begin Qualification', 'Begin Qualification');
+  await page.keyboard.press('Escape');
+  await other(page, 'Reply on the Receipt');
+  await pinned('Reply on the Receipt', 'Post Receipt Reply');
+  await page.keyboard.press('Escape');
+  await other(page, 'Assign Route');
+  const route = actionDialog(page, 'Assign Route');
+  await pinned('Assign Route', 'Assign Route');
+  expect(await axe(page)).toEqual([]);
+  // The route form still sends what it always sent.
+  await route.getByLabel('Reviewed route').selectOption(pack.id);
+  await route.getByLabel('Reason').fill('Invented reason for the route');
+  await route.locator('form.operator-form > button.primary-link').click();
+  await expect(route).toBeHidden();
+  await expect(next(page).getByRole('status')).toHaveText('Route assigned.');
+  expect(sent[0]!.path).toBe('/api/workspace/mission-route');
+  expect(Object.keys(sent[0]!.body).sort()).toEqual(
+    ['id', 'missionId', 'missionTypeId', 'packId', 'reason', 'version'].sort(),
+  );
+  expect(sent[0]!.body).toMatchObject({
+    missionId: mission,
+    packId: pack.id,
+    missionTypeId: job.id,
+    version: 1,
+    reason: 'Invented reason for the route',
+  });
+});
 
 // Page length on the Overview tab with disclosures closed, off and on, in this fixture (no team shell around
 // it). Most of the page is the Overview facts, which this unit does not change, so the rule held here is about
