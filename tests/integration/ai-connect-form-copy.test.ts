@@ -182,7 +182,7 @@ describe('the owner-approved words, exactly', () => {
     const form = read('apps/web/app/operator/connect-ai-form.tsx');
     expect(form).toContain('words.beforeSave.runRealOn');
     expect(form).toContain('words.beforeSave.runRealOff');
-    expect(form).not.toContain('words.beforeSave.runReal,');
+    expect(form).not.toMatch(/beforeSave\.runReal(?!On|Off)/);
   });
   it('names owners and admins as the people who can connect', () => {
     expect(words.deniedHeading).toBe('Only owners and admins can do this');
@@ -377,30 +377,33 @@ describe('Before You Save and the switch-off page', () => {
   });
   it('draws the three rows and the recorded line with no control', async () => {
     const { BeforeSend } = await loadWeb('components/before-send.tsx');
-    const html = render(
-      ce(BeforeSend, {
-        surface: 'aiConnection',
-        heading: words.beforeSave.heading,
-        rows: {
-          change: { question: words.beforeSave.change, fact: changeFact('OpenAI', 1) },
-          money: { question: words.beforeSave.money, fact: words.beforeSave.moneyFact },
-          run: { question: words.beforeSave.run, fact: words.beforeSave.runReal },
-        },
-        recorded: words.beforeSave.recorded,
-      }),
-    );
-    expect(html).toContain('aria-label="Before you save"');
-    expect(html.match(/class="before-send-row"/g)).toHaveLength(3);
-    for (const line of [
-      words.beforeSave.change,
-      words.beforeSave.money,
-      words.beforeSave.run,
-      words.beforeSave.moneyFact,
-      words.beforeSave.runReal,
-      words.beforeSave.recorded,
-    ])
-      expect(html).toContain(line);
-    expect(html).not.toMatch(/<(button|input|select|textarea|a)\b|onclick|style=/i);
+    // Both real workspace states (ADR-091) draw the same three rows; only the run fact differs.
+    for (const runFact of [words.beforeSave.runRealOff, words.beforeSave.runRealOn]) {
+      const html = render(
+        ce(BeforeSend, {
+          surface: 'aiConnection',
+          heading: words.beforeSave.heading,
+          rows: {
+            change: { question: words.beforeSave.change, fact: changeFact('OpenAI', 1) },
+            money: { question: words.beforeSave.money, fact: words.beforeSave.moneyFact },
+            run: { question: words.beforeSave.run, fact: runFact },
+          },
+          recorded: words.beforeSave.recorded,
+        }),
+      );
+      expect(html).toContain('aria-label="Before you save"');
+      expect(html.match(/class="before-send-row"/g)).toHaveLength(3);
+      for (const line of [
+        words.beforeSave.change,
+        words.beforeSave.money,
+        words.beforeSave.run,
+        words.beforeSave.moneyFact,
+        runFact,
+        words.beforeSave.recorded,
+      ])
+        expect(html).toContain(line);
+      expect(html).not.toMatch(/<(button|input|select|textarea|a)\b|onclick|style=/i);
+    }
   });
   it('draws nothing before the read answers, so with the switch off the panel is what it was', async () => {
     const { ConnectAiForm } = await loadWeb('app/operator/connect-ai-form.tsx');
