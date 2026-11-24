@@ -1136,8 +1136,11 @@
         "L9": "n/a",
         "L10": "not_assessed"
       },
-      "evidence": [],
-      "notes": "Team desk v4.1 Phase 5 (P5a, 24 Nov 2026, code read and tests/operator/p5a-meetings-money-reports.spec.ts): Meetings (D11), Money (D12) and Reports (D13) assessed behind CORRIDRA_UX_TEAM_DESK_V41. None of the three shows a place name as a label (Meetings lists stored jurisdiction codes only), a guided choice set or a sourced fact with a date, so L1 to L3 and L10 do not apply to them. The row stays not_assessed until every section of this route is assessed."
+      "evidence": [
+        "tests/operator/p5a-meetings-money-reports.spec.ts",
+        "tests/operator/p5b-helpers-status-team.spec.ts"
+      ],
+      "notes": "Team desk v4.1 Phase 5 (P5a, 24 Nov 2026, code read and tests/operator/p5a-meetings-money-reports.spec.ts): Meetings (D11), Money (D12) and Reports (D13) assessed behind CORRIDRA_UX_TEAM_DESK_V41. None of the three shows a place name as a label (Meetings lists stored jurisdiction codes only), a guided choice set or a sourced fact with a date, so L1 to L3 and L10 do not apply to them. The row stays not_assessed until every section of this route is assessed. Team desk v4.1 D14 to D16 (Helpers, Status, Team and access), behind CORRIDRA_UX_TEAM_DESK_V41; with the switch off the pages are as before. L1 partly built, on Status only: the route line of a record and the origin and destination market cells show the place mark before the written name through the shared Flagged and RouteLine components; a place outside the nine flags shows its name only. The status stays not_assessed because the other sections of this route have not been assessed for L1, and L2, L3 and L10 have not been assessed on Helpers, Status or Team and access. Not verified: no six-width screenshots or signed journey evidence."
     },
     {
       "route": "/operator/[section]/[missionId]",

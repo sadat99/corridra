@@ -8,6 +8,7 @@ import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback'
 import { formatDateTime } from '../../lib/ux/format';
 import { readJson, withStepUp } from '../../lib/ux/step-up';
 import { useOperatorFlags } from './operator-flags';
+import './desk-helpers-status-team.css';
 
 const roleNames: Record<string, string> = {
   owner: 'Owner',
@@ -439,7 +440,9 @@ export function WorkspaceControls({
       <header className="ux-controls-heading">
         <div>
           {teamDeskV41 ? null : <p className="eyebrow">Workspace settings</p>}
-          <h2>Workspace controls</h2>
+          {/* Team desk v4.1 (D16): the page title is Team and access; this heading stays for screen
+              readers only. Nothing about members, roles or the authenticator rule changes. */}
+          <h2 className={teamDeskV41 ? 'sr-only' : undefined}>Workspace controls</h2>
           <p>
             Manage member access and available tools for <strong>{workspaceName}</strong>.
           </p>
@@ -469,7 +472,14 @@ export function WorkspaceControls({
                 >
                   <div className="ux-controls-section-heading">
                     <div>
-                      <h3 id="workspace-members-heading">People and access</h3>
+                      {/* Team desk v4.1 (D16): the segment and the tab already say this; the heading stays
+                          for screen readers and still names the section. */}
+                      <h3
+                        id="workspace-members-heading"
+                        className={teamDeskV41 ? 'sr-only' : undefined}
+                      >
+                        People and access
+                      </h3>
                       <p>Change the role or access of an existing member.</p>
                     </div>
                     <button
@@ -579,7 +589,7 @@ export function WorkspaceControls({
           },
           {
             id: 'invite',
-            label: 'Invite a team member',
+            label: teamDeskV41 ? 'Invite a Team Member' : 'Invite a team member',
             panel: <TeamInvites tenant={tenant} workspaceName={workspaceName} />,
           },
           {

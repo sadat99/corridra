@@ -1,5 +1,5 @@
 'use client';
-import { SubTabs } from '../../components/ux/sub-tabs';
+import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 import { FounderOverview } from '../../components/founder-overview';
 import { ReferencePicker } from '../../components/ux/reference-picker';
 import { PhoneFold } from '../../components/phone-fold';
@@ -12,9 +12,21 @@ import { SubmissionFailure } from '../../components/retained-submission';
 import { displayDate } from '@corridra/domain/locale';
 import { formatDate } from '../../lib/ux/format';
 import { ownerName, type Owner } from './missions';
+import { useOperatorFlags } from './operator-flags';
+import './desk-helpers-status-team.css';
 import { missionHref } from './[section]/[missionId]/mission-labels';
+import { operatorSectionPath } from '../../lib/operator-urls';
 import { placeName } from '../account/request-words';
-import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
+import { Flagged, RouteLine, placeMark } from '../../components/ux/flag';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 import { formatMoney, currency } from '@corridra/domain/opportunities';
 import {
   DEFERRED_LABEL,
@@ -167,6 +179,38 @@ function value(v: unknown) {
         ? JSON.stringify(v)
         : String(v);
 }
+/** Team desk v4.1 (UI/UX.v4.1 L1): a market cell shows the place name with its mark before it. */
+function placeCell(key: string, row: Row): ReactNode | undefined {
+  const market = row[key];
+  if ((key !== 'origin_market' && key !== 'destination_market') || typeof market !== 'string')
+    return undefined;
+  return market ? <Flagged code={placeMark(market)}>{placeName(market)}</Flagged> : undefined;
+}
+/**
+ * Team desk v4.1 (D15): the plain words for a summary count. A count with no entry here is shown as its
+ * own words with a capital first letter, so a new count is never hidden.
+ */
+const summaryLabels: Record<string, string> = {
+  submitted: 'Submitted',
+  qualified: 'Qualified',
+  accepted: 'Accepted',
+  cancelled: 'Cancelled',
+  completed: 'Completed',
+  recorded_rejections: 'Recorded rejections',
+  cancellation_reason_unclassified: 'Cancelled with no recorded reason',
+  recorded_paying: 'Recorded as paying',
+  recorded_non_paying: 'Recorded as not paying',
+  blocked: 'On hold',
+  delayed: 'Past the due date',
+  route_unknown: 'No route yet',
+  customer_unknown: 'No customer reference',
+  incomplete_economics: 'Fees or costs incomplete',
+};
+function summaryLabel(key: string, plain: boolean) {
+  const words = key.replaceAll('_', ' ');
+  if (!plain) return words;
+  return summaryLabels[key] ?? words.charAt(0).toUpperCase() + words.slice(1);
+}
 /** The empty line of a fee table for a role that may not read fee records: hidden is not zero. */
 const financeHidden = 'Fee records are shown to owners and admins only. This does not mean zero.';
 /** The words of the button that opens or folds the rows past `limit`. */
@@ -181,6 +225,7 @@ function Table({
   limit,
   empty = 'No matching recorded observations. Missing financial or readiness evidence remains unknown.',
   className,
+  cell,
 }: {
   rows: Row[];
   columns: [string, string][];
@@ -190,6 +235,8 @@ function Table({
   /** What this table says when it has no rows, so each empty table names the record it is missing. */
   empty?: string;
   className?: string;
+  /** What a cell shows instead of its plain value; undefined keeps the plain value. */
+  cell?: (key: string, row: Row) => ReactNode | undefined;
 }) {
   const [all, setAll] = useState(false);
   const shown = limit && !all ? limit : rows.length;
@@ -215,7 +262,7 @@ function Table({
           {rows.map((r, i) => (
             <tr key={String(r.id ?? i)} hidden={i >= shown}>
               {columns.map(([k]) => (
-                <td key={k}>{value(r[k])}</td>
+                <td key={k}>{cell?.(k, r) ?? value(r[k])}</td>
               ))}
             </tr>
           ))}
@@ -236,6 +283,25 @@ function Table({
     <p>{empty}</p>
   );
 }
+/**
+ * The dashboard tabs. `keep` (team desk v4.1) names the tabs this page shows; one tab alone is drawn as its
+ * content, with no tab row above it. Without `keep` these are the shared tabs exactly as before.
+ */
+function DashboardTabs({
+  keep,
+  tabs,
+  ...rest
+}: {
+  keep?: (id: string) => boolean;
+  tabs: SubTab[];
+  label: string;
+  dormant: boolean;
+}) {
+  const shown = keep ? tabs.filter((tab) => keep(tab.id)) : tabs;
+  if (keep && shown.length === 1) return <div className="ux-desk-lone-tab">{shown[0].panel}</div>;
+  return <SubTabs tabs={shown} {...rest} />;
+}
+
 export function Operations({
   tenant,
   role,
@@ -251,6 +317,25 @@ export function Operations({
     ? section
     : 'ops-dashboard';
   const admin = ['owner', 'admin'].includes(role);
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
+  // Team desk v4.1 (D15): Operations and Dashboard each hold some of the dashboard tabs. An address that
+  // names a tab (`?tab=dash-money`) on the page that no longer holds it opens the page that does, so every
+  // address still shows what it named.
+  useEffect(() => {
+    if (!deskV41 || (section !== 'workspace-operations' && section !== 'ops-dashboard')) return;
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (!tab || !['dash-summary', 'dash-actions', 'dash-money', 'dash-records'].includes(tab))
+      return;
+    const home = tab === 'dash-money' ? 'ops-dashboard' : 'workspace-operations';
+    if (home === section) return;
+    const address = new URL(window.location.href);
+    const path = operatorSectionPath(home);
+    if (path && /^\/operator\/[^/]+$/.test(address.pathname)) {
+      address.pathname = path;
+      address.hash = '';
+    } else address.hash = home;
+    window.location.replace(address.toString());
+  }, [deskV41, section]);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null),
     [controls, setControls] = useState<Controls | null>(null),
     [catalogue, setCatalogue] = useState<Catalogue | null>(null),
@@ -518,13 +603,26 @@ export function Operations({
       onResetCapture={onResetCapture}
     >
       <div className="ops-heading">
-        <h2>Global operations</h2>
+        {/* Team desk v4.1 (D15): the page title is Status and the segment names the page, so this heading
+            stays for screen readers only and the page keeps its outline. */}
+        <h2 className={deskV41 ? 'sr-only' : undefined}>Global operations</h2>
         <button
           className="button button-secondary"
           disabled={busy}
           onClick={() => void load(filters)}
         >
-          {busy ? 'Loading Operations…' : dashboard ? 'Refresh Operations' : 'Load Operations'}
+          {deskV41
+            ? // Team desk v4.1 (D15): the control reloads every Status page, so it carries the page's name.
+              busy
+              ? 'Loading Status…'
+              : dashboard
+                ? 'Refresh Status'
+                : 'Load Status'
+            : busy
+              ? 'Loading Operations…'
+              : dashboard
+                ? 'Refresh Operations'
+                : 'Load Operations'}
         </button>
       </div>
       <OperatorWorkbench
@@ -585,7 +683,8 @@ export function Operations({
         className="ux-operations-panel"
         hidden={activeSection !== 'ops-dashboard'}
       >
-        <h3>Mission Operations dashboard</h3>
+        {/* Team desk v4.1 (D15): the segment names the page; this heading stays for screen readers. */}
+        <h3 className={deskV41 ? 'sr-only' : undefined}>Mission Operations dashboard</h3>
         <PhoneFold summary="Filter the records (10 filters)" className="ops-filters" fold="always">
           <form onSubmit={filter} className="operator-form">
             <fieldset disabled={busy}>
@@ -596,7 +695,10 @@ export function Operations({
                   <option value="">All routes, including unresolved</option>
                   {catalogue?.routes.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.origin_market} → {r.destination_market}
+                      {/* Team desk v4.1 (UI/UX.v4.1 L1): the place names; an option holds words only. */}
+                      {deskV41
+                        ? `${placeName(r.origin_market)} → ${placeName(r.destination_market)}`
+                        : `${r.origin_market} → ${r.destination_market}`}
                     </option>
                   ))}
                 </select>
@@ -672,9 +774,17 @@ export function Operations({
         {dashboard && (
           <>
             <p>{dashboard.definitions.scope}</p>
-            <SubTabs
+            <DashboardTabs
               label="Dashboard sections"
               dormant={activeSection !== 'ops-dashboard'}
+              keep={
+                // Team desk v4.1 (D15): Operations and Dashboard no longer draw the same body. Operations
+                // has the summary, the next actions and the records; Dashboard has the money. Nothing is
+                // removed: each tab is on one of the two pages, and both are segments of Status.
+                deskV41
+                  ? (id) => (section === 'ops-dashboard') === (id === 'dash-money')
+                  : undefined
+              }
               tabs={[
                 {
                   id: 'dash-summary',
@@ -682,12 +792,19 @@ export function Operations({
                   panel: (
                     <div className="ops-summary-grid">
                       <div>
+                        {deskV41 ? (
+                          // Team desk v4.1 (D15): the reader is told what the first number is a total of.
+                          <p className="ux-desk-summary-note">
+                            Submitted is every mission that matches the filters. The other counts
+                            are parts of it.
+                          </p>
+                        ) : null}
                         <dl className="operations-metrics">
                           {Object.entries(dashboard.summary)
                             .slice(0, 6)
                             .map(([k, v]) => (
                               <div key={k}>
-                                <dt>{k.replaceAll('_', ' ')}</dt>
+                                <dt>{summaryLabel(k, deskV41)}</dt>
                                 <dd>{value(v)}</dd>
                               </div>
                             ))}
@@ -701,7 +818,7 @@ export function Operations({
                               .slice(6)
                               .map(([k, v]) => (
                                 <div key={k}>
-                                  <dt>{k.replaceAll('_', ' ')}</dt>
+                                  <dt>{summaryLabel(k, deskV41)}</dt>
                                   <dd>{value(v)}</dd>
                                 </div>
                               ))}
@@ -751,9 +868,29 @@ export function Operations({
                                   {typeof m.origin_market === 'string' &&
                                   m.origin_market &&
                                   typeof m.destination_market === 'string' &&
-                                  m.destination_market
-                                    ? `${placeName(m.origin_market)} to ${placeName(m.destination_market)}`
-                                    : 'No route yet'}
+                                  m.destination_market ? (
+                                    deskV41 ? (
+                                      // Team desk v4.1 (D15, UI/UX.v4.1 L1): each place has its mark
+                                      // before its name; a place with no flag shows its name only.
+                                      <RouteLine
+                                        from={{
+                                          name: placeName(m.origin_market),
+                                          mark: placeMark(m.origin_market),
+                                        }}
+                                        to={[
+                                          {
+                                            name: placeName(m.destination_market),
+                                            mark: placeMark(m.destination_market),
+                                          },
+                                        ]}
+                                        word="to"
+                                      />
+                                    ) : (
+                                      `${placeName(m.origin_market)} to ${placeName(m.destination_market)}`
+                                    )
+                                  ) : (
+                                    'No route yet'
+                                  )}
                                   {' · '}Owner:{' '}
                                   {ownerName(
                                     dashboard.owners,
@@ -771,9 +908,12 @@ export function Operations({
                             is complete.
                           </p>
                         )}
-                        <a className="text-link" href="#workspace-missions">
-                          Open mission review queue
-                        </a>
+                        {/* Team desk v4.1 (D15): Missions is in the menu; a place is not linked twice. */}
+                        {deskV41 ? null : (
+                          <a className="text-link" href="#workspace-missions">
+                            Open mission review queue
+                          </a>
+                        )}
                       </section>
                     </div>
                   ),
@@ -801,6 +941,7 @@ export function Operations({
                               ? 'No Corridra fee records match these filters. A missing record means unknown, not zero.'
                               : financeHidden
                           }
+                          cell={deskV41 ? placeCell : undefined}
                           columns={[
                             ['origin_market', 'Origin'],
                             ['destination_market', 'Destination'],
@@ -835,6 +976,7 @@ export function Operations({
                                 ? 'Unknown'
                                 : `${r.effort_minutes} recorded minutes; completeness ${r.effort_complete === true ? 'attested' : 'unknown'}`,
                           }))}
+                          cell={deskV41 ? placeCell : undefined}
                           columns={[
                             ['id', 'Mission'],
                             ['origin_market', 'Origin'],
@@ -1196,8 +1338,27 @@ export function Operations({
                           historical. Missing or expired evidence stays blocked.
                         </p>
                         <h4>
-                          {routeRow?.origin_market} → {routeRow?.destination_market}: {type}{' '}
-                          readiness
+                          {deskV41 && routeRow ? (
+                            // Team desk v4.1 (UI/UX.v4.1 L1): each place has its mark before its name.
+                            <RouteLine
+                              from={{
+                                name: placeName(routeRow.origin_market),
+                                mark: placeMark(routeRow.origin_market),
+                              }}
+                              to={[
+                                {
+                                  name: placeName(routeRow.destination_market),
+                                  mark: placeMark(routeRow.destination_market),
+                                },
+                              ]}
+                              word="→"
+                            />
+                          ) : (
+                            <>
+                              {routeRow?.origin_market} → {routeRow?.destination_market}
+                            </>
+                          )}
+                          : {type} readiness
                         </h4>
                         <Table
                           label="Route readiness evidence"
@@ -1513,7 +1674,7 @@ export function Operations({
         className="ux-operations-panel"
         hidden={activeSection !== 'ops-health'}
       >
-        <h3>Recovery and health</h3>
+        <h3 className={deskV41 ? 'sr-only' : undefined}>Recovery and health</h3>
         <p>
           PostgreSQL events and receipts remain authoritative. Leases expire after 30 seconds;
           transient attempts back off by 5, 10 and 20 seconds. Three failed attempts need an
@@ -1668,12 +1829,21 @@ export function Operations({
             />
           </>
         )}
-        <p>
-          Continue manual missions in <a href="#workspace-missions">Mission operations</a>, review
-          failed drafts in <a href="#workspace-ai">AI assistance</a>, inspect contributor disputes
-          in <a href="#workspace-network">Execution network</a> and retry publication through{' '}
-          <a href="#workspace-delivery">Delivery</a>.
-        </p>
+        {deskV41 ? (
+          // Team desk v4.1 (D15): the sentence names each place by its menu word, in plain words. Each
+          // place is in the menu, and a place is not linked twice on one screen.
+          <p>
+            Continue manual missions in Missions, review failed drafts in Settings, Assistance,
+            check helper disputes in Helpers and retry publication in Reports.
+          </p>
+        ) : (
+          <p>
+            Continue manual missions in <a href="#workspace-missions">Mission operations</a>, review
+            failed drafts in <a href="#workspace-ai">AI assistance</a>, inspect contributor disputes
+            in <a href="#workspace-network">Execution network</a> and retry publication through{' '}
+            <a href="#workspace-delivery">Delivery</a>.
+          </p>
+        )}
       </section>
       <section
         id="ops-gates"
@@ -1681,7 +1851,7 @@ export function Operations({
         className="ux-operations-panel"
         hidden={activeSection !== 'ops-gates'}
       >
-        <h3>Production readiness and activation</h3>
+        <h3 className={deskV41 ? 'sr-only' : undefined}>Production readiness and activation</h3>
         <p className="ops-live-state">
           <strong>Status: {LIVE_STATE}.</strong> Corridra serves a small number of real customers.
           The controls below are open and deferred by the owner. None of them is passed or approved.
@@ -1763,9 +1933,13 @@ export function Operations({
             },
           ]}
         />
-        <a className="text-link" href="#workspace-navigation">
-          Return to workspace navigation
-        </a>
+        {/* Team desk v4.1 (D15): the menu and the segments are the way around; the list this link opens
+            is not on the page with the team shell on. */}
+        {deskV41 ? null : (
+          <a className="text-link" href="#workspace-navigation">
+            Return to workspace navigation
+          </a>
+        )}
       </section>
     </section>
   );

@@ -2,7 +2,10 @@
 import { SubTabs } from '../../components/ux/sub-tabs';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useOperatorFlags } from './operator-flags';
+import './desk-helpers-status-team.css';
 import { PhoneFold } from '../../components/phone-fold';
+import { ExampleTag } from '../../components/ux/example-tag';
+import { StatusBadge } from '../../components/access-state';
 import { ContributorInvitations } from './contributor-invitations';
 import { HelperInterestList } from './helper-interest-list';
 import {
@@ -407,22 +410,38 @@ export function ExecutionNetwork({
       e.currentTarget,
     );
   }
+  const networkState = data
+    ? data.enabled
+      ? 'Network enabled'
+      : 'Network paused'
+    : 'Checking access…';
   return (
     <section
       className="detail-card ux-governance-panel ux-network"
       data-operator-workbench
       aria-label="Corridra Network"
     >
-      <header className="ux-network-heading">
-        <div>
-          {teamDeskV41 ? null : <p className="label">CORRIDRA NETWORK</p>}
-          <h2>Assigned work</h2>
-          <p>Invite the right person. Define the work. Review the evidence.</p>
-        </div>
-        <span className="ux-network-state">
-          {data ? (data.enabled ? 'Network enabled' : 'Network paused') : 'Checking access…'}
-        </span>
-      </header>
+      {teamDeskV41 ? (
+        // Team desk v4.1 (D14): the page title and its purpose line say what this page is, once. The
+        // heading stays for screen readers so the page keeps its outline; the state word stays in view.
+        <>
+          <h2 className="sr-only">Assigned work</h2>
+          <p className="ux-helpers-state">
+            <StatusBadge tone={data ? (data.enabled ? 'positive' : 'caution') : 'neutral'}>
+              {networkState}
+            </StatusBadge>
+          </p>
+        </>
+      ) : (
+        <header className="ux-network-heading">
+          <div>
+            <p className="label">CORRIDRA NETWORK</p>
+            <h2>Assigned work</h2>
+            <p>Invite the right person. Define the work. Review the evidence.</p>
+          </div>
+          <span className="ux-network-state">{networkState}</span>
+        </header>
+      )}
       <p role="status" aria-live="polite">
         {message}
       </p>
@@ -516,15 +535,17 @@ export function ExecutionNetwork({
                   >
                     Refresh Assigned Work
                   </button>
-                  <a href="#workspace-missions">Open missions</a>
-                  <a href="#workspace-sources">Open sources and claims</a>
+                  {/* Team desk v4.1 (D14): Missions and Sources and claims are in the menu; a place is not
+                      linked twice on one screen. The authenticator check has no menu entry and stays. */}
+                  {teamDeskV41 ? null : <a href="#workspace-missions">Open missions</a>}
+                  {teamDeskV41 ? null : <a href="#workspace-sources">Open sources and claims</a>}
                   <a href="#workspace-authenticator">Verify current access</a>
                   <Link
                     prefetch={false}
                     className="text-link"
                     href={'/contributor?workspace=' + encodeURIComponent(tenant)}
                   >
-                    Open assigned task access
+                    {teamDeskV41 ? 'Open Assigned Task Access' : 'Open assigned task access'}
                   </Link>
                 </div>
                 {['owner', 'admin', 'operator'].includes(role) && (
@@ -578,174 +599,193 @@ export function ExecutionNetwork({
                     </form>
                   </details>
                 )}
-                <PhoneFold
-                  summary={`Disclosed tasks in this workspace (${data?.tasks.length ?? 0})`}
-                  className="ux-network-tasks"
-                  fold="always"
-                >
-                  <h3>Current disclosed tasks</h3>
-                  {data && !data.tasks.length && (
+                {teamDeskV41 && data && !data.tasks.length ? (
+                  // Team desk v4.1 (D14): with no task the page says so in the open and shows what a task
+                  // reads like. The example is wording only: no record, no name, no date and no control.
+                  <div className="ux-empty ux-helpers-empty">
+                    <h3>Current disclosed tasks</h3>
                     <p>
                       No disclosed tasks are recorded in this workspace. Eligibility and exact
                       assignment remain required before work can start.
                     </p>
-                  )}
-                  {data?.tasks.map((task) => (
-                    <article key={task.id}>
-                      <h3>
-                        {task.configuration.kind.replaceAll('_', ' ')} · {task.configuration.market}
-                      </h3>
-                      <p>{task.configuration.instructions}</p>
-                      {task.late_submission && (
-                        <p>
-                          Submitted after the original deadline. Assess timeliness and the disclosed
-                          late-submission terms.
-                        </p>
-                      )}
+                    <p className="ux-helpers-example">
+                      <ExampleTag>Sample</ExampleTag> A task could read: &ldquo;Visit the
+                      supplier&rsquo;s factory, photograph the production line and send the
+                      photographs within five working days.&rdquo; This shows the wording only. It
+                      is not a record.
+                    </p>
+                  </div>
+                ) : (
+                  <PhoneFold
+                    summary={`Disclosed tasks in this workspace (${data?.tasks.length ?? 0})`}
+                    className="ux-network-tasks"
+                    fold="always"
+                  >
+                    <h3>Current disclosed tasks</h3>
+                    {data && !data.tasks.length && (
                       <p>
-                        {task.status} · version {task.version} · reference {task.id}
+                        No disclosed tasks are recorded in this workspace. Eligibility and exact
+                        assignment remain required before work can start.
                       </p>
-                      <details>
-                        <summary>Original work and review history</summary>
-                        {task.history?.map((h) => (
-                          <div key={h.version}>
-                            <p>
-                              {h.action}: {h.reason}
-                            </p>
-                            {h.details.body && <p>{h.details.body}</p>}
-                            {h.details.rationale && <p>{h.details.rationale}</p>}
-                          </div>
-                        ))}
-                      </details>
-                      {task.status === 'CREATED' && admin && (
-                        <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
-                          <input type="hidden" name="action" value="ASSIGN" />
-                          <label className="field">
-                            Reviewed profile
-                            <select name="profileId" required>
-                              <option value="">Choose eligible work profile</option>
-                              {data.profiles
-                                .filter(
-                                  (p) =>
-                                    p.configuration.status === 'ACTIVE' &&
-                                    !data.profiles.some(
-                                      (other) =>
-                                        other.principal_id === p.principal_id &&
-                                        other.version > p.version,
-                                    ),
-                                )
-                                .map((p) => (
-                                  <option key={p.id} value={p.id}>
-                                    {p.configuration.alias} ·{' '}
-                                    {p.configuration.capabilities.join(', ')}
-                                  </option>
-                                ))}
-                            </select>
-                          </label>
-                          <label className="field">
-                            Relationship disclosure
-                            <input
-                              name="relationshipDisclosure"
-                              required
-                              minLength={3}
-                              maxLength={500}
-                            />
-                          </label>
-                          <Fields tenant={tenant} names={['reason']} />
-                          <button className="primary-link" disabled={busy || !data.enabled}>
-                            Approve Exact Assignment
-                          </button>
-                        </form>
-                      )}
-                      {task.status === 'SUBMIT' && (
-                        <form className="operator-form" onSubmit={(e) => review(e, task)}>
-                          <label className="field">
-                            Evidence quality (0–4)
-                            <input type="number" name="quality" min={0} max={4} required />
-                          </label>
-                          <label className="field">
-                            Timeliness (0–4)
-                            <input type="number" name="timeliness" min={0} max={4} required />
-                          </label>
-                          <label className="field">
-                            Review rationale
-                            <input name="rationale" required minLength={3} maxLength={500} />
-                          </label>
-                          <Fields tenant={tenant} names={['reason']} />
-                          <button className="primary-link" disabled={busy || !data.enabled}>
-                            Review Original Submitted Declaration
-                          </button>
-                        </form>
-                      )}
-                      {['SUBMIT', 'REVIEW', 'DISPUTE'].includes(task.status) && (
-                        <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
-                          <label className="field">
-                            Evidence decision
-                            <select name="action">
-                              {task.status === 'REVIEW' && (
-                                <option value="COMPLETE">Complete reviewed task</option>
-                              )}
-                              {task.status === 'DISPUTE' ? (
-                                <option value="RESOLVE">Resolve dispute, preserve history</option>
-                              ) : (
-                                <>
-                                  <option value="REQUEST_CORRECTION">
-                                    Request corrected evidence
-                                  </option>
-                                  <option value="REJECT">Reject submitted work</option>
-                                </>
-                              )}
-                            </select>
-                          </label>
-                          {task.status === 'DISPUTE' && (
+                    )}
+                    {data?.tasks.map((task) => (
+                      <article key={task.id}>
+                        <h3>
+                          {task.configuration.kind.replaceAll('_', ' ')} ·{' '}
+                          {task.configuration.market}
+                        </h3>
+                        <p>{task.configuration.instructions}</p>
+                        {task.late_submission && (
+                          <p>
+                            Submitted after the original deadline. Assess timeliness and the
+                            disclosed late-submission terms.
+                          </p>
+                        )}
+                        <p>
+                          {task.status} · version {task.version} · reference {task.id}
+                        </p>
+                        <details>
+                          <summary>Original work and review history</summary>
+                          {task.history?.map((h) => (
+                            <div key={h.version}>
+                              <p>
+                                {h.action}: {h.reason}
+                              </p>
+                              {h.details.body && <p>{h.details.body}</p>}
+                              {h.details.rationale && <p>{h.details.rationale}</p>}
+                            </div>
+                          ))}
+                        </details>
+                        {task.status === 'CREATED' && admin && (
+                          <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
+                            <input type="hidden" name="action" value="ASSIGN" />
                             <label className="field">
-                              Dispute disposition
-                              <select name="resolution">
-                                <option value="REOPEN">Reopen evidence review</option>
-                                <option value="REJECT">Reject disputed work</option>
-                                <option value="UPHOLD">Uphold previously completed work</option>
+                              Reviewed profile
+                              <select name="profileId" required>
+                                <option value="">Choose eligible work profile</option>
+                                {data.profiles
+                                  .filter(
+                                    (p) =>
+                                      p.configuration.status === 'ACTIVE' &&
+                                      !data.profiles.some(
+                                        (other) =>
+                                          other.principal_id === p.principal_id &&
+                                          other.version > p.version,
+                                      ),
+                                  )
+                                  .map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.configuration.alias} ·{' '}
+                                      {p.configuration.capabilities.join(', ')}
+                                    </option>
+                                  ))}
                               </select>
                             </label>
-                          )}
-                          <Fields tenant={tenant} names={['reason']} />
-                          <button className="primary-link" disabled={busy || !data.enabled}>
-                            Save Independent Decision
-                          </button>
-                        </form>
-                      )}
-                      {task.status === 'COMPLETE' &&
-                        ['owner', 'admin', 'operator'].includes(role) && (
-                          <form
-                            className="operator-form"
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              void act(
-                                'network-assess',
-                                {
-                                  taskId: task.id,
-                                  reason: new FormData(e.currentTarget).get('reason'),
-                                },
-                                e.currentTarget,
-                              );
-                            }}
-                          >
+                            <label className="field">
+                              Relationship disclosure
+                              <input
+                                name="relationshipDisclosure"
+                                required
+                                minLength={3}
+                                maxLength={500}
+                              />
+                            </label>
                             <Fields tenant={tenant} names={['reason']} />
                             <button className="primary-link" disabled={busy || !data.enabled}>
-                              Assess Contribution Once
+                              Approve Exact Assignment
                             </button>
                           </form>
                         )}
-                    </article>
-                  ))}
-                  <ShowMore
-                    shown={data?.tasks.length ?? 0}
-                    total={data?.tasksTotal}
-                    next={data?.tasksNext}
-                    busy={busy}
-                    label="Tasks"
-                    onMore={() => void showMore('tasks')}
-                  />
-                </PhoneFold>
+                        {task.status === 'SUBMIT' && (
+                          <form className="operator-form" onSubmit={(e) => review(e, task)}>
+                            <label className="field">
+                              Evidence quality (0–4)
+                              <input type="number" name="quality" min={0} max={4} required />
+                            </label>
+                            <label className="field">
+                              Timeliness (0–4)
+                              <input type="number" name="timeliness" min={0} max={4} required />
+                            </label>
+                            <label className="field">
+                              Review rationale
+                              <input name="rationale" required minLength={3} maxLength={500} />
+                            </label>
+                            <Fields tenant={tenant} names={['reason']} />
+                            <button className="primary-link" disabled={busy || !data.enabled}>
+                              Review Original Submitted Declaration
+                            </button>
+                          </form>
+                        )}
+                        {['SUBMIT', 'REVIEW', 'DISPUTE'].includes(task.status) && (
+                          <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
+                            <label className="field">
+                              Evidence decision
+                              <select name="action">
+                                {task.status === 'REVIEW' && (
+                                  <option value="COMPLETE">Complete reviewed task</option>
+                                )}
+                                {task.status === 'DISPUTE' ? (
+                                  <option value="RESOLVE">Resolve dispute, preserve history</option>
+                                ) : (
+                                  <>
+                                    <option value="REQUEST_CORRECTION">
+                                      Request corrected evidence
+                                    </option>
+                                    <option value="REJECT">Reject submitted work</option>
+                                  </>
+                                )}
+                              </select>
+                            </label>
+                            {task.status === 'DISPUTE' && (
+                              <label className="field">
+                                Dispute disposition
+                                <select name="resolution">
+                                  <option value="REOPEN">Reopen evidence review</option>
+                                  <option value="REJECT">Reject disputed work</option>
+                                  <option value="UPHOLD">Uphold previously completed work</option>
+                                </select>
+                              </label>
+                            )}
+                            <Fields tenant={tenant} names={['reason']} />
+                            <button className="primary-link" disabled={busy || !data.enabled}>
+                              Save Independent Decision
+                            </button>
+                          </form>
+                        )}
+                        {task.status === 'COMPLETE' &&
+                          ['owner', 'admin', 'operator'].includes(role) && (
+                            <form
+                              className="operator-form"
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                void act(
+                                  'network-assess',
+                                  {
+                                    taskId: task.id,
+                                    reason: new FormData(e.currentTarget).get('reason'),
+                                  },
+                                  e.currentTarget,
+                                );
+                              }}
+                            >
+                              <Fields tenant={tenant} names={['reason']} />
+                              <button className="primary-link" disabled={busy || !data.enabled}>
+                                Assess Contribution Once
+                              </button>
+                            </form>
+                          )}
+                      </article>
+                    ))}
+                    <ShowMore
+                      shown={data?.tasks.length ?? 0}
+                      total={data?.tasksTotal}
+                      next={data?.tasksNext}
+                      busy={busy}
+                      label="Tasks"
+                      onMore={() => void showMore('tasks')}
+                    />
+                  </PhoneFold>
+                )}
               </>
             ),
           },
@@ -928,7 +968,8 @@ export function ExecutionNetwork({
                   panel: (
                     <>
                       <ContributorInvitations tenant={tenant} />
-                      <HelperInterestList tenant={tenant} role={role} />
+                      {/* Team desk v4.1: helper interest has one home, the Inbox, so it is not drawn here. */}
+                      {teamDeskV41 ? null : <HelperInterestList tenant={tenant} role={role} />}
                       {admin && (
                         <details>
                           <summary>Review an invited helper profile</summary>
