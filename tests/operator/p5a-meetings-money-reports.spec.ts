@@ -224,7 +224,7 @@ type Options = {
   height?: number;
   query?: string;
   empty?: boolean;
-  /** The server holds more meetings than the first page it sent. */
+  /** The server holds more meetings than the page it sent: a next page is named and no total is given. */
   more?: boolean;
   posts?: { url: string; body: unknown }[];
 };
@@ -273,7 +273,7 @@ async function open(page: Page, path: string, options: Options) {
       json: empty
         ? { ...meetings, meetings: [], meetingsTotal: 0 }
         : more
-          ? { ...meetings, meetingsTotal: 60, next: 'page-2' }
+          ? { ...meetings, meetingsTotal: null, next: 'page-2' }
           : meetings,
     }),
   );

@@ -8,6 +8,7 @@ import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useOperatorFlags } from './operator-flags';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { usePathname } from 'next/navigation';
 import { subscribeToHash } from '../../lib/address-store';
 import { deskPrimarySlotId } from '../../components/ux/desk-segments';
 import {
@@ -194,6 +195,8 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null),
     [proposing, setProposing] = useState(false),
     [proposed, setProposed] = useState(false);
+  // The header follows the address, so the slot is looked for again whenever the path or the `#` part changes.
+  const pathname = usePathname();
   useEffect(() => {
     if (!deskV41) return;
     const find = () => setHeaderSlot(document.getElementById(deskPrimarySlotId));
@@ -207,7 +210,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       window.clearTimeout(timer);
       unsubscribe();
     };
-  }, [deskV41]);
+  }, [deskV41, pathname]);
   const [defaults] = useState(() => ({
     tomorrow: utcField(),
     week: utcField(new Date(Date.now() + 7 * 86400000).toISOString()),
@@ -479,7 +482,8 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         ]
       : tabs;
   const allShown =
-    meetings.meetingsTotal === null || meetings.meetings.length >= meetings.meetingsTotal;
+    !meetings.next &&
+    (meetings.meetingsTotal === null || meetings.meetings.length >= meetings.meetingsTotal);
   return (
     <section className="operator-section">
       <div className="section-heading">
@@ -1072,7 +1076,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
           },
         ])}
       />
-      {deskV41 && manage && headerSlot
+      {deskV41 && manage && headerSlot?.isConnected
         ? createPortal(
             <button
               type="button"
