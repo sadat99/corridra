@@ -469,7 +469,12 @@ test('D11 switch on: an introduction is never in a column, and the outreach note
   await expect(board.locator('article', { hasText: 'Introduction Only Buyer' })).toHaveCount(0);
   await expect(board.locator('article', { hasText: 'Test Mode Buyer' })).toHaveCount(0);
   // The Introductions tab is one tap away and the test-mode note of the sent email is written on its card.
+  // The sentence about introduction channels is in the Introductions tab, not above the board.
+  const note = section.getByText('Each introduction goes out through the channel');
+  await expect(note).toHaveCount(1);
+  await expect(note).toBeHidden();
   await openTab(page, 'meetings', /^Introductions \(2\)$/);
+  await expect(note).toBeVisible();
   const card = section.locator('article.introduction-card', { hasText: 'Test Mode Buyer' });
   await expect(card.getByText(/^Delivery note: /)).toBeVisible();
 });
@@ -583,9 +588,14 @@ test('D11 switch on: five columns side by side on a desktop, stacked in order on
   ).toEqual(Array(5).fill(false));
   await expect(columns.locator('h4').first()).toBeHidden();
   await expect(columns.locator('article.meeting-card').first()).toBeHidden();
-  // Closed, the whole Meetings page is short: under two and a half screens of a phone.
-  const pageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
-  expect(pageHeight / 844).toBeLessThan(2.5);
+  // Closed, the whole Meetings page is at most two screens of a phone, on a tall one and on a short one.
+  const lengthInScreens = () =>
+    page.evaluate(() => document.documentElement.scrollHeight / window.innerHeight);
+  expect(await lengthInScreens(), 'page length at 390x844').toBeLessThanOrEqual(2);
+  await open(page, '/operator/meetings', { v41: true, width: 375, height: 667 });
+  await expect(columns).toHaveCount(5);
+  expect(await lengthInScreens(), 'page length at 375x667').toBeLessThanOrEqual(2);
+  await open(page, '/operator/meetings', { v41: true, width: 390, height: 844 });
   await folds.first().locator('> summary').click();
   const button = columns
     .first()

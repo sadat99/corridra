@@ -28,7 +28,10 @@
 /* On a phone the disclosure line names the column, so the heading is not shown a second time. */
 @media (max-width: 39.99rem) {
   .ux-meeting-board.ux-meeting-board {
-    gap: var(--space-3);
+    gap: var(--space-2);
+  }
+  .ux-workspace-body .workspace-panel .ux-meeting-board .ux-meeting-column details.phone-fold {
+    margin: 0;
   }
   .ux-meeting-board .ux-meeting-column.ux-meeting-column h4 {
     display: none;

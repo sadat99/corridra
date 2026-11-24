@@ -405,6 +405,14 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   const manage = ['owner', 'admin', 'operator'].includes(comms.role),
     approve = ['owner', 'admin'].includes(comms.role),
     selected = comms.targets.find((t) => t.id === target);
+  // Team desk v4.1: this sentence is about introductions, so it sits in the Introductions tab.
+  const channelNote = (
+    <p>
+      Each introduction goes out through the channel its approved policy names. Manual handoff
+      records that a team member passed it on themselves. Recorded receipt keeps the receipt in
+      Corridra and sends no email. Owners turn on introductions and dispatch in Workspace controls.
+    </p>
+  );
   const proposeForm = (
     <form
       className="operator-form detail-card"
@@ -489,12 +497,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       >
         Refresh Access and Meetings
       </button>
-      <p>
-        Each introduction goes out through the channel its approved policy names. Manual handoff
-        records that a team member passed it on themselves. Recorded receipt keeps the receipt in
-        Corridra and sends no email. Owners turn on introductions and dispatch in Workspace
-        controls.
-      </p>
+      {deskV41 ? null : channelNote}
       <SubTabs
         label="Introductions and meetings sections"
         tabs={boardFirst([
@@ -503,6 +506,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             label: `Introductions (${comms.messages.length})`,
             panel: (
               <>
+                {deskV41 ? channelNote : null}
                 <details>
                   <summary>Approved communication policy and templates</summary>
                   <ul>
