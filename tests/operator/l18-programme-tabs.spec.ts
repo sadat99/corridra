@@ -137,3 +137,38 @@ test('the programme page tabs scroll inside themselves and the page does not scr
   await expect(last).toHaveAttribute('aria-selected', 'true');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+// Team desk v4.1 brings the chosen tab into view inside a tab row that scrolls, and only inside the team desk frame.
+// The customer programme page is not a desk page: its tab row is never moved for the reader, so a page opened on
+// its last tab still starts with the row at its beginning, as it did before the desk page pattern existed.
+test('the programme page tab row is never scrolled for the reader: opened on the last tab it stays at the start', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('**/api/customer-programme-*', (route) =>
+    route.fulfill({ status: 503, json: { error: 'unavailable' } }),
+  );
+  await page.route('**/api/customer-programmes*', (route) =>
+    route.fulfill({
+      json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
+    }),
+  );
+  await page.goto(`${origin}/?room=1&tab=new`);
+  const last = page.getByRole('tab', { name: 'New Sample Programme' });
+  await expect(last).toHaveAttribute('aria-selected', 'true');
+  const row = page.locator('.programme-page-tabs > .ux-subtabs-list');
+  expect(await page.locator('.ux-desk-frame').count()).toBe(0);
+  // The chosen tab is out of view to the right, so this row is one the desk rule would have moved.
+  expect(await row.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  expect(
+    await last.evaluate(
+      (el) => el.getBoundingClientRect().right > el.parentElement!.getBoundingClientRect().right,
+    ),
+  ).toBe(true);
+  expect(await row.evaluate((el) => el.scrollLeft)).toBe(0);
+  // Choosing another tab and coming back leaves the row where the reader has it.
+  await page.getByRole('tab', { name: 'Programmes' }).click();
+  await page.getByRole('tab', { name: 'Programmes' }).press('End');
+  await expect(last).toHaveAttribute('aria-selected', 'true');
+  expect(await row.evaluate((el) => el.scrollLeft)).toBe(0);
+});

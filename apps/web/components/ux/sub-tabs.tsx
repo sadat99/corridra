@@ -79,6 +79,15 @@ export function openSubTab(from: Element | null, id: string) {
   tab?.click();
 }
 
+/** Scrolls a row sideways so one of its items is in view, centred. A row that fits, or an item already in view, is left alone. */
+function bringIntoRow(row: HTMLElement | null, item: HTMLElement | null | undefined) {
+  if (!row || !item || row.scrollWidth <= row.clientWidth) return;
+  const rowBox = row.getBoundingClientRect();
+  const box = item.getBoundingClientRect();
+  if (box.left < rowBox.left || box.right > rowBox.right)
+    row.scrollLeft += box.left - rowBox.left - (rowBox.width - box.width) / 2;
+}
+
 export function SubTabs({
   tabs,
   label,
@@ -128,15 +137,12 @@ export function SubTabs({
   }, [active]);
 
   // Where the tab row scrolls sideways (a narrow screen with the desk page pattern), the chosen tab is brought
-  // into view inside the row. The page itself is never scrolled, and a row that fits is left alone.
+  // into view inside the row. The page itself is never scrolled, and a row that fits is left alone. Only inside
+  // the team desk frame: any other tab row that scrolls (the customer programme page on a phone) is not moved.
   useEffect(() => {
     const row = list.current;
-    const tab = row?.querySelector<HTMLElement>(`[data-tab="${CSS.escape(active)}"]`);
-    if (!row || !tab || row.scrollWidth <= row.clientWidth) return;
-    const rowBox = row.getBoundingClientRect();
-    const tabBox = tab.getBoundingClientRect();
-    if (tabBox.left < rowBox.left || tabBox.right > rowBox.right)
-      row.scrollLeft += tabBox.left - rowBox.left - (rowBox.width - tabBox.width) / 2;
+    if (!row?.closest('.ux-desk-frame')) return;
+    bringIntoRow(row, row.querySelector<HTMLElement>(`[data-tab="${CSS.escape(active)}"]`));
   }, [active]);
 
   const select = useCallback(
@@ -225,20 +231,16 @@ export function SegmentLinks({
   label: string;
   segments: readonly { id: string; label: string; href: string; current: boolean }[];
 }) {
+  const row = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    bringIntoRow(row.current, row.current?.querySelector<HTMLElement>('[aria-current="page"]'));
+  }, []);
   if (segments.length < 2) return null;
   return (
     <nav className="ux-desk-segments" aria-label={label} lang="en">
-      {/* On a narrow screen the row scrolls sideways; the page in view is then brought into the row's view. */}
-      <ul
-        ref={(row) => {
-          const current = row?.querySelector<HTMLElement>('[aria-current="page"]');
-          if (!row || !current || row.scrollWidth <= row.clientWidth) return;
-          const rowBox = row.getBoundingClientRect();
-          const box = current.getBoundingClientRect();
-          if (box.left < rowBox.left || box.right > rowBox.right)
-            row.scrollLeft += box.left - rowBox.left - (rowBox.width - box.width) / 2;
-        }}
-      >
+      {/* On a narrow screen the row scrolls sideways; the page in view is brought into the row's view once, when
+          the row is first drawn, so a later redraw never moves a row the reader has scrolled. */}
+      <ul ref={row}>
         {segments.map((segment) => (
           <li key={segment.id}>
             <a href={segment.href} aria-current={segment.current ? 'page' : undefined}>

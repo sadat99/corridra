@@ -36,11 +36,12 @@ export function SupplyHub({
     />
   );
   // Team desk v4.1: the link sits at the end of the tab row's own line, so the page has one row under its title.
+  // It follows the tabs in the page's order and the grid in supply.css places it on the row's line.
   if (desk)
     return (
       <div className="supply-hub-desk">
-        <p className="supply-hub-link">{doNotContact}</p>
         {tabs}
+        <p className="supply-hub-link">{doNotContact}</p>
       </div>
     );
   return (
