@@ -5,8 +5,8 @@ import { createServer, type Server } from 'node:http';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// Team desk v4.1, units D6 and D7, behind CORRIDRA_UX_TEAM_DESK_V41 (the page reads it on the server and passes
-// `desk`). The mission page is bundled from the source with the real stylesheets, the shared dialog and the real
+// Team desk v4.1, units D6 and D7, behind CORRIDRA_UX_TEAM_DESK_V41 (the page reads it on the server and hands
+// it down through OperatorFlags). The mission page is bundled from the source with the real stylesheets, the shared dialog and the real
 // in-place code check; every request is answered here, so no database is needed. Off, the page is what it was:
 // the action buttons in Overview and the side panel. On: the stage bar the customer's Road reads, one Next step
 // card with the page's one primary button, a read-only customer panel, and every action in the centred dialog
@@ -44,9 +44,9 @@ test.beforeAll(async () => {
       const q=new URLSearchParams(location.search);
       createRoot(document.getElementById('fixture')).render(
         <main id="main" className="operator-page ux-workspace"><h1>Mission</h1>
-        <OperatorFlags replyReview={false}>
+        <OperatorFlags replyReview={false} teamDeskV41={q.get('desk')==='on'}>
           <MissionPage tenant="${tenant}" workspaceName="Sample team" missionId="${mission}"
-            moveRecords={q.get('moves')==='on'} desk={q.get('desk')==='on'}/>
+            moveRecords={q.get('moves')==='on'}/>
         </OperatorFlags><StepUpDialog/></main>);`,
       loader: 'tsx',
       resolveDir: resolve(root, 'apps/web'),

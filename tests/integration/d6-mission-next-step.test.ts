@@ -27,10 +27,11 @@ describe('D6 and D7 switch', () => {
   });
   it('the mission page reads the switch on the server and the screen defaults to off', () => {
     expect(read('apps/web/app/operator/[section]/[missionId]/page.tsx')).toContain(
-      "desk={uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}",
+      "teamDeskV41={uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}",
     );
+    expect(read('apps/web/app/operator/operator-flags.tsx')).toContain('teamDeskV41 = false,');
     expect(read('apps/web/app/operator/[section]/[missionId]/mission-page.tsx')).toContain(
-      'desk = false,',
+      'const { teamDeskV41: desk } = useOperatorFlags();',
     );
   });
 });

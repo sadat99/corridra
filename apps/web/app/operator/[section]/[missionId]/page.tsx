@@ -77,14 +77,16 @@ export default async function Page({
           desk={uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
         />
       ) : null}
-      <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
+      <OperatorFlags
+        replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
+        teamDeskV41={uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}
+      >
         <MissionPage
           tenant={tenant}
           workspaceName={tenants.find((t) => t.id === tenant)?.name ?? ''}
           missionId={missionId}
           replyId={isUuid(reply) ? reply : undefined}
           moveRecords={customerMovesEnabled()}
-          desk={uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}
         />
       </OperatorFlags>
     </WorkspaceShell>

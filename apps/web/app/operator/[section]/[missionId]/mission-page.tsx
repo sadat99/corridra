@@ -35,6 +35,7 @@ import {
   type CustomerView,
 } from './mission-labels';
 import { bodyNotAvailable } from '../../../../lib/body-access';
+import { useOperatorFlags } from '../../operator-flags';
 
 // D15: one mission, seven tabs plus replies (CQ-40), and one side panel where actions open one at a time.
 // Every action here posts to the same reviewed workspace endpoints as the queue cards, so nothing gains
@@ -84,7 +85,6 @@ export function MissionPage({
   missionId,
   replyId,
   moveRecords,
-  desk = false,
 }: {
   tenant: string;
   workspaceName: string;
@@ -92,12 +92,11 @@ export function MissionPage({
   /** A reviewed supplier reply to prepare an offer from (ADR-081), from the link the reply card gives. */
   replyId?: string;
   moveRecords: boolean;
-  /**
-   * Team desk v4.1, units D6 and D7 (`CORRIDRA_UX_TEAM_DESK_V41`, read on the server): the stage bar, the Next
-   * step card, the customer panel and actions in the centred dialog. Off, the page is exactly what it was.
-   */
-  desk?: boolean;
 }) {
+  // Team desk v4.1, units D6 and D7 (`CORRIDRA_UX_TEAM_DESK_V41`, read on the server and handed down by
+  // OperatorFlags): the stage bar, the Next step card, the customer panel and actions in the centred dialog.
+  // Off, the page is exactly what it was.
+  const { teamDeskV41: desk } = useOperatorFlags();
   const [data, setData] = useState<Queue | null>(null),
     [failure, setFailure] = useState(''),
     [message, setMessage] = useState<{ kind: 'status' | 'alert'; text: string } | null>(null),
