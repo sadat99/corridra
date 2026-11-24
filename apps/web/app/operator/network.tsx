@@ -532,8 +532,10 @@ export function ExecutionNetwork({
                   >
                     Refresh Assigned Work
                   </button>
-                  <a href="#workspace-missions">Open missions</a>
-                  <a href="#workspace-sources">Open sources and claims</a>
+                  {/* Team desk v4.1 (D14): Missions and Sources and claims are in the menu; a place is not
+                      linked twice on one screen. The authenticator check has no menu entry and stays. */}
+                  {teamDeskV41 ? null : <a href="#workspace-missions">Open missions</a>}
+                  {teamDeskV41 ? null : <a href="#workspace-sources">Open sources and claims</a>}
                   <a href="#workspace-authenticator">Verify current access</a>
                   <Link
                     prefetch={false}
