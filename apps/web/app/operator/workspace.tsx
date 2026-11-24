@@ -437,13 +437,13 @@ function TenantWorkspace({
       return;
     switchTenant(next);
   }
-  const deskV41 = useContext(TeamDeskV41Context);
+  const menuV3 = useContext(TeamDeskV41Context);
   const chooseRef = useRef(chooseTenant);
   useEffect(() => {
     chooseRef.current = chooseTenant;
   });
   useEffect(() => {
-    if (!deskV41) return;
+    if (!menuV3) return;
     publishTeamSwitcher({
       workspaces: tenants.map((entry) => ({ id: entry.id, name: entry.name })),
       current: tenant,
@@ -451,7 +451,7 @@ function TenantWorkspace({
       choose: (next) => chooseRef.current(next),
     });
     return () => publishTeamSwitcher(null);
-  }, [deskV41, tenants, tenant, busy]);
+  }, [menuV3, tenants, tenant, busy]);
   return (
     <div
       className="ux-workspace-body"
@@ -460,7 +460,7 @@ function TenantWorkspace({
       }}
     >
       {/* Team desk v4.1: the workspace switch is at the top of the menu, and Help and Sign Out are in the header menus. */}
-      {deskV41 ? null : (
+      {menuV3 ? null : (
         <div className="operator-toolbar">
           <label className="field">
             Workspace

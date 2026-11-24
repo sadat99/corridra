@@ -353,7 +353,7 @@ describe('the switch', () => {
     );
     expect(read('components/ux/team-second-level.tsx')).toContain('if (deskV41) return null;');
     const workspace = read('app/operator/workspace.tsx');
-    expect(workspace).toMatch(/\{deskV41 \? null : \(\s*<div className="operator-toolbar">/);
+    expect(workspace).toMatch(/\{menuV3 \? null : \(\s*<div className="operator-toolbar">/);
     // One guarded change of workspace, shared by the toolbar select and the one in the menu; one id.
     expect(workspace).toContain('onChange={(e) => chooseTenant(e.target.value)}');
     expect(workspace).toContain('choose: (next) => chooseRef.current(next),');
