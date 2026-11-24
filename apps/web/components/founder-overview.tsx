@@ -27,8 +27,9 @@ export function FounderOverview({ tenant }: { tenant: string }) {
           </dd>
           <dt>What is activated?</dt>
           <dd>
-            Live, small scale. The team handles customer requests by hand. Automated outreach, live
-            AI and contributor payments stay off and are{' '}
+            Live, small scale. The team handles customer requests by hand. Real outreach by email
+            exists in test mode only and stays off until the owner says &quot;live&quot;. Live AI
+            and contributor payments stay off. All three are{' '}
             <StatusBadge tone="caution">GATED</StatusBadge>. Open controls are deferred by owner
             decision and listed under Production readiness. Check the route evidence before making
             any availability claim. The table below is read from this deployment&apos;s
