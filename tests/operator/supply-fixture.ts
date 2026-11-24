@@ -70,7 +70,7 @@ export async function startSupplyFixture(root = resolve('.')) {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css', '.woff2': 'empty' },
-    // The flag pictures are static files (a country shows its mark with team desk v4.1 on); they are served below.
+    // The flag pictures are static files the fixture serves itself (see /flags/ below), not modules to bundle.
     external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',

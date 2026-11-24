@@ -128,6 +128,7 @@ export async function startP5cFixture(root = resolve('.')) {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css', '.woff2': 'empty' },
+    // The flag pictures are static files the fixture serves itself (see /flags/ below), not modules to bundle.
     external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',

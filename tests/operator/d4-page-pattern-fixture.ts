@@ -76,11 +76,11 @@ export async function startPagePatternFixture(root = resolve('.')) {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    // Flag images are served by the site, not bundled: a workspace tree that draws them still builds here.
+    external: ['/flags/*'],
     write: false,
     outdir: 'out',
     loader: { '.css': 'css', '.woff2': 'empty' },
-    // The flag pictures are static files (a country shows its mark with team desk v4.1 on); they are served below.
-    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
