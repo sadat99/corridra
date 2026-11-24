@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { missionHintNote, takeMissionHint } from './mission-hint';
 import { useOperatorFlags } from './operator-flags';
 import './money-figures.css';
+import { formatDateTime } from '../../lib/ux/format';
 import {
   currencies,
   formatMoney,
@@ -104,6 +105,11 @@ const moneyFigures = [
   ['Confirmed cash', 'confirmed_cash_minor'],
 ] as const;
 /** Team desk v4.1 (unit D12): the list comes first, then follow-up, then the yield detail. Ids are unchanged. */
+/** Team desk v4.1: a stored stage code in plain words. "QUALIFIED_OPPORTUNITY" reads "Qualified opportunity". */
+function plainStage(code: string) {
+  const words = code.replaceAll('_', ' ').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 const listFirst = <T extends { id: string }>(tabs: T[]): T[] =>
   ['commercial-opportunities', 'commercial-followup', 'commercial-yield'].flatMap((id) =>
     tabs.filter((tab) => tab.id === id),
@@ -718,7 +724,9 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                     {[...data.overdue, ...data.meetingFollowups].map((f, i) => (
                       <li key={`${i}-${f.id}`}>
                         {f.next_action} · {name(f.owner_id)} · due{' '}
-                        {new Date(f.due_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC
+                        {deskV41
+                          ? formatDateTime(f.due_at)
+                          : `${new Date(f.due_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC`}
                       </li>
                     ))}
                   </ul>
@@ -865,12 +873,15 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                     >
                       <h3>{o.title}</h3>
                       <p>
-                        Opportunity state: {o.status} · version {o.version}
+                        Opportunity state: {deskV41 ? plainStage(o.status) : o.status} · version{' '}
+                        {o.version}
                       </p>
                       <p>{o.attribution}</p>
                       <p>
                         Next: {o.next_action} · {name(o.owner_id)} · due{' '}
-                        {new Date(o.due_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC
+                        {deskV41
+                          ? formatDateTime(o.due_at)
+                          : `${new Date(o.due_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC`}
                       </p>
                       {o.loss_reason && <p>Loss reason: {o.loss_reason}</p>}
                       {manage && o.status !== 'LOST' && (

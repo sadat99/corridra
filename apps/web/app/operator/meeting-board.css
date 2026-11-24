@@ -1,35 +1,53 @@
 /* Team desk v4.1, unit D11: the Meetings board. Five columns, one per group of stored meeting statuses
-   (meeting-columns.ts). The columns sit side by side where each has at least 11.5rem and stack in one column on a
-   phone, in the same order. A card is short: title, its exact status word, the next step with its owner, and one
-   button that opens the change form in the shared dialog. Tokens only; selectors repeat a class because the
-   workspace panel styles every heading, paragraph and card inside it. */
+   (meeting-columns.ts). From 40rem a column is a heading over its cards, with no frame of its own, and the
+   columns sit side by side where each has at least 11.5rem. On a phone each column is a closed disclosure that
+   shows its count, in the same order. A card is short: title, its exact status word, the next step with its
+   owner, and one button that opens everything else in the shared dialog. Tokens only; selectors repeat a class
+   because the workspace panel styles every heading, paragraph, card and disclosure inside it. */
 .ux-meeting-board.ux-meeting-board {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.5rem), 1fr));
   align-items: start;
-  gap: var(--space-3);
+  gap: var(--space-4);
   min-inline-size: 0;
 }
 .ux-meeting-board .ux-meeting-column.ux-meeting-column {
-  display: grid;
-  align-content: start;
-  gap: var(--space-3);
   min-inline-size: 0;
   margin: 0;
-  padding: var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface-subtle);
 }
-.ux-meeting-board .ux-meeting-column.ux-meeting-column > h4 {
+.ux-meeting-board .ux-meeting-column.ux-meeting-column h4 {
   margin: 0;
   color: var(--text-1);
   font: 600 var(--text-base) / 1.3 var(--font-ui);
 }
-.ux-meeting-board .ux-meeting-column.ux-meeting-column > .ux-meeting-none {
+.ux-meeting-board .ux-meeting-column.ux-meeting-column .ux-meeting-none {
   margin: 0;
   color: var(--text-2);
   font-size: var(--text-sm);
+}
+/* On a phone the disclosure line names the column, so the heading is not shown a second time. */
+@media (max-width: 39.99rem) {
+  .ux-meeting-board.ux-meeting-board {
+    gap: var(--space-3);
+  }
+  .ux-meeting-board .ux-meeting-column.ux-meeting-column h4 {
+    display: none;
+  }
+  .ux-meeting-board .ux-meeting-column.ux-meeting-column details.phone-fold > :not(summary) {
+    margin-block-start: var(--space-3);
+  }
+}
+/* From 40rem the fold is always open and has no frame; its heading and cards are spaced 12 px apart. */
+@media (min-width: 40rem) {
+  .ux-workspace-body
+    .workspace-panel
+    .ux-meeting-board
+    .ux-meeting-column
+    details.phone-fold[data-phone-fold='phone']
+    > *
+    + * {
+    margin-top: var(--space-3);
+  }
 }
 .ux-meeting-board .ux-meeting-column .meeting-card.meeting-card {
   display: grid;
@@ -55,8 +73,12 @@
   justify-self: start;
   min-block-size: 2.75rem;
 }
-.ux-meeting-board .ux-meeting-column .meeting-card.meeting-card summary {
-  min-block-size: 2.75rem;
-  align-content: center;
-  font-size: var(--text-sm);
+/* The header slot that holds "Propose Meeting": no room is taken while it is empty. */
+.ux-desk-primary-slot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.ux-frame-primary:has(> .ux-desk-primary-slot:empty) {
+  display: none;
 }

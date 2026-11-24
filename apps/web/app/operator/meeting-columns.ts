@@ -16,7 +16,7 @@ export const meetingColumns: readonly {
   { id: 'proposed', title: 'Proposed', statuses: ['PROPOSED'] },
   { id: 'accepted', title: 'Accepted', statuses: ['ACCEPTED'] },
   { id: 'scheduled', title: 'Scheduled', statuses: ['SCHEDULED'] },
-  { id: 'new-time', title: 'Needs a new time', statuses: ['NO_SHOW', 'RESCHEDULE_REQUIRED'] },
+  { id: 'new-time', title: 'Needs a New Time', statuses: ['NO_SHOW', 'RESCHEDULE_REQUIRED'] },
   { id: 'finished', title: 'Finished', statuses: ['HELD', 'DECLINED', 'CANCELLED'] },
 ];
 

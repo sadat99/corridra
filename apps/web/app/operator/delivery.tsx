@@ -476,36 +476,9 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       </>
     ),
   };
-  return (
-    <section
-      data-operator-workbench
-      className="delivery-ops detail-card"
-      ref={formRootRef}
-      onChangeCapture={onChangeCapture}
-      onResetCapture={onResetCapture}
-    >
-      <h2>Client and programme delivery</h2>
-      <OperatorWorkbench
-        label="Publication and reporting sections"
-        sections={[
-          { label: 'Programmes', heading: 'Create programme' },
-          { label: 'Participants', heading: 'Participants' },
-          { label: 'Publication', heading: 'Review client publication' },
-          { label: 'Private scope', heading: 'Share approved view' },
-          { label: 'Access and requests', heading: 'Access and requests' },
-        ]}
-      />
-      <p>
-        {realCustomerInput()
-          ? 'Create a programme, review every intake row, then share only approved mission information. Use the participant contact details supplied for this work.'
-          : 'Create a programme, review every intake row, then share only approved mission information. This is a sample workspace, so participant addresses must be made up and end in .invalid.'}
-      </p>
-      <p role="status" aria-label="Delivery status">
-        {message}
-      </p>
-      <button disabled={busy} onClick={() => void act(async () => {})}>
-        Refresh Delivery
-      </button>
+  // Team desk v4.1: these belong to the Programmes tab; the Reports list follows the header.
+  const programmeControls = (
+    <>
       <label className="operator-select-field">
         Programme
         <select
@@ -545,6 +518,39 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
           Next Programmes
         </button>
       </p>
+    </>
+  );
+  return (
+    <section
+      data-operator-workbench
+      className="delivery-ops detail-card"
+      ref={formRootRef}
+      onChangeCapture={onChangeCapture}
+      onResetCapture={onResetCapture}
+    >
+      <h2>Client and programme delivery</h2>
+      <OperatorWorkbench
+        label="Publication and reporting sections"
+        sections={[
+          { label: 'Programmes', heading: 'Create programme' },
+          { label: 'Participants', heading: 'Participants' },
+          { label: 'Publication', heading: 'Review client publication' },
+          { label: 'Private scope', heading: 'Share approved view' },
+          { label: 'Access and requests', heading: 'Access and requests' },
+        ]}
+      />
+      <p>
+        {realCustomerInput()
+          ? 'Create a programme, review every intake row, then share only approved mission information. Use the participant contact details supplied for this work.'
+          : 'Create a programme, review every intake row, then share only approved mission information. This is a sample workspace, so participant addresses must be made up and end in .invalid.'}
+      </p>
+      <p role="status" aria-label="Delivery status">
+        {message}
+      </p>
+      <button disabled={busy} onClick={() => void act(async () => {})}>
+        Refresh Delivery
+      </button>
+      {deskV41 ? null : programmeControls}
       <SubTabs
         label="Delivery sections"
         tabs={[
@@ -554,6 +560,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
             label: 'Programmes',
             panel: (
               <>
+                {deskV41 ? programmeControls : null}
                 {manages && (
                   <details>
                     <summary>Create programme</summary>

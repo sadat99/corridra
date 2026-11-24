@@ -224,10 +224,20 @@ type Options = {
   height?: number;
   query?: string;
   empty?: boolean;
+  /** The server holds more meetings than the first page it sent. */
+  more?: boolean;
   posts?: { url: string; body: unknown }[];
 };
 async function open(page: Page, path: string, options: Options) {
-  const { v41, width = 1440, height = 900, query = '', empty = false, posts } = options;
+  const {
+    v41,
+    width = 1440,
+    height = 900,
+    query = '',
+    empty = false,
+    more = false,
+    posts,
+  } = options;
   await page.setViewportSize({ width, height });
   // A script error on the page fails the test at once, with its own words.
   page.on('pageerror', (error) => {
@@ -259,7 +269,13 @@ async function open(page: Page, path: string, options: Options) {
     route.fulfill({ json: communications }),
   );
   await page.route('**/api/workspace/meetings?*', (route) =>
-    route.fulfill({ json: empty ? { ...meetings, meetings: [], meetingsTotal: 0 } : meetings }),
+    route.fulfill({
+      json: empty
+        ? { ...meetings, meetings: [], meetingsTotal: 0 }
+        : more
+          ? { ...meetings, meetingsTotal: 60, next: 'page-2' }
+          : meetings,
+    }),
   );
   await page.route('**/api/workspace/meeting?*', (route) => {
     posts?.push({ url: route.request().url(), body: route.request().postDataJSON() });
@@ -320,21 +336,32 @@ test('D11 switch off: meetings are the cards the desk has today, with the form o
   await expect(section.locator('article.meeting-card')).toHaveCount(9);
 });
 
-test('D11 switch on: five columns of real statuses, every card with its exact status word', async ({
+test('D11 switch on: the page opens on five columns of real statuses, every card with its exact status word', async ({
   page,
 }) => {
   await open(page, '/operator/meetings', { v41: true });
   const section = panel(page, 'meetings');
-  await openTab(page, 'meetings', /^Meetings \(9\)$/);
+  // The board is the page: its tab is the first and is the one shown, with the other two beside it.
+  await expect(section.getByRole('tab')).toHaveText([
+    'Meetings (9)',
+    'Introductions (2)',
+    'Follow-up (0)',
+  ]);
+  await expect(section.getByRole('tab', { name: 'Meetings (9)' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
   const columns = section.locator('.ux-meeting-board > section.ux-meeting-column');
   await expect(columns).toHaveCount(5);
-  await expect(columns.locator('> h4')).toHaveText([
+  await expect(columns.locator('h4')).toHaveText([
     'Proposed (2)',
     'Accepted (1)',
     'Scheduled (1)',
-    'Needs a new time (2)',
+    'Needs a New Time (2)',
     'Finished (3)',
   ]);
+  // From 40rem a column is a heading over its cards: its disclosure line is not shown.
+  await expect(columns.locator('summary').first()).toBeHidden();
   const words = (index: number) => columns.nth(index).locator('article.meeting-card .ux-status');
   await expect(words(0)).toHaveText(['Proposed', 'Proposed']);
   await expect(words(1)).toHaveText(['Accepted']);
@@ -348,19 +375,86 @@ test('D11 switch on: five columns of real statuses, every card with its exact st
   ).toEqual(['positive', 'unknown', 'unknown']);
   // Every meeting is in exactly one column.
   await expect(section.locator('article.meeting-card')).toHaveCount(9);
-  // A card names its owner and next step, and a finished meeting offers no change.
+  // A card is its title, status word, next step and one control. Nothing else is on the card.
   const first = columns.nth(0).locator('article.meeting-card').first();
   await expect(first.locator('h5')).toHaveText('Meeting 1 proposed');
   await expect(first).toContainText('Next: Next step of meeting 1 · Amina Rahman · due');
   await expect(first).toContainText('Version 1.');
-  await expect(columns.nth(4).getByRole('button', { name: /^Update Meeting/ })).toHaveCount(0);
+  await expect(first.locator('> button')).toHaveCount(1);
+  await expect(first.locator('> details')).toHaveCount(0);
+  // A meeting that can change offers Update Meeting; a finished one can only be viewed.
   await expect(columns.nth(0).getByRole('button', { name: /^Update Meeting/ })).toHaveCount(2);
-  // The brief stays one tap away.
+  await expect(columns.nth(4).getByRole('button', { name: /^Update Meeting/ })).toHaveCount(0);
+  await expect(columns.nth(4).getByRole('button', { name: /^View Meeting/ })).toHaveCount(3);
+  // The brief, the participants and the history are in the dialog the one control opens.
   await expect(first.getByText('Private brief of meeting 1.')).toBeHidden();
-  await first.getByText('Meeting brief and participants').click();
-  await expect(first.getByText('Private brief of meeting 1.')).toBeVisible();
-  await expect(first.getByText('Participants: Buyer Lead')).toBeVisible();
+  await first.getByRole('button', { name: 'Update Meeting Meeting 1 proposed' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Update Meeting' });
+  await expect(dialog.getByText('Private brief of meeting 1.')).toBeVisible();
+  await expect(dialog.getByText('Participants: Buyer Lead')).toBeVisible();
+  await expect(dialog.getByText('Meeting history')).toBeVisible();
+  await page.keyboard.press('Escape');
+  // A finished meeting shows the same facts and no form.
+  await columns.nth(4).getByRole('button', { name: 'View Meeting Meeting 4 held' }).click();
+  const view = page.getByRole('dialog', { name: 'View Meeting' });
+  await expect(view.getByText('Private brief of meeting 4.')).toBeVisible();
+  await expect(view.getByRole('form')).toHaveCount(0);
+  await page.keyboard.press('Escape');
   await expect(page.locator('h1')).toHaveCount(1);
+});
+
+test('D11 switch on: a column counts what is loaded and says so while more is to come', async ({
+  page,
+}) => {
+  await open(page, '/operator/meetings', { v41: true, more: true });
+  const columns = panel(page, 'meetings').locator('.ux-meeting-column');
+  await expect(columns.locator('h4')).toHaveText([
+    'Proposed (2 shown)',
+    'Accepted (1 shown)',
+    'Scheduled (1 shown)',
+    'Needs a New Time (2 shown)',
+    'Finished (3 shown)',
+  ]);
+});
+
+test('D11 switch on: Propose Meeting is the one primary action in the header and opens the shared dialog', async ({
+  page,
+}) => {
+  const posts: { url: string; body: unknown }[] = [];
+  await open(page, '/operator/meetings', { v41: true, posts });
+  const section = panel(page, 'meetings');
+  const propose = page.locator('.ux-page-heading').getByRole('button', { name: 'Propose Meeting' });
+  await expect(propose).toBeVisible();
+  // One primary action on the page, and no second copy of the form on the board.
+  await expect(page.locator('.ux-frame-primary').getByRole('button')).toHaveCount(1);
+  await expect(section.getByText('Propose a meeting')).toHaveCount(0);
+  await propose.click();
+  const dialog = page.getByRole('dialog', { name: 'Propose Meeting' });
+  await expect(dialog).toBeVisible();
+  const form = dialog.getByRole('form', { name: 'Propose meeting' });
+  await form.getByLabel('Meeting title').fill('First call');
+  await form.getByLabel('Meeting brief').fill('Agree the sample plan');
+  await form.getByLabel('Meeting participants, one per line').fill('Buyer Lead\nAmina Rahman');
+  await form.getByLabel('Meeting next action').fill('Send the agenda');
+  await form.getByLabel('Meeting command reason').fill('Buyer asked for a call');
+  await form.getByRole('button', { name: 'Propose Meeting' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(section.getByRole('status', { name: 'Access status' })).toHaveText('Saved.');
+  expect(posts).toHaveLength(1);
+  const body = posts[0].body as Record<string, unknown>;
+  expect({ ...body, commandId: '', dueAt: '', messageId: '', ownerId: '' }).toEqual({
+    action: 'propose',
+    messageId: '',
+    title: 'First call',
+    brief: 'Agree the sample plan',
+    participants: ['Buyer Lead', 'Amina Rahman'],
+    ownerId: '',
+    nextAction: 'Send the agenda',
+    dueAt: '',
+    reason: 'Buyer asked for a call',
+    commandId: '',
+  });
+  expect(typeof body.messageId).toBe('string');
 });
 
 test('D11 switch on: an introduction is never in a column, and the outreach note stays in view', async ({
@@ -368,16 +462,16 @@ test('D11 switch on: an introduction is never in a column, and the outreach note
 }) => {
   await open(page, '/operator/meetings', { v41: true });
   const section = panel(page, 'meetings');
-  // The Introductions tab is the first one: the test-mode note of the sent email is in view without a tap.
-  const card = section.locator('article.introduction-card', { hasText: 'Test Mode Buyer' });
-  await expect(card.getByText(/^Delivery note: /)).toBeVisible();
-  await openTab(page, 'meetings', /^Meetings \(9\)$/);
   const board = section.locator('.ux-meeting-board');
   await expect(board).toBeVisible();
   await expect(board.locator('article.introduction-card')).toHaveCount(0);
   // The buyer that only has an introduction is offered in the Propose form, not shown as a meeting.
   await expect(board.locator('article', { hasText: 'Introduction Only Buyer' })).toHaveCount(0);
   await expect(board.locator('article', { hasText: 'Test Mode Buyer' })).toHaveCount(0);
+  // The Introductions tab is one tap away and the test-mode note of the sent email is written on its card.
+  await openTab(page, 'meetings', /^Introductions \(2\)$/);
+  const card = section.locator('article.introduction-card', { hasText: 'Test Mode Buyer' });
+  await expect(card.getByText(/^Delivery note: /)).toBeVisible();
 });
 
 test('D11 switch on: the change form opens in the shared dialog and sends the same payload', async ({
@@ -393,7 +487,13 @@ test('D11 switch on: the change form opens in the shared dialog and sends the sa
   const dialog = page.getByRole('dialog', { name: 'Update Meeting' });
   await expect(dialog).toBeVisible();
   const form = dialog.getByRole('form', { name: 'Update meeting Meeting 1 proposed' });
+  // The choices read in plain words; the value sent is the stored code.
   await expect(form.getByLabel('Next meeting state')).toHaveValue('ACCEPTED');
+  await expect(form.getByLabel('Next meeting state').locator('option')).toHaveText([
+    'Accepted',
+    'Declined',
+    'Cancelled',
+  ]);
   await expect(form.getByLabel('Meeting next action')).toHaveValue('Next step of meeting 1');
   // Escape closes it and focus returns to the button that opened it; what was typed is kept.
   await form.getByLabel('Meeting command reason').fill('Buyer agreed by phone');
@@ -463,18 +563,39 @@ test('D11 switch on: five columns side by side on a desktop, stacked in order on
   expect(await overflow(page)).toBeLessThanOrEqual(0);
 
   await open(page, '/operator/meetings', { v41: true, width: 390, height: 844 });
-  await openTab(page, 'meetings', /^Meetings \(9\)$/);
+  await expect(columns).toHaveCount(5);
   const narrow = await boxes();
   expect(new Set(narrow.map((box) => box.x)).size, 'one column at 390').toBe(1);
   for (let index = 1; index < narrow.length; index += 1)
     expect(narrow[index].y).toBeGreaterThan(narrow[index - 1].y);
   expect(await overflow(page)).toBeLessThanOrEqual(0);
-  // The button of a card is a 44 px target on a phone.
-  const height = await panel(page, 'meetings')
-    .getByRole('button', { name: /^Update Meeting/ })
+  // On a phone each column is a closed disclosure that shows its count, and its heading is not repeated.
+  const folds = columns.locator('details.phone-fold');
+  await expect(folds.locator('> summary')).toHaveText([
+    'Proposed (2)',
+    'Accepted (1)',
+    'Scheduled (1)',
+    'Needs a New Time (2)',
+    'Finished (3)',
+  ]);
+  expect(
+    await folds.evaluateAll((nodes) => nodes.map((n) => (n as HTMLDetailsElement).open)),
+  ).toEqual(Array(5).fill(false));
+  await expect(columns.locator('h4').first()).toBeHidden();
+  await expect(columns.locator('article.meeting-card').first()).toBeHidden();
+  // Closed, the whole Meetings page is short: under two and a half screens of a phone.
+  const pageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+  expect(pageHeight / 844).toBeLessThan(2.5);
+  await folds.first().locator('> summary').click();
+  const button = columns
     .first()
-    .evaluate((button) => button.getBoundingClientRect().height);
-  expect(height).toBeGreaterThanOrEqual(44);
+    .getByRole('button', { name: /^Update Meeting/ })
+    .first();
+  await expect(button).toBeVisible();
+  // The button of a card is a 44 px target on a phone.
+  expect(
+    await button.evaluate((node) => node.getBoundingClientRect().height),
+  ).toBeGreaterThanOrEqual(44);
 });
 
 test('D11 switch on: with no meeting every column says so', async ({ page }) => {
@@ -569,13 +690,35 @@ test('D12 switch on: five across on a desktop, no sideways scroll on a phone, an
   const cells = panel(page, 'commercial').locator('dl[aria-label="USD amounts"] > div');
   const rows = async () =>
     new Set(await cells.evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().y))).size;
+  // The figures are drawn once the amounts have loaded: wait for the five before measuring them.
+  await expect(cells).toHaveCount(5);
   expect(await rows(), 'five across at 1440').toBe(1);
   await open(page, '/operator/commercial', { v41: true, width: 320, height: 700 });
+  await expect(cells).toHaveCount(5);
   expect(await overflow(page)).toBeLessThanOrEqual(0);
   const inside = await cells.evaluateAll((nodes) =>
     nodes.every((node) => node.scrollWidth <= node.clientWidth + 1),
   );
   expect(inside, 'each amount stays inside its cell at 320').toBe(true);
+  // Two across even at 320, and the amount is the smaller size on a phone.
+  expect(
+    new Set(await cells.evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().x))).size,
+    'two columns at 320',
+  ).toBe(2);
+  const size = (width: number) =>
+    open(page, '/operator/commercial', { v41: true, width }).then(async () => {
+      await expect(cells).toHaveCount(5);
+      return cells
+        .first()
+        .evaluate((node) => [
+          getComputedStyle(node.querySelector('dt')!).fontSize,
+          getComputedStyle(node.querySelector('dd')!).fontSize,
+        ]);
+    });
+  // The figure styles win over the panel's own dt and dd rule: label 14 px, amount 18 px then 24 px from 40rem.
+  expect(await size(390)).toEqual(['14px', '18px']);
+  expect(await size(768)).toEqual(['14px', '24px']);
+  expect(await size(1440)).toEqual(['14px', '24px']);
   await open(page, '/operator/commercial', { v41: true, empty: true });
   const figures = panel(page, 'commercial').getByRole('group', { name: 'Recorded amounts' });
   await expect(figures).toHaveText('No commercial amounts recorded.');
@@ -584,6 +727,20 @@ test('D12 switch on: five across on a desktop, no sideways scroll on a phone, an
   await expect(panel(page, 'commercial').getByText('No commercial amounts recorded.')).toHaveCount(
     1,
   );
+});
+
+test('D12 switch on: an opportunity row says its stage and its date in plain words', async ({
+  page,
+}) => {
+  await open(page, '/operator/commercial', { v41: true });
+  const card = panel(page, 'commercial').locator('article[aria-label="Knitwear programme"]');
+  await expect(card).toContainText('Opportunity state: Qualified opportunity · version 2');
+  await expect(card).toContainText('due 1 Dec 2026, 09:00 (UTC)');
+  await expect(card).not.toContainText('QUALIFIED_OPPORTUNITY');
+  // Switch off, the row is as it was.
+  await open(page, '/operator/commercial', { v41: false });
+  await expect(card).toContainText('Opportunity state: QUALIFIED_OPPORTUNITY · version 2');
+  await expect(card).toContainText('due 01/12/2026, 09:00:00 UTC');
 });
 
 // D13 Reports --------------------------------------------------------------------------------------------------
@@ -627,6 +784,14 @@ test('D13 switch on: one list of reports, each with its status word', async ({ p
   ]);
   await expect(rows.locator('.ux-status')).toHaveText(['Approved', 'Withdrawn', 'Approved']);
   await expect(section.locator('.ux-report-scope')).toHaveCount(0);
+  // The list follows the header: the programme chooser and its pager belong to the Programmes tab.
+  const programme = section.locator('select[aria-label="Programme"]');
+  await expect(programme).toHaveCount(1);
+  await expect(programme).toBeHidden();
+  await expect(section.locator('.operator-pager').first()).toBeHidden();
+  expect(
+    await programme.evaluate((node) => node.closest('[data-subtab]')?.getAttribute('data-subtab')),
+  ).toBe('programmes');
   for (const height of await rows.evaluateAll((nodes) =>
     nodes.map((node) => node.getBoundingClientRect().height),
   ))

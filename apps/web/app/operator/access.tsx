@@ -1,12 +1,15 @@
 'use client';
-import { SubTabs } from '../../components/ux/sub-tabs';
+import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 import { notSentWords } from './contact-not-sent';
 import { canSendOne, deliveryNoteWords, sendOneBody } from './outreach-send';
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useOperatorFlags } from './operator-flags';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { subscribeToHash } from '../../lib/address-store';
+import { deskPrimarySlotId } from '../../components/ux/desk-segments';
 import {
   contactPurpose,
   meetingTransitions,
@@ -186,6 +189,25 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
     [buyerPath, setBuyerPath] = useState(''),
     [target, setTarget] = useState('');
   const retry = useRef(new Map<string, string>());
+  // Team desk v4.1: "Propose Meeting" is the one primary action of the page. It sits in the header's slot, which
+  // exists only while the Meetings page is the one on show, and opens the propose form in the shared dialog.
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null),
+    [proposing, setProposing] = useState(false),
+    [proposed, setProposed] = useState(false);
+  useEffect(() => {
+    if (!deskV41) return;
+    const find = () => setHeaderSlot(document.getElementById(deskPrimarySlotId));
+    find();
+    // The header follows the address; look again once it has redrawn for the new one.
+    let timer = 0;
+    const unsubscribe = subscribeToHash(() => {
+      timer = window.setTimeout(find, 0);
+    });
+    return () => {
+      window.clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [deskV41]);
   const [defaults] = useState(() => ({
     tomorrow: utcField(),
     week: utcField(new Date(Date.now() + 7 * 86400000).toISOString()),
@@ -383,6 +405,73 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   const manage = ['owner', 'admin', 'operator'].includes(comms.role),
     approve = ['owner', 'admin'].includes(comms.role),
     selected = comms.targets.find((t) => t.id === target);
+  const proposeForm = (
+    <form
+      className="operator-form detail-card"
+      aria-label="Propose meeting"
+      onSubmit={(e) => {
+        setProposed(true);
+        void submit(
+          e,
+          (f) => ({
+            action: 'propose',
+            messageId: field(f, 'messageId'),
+            title: field(f, 'title'),
+            brief: field(f, 'brief'),
+            participants: field(f, 'participants')
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean),
+            ownerId: field(f, 'ownerId'),
+            nextAction: field(f, 'nextAction'),
+            dueAt: timestamp(f, 'dueAt'),
+            reason: field(f, 'reason'),
+          }),
+          'meeting',
+        ).then((saved) => {
+          if (saved) setProposing(false);
+        });
+      }}
+    >
+      {deskV41 ? null : <h3>Propose a meeting</h3>}
+      <label className="field">
+        Meeting introduction
+        <select name="messageId" required>
+          {comms.messages.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.presentation.company} ({m.decision ?? 'no response'})
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        Meeting title
+        <input name="title" required minLength={3} maxLength={160} />
+      </label>
+      <label className="field">
+        Meeting brief
+        <textarea name="brief" required minLength={3} maxLength={2000} />
+      </label>
+      <label className="field">
+        Meeting participants, one per line
+        <textarea name="participants" required maxLength={1200} />
+      </label>
+      <Ownership owners={meetings.owners} />
+      <button className="primary-link" disabled={busy}>
+        Propose Meeting
+      </button>
+    </form>
+  );
+  /** Team desk v4.1: the Meetings page opens on its board; introductions and follow-up stay sibling tabs. */
+  const boardFirst = (tabs: SubTab[]) =>
+    deskV41
+      ? [
+          ...tabs.filter((tab) => tab.id === 'access-meetings'),
+          ...tabs.filter((tab) => tab.id !== 'access-meetings'),
+        ]
+      : tabs;
+  const allShown =
+    meetings.meetingsTotal === null || meetings.meetings.length >= meetings.meetingsTotal;
   return (
     <section className="operator-section">
       <div className="section-heading">
@@ -408,7 +497,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       </p>
       <SubTabs
         label="Introductions and meetings sections"
-        tabs={[
+        tabs={boardFirst([
           {
             id: 'access-introductions',
             label: `Introductions (${comms.messages.length})`,
@@ -848,60 +937,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             label: `Meetings (${meetings.meetings.length})`,
             panel: (
               <>
-                {manage && (
+                {manage && !deskV41 && (
                   <PhoneFold summary="Propose a meeting" fold="always">
-                    <form
-                      className="operator-form detail-card"
-                      aria-label="Propose meeting"
-                      onSubmit={(e) =>
-                        submit(
-                          e,
-                          (f) => ({
-                            action: 'propose',
-                            messageId: field(f, 'messageId'),
-                            title: field(f, 'title'),
-                            brief: field(f, 'brief'),
-                            participants: field(f, 'participants')
-                              .split('\n')
-                              .map((s) => s.trim())
-                              .filter(Boolean),
-                            ownerId: field(f, 'ownerId'),
-                            nextAction: field(f, 'nextAction'),
-                            dueAt: timestamp(f, 'dueAt'),
-                            reason: field(f, 'reason'),
-                          }),
-                          'meeting',
-                        )
-                      }
-                    >
-                      <h3>Propose a meeting</h3>
-                      <label className="field">
-                        Meeting introduction
-                        <select name="messageId" required>
-                          {comms.messages.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.presentation.company} ({m.decision ?? 'no response'})
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="field">
-                        Meeting title
-                        <input name="title" required minLength={3} maxLength={160} />
-                      </label>
-                      <label className="field">
-                        Meeting brief
-                        <textarea name="brief" required minLength={3} maxLength={2000} />
-                      </label>
-                      <label className="field">
-                        Meeting participants, one per line
-                        <textarea name="participants" required maxLength={1200} />
-                      </label>
-                      <Ownership owners={meetings.owners} />
-                      <button className="primary-link" disabled={busy}>
-                        Propose Meeting
-                      </button>
-                    </form>
+                    {proposeForm}
                   </PhoneFold>
                 )}
                 <h3>Meeting itinerary</h3>
@@ -916,14 +954,12 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                         column.statuses.includes(m.status),
                       );
                       return (
-                        <section
+                        <BoardColumn
                           key={column.id}
-                          className="ux-meeting-column"
-                          aria-labelledby={`meeting-column-${column.id}`}
+                          id={column.id}
+                          title={column.title}
+                          count={allShown ? `${cards.length}` : `${cards.length} shown`}
                         >
-                          <h4 id={`meeting-column-${column.id}`}>
-                            {column.title} ({cards.length})
-                          </h4>
                           {cards.length === 0 && <p className="ux-meeting-none">No meetings.</p>}
                           {cards.map((m) => (
                             <MeetingCard
@@ -938,7 +974,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                               message={message}
                             />
                           ))}
-                        </section>
+                        </BoardColumn>
                       );
                     })}
                   </div>
@@ -1030,8 +1066,63 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
               </>
             ),
           },
-        ]}
+        ])}
       />
+      {deskV41 && manage && headerSlot
+        ? createPortal(
+            <button
+              type="button"
+              className="primary-link"
+              onClick={() => {
+                setProposed(false);
+                setProposing(true);
+              }}
+            >
+              Propose Meeting
+            </button>,
+            headerSlot,
+          )
+        : null}
+      {deskV41 && manage && (
+        <Dialog
+          open={proposing}
+          onClose={() => setProposing(false)}
+          title="Propose Meeting"
+          keepMounted
+          locked={busy}
+        >
+          {proposeForm}
+          {proposed && !busy && message && <p role="alert">{message}</p>}
+        </Dialog>
+      )}
+    </section>
+  );
+}
+/**
+ * One column of the Meetings board (team desk v4.1, unit D11). From 40rem it is a heading over its cards. On a
+ * phone it is a closed disclosure that shows its count, so five columns do not make a page five screens long.
+ * The heading and the disclosure line are never shown together.
+ */
+function BoardColumn({
+  id,
+  title,
+  count,
+  children,
+}: {
+  id: string;
+  title: string;
+  /** "2", or "25 shown" while more meetings are still to be loaded. */
+  count: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="ux-meeting-column" aria-label={`${title} (${count})`}>
+      <PhoneFold summary={`${title} (${count})`}>
+        <h4 id={`meeting-column-${id}`}>
+          {title} ({count})
+        </h4>
+        {children}
+      </PhoneFold>
     </section>
   );
 }
@@ -1132,9 +1223,15 @@ function MeetingCard({
       <label className="field">
         Next meeting state
         <select value={status} onChange={(e) => setStatus(e.target.value as MeetingStatus)}>
-          {transitions.map((t) => (
-            <option key={t}>{t}</option>
-          ))}
+          {transitions.map((t) =>
+            board ? (
+              <option key={t} value={t}>
+                {plain(t)}
+              </option>
+            ) : (
+              <option key={t}>{t}</option>
+            ),
+          )}
         </select>
       </label>
       <Ownership owners={data.owners} meeting={m} />
@@ -1216,85 +1313,87 @@ function MeetingCard({
       </button>
     </form>
   );
-  return (
-    <article className="detail-card meeting-card">
-      <Title>{m.title}</Title>
-      {board ? (
+  const schedule = m.starts_at && m.ends_at && m.timezone && (
+    <p>
+      {localWallTime(m.starts_at, m.timezone)} to {localWallTime(m.ends_at, m.timezone)} (
+      {m.timezone}). Your time: {formatDateTime(m.starts_at)} to {formatDateTime(m.ends_at)}.
+      Location: {m.location}.
+    </p>
+  );
+  const history = (
+    <details>
+      <summary>Meeting history</summary>
+      <ul>
+        {data.history
+          .filter((h) => h.meeting_id === m.id)
+          .map((h) => (
+            <li key={h.id}>
+              {h.action}: {h.details.command.reason}
+              {h.details.previous?.startsAt
+                ? ` Previous schedule: ${h.details.previous.startsAt} (${h.details.previous.timezone}).`
+                : ''}
+            </li>
+          ))}
+      </ul>
+    </details>
+  );
+  // The board card: title, the exact status word, the next step and one control. Everything else about the
+  // meeting (brief, participants, times, outcomes, the change form and the history) is in the dialog it opens.
+  if (board) {
+    const control = form ? 'Update Meeting' : 'View Meeting';
+    return (
+      <article className="detail-card meeting-card">
+        <Title>{m.title}</Title>
         <p>
           <span className="ux-status" data-tone={meetingStatusTone(m.status)}>
             {plain(m.status)}
           </span>{' '}
           Version {m.version}.
         </p>
-      ) : (
-        <p>
-          State: {plain(m.status)}. Version {m.version}.
-        </p>
-      )}
-      {board && (
         <p>
           Next: {m.next_action} ·{' '}
           {data.owners.find((o) => o.user_id === m.owner_id)?.name ?? 'Not assigned'} · due{' '}
           {formatDateTime(m.due_at)}
         </p>
-      )}
-      {!board && brief}
-      {m.starts_at && m.ends_at && m.timezone && (
-        <p>
-          {localWallTime(m.starts_at, m.timezone)} to {localWallTime(m.ends_at, m.timezone)} (
-          {m.timezone}). Your time: {formatDateTime(m.starts_at)} to {formatDateTime(m.ends_at)}.
-          Location: {m.location}.
-        </p>
-      )}
-      {outcomes}
-      {board
-        ? form && (
-            <>
-              <button
-                type="button"
-                className="secondary-link"
-                aria-label={`Update Meeting ${m.title}`}
-                onClick={() => {
-                  setSent(false);
-                  setChanging(true);
-                }}
-              >
-                Update Meeting
-              </button>
-              <Dialog
-                open={changing}
-                onClose={() => setChanging(false)}
-                title="Update Meeting"
-                keepMounted
-                locked={busy}
-              >
-                {form}
-                {sent && !busy && message && <p role="alert">{message}</p>}
-              </Dialog>
-            </>
-          )
-        : form}
-      {board && (
-        <details>
-          <summary>Meeting brief and participants</summary>
+        <button
+          type="button"
+          className="secondary-link"
+          aria-label={`${control} ${m.title}`}
+          onClick={() => {
+            setSent(false);
+            setChanging(true);
+          }}
+        >
+          {control}
+        </button>
+        <Dialog
+          open={changing}
+          onClose={() => setChanging(false)}
+          title={control}
+          keepMounted
+          locked={busy}
+        >
           {brief}
-        </details>
-      )}
-      <details>
-        <summary>Meeting history</summary>
-        <ul>
-          {data.history
-            .filter((h) => h.meeting_id === m.id)
-            .map((h) => (
-              <li key={h.id}>
-                {h.action}: {h.details.command.reason}
-                {h.details.previous?.startsAt
-                  ? ` Previous schedule: ${h.details.previous.startsAt} (${h.details.previous.timezone}).`
-                  : ''}
-              </li>
-            ))}
-        </ul>
-      </details>
+          {schedule}
+          {outcomes}
+          {form}
+          {sent && !busy && message && <p role="alert">{message}</p>}
+          {history}
+        </Dialog>
+      </article>
+    );
+  }
+  return (
+    <article className="detail-card meeting-card">
+      <Title>{m.title}</Title>
+      <p>
+        State: {plain(m.status)}. Version {m.version}.
+      </p>
+      {brief}
+      {schedule}
+      {outcomes}
+      {form}
+      {history}
     </article>
   );
 }

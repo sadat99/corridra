@@ -1,7 +1,8 @@
 /* Team desk v4.1, unit D12: the five amounts at the top of Money, one row per currency. Each figure is a plain
-   label (14 px) over its exact stored amount (the section-title size). Five across from 64rem, three from 40rem,
-   two on a phone and one under 22.5rem, so a long amount wraps inside its own cell and the page never scrolls
-   sideways. Tokens only; the selectors repeat a class because the workspace panel styles every dl and p inside it. */
+   label (14 px) over its exact stored amount (large from 40rem). Five across from 64rem, three from 40rem and two
+   on a phone; a long amount wraps inside its own cell, so the page never scrolls sideways. Tokens only; the
+   selectors carry the workspace panel's own path and repeat a class because the panel, and its phone rules, style
+   every dl, dt, dd and p inside it. */
 .ux-money-figures.ux-money-figures {
   display: grid;
   gap: var(--space-3);
@@ -25,12 +26,12 @@
   border-radius: var(--radius-md);
   background: var(--surface-1);
 }
-.ux-money-figures.ux-money-figures dt {
+.ux-workspace-body .workspace-panel .ux-money-figures.ux-money-figures dt {
   margin: 0;
   color: var(--text-2);
   font: 400 var(--text-sm) / 1.3 var(--font-ui);
 }
-.ux-money-figures.ux-money-figures dd {
+.ux-workspace-body .workspace-panel .ux-money-figures.ux-money-figures dd {
   margin: 0;
   color: var(--text-1);
   font: 600 var(--text-lg) / 1.3 var(--font-ui);
@@ -41,22 +42,16 @@
   margin: 0;
   color: var(--text-2);
 }
-@media (max-width: 22.49rem) {
-  .ux-money-figures.ux-money-figures > dl {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
 @media (min-width: 40rem) {
   .ux-money-figures.ux-money-figures > dl {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ux-workspace-body .workspace-panel .ux-money-figures.ux-money-figures dd {
+    font-size: var(--text-2xl);
   }
 }
 @media (min-width: 64rem) {
   .ux-money-figures.ux-money-figures > dl {
     grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-  .ux-money-figures.ux-money-figures dd {
-    font-size: var(--text-h2);
-    font-weight: 500;
   }
 }

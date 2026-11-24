@@ -17,7 +17,7 @@ describe('D11 meeting columns', () => {
       'Proposed',
       'Accepted',
       'Scheduled',
-      'Needs a new time',
+      'Needs a New Time',
       'Finished',
     ]);
   });
