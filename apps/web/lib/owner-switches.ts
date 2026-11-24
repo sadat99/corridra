@@ -396,7 +396,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_LANGUAGES_PREVIEW',
     label: 'Show every language',
-    line: 'Shows all six other languages in the language chooser, with no mark, including any not listed in Languages offered. No native review is recorded for them. Needs a new deploy.',
+    line: 'Shows all six other languages in the language chooser, with no mark, including any not listed in Languages offered. No native review is recorded for them. Keep it off for the public deployment. Needs a new deploy.',
     group: 'Accounts and requests',
     kind: 'flag',
   },
@@ -448,7 +448,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_AI_ENABLED',
     label: 'AI assistance',
-    line: "Allows AI assistance for the team. A real workspace also needs the real AI control opened by the install job, a provider key, its processing locations and the workspace's own AI setting. AI never decides access, money or facts.",
+    line: "Allows AI assistance for the team. A real workspace also needs the real AI install, then the real AI control opened in its own separate owner run, a provider key, its processing locations and the workspace's own AI setting. AI never decides access, money or facts.",
     group: 'Safety and checks',
     kind: 'flag',
   },
@@ -611,7 +611,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_SHARE_CARD',
     label: 'Decision card',
-    line: 'Lets customers who are owners or admins of a workspace create read-only links to one reviewed decision. A sample workspace needs saved reports and decisions on, its database module installed and the recorded privacy review. A real workspace also needs the real decision cards install, real use open and the signed-in report switch on; its links open without sign-in only while the public report link switch is on. A link can be withdrawn, but what was seen cannot be recalled.',
+    line: 'Lets customers who are owners or admins of a workspace create read-only links to one reviewed decision. A sample workspace needs saved reports and decisions on, its database module installed and the recorded privacy review. A real workspace also needs the real decision cards install, real use open, Signed-in report access for real workspaces on and Public report links for real workspaces on; while the public links switch is off no card is offered, previewed or created there and no link opens, and listing and withdrawing still work. A link can be withdrawn, but what was seen cannot be recalled.',
     group: 'Delivery',
     kind: 'flag',
   },
