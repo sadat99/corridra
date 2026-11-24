@@ -12,6 +12,8 @@ export type DoorItem = {
   /** An exact existing address. A test checks each one against the real sections and pages. */
   href: string;
   primary?: boolean;
+  /** UI/UX.v4.1 L2: the one owned icon of the door, an existing icon name. A door without one is drawn as before. */
+  icon?: string;
 };
 
 export const founderDoor: readonly DoorItem[] = [
@@ -72,17 +74,20 @@ export const helperDoor: readonly DoorItem[] = [
     line: 'Set up your separate helper access from the invitation the Corridra team sent.',
     href: helperWays.setup.href,
     primary: true,
+    icon: 'document',
   },
   {
     id: 'how',
     title: helperWays.network.text,
     line: 'What a task holds, how evidence is reviewed and what a reward does and does not mean.',
     href: helperWays.network.href,
+    icon: 'network',
   },
   {
     id: 'signin',
     title: helperWays.signIn.text,
     line: 'Sign in with your work account to open the tasks assigned to you.',
     href: helperWays.signIn.href,
+    icon: 'check',
   },
 ];

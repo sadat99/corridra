@@ -10,7 +10,7 @@ import { translate } from '../../apps/web/lib/i18n/messages';
 
 const token = 'a'.repeat(64);
 const typed = 'We can supply plain trims.';
-const claim = 'Operator-reported context. No independent verification is asserted.';
+const claim = 'Corridra team-reported context. No independent verification is asserted.';
 const widths = [320, 390, 768, 1440] as const;
 const shots = process.env.BUYER_STEPS_SHOTS_DIR;
 let script = '';
