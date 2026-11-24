@@ -1,3 +1,4 @@
+import type { RoutePlace } from '../components/ux/flag';
 import type { factLabels } from '../components/fact-label';
 
 export type PublicPageContent = {
@@ -24,7 +25,16 @@ export type PublicPageContent = {
   ctaHref?: string;
   intakeJob?: string;
   /** The commercial direction this page is about, shown next to the main action. */
-  route?: { label: string; href: string; linkLabel: string };
+  /**
+   * `places` is the same route as its two places, each with the mark that stands before its written name (UI/UX.v4.1
+   * L1); the words read exactly as `label`.
+   */
+  route?: {
+    label: string;
+    places: [RoutePlace, RoutePlace];
+    href: string;
+    linkLabel: string;
+  };
   /** The opposite direction, when the route also works in reverse. */
   reverse?: {
     title: string;
@@ -72,6 +82,10 @@ export const publicPages: Record<string, PublicPageContent> = {
     cta: 'Plan My Mission',
     route: {
       label: 'Bangladesh to the EU',
+      places: [
+        { name: 'Bangladesh', mark: 'bd' },
+        { name: 'the EU', mark: 'eu' },
+      ],
       href: '/corridors/bangladesh-eu',
       linkLabel: 'Read the EU route details',
     },
@@ -124,6 +138,10 @@ export const publicPages: Record<string, PublicPageContent> = {
     cta: 'Plan a Sourcing Mission',
     route: {
       label: 'Bangladesh to China',
+      places: [
+        { name: 'Bangladesh', mark: 'bd' },
+        { name: 'China', mark: 'cn' },
+      ],
       href: '/corridors/bangladesh-china',
       linkLabel: 'Read the China route details',
     },
@@ -168,6 +186,10 @@ export const publicPages: Record<string, PublicPageContent> = {
     cta: 'Plan a Market-Entry Mission',
     route: {
       label: 'The EU to Bangladesh',
+      places: [
+        { name: 'The EU', mark: 'eu' },
+        { name: 'Bangladesh', mark: 'bd' },
+      ],
       href: '/corridors/bangladesh-eu',
       linkLabel: 'Read the EU to Bangladesh route details',
     },
@@ -212,6 +234,10 @@ export const publicPages: Record<string, PublicPageContent> = {
     cta: 'Plan a Trade Mission',
     route: {
       label: 'Bangladesh to China',
+      places: [
+        { name: 'Bangladesh', mark: 'bd' },
+        { name: 'China', mark: 'cn' },
+      ],
       href: '/corridors/bangladesh-china',
       linkLabel: 'Read the China route details',
     },

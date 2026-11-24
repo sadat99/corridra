@@ -48,6 +48,9 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
+    // The plan summary draws flags (UI/UX.v4.1 L1). Files under public/ are served by Next at the site root, so
+    // the fixture leaves the flag addresses as they are instead of bundling them.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
@@ -386,4 +389,85 @@ test('notes validation keeps its context hint and exposes the error on the texta
   await expect(page.locator('#notes-error')).toBeVisible();
   await expect(notes).toHaveAttribute('aria-invalid', 'true');
   await expect(notes).toHaveAttribute('aria-describedby', 'request-context-hint notes-error');
+});
+
+// UI/UX.v4.1 L6 with L2 and L3 (owner lock of 23 November 2026): each goal is a row with one owned icon in a soft
+// square, a hollow radio until it is chosen, then the cobalt edge, the selected fill and a filled radio.
+test('v4.1 L6: goal rows carry one owned icon in a soft square and the chosen state', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${origin}/?fq=1`);
+  const token = (name: string) =>
+    page.evaluate((value) => {
+      const probe = document.createElement('span');
+      probe.style.color = `var(${value})`;
+      document.body.append(probe);
+      const colour = getComputedStyle(probe).color;
+      probe.remove();
+      return colour;
+    }, name);
+  const [selected, surface, soft, paper] = [
+    await token('--selected'),
+    await token('--selected-surface'),
+    await token('--surface-subtle'),
+    await token('--surface-1'),
+  ];
+  const cards = page.locator('.mr-fq-card');
+  await expect(cards).toHaveCount(5);
+  // Rows: one under the other, each the full width of the question.
+  const boxes = await cards.evaluateAll((items) =>
+    items.map((item) => {
+      const { left, width } = item.getBoundingClientRect();
+      return `${Math.round(left)}:${Math.round(width)}`;
+    }),
+  );
+  expect(new Set(boxes).size, JSON.stringify(boxes)).toBe(1);
+  for (const card of await cards.all()) {
+    const tile = card.locator('.mr-fq-tile');
+    await expect(tile).toHaveCount(1);
+    await expect(tile).toHaveAttribute('aria-hidden', 'true');
+    await expect(tile.locator('svg.corridra-icon')).toHaveCount(1);
+    const box = (await tile.boundingBox())!;
+    for (const side of [box.width, box.height]) {
+      expect(side).toBeGreaterThanOrEqual(42);
+      expect(side).toBeLessThanOrEqual(44);
+    }
+    expect(await tile.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(soft);
+    // One icon per choice: the radio is drawn, it is not a second icon.
+    await expect(card.locator('svg')).toHaveCount(1);
+    const radio = card.locator('.mr-fq-check');
+    expect(await radio.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(paper);
+    expect(await radio.evaluate((el) => getComputedStyle(el, '::after').content)).toBe('none');
+  }
+  const sell = cards.nth(2);
+  const before = (await sell.boundingBox())!;
+  await page.getByRole('radio', { name: /Sell abroad/ }).check();
+  const look = await sell.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return {
+      fill: style.backgroundColor,
+      edge: style.borderTopColor,
+      width: style.borderTopWidth,
+      shadow: style.boxShadow,
+    };
+  });
+  expect(look.fill).toBe(surface);
+  expect(look.edge).toBe(selected);
+  expect(look.width).toBe('1px');
+  expect(look.shadow).toContain('inset');
+  const after = (await sell.boundingBox())!;
+  expect(Math.round(after.height)).toBe(Math.round(before.height));
+  const dot = sell.locator('.mr-fq-check');
+  expect(await dot.evaluate((el) => getComputedStyle(el).borderTopColor)).toBe(selected);
+  expect(await dot.evaluate((el) => getComputedStyle(el, '::after').backgroundColor)).toBe(
+    selected,
+  );
+  expect(
+    await sell.locator('.mr-fq-tile').evaluate((el) => getComputedStyle(el).backgroundColor),
+  ).toBe(surface);
+  // The other four stay not chosen.
+  expect(await cards.nth(0).evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(paper);
+  const results = await new AxeBuilder({ page }).include('.mr-fq').analyze();
+  expect(results.violations).toEqual([]);
 });

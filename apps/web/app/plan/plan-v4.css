@@ -163,3 +163,27 @@
   color: var(--text-2);
   overflow-wrap: anywhere;
 }
+
+/* ===== UI/UX.v4.1 L6 (owner lock, 23 November 2026): "Your request" is a flat navy summary panel. One fill, no
+   gradient, glass or glow; every word on it is the on-brand white (the only text colour allowed on navy), and the
+   dividing lines are the same white, thinned. */
+.ux-intake-page .ux-brief-summary {
+  border-color: var(--brand-deep);
+  background: var(--brand-deep);
+  color: var(--on-brand);
+}
+.ux-intake-page
+  .ux-brief-summary
+  :is(.plan-summary-heading, .ux-brief-count, .label, dt, dd, p, summary) {
+  color: var(--on-brand);
+}
+.ux-intake-page .ux-brief-summary dl > div {
+  border-top-color: color-mix(in srgb, var(--on-brand) 30%, transparent);
+}
+.ux-intake-page .ux-brief-summary .ux-flag {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 40%, transparent);
+}
+.ux-intake-page .ux-brief-summary :focus-visible {
+  outline: 3px solid var(--on-brand);
+  outline-offset: 3px;
+}
