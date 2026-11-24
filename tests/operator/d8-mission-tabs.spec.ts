@@ -813,7 +813,8 @@ for (const width of [320, 390, 768, 1024, 1440, 1920])
         );
       }
       await tab(page, 'Replies').click();
-      await expect(page.getByText('Second invented reply to the customer')).toBeVisible();
+      // Scoped to the tab panel: the mission page's own summary also quotes the latest reply.
+      await expect(panel(page).getByText('Second invented reply to the customer')).toBeVisible();
       await fits();
       if (desk) expect(await axe(page, '[role="tabpanel"]')).toEqual([]);
       if (shots)
