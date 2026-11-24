@@ -5,6 +5,7 @@ import { canSendOne, deliveryNoteWords, sendOneBody } from './outreach-send';
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
+import { useOperatorFlags } from './operator-flags';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   contactPurpose,
@@ -174,6 +175,7 @@ function Ownership({ owners, meeting }: { owners: Owner[]; meeting?: Meeting }) 
   );
 }
 export function ControlledAccess({ tenant, revision }: { tenant: string; revision: number }) {
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [comms, setComms] = useState<Comms | null>(null),
     [meetings, setMeetings] = useState<Meetings | null>(null),
     [message, setMessage] = useState(''),
@@ -379,7 +381,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   return (
     <section className="operator-section">
       <div className="section-heading">
-        <p className="label">CONTROLLED ACCESS</p>
+        {deskV41 ? null : <p className="label">CONTROLLED ACCESS</p>}
         <h2>Introductions and meetings</h2>
         <p>Give the buyer a reason to respond. Keep the meeting and its next step owned.</p>
       </div>
