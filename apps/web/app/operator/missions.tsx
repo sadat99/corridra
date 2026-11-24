@@ -2,7 +2,7 @@
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench, useFormChangeGuard } from '../../components/operator-workbench';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
 import { StatusChip } from '../../components/ux/status-chip';
 import type { MissionBrief } from '@corridra/domain/missions';
@@ -14,6 +14,7 @@ import { missionStatus } from '@corridra/domain/missions';
 import { formatDate, formatDateTime } from '../../lib/ux/format';
 import './[section]/[missionId]/mission-page.css';
 import { readFailureKind, readFailureWords } from './read-failure';
+import { readJson, withStepUp } from '../../lib/ux/step-up';
 import {
   actionLabel,
   isOverdue,
@@ -90,16 +91,22 @@ export const ownerName = (
   id: string | null | undefined,
 ) => owners.find((o) => o.user_id === id)?.name ?? (id ? 'Former team member' : 'Not assigned');
 
-/** POSTs one mission command to the existing workspace API and throws the server's message. */
+/**
+ * POSTs one mission command to the existing workspace API and throws the server's message. A refusal that
+ * needs a fresh authenticator check opens the code check in place and sends the same body once more after
+ * it (unit D2); the form behind it stays mounted, so nothing typed is lost.
+ */
 export async function missionRequest(tenant: string, action: string, body: unknown) {
-  const r = await fetch(`/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await r.json();
-  if (!r.ok) throw new Error(data.error);
-  return data;
+  return withStepUp(async () =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the workspace API answers several shapes
+    readJson<any>(
+      await fetch(`/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+    ),
+  );
 }
 
 /** Builds the mission command from the action form. Returns null (and says why) for an invalid date. */
@@ -381,6 +388,7 @@ export function Missions({
     [routes, setRoutes] = useState<RouteOption[]>([]),
     // D15: the compact queue with one page per mission. Read from the server; off keeps the cards below.
     [compact, setCompact] = useState(false);
+  const sending = useRef(false);
   const query = new URLSearchParams({
     tenant,
     filter,
@@ -388,19 +396,22 @@ export function Missions({
     ...selected,
   }).toString();
   async function request(action: string, body?: unknown) {
-    const r = await fetch(
-      `/api/workspace/${action}?${query}`,
-      body === undefined
-        ? {}
-        : {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          },
-    );
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error);
-    return data;
+    const send = async () =>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the workspace API answers several shapes
+      readJson<any>(
+        await fetch(
+          `/api/workspace/${action}?${query}`,
+          body === undefined
+            ? {}
+            : {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+              },
+        ),
+      );
+    // A change that needs a fresh authenticator check asks for the code in place, then is sent once more.
+    return body === undefined ? send() : withStepUp(send);
   }
   useEffect(() => {
     let active = true;
@@ -443,6 +454,10 @@ export function Missions({
     };
   }, [tenant]);
   async function act(action: string, body: unknown) {
+    // One change at a time: a second submit while the first is still out (slow network, or the code
+    // check is open) is ignored, so nothing is sent twice.
+    if (sending.current) return false;
+    sending.current = true;
     setBusy(true);
     setMessage('');
     try {
@@ -455,6 +470,7 @@ export function Missions({
       setMessage(e instanceof Error ? e.message : 'Unable to save');
       return false;
     } finally {
+      sending.current = false;
       setBusy(false);
     }
   }
