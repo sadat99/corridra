@@ -145,6 +145,13 @@ export class IntelligenceService {
       const markerInstalled = await locationMarker(t);
       const real = await isRealWorkspace(t);
       const blocked = await connectBlock(t, markerInstalled);
+      // ADR-091. Whether a run can start in this real workspace now, read exactly as run() reads it below: the deployment
+      // switch, then app.part4_enabled (the closed control and the owner's own setting). It only words the form's facts.
+      const realAiOn =
+        real &&
+        this.enabled &&
+        (await t.db.query("SELECT app.part4_enabled($1,'ai.enabled') AS enabled", [t.tenantId]))
+          .rows[0].enabled === true;
       const latest = (
         await t.db.query(
           `SELECT DISTINCT ON (key) key,id,version,configuration,configuration->>'adapter' AS adapter,configuration->>'model' AS model,configuration->>'effectiveUntil' AS "effectiveUntil",terms_source_id AS "termsSourceId",daily_budget_minor::text AS "dailyBudgetMinor" FROM app.ai_model_policy WHERE tenant_id=$1 ORDER BY key,version DESC LIMIT 50`,
@@ -173,6 +180,7 @@ export class IntelligenceService {
       return {
         moduleInstalled: markerInstalled,
         realWorkspace: real,
+        realAiOn,
         canConnect: blocked === null,
         canManage,
         blockedReason: blocked,

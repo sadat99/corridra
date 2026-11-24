@@ -249,6 +249,9 @@ test('an owner saves in nine steps: one request of plain answers, facts before S
   );
   await expect(facts).toContainText('No. This saves settings only. No money moves.');
   await expect(facts).toContainText('No. This save runs no AI and does not switch it on.');
+  await expect(facts.locator('.before-send-row').nth(2).locator('p').nth(1)).toHaveText(
+    'No. This save runs no AI and does not switch it on.',
+  );
   await expect(facts).toContainText('The save is recorded with your name and your reason.');
   const saveButton = flow(page).getByRole('button', { name: 'Save Connection' });
   expect((await facts.boundingBox())!.y).toBeLessThan((await saveButton.boundingBox())!.y);
@@ -296,6 +299,35 @@ test('a team member who is not an owner or admin sees only that owners and admin
   );
   await expect(box.locator('input, select, textarea')).toHaveCount(0);
 });
+
+for (const [state, realAiOn, fact] of [
+  [
+    'off',
+    false,
+    'No. This save runs no AI and does not switch it on. AI is off for this workspace, so no AI run can start here.',
+  ],
+  [
+    'on',
+    true,
+    'No. This save runs no AI and does not switch it on. AI is already on for this workspace. A later run can use this connection only if the route pack of the request names it and the evaluation status is Approved provider. A run is refused if a cited statement holds an email address or a phone number. The cost cap and the daily budget still apply. A person must review every result.',
+  ],
+] as const)
+  test(`a real workspace with AI ${state} says before Save what can run`, async ({ page }) => {
+    await open(page, { read: () => ({ json: options({ realWorkspace: true, realAiOn }) }) });
+    await walk(page);
+    const facts = flow(page).getByRole('group', { name: 'Before you save' });
+    await expect(facts.locator('.before-send-row').nth(2).locator('p').nth(1)).toHaveText(fact);
+    await expect(facts).not.toContainText('No AI run is possible in a real workspace yet');
+    await expect(facts).toContainText('No. This saves settings only. No money moves.');
+    expect(await new AxeBuilder({ page }).include('details.connect-ai').analyze()).toMatchObject({
+      violations: [],
+    });
+    const width = await page.evaluate(() => [
+      document.documentElement.scrollWidth,
+      document.documentElement.clientWidth,
+    ]);
+    expect(width[0]).toBeLessThanOrEqual(width[1]);
+  });
 
 test('a real workspace without the module says why and offers no Save', async ({ page }) => {
   await open(page, {

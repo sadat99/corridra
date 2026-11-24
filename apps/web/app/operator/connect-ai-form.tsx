@@ -84,6 +84,8 @@ type Blocked = 'MODULE_NOT_INSTALLED' | 'REAL_USE_OFF';
 type Options = {
   moduleInstalled: boolean;
   realWorkspace: boolean;
+  /** A real workspace where a run can start now (ADR-091). Absent or false: no run can start here. */
+  realAiOn?: boolean;
   canConnect: boolean;
   canManage: boolean;
   blockedReason: Blocked | null;
@@ -862,7 +864,11 @@ export function ConnectAiForm({
             money: { question: words.beforeSave.money, fact: words.beforeSave.moneyFact },
             run: {
               question: words.beforeSave.run,
-              fact: options?.realWorkspace ? words.beforeSave.runReal : words.beforeSave.runSample,
+              fact: !options?.realWorkspace
+                ? words.beforeSave.runSample
+                : options.realAiOn
+                  ? words.beforeSave.runRealOn
+                  : words.beforeSave.runRealOff,
             },
           }}
           recorded={words.beforeSave.recorded}

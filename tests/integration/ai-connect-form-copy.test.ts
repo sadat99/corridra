@@ -163,10 +163,26 @@ describe('the owner-approved words, exactly', () => {
       'This is the first version of the OpenAI connection. No route pack is pinned to an earlier version.',
     );
     expect(words.beforeSave.moneyFact).toBe('No. This saves settings only. No money moves.');
-    expect(words.beforeSave.runReal).toBe(
-      'No. This save runs no AI and does not switch it on. No AI run is possible in a real workspace yet.',
+    // A real workspace has two states since ADR-091. Off: no run can start. On: the save still runs nothing, and the
+    // sentence names what a later run must pass.
+    expect(words.beforeSave.runRealOff).toBe(
+      'No. This save runs no AI and does not switch it on. AI is off for this workspace, so no AI run can start here.',
+    );
+    expect(words.beforeSave.runRealOn).toBe(
+      'No. This save runs no AI and does not switch it on. AI is already on for this workspace. A later run can use this connection only if the route pack of the request names it and the evaluation status is Approved provider. A run is refused if a cited statement holds an email address or a phone number. The cost cap and the daily budget still apply. A person must review every result.',
     );
     expect(words.beforeSave.runSample).toBe('No. This save runs no AI and does not switch it on.');
+    for (const fact of [words.beforeSave.runRealOff, words.beforeSave.runRealOn])
+      expect(fact.startsWith(words.beforeSave.runSample)).toBe(true);
+    expect(JSON.stringify(words.beforeSave)).not.toContain(
+      'No AI run is possible in a real workspace yet',
+    );
+    // The on-state sentence uses the form's own names for the evaluation status and the two limits.
+    expect(words.beforeSave.runRealOn).toContain(words.evaluation.APPROVED_PROVIDER.label);
+    const form = read('apps/web/app/operator/connect-ai-form.tsx');
+    expect(form).toContain('words.beforeSave.runRealOn');
+    expect(form).toContain('words.beforeSave.runRealOff');
+    expect(form).not.toContain('words.beforeSave.runReal,');
   });
   it('names owners and admins as the people who can connect', () => {
     expect(words.deniedHeading).toBe('Only owners and admins can do this');
@@ -339,6 +355,23 @@ describe('Before You Save and the switch-off page', () => {
     expect(aiConnectionRows.map((r) => r.id)).toEqual(['change', 'money', 'run']);
     expect(aiConnectionRows.map((r) => r.icon)).toEqual(['document', 'shield', 'lock']);
     for (const row of aiConnectionRows) expect(row.sourceNote.length, row.id).toBeGreaterThan(20);
+    // The run row cites the record that opened AI in real workspaces and both states, and every file it names exists.
+    const run = aiConnectionRows[2].sourceNote;
+    expect(run).toContain('docs/adr/0091-ai-assistance-in-real-workspaces.md:Decision 5');
+    expect(run).toContain('0002_real_workspace_runs.sql:51-54 (app.ai_real_runs_open');
+    expect(run).toContain('0002_real_workspace_runs.sql:111-116 (app.part4_enabled');
+    expect(run).not.toContain('sample-only');
+    for (const path of run.match(/(?:docs|packages)\/[\w./-]+\.(?:sql|ts|md)/g) ?? [])
+      expect(read(path).length, path).toBeGreaterThan(0);
+    const step = read(
+      'packages/db/ai-model-policy-real-migrations/0002_real_workspace_runs.sql',
+    ).split('\n');
+    expect(step[50]).toContain('CREATE FUNCTION app.ai_real_runs_open()');
+    expect(step[110]).toContain('CREATE OR REPLACE FUNCTION app.part4_enabled');
+    expect(step[68]).toContain('APPROVED_PROVIDER');
+    expect(step[71]).toContain('may be a phone number');
+    expect(step[91]).toContain('daily_budget_minor');
+    expect(step[105]).toContain('AI review authority required');
     expect(aiConnectionRecordedFact.sourceNote.length).toBeGreaterThan(20);
     expect(Object.keys(beforeSendRows).sort()).toEqual(['evidenceReply', 'recipientReply']);
   });

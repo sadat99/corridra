@@ -195,6 +195,7 @@ describe('sample workspace before the module is installed', () => {
     expect(o).toMatchObject({
       moduleInstalled: false,
       realWorkspace: false,
+      realAiOn: false,
       canConnect: true,
       blockedReason: null,
       locationLimit: 20,
@@ -509,6 +510,7 @@ describe('real workspace', () => {
     expect(o).toMatchObject({
       moduleInstalled: true,
       realWorkspace: true,
+      realAiOn: false,
       canConnect: true,
       blockedReason: null,
       locationLimit: 30,

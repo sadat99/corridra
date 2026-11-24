@@ -194,8 +194,10 @@ export const words = {
     money: 'Does money move?',
     run: 'Can anything run?',
     moneyFact: 'No. This saves settings only. No money moves.',
-    runReal:
-      'No. This save runs no AI and does not switch it on. No AI run is possible in a real workspace yet.',
+    runRealOff:
+      'No. This save runs no AI and does not switch it on. AI is off for this workspace, so no AI run can start here.',
+    runRealOn:
+      'No. This save runs no AI and does not switch it on. AI is already on for this workspace. A later run can use this connection only if the route pack of the request names it and the evaluation status is Approved provider. A run is refused if a cited statement holds an email address or a phone number. The cost cap and the daily budget still apply. A person must review every result.',
     runSample: 'No. This save runs no AI and does not switch it on.',
     recorded: 'The save is recorded with your name and your reason.',
   },
