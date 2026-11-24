@@ -89,9 +89,21 @@ async function insertPending(
     'INSERT INTO identity.principal(id,identity_id,operating_country,disabled_at) VALUES($1,$2,$3,now())',
     [principalId, userId, v.operatingCountry],
   );
+  // The member gets the workspace's own processing purpose, stated here and not left to the column default
+  // (as team-control.ts does). Both callers accept sample workspaces only, so the value is unchanged today.
+  // A deployment without the real-use module has no such function and keeps the sample purpose.
+  const hasPurpose = (
+    await db.query(
+      "SELECT to_regprocedure('app.tenant_processing_purpose(uuid)') IS NOT NULL AS present",
+    )
+  ).rows[0]?.present;
+  const purpose: string | null = hasPurpose
+    ? ((await db.query('SELECT app.tenant_processing_purpose($1) AS purpose', [tenantId])).rows[0]
+        ?.purpose ?? null)
+    : null;
   await db.query(
-    'INSERT INTO app.membership(tenant_id,user_id,role,allowed_countries) VALUES($1,$2,$3,$4)',
-    [tenantId, principalId, v.role, [v.operatingCountry]],
+    'INSERT INTO app.membership(tenant_id,user_id,role,allowed_countries,allowed_purposes) VALUES($1,$2,$3,$4,$5)',
+    [tenantId, principalId, v.role, [v.operatingCountry], [purpose ?? 'synthetic_validation']],
   );
   const invite = {
     userId,
