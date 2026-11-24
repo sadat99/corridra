@@ -17,7 +17,6 @@ import {
   teamAccountPlaces,
   teamItemsFor,
   teamMap,
-  teamPins,
   teamPlacesFor,
   type MenuItem,
   type MenuItemKey,

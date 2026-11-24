@@ -713,3 +713,77 @@ test.describe('Supply (D19)', () => {
       await axeClean(page);
     });
 });
+
+test.describe('Team header on a phone (owner review, 24 Nov 2026)', () => {
+  const header = (page: Page) => page.locator('.site-shell > .ux-app-header');
+  const parts = (page: Page) =>
+    header(page).evaluate((bar) =>
+      Array.from(bar.querySelectorAll<HTMLElement>(':scope > *, :scope > .ux-app-tools > *'))
+        .filter((part) => part.getClientRects().length > 0 && !part.matches('.ux-app-tools'))
+        .map((part) => {
+          const box = part.getBoundingClientRect();
+          return {
+            name: part.className.toString().split(' ')[0]!,
+            left: box.left,
+            right: box.right,
+            top: box.top,
+            bottom: box.bottom,
+            width: box.width,
+            height: box.height,
+          };
+        }),
+    );
+  for (const width of [320, 375])
+    test(`switch on: one row inside 60 px at ${width} px, every control whole`, async ({
+      page,
+    }) => {
+      await open(page, '/operator/inbox', { v41: true, width, height: 700 });
+      await expect(page.getByRole('tab', { name: 'Problem reports' })).toBeVisible();
+      const bar = (await header(page).boundingBox())!;
+      expect(bar.height).toBeLessThanOrEqual(60);
+      expect(bar.x).toBe(0);
+      expect(bar.width).toBe(width);
+      const boxes = await parts(page);
+      // The menu button, the mark, the mode label, search, the inbox and the account menu.
+      expect(boxes.map((box) => box.name)).toEqual([
+        'ux-app-button',
+        'brand',
+        'ux-app-status',
+        'ux-palette-trigger',
+        'ux-app-inbox',
+        'ux-menu',
+      ]);
+      for (const [index, box] of boxes.entries()) {
+        // One row: every part sits inside the bar, after the part before it, and inside the screen.
+        expect(box.top, box.name).toBeGreaterThanOrEqual(bar.y);
+        expect(box.bottom, box.name).toBeLessThanOrEqual(bar.y + bar.height);
+        expect(box.left, box.name).toBeGreaterThanOrEqual(0);
+        expect(box.right, box.name).toBeLessThanOrEqual(width);
+        if (index > 0) expect(box.left, box.name).toBeGreaterThanOrEqual(boxes[index - 1]!.right);
+        // Every control keeps its 44 px target; the mode label is words, not a control.
+        if (box.name !== 'ux-app-status') {
+          expect(box.width, box.name).toBeGreaterThanOrEqual(44);
+          expect(box.height, box.name).toBeGreaterThanOrEqual(44);
+        }
+      }
+      // The mode label is whole: its words are not cut.
+      const label = header(page).locator('.ux-app-status');
+      expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+      await noSidewaysScroll(page);
+      const result = await new AxeBuilder({ page }).include('.ux-app-header').analyze();
+      expect(result.violations.map((violation) => violation.id)).toEqual([]);
+    });
+
+  test('switch off: the header wraps as it did', async ({ page }) => {
+    await openWorkspace(page, '/operator/settings', { v41: false, width: 320, height: 700 });
+    const bar = (await header(page).boundingBox())!;
+    expect(bar.height).toBeGreaterThan(100);
+    expect(bar.x).toBe(24);
+    // Its tools still take the rows they need.
+    expect(
+      await header(page)
+        .locator('.ux-app-tools')
+        .evaluate((el) => getComputedStyle(el).flexWrap),
+    ).toBe('wrap');
+  });
+});
