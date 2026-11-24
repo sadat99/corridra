@@ -310,7 +310,7 @@ const busyActions = [
   { slug: 'research', name: 'Refresh Research' },
   { slug: 'assistance', name: 'Refresh AI Review' },
   { slug: 'network', name: 'Refresh Invitations' },
-  { slug: 'network', name: 'Refresh Execution Work' },
+  { slug: 'network', name: 'Refresh Assigned Work' },
   { slug: 'health', name: 'Refresh Operations' },
   { slug: 'settings', name: 'Refresh Reviewed Configuration' },
   { slug: 'audit', name: 'Load Access and Recent Changes' },

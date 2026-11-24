@@ -5,6 +5,7 @@ import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
 import { missionHintNote, takeMissionHint } from './mission-hint';
+import { stageLabel } from './[section]/[missionId]/mission-labels';
 import {
   ChangeAvailability,
   RecordItem,
@@ -1071,7 +1072,7 @@ export function Counterparties({
               <option value="">Choose a mission</option>
               {missions.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {txt(m, 'company_name')} · {txt(m, 'status')}
+                  {txt(m, 'company_name')} · {stageLabel(txt(m, 'status'))}
                 </option>
               ))}
             </select>

@@ -115,6 +115,8 @@ type Setup = {
   after?: { contacts?: Row[]; notes?: Row[] };
   /** Leave the company unselected, so only the shortlist panel reads contact states. */
   noCompany?: boolean;
+  /** The stored status of the one mission the shortlist chooser offers. */
+  missionStatus?: string;
 };
 async function open(page: Page, setup: Setup = {}) {
   const sent: Row[] = [];
@@ -162,7 +164,13 @@ async function open(page: Page, setup: Setup = {}) {
         claims: [],
       },
       missions: {
-        missions: [{ id: mission, status: 'TARGETING', brief: { company: 'Synthetic Mission' } }],
+        missions: [
+          {
+            id: mission,
+            status: setup.missionStatus ?? 'TARGETING',
+            brief: { company: 'Synthetic Mission' },
+          },
+        ],
         owners: [{ user_id: owner, name: 'Synthetic Owner' }],
       },
       counterparty: {
@@ -1102,3 +1110,18 @@ for (const width of [320, 1440])
       ).violations.map((v) => v.id),
     ).toEqual([]);
   });
+
+// Team desk D2b: the chooser names the stage in plain words, the same words the Missions list shows, never the
+// stored code. The value sent is still the mission id.
+test('D2b the shortlist chooser shows the plain stage label, never the stored status code', async ({
+  page,
+}) => {
+  await open(page, { missionStatus: 'DRAFT', noCompany: true });
+  const chooser = page.getByLabel('Shortlist mission');
+  await expect(chooser.locator('option')).toHaveText([
+    'Choose a mission',
+    'Synthetic Mission · Received, waiting for review',
+  ]);
+  await expect(chooser.locator('option').nth(1)).toHaveAttribute('value', mission);
+  await expect(chooser).not.toContainText('DRAFT');
+});
