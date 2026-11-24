@@ -66,7 +66,8 @@ export function contentLang(text: string): 'zh' | 'bn' | undefined {
 }
 
 export const kindWords: Record<WorkKind, string> = {
-  draft: 'Draft request',
+  // A customer never reads "draft" (owner, 23 Nov 2026): an unsent guided request is a saved request.
+  draft: 'Saved request',
   request: 'Request',
   programme: 'Programme',
   service_request: 'Service request',

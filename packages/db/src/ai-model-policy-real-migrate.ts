@@ -7,6 +7,11 @@ import { migrateOnce } from './migration-run';
 // real-use modules are already installed (it never installs them itself), and the SQL refuses unless the guard definition is
 // exactly the one migration 0026 installed. It changes no policy, control or switch, and AI inference stays off. No runtime
 // request receives this owner connection.
+// It applies its own step only. The second file of the family (ADR-091, AI runs in real workspaces) is applied only by
+// migrateAiRealRuns in ai-real-runs-migrate.ts, on its own installer choice; every file is still read here, so a recorded
+// file that no longer matches the repository stops this install too.
+const ownStep = '0001_real_workspace_model_policy.sql';
+
 export function migrateAiModelPolicyReal(pool: DatabasePool) {
   return migrateOnce(pool, 'migrateAiModelPolicyReal', () => migrateAiModelPolicyRealRun(pool));
 }
@@ -48,7 +53,7 @@ async function migrateAiModelPolicyRealRun(pool: DatabasePool) {
       if (sources.get(row.name)?.hash !== row.sha256)
         throw new Error('AI model policy migration history mismatch');
     for (const [name, source] of sources) {
-      if (applied.rows.some((row) => row.name === name)) continue;
+      if (name !== ownStep || applied.rows.some((row) => row.name === name)) continue;
       await db.query(source.sql);
       await db.query(
         'INSERT INTO ai_model_policy_real_migrations.applied(name,sha256) VALUES($1,$2)',

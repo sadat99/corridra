@@ -15,6 +15,9 @@ import { uxSwitchOn } from '../../../lib/ux-switches';
 import { loadWorkItems } from '../../../lib/work-items/load';
 import { MeetingsList, RequestsSection, type MeetingGroup } from './meetings-list';
 import { MeetingsTabs } from './meetings-tabs';
+import { activeJourneyMode } from '../../../lib/ux/journey-mode-server';
+import { meetingRequests } from '../../../lib/work-items/journey-scope';
+import { JourneyScoped } from '../../../components/ux/journey-scoped';
 import '../rooms/[requestId]/room-view.css';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -49,7 +52,11 @@ export default async function Page() {
   const list = await loadWorkItems(session.data.user.id, issuer, {
     rooms: uxSwitchOn('CORRIDRA_UX_ROAD'),
   });
-  const requests = list.items.filter((item) => item.kind === 'request');
+  // Journey modes (null while that switch is off): in a journey only that journey's requests, and so only their
+  // meetings, are shown. The list is the one already read; nothing more is read.
+  const mode = await activeJourneyMode();
+  const scoped = mode && mode !== 'all' ? mode : null;
+  const requests = meetingRequests(list.items, scoped);
   // The list is read only where the workspaces and requests modules are on. Where they are not, nothing was read, so
   // the page must not say there are no requests.
   const readable = customerWorkspacesEnabled() && customerRequestsEnabled();
@@ -142,42 +149,46 @@ export default async function Page() {
       />
     ) : null;
   return (
-    <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings">
-      {readable ? null : <p>{intro}</p>}
-      <div className="room">
-        {partial ? (
-          <p role="status">
-            We could not check all your requests just now. Some meetings may be missing.{' '}
-            <Link className="text-link" prefetch={false} href="/account/meetings">
-              Try Again
-            </Link>
-            {oneNotice && meetings.capped ? (
-              <>
-                {' '}
-                We show meetings from the first {meetingReportCap} reports only. Open a request to
-                see all of its meetings.
-              </>
-            ) : null}
-            {oneNotice && meetings.notSaved > 0 ? (
-              <>
-                {' '}
-                {notSavedSentence} {openLibrary}
-              </>
-            ) : null}
-          </p>
-        ) : null}
-        {!readable ? <p role="status">Your requests list is not available here yet.</p> : null}
-        {readable && !meetingsShown ? (
-          <>
-            {whatNext}
+    <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings" journeyMode={mode}>
+      <JourneyScoped mode={scoped}>
+        {readable ? null : <p>{intro}</p>}
+        <div className="room">
+          {partial ? (
             <p role="status">
-              Meetings and visits are not available here yet. Your requests are listed below.
+              We could not check all your requests just now. Some meetings may be missing.{' '}
+              <Link className="text-link" prefetch={false} href="/account/meetings">
+                Try Again
+              </Link>
+              {oneNotice && meetings.capped ? (
+                <>
+                  {' '}
+                  We show meetings from the first {meetingReportCap} reports only. Open a request to
+                  see all of its meetings.
+                </>
+              ) : null}
+              {oneNotice && meetings.notSaved > 0 ? (
+                <>
+                  {' '}
+                  {notSavedSentence} {openLibrary}
+                </>
+              ) : null}
             </p>
-            {requestsPanel}
-          </>
-        ) : null}
-        {meetingsShown ? <MeetingsTabs meetings={meetingsPanel} requests={requestsPanel} /> : null}
-      </div>
+          ) : null}
+          {!readable ? <p role="status">Your requests list is not available here yet.</p> : null}
+          {readable && !meetingsShown ? (
+            <>
+              {whatNext}
+              <p role="status">
+                Meetings and visits are not available here yet. Your requests are listed below.
+              </p>
+              {requestsPanel}
+            </>
+          ) : null}
+          {meetingsShown ? (
+            <MeetingsTabs meetings={meetingsPanel} requests={requestsPanel} />
+          ) : null}
+        </div>
+      </JourneyScoped>
     </CustomerShell>
   );
 }

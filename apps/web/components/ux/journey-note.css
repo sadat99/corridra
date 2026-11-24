@@ -1,0 +1,16 @@
+/* The quiet lines of journey modes. Tokens only; a plain line of text, never a banner. */
+.ux-journey-note {
+  margin: 0 0 var(--space-3);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-journey-note-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}

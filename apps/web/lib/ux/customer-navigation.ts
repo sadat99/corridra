@@ -9,6 +9,7 @@
 
 import type { MessageKey } from '../i18n/messages';
 import { activeWorkspaces } from '../workspace-choice';
+import { journeyScopedHref, type JourneyMode } from './journey-mode';
 
 export type CustomerTabKey = 'home' | 'requests' | 'companies' | 'meetings' | 'reports';
 export type CustomerTab = {
@@ -75,23 +76,29 @@ export const newRequestHref = (hasWorkspace: boolean) =>
   hasWorkspace ? '/account?view=work#customer-workspaces' : '/plan';
 export const manageWorkspacesHref = '/account?view=work#customer-workspaces';
 
-/** The primary destinations in their fixed order. Companies appears only where its module is on. */
+/**
+ * The primary destinations in their fixed order. Companies appears only where its module is on. `journey` is the
+ * chosen journey mode (journey-mode.ts): in a journey, Home and Requests open that journey; with none, or Everything,
+ * the addresses are exactly what they always were.
+ */
 export function customerTabs({
   companies,
   move,
-}: Pick<CustomerNavigationInput, 'companies' | 'move'>): CustomerTab[] {
+  journey,
+}: Pick<CustomerNavigationInput, 'companies' | 'move'> & { journey?: JourneyMode }): CustomerTab[] {
+  const mode = journey ?? 'all';
   return [
     {
       key: 'home',
       label: 'Home',
-      href: move ? '/account/move' : '/account',
+      href: move ? journeyScopedHref('home', mode) : '/account',
       icon: 'home',
       labelKey: 'wse.nav.home',
     },
     {
       key: 'requests',
       label: 'Requests',
-      href: '/account?view=work',
+      href: journeyScopedHref('requests', mode),
       icon: 'work',
       labelKey: 'wse.nav.work',
     },
