@@ -6,7 +6,7 @@
 //
 // The list, in this order: the Next Move first and in the primary cobalt (lib/ux/next-move.ts: Review N Quotes, Finish
 // Your Draft or New Request), then Get Help (the whole existing help content, customerHelpGroups, the same rows the header
-// Help menu draws), Search, Meetings, Shortcuts, Continue Draft (only when a draft exists and it is not already the Next Move) and
+// Help menu draws), Search, Meetings, Shortcuts, Continue Your Saved Request (only when a saved request exists and it is not already the Next Move) and
 // New Request (only when it is not already the Next Move), so no row is ever drawn twice. The first row is the one
 // nearest the thumb, and the first in reading and Tab order.
 //
@@ -133,7 +133,7 @@ function PocketView({
   const helpGroups = useCustomerHelpGroups(whatsappHref);
   const listen = useListen();
 
-  // The Next Move is the first row. Continue Draft and New Request are listed only when the Next Move is not already
+  // The Next Move is the first row. Continue Your Saved Request and New Request are listed only when the Next Move is not already
   // that same thing, so neither is ever drawn twice.
   const rows: Row[] = [
     {
@@ -154,7 +154,14 @@ function PocketView({
     { key: 'meetings', label: 'Meetings', icon: 'calendar', href: '/account/meetings' },
     { key: 'shortcuts', label: 'Shortcuts', icon: 'list', run: () => setView('shortcuts') },
     ...(read?.drafts.href && move.key !== 'draft'
-      ? [{ key: 'draft', label: 'Continue Draft', icon: 'document', href: read.drafts.href }]
+      ? [
+          {
+            key: 'draft',
+            label: 'Continue Your Saved Request',
+            icon: 'document',
+            href: read.drafts.href,
+          },
+        ]
       : []),
     ...(move.key !== 'new'
       ? [

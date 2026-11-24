@@ -8,6 +8,7 @@ import { FrontDoor } from '../../components/front-door';
 import { foundations } from '../../lib/foundations';
 import { helperDoor } from '../../lib/front-doors';
 import { uxSwitchOn } from '../../lib/ux-switches';
+import { NextStep } from './next-step';
 import { ContributorSignout } from './signout';
 import { TaskBoard } from './task-board';
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,9 @@ export default async function Page({
         <ContributorSignout />
       </WorkspaceShell>
     );
+  // UI/UX.v4.1 L9: the one primary way in is drawn as the next step card; the other ways in stay quiet. With the doors
+  // on, the sign-in door below is the one way to the helper sign-in, so the card does not repeat it.
+  const firstDoor = helperDoor.find((item) => item.primary);
   if (!workspace.success)
     return (
       <WorkspaceShell eyebrow="Assigned work" title="Your assigned tasks." compact>
@@ -60,12 +64,22 @@ export default async function Page({
           not grant assigned-task access.
         </p>
         {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') ? (
-          <FrontDoor label="Ways in for a helper" items={helperDoor} />
+          <>
+            {firstDoor ? (
+              <NextStep line={firstDoor.line} href={firstDoor.href} action={firstDoor.title} />
+            ) : null}
+            <FrontDoor
+              label="Ways in for a helper"
+              items={helperDoor.filter((item) => !item.primary)}
+            />
+          </>
         ) : (
           <>
-            <Link prefetch={false} className="primary-link" href="/contributor/setup">
-              Accept a Reviewed Helper Invitation
-            </Link>
+            <NextStep href="/contributor/setup" action="Accept a Reviewed Helper Invitation">
+              <a className="text-link" href="/contributor/signin">
+                Helper Sign-In
+              </a>
+            </NextStep>
             <Link prefetch={false} className="text-link" href="/network">
               How assigned work works
             </Link>
@@ -74,9 +88,6 @@ export default async function Page({
             </Link>
           </>
         )}
-        <a className="text-link" href="/contributor/signin">
-          Helper Sign-In
-        </a>
         <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>

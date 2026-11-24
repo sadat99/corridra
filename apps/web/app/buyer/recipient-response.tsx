@@ -152,7 +152,7 @@ export function RecipientResponse({
           <p>Meeting or visit interest recorded. No appointment confirmed.</p>
         )}
         <p className="evidence-label">
-          {saved.sourceKind}. The operator must review this declaration. No meeting, quotation
+          {saved.sourceKind}. The Corridra team must review this declaration. No meeting, quotation
           approval or verification is inferred.
         </p>
       </section>
@@ -250,7 +250,9 @@ export function RecipientResponse({
         )}
         <label className="check-field">
           <input name="acknowledged" type="checkbox" required />
-          This is my declaration for this request. I understand that the operator will review it.
+          {
+            'This is my declaration for this request. I understand that the Corridra team will review it.'
+          }
         </label>
       </fieldset>
       <button className="primary-link" disabled={busy}>

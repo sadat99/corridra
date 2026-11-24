@@ -131,7 +131,7 @@ describe('who can see it: the readers come only from confirmed code facts', () =
       // The existing page words already tell the person the team reviews the reply.
       [
         'apps/web/app/buyer/recipient-response.tsx',
-        /I understand that the operator will review it\./,
+        /I understand that the Corridra team will review it\./,
       ],
       ['apps/web/lib/reply-words.ts', /The team will review it\./],
     ];
@@ -282,7 +282,7 @@ describe('on each surface, the label informs and changes no control', () => {
       'textarea|name="body" minLength="3" maxLength="1000" required=""|',
       'input|type="checkbox" name="meetingInterest"/|I would like to discuss a meeting or visit. This is interest, not a confirmed appointment.',
       'input|type="checkbox"/|Include a supplier-declared quotation',
-      'input|type="checkbox" required="" name="acknowledged"/|This is my declaration for this request. I understand that the operator will review it.',
+      'input|type="checkbox" required="" name="acknowledged"/|This is my declaration for this request. I understand that the Corridra team will review it.',
       'button|class="primary-link"|Record Response',
     ]);
     // The label sits outside the form's fieldset, so it can never be disabled with it or hold the send.

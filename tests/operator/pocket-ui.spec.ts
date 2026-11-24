@@ -487,7 +487,7 @@ test.describe('the Next Move words, as the first row of the list', () => {
         'Search',
         'Meetings',
         'Shortcuts',
-        'Continue Draft',
+        'Continue Your Saved Request',
         'New Request',
       ],
     ],
@@ -725,24 +725,23 @@ test.describe('doing things with it', () => {
     await expect(page).toHaveURL(/\/account\/meetings$/);
   });
 
-  test('Continue Draft is listed only when a draft exists and it is not the Next Move', async ({
+  test('Continue Your Saved Request is listed only when a saved request exists and it is not the Next Move', async ({
     page,
   }) => {
     await mount(page, '/account', '?signals=none');
     await openList(page);
-    expect(await rowLabels(page)).not.toContain('Continue Draft');
+    expect(await rowLabels(page)).not.toContain('Continue Your Saved Request');
     await mount(page, '/account', '?signals=quotes1');
     await openList(page);
-    expect(await rowLabels(page)).not.toContain('Continue Draft');
+    expect(await rowLabels(page)).not.toContain('Continue Your Saved Request');
     await mount(page, '/account', '?signals=draft');
     await openList(page);
-    expect(await rowLabels(page)).not.toContain('Continue Draft');
+    expect(await rowLabels(page)).not.toContain('Continue Your Saved Request');
     await mount(page, '/account', '?signals=quotes3');
     await openList(page);
-    await expect(page.locator('.ux-pocket-row', { hasText: 'Continue Draft' })).toHaveAttribute(
-      'href',
-      `/account/drafts/${workspace}?draft=d1`,
-    );
+    await expect(
+      page.locator('.ux-pocket-row', { hasText: 'Continue Your Saved Request' }),
+    ).toHaveAttribute('href', `/account/drafts/${workspace}?draft=d1`);
   });
 
   test('New Request in the list opens where requests are made', async ({ page }) => {
