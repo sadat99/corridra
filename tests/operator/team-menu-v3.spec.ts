@@ -72,7 +72,7 @@ test('switch on: four groups, every item one plain link, no expander and no numb
   expect(await names(page, 'Work')).toEqual(['Today', 'Missions', 'Meetings', 'Inbox']);
   expect(await names(page, 'People and companies')).toEqual(['Companies', 'Helpers', 'Supply']);
   expect(await names(page, 'Results')).toEqual(['Money', 'Reports']);
-  expect(await names(page, 'Admin')).toEqual(['Team and access', 'Settings', 'Status']);
+  expect(await names(page, 'Admin')).toEqual(['Team and Access', 'Settings', 'Status']);
   await expect(sidebar.locator('details, summary, .ux-team-pins, .ux-team-pin-count')).toHaveCount(
     0,
   );
@@ -85,13 +85,14 @@ test('switch on: four groups, every item one plain link, no expander and no numb
   expect(await href('Today')).toBe(`/operator${w}`);
   expect(await href('Missions')).toBe(`/operator/missions${w}`);
   expect(await href('Meetings')).toBe(`/operator/meetings${w}`);
-  expect(await href('Inbox')).toBe(`/operator/settings${w}&tab=settings-erasure`);
+  // Report a Problem is offered in this fixture address (reports=on): Inbox opens on the Problem reports tab.
+  expect(await href('Inbox')).toBe(`/operator/settings${w}&tab=settings-reports`);
   expect(await href('Companies')).toBe(`/operator/research${w}`);
   expect(await href('Helpers')).toBe(`/operator/network${w}`);
   expect(await href('Supply')).toBe(`/operator/supply${w}`);
   expect(await href('Money')).toBe(`/operator/commercial${w}`);
   expect(await href('Reports')).toBe(`/operator/delivery${w}`);
-  expect(await href('Team and access')).toBe(`/operator/controls${w}`);
+  expect(await href('Team and Access')).toBe(`/operator/controls${w}`);
   expect(await href('Settings')).toBe(`/operator/settings${w}`);
   expect(await href('Status')).toBe(`/operator/operations${w}`);
   await expect(sidebar.getByRole('link', { name: 'Today', exact: true })).toHaveAttribute(
@@ -169,7 +170,7 @@ test('the lit item follows the address: a segment lights its item, a queue tab l
   expect(await lit('/operator/sources')).toEqual(['Companies', 'true']);
   expect(await lit('/operator/evidence')).toEqual(['Companies', 'true']);
   expect(await lit('/operator/network')).toEqual(['Helpers', 'page']);
-  expect(await lit('/operator/audit')).toEqual(['Team and access', 'true']);
+  expect(await lit('/operator/audit')).toEqual(['Team and Access', 'true']);
   expect(await lit('/operator/assistance')).toEqual(['Settings', 'true']);
   expect(await lit('/operator/control-center')).toEqual(['Settings', 'true']);
   expect(await lit('/operator/owner')).toEqual(['Settings', 'true']);
@@ -177,11 +178,12 @@ test('the lit item follows the address: a segment lights its item, a queue tab l
   expect(await lit('/operator/readiness')).toEqual(['Status', 'true']);
   expect(await lit('/operator/dashboard')).toEqual(['Status', 'true']);
   expect(await lit('/operator/supply')).toEqual(['Supply', 'page']);
-  expect(await lit('/operator/supply/missions/abc')).toEqual(['Supply', 'page']);
+  expect(await lit('/operator/supply/missions/abc')).toEqual(['Supply', 'true']);
   expect(await lit('/operator/settings')).toEqual(['Settings', 'page']);
   expect(await lit('/operator/settings?tab=settings-erasure')).toEqual(['Inbox', 'page']);
   expect(await lit('/operator#workspace-commercial')).toEqual(['Money', 'page']);
-  expect(await lit('/operator/settings?tab=settings-reports')).toEqual(['Inbox', 'page']);
+  // Report a Problem is not offered here, so Inbox's own address is the erasure tab; another queue tab is inside it.
+  expect(await lit('/operator/settings?tab=settings-reports')).toEqual(['Inbox', 'true']);
   // A tab chosen on the page changes ?tab= without a page load; the menu follows it.
   await page.evaluate(() => {
     const url = new URL(window.location.href);
@@ -247,6 +249,11 @@ for (const width of widths)
           () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
         ),
       ).toBeLessThanOrEqual(0);
+      // The state under test is the one drawn: menu v3 with its thirteen links, or the sidebar before it.
+      if (state === 'on') {
+        await expect(sidebar).toHaveAttribute('data-menu', 'v3');
+        await expect(sidebar.getByRole('link')).toHaveCount(13);
+      } else await expect(sidebar).not.toHaveAttribute('data-menu', /.*/);
       if (state === 'on')
         for (const link of await sidebar.getByRole('link').all()) {
           const box = (await link.boundingBox())!;

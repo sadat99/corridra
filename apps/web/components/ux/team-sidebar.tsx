@@ -16,12 +16,14 @@ import { subscribeToHash } from '../../lib/address-store';
 import { sectionForSlug } from '../../lib/operator-urls';
 import { currentTeamSection } from '../../lib/ux/shells';
 import {
+  inboxLeadTab,
   itemForPlace,
   menuGroupsFor,
   menuItemForAddress,
   menuItemHref,
   menuPlacesFor,
   placeHref,
+  supplyPath,
   teamItemsFor,
   teamPins,
   teamPlacesFor,
@@ -53,6 +55,66 @@ const translated: Partial<
   meetings: 'wse.team.meetings',
 };
 
+type Words = ReturnType<typeof useLanguage>;
+
+/** English words on a page in another language carry lang="en". */
+function english(locale: Words['locale'], text: string): ReactNode {
+  return locale !== 'en' ? <span lang="en">{text}</span> : text;
+}
+
+/**
+ * The words of a menu item: in the chosen language where a key exists, otherwise its English label. `text` is the
+ * plain string (the tooltip of the collapsed bar); `words` is what is drawn, marked lang="en" when it is English on a
+ * page in another language.
+ */
+function labelFor(
+  key: string,
+  label: string,
+  { t, locale }: Pick<Words, 't' | 'locale'>,
+): { text: string; words: ReactNode } {
+  const message = translated[key as TeamItem['key']];
+  const text = message ? t(message) : label;
+  const untranslated = !message || text === translate('en', message);
+  return { text, words: locale !== 'en' && untranslated ? <span lang="en">{text}</span> : text };
+}
+
+/**
+ * One menu link. A `#` address, or any page that is not the workspace itself (`plain`), is a plain anchor: the
+ * workspace reads the address once, so a soft change could show the old section. The name is also the tooltip of
+ * the bar collapsed to icons.
+ */
+function NavLink({
+  href,
+  name,
+  icon,
+  plain,
+  current,
+  children,
+}: {
+  href: string;
+  name: string;
+  icon: string | null;
+  plain: boolean;
+  current: 'page' | 'true' | undefined;
+  children: ReactNode;
+}) {
+  const content = (
+    <>
+      {icon ? <OperatorIcon name={icon} /> : null}
+      <span>{children}</span>
+    </>
+  );
+  return plain || href.includes('#') ? (
+    <a href={href} title={name} aria-current={current}>
+      {content}
+    </a>
+  ) : (
+    <Link prefetch={false} href={href} title={name} aria-current={current}>
+      {content}
+    </Link>
+  );
+}
+
 type SidebarProps = {
   urls: boolean;
   ownerPage?: boolean;
@@ -69,7 +131,7 @@ type SidebarProps = {
 /** The team sidebar: menu v3 behind CORRIDRA_UX_TEAM_DESK_V41, otherwise the sidebar as it was. */
 export function TeamSidebar({ deskV41 = false, supply = false, ...legacy }: SidebarProps) {
   return deskV41 ? (
-    <TeamMenuV3 urls={legacy.urls} supply={supply} />
+    <TeamMenuV3 urls={legacy.urls} supply={supply} problemReports={!!legacy.problemReports} />
   ) : (
     <TeamSidebarV1 {...legacy} />
   );
@@ -96,8 +158,18 @@ const readServerAddress = () => '';
  * no second level and no expander. Which item a role sees and where it leads is lib/ux/team-map.ts (`menuV3`); the
  * addresses are the ones every earlier link used. Inbox shows no number (decision 5): this menu reads no queue.
  */
-function TeamMenuV3({ urls, supply }: { urls: boolean; supply: boolean }) {
-  const { t, locale } = useLanguage();
+function TeamMenuV3({
+  urls,
+  supply,
+  problemReports,
+}: {
+  urls: boolean;
+  supply: boolean;
+  /** Report a Problem is offered: Inbox then opens on the Problem reports tab. */
+  problemReports: boolean;
+}) {
+  const language = useLanguage();
+  const { t, locale } = language;
   const pathname = usePathname() ?? '/operator';
   const address = useSyncExternalStore(subscribeToAddress, readAddress, readServerAddress);
   const { tenant, role } = useSyncExternalStore(
@@ -115,12 +187,10 @@ function TeamMenuV3({ urls, supply }: { urls: boolean; supply: boolean }) {
   const search = cut < 0 ? address : address.slice(0, cut);
   const hash = cut < 0 ? '' : address.slice(cut);
   const place = (currentTeamSection(pathname, hash, sectionForSlug) || 'home') as TeamPlaceId;
-  const options = { supply };
+  const options = { supply, problemReports };
   const lit = menuItemForAddress({ place, pathname, search, hash }, role, options);
   // As in the sidebar before it: a section word on a page that is not the workspace is a full page change.
   const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
-  const english = (text: string): ReactNode =>
-    locale !== 'en' ? <span lang="en">{text}</span> : text;
   return (
     <nav
       id="workspace-navigation"
@@ -151,7 +221,7 @@ function TeamMenuV3({ urls, supply }: { urls: boolean; supply: boolean }) {
         ) : null}
         <a href="/workspace" title="All Workspaces">
           <OperatorIcon name="grid" />
-          <span>{english('All Workspaces')}</span>
+          <span>{english(locale, 'All Workspaces')}</span>
         </a>
       </div>
       {menuGroupsFor(role, options).map((group) => {
@@ -164,41 +234,33 @@ function TeamMenuV3({ urls, supply }: { urls: boolean; supply: boolean }) {
             aria-labelledby={heading}
           >
             <p id={heading} className="ux-team-menu-heading">
-              {english(group.label)}
+              {english(locale, group.label)}
             </p>
             <ul>
               {group.items.map((item) => {
-                const key = translated[item.key as TeamItem['key']];
-                const text = key ? t(key) : item.label;
-                const words =
-                  locale !== 'en' && (!key || text === translate('en', key)) ? english(text) : text;
-                const target = menuItemHref(item, role, urls, tenant);
+                const { text, words } = labelFor(item.key, item.label, language);
+                const target = menuItemHref(item, role, urls, tenant, options);
                 const lead = menuPlacesFor(item, role)[0]?.id;
-                // "page" on the item whose own page is open; "true" when a segment or a page inside it is open.
-                const current =
-                  lit !== item.key
-                    ? undefined
-                    : item.special ||
-                        (lead === place && !/^\/operator\/[^/]+\/[^/]+/.test(pathname))
-                      ? ('page' as const)
-                      : ('true' as const);
-                const content = (
-                  <>
-                    <OperatorIcon name={item.icon} />
-                    <span>{words}</span>
-                  </>
-                );
+                // "page" only on the item whose own address is open; "true" when a segment, another queue tab or a
+                // page inside it is open.
+                const own =
+                  item.special === 'supply'
+                    ? pathname === supplyPath
+                    : item.special === 'inbox'
+                      ? new URLSearchParams(search).get('tab') === inboxLeadTab(options)
+                      : lead === place && !/^\/operator\/[^/]+\/[^/]+/.test(pathname);
+                const current = lit !== item.key ? undefined : own ? 'page' : 'true';
                 return (
                   <li key={item.key}>
-                    {plain || item.special || target.includes('#') ? (
-                      <a href={target} title={text} aria-current={current}>
-                        {content}
-                      </a>
-                    ) : (
-                      <Link prefetch={false} href={target} title={text} aria-current={current}>
-                        {content}
-                      </Link>
-                    )}
+                    <NavLink
+                      href={target}
+                      name={text}
+                      icon={item.icon}
+                      plain={plain || !!item.special}
+                      current={current}
+                    >
+                      {words}
+                    </NavLink>
                   </li>
                 );
               })}
@@ -215,7 +277,8 @@ function TeamSidebarV1({
   desk = false,
   problemReports = false,
 }: Omit<SidebarProps, 'deskV41' | 'supply'>) {
-  const { t, locale } = useLanguage();
+  const language = useLanguage();
+  const { t, locale } = language;
   const pathname = usePathname() ?? '/operator';
   const hash = useSyncExternalStore(
     subscribeToHash,
@@ -241,47 +304,24 @@ function TeamSidebarV1({
   // workspace reads the address once, so a soft change could show the old section.
   const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
   // The visible words of an item, in the chosen language where one exists; also its tooltip.
-  const labelText = (item: TeamItem): string => {
-    const key = translated[item.key];
-    return key ? t(key) : item.label;
-  };
-  const label = (item: TeamItem): ReactNode => {
-    const key = translated[item.key];
-    const text = labelText(item);
-    const untranslated = !key || text === translate('en', key);
-    return locale !== 'en' && untranslated ? <span lang="en">{text}</span> : text;
-  };
-  const english = (text: string): ReactNode =>
-    locale !== 'en' ? <span lang="en">{text}</span> : text;
+  const labelText = (item: TeamItem): string => labelFor(item.key, item.label, language).text;
+  const label = (item: TeamItem): ReactNode => labelFor(item.key, item.label, language).words;
   type Current = 'page' | 'true' | undefined;
   /** "page" only on the link of the page itself; a parent of the current page is "true". */
   const mark = (own: boolean, parent: boolean): Current =>
     own ? 'page' : parent ? 'true' : undefined;
-  function link(
+  const link = (
     key: string,
     text: ReactNode,
     name: string,
     icon: string | null,
     target: string,
     current: Current,
-  ) {
-    const content = (
-      <>
-        {icon ? <OperatorIcon name={icon} /> : null}
-        <span>{text}</span>
-      </>
-    );
-    // The name shows as a tooltip when the bar is collapsed to icons.
-    return plain || target.includes('#') ? (
-      <a key={key} href={target} title={name} aria-current={current}>
-        {content}
-      </a>
-    ) : (
-      <Link key={key} prefetch={false} href={target} title={name} aria-current={current}>
-        {content}
-      </Link>
-    );
-  }
+  ) => (
+    <NavLink key={key} href={target} name={name} icon={icon} plain={plain} current={current}>
+      {text}
+    </NavLink>
+  );
   const items = teamItemsFor(role, desk);
   const pins = desk ? teamPins(role, problemReports, urls, tenant) : [];
   const daily = items.filter((item) => item.key !== 'admin');
@@ -323,7 +363,7 @@ function TeamSidebarV1({
             <span>{label(adminItem)}</span>
             {/* The board's caption. Hidden from the name (the name stays "Admin") and read as its description. */}
             <small id={adminNote} className="ux-team-caption" aria-hidden="true">
-              {english('Owner and admin')}
+              {english(locale, 'Owner and admin')}
             </small>
             <OperatorIcon name="chevron" className="ux-team-chevron" />
           </summary>
@@ -332,7 +372,7 @@ function TeamSidebarV1({
               <li key={entry.id}>
                 {link(
                   entry.id,
-                  english(entry.label),
+                  english(locale, entry.label),
                   entry.label,
                   null,
                   placeHref(entry.id, urls, tenant),
@@ -360,7 +400,7 @@ function TeamSidebarV1({
             return (
               <li key={pin.id}>
                 <a href={pin.href} title={pin.label}>
-                  <span>{english(pin.label)}</span>
+                  <span>{english(locale, pin.label)}</span>
                   {text !== null ? <span className="ux-team-pin-count">{text}</span> : null}
                 </a>
               </li>

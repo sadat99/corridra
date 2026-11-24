@@ -837,18 +837,21 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-heading {
   margin: 0;
   padding-inline: var(--space-3);
   color: color-mix(in srgb, var(--ac-paper) 76%, var(--ac-navy));
-  font-size: var(--text-xs);
-  font-weight: 600;
-  line-height: 1.6;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.3;
 }
 nav.ux-team-sidebar[data-menu='v3'] a {
   font-weight: 500;
 }
-nav.ux-team-sidebar[data-menu='v3'] a[aria-current],
-[dir='rtl'] nav.ux-team-sidebar[data-menu='v3'] a[aria-current] {
+/* The lit item is the filled row with a white edge stripe: cobalt on navy does not show, and the Stronger Colours
+   setting relies on the stripe (comfort.css), so it is kept, in white. */
+nav.ux-team-sidebar[data-menu='v3'] a[aria-current] {
   font-weight: 600;
-  /* The lit item is the filled row; the cobalt edge stripe of the light bar is not drawn on navy. */
-  box-shadow: none;
+  box-shadow: inset 3px 0 0 var(--ac-paper);
+}
+[dir='rtl'] nav.ux-team-sidebar[data-menu='v3'] a[aria-current] {
+  box-shadow: inset -3px 0 0 var(--ac-paper);
 }
 /* The workspace switch: the first row of the menu, set apart from the groups by a line. */
 nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-workspace {
@@ -905,6 +908,11 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
   .ux-leftnav-panel:has(nav[data-menu='v3']) .ux-leftnav-close:focus-visible {
     outline-color: var(--ac-paper);
   }
+  /* The drawer carries the padding, so the menu inside it is flush and square. */
+  .ux-leftnav-panel > nav.ux-team-sidebar[data-menu='v3'] {
+    padding: 0;
+    border-radius: 0;
+  }
 }
 /* 1024 px and wider: the whole bar is navy, from the brand down, and it scrolls with the page instead of holding
    its own scroll. The bar's column stays painted for the full window height (the fixed backdrop of left-nav.css),
@@ -917,6 +925,10 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header .brand {
     background: var(--ac-navy);
     color: var(--ac-paper);
+  }
+  .site-shell:has(nav[data-menu='v3']) > .ux-app-header .brand:focus-visible {
+    outline: 3px solid var(--ac-paper);
+    outline-offset: -5px;
   }
   /* The brand rule: orb and wordmark turn white on navy. */
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header .brand :is(.brand-mark, .brand-word) {
@@ -978,5 +990,12 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
   }
   .ux-leftnav-frame[data-collapsed='true'] nav.ux-team-sidebar[data-menu='v3'] {
     gap: var(--space-3);
+  }
+}
+/* After the navy corner rules above, so it wins: in forced colours the brand takes the system text colour. */
+@media (forced-colors: active) {
+  .site-shell:has(nav[data-menu='v3']) > .ux-app-header .brand,
+  .site-shell:has(nav[data-menu='v3']) > .ux-app-header .brand :is(.brand-mark, .brand-word) {
+    color: CanvasText;
   }
 }

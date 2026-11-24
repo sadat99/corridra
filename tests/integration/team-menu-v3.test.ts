@@ -5,6 +5,7 @@ import { operatorSlugs } from '../../apps/web/lib/operator-urls';
 import { uxSwitchNames, uxSwitchOn } from '../../apps/web/lib/ux-switches';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
 import {
+  inboxLeadTab,
   inboxTabs,
   menuGroupsFor,
   menuItemForAddress,
@@ -87,7 +88,7 @@ describe('four visible groups, one click to every item, no second level', () => 
       ['Work', ['Today', 'Missions', 'Meetings', 'Inbox']],
       ['People and companies', ['Companies', 'Helpers', 'Supply']],
       ['Results', ['Money', 'Reports']],
-      ['Admin', ['Team and access', 'Settings', 'Status']],
+      ['Admin', ['Team and Access', 'Settings', 'Status']],
     ]);
     expect(menuGroupsFor('owner', { supply: true }).map((group) => group.items.length)).toEqual([
       4, 3, 2, 3,
@@ -214,6 +215,22 @@ describe('Inbox (decision 5)', () => {
       );
     expect(menuItemHref(item('inbox'), 'admin', true)).toBe(
       '/operator/settings?tab=settings-erasure',
+    );
+    // Where Report a Problem is offered Settings has its Problem reports tab, and Inbox opens there.
+    expect(menuItemHref(item('inbox'), 'admin', true, '', { problemReports: true })).toBe(
+      '/operator/settings?tab=settings-reports',
+    );
+    expect(menuItemHref(item('inbox'), 'owner', false, workspace, { problemReports: true })).toBe(
+      `/operator?workspace=${workspace}&tab=settings-reports#workspace-settings`,
+    );
+    expect(menuItemHref(item('inbox'), 'owner', true, '', { problemReports: false })).toBe(
+      '/operator/settings?tab=settings-erasure',
+    );
+    expect(inboxLeadTab({ problemReports: true })).toBe('settings-reports');
+    expect(inboxLeadTab()).toBe('settings-erasure');
+    // The frame hands the menu what the server decided.
+    expect(read('components/ux/team-sidebar.tsx')).toContain(
+      'problemReports={!!legacy.problemReports}',
     );
     const tabs = read('app/operator/workspace.tsx');
     for (const tab of inboxTabs) expect(tabs).toContain(`id: '${tab}'`);

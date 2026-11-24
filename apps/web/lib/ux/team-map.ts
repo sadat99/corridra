@@ -385,7 +385,7 @@ export const menuV3: readonly MenuGroup[] = [
     items: [
       {
         key: 'team',
-        label: 'Team and access',
+        label: 'Team and Access',
         icon: 'people',
         places: [
           { id: 'workspace-controls', label: 'People and access' },
@@ -418,13 +418,21 @@ export const menuV3: readonly MenuGroup[] = [
   },
 ];
 
-/** What the server tells the menu: whether the Supply Sources pages exist (CORRIDRA_SUPPLY_SOURCES). */
-export type MenuOptions = { supply?: boolean };
+/**
+ * What the server tells the menu: whether the Supply Sources pages exist (CORRIDRA_SUPPLY_SOURCES), and whether Report
+ * a Problem is offered (only then does Settings have its Problem reports tab).
+ */
+export type MenuOptions = { supply?: boolean; problemReports?: boolean };
 
 /** The Settings sub-tabs that hold the queues (SubTabs ids in app/operator/workspace.tsx) and the old `#` addresses inside them. */
 export const inboxTabs = ['settings-erasure', 'settings-reports', 'settings-applications'] as const;
 const inboxFragments = ['problem-report-queue', 'erasure-queue-title', ...inboxTabs] as const;
 export const supplyPath = '/operator/supply';
+
+/** The queue tab Inbox opens: problem reports where that tab exists, otherwise erasure requests (always there). */
+export function inboxLeadTab(options: MenuOptions = {}): (typeof inboxTabs)[number] {
+  return options.problemReports ? 'settings-reports' : 'settings-erasure';
+}
 
 /** The places of an item the role may open, in order: its segments. Empty for Inbox and Supply. */
 export function menuPlacesFor(item: MenuItem, role: string | null): TeamPlace[] {
@@ -455,9 +463,10 @@ export function menuItemHref(
   role: string | null,
   urls: boolean,
   workspace = '',
+  options: MenuOptions = {},
 ): string {
   if (item.special === 'inbox')
-    return withSettingsTab(placeHref('workspace-settings', urls, workspace), inboxTabs[0]);
+    return withSettingsTab(placeHref('workspace-settings', urls, workspace), inboxLeadTab(options));
   if (item.special === 'supply') return supplyPath + workspaceQuery(workspace);
   const lead = menuPlacesFor(item, role)[0] ?? item.places[0]!;
   return placeHref(lead.id, urls, workspace);
