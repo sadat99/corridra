@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { formatDateTime } from '../../lib/ux/format';
+import { useOperatorFlags } from './operator-flags';
 import { PanelHeading } from './panel-heading';
+import './desk-helpers-status-team.css';
 
 type Member = { user_id?: string; name?: string | null; role?: string; revoked_at?: string | null };
 type AuditEvent = {
@@ -100,18 +102,25 @@ export function WorkspaceAudit({
   busy: boolean;
   onLoad: () => void;
 }) {
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [requestedPage, setRequestedPage] = useState(0);
   const pageCount = Math.max(1, Math.ceil(events.length / 10));
   const page = Math.min(requestedPage, pageCount - 1);
   const visibleEvents = events.slice(page * 10, (page + 1) * 10);
   return (
     <div className="ux-audit-workspace">
-      <PanelHeading
-        title="Access and audit"
-        eyebrow="Settings and access"
-        icon="shield"
-        description="See who has access and what changed in this workspace."
-      />
+      {deskV41 ? (
+        // Team desk v4.1 (D16): the page title and its purpose line say this once; the heading stays for
+        // screen readers so the page keeps its outline.
+        <h2 className="sr-only">Access and audit</h2>
+      ) : (
+        <PanelHeading
+          title="Access and audit"
+          eyebrow="Settings and access"
+          icon="shield"
+          description="See who has access and what changed in this workspace."
+        />
+      )}
       <div className="ux-audit-toolbar">
         <p>
           Read-only review. Viewing a record does not change access, verify a source or authorize a

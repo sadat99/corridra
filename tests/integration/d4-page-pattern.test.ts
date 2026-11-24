@@ -325,8 +325,12 @@ describe('switch off, every header is the one it was', () => {
     expect(read('app/operator/access.tsx')).toContain(
       '{deskV41 ? null : <p className="label">CONTROLLED ACCESS</p>}',
     );
-    expect(read('app/operator/network.tsx')).toContain(
-      '{teamDeskV41 ? null : <p className="label">CORRIDRA NETWORK</p>}',
+    // D14 moved the whole Helpers heading into the off branch of one switch read, so the old words
+    // are still drawn only with the switch off.
+    const network = read('app/operator/network.tsx');
+    const networkOff = network.slice(network.indexOf('{teamDeskV41 ? ('));
+    expect(networkOff.slice(0, networkOff.indexOf('<p role="status"'))).toMatch(
+      /\) : \(\s*<header className="ux-network-heading">\s*<div>\s*<p className="label">CORRIDRA NETWORK<\/p>/,
     );
     expect(read('app/operator/workspace-controls.tsx')).toContain(
       '{teamDeskV41 ? null : <p className="eyebrow">Workspace settings</p>}',

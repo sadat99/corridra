@@ -69,6 +69,20 @@ function openFoldsAround(element: Element) {
   )
     fold.open = true;
 }
+/**
+ * The link under a panel back to the list of sections. Team desk v4.1: with the switch on it is not drawn. The
+ * list it opens is not on the page with the team shell on, and the menu is the one way around.
+ */
+function BackToSections() {
+  const { teamDeskV41 } = useOperatorFlags();
+  if (teamDeskV41) return null;
+  return (
+    <a className="text-link" href="#workspace-navigation">
+      Back to workspace sections
+    </a>
+  );
+}
+
 export function Workspace({
   tenants,
   initialTenant,
@@ -392,13 +406,14 @@ function TenantWorkspace({
   }
   // True once the work is done and the records are refreshed; callers that only need the shared
   // status line ignore it.
-  async function act(work: () => Promise<unknown>): Promise<boolean> {
+  const loadedWord = deskV41 ? 'Loaded.' : 'Saved.';
+  async function act(work: () => Promise<unknown>, done = 'Saved.'): Promise<boolean> {
     setBusy(true);
     setMessage('');
     try {
       await work();
       await refresh();
-      setMessage('Saved.');
+      setMessage(done);
       return true;
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Request failed');
@@ -728,9 +743,7 @@ function TenantWorkspace({
                 onChanged={() => setMissionRevision((v) => v + 1)}
                 moveRecords={moveRecords}
               />
-              <a className="text-link" href="#workspace-navigation">
-                Back to workspace sections
-              </a>
+              <BackToSections />
             </div>
           )}
           {shown('workspace-research') && (
@@ -760,9 +773,7 @@ function TenantWorkspace({
                   </Link>
                 </p>
               )}
-              <a className="text-link" href="#workspace-navigation">
-                Back to workspace sections
-              </a>
+              <BackToSections />
             </div>
           )}
           {shown('workspace-meetings') && (
@@ -777,9 +788,7 @@ function TenantWorkspace({
                 tenant={tenant}
                 revision={missionRevision}
               />
-              <a className="text-link" href="#workspace-navigation">
-                Back to workspace sections
-              </a>
+              <BackToSections />
             </div>
           )}
           {shown('workspace-commercial') && (
@@ -794,9 +803,7 @@ function TenantWorkspace({
                 tenant={tenant}
                 revision={missionRevision}
               />
-              <a className="text-link" href="#workspace-navigation">
-                Back to workspace sections
-              </a>
+              <BackToSections />
             </div>
           )}
           {shown('workspace-delivery') && (
@@ -807,9 +814,7 @@ function TenantWorkspace({
               hidden={view !== 'workspace-delivery'}
             >
               <Delivery key={`delivery-${tenant}`} tenant={tenant} revision={missionRevision} />
-              <a className="text-link" href="#workspace-navigation">
-                Back to workspace sections
-              </a>
+              <BackToSections />
             </div>
           )}
           {shown('workspace-operations') && ['owner', 'admin', 'operator'].includes(data.role) && (
@@ -833,9 +838,7 @@ function TenantWorkspace({
                   hidden={view !== 'workspace-ai'}
                 >
                   <GovernedAssistance key={`ai-${tenant}`} tenant={tenant} role={data.role} />
-                  <a className="text-link" href="#workspace-navigation">
-                    Back to workspace sections
-                  </a>
+                  <BackToSections />
                 </div>
               )}
               {shown('workspace-network') && (
@@ -856,9 +859,7 @@ function TenantWorkspace({
                       selector?.focus();
                     }}
                   />
-                  <a className="text-link" href="#workspace-navigation">
-                    Back to workspace sections
-                  </a>
+                  <BackToSections />
                 </div>
               )}
             </>
@@ -993,7 +994,8 @@ function TenantWorkspace({
                     setMembersLoaded(true);
                     setAudit(currentAudit);
                     setAuditLoaded(true);
-                  })
+                    // Team desk v4.1 (D16): a read changes nothing, so it does not say "Saved."
+                  }, loadedWord)
                 }
               />
             </section>
@@ -1016,7 +1018,7 @@ function TenantWorkspace({
                   void act(async () => {
                     setMembers(await request('members'));
                     setMembersLoaded(true);
-                  })
+                  }, loadedWord)
                 }
                 onUpdateMember={(value) => {
                   // A retry of the same change after an answer that never arrived reuses its command id, so it is

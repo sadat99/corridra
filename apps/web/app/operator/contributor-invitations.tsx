@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { PhoneFold } from '../../components/phone-fold';
+import { useOperatorFlags } from './operator-flags';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback';
 import { displayDate } from '@corridra/domain/locale';
@@ -37,6 +38,7 @@ type Snapshot = {
 };
 
 export function ContributorInvitations({ tenant }: { tenant: string }) {
+  const { teamDeskV41 } = useOperatorFlags();
   const [data, setData] = useState<Snapshot | null>(null);
   const [cursor, setCursor] = useState<Cursor | null>(null);
   const [previous, setPrevious] = useState<(Cursor | null)[]>([]);
@@ -159,7 +161,8 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
   }
   return (
     <section className="detail-card ux-network-invitations" aria-label="Helper invitations">
-      <p className="label">01 · INVITE</p>
+      {/* Team desk v4.1 (D14): no small label above a heading. */}
+      {teamDeskV41 ? null : <p className="label">01 · INVITE</p>}
       <h3>Invite a helper</h3>
       <p role="status" aria-live="polite">
         {message}
@@ -318,7 +321,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
             Copy Assigned-task Link
           </button>
           <Link prefetch={false} className="text-link" href="/network">
-            Network access and work overview
+            {teamDeskV41 ? 'Network Access and Work Overview' : 'Network access and work overview'}
           </Link>
           <button
             className="text-link"
