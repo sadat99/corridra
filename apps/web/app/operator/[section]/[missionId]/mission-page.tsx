@@ -68,7 +68,8 @@ export function MissionPage({
     [panel, setPanel] = useState<Panel>(null),
     [revision, setRevision] = useState(0);
   const panelHeading = useRef<HTMLHeadingElement>(null),
-    trigger = useRef<HTMLButtonElement | null>(null);
+    trigger = useRef<HTMLButtonElement | null>(null),
+    sending = useRef(false);
   const q = `tenant=${encodeURIComponent(tenant)}`;
   const load = useCallback(
     () => read<Queue>(`/api/team-work/mission?${q}&id=${missionId}`),
@@ -110,6 +111,10 @@ export function MissionPage({
     trigger.current?.focus();
   }
   async function act(action: string, body: unknown, done: string) {
+    // One change at a time (unit D2): a second submit while the first is still out, or while the
+    // authenticator check is open, is ignored. missionRequest asks for the code in place and retries once.
+    if (sending.current) return false;
+    sending.current = true;
     setBusy(true);
     setMessage(null);
     try {
@@ -121,6 +126,7 @@ export function MissionPage({
       setMessage({ kind: 'alert', text: e instanceof Error ? e.message : 'Unable to save' });
       return false;
     } finally {
+      sending.current = false;
       setBusy(false);
     }
   }

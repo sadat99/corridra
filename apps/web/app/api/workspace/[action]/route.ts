@@ -7,6 +7,7 @@ import { foundations } from '../../../../lib/foundations';
 import { communicationOrchestrator } from '../../../../lib/communication-orchestrator';
 import { notify } from '../../../../lib/notify';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
+import { refusalReference, workspaceRefusal } from '../../../../lib/staff-db-error';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 async function handle(request: Request, { params }: { params: Promise<{ action: string }> }) {
@@ -16,11 +17,26 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
   let replyPath = false;
   try {
     const s = foundations();
-    if (!s)
+    if (!s) {
+      const reference = refusalReference(correlationId);
+      console.error(
+        JSON.stringify({
+          event: 'foundation_request_failed',
+          code: 'UNAVAILABLE',
+          status: 503,
+          correlationId,
+          reference,
+        }),
+      );
       return Response.json(
-        { error: 'Operator workspace is unavailable' },
+        {
+          error: `Operator workspace is unavailable. Try again later. If it continues, quote reference ${reference}.`,
+          correlationId,
+          reference,
+        },
         { status: 503, headers },
       );
+    }
     await s.ready;
     if (
       request.method === 'POST' &&
@@ -355,45 +371,31 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     if (!Object.hasOwn(writes, action)) throw new DomainError('Not found', 404);
     return Response.json(await writes[action as keyof typeof writes](), { status: 201, headers });
   } catch (error) {
-    const status =
+    // Unit D2: every refusal carries a short reference, and 403, 409, 503 and 500 leave one log line
+    // with the code and the correlation id. The words of the database never reach the answer or the log.
+    const reference = refusalReference(correlationId);
+    const refusal =
       error instanceof DomainError
-        ? error.status
+        ? { status: error.status, message: error.message, code: error.code ?? 'DOMAIN' }
         : error instanceof z.ZodError || error instanceof SyntaxError
-          ? 400
-          : replyPath &&
-              ['42883', '42P01', '3F000'].includes((error as { code?: string }).code ?? '')
-            ? 503
-            : ['23514', '23503', '23505', 'P0001', '54000'].includes(
-                  (error as { code?: string }).code ?? '',
-                )
-              ? 409
-              : (error as { code?: string }).code === '42501'
-                ? 403
-                : 500;
-    const message =
-      error instanceof DomainError
-        ? error.message
-        : status === 400
-          ? 'Check the submitted values'
-          : status === 409
-            ? 'The record or policy changed. Check its status and refresh before retrying.'
-            : status === 403
-              ? 'Access denied'
-              : 'The request could not be completed';
-    if (status === 500)
-      console.error(JSON.stringify({ event: 'foundation_request_failed', correlationId }));
-    else if (status === 503 && !(error instanceof DomainError))
+          ? { status: 400, message: 'Check the submitted values', code: 'INPUT' }
+          : workspaceRefusal(error, reference, { replyPath });
+    if ([403, 409, 500, 503].includes(refusal.status))
       console.error(
         JSON.stringify({
-          event: 'foundation_request_failed',
+          event: refusal.status >= 500 ? 'foundation_request_failed' : 'foundation_request_refused',
+          code: refusal.code,
+          status: refusal.status,
           correlationId,
-          code: (error as { code?: string }).code,
+          reference,
         }),
       );
     const code = error instanceof DomainError ? error.code : undefined;
     return Response.json(
-      code ? { error: message, code, correlationId } : { error: message, correlationId },
-      { status, headers },
+      code
+        ? { error: refusal.message, code, correlationId, reference }
+        : { error: refusal.message, correlationId, reference },
+      { status: refusal.status, headers },
     );
   }
 }
