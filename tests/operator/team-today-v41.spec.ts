@@ -240,11 +240,13 @@ test('switch on: Today has the two regions, the headline says what to do, and ea
   await expect(
     queues.getByRole('link', { name: '1 paid-service request to quote' }),
   ).toHaveAttribute('href', '#billing-services');
-  await expect(queues.getByRole('link', { name: '1 follow-up past its due date' })).toHaveAttribute(
-    'href',
-    '#workspace-meetings',
-  );
-  await expect(queues.getByRole('link', { name: '1 meeting needs a new time' })).toBeVisible();
+  // Follow-ups and meetings to rebook are handled in one place: one tile, one link.
+  await expect(
+    queues.getByRole('link', {
+      name: /1\s*follow-up past its due date\s*1\s*meeting needs a new time/,
+    }),
+  ).toHaveAttribute('href', '#workspace-meetings');
+  await expect(queues.locator('a[href="#workspace-meetings"]')).toHaveCount(1);
   await expect(queues.getByText('accepted quote')).toHaveCount(0);
 
   // Waiting on others is a closed row that says how many are on time. Open: the coming meeting and the open missions
@@ -259,18 +261,20 @@ test('switch on: Today has the two regions, the headline says what to do, and ea
   await expect(others.nth(0).locator('.ux-desk-chip')).toHaveCount(0);
   await expect(others.nth(1)).toContainText('Sample Ceramics Co');
   await expect(others.nth(2)).toContainText('Sample Leather Co');
-  await expect(others.nth(0).getByRole('link')).toHaveAccessibleName(
-    'Open Sample buyer introduction, Meeting',
+  // A meeting has no address of its own, so its row carries no link (Meetings is in the menu).
+  await expect(others.nth(0).getByRole('link')).toHaveCount(0);
+  await expect(others.nth(1).getByRole('link')).toHaveAccessibleName(
+    'Open Source suppliers · China, Sample Ceramics Co',
   );
   await expect(others.nth(1).locator('a.text-link')).toHaveText('Open');
   await expect(others.nth(1).locator('a.text-link')).toHaveAttribute(
     'href',
     `/operator/missions/${id(11)}?workspace=${tenant}`,
   );
-  await expect(waiting(page).getByRole('link', { name: 'Open Missions' })).toHaveAttribute(
-    'href',
-    '#workspace-missions',
-  );
+  // The Missions menu place is not repeated in the page; the count stays as words.
+  await expect(
+    page.locator('.ux-today41').getByRole('link', { name: 'Open Missions' }),
+  ).toHaveCount(0);
   await expect(waiting(page).getByText('5 open in total')).toBeVisible();
   // One cobalt button on the whole page: Review in the first row that needs a decision.
   await expect(page.locator('.ux-today41 a.primary-link')).toHaveCount(1);
@@ -363,8 +367,11 @@ test('switch on: a capped read is a lower bound: only its own tile carries the p
     'No new requests and nothing late. Some lists could not be checked.',
   );
   const queues = decide(page).getByRole('list', { name: 'Also needs your decision' });
-  await expect(queues.getByRole('link', { name: '1+ follow-up past its due date' })).toBeVisible();
-  await expect(queues.getByRole('link', { name: '1+ meeting needs a new time' })).toBeVisible();
+  await expect(
+    queues.getByRole('link', {
+      name: /1\+\s*follow-up past its due date\s*1\+\s*meeting needs a new time/,
+    }),
+  ).toBeVisible();
   await expect(
     decide(page).getByText(
       'Follow-ups and meetings that need a new time cover the 50 earliest of each.',
@@ -374,9 +381,10 @@ test('switch on: a capped read is a lower bound: only its own tile carries the p
 
   // Only the follow-ups read stopped: the meetings count is exact and keeps its plain number.
   await open(page, { ...quiet, meetings: { ...meetings, followupsNext: 'more' } });
-  await expect(queues.getByRole('link', { name: '1+ follow-up past its due date' })).toBeVisible();
   await expect(
-    queues.getByRole('link', { name: '1 meeting needs a new time', exact: true }),
+    queues.getByRole('link', {
+      name: /1\+\s*follow-up past its due date\s*1\s*meeting needs a new time/,
+    }),
   ).toBeVisible();
   await expect(decide(page).getByText('Follow-ups cover the 50 earliest.')).toBeVisible();
   await expect(waiting(page)).toContainText('1 on time');
@@ -389,9 +397,10 @@ test('switch on: a capped read is a lower bound: only its own tile carries the p
     meetings: { meetings: [meetings.meetings[1]], followups: meetings.followups, next: 'more' },
   });
   await expect(
-    queues.getByRole('link', { name: '1 follow-up past its due date', exact: true }),
+    queues.getByRole('link', {
+      name: /1\s*follow-up past its due date\s*1\+\s*meeting needs a new time/,
+    }),
   ).toBeVisible();
-  await expect(queues.getByRole('link', { name: '1+ meeting needs a new time' })).toBeVisible();
   await expect(
     decide(page).getByText('Meetings that need a new time cover the 50 earliest.'),
   ).toBeVisible();
@@ -440,6 +449,63 @@ test('switch on: the problem report and erasure tiles keep their detail words', 
   // The overdue request is also a row of the table, with the words in sentence case.
   await expect(decide(page).locator('tbody tr')).toHaveCount(1);
   await expect(decide(page).locator('tbody tr')).toContainText('Erasure requests');
+  // An erasure request has no address of its own: its row has no link, the tile is the one link to the queue.
+  await expect(decide(page).locator('tbody tr').getByRole('link')).toHaveCount(0);
+  await expect(page.locator('main a[href="#workspace-settings"]')).toHaveCount(1);
+});
+
+// Owner rule, 24 Nov 2026: "Avoid unnecessary repetition of navigation links on a single screen". With the switch on,
+// every address in the page body appears once. The sidebar menu is the only global path; a count tile is a work queue
+// (the "queue tile" rule): each links once and no two tiles share an address.
+test('switch on: no address is linked twice in the page body, and no menu place is repeated there', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const erasure = (n: number, daysLeft: number) => ({
+    id: id(800 + n),
+    reference: `ER-00010${n}`,
+    requestedAt: daysAgo(30 - daysLeft),
+    dueAt: inDays(daysLeft),
+    daysLeft,
+    status: 'received',
+  });
+  await open(
+    page,
+    {
+      ...busy,
+      team: { acceptedQuotesNotStarted: 2, serviceRequestsToQuote: 1, repliesToReview: 2 },
+      problemReports: {
+        counts: { received: 2, in_review: 1, resolved: 4, closed: 0 },
+        oldestReceivedAt: daysAgo(6),
+        items: [],
+      },
+      erasure: [erasure(1, -3), erasure(2, -5), erasure(3, 4)],
+    },
+    '/?v41=on&reports=on',
+  );
+  await expect(decide(page).locator('tbody tr')).toHaveCount(5);
+  await showWaiting(page);
+  await page.getByRole('button', { name: 'Show Start with a mission' }).click();
+  const addresses = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('main a[href]')).map((link) => link.getAttribute('href')!),
+  );
+  const twice = addresses.filter((address, index) => addresses.indexOf(address) !== index);
+  expect(twice, `linked more than once: ${twice.join(', ')}`).toEqual([]);
+  // The six queue tiles, each to its own place.
+  const tiles = await page
+    .getByRole('list', { name: 'Also needs your decision' })
+    .locator('a[href]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+  expect(tiles).toEqual([
+    '#workspace-delivery',
+    '#billing-services',
+    '#workspace-commercial',
+    '#workspace-meetings',
+    '#problem-report-queue',
+    '#workspace-settings',
+  ]);
+  // Menu places are not repeated as plain links in the body.
+  await expect(page.locator('main a[href="#workspace-missions"]')).toHaveCount(0);
 });
 
 test('switch off and on at 320, 390, 768, 1024, 1440 and 1920: off is unchanged, on has no sideways scroll, 44 px targets and is axe clean', async ({

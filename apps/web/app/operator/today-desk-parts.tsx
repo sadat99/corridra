@@ -99,12 +99,17 @@ export type RegionRowView = {
   when: ReactNode;
   /** The word before the date on a phone, where the column heading is not shown: "Due" or "Starts". */
   whenWord: string;
-  href: string;
+  /**
+   * Where the row opens, or null for a row with no address of its own (a meeting, an erasure request): its queue
+   * tile is then the one link to that place, so no address appears twice on the page.
+   */
+  href: string | null;
 };
 
 /**
- * One region's rows. With `primary`, the first row carries the page's one primary button and every later row the
- * quiet link; without it every row is quiet. Rows past `firstRows` stay in the table, hidden until Show More.
+ * One region's rows. With `primary`, the first row that has a link carries the page's one primary button and every
+ * later row the quiet link; without it every row is quiet. Rows past `firstRows` stay in the table, hidden until
+ * Show More.
  */
 export function RegionTable({
   views,
@@ -127,6 +132,7 @@ export function RegionTable({
   /** Only the region that needs a decision passes this: one cobalt button on the page. */
   primary?: boolean;
 }) {
+  const firstLinked = views.findIndex((view) => view.href !== null);
   return (
     <div className="ux-desk-scroll">
       <table id={tableId} className="ux-desk-table ux-today41-table" role="table">
@@ -167,17 +173,19 @@ export function RegionTable({
                   </span>
                 </td>
                 <td role="cell">
-                  <a
-                    className={
-                      primary && index === 0
-                        ? 'primary-link ux-today41-review'
-                        : 'text-link ux-today41-review'
-                    }
-                    href={href}
-                    aria-label={`${action} ${reference ? `${reference}, ` : ''}${what}, ${group}`}
-                  >
-                    {action}
-                  </a>
+                  {href !== null && (
+                    <a
+                      className={
+                        primary && index === firstLinked
+                          ? 'primary-link ux-today41-review'
+                          : 'text-link ux-today41-review'
+                      }
+                      href={href}
+                      aria-label={`${action} ${reference ? `${reference}, ` : ''}${what}, ${group}`}
+                    >
+                      {action}
+                    </a>
+                  )}
                 </td>
               </tr>
             ),

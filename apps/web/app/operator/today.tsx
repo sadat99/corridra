@@ -931,7 +931,8 @@ function DecisionRegion({
       reference: null,
       what: `Erasure request ${row.reference ?? ''}`.trim(),
       group: 'Erasure requests',
-      href: '#workspace-settings',
+      // No address of its own: the erasure tile below is the one link to the queue.
+      href: null,
     };
   });
   const extra = today.erasure?.rows.length ?? 0;
@@ -997,22 +998,33 @@ function DecisionRegion({
       '#workspace-commercial',
       plural(queues.quotes, 'accepted quote not started', 'accepted quotes not started'),
     ),
-    queue(
-      'follow-ups',
-      queues.followUps,
-      today.work !== null,
-      '#workspace-meetings',
-      plural(queues.followUps, 'follow-up past its due date', 'follow-ups past their due date'),
-      { tone: 'late', plus: followUpsCapped },
-    ),
-    queue(
-      'reschedule',
-      queues.reschedule,
-      today.work !== null,
-      '#workspace-meetings',
-      plural(queues.reschedule, 'meeting needs a new time', 'meetings need a new time'),
-      { plus: meetingsCapped },
-    ),
+    // Follow-ups and meetings to rebook are handled in one place, so they share one tile and one link.
+    today.work !== null && (queues.followUps !== 0 || queues.reschedule !== 0) ? (
+      <li key="meetings" data-tone={queues.followUps ? 'late' : undefined}>
+        <a href="#workspace-meetings">
+          {queues.followUps ? (
+            <>
+              <strong>{followUpsCapped ? `${queues.followUps}+` : queues.followUps}</strong>
+              <span>
+                {plural(
+                  queues.followUps,
+                  'follow-up past its due date',
+                  'follow-ups past their due date',
+                )}
+              </span>
+            </>
+          ) : null}
+          {queues.reschedule ? (
+            <>
+              <strong>{meetingsCapped ? `${queues.reschedule}+` : queues.reschedule}</strong>
+              <span>
+                {plural(queues.reschedule, 'meeting needs a new time', 'meetings need a new time')}
+              </span>
+            </>
+          ) : null}
+        </a>
+      </li>
+    ) : null,
     queue(
       'reports',
       reports?.count ?? null,
@@ -1157,7 +1169,8 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
           </>
         ),
         whenWord: 'Starts',
-        href: '#workspace-meetings',
+        // No address of its own: Meetings is in the menu, and the meetings tile links there when work waits.
+        href: null,
       } satisfies RegionRowView,
     })),
   ]
@@ -1175,12 +1188,7 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
         : `${views.length} on time`;
   return (
     <DeskFold title="Waiting on others" summary={summary}>
-      <p className="ux-desk-open-missions">
-        <a className="text-link" href="#workspace-missions">
-          Open Missions
-        </a>
-        <span>{today.open.total} open in total</span>
-      </p>
+      <p className="ux-desk-open-missions">{today.open.total} open in total</p>
       {views.length === 0 ? (
         meetingsCapped ? null : (
           <p className="ux-needs-empty">Nothing is waiting on anyone else.</p>
