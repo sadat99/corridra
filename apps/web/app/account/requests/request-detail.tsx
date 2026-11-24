@@ -16,6 +16,8 @@ import { customerStatusLabel } from '../../../lib/ux/customer-road';
 import { formatDateTime } from '../../../lib/ux/format';
 import { requestFacts, requestTitle } from '../request-words';
 import { limitWords } from '../../../lib/account-limit';
+import { classifyObjective } from '../../../lib/work-items/classify';
+import { JourneyMismatchNote } from '../../../components/ux/journey-mismatch-note';
 
 const displayDate = (value: string) => formatDateTime(value);
 
@@ -40,6 +42,8 @@ type Scope = {
   roomHref?: string;
   /** The email reminder card, drawn by the page. Shown only beside a request the person may read. */
   nudge?: ReactNode;
+  /** The request's short reference (RQ-000001), when the person's own list gave one. */
+  reference?: string;
 };
 /** CQ-24 and D-017: the original brief in groups (Goal, Where, Details, Contact), each fact once, in plain words. */
 function RequestFacts({ value }: { value: Record<string, unknown> }) {
@@ -114,6 +118,7 @@ function PrivateDetail({
   framed = false,
   roomHref,
   nudge,
+  reference,
 }: Scope) {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [status, setStatus] = useState('loading');
@@ -191,6 +196,7 @@ function PrivateDetail({
       framed={framed}
       roomHref={roomHref}
       nudge={nudge}
+      reference={reference}
       onRefresh={() => {
         setDetail(null);
         setStatus('loading');
@@ -208,6 +214,7 @@ export function RequestDetailView({
   framed = false,
   roomHref,
   nudge,
+  reference,
   onRefresh,
 }: {
   status: string;
@@ -217,6 +224,7 @@ export function RequestDetailView({
   framed?: boolean;
   roomHref?: string;
   nudge?: ReactNode;
+  reference?: string;
   onRefresh: () => void;
 }) {
   const original = detail?.original;
@@ -268,7 +276,13 @@ export function RequestDetailView({
           </p>
         ) : (
           <>
+            <JourneyMismatchNote family={classifyObjective(original?.objective)} />
             <section aria-label="Request overview" className="detail-card">
+              {reference ? (
+                <p className="ux-hint" lang="en" data-request-reference>
+                  {reference}
+                </p>
+              ) : null}
               <h2>{requestTitle(original) ?? original?.objective}</h2>
               {detail.progress && (
                 <p>

@@ -21,6 +21,8 @@ import { usePathname } from 'next/navigation';
 import { CorridraIcon } from '../corridra-icon';
 import { OperatorIcon } from '../operator-icon';
 import { customerGroupHere, newRequestHref } from '../../lib/ux/customer-navigation';
+import { groupsShownInJourney, type JourneyMode } from '../../lib/ux/journey-mode';
+import { JourneySwitch } from './journey-switch';
 import { useWorkspaces } from './customer-bar';
 import { TopBarTools } from './top-bar';
 import { activeWorkspaces } from '../../lib/workspace-choice';
@@ -227,6 +229,7 @@ export function CustomerSideNav({
   current,
   journeys,
   journeyCounts,
+  journeyMode,
   groups,
 }: {
   id: string;
@@ -234,6 +237,11 @@ export function CustomerSideNav({
   items: readonly CustomerSideItem[];
   current: string;
   journeys: readonly CustomerSideItem[];
+  /**
+   * Journey modes (journey-mode.ts), given only while that switch is on: the Journey switcher is then the first
+   * thing in the list and replaces Your Journeys, and Groups are drawn by `groupsShownInJourney`.
+   */
+  journeyMode?: JourneyMode;
   /** Read on the server, never awaited by the frame: the list is drawn at once and the counts appear when ready. */
   journeyCounts?: Promise<JourneyCounts | null>;
   groups: readonly CustomerSideItem[];
@@ -248,6 +256,7 @@ export function CustomerSideNav({
       className="ux-team-sidebar ux-leftnav-list ux-customer-nav"
       aria-label={label}
     >
+      {journeyMode ? <SwitchWithTip mode={journeyMode} counts={journeyCounts} /> : null}
       <ul>
         {items.map((item) => (
           <li key={item.key}>
@@ -255,7 +264,7 @@ export function CustomerSideNav({
           </li>
         ))}
       </ul>
-      {journeyCounts && journeys.length ? (
+      {journeyMode ? null : journeyCounts && journeys.length ? (
         <Suspense
           fallback={
             <SideGroup id={`${id}-journeys`} label="Your Journeys" items={journeys} here={null} />
@@ -266,9 +275,22 @@ export function CustomerSideNav({
       ) : (
         <SideGroup id={`${id}-journeys`} label="Your Journeys" items={journeys} here={null} />
       )}
-      <SideGroup id={`${id}-groups`} label="Groups" items={groups} here={here} />
+      {!journeyMode || groupsShownInJourney(journeyMode, groupHere !== null) ? (
+        <SideGroup id={`${id}-groups`} label="Groups" items={groups} here={here} />
+      ) : null}
     </nav>
   );
+}
+
+/** The Journey switcher with the icons-only bar's hover and focus name, as the Help row has. */
+function SwitchWithTip({
+  mode,
+  counts,
+}: {
+  mode: JourneyMode;
+  counts?: Promise<JourneyCounts | null>;
+}) {
+  return <JourneySwitch mode={mode} counts={counts} summaryProps={useRailTip(true)} />;
 }
 
 export function CustomerRailTop() {
