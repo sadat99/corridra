@@ -1200,3 +1200,14 @@
     gap: 0;
   }
 }
+@media (max-width: 23.99rem) {
+  /* Under the heading at 320 the link may wrap: a long word in another language breaks instead of widening the page. */
+  .move-card > .move-card-link {
+    max-inline-size: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .move-card > .move-card-link > span {
+    min-inline-size: 0;
+  }
+}
