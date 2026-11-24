@@ -2631,7 +2631,9 @@ test('the done ticks are whole once the draw animation has finished, at 320, 768
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const paths = document.querySelectorAll('[data-shape="done"] .corridra-icon path');
       await Promise.all(
-        [...paths].flatMap((p) => p.getAnimations()).map((a) => a.finished.catch(() => undefined)),
+        Array.from(paths)
+          .flatMap((p) => p.getAnimations())
+          .map((a) => a.finished.catch(() => undefined)),
       );
     });
     const ticks = await page
