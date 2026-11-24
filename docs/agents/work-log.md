@@ -4961,7 +4961,7 @@ Merged as 9c81596.
 
 ## 24 Nov 2026: records for PRs 617 to 626, how to read them
 
-Request: records only for the nine PRs merged after PR 616, the owner word of 01:47Z and two Guardian rulings. Written by the scribe on branch `claude/records-617-626` from main d3c9df16, authority stamp auth-12d72cb8f7f1. No ledger edit in this PR (rule 5 of `docs/agents/README.md`: only the run's last PR updates the ledger). PR 616 (37b3a75, records) has no entry of its own. PR 625 is an open draft and has no entry.
+Request: records only for the ten PRs merged after PR 616, the owner word of 01:47Z and two Guardian rulings. Written by the scribe on branch `claude/records-617-626` from main d3c9df16, authority stamp auth-12d72cb8f7f1. No ledger edit in this PR (rule 5 of `docs/agents/README.md`: only the run's last PR updates the ledger). PR 616 (37b3a75, records) has no entry of its own: it is itself a records PR. PR 625 merged at 03:50Z on 24 Nov 2026, after the first records commit 27d1b1c4, and has its entry after PR 626, in merge order; origin/main 7b67552a is merged into this branch.
 
 Sources: each PR body, `git log origin/main`, and the commit status of each merge commit, read by the scribe at 03:15:02Z on 24 Nov 2026. A Vercel "success" is a deployment status only. It is not a smoke, not a signed-in journey and not acceptance. No install, switch flip, smoke or signed-in pass is recorded for any of these PRs. The Guardian's review receipts were not given to the scribe, so a review line below quotes the PR body only.
 
@@ -5069,6 +5069,18 @@ Owner items raised in the PR body, undecided: the hero mark against `docs/brand/
 
 Merged as d3c9df160bd63272366aa2222e7e8fb88a22500f at 03:11:12Z. Vercel status was pending at 03:11:20Z (read by the launching agent) and success, "Deployment has completed", at 03:13:16Z (read by the scribe at 03:15:02Z).
 
+## 24 Nov 2026: V4.1-C recipient links and helper pages (PR 625)
+
+Scope: UI/UX.v4.1 wave C, presentation only, on `/buyer`, `/client`, `/decision-card`, `/programme`, both mute pages and `/contributor/**`. The PR body states that no route, id, payload, permission or refusal path changed. L8 on `/buyer`: a private link that does not open shows a caution left edge, a lock beside the shared refusal line (D-053, words unchanged) and "Retry Private Introduction" as the one primary action. `/buyer?stop=1` is marked the same way with one retry ("Try Again") and one help link; neither sends anything. Four recipient lines that named "the operator" now name "the Corridra team". On `/client` and `/programme` a meeting time is written by `formatDateTime` in the meeting's own time zone. L9 on `/contributor`: one "Your next step" card with one primary action, in both states of the front doors switch. L2: each helper door names one existing icon; the shared door list takes an optional `icon`. L1: the market and work country of a task go through `Flagged` with the shared `placeMark`. Conformance for wave C went from 40 not assessed, 58 n/a, 2 not started, 0 built to 0 not assessed, 93 n/a, 3 not started, 4 built. Pinned words moved in `tests/integration/buyer-steps.test.ts`, `tests/ux/buyer-steps.spec.ts` and `tests/integration/pl1-privacy-label.test.ts`. No baseline file changed.
+
+Checks (PR body): on 531b49d3 (main ebc7e83f merged), each through `node scripts/gate.mjs`, all exit 0: format, lint, typecheck, `pnpm test` (131 passed), build; static guards, 258 files, 4088 passed, 1 skipped; five database suites, 68 passed; six `pnpm test:ux` specs, 173 passed; three browser specs, 12 passed, 8 skipped; three operator specs, 36 passed. On 2f37299b (before the review fixes), all exit 0: full `pnpm test:ux`, 783 passed; full browser suite, 803 passed, 513 skipped; 21 operator spec files, 391 passed; 17 database suites, 559 passed. The PR body names no check on the merged PR head b3e87af3; CI on that head and on main was not read by the scribe.
+
+Not verified: the four rows are `built`, none is `verified`. Not run (PR body): the whole operator suite; the whole UX and browser suites after the review fixes; axe as a separate pass beyond what `ux-gate` runs; any live-site or real-device check. Page length was not measured separately. `tests/operator/zzz-owner-page.spec.ts` fails when run without `workspace.spec.ts` before it (times out at the staff sign-in code step) and passes after it; the PR does not touch that page.
+
+Open items in the PR body, not changed there: `/buyer` L1 (Country row mark) is a follow-up unit, because golden files in `tests/integration/fixtures/buyer-steps-off` pin the reply page markup and four browser harnesses cannot load the flag stylesheet; `/client` and `/programme` L1 are not started, because the shared report body `app/mission-experience-view.tsx` also serves staff screens and was not touched; on the Reply Page the retry button also shows while the page is loading, as before; L8 keeps the live refusal line and the extra sentences in the mockup were not added.
+
+Merged as 7b67552a564e8b956cf641ea18969bfa570ad16d at 03:50:36Z (GitHub `merged_at`; relayed as 03:50:35Z), squash of PR head b3e87af3. Vercel status was pending, "Vercel is deploying your app", at 03:50:40Z (read by the launching agent at 03:50:55Z) and success, "Deployment has completed", updated 03:52:24Z (read by the scribe at 03:52:47Z; the scribe also read it pending at 03:51:22Z and 03:52:02Z). A Vercel success is a deployment status only: no smoke, live-site check or acceptance is recorded here.
+
 ## 24 Nov 2026: owner word "live", relayed
 
 At 01:47Z on 24 Nov 2026 the owner said the exact word "live". It relates to opening outreach, AI in real workspaces and real invoices under the owner decision of 23 Nov 2026 ("outreach and money in test mode first, live only on the owner's word "live"").
@@ -5079,10 +5091,17 @@ Limits: it does NOT cover real payments or payouts, which stay closed (D01-D08, 
 
 ## 24 Nov 2026: Guardian rulings 40 and 41, relayed
 
-These are Guardian rulings relayed by the launching agent. They are not owner directions, they have no source in the repository and they do not amend `docs/revamp/commercial-ready-run-2026-11-23.md`. "B7b" is not a unit name in that plan.
+These are Guardian rulings relayed by the launching agent. They are not owner directions, they have no source in the repository and they do not amend `docs/revamp/commercial-ready-run-2026-11-23.md`. "B7b" is not a unit name in that plan: it is a run unit, split by Guardian 40 into B7b-db and B7b-ui (per Guardian 41, relayed).
 
-Guardian 40: unit B8b is granted up to 12 files. B7b is split into B7b-db (database only, additive migrations, installer first) and B7b-ui (after the install has run in production).
+Guardian 40 (session_0187kU9u9p25NZsGEnJRZZWD): unit B8b is granted up to 12 files. B7b is split into B7b-db (database only, additive migrations, installer first) and B7b-ui (after the install has run in production).
 
 Guardian 41 (session_0187kU9tuubfFGmpSZKRp6VQ): the B7b-db shape is 2 migration files (real-use 0022, plus workspace-lifecycle 0010 late), with up to 12 files only for test hide-list additions. The CP unit is widened to 10 files to include the false success page wording.
 
-Next action: the run's last PR updates the ledger. Open for the owner or an ADR author: the Status lines and index lines of ADR-090, 091 and 092.
+Handover: Guardian 41 handed over to Guardian 42 (session_0187kU9sn7WZvDkYoqNneWvw) at about 03:26Z on 24 Nov 2026, relayed.
+
+Next action: the run's last PR updates the ledger.
+
+Open follow-ups, untouched by this PR:
+
+- ADR-090, 091 and 092: each Status line still reads "Proposed 23 November 2026" and `docs/adr/README.md` has no index line for them (read by the scribe on this branch). For the owner or an ADR author.
+- Register drift: `docs/revamp/v4-1-conformance.json` and `docs/documentation-map.md` have no `Document status:` line and no row in `docs/PLAN_STATUS.md`. `docs/agents/conductor/SKILL.md` has no register row; the scribe's read found a `Document status: CURRENT` line on its line 1, where the Guardian review reported none, so that point is left for whoever repairs the register.
