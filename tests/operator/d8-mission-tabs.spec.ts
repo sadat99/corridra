@@ -738,6 +738,8 @@ test('switch off: the Quotes and Replies tabs and the research section are today
 
 // Owner rule, 24 Nov 2026: a destination has one link on a screen. Every address linked inside <main> is
 // collected with the switch on and none may appear twice. No exception is named: nothing here needs one.
+// "Open Reports" and "Open Money" are each a contextual deep link (Guardian ruling, 24 Nov 2026): they carry
+// ?mission=<id> to a view opened on this mission, so they are not copies of the Reports and Money menu places.
 test('switch on: no address is linked twice inside main on Quotes, Replies or Add companies', async ({
   page,
 }) => {
