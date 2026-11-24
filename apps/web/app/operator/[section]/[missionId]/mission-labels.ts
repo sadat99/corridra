@@ -232,7 +232,7 @@ export type MissionField = (typeof missionFields)[number];
 
 const askedFor: Record<string, readonly MissionField[]> = {
   assign: missionFields,
-  qualify: ['marketCode', 'targetProfile', 'nextAction', 'dueAt'],
+  qualify: ['marketCode', 'targetProfile'],
   pause: [],
   cancel: [],
   close: [],
@@ -297,7 +297,7 @@ export function stepStatement(
     };
   const view = customer(stage);
   return {
-    changes: `The stage changes from ${stageLabel(status)} to ${stageLabel(stage)}.`,
+    changes: `Stage now: ${stageLabel(status)}. After this: ${stageLabel(stage)}.`,
     customer: `The customer will see: ${view.step ? `${view.step}. ` : ''}${view.words}`,
   };
 }

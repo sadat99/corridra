@@ -410,7 +410,7 @@ export function MissionStepForm({
       className="operator-form mission-step-form"
       onSubmit={onSubmit}
     >
-      <div className="mission-step-facts">
+      <div className="mission-step-facts" tabIndex={-1} data-autofocus>
         <p data-step-changes>{statement.changes}</p>
         <p data-step-customer>{statement.customer}</p>
         <p data-step-route>{routeLine(m.route_label, action)}</p>

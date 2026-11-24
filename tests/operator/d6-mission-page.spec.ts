@@ -111,7 +111,6 @@ type Shape = {
   targetProfile?: string | null;
   routeLabel?: string | null;
   replies?: { id: string; mission_id: string; body: string; created_at?: string }[];
-  reports?: number;
 };
 const queue = (shape: Shape) => ({
   role: shape.role ?? 'owner',
@@ -164,6 +163,7 @@ async function open(
 ) {
   const sent: { path: string; body: Record<string, unknown> }[] = [];
   const codes: string[] = [];
+  const reads: string[] = [];
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -177,49 +177,38 @@ async function open(
       if (answer.delay) await new Promise((done) => setTimeout(done, answer.delay));
       return route.fulfill({ status: answer.status, json: answer.json });
     }
+    reads.push(url.pathname);
     const json =
       url.pathname === '/api/team-work/mission'
         ? queue(shape)
-        : url.pathname === '/api/workspace/delivery'
+        : url.pathname === '/api/move/staff'
           ? {
-              role: shape.role ?? 'owner',
-              participants: [],
-              owners: [],
-              publications: Array.from({ length: shape.reports ?? 0 }, (_, index) => ({
-                id: `00000000-0000-4000-8000-00000000d${String(index).padStart(3, '0')}`,
-                mission_id: mission,
-                copy: { title: `Invented report ${index + 1}`, company: 'Invented Machinery Co' },
-                revoked: false,
-              })),
+              version: 1,
+              moves: [
+                {
+                  id: '00000000-0000-4000-8000-0000000000e1',
+                  verb: 'Add',
+                  object: 'the invented packing list',
+                  holder: 'customer',
+                  dueOn: null,
+                  position: 1,
+                  setAt: '2026-11-20T09:00:00.000Z',
+                  closed: null,
+                },
+              ],
             }
-          : url.pathname === '/api/move/staff'
-            ? {
-                version: 1,
-                moves: [
-                  {
-                    id: '00000000-0000-4000-8000-0000000000e1',
-                    verb: 'Add',
-                    object: 'the invented packing list',
-                    holder: 'customer',
-                    dueOn: null,
-                    position: 1,
-                    setAt: '2026-11-20T09:00:00.000Z',
-                    closed: null,
-                  },
-                ],
-              }
-            : url.pathname === '/api/workspace/mission-catalogue'
-              ? { routes: [], packs: [], types: [], requirements: [], assessments: [] }
-              : url.pathname === '/api/workspace/commercial-mission'
-                ? { assignments: [], quotations: [], targets: [] }
-                : {};
+          : url.pathname === '/api/workspace/mission-catalogue'
+            ? { routes: [], packs: [], types: [], requirements: [], assessments: [] }
+            : url.pathname === '/api/workspace/commercial-mission'
+              ? { assignments: [], quotations: [], targets: [] }
+              : {};
     return route.fulfill({ json });
   });
   await page.goto(`${origin}/?desk=${desk ? 'on' : 'off'}${moves ? '&moves=on' : ''}`);
   await expect(
     page.getByRole('heading', { level: 2, name: 'Invented Machinery Co' }),
   ).toBeVisible();
-  return { sent, codes };
+  return { sent, codes, reads };
 }
 
 const next = (page: Page) => page.getByRole('region', { name: 'Next step' });
@@ -237,7 +226,7 @@ const axe = async (page: Page) =>
 async function other(page: Page, name: string) {
   const more = next(page).locator('details.mission-more');
   if (!(await more.evaluate((node: HTMLDetailsElement) => node.open)))
-    await next(page).getByText('Other Actions').click();
+    await next(page).getByText('More Actions').click();
   await next(page).getByRole('button', { name, exact: true }).click();
 }
 
@@ -268,7 +257,7 @@ test('D6 off: the mission page is what it was, with its Overview buttons and sid
 test('D6 on: the stage bar reads the customer marker, one Next step card holds the one primary button, and the customer panel is read-only', async ({
   page,
 }) => {
-  await open(page, true, {
+  const { reads } = await open(page, true, {
     replies: [
       {
         id: '00000000-0000-4000-8000-0000000000f2',
@@ -282,12 +271,20 @@ test('D6 on: the stage bar reads the customer marker, one Next step card holds t
         body: 'Invented first reply',
       },
     ],
-    reports: 2,
   });
   // The same six stages and the same marker as the customer's Road: a received request sits on Define.
   const bar = page.getByRole('list', { name: 'Stage of Invented Machinery Co' });
   await expect(bar.getByRole('listitem')).toHaveCount(6);
   await expect(bar.locator('[aria-current="step"]')).toHaveText(/Define/);
+  // The current stage is a shape and a word, never colour alone, and it is counted in words.
+  await expect(page.locator('.mission-desk .mr-stage-wrap')).toHaveAttribute(
+    'data-variant',
+    'room',
+  );
+  await expect(page.getByRole('heading', { name: 'Step 1 of 6: Define' })).toBeVisible();
+  await expect(bar.locator('[aria-current="step"] .mr-stage-state')).toHaveText('Now');
+  // The header's own "Next action" line gives way to the Next step card.
+  await expect(page.locator('.mission-page-summary')).not.toContainText('Next action:');
   await expect(next(page)).toContainText('Read the request, then begin qualification.');
   // One primary button on the page, not two.
   const primary = page.locator('.mission-page .primary-link');
@@ -301,8 +298,8 @@ test('D6 on: the stage bar reads the customer marker, one Next step card holds t
   await expect(page.getByLabel('Mission actions', { exact: true })).toHaveCount(0);
   // The other actions wait behind one named disclosure. A received request cannot be paused.
   await expect(next(page).getByRole('button', { name: 'Assign Route' })).toBeHidden();
-  await next(page).getByText('Other Actions').click();
-  await expect(next(page).getByLabel('Other mission actions').getByRole('button')).toHaveText([
+  await next(page).getByText('More Actions').click();
+  await expect(next(page).getByLabel('More mission actions').getByRole('button')).toHaveText([
     'Update Mission Details',
     'Cancel Mission',
     'Assign Route',
@@ -315,7 +312,10 @@ test('D6 on: the stage bar reads the customer marker, one Next step card holds t
   );
   await expect(panel.locator('[data-customer-replies]')).toContainText('2 posted. Latest');
   await expect(panel.locator('[data-customer-replies]')).toContainText('Invented second reply');
-  await expect(panel.locator('[data-customer-reports]')).toHaveText('2 approved for the customer.');
+  // Nothing is claimed about reports: a staff publication is not proof the customer can read it.
+  await expect(panel.locator('[data-customer-reports]')).toHaveCount(0);
+  await expect(page.locator('.mission-desk')).not.toContainText('approved for the customer');
+  expect(reads).not.toContain('/api/workspace/delivery');
   await expect(panel.locator('button, a, input, select, textarea')).toHaveCount(0);
   await expect(panel.locator('[data-customer-moves]')).toHaveCount(0);
   expect(await axe(page)).toEqual([]);
@@ -329,9 +329,8 @@ test('D6 on: empty, closed, paused and read-only states say what is true', async
     'Follow through. This request is closed.',
   );
   await expect(customer(page).locator('[data-customer-replies]')).toHaveText('None posted yet.');
-  await expect(customer(page).locator('[data-customer-reports]')).toHaveText('None approved yet.');
-  await next(page).getByText('Other Actions').click();
-  await expect(next(page).getByLabel('Other mission actions').getByRole('button')).toHaveText([
+  await next(page).getByText('More Actions').click();
+  await expect(next(page).getByLabel('More mission actions').getByRole('button')).toHaveText([
     'Assign Route',
     'Reply on the Receipt',
   ]);
@@ -346,7 +345,7 @@ test('D6 on: empty, closed, paused and read-only states say what is true', async
   // A role that can only read gets no button, and the reason is written.
   await open(page, true, { role: 'viewer' });
   await expect(next(page).getByRole('button')).toHaveCount(0);
-  await expect(next(page).getByText('Other Actions')).toHaveCount(0);
+  await expect(next(page).getByText('More Actions')).toHaveCount(0);
   await expect(next(page)).toContainText(
     'Your role can read this mission. An owner, admin or operator makes changes.',
   );
@@ -359,6 +358,9 @@ test('D6 on: empty, closed, paused and read-only states say what is true', async
   );
   await other(page, "Set the Customer's Next Move");
   await expect(actionDialog(page, "Set the Customer's Next Move")).toBeVisible();
+  await expect(
+    actionDialog(page, "Set the Customer's Next Move").locator('[data-step-route]'),
+  ).toHaveText('Route: not assigned yet.');
 });
 
 test('D7: Begin Qualification opens in the centred dialog with only its fields, the route state and what the customer will see, and sends the same command', async ({
@@ -376,8 +378,10 @@ test('D7: Begin Qualification opens in the centred dialog with only its fields, 
   expect(Math.abs(box.y + box.height / 2 - view.height / 2)).toBeLessThanOrEqual(2);
   await expect(page.locator('aside.mission-panel')).toHaveCount(0);
   // What changes, what the customer will see, and the route state: qualification never needs a route.
+  // Focus lands on the statement, so it is read before the fields.
+  await expect(dialog.locator('.mission-step-facts')).toBeFocused();
   await expect(dialog.locator('[data-step-changes]')).toHaveText(
-    'The stage changes from Received, waiting for review to Qualifying.',
+    'Stage now: Received, waiting for review. After this: Qualifying.',
   );
   await expect(dialog.locator('[data-step-customer]')).toHaveText(
     'The customer will see: Define. The Corridra team is checking your requirement.',
@@ -387,18 +391,24 @@ test('D7: Begin Qualification opens in the centred dialog with only its fields, 
   );
   // Only its fields: no action chooser and no owner chooser; the rest travel unchanged.
   const form = dialog.locator('form');
-  await expect(form.locator('select, textarea, input:not([type="hidden"])')).toHaveCount(5);
+  // One to three fields: market, target profile and the reason.
+  await expect(form.locator('select, textarea, input:not([type="hidden"])')).toHaveCount(3);
   await expect(form.locator('select[name="action"]')).toHaveCount(0);
+  await expect(form.locator('input[type="hidden"][name="nextAction"]')).toHaveValue(
+    'Review submitted brief',
+  );
   await expect(form.locator('select[name="owner"]')).toHaveCount(0);
   await expect(form.locator('input[type="hidden"][name="action"]')).toHaveValue('qualify');
   await expect(form.locator('input[type="hidden"][name="owner"]')).toHaveValue(owner.user_id);
   await expect(form.locator('select[name="marketCode"]')).toHaveValue('ES');
-  await form.locator('input[name="nextAction"]').fill('Call the invented buyer on Monday');
   await form.locator('textarea[name="targetProfile"]').fill('Invented mills with export licences');
   await form.locator('textarea[name="reason"]').fill('Brief is complete, start qualification');
   await form.getByRole('button', { name: 'Begin Qualification' }).click();
   await expect(dialog).toBeHidden();
-  await expect(next(page).getByText('Mission saved.')).toBeVisible();
+  // The page says what was saved and what the customer now reads.
+  await expect(next(page).getByRole('status')).toHaveText(
+    'Begin Qualification saved. The customer will see: Define. The Corridra team is checking your requirement.',
+  );
   await expect(trigger).toBeFocused();
   expect(sent).toHaveLength(1);
   expect(sent[0]!.path).toBe('/api/workspace/mission');
@@ -422,7 +432,7 @@ test('D7: Begin Qualification opens in the centred dialog with only its fields, 
     version: 3,
     action: 'qualify',
     ownerId: owner.user_id,
-    nextAction: 'Call the invented buyer on Monday',
+    nextAction: 'Review submitted brief',
     dueAt: '2026-12-01T09:00:00.000Z',
     marketCode: 'ES',
     targetProfile: 'Invented mills with export licences',
@@ -443,7 +453,7 @@ test('D7: an action with no fields of its own asks only for the reason and carri
   await other(page, 'Pause Mission');
   const dialog = actionDialog(page, 'Pause Mission');
   await expect(dialog.locator('[data-step-changes]')).toHaveText(
-    'The stage changes from Active to Paused.',
+    'Stage now: Active. After this: Paused.',
   );
   await expect(dialog.locator('[data-step-customer]')).toContainText(
     'The customer will see: On hold.',
@@ -475,7 +485,9 @@ test('D7: an action with no fields of its own asks only for the reason and carri
   await details.locator('select[name="owner"]').selectOption(second.user_id);
   await details.locator('textarea[name="reason"]').fill('Invented hand-over to Ben');
   await details.getByRole('button', { name: 'Update Mission Details' }).click();
-  await expect(next(page).getByText('Mission saved.')).toBeVisible();
+  await expect(next(page).getByRole('status')).toHaveText(
+    'Update Mission Details saved. The stage the customer sees stays the same.',
+  );
   expect(again.sent[0]!.body).toMatchObject({ action: 'assign', ownerId: second.user_id });
 });
 
@@ -502,7 +514,7 @@ test('D7: the code check opens in place over the dialog, the form is kept and th
   await check.getByRole('button', { name: 'Confirm and continue' }).click();
   await expect(check).toBeHidden();
   await expect(dialog).toBeHidden();
-  await expect(next(page).getByText('Mission saved.')).toBeVisible();
+  await expect(next(page).getByRole('status')).toContainText('Begin Qualification saved.');
   expect(codes).toEqual(['123456']);
   expect(sent).toHaveLength(2);
   expect(sent[1]).toEqual(sent[0]);
@@ -553,7 +565,7 @@ test('D7: while a change is out the dialog cannot be closed and a second submit 
   await page.keyboard.press('Escape');
   await expect(dialog).toBeVisible();
   await form.evaluate((node: HTMLFormElement) => node.requestSubmit());
-  await expect(next(page).getByText('Mission saved.')).toBeVisible();
+  await expect(next(page).getByRole('status')).toContainText('Begin Qualification saved.');
   expect(sent).toHaveLength(1);
 });
 
@@ -564,6 +576,7 @@ test('D7: Reply on the Receipt and Assign Route open in the same dialog and send
   await other(page, 'Reply on the Receipt');
   const reply = actionDialog(page, 'Reply on the Receipt');
   await expect(reply).toContainText('The customer will read it on their private receipt');
+  await expect(reply.locator('[data-step-route]')).toHaveText('Route: not assigned yet.');
   await reply.getByLabel('Reply visible on the private receipt').fill('Invented reply words');
   await reply.getByRole('button', { name: 'Post Receipt Reply' }).click();
   await expect(reply).toBeHidden();
@@ -594,7 +607,7 @@ for (const width of [320, 390, 768, 1024, 1440, 1920]) {
     if (shots) await page.screenshot({ path: `${shots}/mission-off-${width}.png`, fullPage: true });
     await page.unrouteAll({ behavior: 'ignoreErrors' });
 
-    await open(page, true, { reports: 1 }, [
+    await open(page, true, {}, [
       { status: 403, json: { error: refusal, correlationId: 'invented', reference } },
     ]);
     await fits();
@@ -602,17 +615,44 @@ for (const width of [320, 390, 768, 1024, 1440, 1920]) {
     // Touch targets: the primary button and the disclosure are at least 44 px tall.
     for (const target of [
       next(page).getByRole('button', { name: 'Begin Qualification' }),
-      next(page).getByText('Other Actions'),
+      next(page).getByText('More Actions'),
     ])
       expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(44);
     if (shots) await page.screenshot({ path: `${shots}/mission-on-${width}.png`, fullPage: true });
-    await next(page).getByText('Other Actions').click();
+    await next(page).getByText('More Actions').click();
     await fits();
     if (shots)
       await page.screenshot({ path: `${shots}/mission-on-other-${width}.png`, fullPage: true });
+    // Under 1024 px the customer panel is a closed disclosure whose summary already says the stage.
+    const seen = customer(page).locator('details');
+    if (width < 1024) {
+      await expect(seen).not.toHaveAttribute('open', '');
+      await expect(seen.locator('summary')).toHaveText(
+        'What the customer sees: Define. Received, waiting for review.',
+      );
+      await expect(customer(page).locator('[data-customer-replies]')).toBeHidden();
+      expect((await seen.locator('summary').boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      await seen.locator('summary').click();
+      await expect(customer(page).locator('[data-customer-replies]')).toBeVisible();
+      await fits();
+      expect(await axe(page)).toEqual([]);
+      await seen.locator('summary').click();
+    } else {
+      await expect(seen).toHaveCount(0);
+      await expect(
+        customer(page).getByRole('heading', { name: 'What the customer sees' }),
+      ).toBeVisible();
+    }
     await next(page).getByRole('button', { name: 'Begin Qualification' }).click();
     const dialog = actionDialog(page, 'Begin Qualification');
     await expect(dialog).toBeVisible();
+    await expect(dialog.locator('.mission-step-facts')).toBeFocused();
+    // Phone bottom action area: the dialog's one action is in view before any scrolling, and tall enough.
+    if (width <= 640) {
+      const action = dialog.locator('form').getByRole('button', { name: 'Begin Qualification' });
+      await expect(action).toBeInViewport({ ratio: 1 });
+      expect((await action.boundingBox())!.height).toBeGreaterThanOrEqual(60);
+    }
     const box = (await dialog.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(width);
@@ -632,5 +672,32 @@ for (const width of [320, 390, 768, 1024, 1440, 1920]) {
     expect(words.x + words.width).toBeLessThanOrEqual(box.x + box.width);
     expect(await axe(page)).toEqual([]);
     if (shots) await page.screenshot({ path: `${shots}/dialog-refused-${width}.png` });
+  });
+}
+
+// Page length on the Overview tab with disclosures closed, off and on, in this fixture (no team shell around
+// it). Most of the page is the Overview facts, which this unit does not change, so the rule held here is about
+// what the unit adds: the desk block fits one screen, and on a phone the page with it stays within two screens.
+// The heights are printed for the record.
+for (const [width, height] of [
+  [390, 844],
+  [320, 568],
+  [1440, 900],
+] as const) {
+  test(`D6 page length at ${width}x${height}, off and on`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    const total = () => page.evaluate(() => document.documentElement.scrollHeight);
+    await open(page, false);
+    const off = await total();
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+    await open(page, true);
+    const on = await total();
+    const desk = Math.round((await page.locator('.mission-desk').boundingBox())!.height);
+    const screens = (value: number) => Math.round((value / height) * 100) / 100;
+    console.log(
+      `D6 page length ${width}x${height}: off ${off} px (${screens(off)} screens), on ${on} px (${screens(on)} screens), desk block ${desk} px`,
+    );
+    expect(desk).toBeLessThanOrEqual(height);
+    if (width === 390) expect(screens(on)).toBeLessThanOrEqual(2);
   });
 }

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNod
 import { StageBar } from '../../../../components/mr/stage-bar';
 import { mrLabels } from '../../../../components/mr/labels';
 import { statusToRoadStep } from '../../../../components/mr/road-status';
+import { CorridraIcon } from '../../../../components/corridra-icon';
 import { Dialog } from '../../../../components/ux/dialog';
 import { StatusChip } from '../../../../components/ux/status-chip';
 import { formatDate, formatDateTime } from '../../../../lib/ux/format';
@@ -31,7 +32,9 @@ import {
   nextStep,
   plainCode,
   restingLine,
+  routeLine,
   stageChip,
+  stepStatement,
   type CustomerView,
 } from './mission-labels';
 import { bodyNotAvailable } from '../../../../lib/body-access';
@@ -208,12 +211,12 @@ export function MissionPage({
           {ownerName(data.owners, m.owner_id)} · Due {formatDate(m.due_at)} · Route{' '}
           {m.route_label ?? 'not assigned yet'}
         </p>
-        <p>Next action: {m.next_action || 'Not recorded'}</p>
+        {!desk && <p>Next action: {m.next_action || 'Not recorded'}</p>}
         <WithdrawalNote tenant={tenant} missionId={m.id} />
       </header>
       {desk && (
         <div className="mission-desk">
-          <StageBar status={m.status} name={`Stage of ${m.brief.company}`} named />
+          <StageBar status={m.status} name={`Stage of ${m.brief.company}`} variant="room" />
           <section className="mission-next" aria-labelledby="mission-next-heading">
             <h3 id="mission-next-heading" tabIndex={-1}>
               Next step
@@ -235,8 +238,11 @@ export function MissionPage({
                   </button>
                 )}
                 <details className="mission-more">
-                  <summary>Other Actions</summary>
-                  <div className="mission-actions" aria-label="Other mission actions">
+                  <summary aria-label={`More actions for ${m.brief.company}`}>
+                    More Actions
+                    <CorridraIcon name="chevron" size={16} className="mission-more-chevron" />
+                  </summary>
+                  <div className="mission-actions" aria-label="More mission actions">
                     {open &&
                       ['assign', ...(canPause(m.status) ? ['pause'] : []), 'cancel'].map(
                         (action) => (
@@ -327,7 +333,12 @@ export function MissionPage({
                   const body = missionCommandBody(e, m, (text) =>
                     setMessage({ kind: 'alert', text }),
                   );
-                  if (body) void act('mission', body, 'Mission saved.');
+                  if (body)
+                    void act(
+                      'mission',
+                      body,
+                      `${actionTitle(stepAction)} saved. ${stepStatement(stepAction, m.status, customerView).customer}`,
+                    );
                 }}
               />
             )}
@@ -337,9 +348,7 @@ export function MissionPage({
                   This records the reviewed route and mission job for this mission. The stage the
                   customer sees stays the same.
                 </p>
-                <p data-step-route>
-                  {m.route_label ? `Route: ${m.route_label}.` : 'Route: not assigned yet.'}
-                </p>
+                <p data-step-route>{routeLine(m.route_label, '')}</p>
                 {feedback}
                 <AssignRoute
                   tenant={tenant}
@@ -351,6 +360,7 @@ export function MissionPage({
             )}
             {panel === 'reply' && (
               <>
+                <p data-step-route>{routeLine(m.route_label, '')}</p>
                 <p>
                   This posts one reply. The customer will read it on their private receipt, exactly
                   as written.
@@ -364,7 +374,12 @@ export function MissionPage({
                 />
               </>
             )}
-            {panel === 'move' && <MissionMoves tenant={tenant} missionId={m.id} />}
+            {panel === 'move' && (
+              <>
+                <p data-step-route>{routeLine(m.route_label, '')}</p>
+                <MissionMoves tenant={tenant} missionId={m.id} />
+              </>
+            )}
           </Dialog>
         </div>
       )}
@@ -565,8 +580,9 @@ export function MissionPage({
 
 /**
  * Team desk v4.1, unit D6: what the customer can read about this mission today, built only from reads this
- * page already makes (the stage, the receipt replies, the approved reports and, where Move records are on, the
- * open Moves). Read-only: it holds no control and sends nothing.
+ * page already makes (the stage, the receipt replies and, where Move records are on, the open Moves).
+ * Read-only: it holds no control that changes anything and sends nothing. Under 1024 px it is a closed
+ * disclosure whose summary already says the stage, so the page stays short on a phone.
  */
 function CustomerSees({
   tenant,
@@ -584,14 +600,10 @@ function CustomerSees({
   revision: number;
 }) {
   const view = customerView(status);
-  const delivery = useDelivery(tenant);
-  const reports = (delivery.value?.publications ?? []).filter(
-    (p) => p.mission_id === missionId && !p.revoked,
-  );
+  const wide = useWide();
   const latest = replies[0];
-  return (
-    <aside className="mission-customer" aria-labelledby="mission-customer-heading">
-      <h3 id="mission-customer-heading">What the customer sees</h3>
+  const facts = (
+    <>
       <dl>
         <dt>Stage</dt>
         <dd data-customer-stage>
@@ -604,16 +616,6 @@ function CustomerSees({
             ? `${replies.length} posted. Latest${latest.created_at ? `, ${formatDateTime(latest.created_at)}` : ''}: ${latest.body}`
             : 'None posted yet.'}
         </dd>
-        <dt>Reports</dt>
-        <dd data-customer-reports>
-          {!delivery.value
-            ? delivery.error
-              ? 'Reports could not be read.'
-              : 'Reading reports…'
-            : reports.length
-              ? `${reports.length} approved for the customer.`
-              : 'None approved yet.'}
-        </dd>
         {moveRecords && (
           <>
             <dt>Open Moves</dt>
@@ -624,8 +626,45 @@ function CustomerSees({
         )}
       </dl>
       <p className="guide-hint">Read from this mission&apos;s records. Nothing here is sent.</p>
+    </>
+  );
+  return (
+    <aside className="mission-customer" aria-labelledby="mission-customer-heading">
+      {wide ? (
+        <>
+          <h3 id="mission-customer-heading">What the customer sees</h3>
+          {facts}
+        </>
+      ) : (
+        <details>
+          <summary>
+            <span>
+              <span id="mission-customer-heading">What the customer sees</span>:{' '}
+              {view.step ? `${view.step}. ` : ''}
+              {view.words}
+            </span>
+            <CorridraIcon name="chevron" size={16} className="mission-more-chevron" />
+          </summary>
+          {facts}
+        </details>
+      )}
     </aside>
   );
+}
+
+/** True from 1024 px, where the desk has two columns. The page mounts in the browser, after its first read. */
+function useWide() {
+  const query = '(min-width: 1024px)';
+  const [wide, setWide] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
+  );
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const changed = () => setWide(media.matches);
+    media.addEventListener('change', changed);
+    return () => media.removeEventListener('change', changed);
+  }, []);
+  return wide;
 }
 
 function CustomerMoves({

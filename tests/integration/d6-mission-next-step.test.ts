@@ -97,9 +97,10 @@ describe('D7 each action asks only for its fields', () => {
       'marketCode',
       'targetProfile',
     ]);
-    expect(stepFields('qualify', full)).toEqual([
+    // One to three fields per step: market, target profile and the reason.
+    expect(stepFields('qualify', full)).toEqual(['marketCode', 'targetProfile']);
+    expect(stepFields('qualify', { next_action: '', target_profile: null })).toEqual([
       'nextAction',
-      'dueAt',
       'marketCode',
       'targetProfile',
     ]);
@@ -126,15 +127,15 @@ describe('D7 one line on what changes and what the customer will see', () => {
   it('names the stage change and quotes the customer words for the new stage', async () => {
     const { stepStatement } = await labels();
     expect(stepStatement('qualify', 'DRAFT', customer)).toEqual({
-      changes: 'The stage changes from Received, waiting for review to Qualifying.',
+      changes: 'Stage now: Received, waiting for review. After this: Qualifying.',
       customer: 'The customer will see: Step of QUALIFICATION. Words of QUALIFICATION.',
     });
     expect(stepStatement('pause', 'ACTIVE', () => ({ step: null, words: 'On hold.' }))).toEqual({
-      changes: 'The stage changes from Active to Paused.',
+      changes: 'Stage now: Active. After this: Paused.',
       customer: 'The customer will see: On hold.',
     });
     expect(stepStatement('cancel', 'MEETINGS', customer).changes).toBe(
-      'The stage changes from Meetings to Cancelled.',
+      'Stage now: Meetings. After this: Cancelled.',
     );
   });
   it('promises no stage change where the command makes none', async () => {
@@ -153,5 +154,6 @@ describe('D7 one line on what changes and what the customer will see', () => {
     );
     expect(routeLine('BD to CN', 'qualify')).toBe('Route: BD to CN.');
     expect(routeLine(undefined, 'activate')).toBe('Route: not assigned yet.');
+    expect(routeLine(null, '')).toBe('Route: not assigned yet.');
   });
 });

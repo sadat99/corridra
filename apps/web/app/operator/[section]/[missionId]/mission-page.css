@@ -132,13 +132,11 @@
 .mission-desk > * {
   min-width: 0;
 }
+/* From 1024 px the stage timeline stands beside the two cards, so the desk stays inside one screen. */
 @media (min-width: 1024px) {
   .mission-desk {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    grid-template-columns: minmax(12rem, 15rem) minmax(0, 3fr) minmax(0, 2fr);
     align-items: start;
-  }
-  .mission-desk > .mr-stage-wrap {
-    grid-column: 1 / -1;
   }
 }
 .mission-next,
@@ -164,32 +162,64 @@
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
-.mission-next .primary-link,
-.mission-more summary {
+.mission-next .primary-link {
   min-height: 44px;
 }
 .mission-more {
   width: 100%;
 }
-.mission-more summary {
+.mission-more summary,
+.mission-customer summary {
   display: inline-flex;
   align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  list-style: none;
   color: var(--action);
   font-weight: 600;
   cursor: pointer;
 }
-.mission-more summary:focus-visible {
+.mission-more summary::-webkit-details-marker,
+.mission-customer summary::-webkit-details-marker {
+  display: none;
+}
+.mission-more summary:focus-visible,
+.mission-customer summary:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
+/* The owned chevron points down while closed and up while open: a shape, not only a colour. */
+.mission-more-chevron {
+  flex: none;
+  transform: rotate(90deg);
+}
+details[open] > summary .mission-more-chevron {
+  transform: rotate(-90deg);
+}
 .mission-more .mission-actions {
   margin-top: var(--space-2);
+}
+.mission-customer {
+  container-type: inline-size;
+}
+.mission-customer details {
+  width: 100%;
+}
+.mission-customer summary {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.mission-customer details[open] > summary {
+  margin-bottom: var(--space-3);
 }
 .mission-customer dl {
   display: grid;
   gap: var(--space-1) var(--space-4);
   width: 100%;
   margin: 0;
+}
+.mission-customer details dl {
+  margin-bottom: var(--space-3);
 }
 .mission-customer dt {
   color: var(--text-muted);
@@ -199,7 +229,15 @@
   margin: 0 0 var(--space-2);
   overflow-wrap: anywhere;
 }
-@media (min-width: 480px) {
+/* The latest reply is a reminder, not the record: two lines here, the whole reply under Replies. */
+.mission-customer [data-customer-replies] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+@container (min-width: 26rem) {
   .mission-customer dl {
     grid-template-columns: max-content minmax(0, 1fr);
   }
@@ -219,4 +257,17 @@
 .mission-step-facts p {
   margin: 0;
   overflow-wrap: anywhere;
+}
+.mission-step-facts:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+/* Phone bottom action area: the one action of a dialog stays in reach while its fields scroll. */
+@media (max-width: 40rem) {
+  .ux-dialog .operator-form > button.primary-link {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    min-height: var(--bottom-action-h);
+  }
 }
