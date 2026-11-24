@@ -736,6 +736,51 @@ test('switch off: the Quotes and Replies tabs and the research section are today
   expect(await rationale.getAttribute('minlength')).toBeNull();
 });
 
+// Owner rule, 24 Nov 2026: a destination has one link on a screen. Every address linked inside <main> is
+// collected with the switch on and none may appear twice. No exception is named: nothing here needs one.
+test('switch on: no address is linked twice inside main on Quotes, Replies or Add companies', async ({
+  page,
+}) => {
+  const addresses = () =>
+    page.locator('#main a[href]').evaluateAll((links) => links.map((a) => a.getAttribute('href')!));
+  const expectNoRepeat = async (where: string, atLeast: number) => {
+    const found = await addresses();
+    expect(found.length, where).toBeGreaterThanOrEqual(atLeast);
+    expect(
+      found.filter((href, index) => found.indexOf(href) !== index),
+      where,
+    ).toEqual([]);
+  };
+  const reports = `/operator?workspace=${tenant}&mission=${mission}#workspace-delivery`;
+  const money = `/operator?workspace=${tenant}&mission=${mission}#workspace-commercial`;
+
+  await open(page, 'mission', { desk: true });
+  await tab(page, 'Quotes').click();
+  await expect(page.getByText('From Invented Supplier Ltd')).toBeVisible();
+  await expectNoRepeat('Quotes', 2);
+  expect(await addresses()).toContain(money);
+
+  await open(page, 'mission', { desk: true, capped: true });
+  await tab(page, 'Quotes').click();
+  await expect(page.getByRole('link', { name: 'Open Reports' })).toBeVisible();
+  await expectNoRepeat('Quotes, reply read at its limit', 3);
+  expect((await addresses()).filter((href) => href === reports)).toHaveLength(1);
+
+  await open(page, 'mission', { desk: true, review: false });
+  await tab(page, 'Quotes').click();
+  await expect(page.getByRole('link', { name: 'Open Reports' })).toBeVisible();
+  await expectNoRepeat('Quotes, reply review off', 3);
+
+  await open(page, 'mission', { desk: true });
+  await tab(page, 'Replies').click();
+  await expect(page.getByRole('link', { name: 'Open Reports' })).toBeVisible();
+  await expectNoRepeat('Replies', 2);
+
+  await open(page, 'research', { desk: true });
+  await openAddForm(page);
+  await expectNoRepeat('Add companies', 0);
+});
+
 for (const width of [320, 390, 768, 1024, 1440, 1920])
   test(`D8 to D10 at ${width}px: nothing runs off the page and the panels are axe clean`, async ({
     page,
