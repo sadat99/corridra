@@ -59,3 +59,18 @@
     min-height: 44px;
   }
 }
+
+/* The team desk page pattern (v4.1, unit D4), opt in with the shell class "ux-desk-frame": the purpose line
+   and the one primary action take their own row under the title on every width (the desk header is a wrapping
+   row on a wide screen), then the segments follow the header. */
+.ux-workspace.ux-desk-frame > .ux-page-heading > .ux-frame-lead {
+  flex-basis: 100%;
+  width: 100%;
+}
+.ux-workspace.ux-desk-frame > .ux-desk-segments {
+  margin-block: var(--space-3) var(--space-6);
+}
+.ux-desk-frame .ux-desk-segments a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}

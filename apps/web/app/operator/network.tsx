@@ -1,6 +1,7 @@
 'use client';
 import { SubTabs } from '../../components/ux/sub-tabs';
 import { OperatorWorkbench } from '../../components/operator-workbench';
+import { useOperatorFlags } from './operator-flags';
 import { PhoneFold } from '../../components/phone-fold';
 import { ContributorInvitations } from './contributor-invitations';
 import { HelperInterestList } from './helper-interest-list';
@@ -201,6 +202,7 @@ export function ExecutionNetwork({
   workspaceName?: string;
   onChooseWorkspace?: () => void;
 }) {
+  const { teamDeskV41 } = useOperatorFlags();
   const [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
     [feedback, setFeedback] = useState<{ form: HTMLFormElement; value: Feedback } | null>(null),
@@ -413,7 +415,7 @@ export function ExecutionNetwork({
     >
       <header className="ux-network-heading">
         <div>
-          <p className="label">CORRIDRA NETWORK</p>
+          {teamDeskV41 ? null : <p className="label">CORRIDRA NETWORK</p>}
           <h2>Assigned work</h2>
           <p>Invite the right person. Define the work. Review the evidence.</p>
         </div>

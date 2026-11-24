@@ -7,6 +7,7 @@ import { OperatorIcon } from '../../components/operator-icon';
 import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback';
 import { formatDateTime } from '../../lib/ux/format';
 import { readJson, withStepUp } from '../../lib/ux/step-up';
+import { useOperatorFlags } from './operator-flags';
 
 const roleNames: Record<string, string> = {
   owner: 'Owner',
@@ -431,12 +432,13 @@ export function WorkspaceControls({
   }) => void;
   onChangeFeature: (key: string, value: boolean) => void;
 }) {
+  const { teamDeskV41 } = useOperatorFlags();
   const tenant = useCurrentTenant(tenantProp);
   return (
     <div className="ux-workspace-controls">
       <header className="ux-controls-heading">
         <div>
-          <p className="eyebrow">Workspace settings</p>
+          {teamDeskV41 ? null : <p className="eyebrow">Workspace settings</p>}
           <h2>Workspace controls</h2>
           <p>
             Manage member access and available tools for <strong>{workspaceName}</strong>.
