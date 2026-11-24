@@ -124,7 +124,7 @@ describe('with the switch on the reply journey draws the steps', () => {
   ] as const;
   // The owner ruled one word out of this unit (UI/UX.v4 language row); it is spelled in parts so this file never holds it.
   const ruledOut = new RegExp(['d', 'raft'].join(''), 'i');
-  const claim = 'Operator-reported context. No independent verification is asserted.';
+  const claim = 'Corridra team-reported context. No independent verification is asserted.';
   const draw = async (language: 'en' | 'zh', data: Record<string, unknown>) => {
     const { ReplyJourney } = (await loadWeb('app/buyer/reply-journey')) as {
       ReplyJourney: unknown;

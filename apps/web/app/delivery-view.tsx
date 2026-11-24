@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { displayMoney as amount } from '@corridra/domain/locale';
-import { formatMoment, formatUtcDay } from '../lib/ux/format';
+import { formatDateTime, formatMoment, formatUtcDay } from '../lib/ux/format';
 import {
   usePrivateCapability,
   checkedResponse,
@@ -504,7 +504,7 @@ function ScopedDeliveryView({
                     {mt.scheduleChanged
                       ? 'Schedule changed. The Corridra team will send an updated itinerary.'
                       : mt.startsAt
-                        ? `${new Date(mt.startsAt).toLocaleString('en', { timeZone: mt.timezone })} (${mt.timezone}) · ${mt.location ?? 'Location to be confirmed'}`
+                        ? `${formatDateTime(mt.startsAt, { timeZone: mt.timezone })} · ${mt.location ?? 'Location to be confirmed'}`
                         : 'Schedule to be confirmed.'}
                   </p>
                 </li>
