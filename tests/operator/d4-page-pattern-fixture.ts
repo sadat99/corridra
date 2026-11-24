@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
 // The team desk page pattern (team desk v4.1, unit D4) bundled from the source with the real stylesheets and
-// served on a local port: the team header and left bar, then the shell header exactly as
-// apps/web/app/operator/operator-entry.tsx builds it for a section address, with the workspace under it.
+// served on a local port: the team header and left bar, then the shell header from the
+// same function apps/web/app/operator/operator-entry.tsx calls (operatorHeader), with the workspace under it.
 // ?v41=on is CORRIDRA_UX_TEAM_DESK_V41 on; without it the header is the one the desk has today. The page in
 // view comes from the address (/operator/<word>), as on the site. Reads are answered by the caller.
 export const fixtureTenant = '00000000-0000-4000-8000-0000000000a1';
@@ -36,12 +36,11 @@ export async function startPagePatternFixture(root = resolve('.')) {
       import{TeamFrame}from ${source('apps/web/components/ux/team-frame.tsx')};
       import{WorkspaceShell}from ${source('apps/web/components/workspace-shell.tsx')};
       import{TeamSecondLevel}from ${source('apps/web/components/ux/team-second-level.tsx')};
-      import{deskFrame}from ${source('apps/web/components/ux/desk-frame.tsx')};
+      import{operatorHeader}from ${source('apps/web/components/ux/desk-frame.tsx')};
       import{SiteFooterPlace}from ${source('apps/web/components/site-footer-place.tsx')};
       import{OperatorFlags}from ${source('apps/web/app/operator/operator-flags.tsx')};
       import{Workspace}from ${source('apps/web/app/operator/workspace.tsx')};
       import{sectionForSlug}from ${source('apps/web/lib/operator-urls.ts')};
-      import{teamSectionTitle}from ${source('apps/web/lib/ux/shells.ts')};
       import ${source('apps/web/app/operator/operator-overview.css')};
       // A segment link is a full page load without the query, so each choice is kept for the tab.
       const flag = (name) => {
@@ -53,21 +52,16 @@ export async function startPagePatternFixture(root = resolve('.')) {
       const ownerPage = flag('owner') !== 'off';
       const role = flag('role') ?? 'owner';
       const section = sectionForSlug(location.pathname.split('/')[2] ?? '') ?? undefined;
-      const heading = teamSectionTitle(section);
-      const frame = v41 ? deskFrame({ place: section ?? 'home', urls: true, ownerPage }) : null;
+      // The same function operator-entry.tsx calls, so the header here is the header of the page.
+      const header = operatorHeader({ shellsV2: true, urls: true, teamDeskV41: v41, section, ownerPage });
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={[{code:'en',draft:false}]}>
           <div className="site-shell">
             <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
             <TeamFrame urls ownerPage={ownerPage} problemReports={false}>
-              <WorkspaceShell
-                eyebrow={v41 ? undefined : 'TEAM WORKSPACE'}
-                title={frame?.title ?? heading}
-                lead={frame?.lead}
-                className={(heading === 'Today' ? 'ux-operator-home ux-titled-today' : 'ux-operator-home') + (frame ? ' ' + frame.className : '')}
-              >
+              <WorkspaceShell eyebrow={header.eyebrow} title={header.title} lead={header.lead} className={header.className}>
                 <TeamSecondLevel urls ownerPage={ownerPage}/>
-                {frame?.segments}
+                {header.segments}
                 <OperatorFlags replyReview={false} teamDeskV41={v41}>
                   <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:role}]}
                     initialTenant=${JSON.stringify(fixtureTenant)} initialSection={section} shellsV2 ownerPage={ownerPage}/>

@@ -215,7 +215,7 @@ export function SegmentLinks({
 }) {
   if (segments.length < 2) return null;
   return (
-    <nav className="ux-segments" aria-label={label} lang="en">
+    <nav className="ux-desk-segments" aria-label={label} lang="en">
       <ul>
         {segments.map((segment) => (
           <li key={segment.id}>

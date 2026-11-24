@@ -45,7 +45,7 @@ async function open(page: Page, path: string, options: Options) {
   await expect(page.getByText('Loading workspace…')).toHaveCount(0);
 }
 const heading = (page: Page) => page.locator('main#main > header.ux-page-heading');
-const segments = (page: Page) => page.locator('main#main nav.ux-segments');
+const segments = (page: Page) => page.locator('main#main nav.ux-desk-segments');
 
 test('switch off: the header is the one the desk has today', async ({ page }) => {
   await open(page, '/operator/research', { v41: false });
@@ -71,6 +71,8 @@ test('switch off: the label above a panel heading and the jump links stay', asyn
   await expect(page.getByText('OPS HOME', { exact: true })).toBeVisible();
   await expect(page.locator('nav.ux-operator-workbench')).toHaveCount(1);
   await expect(page.getByText('JUMP TO', { exact: true })).toBeVisible();
+  await open(page, '/operator/network', { v41: false });
+  await expect(page.getByText('CORRIDRA NETWORK', { exact: true })).toBeVisible();
 });
 
 test('switch on: serif title, one purpose line, segments under the title, no label above it', async ({
@@ -116,7 +118,7 @@ test('switch on: serif title, one purpose line, segments under the title, no lab
   ]);
   const order = await page.evaluate(() => {
     const header = document.querySelector('main#main > header.ux-page-heading')!;
-    const row = document.querySelector('main#main nav.ux-segments')!;
+    const row = document.querySelector('main#main nav.ux-desk-segments')!;
     const next = header.nextElementSibling!;
     return next === row || (next.matches('nav.ux-team-second') && next.nextElementSibling === row);
   });
@@ -132,7 +134,7 @@ test('switch on: a segment opens the existing address and the page opens at the 
   await expect(heading(page).locator('h1')).toHaveText('Companies');
   await expect(segments(page).locator('a[aria-current="page"]')).toHaveText('Sources and claims');
   await expect(heading(page).locator('.ux-frame-helper')).toHaveText(
-    'Where each piece of information came from and what it claims.',
+    'Where information came from, what it claims and which facts are verified.',
   );
   await expect(page.locator('#workspace-sources')).toBeVisible();
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
@@ -149,6 +151,28 @@ test('switch on: an old # link still lands on its section', async ({ page }) => 
   });
   await expect(page.locator('#workspace-evidence')).toBeFocused();
   await expect(segments(page).locator('a[aria-current="page"]')).toHaveText('Evidence review');
+  // The title and the purpose line follow the same address as the segments.
+  await expect(heading(page).locator('h1')).toHaveText('Companies');
+  await expect(heading(page).locator('.ux-frame-helper')).toHaveText(
+    'Files to review before they count as evidence.',
+  );
+  await open(page, '/operator/settings', { v41: true });
+  await page.evaluate(() => {
+    window.location.hash = 'workspace-audit';
+  });
+  await expect(heading(page).locator('h1')).toHaveText('Team and access');
+  await expect(heading(page).locator('.ux-frame-helper')).toHaveText(
+    'What changed in this workspace, who changed it and when.',
+  );
+  await expect(segments(page).locator('a[aria-current="page"]')).toHaveText('Audit');
+  await page.evaluate(() => {
+    window.location.hash = 'workspace-missions';
+  });
+  await expect(heading(page).locator('h1')).toHaveText('Missions');
+  await expect(heading(page).locator('.ux-frame-helper')).toHaveText(
+    'Every customer request with its owner and its next step.',
+  );
+  await expect(segments(page)).toHaveCount(0);
 });
 
 test('switch on: no label above a panel heading and no jump links', async ({ page }) => {
@@ -161,6 +185,8 @@ test('switch on: no label above a panel heading and no jump links', async ({ pag
   await expect(segments(page)).toHaveCount(0);
   await open(page, '/operator/network', { v41: true });
   await expect(heading(page).locator('h1')).toHaveText('Helpers');
+  await expect(page.getByRole('heading', { name: 'Assigned work' })).toBeVisible();
+  await expect(page.getByText('CORRIDRA NETWORK', { exact: true })).toHaveCount(0);
 });
 
 test('switch on: the segments follow the role', async ({ page }) => {
@@ -182,7 +208,7 @@ test('switch on: the segments follow the role', async ({ page }) => {
   await expect(heading(page).locator('h1')).toHaveText('Team and access');
   await expect(
     page.getByRole('navigation', { name: 'Team and access pages' }).getByRole('link'),
-  ).toHaveText(['Audit', 'People and access']);
+  ).toHaveText(['People and access', 'Audit']);
   // A reviewer may open Assistance but none of the other Settings pages: no row for one link.
   await open(page, '/operator/assistance', { v41: true, role: 'reviewer' });
   await expect(heading(page).locator('h1')).toHaveText('Settings');
@@ -229,7 +255,7 @@ for (const v41 of [false, true]) {
       }
       const results = await new AxeBuilder({ page })
         .include('main#main > header.ux-page-heading')
-        .include(v41 ? 'main#main nav.ux-segments' : 'main#main nav.ux-team-second')
+        .include(v41 ? 'main#main nav.ux-desk-segments' : 'main#main nav.ux-team-second')
         .analyze();
       expect(results.violations, `axe at ${width}`).toEqual([]);
     }

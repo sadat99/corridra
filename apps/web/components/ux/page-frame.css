@@ -67,3 +67,10 @@
   flex-basis: 100%;
   width: 100%;
 }
+.ux-workspace.ux-desk-frame > .ux-desk-segments {
+  margin-block: var(--space-3) var(--space-6);
+}
+.ux-desk-frame .ux-desk-segments a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}

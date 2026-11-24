@@ -38,8 +38,8 @@ export const deskGroups: Record<DeskGroupKey, { title: string; segments: readonl
     team: {
       title: 'Team and access',
       segments: [
-        { id: 'workspace-audit', label: 'Audit' },
         { id: 'workspace-controls', label: 'People and access' },
+        { id: 'workspace-audit', label: 'Audit' },
       ],
     },
     settings: {
@@ -70,7 +70,7 @@ const places: Record<DeskPlaceId, { title?: string; purpose: string }> = {
   },
   'workspace-commercial': {
     title: 'Money',
-    purpose: 'Commercial progress for each mission, in exact amounts.',
+    purpose: 'Opportunities, overdue follow-ups and outcomes for each mission, in exact amounts.',
   },
   'workspace-delivery': {
     title: 'Reports',
@@ -78,25 +78,29 @@ const places: Record<DeskPlaceId, { title?: string; purpose: string }> = {
   },
   'workspace-authenticator': {
     title: 'Authenticator',
-    purpose: 'Confirm a protected action with a fresh code from your authenticator app.',
+    purpose: 'A fresh code from your authenticator app, asked for before a protected action.',
   },
   'workspace-research': { purpose: 'The companies your team has researched for its missions.' },
   'workspace-sources': {
-    purpose: 'Where each piece of information came from and what it claims.',
+    purpose: 'Where information came from, what it claims and which facts are verified.',
   },
-  'workspace-evidence': { purpose: 'Files waiting for review before they count as proof.' },
+  'workspace-evidence': { purpose: 'Files to review before they count as evidence.' },
   'workspace-operations': { purpose: 'The work in progress across every mission.' },
-  'ops-dashboard': { purpose: 'Mission results and their economics.' },
+  'ops-dashboard': { purpose: 'Corridra fees and customer trade results across missions.' },
   'ops-health': { purpose: 'What failed, what is recovering and what needs a retry.' },
   'ops-gates': { purpose: 'What is ready for real use and what is still closed.' },
-  'workspace-audit': { purpose: 'Who has access and what changed in this workspace.' },
-  'workspace-controls': { purpose: 'Members, their roles and the controls of this workspace.' },
+  'workspace-audit': { purpose: 'What changed in this workspace, who changed it and when.' },
+  'workspace-controls': {
+    purpose: 'Members, invitations, roles and the tools this workspace offers.',
+  },
   'workspace-settings': {
-    purpose: 'Routes, mission templates and the reviewed policies that govern them.',
+    purpose: 'Routes, mission templates and the reviewed policies for each route.',
   },
   'workspace-ai': { purpose: 'Where assistance may help and what a person must review.' },
-  'ops-center': { purpose: 'Readiness reviews and controls for each route.' },
-  owner: { purpose: 'What is switched on and off for this workspace.' },
+  'ops-center': {
+    purpose: 'Readiness reviews, budgets, documents and effort records for each route.',
+  },
+  owner: { purpose: 'What is blocked, what is still open and which features are switched on.' },
 };
 
 export function isDeskPlace(id: string): id is DeskPlaceId {
@@ -175,4 +179,16 @@ export function deskSegmentsFor(
 /** The Status pages: with the pattern on, the workspace's scanning line is shown on these only. */
 export function deskStatusPlace(place: string): boolean {
   return deskGroups.status.segments.some((segment) => segment.id === place);
+}
+
+/**
+ * The browser tab title of a place with the pattern on: the page title for a place in no group, and for a
+ * grouped place its segment word, then the group word when the two differ ("Sources and claims · Companies").
+ */
+export function deskTabTitle(place: DeskPlaceId): string {
+  const group = deskGroupOf(place);
+  if (!group) return deskPattern(place).title;
+  const { title, segments } = deskGroups[group];
+  const label = segments.find((segment) => segment.id === place)!.label;
+  return label === title ? title : `${label} \u00b7 ${title}`;
 }

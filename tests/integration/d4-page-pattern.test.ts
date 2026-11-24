@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
+import { operatorHeaderWords } from '../../apps/web/app/operator/operator-header';
 import { operatorSectionPath } from '../../apps/web/lib/operator-urls';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
 import { uxSwitchNames, uxSwitchOn } from '../../apps/web/lib/ux-switches';
@@ -11,10 +12,11 @@ import {
   deskPlaceHref,
   deskSegmentsFor,
   deskStatusPlace,
+  deskTabTitle,
   isDeskPlace,
   type DeskPlaceId,
 } from '../../apps/web/lib/ux/page-pattern';
-import { teamSectionHref } from '../../apps/web/lib/ux/shells';
+import { teamSectionHref, teamSectionTitle } from '../../apps/web/lib/ux/shells';
 import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
 
 // Team desk v4.1, unit D4 (docs/revamp/specs/team-desk-v4-1.md section 5): one page pattern behind
@@ -91,8 +93,8 @@ describe('where the seventeen places go', () => {
       'ops-gates',
     ]);
     expect(labels('status')).toEqual(['Operations', 'Dashboard', 'Health', 'Readiness']);
-    expect(ids('team')).toEqual(['workspace-audit', 'workspace-controls']);
-    expect(labels('team')).toEqual(['Audit', 'People and access']);
+    expect(ids('team')).toEqual(['workspace-controls', 'workspace-audit']);
+    expect(labels('team')).toEqual(['People and access', 'Audit']);
     expect(ids('settings')).toEqual(['workspace-settings', 'workspace-ai', 'ops-center', 'owner']);
     expect(labels('settings')).toEqual(['Settings', 'Assistance', 'Control Center', 'Owner page']);
   });
@@ -200,7 +202,7 @@ describe('a segment never shows a place the role may not open', () => {
       'ops-gates',
     ]);
     expect(ids('workspace-audit', 'admin')).toEqual([]);
-    expect(ids('workspace-audit', 'owner')).toEqual(['workspace-audit', 'workspace-controls']);
+    expect(ids('workspace-audit', 'owner')).toEqual(['workspace-controls', 'workspace-audit']);
     expect(ids('workspace-settings', 'admin')).toEqual([
       'workspace-settings',
       'workspace-ai',
@@ -217,11 +219,100 @@ describe('a segment never shows a place the role may not open', () => {
   });
 });
 
+describe('the browser tab title with the pattern on', () => {
+  test('a place in no group says its page title; a grouped place its segment, then the group', () => {
+    expect(deskTabTitle('home')).toBe('Today');
+    expect(deskTabTitle('workspace-network')).toBe('Helpers');
+    expect(deskTabTitle('workspace-commercial')).toBe('Money');
+    expect(deskTabTitle('workspace-research')).toBe('Companies');
+    expect(deskTabTitle('workspace-sources')).toBe('Sources and claims \u00b7 Companies');
+    expect(deskTabTitle('ops-gates')).toBe('Readiness \u00b7 Status');
+    expect(deskTabTitle('workspace-controls')).toBe('People and access \u00b7 Team and access');
+    expect(deskTabTitle('workspace-settings')).toBe('Settings');
+    expect(deskTabTitle('owner')).toBe('Owner page \u00b7 Settings');
+    for (const place of everyPlace) expect(deskTabTitle(place).length).toBeGreaterThan(0);
+  });
+  test('the section page reads it only with the switch on', () => {
+    const page = read('app/operator/[section]/page.tsx');
+    expect(page).toContain("if (section && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41'))");
+    expect(page).toContain('privatePageMetadata(teamSectionTitle(section))');
+  });
+});
+
 describe('switch off, every header is the one it was', () => {
+  test('the workspace header words are exactly the ones before the pattern', () => {
+    const sections = [undefined, ...workspaceSections.map((section) => section.id)];
+    for (const section of sections) {
+      // Team shell off: the operator label and the one title, whatever else is set.
+      for (const urls of [true, false])
+        for (const teamDeskV41 of [true, false])
+          expect(operatorHeaderWords({ shellsV2: false, urls, teamDeskV41, section })).toEqual({
+            eyebrow: 'OPERATOR WORKSPACE',
+            title: 'Your workspace.',
+            className: 'ux-operator-home',
+            place: null,
+          });
+      // Team shell on, pattern off: the team label, and the section's own title with section addresses on.
+      expect(
+        operatorHeaderWords({ shellsV2: true, urls: false, teamDeskV41: false, section }),
+      ).toEqual({
+        eyebrow: 'TEAM WORKSPACE',
+        title: 'Your workspace.',
+        className: 'ux-operator-home',
+        place: null,
+      });
+      expect(
+        operatorHeaderWords({ shellsV2: true, urls: true, teamDeskV41: false, section }),
+      ).toEqual({
+        eyebrow: 'TEAM WORKSPACE',
+        title: teamSectionTitle(section),
+        className: section ? 'ux-operator-home' : 'ux-operator-home ux-titled-today',
+        place: null,
+      });
+    }
+    expect(teamSectionTitle(undefined)).toBe('Today');
+    expect(teamSectionTitle('workspace-network')).toBe('Network');
+  });
+  test('switch on: no label, the pattern title and class; without section addresses only the label goes', () => {
+    expect(
+      operatorHeaderWords({ shellsV2: true, urls: true, teamDeskV41: true, section: undefined }),
+    ).toEqual({
+      eyebrow: undefined,
+      title: 'Today',
+      className: 'ux-operator-home ux-titled-today ux-desk-frame',
+      place: 'home',
+    });
+    expect(
+      operatorHeaderWords({
+        shellsV2: true,
+        urls: true,
+        teamDeskV41: true,
+        section: 'workspace-network',
+      }),
+    ).toEqual({
+      eyebrow: undefined,
+      title: 'Helpers',
+      className: 'ux-operator-home ux-desk-frame',
+      place: 'workspace-network',
+    });
+    expect(
+      operatorHeaderWords({
+        shellsV2: true,
+        urls: false,
+        teamDeskV41: true,
+        section: 'workspace-network',
+      }),
+    ).toEqual({
+      eyebrow: undefined,
+      title: 'Your workspace.',
+      className: 'ux-operator-home',
+      place: null,
+    });
+  });
   test('each changed header reads the switch and keeps its old words for the off state', () => {
     const entry = read('app/operator/operator-entry.tsx');
-    expect(entry).toContain("uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')");
-    expect(entry).toContain("shellsV2 ? 'TEAM WORKSPACE' : 'OPERATOR WORKSPACE'");
+    expect(entry).toContain("teamDeskV41: uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')");
+    expect(entry).toContain('operatorHeader({');
     expect(entry).toContain('<TeamSecondLevel');
     expect(read('app/operator/owner/page.tsx')).toContain("'OWNER PAGE'");
     expect(read('app/operator/owner/page.tsx')).toContain("'What is on and off.'");
@@ -231,6 +322,12 @@ describe('switch off, every header is the one it was', () => {
     );
     expect(read('app/operator/access.tsx')).toContain(
       '{deskV41 ? null : <p className="label">CONTROLLED ACCESS</p>}',
+    );
+    expect(read('app/operator/network.tsx')).toContain(
+      '{teamDeskV41 ? null : <p className="label">CORRIDRA NETWORK</p>}',
+    );
+    expect(read('app/operator/workspace-controls.tsx')).toContain(
+      '{teamDeskV41 ? null : <p className="eyebrow">Workspace settings</p>}',
     );
   });
   test('the client flag is off by default, so a screen outside the team shell keeps its jump links', () => {
