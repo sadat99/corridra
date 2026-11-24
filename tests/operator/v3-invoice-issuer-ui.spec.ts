@@ -134,7 +134,14 @@ const seeded = (over: Record<string, unknown> = {}) => ({
     paymentInstructions: null,
     financeLabel: null,
   },
-  fixed: { country: 'SG', taxLabel: 'GST', gstRateBps: 900, paymentTermsDays: 30 },
+  fixed: {
+    country: 'SG',
+    taxLabel: 'GST',
+    gstRateBps: 900,
+    paymentTermsDays: 30,
+    rateWhenRegisteredBps: 900,
+    rateWhenNotRegisteredBps: 0,
+  },
   realInvoicesOpen: false,
   synthetic: false,
   ...over,
@@ -288,6 +295,9 @@ test('each step checks its own answers before the next one opens', async ({ page
   await next(page).click();
   await expect(page.getByRole('alert')).toHaveText('Choose whether the company is GST registered.');
   await page.getByText('Yes, GST registered', { exact: true }).click();
+  await expect(page.locator('#issuer-gstRegistrationNo-help')).toHaveText(
+    'Invoices will show 9% GST, the Singapore standard rate. You do not type the rate.',
+  );
   await next(page).click();
   await expect(page.getByRole('alert')).toHaveText(
     'Enter the GST registration number, 3 to 60 characters.',
@@ -295,6 +305,9 @@ test('each step checks its own answers before the next one opens', async ({ page
   // Not registered asks for no number.
   await page.getByText('No, not GST registered', { exact: true }).click();
   await expect(page.getByLabel('GST registration number', { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByText('Invoices will show a tax rate of 0%, no GST is charged.'),
+  ).toBeVisible();
   await next(page).click();
   await expect(stepHeading(page, 'Step 3 of 4: Payment')).toBeVisible();
   await next(page).click();
@@ -335,6 +348,9 @@ test('saving checks the authenticator code first, then sends the details once an
     real.address,
     'GST registered',
     real.gstRegistrationNo,
+    // The tax rate is derived from the GST answer and shown before the save; it is never typed.
+    'Tax rate on invoices',
+    '9% GST, the Singapore standard rate',
     real.paymentInstructions,
     real.financeLabel,
   ])
@@ -355,13 +371,30 @@ test('saving checks the authenticator code first, then sends the details once an
   expect(fixture.order).toEqual(['read', 'verify', 'save', 'read']);
   expect(fixture.verifies).toEqual([{ code: '123456', trustDevice: false }]);
   const sent = posts(fixture)[0]!.body!;
+  // Exactly the typed details: the rate is written by the database, never sent.
   expect(sent).toEqual({ commandId: sent.commandId, expectedVersion: 1, ...real });
+  expect(JSON.stringify(sent)).not.toMatch(/rate/i);
   expect(String(sent.commandId)).toMatch(uuid);
   await expect(page.locator('#issuer-status')).toContainText(
     'Issuer details are complete. Typed by the owner and saved on 23 Nov 2026.',
   );
   // The code is not kept on the page.
   await expect(page.locator('#fixture')).not.toContainText('123456');
+});
+
+test('where the screen does not set the tax rate, no rate is promised on the last step', async ({
+  page,
+}) => {
+  // Before the rate install, or for an issuer outside Singapore GST, the view carries no rate for either answer.
+  await serve(page, {
+    view: seeded({
+      fixed: { country: 'SG', taxLabel: 'GST', gstRateBps: 900, paymentTermsDays: 30 },
+    }),
+  });
+  await page.goto(origin + '/');
+  await fillAll(page);
+  await expect(page.locator('#issuer-summary')).toContainText('GST registered');
+  await expect(page.locator('#issuer-summary')).not.toContainText('Tax rate on invoices');
 });
 
 test('a wrong code sends nothing and keeps every answer; an unregistered company sends no GST number', async ({
@@ -384,6 +417,9 @@ test('a wrong code sends nothing and keeps every answer; an unregistered company
   await expect(codeField(page)).toHaveAttribute('aria-invalid', 'true');
   expect(posts(fixture)).toHaveLength(0);
   await expect(page.locator('#issuer-summary')).toContainText('Not GST registered');
+  await expect(page.locator('#issuer-summary')).toContainText(
+    'Tax rate on invoices0%, no GST is charged',
+  );
   accept = true;
   await codeField(page).fill('654321');
   await saveButton(page).click();

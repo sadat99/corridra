@@ -1,7 +1,8 @@
-// Languages the product can show. English is the source and the fallback. A language is offered to
-// the public only when its text has been reviewed by a native speaker (ui-direction.md, rule 3), and
-// the owner records that by listing it in CORRIDRA_LANGUAGES_REVIEWED. CORRIDRA_LANGUAGES_PREVIEW
-// shows the unreviewed drafts, labelled, so the owner can read them before a reviewer does.
+// Languages the product can show. English is the source and the fallback. A language is offered when
+// the owner lists it in CORRIDRA_LANGUAGES_REVIEWED, or all of them with CORRIDRA_LANGUAGES_PREVIEW.
+// Owner, 23 November 2026: the six are shown by owner decision and no screen marks them; no native
+// review is recorded (docs/product/language-review-record.md). The `draft` field below still says
+// whether a language is offered without being listed; nothing on screen reads it.
 export const localeCodes = ['en', 'bn', 'zh', 'es', 'ar', 'fr', 'de'] as const;
 export type Locale = (typeof localeCodes)[number];
 export const defaultLocale: Locale = 'en';
@@ -23,7 +24,7 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (localeCodes as readonly string[]).includes(value);
 }
 
-/** English always. A reviewed language is offered as itself, a draft only in preview. */
+/** English always, each listed language, and every language in preview. */
 export function offeredLanguages(
   env: Record<string, string | undefined> = process.env,
 ): OfferedLanguage[] {

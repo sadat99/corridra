@@ -102,15 +102,6 @@
 .language-sheet-name {
   flex: 1 1 auto;
 }
-.language-sheet-list small {
-  font-size: var(--text-sm);
-  color: var(--text-2);
-}
-.language-sheet-note {
-  margin: var(--space-3) 0 0;
-  font-size: var(--text-sm);
-  color: var(--text-2);
-}
 @media (prefers-reduced-motion: reduce) {
   .language-sheet {
     animation: none;

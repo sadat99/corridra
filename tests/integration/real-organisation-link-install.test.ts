@@ -73,7 +73,10 @@ vi.mock('node:fs/promises', async (importOriginal) => {
         // Real-use 0020 (offer commissioning term) is applied after 0019 and has its own gate: the last test of this file opens it.
         !(gate.__commissioningHide && String(n).startsWith('0020_')) &&
         // Real-use 0021 (organisation source rights and takedown) is applied after 0020 and has its own gate: the last test opens it.
-        !(gate.__sourceRightsHide && String(n).startsWith('0021_')),
+        !(gate.__sourceRightsHide && String(n).startsWith('0021_')) &&
+        // Real-use 0022 (the sample first word, B7b) comes after 0021 and changes the first-word comparison of functions this
+        // suite fingerprints at the earlier state, so it stays away here. tests/integration/sample-first-word.test.ts proves it.
+        !String(n).startsWith('0022_'),
     );
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };

@@ -113,6 +113,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'data_cleanup_inventory',
     'real_intake_owner_apply',
     'qa_data_retire',
+    'outreach_real_install',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
@@ -169,6 +170,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['data_cleanup_inventory', u, u, u, u, u, u, u, u],
     ['real_intake_owner_apply', u, u, u, u, u, u, u, u],
     ['qa_data_retire', u, u, u, u, u, u, u, u],
+    ['outreach_real_install', u, u, u, u, u, u, u, u],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
@@ -546,7 +548,7 @@ test('the QA data retirement choice only reports, moves no other module and carr
   assert.equal(Object.keys(declared).length, 24);
   assert.match(
     declared.field_modules_action.description,
-    /qa_data_retire \(B11b, owner decision 23 Nov 2026: read-only report[^)]*run without apply, it is refused together with apply[^)]*refuses unless exactly one matches[^)]*writes, archives and deletes nothing[^)]*no user or account is touched[^)]*\)/,
+    /qa_data_retire \(B11b, owner decision 23 Nov 2026: read-only report[^)]*run without apply, it is refused together with apply[^)]*reports each as found, not found or more than one and exits 0 either way[^)]*checklist only when every item matches exactly once[^)]*writes, archives and deletes nothing[^)]*no user or account is touched[^)]*\)/,
   );
 });
 
@@ -652,4 +654,67 @@ test('set_supplier takes the supplier details only from the protected environmen
     assert.doesNotMatch(run, /secrets\.|SUPPLIER|set -x|\benv\b|printenv|toJSON/);
   }
   assert.doesNotMatch(source, /toJSON\(\s*(secrets|env|inputs)/);
+});
+
+test('the real outreach choice installs only its database module, opens nothing and adds no input', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const steps = workflow.jobs.install.steps;
+  const env = steps.find((step) => step.name === 'Report or install the customer modules').env;
+  const guard = steps.find((step) => step.name?.startsWith('Verify exact revision')).if;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  assert.ok(declared.field_modules_action.options.includes('outreach_real_install'));
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    // ADR-090: only its own choice reaches the installer, and only as install.
+    assert.equal(
+      evaluate(env.OUTREACH_REAL_ACTION, inputs),
+      choice === 'outreach_real_install' ? 'install' : 'unchanged',
+      choice,
+    );
+    if (choice !== 'outreach_real_install') continue;
+    // No other module moves, and no reason line is filled, because nothing is opened or paused.
+    for (const [name, value] of Object.entries(env)) {
+      if (name === 'OUTREACH_REAL_ACTION') continue;
+      if (name.endsWith('_ACTION'))
+        assert.equal(
+          evaluate(String(value), inputs),
+          defaults[name.toLowerCase()] ?? 'unchanged',
+          `${choice} must not move ${name}`,
+        );
+      if (name.endsWith('_REASON'))
+        assert.equal(evaluate(String(value), inputs), '', `${choice} must not fill ${name}`);
+    }
+    // The exact-head check runs before the install.
+    assert.equal(evaluate(guard, inputs), true);
+  }
+  // The default opens nothing and the protected job gains no input and no other outreach setting.
+  assert.equal(evaluate(env.OUTREACH_REAL_ACTION, defaults), 'unchanged');
+  assert.equal(Object.keys(declared).length, 24);
+  assert.ok(Object.keys(declared).every((name) => !/outreach/.test(name)));
+  assert.deepEqual(
+    Object.keys(env).filter((name) => /OUTREACH/.test(name)),
+    ['OUTREACH_REAL_ACTION'],
+  );
+  assert.equal(workflow.jobs.install.environment, 'customer-modules-install');
+  assert.match(
+    declared.field_modules_action.description,
+    /outreach_real_install \(ADR-090 real outreach by email: installs the database module only[^)]*sends nothing and turns nothing on[^)]*the switch stays off and the mode stays test[^)]*needs the real-use modules installed first[^)]*only when the owner approves\)/,
+  );
+  assert.doesNotMatch(declared.field_modules_action.description, /\u2014/);
+  const installer = readFileSync('scripts/install-customer-modules.ts', 'utf8');
+  assert.match(
+    installer,
+    /OUTREACH_REAL_ACTION: z\.enum\(\['unchanged', 'install'\]\)\.default\('unchanged'\)/,
+  );
+  assert.match(
+    installer,
+    /if \(v\.OUTREACH_REAL_ACTION !== 'unchanged' && !apply\)\n\s+throw new Error\('Real outreach installation requires INSTALL_APPLY=yes'\);/,
+  );
 });

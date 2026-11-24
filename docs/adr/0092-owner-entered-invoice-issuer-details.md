@@ -64,3 +64,43 @@ Amends ADR-064 forward. ADR-064 and its amendment of 17 November 2026 say the su
 - `tests/operator/v3-invoice-issuer-ui.spec.ts`: the four steps, each refusal line, the code checked before the single save and never sent with it, retry under the same command, load latest, the denied, not installed and switched-off lines, phone width, axe.
 - `tests/integration/billing-dates.test.ts`: a billing day reads the same west of UTC, east of UTC and in UTC.
 - `tests/operator/v3-billing-ui.spec.ts`, `v3-invoicing-ui.spec.ts`, `v3-real-invoicing-ui.spec.ts`: the customer billing dates in the shared format.
+
+## Addendum, 24 November 2026 (unit B8b): the tax rate follows the GST answer
+
+Status: Proposed with this record. It changes two lines of the Decision above and nothing else: "Country, tax name, tax rate and payment terms are not asked" and "A made-up mark on a field the screen does not ask for (the tax rate) is kept". Country, tax name and payment terms are still carried and stay under the install step.
+
+### Why
+
+- The screen did not ask for the tax rate, so a made-up mark on it survived every owner save and D3 kept refusing real invoices after a complete save. The owner's decision was one screen that completes the details.
+
+### What changes
+
+- The tax rate is still never typed and never sent. The database derives it from the GST answer the owner already gives on the GST step, for a Singapore GST issuer (country `SG`, tax name `GST`):
+  - GST registered: the Singapore standard rate, 9% (900 basis points).
+  - Not GST registered: 0.
+- The rate source: IRAS, "Current GST rates" and "Prevailing GST rate" (iras.gov.sg), read 24 November 2026: "The current GST rate in Singapore is 9%", in force since 1 January 2024. The install seed of ADR-064 already carried 900 (`defaultRealInvoicingEntity.gstRateBps`).
+- The rate lives in one place, `customer_private.real_invoicing_issuer_rate(entity, registered)`. A change of the standard rate is a new reviewed migration, never an input or a setting.
+- `app.real_invoicing_issuer_save` writes the derived rate in the same ONE new supplier version and clears the mark on it, so one complete owner save leaves no made-up field and D3 lifts. The request, its digest, the command replay, the lock and every authority check are unchanged. `gstRateBps` joins the changed field names of the event when the rate or its mark changed. The event, the audit line and the command record still carry no value.
+- For an issuer that is not a Singapore GST issuer the screen sets no rate: the rate is carried and a made-up mark on it is kept, as before.
+- `app.real_invoicing_issuer_view` adds, under `fixed`, the rate each answer would write (`rateWhenRegisteredBps`, `rateWhenNotRegisteredBps`; null when the screen sets none). The GST step and the Check And Save step show it ("Tax rate on invoices") before the save. Before this install the two values are absent and the screen promises no rate.
+- A version written by the secret path (`set_supplier`) with another rate is replaced by the derived rate on the next owner save. That is intended: for a Singapore GST issuer the standard rate is the only rate this module charges.
+- Additive migration `packages/db/customer-invoicing-real-migrations/0004_issuer_tax_rate.sql`, installed by the existing `real_invoicing_action=install` step. No new workflow input, no new grant: the runtime login still executes only the view and the save.
+
+### What stays closed
+
+- Unchanged from the record above. Saving switches nothing on, no saved version or issued document is touched, and a document keeps the version, and so the rate, it was issued under.
+
+### Rollback
+
+- The screen off (`CORRIDRA_INVOICE_ISSUER`) stops all owner saves at once.
+- The rollback file of this record (`rollback/0003_drop_owner_issuer_details.sql`) now also drops the rate function and removes the applied line of 0004, so a later install puts both back. There is no separate rollback for 0004: to correct a rate without it, write a new supplier version with `set_supplier`.
+
+### Owner page link
+
+- The Owner page shows a link "Invoice issuer details" to `/operator/invoice-issuer` at the top of "What is on and off", only to the owner of the chosen workspace and only while `CORRIDRA_INVOICE_ISSUER` is exactly `true`. An admin sees no link.
+
+### Tests
+
+- `tests/integration/customer-invoicing-real-issuer.test.ts`: the fourth migration; the view's two rates; a rate in the request refused in the service and in the database; a marked rate cleared by one owner save with 900 written, earlier versions unchanged, the event without a value, D3 lifted; not registered writes 0 and registering again writes 900; an issuer outside Singapore GST keeps its rate and mark; the rate function closed to the runtime logins; rollback.
+- `tests/operator/v3-invoice-issuer-ui.spec.ts`: the rate on the GST step and on Check And Save for both answers, never sent, and no rate promised when the view carries none.
+- `tests/integration/owner-page.test.ts`: the link for the owner with the switch on; none with the switch off or for any other role.

@@ -24,13 +24,22 @@ const flagNames: Record<FlagCode, string> = {
   it: 'Italy',
 };
 
+/** The nine written names, lower case, to their flags. A `Map`, so no object key is ever read as a place. */
+const flagByName = new Map<string, FlagCode>(
+  flagCodes.map((code) => [flagNames[code].toLowerCase(), code]),
+);
+
 /**
- * The mark for a country code as the forms hold it ("BD", "EU"): its flag when it is one of the nine, otherwise
- * nothing, so every other place shows its name only.
+ * The mark for a place as it is stored: a country code as the forms hold it ("BD", "EU") or the written English
+ * name of one of the nine ("Bangladesh"), which older records and team-written introductions carry. Its flag when
+ * it is one of the nine, otherwise nothing, so every other place shows its name only. Never a guess: the whole
+ * value must be the code or the name.
  */
 export function placeMark(code: string | null | undefined): PlaceMark {
-  const key = (code ?? '').toLowerCase();
-  return (flagCodes as readonly string[]).includes(key) ? (key as FlagCode) : null;
+  const key = (code ?? '').trim().toLowerCase();
+  return (flagCodes as readonly string[]).includes(key)
+    ? (key as FlagCode)
+    : (flagByName.get(key) ?? null);
 }
 
 /**

@@ -52,6 +52,8 @@ test.beforeAll(async () => {
     platform: 'browser',
     jsx: 'automatic',
     loader: { '.css': 'css' },
+    // The flag stylesheet names its pictures by their public path; they are served files, not bundled ones.
+    external: ['/flags/*'],
     define: { 'process.env.NODE_ENV': '"production"' },
   });
   script = result.outputFiles.find((f) => f.path.endsWith('.js'))!.text;

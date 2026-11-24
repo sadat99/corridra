@@ -555,8 +555,10 @@ try {
   // QA test data retirement (B11b, owner decision 23 Nov 2026), reached only through field_modules_action=qa_data_retire.
   // Read only, and refused above together with INSTALL_APPLY=yes: every lifecycle that retires this data needs a signed-in person as its
   // actor, so the people do it on the existing screens and this step lists how each item stands, who retires it and where.
-  // It refuses (and the run fails) unless each name matches exactly one record. The log is public: the fixed names and
-  // 8-character ids only. No user, identity or account is read by name, changed or deleted.
+  // It reports each name as found, not found or more than one and the run exits 0 either way; the checklist is given only
+  // when every name matches exactly one record. The log is public: the fixed names and 8-character ids, plus, when the
+  // request is not found, the objective and market of the requests in the QA workspace with addresses, links and numbers
+  // hidden. No user, identity or account is read by name, changed or deleted.
   if (v.QA_DATA_RETIRE_ACTION !== 'unchanged')
     console.log(
       `QA test data retirement, read only (nothing written)\n${(await reportQaDataRetire(pool)).lines.join('\n')}`,

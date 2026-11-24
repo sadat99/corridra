@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -21,6 +21,22 @@ import { CustomerParticipantService } from '../../packages/auth/src/customer-par
 // and nothing else. Three existing functions get one gate each, only when their live text is the reviewed text. This
 // proves the text is exactly the reviewed text plus the gate, that a never-archived workspace behaves exactly as it
 // did, that every refusal says what to do next, and that an archive cannot be raced.
+// Workspace lifecycle file 0010 (the sample first word, B7b) is a later change to the same functions, so it is kept away
+// from the installer here: this suite proves files 0001 to 0009 exactly. tests/integration/sample-first-word.test.ts
+// proves file 0010.
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const real = await importOriginal<typeof import('node:fs/promises')>();
+  const readdir = (async (path: unknown, ...rest: unknown[]) => {
+    const names = (await (real.readdir as (...a: unknown[]) => Promise<unknown[]>)(
+      path,
+      ...rest,
+    )) as unknown[];
+    if (!String(path).includes('customer-workspace-lifecycle-migrations')) return names;
+    return names.filter((n) => String(n) !== '0010_sample_first_word_late.sql');
+  }) as typeof real.readdir;
+  return { ...real, readdir, default: { ...real, readdir } };
+});
+
 const prefix = 'g4par';
 const archivedText =
   'This workspace is archived. Restore it to send new private requests, invitations and registrations.';

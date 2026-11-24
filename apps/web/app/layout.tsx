@@ -11,10 +11,12 @@ import { SkipLink } from '../components/skip-link';
 import { CanonicalLink } from '../components/ux/canonical-link';
 import { ComfortSync } from '../components/ux/use-comfort';
 import { ServiceWorkerRegistration } from '../components/ux/service-worker-registration';
+import { SiteTitle } from '../components/ux/site-title';
 import { canonicalSiteOrigin } from '../lib/canonical-origin';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
 import { offeredLanguages } from '../lib/i18n/locales';
 import { languagesWithPages } from '../lib/i18n/pages';
+import { siteWords } from '../lib/i18n/messages';
 import { uxSwitchOn } from '../lib/ux-switches';
 import { serviceWorkerOn } from '../lib/ux/service-worker';
 import { realUseEnabled } from '@corridra/auth/customer-production';
@@ -84,9 +86,9 @@ const fontVariables = [
 export const metadata: Metadata = {
   // Social images resolve against the owned address the canonical links already name (ADR-034).
   metadataBase: new URL(canonicalSiteOrigin),
-  title: 'Corridra | Cross-border market access',
-  description:
-    'Corridra helps Bangladeshi businesses enter China, the EU, the UK, the US, Australia and key Asian markets with qualified buyers and clear next steps.',
+  // English for search and share previews; the browser shows the tab title in the chosen language (SiteTitle below).
+  title: siteWords['site.title'],
+  description: siteWords['site.description'],
   applicationName: 'Corridra',
   openGraph: {
     title: 'Corridra | Know who is worth meeting.',
@@ -119,6 +121,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <LanguageProvider offered={offered} pageLocales={languagesWithPages()}>
           <CanonicalLink />
+          <SiteTitle />
           <ComfortSync />
           <ServiceWorkerRegistration enabled={serviceWorkerOn()} />
           <SkipLink />

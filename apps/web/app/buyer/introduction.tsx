@@ -8,6 +8,7 @@ import {
   accessDenied,
 } from '../../components/private-capability';
 import { ParticipantScope } from '../../components/participant-scope';
+import { Flagged, placeMark } from '../../components/ux/flag';
 import { RecipientResponse } from './recipient-response';
 import { ReplyJourney } from './reply-journey';
 import { parseReplyFragment } from '../../lib/reply-terms';
@@ -107,6 +108,8 @@ function ScopedIntroduction({
     [message, setMessage] = useState(
       replyPage ? `${words.loading}…` : 'Loading your introduction…',
     ),
+    // True until the first read of the link has ended, whatever the loading line says in the link's language.
+    [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [optOut, setOptOut] = useState(false),
     [declined, setDeclined] = useState(false),
@@ -124,7 +127,10 @@ function ScopedIntroduction({
     token.current = linkToken;
     if (!/^[a-f0-9]{64}$/.test(token.current)) {
       Promise.resolve().then(() => {
-        if (active) setMessage(gone);
+        if (active) {
+          setLoading(false);
+          setMessage(gone);
+        }
       });
       return () => {
         active = false;
@@ -144,12 +150,16 @@ function ScopedIntroduction({
       })
       .then((v) => {
         if (active) {
+          setLoading(false);
           setData({ ...v, capability: token.current });
           setMessage('');
         }
       })
       .catch((e) => {
-        if (active) setMessage(failed(e, 'Your introduction could not be opened. Try again.', ''));
+        if (active) {
+          setLoading(false);
+          setMessage(failed(e, 'Your introduction could not be opened. Try again.', ''));
+        }
       });
     return () => {
       active = false;
@@ -270,7 +280,7 @@ function ScopedIntroduction({
       data-link-state={unavailable ? 'unavailable' : undefined}
     >
       <LinkStatus message={message} unavailable={unavailable} />
-      {!data && message !== 'Loading your introduction…' && (
+      {!data && !loading && (
         <button
           className={unavailable ? 'primary-link' : 'text-link'}
           onClick={() => window.location.reload()}
@@ -327,7 +337,7 @@ function ScopedIntroduction({
               <div key={label}>
                 <dt>{label}</dt>
                 <dd>
-                  {value}
+                  {label === 'Country' ? <Flagged code={placeMark(value)}>{value}</Flagged> : value}
                   {label === 'Evidence highlights' && (
                     <p className="evidence-label">
                       Corridra team-reported context. No independent verification is asserted.

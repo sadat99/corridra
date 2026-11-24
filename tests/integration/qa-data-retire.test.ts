@@ -21,6 +21,7 @@ import { CustomerParticipantService } from '../../packages/auth/src/customer-par
 import {
   qaDataRetirePlan,
   reportQaDataRetire,
+  shown,
   type QaDataRetirePlan,
   type QaDataRetireReport,
 } from '../../packages/auth/src/customer-qa-data-retire';
@@ -209,11 +210,229 @@ afterAll(async () => {
 });
 
 describe('before anything is retired', () => {
-  test('a needed module that is not installed is named, and the fixed names are refused where they do not exist', async () => {
+  test('a needed module that is not installed is named, and the fixed names resolve to nothing where they do not exist', async () => {
     expect(String(missingModule)).toContain('Install the workspace lifecycle module first');
-    await expect(reportQaDataRetire(f.owner)).rejects.toThrow(
-      'Expected exactly one workspace named "QA-Organiser Workspace (madeup)", found 0',
+    // The fixed plan in a database without the QA workspace: a report, never a crash, and nothing to act on.
+    const result = await reportQaDataRetire(f.owner);
+    expect(result.state).toBe('targets not resolved');
+    expect(result.targets).toEqual([
+      {
+        kind: 'workspace',
+        label: 'workspace "QA-Organiser Workspace (madeup)"',
+        status: 'not found',
+        matches: 0,
+      },
+      {
+        kind: 'programme',
+        label: 'programme "QA-Test Programme (madeup)"',
+        status: 'not checked',
+        matches: null,
+      },
+      {
+        kind: 'request',
+        label: 'request "Source suppliers in China"',
+        status: 'not checked',
+        matches: null,
+      },
+      {
+        kind: 'problem report',
+        label: 'problem report RP-000001',
+        status: 'not checked',
+        matches: null,
+      },
+    ]);
+    expect(result.steps).toEqual([]);
+    expect(result.checklist).toEqual([]);
+    expect(result.lines).toEqual([
+      'target workspace "QA-Organiser Workspace (madeup)": not found',
+      'target programme "QA-Test Programme (madeup)": not checked, it is looked up inside the QA workspace',
+      'target request "Source suppliers in China": not checked, it is looked up inside the QA workspace',
+      'target problem report RP-000001: not checked, it is looked up inside the QA workspace',
+      '4 of 4 targets not resolved exactly once',
+      'No checklist: nothing is to be retired until every target is found exactly once.',
+      'kept, never touched: every user, identity, sign-in and customer account',
+      'Nothing was written, changed or deleted.',
+    ]);
+  });
+
+  test('a request that matches nothing is reported with what the QA workspace holds, and no checklist is given', async () => {
+    const before = { rows: await digest(f, tables), people: await people() };
+    // The production dry run of 24 Nov 2026: the workspace and programme resolve, the request title matches nothing.
+    const result = await report({
+      request: {
+        title: 'Find customers in Spain',
+        objective: 'Find customers',
+        markets: ['Spain'],
+      },
+    });
+    expect(result.state).toBe('targets not resolved');
+    expect(result.targets.map((target) => `${target.kind}: ${target.status}`)).toEqual([
+      'workspace: found',
+      'programme: found',
+      'request: not found',
+      'problem report: found',
+    ]);
+    expect(result.steps).toEqual([]);
+    expect(result.checklist).toEqual([]);
+    const short = workspaceId.slice(0, 8);
+    expect(result.lines).toEqual([
+      'target workspace "Synthetic QA-Organiser Workspace": found',
+      'target programme "Synthetic QA-Test Programme": found',
+      'target request "Find customers in Spain": not found',
+      `target problem report ${plan.problemReport}: found`,
+      `requests in the workspace "Synthetic QA-Organiser Workspace" (${short}): 2`,
+      `request ${requestId.slice(0, 8)}: objective "Source suppliers", market "CN", status DRAFT`,
+      expect.stringMatching(
+        /^request [0-9a-f]{8}: objective "Sell in a new market", market "Spain", status DRAFT$/,
+      ),
+      'the same title, sent by a member of the QA workspace into another workspace: 0 (never a target: the plan names the QA workspace only)',
+      '1 of 4 targets not resolved exactly once',
+      'No checklist: nothing is to be retired until every target is found exactly once.',
+      'kept, never touched: every user, identity, sign-in and customer account',
+      'Nothing was written, changed or deleted.',
+    ]);
+    // Safe for a public log: no address, no full id, and nothing a person typed beyond the objective and market.
+    const text = result.lines.join('\n');
+    expect(text).not.toMatch(/@|[0-9a-f]{8}-[0-9a-f]{4}-/);
+    expect(text).not.toMatch(/Pat|olga|Test Person|Example Test Company|cotton towels/);
+    expect({ rows: await digest(f, tables), people: await people() }).toEqual(before);
+  });
+
+  test('a request title that matches two requests is reported as more than one', async () => {
+    // A third request with the same objective and another spelling of the market: "CN" and "China" both make the title.
+    const before = await report();
+    expect(before.state).toBe('still to retire');
+    const third = await requests('olga').submit(
+      { commandId: randomUUID(), workspaceId, brief: brief('Source suppliers', 'China') },
+      prepare,
     );
+    const result = await report();
+    expect(result.state).toBe('targets not resolved');
+    expect(result.targets[2]).toEqual({
+      kind: 'request',
+      label: 'request "Source suppliers in China"',
+      status: 'more than one',
+      matches: 2,
+    });
+    expect(result.checklist).toEqual([]);
+    expect(result.lines).toContain(
+      'target request "Source suppliers in China": more than one (2 match)',
+    );
+    expect(result.lines).toContain(
+      `request ${(third.id as string).slice(0, 8)}: objective "Source suppliers", market "China", status DRAFT`,
+    );
+    // Nothing is guessed between the two. The tests below name the one spelling the first request has, so the plan
+    // resolves again; the extra request stays in the workspace untouched (three requests from here on).
+    plan.request = { ...plan.request, markets: ['CN'] };
+    expect((await report()).state).toBe('still to retire');
+  });
+
+  test('text a customer typed is hidden from the public log when it holds an address, a link, a domain or a number', () => {
+    for (const value of [
+      'pat@example.invalid',
+      'see https://example.invalid/x',
+      'ftp://files',
+      'www.example',
+      'WWW.Example.invalid',
+      'example.invalid',
+      'China, example.co/path',
+      'shop.example-site.invalid',
+      'call 5550100',
+      '+880 1711-000 000',
+      '65 6555 0100',
+      'account 072-123456-7',
+    ])
+      expect(shown(value, 60), value).toBe('(hidden)');
+    // A place name, a code and a short number stay readable; an empty value says so; a long one is cut.
+    expect(shown('China', 40)).toBe('China');
+    expect(shown('CN', 40)).toBe('CN');
+    expect(shown('  Guangdong   and\nZhejiang ', 40)).toBe('Guangdong and Zhejiang');
+    expect(shown('Top 20 cities, 2027', 40)).toBe('Top 20 cities, 2027');
+    expect(shown(null, 40)).toBe('(empty)');
+    expect(shown('   ', 40)).toBe('(empty)');
+    expect(shown('a'.repeat(70), 60)).toBe('a'.repeat(60) + '...');
+  });
+
+  test('the request list is capped at 50 rows and hides unsafe text in the report itself', async () => {
+    // The list query is answered with 51 made-up rows, so the cap and the printing are tested on the real report path
+    // without sending 51 requests. Every other statement goes to the database unchanged.
+    const unsafe = [
+      'pat@example.invalid',
+      'https://example.invalid',
+      'www.example',
+      'example.invalid',
+      '+65 6555 0100',
+    ];
+    const rows = Array.from({ length: 51 }, (_, index) => ({
+      id: index.toString(16).padStart(8, '0'),
+      objective: 'Source suppliers',
+      market: unsafe[index] ?? `Market ${index}`,
+      status: 'DRAFT',
+      withdrawn: index === 5,
+    }));
+    const many: DatabasePool = {
+      query: f.owner.query.bind(f.owner),
+      end: f.owner.end.bind(f.owner),
+      connect: async () => {
+        const client = await f.owner.connect();
+        return new Proxy(client, {
+          get(target, key, receiver) {
+            if (key !== 'query') return Reflect.get(target, key, receiver);
+            return (text: unknown, ...rest: unknown[]) =>
+              typeof text === 'string' && text.includes('LIMIT 51')
+                ? Promise.resolve({ rows, rowCount: rows.length })
+                : Reflect.apply(target.query, target, [text, ...rest]);
+          },
+        });
+      },
+    } as DatabasePool;
+    const result = await reportQaDataRetire(many, {
+      ...plan,
+      request: {
+        title: 'Find customers in Spain',
+        objective: 'Find customers',
+        markets: ['Spain'],
+      },
+    });
+    expect(result.state).toBe('targets not resolved');
+    const listed = result.lines.filter((line) => /^request [0-9a-f]{8}: /.test(line));
+    expect(listed).toHaveLength(50);
+    expect(result.lines).toContain(
+      `requests in the workspace "Synthetic QA-Organiser Workspace" (${workspaceId.slice(0, 8)}): the first 50`,
+    );
+    expect(listed.slice(0, 5)).toEqual(
+      [0, 1, 2, 3, 4].map(
+        (index) =>
+          `request 0000000${index}: objective "Source suppliers", market "(hidden)", status DRAFT`,
+      ),
+    );
+    expect(listed[5]).toBe(
+      'request 00000005: objective "Source suppliers", market "Market 5", status DRAFT, withdrawn',
+    );
+    // The 51st row is never printed.
+    expect(result.lines.join('\n')).not.toMatch(/00000032|Market 50/);
+    expect(result.lines.join('\n')).not.toMatch(/@|example|6555/);
+  });
+
+  test('a missing programme or problem report is named while the request still resolves', async () => {
+    const many = await reportQaDataRetire(f.owner, {
+      ...plan,
+      // Both markets in the workspace are named, but only one request has this objective.
+      request: { ...plan.request, markets: ['CN', 'Spain'] },
+      programme: 'Synthetic programme nobody made',
+      problemReport: 'RP-999999',
+    });
+    expect(many.targets.map((target) => `${target.kind}: ${target.status}`)).toEqual([
+      'workspace: found',
+      'programme: not found',
+      'request: found',
+      'problem report: not found',
+    ]);
+    expect(many.state).toBe('targets not resolved');
+    expect(many.checklist).toEqual([]);
+    expect(many.lines).toContain('2 of 4 targets not resolved exactly once');
+    // The request resolved, so the request list of the workspace is not printed.
+    expect(many.lines.join('\n')).not.toMatch(/requests in the workspace|objective "/);
   });
 
   test('every item is listed as still to retire, in an order that is safe, with who and where', async () => {
@@ -267,10 +486,20 @@ describe('before anything is retired', () => {
     expect(seen.at(-1)).toBe('ROLLBACK');
     expect(seen.filter((text) => /^\s*(BEGIN|COMMIT|ROLLBACK)/.test(text))).toHaveLength(2);
     for (const text of seen.slice(1, -1)) expect(text).toMatch(/^\s*SELECT\b/);
-    // A refused report is rolled back too.
-    await expect(report({ programme: 'Synthetic programme nobody made' })).rejects.toThrow(
-      'Expected exactly one programme named "Synthetic programme nobody made" in the workspace "Synthetic QA-Organiser Workspace", found 0',
-    );
+    // A report with a target that does not resolve is read only and rolled back in the same way.
+    const unresolved: string[] = [];
+    const none = await reportQaDataRetire(watching(f.owner, unresolved, { next: false }, /./), {
+      ...plan,
+      request: {
+        title: 'Find customers in Spain',
+        objective: 'Find customers',
+        markets: ['Spain'],
+      },
+    });
+    expect(none.state).toBe('targets not resolved');
+    expect(unresolved[0]).toBe('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    expect(unresolved.at(-1)).toBe('ROLLBACK');
+    for (const text of unresolved.slice(1, -1)) expect(text).toMatch(/^\s*SELECT\b/);
     expect({ rows: await digest(f, tables), people: await people() }).toEqual(before);
     // The database itself refuses a write inside such a transaction.
     const db = await f.owner.connect();
@@ -349,23 +578,39 @@ describe('before anything is retired', () => {
         });
       },
     };
-    await expect(
-      reportQaDataRetire(counting, { ...plan, problemReport: 'RP-999999' }),
-    ).rejects.toThrow('found 0');
+    expect(
+      (await reportQaDataRetire(counting, { ...plan, problemReport: 'RP-999999' })).state,
+    ).toBe('targets not resolved');
     expect(seen).toEqual([undefined]);
+    // A report that is refused outright (a kept name as a target) releases its connection too.
+    await expect(
+      reportQaDataRetire(counting, { ...plan, workspace: 'Synthetic QA kept workspace' }),
+    ).rejects.toThrow('A kept name cannot be a retirement target');
+    expect(seen).toEqual([undefined, undefined]);
   });
 
   test('a same-named workspace made after the owner decision is never taken for the QA workspace', async () => {
     await h.provision('zed', 'Synthetic late QA workspace');
-    await expect(report({ workspace: 'Synthetic late QA workspace' })).rejects.toThrow(
-      'The workspace named "Synthetic late QA workspace" was created after the owner decision, so it is not the QA workspace',
+    const late = await report({ workspace: 'Synthetic late QA workspace' });
+    expect(late.state).toBe('targets not resolved');
+    expect(late.steps).toEqual([]);
+    expect(late.checklist).toEqual([]);
+    expect(late.targets[0]).toMatchObject({ kind: 'workspace', status: 'not found', matches: 0 });
+    expect(late.targets.slice(1).map((target) => target.status)).toEqual([
+      'not checked',
+      'not checked',
+      'not checked',
+    ]);
+    expect(late.lines[0]).toBe(
+      'target workspace "Synthetic late QA workspace": not found, a workspace of that name was made after the owner decision, so it is not the QA workspace',
     );
     // The real cut-off is the end of the day of the decision, fixed in the module.
     expect(qaDataRetirePlan.workspaceCreatedBefore).toBe('2026-11-24T00:00:00Z');
     // The QA workspace itself would be refused the same way if it had been made after the cut-off.
-    await expect(report({ workspaceCreatedBefore: '2000-01-01T00:00:00Z' })).rejects.toThrow(
-      'was created after the owner decision',
-    );
+    const early = await report({ workspaceCreatedBefore: '2000-01-01T00:00:00Z' });
+    expect(early.state).toBe('targets not resolved');
+    expect(early.checklist).toEqual([]);
+    expect(early.lines[0]).toContain('was made after the owner decision');
   });
 
   test('only the schema owner may read it, a kept name is never a target, and a report from elsewhere is left alone', async () => {
@@ -375,20 +620,6 @@ describe('before anything is retired', () => {
     );
     await expect(report({ workspace: 'QA Test Co (madeup)' })).rejects.toThrow(
       'A kept name cannot be a retirement target',
-    );
-    await expect(
-      report({
-        request: {
-          title: 'Find customers in Spain',
-          objective: 'Find customers',
-          markets: ['Spain'],
-        },
-      }),
-    ).rejects.toThrow(
-      'Expected exactly one request "Find customers in Spain" in the workspace "Synthetic QA-Organiser Workspace", found 0',
-    );
-    await expect(report({ problemReport: 'RP-999999' })).rejects.toThrow(
-      'Expected exactly one problem report RP-999999, found 0',
     );
     // Filed by a person who is not a member of the QA workspace: listed as left alone, never as a step to do.
     const other = await file('zed');
@@ -503,13 +734,29 @@ describe('each item retired by its own person through its own lifecycle', () => 
           [workspaceId, programmeId],
         )
       ).rows[0],
-    ).toEqual({ requests: 2, registrations: 1, invitations: 2, members: 1 });
+    ).toEqual({ requests: 3, registrations: 1, invitations: 2, members: 1 });
   });
 
   test('two workspaces with the same name are refused', async () => {
     await h.provision('zed', plan.workspace);
-    await expect(report()).rejects.toThrow(
-      'Expected exactly one workspace named "Synthetic QA-Organiser Workspace", found 2',
+    const result = await report();
+    expect(result.state).toBe('targets not resolved');
+    expect(result.targets[0]).toEqual({
+      kind: 'workspace',
+      label: 'workspace "Synthetic QA-Organiser Workspace"',
+      status: 'more than one',
+      matches: 2,
+    });
+    expect(result.lines[0]).toBe(
+      'target workspace "Synthetic QA-Organiser Workspace": more than one (2 match)',
     );
+    // Neither is taken for the QA workspace: nothing inside either is looked up and no checklist is given.
+    expect(result.targets.slice(1).map((target) => target.status)).toEqual([
+      'not checked',
+      'not checked',
+      'not checked',
+    ]);
+    expect(result.steps).toEqual([]);
+    expect(result.checklist).toEqual([]);
   });
 });

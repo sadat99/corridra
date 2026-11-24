@@ -2,30 +2,19 @@
 // The language chooser (UI/UX.v4 row "Language chooser", board screen 10): a bottom sheet that lists each offered
 // language in its own script with its short code, for example "EN English" and "BN বাংলা". It uses the same stored
 // choice as every other language control (language-provider.tsx), so switching and its persistence are unchanged.
-// The line "Six of seven are draft translations. Native review pending." is written from the offered languages
-// themselves, so it is shown only while drafts are offered and the numbers are the real ones.
+// Owner, 23 November 2026: a translated page carries no note at all, so the sheet lists the languages and nothing
+// else; the native review stays open in the record (docs/product/language-review-record.md), not on the screen.
 import './language-sheet.css';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { localeMeta, type Locale, type OfferedLanguage } from '../../lib/i18n/locales';
+import { localeMeta, type Locale } from '../../lib/i18n/locales';
 import { useLanguage } from '../language-provider';
 import { CorridraIcon } from '../corridra-icon';
 import { useLanguageSheetSlot } from './language-sheet-slot';
 
-const numberWords = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'];
-
 /** The short code of a language, as the top bar and the sheet show it: EN, BN, ZH, ES, AR, FR, DE. */
 export function localeCode(locale: Locale) {
   return locale.toUpperCase();
-}
-
-/** "Six of seven are draft translations. Native review pending." or null when no draft is offered. */
-export function draftLine(offered: readonly OfferedLanguage[]) {
-  const drafts = offered.filter((item) => item.draft).length;
-  if (drafts === 0 || offered.length >= numberWords.length) return null;
-  const total = numberWords[offered.length].toLowerCase();
-  const verb = drafts === 1 ? 'is a draft translation' : 'are draft translations';
-  return `${numberWords[drafts]} of ${total} ${verb}. Native review pending.`;
 }
 
 const focusable = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -34,7 +23,6 @@ function Sheet({ onClose, extra }: { onClose: () => void; extra?: ReactNode }) {
   const { locale, offered, choose, t } = useLanguage();
   const titleId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const panel = useRef<HTMLDivElement>(null);
-  const line = draftLine(offered);
   const pageHelp = useLanguageSheetSlot();
 
   useEffect(() => {
@@ -88,7 +76,7 @@ function Sheet({ onClose, extra }: { onClose: () => void; extra?: ReactNode }) {
           </button>
         </div>
         <ul className="language-sheet-list">
-          {offered.map(({ code, draft }) => (
+          {offered.map(({ code }) => (
             <li key={code}>
               <button
                 type="button"
@@ -104,17 +92,11 @@ function Sheet({ onClose, extra }: { onClose: () => void; extra?: ReactNode }) {
                   {localeCode(code)}
                 </span>
                 <span className="language-sheet-name">{localeMeta[code].name}</span>
-                {draft && <small>{t('language.draft')}</small>}
                 {code === locale && <CorridraIcon name="check" size={18} />}
               </button>
             </li>
           ))}
         </ul>
-        {line && (
-          <p className="language-sheet-note" lang="en" dir="ltr">
-            {line}
-          </p>
-        )}
         {/* Room under the rows for a page's own language help: the `extra` prop, or what the open page registered
             with <LanguageSheetExtra> (the plan form's Bangla guidance). */}
         {extra}
