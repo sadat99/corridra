@@ -53,7 +53,8 @@ export default async function Page({
         <ContributorSignout />
       </WorkspaceShell>
     );
-  // UI/UX.v4.1 L9: the one primary way in is drawn as the next step card; the other ways in stay quiet.
+  // UI/UX.v4.1 L9: the one primary way in is drawn as the next step card; the other ways in stay quiet. With the doors
+  // on, the sign-in door below is the one way to the helper sign-in, so the card does not repeat it.
   const firstDoor = helperDoor.find((item) => item.primary);
   if (!workspace.success)
     return (
@@ -65,16 +66,7 @@ export default async function Page({
         {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') ? (
           <>
             {firstDoor ? (
-              <NextStep
-                title={firstDoor.title}
-                line={firstDoor.line}
-                href={firstDoor.href}
-                action={firstDoor.title}
-              >
-                <a className="text-link" href="/contributor/signin">
-                  Helper Sign-In
-                </a>
-              </NextStep>
+              <NextStep line={firstDoor.line} href={firstDoor.href} action={firstDoor.title} />
             ) : null}
             <FrontDoor
               label="Ways in for a helper"

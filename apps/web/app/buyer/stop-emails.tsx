@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { usePrivateCapability } from '../../components/private-capability';
+import { accessHelp } from '../../lib/access-doors';
 import { LinkStatus } from './link-status';
 
 const words = {
@@ -32,7 +33,9 @@ export function StopEmails() {
     }
   }
   const message = !usable ? words.gone : words[state];
-  // UI/UX.v4.1 L8: a link that does not open is marked the same way as on the introduction page. No control is added.
+  // UI/UX.v4.1 L8: a link that does not open is marked the same way as on the introduction page, with one retry and
+  // one help link. Neither sends anything: the retry loads the page again and the opt-out still needs its button.
+  const help = accessHelp.buyer.links[0];
   const shut = !usable || state === 'gone';
   return (
     <section
@@ -45,6 +48,16 @@ export function StopEmails() {
         <button className="primary-link" disabled={state === 'working'} onClick={stop}>
           Stop These Emails
         </button>
+      )}
+      {shut && (
+        <>
+          <button className="primary-link" onClick={() => window.location.reload()}>
+            Try Again
+          </button>
+          <a className="text-link" href={help.href}>
+            {help.text}
+          </a>
+        </>
       )}
     </section>
   );

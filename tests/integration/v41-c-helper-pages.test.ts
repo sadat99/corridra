@@ -68,7 +68,13 @@ describe('L9: one next step card with one primary action', () => {
     );
     for (const line of ['How assigned work works', 'Choose your sign-in route', 'Back to Corridra'])
       expect(page).toContain(line);
-    expect(page.match(/<a className="text-link" href="\/contributor\/signin">/g)).toHaveLength(2);
+    // Helper Sign-In is written once: beside the action with the switch off. With the switch on the sign-in door
+    // is the one way there, and the card has no title that repeats its button.
+    expect(page.match(/<a className="text-link" href="\/contributor\/signin">/g)).toHaveLength(1);
+    expect(flat).toContain(
+      '<NextStep line={firstDoor.line} href={firstDoor.href} action={firstDoor.title} />',
+    );
+    expect(page).not.toContain('title={firstDoor.title}');
     // The page still says it.
     expect(flat).toContain(
       'Open the workspace link supplied with your reviewed invitation. A customer account does not grant assigned-task access.',

@@ -77,10 +77,18 @@ describe('L8: a private introduction link that does not open', () => {
     expect(status).not.toMatch(/introduction|company|capability|workspace|requestId|token/i);
     expect(status).not.toMatch(dashes);
     const stop = read('apps/web/app/buyer/stop-emails.tsx').replace(/\s+/g, ' ');
-    // The opt-out page marks its "link does not open" state the same way and gains no control.
+    // The opt-out page marks its "link does not open" state the same way, with one retry and one help link.
     expect(stop).toContain("const shut = !usable || state === 'gone';");
     expect(stop).toContain('<LinkStatus message={message} unavailable={shut} />');
-    expect(stop.match(/<button/g)).toHaveLength(1);
+    expect(stop).toContain('const help = accessHelp.buyer.links[0];');
+    expect(stop).toMatch(
+      /\{shut && \( <> <button className="primary-link" onClick=\{\(\) => window\.location\.reload\(\)\}> Try Again <\/button> <a className="text-link" href=\{help\.href\}> \{help\.text\} <\/a> <\/> \)\}/,
+    );
+    // Two buttons in the source, never both at once: the opt-out button is not drawn when the link is shut, and
+    // the retry only loads the page again. Only the opt-out button reaches the server.
+    expect(stop.match(/<button/g)).toHaveLength(2);
+    expect(stop).toContain("{usable && state !== 'done' && state !== 'gone' && (");
+    expect(stop.match(/fetch\(/g)).toHaveLength(1);
     expect(stop).toContain("fetch('/api/outreach/unsubscribe'");
   });
 
