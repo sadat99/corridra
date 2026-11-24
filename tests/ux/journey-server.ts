@@ -39,6 +39,8 @@ export type JourneySeed = {
   busy: Person;
   /** A brand-new account: signed in, no workspace, no work. */
   fresh: Person;
+  /** A person whose only work is one Sourcing request. */
+  single: Person;
   workspaceId: string;
   sourcing: string;
   selling: string;
@@ -107,6 +109,7 @@ export function journeyServer() {
 
       const busy = person('busy');
       const fresh = person('fresh');
+      const single = person('single');
       const connection = (role: string, secret: string) =>
         `postgresql://${role}:${secret}@127.0.0.1:54329/${database}`;
       const env: NodeJS.ProcessEnv = {
@@ -129,7 +132,7 @@ export function journeyServer() {
         NEON_AUTH_BASE_URL: issuer,
         NEON_AUTH_COOKIE_SECRET: randomBytes(32).toString('hex'),
         QA_FAKE_NEON_AUTH_BASE_URL: issuer,
-        QA_FAKE_NEON_AUTH_USERS: JSON.stringify([busy, fresh]),
+        QA_FAKE_NEON_AUTH_USERS: JSON.stringify([busy, fresh, single]),
         NODE_OPTIONS: [
           process.env.NODE_OPTIONS,
           `--import=${pathToFileURL(resolve('scripts/qa/fake-neon-auth.mjs')).href}`,
@@ -223,7 +226,27 @@ export function journeyServer() {
         reportingPurpose: 'Synthetic QA Test delegation for the journey pages.',
         acknowledged: true,
       });
-      return { busy, fresh, workspaceId, sourcing, selling, unsorted, programmeRoom: workspaceId };
+      const only = (
+        await api(single, '/api/customer-workspaces', {
+          commandId: randomUUID(),
+          name: 'Synthetic QA Test Sourcing workspace',
+        })
+      ).id as string;
+      await api(single, '/api/customer-requests', {
+        commandId: randomUUID(),
+        workspaceId: only,
+        brief: brief('Source suppliers', 'Synthetic ceramic tiles for one buyer.'),
+      });
+      return {
+        busy,
+        fresh,
+        single,
+        workspaceId,
+        sourcing,
+        selling,
+        unsorted,
+        programmeRoom: workspaceId,
+      };
     },
   };
 }

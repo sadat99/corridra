@@ -15,7 +15,6 @@ import {
   shouldOfferSwitch,
   workFilterOfMode,
 } from '../../apps/web/lib/ux/journey-mode';
-import { requestsOutsideJourney } from '../../apps/web/lib/work-items/journey-scope';
 import { customerTabs } from '../../apps/web/lib/ux/customer-navigation';
 import { uxSwitchNames } from '../../apps/web/lib/ux-switches';
 import { journeyModesOn } from '../../apps/web/lib/ux/journey-modes-on';
@@ -224,72 +223,6 @@ describe('journey mode: the short request reference', () => {
     expect(page.indexOf('data-request-reference')).toBeGreaterThan(
       page.indexOf('The original request is no longer available.'),
     );
-  });
-});
-
-describe('journey mode: Reports in a journey', () => {
-  const item = (kind: string, id: string, family: string) => ({ kind, id, family }) as never;
-  const list = {
-    items: [
-      item('request', 'r-source', 'SOURCE'),
-      item('request', 'r-sell', 'SELL'),
-      item('request', 'r-organise', 'ORGANISE'),
-      item('request', 'r-unsorted', 'UNCLASSIFIED'),
-      item('draft', 'd-sell', 'SELL'),
-      item('programme', 'p-organise', 'ORGANISE'),
-    ],
-  };
-  it('names only requests the list places outside the chosen journey', () => {
-    expect(requestsOutsideJourney(list, 'source')).toEqual(['r-sell', 'r-organise', 'r-unsorted']);
-    expect(requestsOutsideJourney(list, 'sell')).toEqual(['r-source', 'r-organise', 'r-unsorted']);
-    expect(requestsOutsideJourney(list, 'organise')).toEqual(['r-source', 'r-sell', 'r-unsorted']);
-    // A request the list does not hold is never named, so its report stays visible.
-    expect(requestsOutsideJourney({ items: [] }, 'source')).toEqual([]);
-  });
-
-  it('reads the same list as the sidebar counts and never throws', () => {
-    const reader = web('lib/work-items/journey-scope-server.ts');
-    expect(reader).toContain('const identity = await customerIdentity();');
-    expect(reader).toMatch(
-      /loadWorkItems\(identity\.subject, identity\.issuer, \{\s*rooms: uxSwitchOn\('CORRIDRA_UX_ROAD'\),\s*\}\)/,
-    );
-    expect(reader).toMatch(/catch \{\s*return \[\];/);
-    const page = web('app/account/page.tsx');
-    // Only on Reports and only while a journey is chosen; Everything and switch off ask for nothing.
-    expect(page).toMatch(
-      /scoped && view === reportsView\s*\? await readRequestsOutsideJourney\(scoped\)\s*: undefined/,
-    );
-  });
-
-  it('leaves out reports of other journeys and says what is not sorted, never hiding it', () => {
-    const delivered = web('app/account/delivered-reports.tsx');
-    expect(delivered).toContain('reports.filter((report) => !elsewhere.has(report.requestId))');
-    expect(delivered).toContain('No reports have been delivered in {journey} yet.');
-    const assigned = web('app/account/assigned-missions.tsx');
-    expect(assigned).toContain('!outside.includes(item.requestId)');
-    expect(assigned).toContain('No report delivered here is in {journey}.');
-    const tabs = web('app/account/reports-tabs.tsx');
-    for (const [what, panel] of [
-      ['Saved missions', 'saved'],
-      ['Missions shared with you', 'shared'],
-      ['Members’ reports', 'members'],
-    ])
-      expect(tabs).toContain(`panel: journey ? notSorted('${what}', ${panel}) : ${panel},`);
-    expect(tabs).toContain('<NotSortedByJourney what={what} />');
-    const note = web('components/ux/journey-not-sorted.tsx');
-    expect(note).toContain('{what} are not sorted by journey.');
-    // No router: the tabs are also drawn where there is none.
-    expect(note).not.toContain('next/navigation');
-    expect(note).toMatch(
-      /function NotSortedByJourney[^]*?if \(!mode \|\| mode === 'all'\) return null;/,
-    );
-    const page = web('app/account/page.tsx');
-    expect(page).toMatch(
-      /delivered=\{[^]*?<JourneyScoped mode=\{scoped\}>\s*\{requestIssuer && \(/,
-    );
-    expect(page).toContain('journey={!!scoped}');
-    // No journey: the section itself and nothing else, so the page is exactly what it was.
-    expect(web('components/ux/journey-scoped.tsx')).toContain('if (!mode) return children;');
   });
 });
 

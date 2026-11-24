@@ -12,6 +12,8 @@ import {
   type AcceptCommand,
 } from './assigned-mission-accept';
 import { limitWords } from '../../lib/account-limit';
+import { reportsInJourney, type JourneyReportScope } from '../../lib/work-items/journey-scope';
+import { ReportsNotSorted } from '../../components/ux/journey-not-sorted';
 import './assigned-missions.css';
 const unavailable = z
   .object({ id: z.uuid(), requestId: z.uuid(), available: z.literal(false) })
@@ -57,15 +59,15 @@ export function SaveReportForm({
   );
 }
 type AssignedScope = SavedMissionScope & {
-  /** Journey modes: requests the work list places in another journey. Their deliveries are left out. */
-  outside?: string[];
+  /** Journey modes: which requests the work list places in another journey, and which in this one. */
+  scope?: JourneyReportScope;
   /** The chosen journey's name, for the line when every delivery here is in another journey. */
   journey?: string;
 };
 export function AssignedMissions(props: AssignedScope) {
   return <PrivateAssignments key={JSON.stringify([props.issuer, props.subject])} {...props} />;
 }
-function PrivateAssignments({ subject, issuer, outside, journey }: AssignedScope) {
+function PrivateAssignments({ subject, issuer, scope, journey }: AssignedScope) {
   const router = useRouter();
   const [data, setData] = useState<Page | null>(null),
     [status, setStatus] = useState('loading'),
@@ -209,10 +211,7 @@ function PrivateAssignments({ subject, issuer, outside, journey }: AssignedScope
     e.preventDefault();
     void accept(acceptCommand(assignmentId));
   }
-  const shown =
-    data && outside?.length
-      ? data.assignments.filter((item) => !outside.includes(item.requestId))
-      : (data?.assignments ?? []);
+  const { shown, unsorted } = reportsInJourney(data?.assignments ?? [], scope);
   return (
     <section
       className="detail-card ux-mission-detail ux-delivered-card"
@@ -261,6 +260,7 @@ function PrivateAssignments({ subject, issuer, outside, journey }: AssignedScope
               on the Requests page.
             </p>
           )}
+          {unsorted ? <ReportsNotSorted /> : null}
           {data.assignments.length > 0 && shown.length === 0 && (
             <p>No report delivered here is in {journey}.</p>
           )}

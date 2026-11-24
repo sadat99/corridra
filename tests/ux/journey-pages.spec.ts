@@ -169,6 +169,30 @@ test('a brand-new account still has the switcher, with all three journeys and no
   await expect(page.locator('main [role="alert"]')).toHaveCount(0);
 });
 
+test('an account with work in one journey only still has the switcher, and Home has a way back to Everything', async ({
+  page,
+  context,
+}) => {
+  await signInAs(context, seed.single);
+  await page.goto(at('/account/move'));
+  await expect(summary(page)).toHaveAccessibleName(/^Journey, Everything/);
+  await expect(page.locator('.ux-journey-note')).toHaveCount(0);
+  await summary(page).click();
+  const choices = nav(page).locator('.ux-journey-switch button');
+  await expect(choices).toHaveText([/^Everything/, /^Sourcing/, /^Organising/, /^Selling/]);
+  await choices.filter({ hasText: /^Selling/ }).click();
+  await expect(page).toHaveURL(at('/account/move?journey=sell'));
+  await expect(summary(page)).toHaveAccessibleName(/^Journey, Selling/);
+  // Home says which journey is shown and offers the one way back, also where the page has no journey chips.
+  const note = page.locator('.ux-journey-note');
+  await expect(note).toContainText('Showing Selling.');
+  await note.getByRole('button', { name: 'Show Everything' }).click();
+  await expect(page).toHaveURL(at('/account/move'));
+  await expect(summary(page)).toHaveAccessibleName(/^Journey, Everything/);
+  await expect(page.locator('.ux-journey-note')).toHaveCount(0);
+  expect(await journeyCookie(page)).toBe('all');
+});
+
 test.describe('the "Switch to" line', () => {
   for (const width of [1280, 390])
     test(`${width}: a Sourcing request opened in Selling offers the switch, and pressing it keeps the page`, async ({

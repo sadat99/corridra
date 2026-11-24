@@ -16,7 +16,7 @@ import { loadWorkItems } from '../../../lib/work-items/load';
 import { MeetingsList, RequestsSection, type MeetingGroup } from './meetings-list';
 import { MeetingsTabs } from './meetings-tabs';
 import { activeJourneyMode } from '../../../lib/ux/journey-mode-server';
-import { familyOfJourneyMode } from '../../../lib/ux/journey-mode';
+import { meetingRequests } from '../../../lib/work-items/journey-scope';
 import { JourneyScoped } from '../../../components/ux/journey-scoped';
 import '../rooms/[requestId]/room-view.css';
 export const dynamic = 'force-dynamic';
@@ -56,9 +56,7 @@ export default async function Page() {
   // meetings, are shown. The list is the one already read; nothing more is read.
   const mode = await activeJourneyMode();
   const scoped = mode && mode !== 'all' ? mode : null;
-  const requests = list.items.filter(
-    (item) => item.kind === 'request' && (!scoped || item.family === familyOfJourneyMode[scoped]),
-  );
+  const requests = meetingRequests(list.items, scoped);
   // The list is read only where the workspaces and requests modules are on. Where they are not, nothing was read, so
   // the page must not say there are no requests.
   const readable = customerWorkspacesEnabled() && customerRequestsEnabled();

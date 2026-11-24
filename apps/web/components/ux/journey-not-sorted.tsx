@@ -17,3 +17,12 @@ export function NotSortedByJourney({ what }: { what: string }) {
     </p>
   );
 }
+
+/** Inside a list of reports in a journey: some shown here belong to a request no journey claims. */
+export function ReportsNotSorted() {
+  return (
+    <p className="ux-journey-note" lang="en">
+      Some reports here are from requests that are not sorted by journey.
+    </p>
+  );
+}

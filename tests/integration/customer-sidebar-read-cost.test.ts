@@ -162,22 +162,22 @@ test('loadWorkItems for a person with three workspaces runs a small, fixed numbe
 // the call with nothing to share it with (this test has no render, so nothing is shared).
 test('Reports in a journey costs at most one work-list read, the one the sidebar already makes', async () => {
   const { loadWorkItems } = await import('../../apps/web/lib/work-items/load');
-  const { readRequestsOutsideJourney } =
+  const { readJourneyReportScope } =
     await import('../../apps/web/lib/work-items/journey-scope-server');
   statements = 0;
   await loadWorkItems(subject, issuer, { rooms: false });
   const sidebar = statements;
   statements = 0;
-  const outside = await readRequestsOutsideJourney('source');
-  const scope = statements;
+  const scope = await readJourneyReportScope('source');
+  const scoped = statements;
   console.log(
-    `Journey modes read cost: Reports in a journey runs ${scope} SQL statements unshared, the same ${sidebar} the sidebar counts run; shared in one render it adds 0`,
+    `Journey modes read cost: Reports in a journey runs ${scoped} SQL statements unshared, the same ${sidebar} the sidebar counts run; shared in one render it adds 0`,
   );
-  // The person here has saved guided requests only, so no request is named as outside the journey.
-  expect(outside).toEqual([]);
-  expect(scope).toBeGreaterThan(0);
-  expect(scope).toBe(sidebar);
-  expect(scope).toBeLessThanOrEqual(60);
+  // The person here has saved guided requests only, so no request is named in or outside the journey.
+  expect(scope).toEqual({ outside: [], inJourney: [] });
+  expect(scoped).toBeGreaterThan(0);
+  expect(scoped).toBe(sidebar);
+  expect(scoped).toBeLessThanOrEqual(60);
 });
 
 const details = (family: MissionDraftFamily, n: number): MissionDraftDetails => ({

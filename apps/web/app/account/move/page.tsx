@@ -19,6 +19,7 @@ import { isJourney, journeyOfTask, journeyTargets, journeysOf, type Journey } fr
 import { loadJourneyFacts } from '../../../lib/home-journeys/load';
 import { activeJourneyMode } from '../../../lib/ux/journey-mode-server';
 import { journeyModeOfJourney } from '../../../lib/ux/journey-mode';
+import { JourneyScoped } from '../../../components/ux/journey-scoped';
 
 export const dynamic = 'force-dynamic';
 
@@ -105,22 +106,25 @@ export default async function Page({
       <PendingRequestNotice where="account" enabled={realUseEnabled()} />
       {customerProgrammePagesEnabled() && <ProgrammeApplyNotice />}
       {customerNotificationsEnabled() && <EmailNudge />}
-      <MoveView
-        model={model}
-        startHref={startHref}
-        skippedWorkspaces={loaded.skippedWorkspaces}
-        partial={loaded.partial}
-        unreadable={loaded.unreadable.length > 0}
-        latestItem={journeys?.latest ?? null}
-        journeys={journeys?.cards ?? []}
-        facts={facts}
-        journey={journey}
-        taskJourneys={taskJourneys}
-        viewer={session.subject}
-        sortIncomplete={
-          !work || work.partial || work.unreadable.length > 0 || work.skippedWorkspaces > 0
-        }
-      />
+      {/* Journey modes: in a journey Home says so, with the one way back to Everything. Off, nothing is added. */}
+      <JourneyScoped mode={mode ? journey : null}>
+        <MoveView
+          model={model}
+          startHref={startHref}
+          skippedWorkspaces={loaded.skippedWorkspaces}
+          partial={loaded.partial}
+          unreadable={loaded.unreadable.length > 0}
+          latestItem={journeys?.latest ?? null}
+          journeys={journeys?.cards ?? []}
+          facts={facts}
+          journey={journey}
+          taskJourneys={taskJourneys}
+          viewer={session.subject}
+          sortIncomplete={
+            !work || work.partial || work.unreadable.length > 0 || work.skippedWorkspaces > 0
+          }
+        />
+      </JourneyScoped>
     </CustomerShell>
   );
 }

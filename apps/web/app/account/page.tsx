@@ -59,7 +59,7 @@ import { activeJourneyMode } from '../../lib/ux/journey-mode-server';
 import { journeyModeOfWork, journeyModeWords } from '../../lib/ux/journey-mode';
 import { ShowEverything } from '../../components/ux/journey-note';
 import { JourneyScoped } from '../../components/ux/journey-scoped';
-import { readRequestsOutsideJourney } from '../../lib/work-items/journey-scope-server';
+import { readJourneyReportScope } from '../../lib/work-items/journey-scope-server';
 import './calm-lists.css';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -165,8 +165,8 @@ export default async function Page({
   const workFilter = scoped && query.work === undefined ? scoped : parseWorkFilter(query.work);
   // Reports in a journey: the requests the shared work list places in another journey. Their delivered reports are
   // left out; a list with no request id (saved, shared, members') stays whole and says it is not sorted.
-  const outside =
-    scoped && view === reportsView ? await readRequestsOutsideJourney(scoped) : undefined;
+  const reportScope =
+    scoped && view === reportsView ? await readJourneyReportScope(scoped) : undefined;
   const journeyName = scoped ? journeyModeWords[scoped] : undefined;
   return (
     <CustomerShell
@@ -323,7 +323,7 @@ export default async function Page({
                           subject={data.user.id}
                           issuer={requestIssuer}
                           showEmpty={!(savedMissionIssuer && customerDeliveryEnabled())}
-                          outside={outside}
+                          scope={reportScope}
                           journey={journeyName}
                         />
                       )}
@@ -331,7 +331,7 @@ export default async function Page({
                         <AssignedMissions
                           subject={data.user.id}
                           issuer={savedMissionIssuer}
-                          outside={outside}
+                          scope={reportScope}
                           journey={journeyName}
                         />
                       )}
