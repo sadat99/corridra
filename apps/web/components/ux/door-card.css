@@ -128,3 +128,97 @@
     justify-self: end;
   }
 }
+
+/* UI/UX.v4.1 L2: the one owned icon of a choice in a 44 px soft square, before the words. Only a door given `icon`
+   has it; the words keep their own column. */
+.ux-door.has-icon label {
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  column-gap: var(--space-3);
+}
+.ux-door.has-icon label > :not(.ux-door-tile, .ux-door-dot) {
+  grid-column: 2;
+}
+.ux-door-tile {
+  display: grid;
+  place-items: center;
+  grid-column: 1;
+  grid-row: 1 / span 6;
+  align-self: start;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--on-brand) 12%, transparent);
+  color: inherit;
+}
+.ux-door-tile .corridra-icon {
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+}
+/* A narrow door at a large text size: the icon takes its own line, so the words keep the whole width. */
+@container (max-width: 16rem) {
+  .ux-door.has-icon label {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-door.has-icon label > :not(.ux-door-tile, .ux-door-dot),
+  .ux-door.has-icon .ux-door-dot,
+  .ux-door-tile {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+/* UI/UX.v4.1 L3: the door on the light surface. Not chosen: a paper card with a hollow radio. Chosen: a 2 px selected
+   edge (the second pixel is drawn inside, so the card keeps its size), the selected fill and a filled radio. */
+.ux-door.is-light label {
+  border-color: var(--border-strong);
+  background: var(--surface-1);
+  color: var(--text-1);
+}
+/* Hover darkens the edge in the neutral text colour, never the selected colour, so a hovered door does not read as
+   the chosen one. */
+.ux-door.is-light label:hover {
+  border-color: var(--text-2);
+}
+.ux-door.is-light :is(.ux-door-side, .ux-door-route, .ux-door-text) {
+  color: var(--text-2);
+}
+.ux-door.is-light .ux-flag {
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+.ux-door.is-light .ux-door-tile {
+  background: var(--surface-subtle);
+  color: var(--text-1);
+}
+.ux-door.is-light .ux-door-dot {
+  border-color: var(--border-strong);
+  background: var(--surface-1);
+}
+.ux-door.is-light input:checked + label {
+  border-color: var(--selected);
+  box-shadow: inset 0 0 0 1px var(--selected);
+  background: var(--selected-surface);
+  color: var(--text-1);
+}
+.ux-door.is-light input:checked + label .ux-door-tile {
+  background: var(--selected-surface);
+  box-shadow: inset 0 0 0 1px var(--selected);
+}
+/* The filled centre is the door's own rule above; the light door only names the selected edge. */
+.ux-door.is-light input:checked + label .ux-door-dot {
+  border-color: var(--selected);
+}
+.ux-door.is-light input:focus-visible + label {
+  outline-color: var(--focus);
+}
+@media (forced-colors: active) {
+  .ux-door.is-light label {
+    border-color: ButtonText;
+  }
+  .ux-door.is-light input:checked + label {
+    border-color: Highlight;
+    box-shadow: inset 0 0 0 1px Highlight;
+  }
+  .ux-door.is-light .ux-door-tile {
+    border: 1px solid ButtonText;
+  }
+}
