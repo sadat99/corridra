@@ -729,3 +729,33 @@ for (const v41 of [false, true]) {
       }
   });
 }
+
+// One link per address (owner rule, 24 Nov 2026) -----------------------------------------------------------------
+
+/**
+ * Every link address inside <main> for the screen on show: all of its tabs count, shown or not, and the other
+ * workspace sections (hidden, each its own address) do not.
+ */
+const linkAddresses = (page: Page) =>
+  page.locator('main a[href]').evaluateAll((links) =>
+    links
+      .filter((link) => {
+        for (let node = link.parentElement; node; node = node.parentElement)
+          if (node.hidden && !node.hasAttribute('data-subtab')) return false;
+        return true;
+      })
+      .map((link) => link.getAttribute('href') ?? ''),
+  );
+for (const screen of screens) {
+  test(`switch on: ${screen.slug} names no address twice inside main`, async ({ page }) => {
+    await open(page, `/operator/${screen.slug}`, { v41: true });
+    await expect(panel(page, screen.section).locator('h2').first()).toBeVisible();
+    if (screen.tab) await openTab(page, screen.section, screen.tab);
+    const addresses = await linkAddresses(page);
+    // No named exception: a link that appears twice here is a defect.
+    expect(
+      addresses.filter((address, index) => addresses.indexOf(address) !== index),
+      `${screen.slug}: links in main are ${JSON.stringify(addresses)}`,
+    ).toEqual([]);
+  });
+}
