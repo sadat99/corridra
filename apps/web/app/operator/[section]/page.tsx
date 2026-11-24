@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { sectionForSlug } from '../../../lib/operator-urls';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 import { privatePageMetadata } from '../../../lib/ux/page-metadata';
+import { deskTabTitle } from '../../../lib/ux/page-pattern';
 import { teamSectionTitle } from '../../../lib/ux/shells';
 import { OperatorEntry } from '../operator-entry';
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,9 @@ export async function generateMetadata({ params }: { params: Promise<{ section: 
       ? await params
       : null;
   const section = named ? sectionForSlug(named.section) : null;
+  // Team desk v4.1: the tab says what the page title and its segment say (Network is Helpers). Off, as before.
+  if (section && uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41'))
+    return privatePageMetadata(deskTabTitle(section));
   return section
     ? privatePageMetadata(teamSectionTitle(section))
     : { title: 'Operator workspace | Corridra', robots: { index: false, follow: false } };

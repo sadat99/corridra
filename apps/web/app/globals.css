@@ -5067,6 +5067,10 @@ th {
   color: var(--text-2);
   text-decoration: none;
   border-radius: var(--guided-control-radius);
+}
+/* Only pointing at a tab eases its colours in. A tab that becomes, or stops being, the current one changes at once:
+   with a transition there, white words sit on a half-faded fill for 160 ms and fail a contrast check (KI-65). */
+.guide-tabs a:hover:not([aria-current='page']) {
   transition:
     background var(--dur) var(--ease),
     color var(--dur) var(--ease);

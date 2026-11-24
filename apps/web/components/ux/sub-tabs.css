@@ -81,3 +81,57 @@
     outline-offset: -2px;
   }
 }
+
+/* Segments that are links (team desk v4.1): the same quiet track and raised current segment as the segmented
+   tabs above, drawn for a list of links. The current page is the link with aria-current. Tokens only. */
+.ux-desk-segments ul {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  list-style: none;
+}
+.ux-desk-segments a {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border-radius: calc(var(--radius-sm) - 2px);
+  color: var(--text-2);
+  font: 500 var(--text-base) var(--font-ui);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+.ux-desk-segments a:hover {
+  background: color-mix(in srgb, var(--surface-1) 60%, transparent);
+  color: var(--ink);
+}
+.ux-desk-segments a[aria-current='page'] {
+  background: var(--surface-1);
+  box-shadow:
+    var(--shadow-1),
+    inset 0 -2px 0 var(--selected);
+  color: var(--ink);
+  font-weight: 600;
+}
+.ux-desk-segments a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+@media (max-width: 39.99rem) {
+  .ux-desk-segments a {
+    padding-inline: var(--space-3);
+  }
+}
+@media (forced-colors: active) {
+  .ux-desk-segments a[aria-current='page'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
