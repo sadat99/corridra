@@ -180,7 +180,7 @@ describe('the Inbox', () => {
       '<ProblemReportQueue tenant={tenant} role={role} />',
       '<ErasureQueue tenant={tenant} role={role} problemReports={problemReports} />',
       '<ProgrammeApplicationQueue tenant={tenant} role={role} />',
-      '<HelperInterestList tenant={tenant} role={role} />',
+      '<HelperInterestList tenant={tenant} role={role} installed />',
     ])
       expect(lists).toContain(list);
     // The only request the page itself makes asks whether the helper interest register is installed.
