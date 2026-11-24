@@ -166,16 +166,31 @@ test('a staff invitation is refused in a real workspace and stores the workspace
   ]);
 });
 
-// The lookup above is guarded by this exact expression. A role without EXECUTE on the function (the real-use
-// module grants it to the runtime role only) gets false and keeps the sample purpose instead of a refusal. That
-// role cannot reach the invitation at all today (no access to schema app), so the guard is shown on its own.
+// The lookup above is guarded by this exact expression. A role that can use the schema but holds no EXECUTE on
+// the function (the real-use module grants it to the runtime role only) gets false and keeps the sample purpose
+// instead of a refusal. No such role invites today, so the guard is shown on its own, inside a transaction that
+// is rolled back.
 test('the invitation purpose lookup is skipped for a database role that may not run it', async () => {
   const guard =
     "SELECT coalesce(has_function_privilege(to_regprocedure('app.tenant_processing_purpose(uuid)')::oid,'EXECUTE'),false) AS present,coalesce(has_function_privilege(to_regprocedure('app.no_such_function(uuid)')::oid,'EXECUTE'),false) AS absent";
-  expect((await s.f.auth.query(guard)).rows[0]).toEqual({ present: false, absent: false });
   expect((await s.f.runtime.query(guard)).rows[0]).toEqual({ present: true, absent: false });
   expect((await s.f.owner.query(guard)).rows[0]).toEqual({ present: true, absent: false });
-  await expect(
-    s.f.auth.query('SELECT app.tenant_processing_purpose($1)', [s.f.tenantA]),
-  ).rejects.toMatchObject({ code: '42501' });
+  const db = await s.f.owner.connect();
+  try {
+    await db.query('BEGIN');
+    await db.query(
+      'REVOKE EXECUTE ON FUNCTION app.tenant_processing_purpose(uuid) FROM corridra_runtime',
+    );
+    await db.query('SET LOCAL ROLE corridra_runtime');
+    expect((await db.query(guard)).rows[0]).toEqual({ present: false, absent: false });
+    await db.query('SAVEPOINT refused');
+    await expect(
+      db.query('SELECT app.tenant_processing_purpose($1)', [s.f.tenantA]),
+    ).rejects.toMatchObject({ code: '42501' });
+    await db.query('ROLLBACK TO SAVEPOINT refused');
+  } finally {
+    await db.query('ROLLBACK');
+    db.release();
+  }
+  expect((await s.f.runtime.query(guard)).rows[0]).toEqual({ present: true, absent: false });
 });
