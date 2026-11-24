@@ -54,7 +54,7 @@ test('the start page offers three plain choices and links each kind of person to
     main.getByRole('link', { name: 'Set up your team account', exact: true }),
   ).toHaveAttribute('href', '/operator/setup');
   await expect(
-    main.getByRole('link', { name: 'Local helper sign-in', exact: true }),
+    main.getByRole('link', { name: 'Local Helper Sign-In', exact: true }),
   ).toHaveAttribute('href', '/contributor');
   // Plain words: none of the old role and tool jargon on the first page a visitor opens.
   const text = await main.innerText();

@@ -48,3 +48,10 @@
     background-color: CanvasText;
   }
 }
+
+/* UI/UX.v4.1 L1: the 40 px mark of a route row. The region mark takes the same box, so every row is one size. */
+.ux-flag.is-row,
+.ux-region-mark.is-row {
+  inline-size: 2.5rem;
+  block-size: 1.6875rem;
+}

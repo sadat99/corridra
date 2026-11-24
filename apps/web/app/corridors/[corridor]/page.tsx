@@ -1,8 +1,10 @@
 import { PublicShell } from '../../../components/public-shell';
 import Link from 'next/link';
+import { Fragment } from 'react';
 import { notFound } from 'next/navigation';
 import { corridorPages } from '../../../content/corridors';
 import { Lines } from '../../../components/public-page';
+import { Flagged, placeMark } from '../../../components/ux/flag';
 import '../../../components/page-compact.css';
 import './corridor.css';
 export function generateStaticParams() {
@@ -33,7 +35,17 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
               Routes
             </Link>
           </nav>
-          <p className="label">{c.title.replace('\u2013', ' ')}</p>
+          {/* UI/UX.v4.1 L1: each place of the route has its mark before its written name; the words are unchanged. */}
+          <p className="label guide-corridor-places">
+            {c.title.split('\u2013').map((place, index) => (
+              <Fragment key={place}>
+                {index > 0 ? ' ' : null}
+                <Flagged code={index === 0 ? placeMark('BD') : placeMark(c.market)}>
+                  {place}
+                </Flagged>
+              </Fragment>
+            ))}
+          </p>
           <h1>
             <Lines text={c.heading} />
           </h1>

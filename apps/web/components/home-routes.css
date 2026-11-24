@@ -1523,21 +1523,6 @@
   gap: var(--space-6);
   padding: var(--space-12) min(var(--space-6), 5vw) var(--space-12);
 }
-/* The copper ring of the board is painted on a layer that covers the hero exactly, so it never widens the hero, is
-   never counted as overflow, and leaves the hero's own background a plain navy for the contrast checks. */
-.ux-guide-home.tr-home .tr-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: radial-gradient(
-    circle min(30vw, 23.75rem) at calc(100% + min(6vw, 4rem)) calc(-1 * min(6vw, 4rem)),
-    transparent calc(100% - 2px),
-    color-mix(in srgb, var(--editorial-accent) 40%, transparent) calc(100% - 2px) 100%,
-    transparent 100%
-  );
-}
 .tr-hero > * {
   position: relative;
   z-index: 1;
@@ -2135,5 +2120,105 @@
   .tr-home .tr-track li {
     overflow-wrap: normal;
     word-break: normal;
+  }
+}
+
+/* ===== UI/UX.v4.1 L4 (owner lock, 23 November 2026). The navy band holds the brand line, the headline and the lead,
+   left aligned, with the whole reversed mark and no copper arc. The four choices and the one primary action sit
+   below it on the light surface. Tokens only; no gradient, glass or glow. */
+.ux-guide-home.tr-home .tr-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  min-inline-size: 0;
+  padding-block-end: var(--space-8);
+}
+.ux-guide-home.tr-home .tr-top .tr-hero {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-6);
+  padding-block: var(--space-8);
+}
+/* The question, its doors and the first action keep the same side room as the band and the sections below. */
+.ux-guide-home.tr-home .tr-top :is(.tr-doors, .tr-start) {
+  padding-inline: min(var(--space-6), 5vw);
+}
+.ux-guide-home.tr-home .tr-hero-head {
+  justify-items: start;
+  margin-inline: 0;
+  text-align: start;
+}
+.ux-guide-home.tr-home .tr-hero-head h1 {
+  text-wrap: balance;
+}
+/* The identity mark: whole, in its own proportions, never cropped, tiled or used as a pattern. It needs room, so it
+   shows from 768 px. */
+.ux-guide-home.tr-home .tr-hero-mark {
+  display: none;
+  inline-size: clamp(8rem, 16vw, 13rem);
+  block-size: auto;
+  aspect-ratio: 533 / 511;
+  object-fit: contain;
+  justify-self: end;
+}
+@media (min-width: 48rem) {
+  .ux-guide-home.tr-home .tr-top .tr-hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .ux-guide-home.tr-home .tr-hero-mark {
+    display: block;
+    margin: var(--space-4);
+  }
+}
+/* The question and its doors, on the light surface: dark words, left aligned. */
+.ux-guide-home.tr-home .tr-top .tr-doors {
+  margin: 0;
+  color: var(--text-1);
+}
+.ux-guide-home.tr-home .tr-top .tr-doors legend,
+.ux-guide-home.tr-home .tr-top .tr-doors > .tr-note {
+  text-align: start;
+}
+.ux-guide-home.tr-home .tr-top .tr-note {
+  color: var(--text-2);
+}
+.ux-guide-home.tr-home .tr-top .tr-start {
+  justify-items: start;
+  text-align: start;
+}
+.ux-guide-home.tr-home .tr-top :is(.tr-start-actions, .ac1-calm) {
+  justify-content: flex-start;
+}
+.ux-guide-home.tr-home .tr-top .tr-start .ac1-calm {
+  color: var(--text-2);
+}
+.ux-guide-home.tr-home .tr-top .tr-start .ac1-calm svg {
+  color: var(--text-1);
+}
+.ux-guide-home.tr-home .tr-top .tr-feedback .ac1-quiet {
+  color: var(--action);
+}
+.ux-guide-home.tr-home .tr-top :is(.tr-doors, .tr-start) :focus-visible {
+  outline-color: var(--focus);
+}
+/* A phone shows the four doors one under the other, so each keeps its icon and its words whole. */
+@media (max-width: 47.99rem) {
+  .ux-guide-home.tr-home .tr-top {
+    gap: var(--space-4);
+    padding-block-end: var(--space-6);
+  }
+  .ux-guide-home.tr-home .tr-top .tr-hero {
+    padding-block: var(--space-6);
+  }
+  .ux-guide-home.tr-home .tr-top .tr-doors-small {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-guide-home.tr-home .tr-top :is(.tr-doors, .tr-start) {
+    padding-inline: min(var(--space-4), 4vw);
+  }
+}
+@media (min-width: 48rem) {
+  .ux-guide-home.tr-home .tr-top .ux-door.is-big label {
+    min-block-size: 0;
   }
 }
