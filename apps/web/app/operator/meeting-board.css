@@ -1,0 +1,62 @@
+/* Team desk v4.1, unit D11: the Meetings board. Five columns, one per group of stored meeting statuses
+   (meeting-columns.ts). The columns sit side by side where each has at least 11.5rem and stack in one column on a
+   phone, in the same order. A card is short: title, its exact status word, the next step with its owner, and one
+   button that opens the change form in the shared dialog. Tokens only; selectors repeat a class because the
+   workspace panel styles every heading, paragraph and card inside it. */
+.ux-meeting-board.ux-meeting-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.5rem), 1fr));
+  align-items: start;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+.ux-meeting-board .ux-meeting-column.ux-meeting-column {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+}
+.ux-meeting-board .ux-meeting-column.ux-meeting-column > h4 {
+  margin: 0;
+  color: var(--text-1);
+  font: 600 var(--text-base) / 1.3 var(--font-ui);
+}
+.ux-meeting-board .ux-meeting-column.ux-meeting-column > .ux-meeting-none {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-meeting-board .ux-meeting-column .meeting-card.meeting-card {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  overflow-wrap: anywhere;
+}
+.ux-meeting-board .ux-meeting-column .meeting-card.meeting-card > h5 {
+  margin: 0;
+  color: var(--text-1);
+  font: 600 var(--text-lg) / 1.3 var(--font-ui);
+}
+.ux-meeting-board .ux-meeting-column .meeting-card.meeting-card p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.ux-meeting-board .ux-meeting-column .meeting-card.meeting-card > .secondary-link {
+  justify-self: start;
+  min-block-size: 2.75rem;
+}
+.ux-meeting-board .ux-meeting-column .meeting-card.meeting-card summary {
+  min-block-size: 2.75rem;
+  align-content: center;
+  font-size: var(--text-sm);
+}

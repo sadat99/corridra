@@ -16,6 +16,9 @@ import {
 } from '@corridra/domain/access';
 import { formatDateTime } from '../../lib/ux/format';
 import { ShowMore } from './show-more';
+import { Dialog } from '../../components/ux/dialog';
+import { meetingColumns, meetingStatusTone } from './meeting-columns';
+import './meeting-board.css';
 /** Plain label for a stored delivery channel code. The stored code never changes. */
 function channelLabel(channel: string) {
   if (channel === 'SYNTHETIC') return 'Recorded receipt (no email sent)';
@@ -334,16 +337,18 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       setBusy(false);
     }
   }
+  /** Sends a form. Resolves true once it is saved, so a form shown in a dialog can close itself. */
   function submit(
     e: FormEvent<HTMLFormElement>,
     build: (f: FormData) => Record<string, unknown>,
     endpoint = 'communication',
-  ) {
+  ): Promise<boolean> {
     e.preventDefault();
     try {
-      void act(endpoint, build(new FormData(e.currentTarget)));
+      return act(endpoint, build(new FormData(e.currentTarget)));
     } catch {
       setMessage('Check the dates and submitted values.');
+      return Promise.resolve(false);
     }
   }
   if (!comms || !meetings)
@@ -904,17 +909,52 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                   Times below show both the meeting timezone and your browser timezone. Briefs and
                   outcomes stay private to authorized operators.
                 </p>
-                {meetings.meetings.map((m) => (
-                  <MeetingCard
-                    key={`${m.id}-${m.version}`}
-                    meeting={m}
-                    data={meetings}
-                    response={comms.messages.find((c) => c.id === m.message_id)}
-                    manage={manage}
-                    busy={busy}
-                    submit={submit}
-                  />
-                ))}
+                {deskV41 ? (
+                  <div className="ux-meeting-board">
+                    {meetingColumns.map((column) => {
+                      const cards = meetings.meetings.filter((m) =>
+                        column.statuses.includes(m.status),
+                      );
+                      return (
+                        <section
+                          key={column.id}
+                          className="ux-meeting-column"
+                          aria-labelledby={`meeting-column-${column.id}`}
+                        >
+                          <h4 id={`meeting-column-${column.id}`}>
+                            {column.title} ({cards.length})
+                          </h4>
+                          {cards.length === 0 && <p className="ux-meeting-none">No meetings.</p>}
+                          {cards.map((m) => (
+                            <MeetingCard
+                              key={`${m.id}-${m.version}`}
+                              meeting={m}
+                              data={meetings}
+                              response={comms.messages.find((c) => c.id === m.message_id)}
+                              manage={manage}
+                              busy={busy}
+                              submit={submit}
+                              board
+                              message={message}
+                            />
+                          ))}
+                        </section>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  meetings.meetings.map((m) => (
+                    <MeetingCard
+                      key={`${m.id}-${m.version}`}
+                      meeting={m}
+                      data={meetings}
+                      response={comms.messages.find((c) => c.id === m.message_id)}
+                      manage={manage}
+                      busy={busy}
+                      submit={submit}
+                    />
+                  ))
+                )}
                 <ShowMore
                   shown={meetings.meetings.length}
                   total={meetings.meetingsTotal}
@@ -1002,6 +1042,8 @@ function MeetingCard({
   manage,
   busy,
   submit,
+  board = false,
+  message = '',
 }: {
   meeting: Meeting;
   data: Meetings;
@@ -1012,16 +1054,19 @@ function MeetingCard({
     e: FormEvent<HTMLFormElement>,
     build: (f: FormData) => Record<string, unknown>,
     endpoint?: string,
-  ) => void;
+  ) => Promise<boolean>;
+  /** Team desk v4.1 (unit D11): the short card of a board column; its change form opens in the shared dialog. */
+  board?: boolean;
+  /** The page's status words, repeated inside the open dialog, where the page behind it is not read out. */
+  message?: string;
 }) {
   const transitions = meetingTransitions[m.status],
     [status, setStatus] = useState<MeetingStatus>(transitions[0] ?? m.status);
-  return (
-    <article className="detail-card meeting-card">
-      <h4>{m.title}</h4>
-      <p>
-        State: {plain(m.status)}. Version {m.version}.
-      </p>
+  const [changing, setChanging] = useState(false),
+    [sent, setSent] = useState(false);
+  const Title = board ? 'h5' : 'h4';
+  const brief = (
+    <>
       <p>{m.brief}</p>
       <p>
         Participants:{' '}
@@ -1030,6 +1075,170 @@ function MeetingCard({
           .map((p) => p.name)
           .join(', ')}
       </p>
+    </>
+  );
+  const outcomes = data.outcomes
+    .filter((o) => o.meeting_id === m.id)
+    .map((o) => (
+      <p key={o.id}>
+        Operator-observed {o.status}: {o.summary}
+      </p>
+    ));
+  const form = manage && transitions.length > 0 && (
+    <form
+      className="operator-form"
+      aria-label={`Update meeting ${m.title}`}
+      onSubmit={(e) => {
+        setSent(true);
+        void submit(
+          e,
+          (f) => ({
+            action: 'transition',
+            id: m.id,
+            version: m.version,
+            status,
+            reason: field(f, 'reason'),
+            ownerId: field(f, 'ownerId'),
+            nextAction: field(f, 'nextAction'),
+            dueAt: timestamp(f, 'dueAt'),
+            ...(status === 'ACCEPTED'
+              ? {
+                  acceptance: field(f, 'acceptance'),
+                  ...(f.get('useResponse') === 'on' && response?.response_id
+                    ? { responseId: response.response_id }
+                    : {}),
+                }
+              : {}),
+            ...(status === 'SCHEDULED'
+              ? {
+                  schedule: {
+                    startsAt: field(f, 'startsAt'),
+                    endsAt: field(f, 'endsAt'),
+                    localStart: field(f, 'localStart'),
+                    localEnd: field(f, 'localEnd'),
+                    timezone: field(f, 'timezone'),
+                    location: field(f, 'location'),
+                  },
+                }
+              : {}),
+            ...(['HELD', 'NO_SHOW'].includes(status) ? { outcome: field(f, 'outcome') } : {}),
+          }),
+          'meeting',
+        ).then((saved) => {
+          if (saved) setChanging(false);
+        });
+      }}
+    >
+      <label className="field">
+        Next meeting state
+        <select value={status} onChange={(e) => setStatus(e.target.value as MeetingStatus)}>
+          {transitions.map((t) => (
+            <option key={t}>{t}</option>
+          ))}
+        </select>
+      </label>
+      <Ownership owners={data.owners} meeting={m} />
+      {status === 'ACCEPTED' && (
+        <>
+          <label className="field">
+            Acceptance source
+            <textarea
+              name="acceptance"
+              required
+              minLength={3}
+              maxLength={1000}
+              defaultValue={
+                response?.decision === 'INTERESTED'
+                  ? 'Buyer selected Interested on this private introduction.'
+                  : ''
+              }
+            />
+          </label>
+          {response?.decision === 'INTERESTED' && (
+            <label className="check-field">
+              <input type="checkbox" name="useResponse" defaultChecked />
+              Attribute acceptance to this buyer response
+            </label>
+          )}
+        </>
+      )}
+      {status === 'SCHEDULED' && (
+        <>
+          <p>
+            Enter local wall times and absolute timestamps with explicit offsets. They must agree
+            with the selected timezone. For repeated daylight-saving times, the offset selects the
+            intended occurrence.
+          </p>
+          <label className="field">
+            Meeting timezone
+            <input name="timezone" required defaultValue={m.timezone ?? 'Europe/Madrid'} />
+          </label>
+          <label className="field">
+            Local meeting start
+            <input
+              name="localStart"
+              type="datetime-local"
+              required
+              defaultValue={m.local_start ?? ''}
+            />
+          </label>
+          <label className="field">
+            Local meeting end
+            <input
+              name="localEnd"
+              type="datetime-local"
+              required
+              defaultValue={m.local_end ?? ''}
+            />
+          </label>
+          <DateTimeField label="Meeting start" name="startsAt" initial={m.starts_at} required />
+          <DateTimeField label="Meeting end" name="endsAt" initial={m.ends_at} required />
+          <label className="field">
+            Meeting location
+            <input
+              name="location"
+              required
+              minLength={3}
+              maxLength={500}
+              defaultValue={m.location ?? ''}
+            />
+          </label>
+        </>
+      )}
+      {['HELD', 'NO_SHOW'].includes(status) && (
+        <label className="field">
+          Observed meeting outcome
+          <textarea name="outcome" required minLength={3} maxLength={2000} />
+        </label>
+      )}
+      <button className="primary-link" disabled={busy}>
+        Record Meeting Change
+      </button>
+    </form>
+  );
+  return (
+    <article className="detail-card meeting-card">
+      <Title>{m.title}</Title>
+      {board ? (
+        <p>
+          <span className="ux-status" data-tone={meetingStatusTone(m.status)}>
+            {plain(m.status)}
+          </span>{' '}
+          Version {m.version}.
+        </p>
+      ) : (
+        <p>
+          State: {plain(m.status)}. Version {m.version}.
+        </p>
+      )}
+      {board && (
+        <p>
+          Next: {m.next_action} ·{' '}
+          {data.owners.find((o) => o.user_id === m.owner_id)?.name ?? 'Not assigned'} · due{' '}
+          {formatDateTime(m.due_at)}
+        </p>
+      )}
+      {!board && brief}
       {m.starts_at && m.ends_at && m.timezone && (
         <p>
           {localWallTime(m.starts_at, m.timezone)} to {localWallTime(m.ends_at, m.timezone)} (
@@ -1037,141 +1246,39 @@ function MeetingCard({
           Location: {m.location}.
         </p>
       )}
-      {data.outcomes
-        .filter((o) => o.meeting_id === m.id)
-        .map((o) => (
-          <p key={o.id}>
-            Operator-observed {o.status}: {o.summary}
-          </p>
-        ))}
-      {manage && transitions.length > 0 && (
-        <form
-          className="operator-form"
-          aria-label={`Update meeting ${m.title}`}
-          onSubmit={(e) =>
-            submit(
-              e,
-              (f) => ({
-                action: 'transition',
-                id: m.id,
-                version: m.version,
-                status,
-                reason: field(f, 'reason'),
-                ownerId: field(f, 'ownerId'),
-                nextAction: field(f, 'nextAction'),
-                dueAt: timestamp(f, 'dueAt'),
-                ...(status === 'ACCEPTED'
-                  ? {
-                      acceptance: field(f, 'acceptance'),
-                      ...(f.get('useResponse') === 'on' && response?.response_id
-                        ? { responseId: response.response_id }
-                        : {}),
-                    }
-                  : {}),
-                ...(status === 'SCHEDULED'
-                  ? {
-                      schedule: {
-                        startsAt: field(f, 'startsAt'),
-                        endsAt: field(f, 'endsAt'),
-                        localStart: field(f, 'localStart'),
-                        localEnd: field(f, 'localEnd'),
-                        timezone: field(f, 'timezone'),
-                        location: field(f, 'location'),
-                      },
-                    }
-                  : {}),
-                ...(['HELD', 'NO_SHOW'].includes(status) ? { outcome: field(f, 'outcome') } : {}),
-              }),
-              'meeting',
-            )
-          }
-        >
-          <label className="field">
-            Next meeting state
-            <select value={status} onChange={(e) => setStatus(e.target.value as MeetingStatus)}>
-              {transitions.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-          <Ownership owners={data.owners} meeting={m} />
-          {status === 'ACCEPTED' && (
+      {outcomes}
+      {board
+        ? form && (
             <>
-              <label className="field">
-                Acceptance source
-                <textarea
-                  name="acceptance"
-                  required
-                  minLength={3}
-                  maxLength={1000}
-                  defaultValue={
-                    response?.decision === 'INTERESTED'
-                      ? 'Buyer selected Interested on this private introduction.'
-                      : ''
-                  }
-                />
-              </label>
-              {response?.decision === 'INTERESTED' && (
-                <label className="check-field">
-                  <input type="checkbox" name="useResponse" defaultChecked />
-                  Attribute acceptance to this buyer response
-                </label>
-              )}
+              <button
+                type="button"
+                className="secondary-link"
+                aria-label={`Update Meeting ${m.title}`}
+                onClick={() => {
+                  setSent(false);
+                  setChanging(true);
+                }}
+              >
+                Update Meeting
+              </button>
+              <Dialog
+                open={changing}
+                onClose={() => setChanging(false)}
+                title="Update Meeting"
+                keepMounted
+                locked={busy}
+              >
+                {form}
+                {sent && !busy && message && <p role="alert">{message}</p>}
+              </Dialog>
             </>
-          )}
-          {status === 'SCHEDULED' && (
-            <>
-              <p>
-                Enter local wall times and absolute timestamps with explicit offsets. They must
-                agree with the selected timezone. For repeated daylight-saving times, the offset
-                selects the intended occurrence.
-              </p>
-              <label className="field">
-                Meeting timezone
-                <input name="timezone" required defaultValue={m.timezone ?? 'Europe/Madrid'} />
-              </label>
-              <label className="field">
-                Local meeting start
-                <input
-                  name="localStart"
-                  type="datetime-local"
-                  required
-                  defaultValue={m.local_start ?? ''}
-                />
-              </label>
-              <label className="field">
-                Local meeting end
-                <input
-                  name="localEnd"
-                  type="datetime-local"
-                  required
-                  defaultValue={m.local_end ?? ''}
-                />
-              </label>
-              <DateTimeField label="Meeting start" name="startsAt" initial={m.starts_at} required />
-              <DateTimeField label="Meeting end" name="endsAt" initial={m.ends_at} required />
-              <label className="field">
-                Meeting location
-                <input
-                  name="location"
-                  required
-                  minLength={3}
-                  maxLength={500}
-                  defaultValue={m.location ?? ''}
-                />
-              </label>
-            </>
-          )}
-          {['HELD', 'NO_SHOW'].includes(status) && (
-            <label className="field">
-              Observed meeting outcome
-              <textarea name="outcome" required minLength={3} maxLength={2000} />
-            </label>
-          )}
-          <button className="primary-link" disabled={busy}>
-            Record Meeting Change
-          </button>
-        </form>
+          )
+        : form}
+      {board && (
+        <details>
+          <summary>Meeting brief and participants</summary>
+          {brief}
+        </details>
       )}
       <details>
         <summary>Meeting history</summary>
