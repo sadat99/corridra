@@ -10,7 +10,6 @@ import { foundations } from '../../../lib/foundations';
 import { problemReportsOffered } from '../../../lib/problem-reports-offered';
 import { programmeApplicationsOffered } from '../../../lib/programme-applications-offered';
 import { privatePageMetadata } from '../../../lib/ux/page-metadata';
-import { workspaceQuery } from '../../../lib/ux/shells';
 import { canOpenInbox } from '../../../lib/ux/team-inbox';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 import { operatorSignInPath } from '../../../lib/workspace-navigation';
@@ -81,18 +80,9 @@ export default async function Page({
           />
         </OperatorFlags>
       ) : (
-        <>
-          <AccessState kind="denied">
-            <p>Only owners and admins can open the Inbox.</p>
-          </AccessState>
-          <Link
-            prefetch={false}
-            className="text-link"
-            href={`/operator${workspaceQuery(tenant.id)}`}
-          >
-            Return to Today
-          </Link>
-        </>
+        <AccessState kind="denied">
+          <p>Only owners and admins can open the Inbox.</p>
+        </AccessState>
       )}
     </WorkspaceShell>
   );

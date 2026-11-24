@@ -79,7 +79,7 @@ export async function startP5cFixture(root = resolve('.')) {
             <TeamContextPublisher tenant={tenant} role={role}/>
             {canOpenInbox(role)
               ? <OperatorFlags replyReview={false} teamDeskV41><InboxLists tenant={tenant} role={role} problemReports={flag('reports') !== 'off'} programmeApplications={flag('applications') !== 'off'}/></OperatorFlags>
-              : <><AccessState kind="denied"><p>Only owners and admins can open the Inbox.</p></AccessState><a className="text-link" href={'/operator?workspace=' + tenant}>Return to Today</a></>}
+              : <AccessState kind="denied"><p>Only owners and admins can open the Inbox.</p></AccessState>}
           </WorkspaceShell>);
       } else if (path.startsWith('/operator/supply')) {
         // apps/web/app/operator/supply/supply-page.tsx and the four pages that use it.

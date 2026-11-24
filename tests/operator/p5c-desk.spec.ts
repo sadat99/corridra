@@ -89,6 +89,18 @@ async function noSidewaysScroll(page: Page) {
     ),
   ).toBeLessThanOrEqual(0);
 }
+/**
+ * Owner, 24 Nov 2026: "Avoid unnecessary repetition of navigation links on a single screen". Every address a
+ * link in the page leads to, with the switch on: none may appear twice.
+ */
+async function noRepeatedLinks(page: Page, links = 'main#main a[href]') {
+  const hrefs = await page
+    .locator(links)
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href') ?? ''));
+  const twice = hrefs.filter((href, index) => hrefs.indexOf(href) !== index);
+  expect(twice, `addresses linked more than once: ${twice.join(', ')}`).toEqual([]);
+  return hrefs;
+}
 async function axeClean(page: Page) {
   const result = await new AxeBuilder({ page }).include('main#main').analyze();
   expect(result.violations.map((violation) => violation.id)).toEqual([]);
@@ -217,7 +229,15 @@ test.describe('Settings (D17)', () => {
     };
     const off = await fields(false);
     const on = await fields(true);
-    expect(on).toEqual(off);
+    // The links to menu places are not repeated in the page with the switch on; everything else is the same.
+    expect(off.links).toEqual([
+      '#workspace-navigation Back to workspace sections',
+      '#workspace-sources Find source references',
+      '#workspace-authenticator Confirm your authenticator',
+      '#workspace-controls Workspace switches',
+    ]);
+    expect(on.links).toEqual([]);
+    expect({ ...on, links: off.links }).toEqual(off);
     expect(on.summaries).toEqual([
       '01 Prepare commercial mission templates',
       '02 Create a directional corridor route',
@@ -300,7 +320,8 @@ test.describe('Settings (D17)', () => {
   test('switch on: an old address of a list inside Settings leads to the Inbox', async ({
     page,
   }) => {
-    await openWorkspace(page, '/operator/settings', { v41: true, query: 'tab=settings-erasure' });
+    // The workspace leaves as soon as it has read the role, so each visit waits for the Inbox address itself.
+    await open(page, '/operator/settings', { v41: true, query: 'tab=settings-erasure' });
     await expect(page).toHaveURL(
       new RegExp(`/operator/inbox\\?workspace=${fixtureTenant}&tab=erasure$`),
     );
@@ -308,7 +329,7 @@ test.describe('Settings (D17)', () => {
       'aria-selected',
       'true',
     );
-    await openWorkspace(page, '/operator', { v41: true, hash: 'problem-report-queue' });
+    await open(page, '/operator', { v41: true, hash: 'problem-report-queue' });
     await expect(page).toHaveURL(
       new RegExp(`/operator/inbox\\?workspace=${fixtureTenant}#problem-report-queue$`),
     );
@@ -317,7 +338,7 @@ test.describe('Settings (D17)', () => {
       'true',
     );
     await expect(page.locator('#problem-report-queue')).toHaveAttribute('open', '');
-    await openWorkspace(page, '/operator', { v41: true, hash: 'programme-application-queue' });
+    await open(page, '/operator', { v41: true, hash: 'programme-application-queue' });
     await expect(page).toHaveURL(
       /\/operator\/inbox\?workspace=[0-9a-f-]+#programme-application-queue$/,
     );
@@ -349,6 +370,21 @@ test.describe('Settings (D17)', () => {
     await expect(page.getByLabel('Workspace status')).toBeAttached();
     await page.waitForLoadState('networkidle');
     await expect(page).toHaveURL(/\/operator\?[^#]*#problem-report-queue$/);
+  });
+
+  test('switch on: no address is linked twice on the Settings page', async ({ page }) => {
+    await openWorkspace(page, '/operator/settings', { v41: true });
+    await expect(settings(page).locator('.settings-routes li')).toHaveCount(3);
+    // The old second row of links (nav.ux-team-second) is hidden with the switch on by unit D3, inside
+    // team-second-level.tsx; until that unit is in, it is left out here.
+    const hrefs = await noRepeatedLinks(page, 'main#main a[href]:not(nav.ux-team-second a)');
+    // No "Back to" link and no link to a menu place inside the Settings panel.
+    expect(
+      await settings(page)
+        .locator('a[href]')
+        .evaluateAll((links) => links.map((link) => link.getAttribute('href'))),
+    ).toEqual([]);
+    expect(hrefs.filter((href) => href.includes('/operator/settings'))).toHaveLength(1);
   });
 
   for (const width of [320, 390, 768, 1024, 1440, 1920])
@@ -504,13 +540,31 @@ test.describe('Inbox (D18)', () => {
   }) => {
     const world = await open(page, '/operator/inbox', { v41: true, role: 'operator' });
     await expect(page.getByRole('alert')).toHaveText('Only owners and admins can open the Inbox.');
-    await expect(page.getByRole('link', { name: 'Return to Today' })).toHaveAttribute(
-      'href',
-      `/operator?workspace=${fixtureTenant}`,
-    );
+    // The menu is the way out: no link to a menu place is repeated in the page.
+    await expect(page.locator('main#main a[href]')).toHaveCount(0);
     await expect(page.locator('[role="tablist"]')).toHaveCount(0);
     await page.waitForLoadState('networkidle');
     expect(world.asked.filter((line) => !line.includes('/api/notifications'))).toEqual([]);
+  });
+
+  test('switch on: no address is linked twice on the Inbox page, with every list read', async ({
+    page,
+  }) => {
+    await open(page, '/operator/inbox', { v41: true });
+    await page.getByRole('button', { name: 'Load Problem Reports' }).click();
+    await expect(page.getByText('RP-000001')).toBeVisible();
+    await page.getByRole('tab', { name: 'Erasure requests' }).click();
+    await page.getByRole('button', { name: 'Load Erasure Requests' }).click();
+    await expect(page.getByText('ER-000001')).toBeVisible();
+    await page.getByRole('tab', { name: 'Programme applications' }).click();
+    await page.getByRole('button', { name: 'Load Applications' }).click();
+    await expect(page.getByText('Synthetic applicant 1')).toBeVisible();
+    await page.getByRole('tab', { name: 'Helper interest' }).click();
+    await page.getByRole('button', { name: 'Load Entries' }).click();
+    await expect(page.getByText('Synthetic Helper')).toBeVisible();
+    const hrefs = await noRepeatedLinks(page);
+    // No link to a menu place: the menu is the one way to another place.
+    expect(hrefs.filter((href) => /^\/operator(\?|#|$)/.test(href))).toEqual([]);
   });
 
   for (const width of [320, 390, 768, 1024, 1440, 1920])
@@ -628,6 +682,22 @@ test.describe('Supply (D19)', () => {
         await expect(page.getByText('Companies Corridra must not contact.')).toHaveCount(1);
       } else expect(after).toBe(before);
     });
+
+  test('switch on: no address is linked twice on a Supply page', async ({ page }) => {
+    await open(page, '/operator/supply', { v41: true });
+    await expect(page.getByText('Trade register of Spain')).toBeVisible();
+    await noRepeatedLinks(page);
+    for (const entry of pages) {
+      await open(page, entry.path, { v41: true });
+      await expect(heading(page).locator('.ux-frame-helper')).toHaveText(entry.purpose);
+      await page.waitForLoadState('networkidle');
+      const hrefs = await noRepeatedLinks(page);
+      // A breadcrumb only on a page deeper than one level under Supply.
+      const crumbs = await page.getByRole('navigation', { name: 'Breadcrumb' }).count();
+      expect(crumbs).toBe(entry.title === 'Do Not Contact' ? 0 : 1);
+      expect(hrefs.length).toBeGreaterThanOrEqual(crumbs);
+    }
+  });
 
   for (const width of [320, 390, 768, 1024, 1440, 1920])
     test(`switch on: Supply fits ${width} px and is axe clean`, async ({ page }) => {

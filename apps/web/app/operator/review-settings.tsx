@@ -426,13 +426,23 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
         permission and authenticator checks still apply. Use only records and actions approved for
         this workspace.
       </p>
-      <div className="workspace-links">
-        <a href="#workspace-navigation">Back to workspace sections</a>
-        <a href="#workspace-sources">Find source references</a>
-        <a href="#workspace-authenticator">Confirm your authenticator</a>
-        {role === 'owner' && <a href="#workspace-controls">Workspace switches</a>}
-        {next && <a href={next}>Continue to the related workspace</a>}
-      </div>
+      {/* Team desk v4.1 (owner, 24 Nov 2026: no repeated navigation links): the menu and the segments are the way
+          to another place, so the links to menu places are not drawn. The one link left follows a save. */}
+      {deskV41 ? (
+        next && (
+          <div className="workspace-links">
+            <a href={next}>Continue to the related workspace</a>
+          </div>
+        )
+      ) : (
+        <div className="workspace-links">
+          <a href="#workspace-navigation">Back to workspace sections</a>
+          <a href="#workspace-sources">Find source references</a>
+          <a href="#workspace-authenticator">Confirm your authenticator</a>
+          {role === 'owner' && <a href="#workspace-controls">Workspace switches</a>}
+          {next && <a href={next}>Continue to the related workspace</a>}
+        </div>
+      )}
     </div>
   );
   return (
