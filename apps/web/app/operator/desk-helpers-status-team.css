@@ -1,0 +1,19 @@
+/* Team desk v4.1, units D14 to D16: the bodies of Helpers, Status and Team and access on the page pattern.
+   Every rule sits under the shell class "ux-desk-frame", which is only present with
+   CORRIDRA_UX_TEAM_DESK_V41 on, so nothing here applies with the switch off. Tokens only. */
+
+/* Helpers: the state word sits on the left edge, above the tabs. */
+.ux-desk-frame .ux-helpers-state {
+  margin: 0;
+}
+/* Helpers with no task: the words and one example of how a task reads. */
+.ux-desk-frame .ux-helpers-empty {
+  display: grid;
+  gap: var(--space-2);
+}
+.ux-desk-frame .ux-helpers-empty :is(h3, p) {
+  margin: 0;
+}
+.ux-desk-frame .ux-helpers-example .ux-example-tag {
+  margin-inline-end: var(--space-2);
+}

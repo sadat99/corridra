@@ -781,9 +781,13 @@ function TenantWorkspace({
                       selector?.focus();
                     }}
                   />
-                  <a className="text-link" href="#workspace-navigation">
-                    Back to workspace sections
-                  </a>
+                  {/* Team desk v4.1 (D14): the list this link opens is not on the page with the team shell
+                      on; the menu is the way around. */}
+                  {deskV41 ? null : (
+                    <a className="text-link" href="#workspace-navigation">
+                      Back to workspace sections
+                    </a>
+                  )}
                 </div>
               )}
             </>
