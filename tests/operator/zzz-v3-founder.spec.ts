@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { createHmac } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { ensureOrdinaryOperatorScope } from './ordinary-operator-scope';
 
 function totp(secret: string) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -23,6 +24,10 @@ test('V3 founder clarity retains source-backed operations and denies the ordinar
   test.setTimeout(180000);
   const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
   const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  // This spec needs a workspace where the person is an ordinary operator. It used to rely on the governance spec
+  // having made one earlier in the same run, and failed whenever that spec did (KI-65); it now makes sure itself.
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  await ensureOrdinaryOperatorScope(seed.principalId, local.ownerPassword);
   // Respect the unchanged authentication budget and TOTP replay rules of preceding journeys.
   const nextWindow = Date.now() + 60000;
   await expect
