@@ -39,7 +39,12 @@ export const LATER_FILES: Record<string, string[]> = {
     '0019_offer_context.sql',
     '0020_offer_commissioning_term.sql',
     '0021_organisation_source_rights_and_takedown.sql',
+    '0022_sample_first_word.sql',
   ],
+  // The sample first word (B7b, 24 Nov 2026). Real-use 0022 above and this file change only the first-word comparison
+  // of functions and checks these suites fingerprint at the earlier state. tests/integration/sample-first-word.test.ts
+  // proves both files.
+  'customer-workspace-lifecycle-migrations': ['0010_sample_first_word_late.sql'],
   // Decision cards for real workspaces (B7, 23 Nov 2026). It replaces two functions the removed member file does not
   // touch, and its own suites prove it, a removed creator and a person who was never a member included.
   'customer-decision-card-migrations': ['0003_real_workspace_decision_cards.sql'],

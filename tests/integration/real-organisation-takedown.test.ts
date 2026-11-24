@@ -24,7 +24,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
         !sourceRightsHidden(String(path), String(n)) &&
         !(
           base &&
-          /^(0013_organisation_link_provenance_and_search|0014_|0015_|0016_|0017_|0018_|0019_|0020_|0021_)/.test(
+          /^(0013_organisation_link_provenance_and_search|0014_|0015_|0016_|0017_|0018_|0019_|0020_|0021_|0022_)/.test(
             String(n),
           )
         ),
