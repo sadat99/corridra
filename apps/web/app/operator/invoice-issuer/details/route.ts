@@ -7,7 +7,7 @@ import { boundedBody, deliveryHeaders } from '../../../../lib/delivery-http';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// ADR-091 (unit B8). The data side of the Owner-only Invoice issuer screen. With CORRIDRA_INVOICE_ISSUER off it answers
+// ADR-092 (unit B8). The data side of the Owner-only Invoice issuer screen. With CORRIDRA_INVOICE_ISSUER off it answers
 // 404 before any session or service is touched. Authority is the staff session; the workspace comes from the query and
 // is checked by the database, which also repeats the owner role and, for a save, the authenticator check.
 function refused(error: unknown) {

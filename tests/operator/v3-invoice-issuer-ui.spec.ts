@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 
-// ADR-091 (unit B8). Explicit UI protocol fixtures for the Owner-only Invoice issuer screen. The database authority has
+// ADR-092 (unit B8). Explicit UI protocol fixtures for the Owner-only Invoice issuer screen. The database authority has
 // its own acceptance in tests/integration/customer-invoicing-real-issuer.test.ts.
 const tenant = '00000000-0000-4000-8000-0000000000d4';
 let server: Server, origin: string;

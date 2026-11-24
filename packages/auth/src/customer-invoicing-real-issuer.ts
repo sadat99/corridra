@@ -7,7 +7,7 @@ import {
   type RequestContext,
 } from '@corridra/db';
 
-// ADR-091 (unit B8): the Invoice issuer screen. The owner of the real staff workspace types the details printed on every
+// ADR-092 (unit B8): the Invoice issuer screen. The owner of the real staff workspace types the details printed on every
 // real invoice (legal name, UEN, address, GST status and number, payment instructions, finance contact label) and saves
 // them behind an authenticator check. A save writes one new append-only version of the supplier record of ADR-064; the
 // fields typed here are no longer marked made up, so the real-invoice refusal (D3) lifts once nothing made up is left.
@@ -35,6 +35,13 @@ const plain = (min: number, max: number) =>
         !/[\u0000-\u001f\u007f]/u.test(v) && !/(:\/\/|@|www\.)/.test(v) && !/\(madeup\)/i.test(v),
       'Plain text only',
     );
+// The values the install step seeds (ADR-064). They are refused even with the "(madeup)" text taken off.
+const seeded = {
+  uen: '202600000A',
+  gstRegistrationNo: 'M9-0000000-0',
+  financeLabel: 'sadat fpa',
+  account: '000-000000-0',
+};
 export const issuerDetailsInput = z
   .object({
     commandId: z.uuid(),
@@ -49,6 +56,14 @@ export const issuerDetailsInput = z
     financeLabel: plain(2, 120),
   })
   .strict()
+  .refine(
+    (v) =>
+      v.uen.toUpperCase() !== seeded.uen &&
+      (v.gstRegistrationNo ?? '').toUpperCase() !== seeded.gstRegistrationNo &&
+      v.financeLabel.toLowerCase() !== seeded.financeLabel &&
+      !v.paymentInstructions.includes(seeded.account),
+    'A seeded placeholder value is not a real detail',
+  )
   .refine(
     (v) => (v.gstRegistered ? v.gstRegistrationNo !== null : v.gstRegistrationNo === null),
     'A GST registered issuer needs its number; an unregistered one has none',

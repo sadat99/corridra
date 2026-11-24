@@ -24,14 +24,14 @@ function Denied({ children }: { children: string }) {
         <p>{children}</p>
       </AccessState>
       <Link prefetch={false} className="text-link" href="/operator">
-        Back To Your Workspace
+        Back to Your Workspace
       </Link>
     </WorkspaceShell>
   );
 }
 
 /**
- * ADR-091 (unit B8). Owner only. With CORRIDRA_INVOICE_ISSUER off the page does not exist. The page itself reads
+ * ADR-092 (unit B8). Owner only. With CORRIDRA_INVOICE_ISSUER off the page does not exist. The page itself reads
  * nothing about the issuer: the form asks the route, and the database decides again who may read and who may save.
  */
 export default async function Page({
@@ -70,7 +70,7 @@ export default async function Page({
     >
       <InvoiceIssuerForm tenant={tenant.id} />
       <Link prefetch={false} className="text-link" href="/operator">
-        Back To Your Workspace
+        Back to Your Workspace
       </Link>
     </WorkspaceShell>
   );

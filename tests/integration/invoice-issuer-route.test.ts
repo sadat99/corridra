@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { DomainError, stepUpRequired } from '../../packages/domain/src/index';
 
-// ADR-091 (unit B8). The Invoice issuer route answers 404, before any session or service is touched, unless
+// ADR-092 (unit B8). The Invoice issuer route answers 404, before any session or service is touched, unless
 // CORRIDRA_INVOICE_ISSUER is exactly "true". The service and the database behind it are proved in
 // customer-invoicing-real-issuer.test.ts.
 const session = vi.fn();

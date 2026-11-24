@@ -1,4 +1,4 @@
--- Optional additive change to the real invoicing module (ADR-091, unit B8; owner decision of 23 Nov 2026: "Invoice issuer
+-- Optional additive change to the real invoicing module (ADR-092, unit B8; owner decision of 23 Nov 2026: "Invoice issuer
 -- details typed by the owner in a new Owner-only staff screen with an authenticator check").
 -- The owner of the real staff workspace types the issuer details (legal name, UEN, address, GST status and number,
 -- payment instructions, finance contact label). A save writes ONE new append-only version of the existing supplier
@@ -18,6 +18,7 @@ DO $guard$ BEGIN
  OR to_regprocedure('app.real_use_allowed(uuid)') IS NULL
  OR to_regprocedure('app.actor_id()') IS NULL
  OR to_regprocedure('app.member_role(uuid)') IS NULL
+ OR to_regclass('customer_private.real_use_configuration') IS NULL
  THEN RAISE EXCEPTION 'Invoice issuer prerequisites are missing'; END IF;
 END $guard$;
 
@@ -44,13 +45,6 @@ CREATE FUNCTION customer_private.real_invoicing_issuer_madeup(e customer_private
    ('payment_instructions',e.payment_instructions),('finance_label',e.finance_label)) x(f,v) WHERE x.v ~* '\(madeup\)') s
 $$;
 
--- Complete means: a version exists, it has a UEN, and no field is made up.
-CREATE FUNCTION customer_private.real_invoicing_issuer_complete() RETURNS boolean
- LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
- SELECT coalesce((SELECT e.uen IS NOT NULL AND cardinality(customer_private.real_invoicing_issuer_madeup(e))=0
-  FROM customer_private.real_invoicing_entity e ORDER BY e.version DESC LIMIT 1),false)
-$$;
-
 -- The owner of the real staff workspace, on the live session. need_fresh adds the authenticator check of the last five
 -- minutes and answers CR401 without it, so the screen can ask for a code instead of saying "denied".
 CREATE FUNCTION customer_private.real_invoicing_issuer_owner(need_fresh boolean) RETURNS uuid
@@ -59,7 +53,10 @@ DECLARE actor uuid:=app.actor_id(); t uuid:=NULLIF(current_setting('corridra.ten
 BEGIN
  IF actor IS NULL OR t IS NULL OR NOT coalesce(app.can_access(t,'INTERNAL',app.tenant_processing_purpose(t)),false)
   OR coalesce(app.member_role(t),'')<>'owner'
-  OR NOT EXISTS(SELECT FROM app.tenant x WHERE x.id=t AND NOT x.synthetic AND app.real_use_allowed(x.id)) THEN
+  OR NOT EXISTS(SELECT FROM app.tenant x WHERE x.id=t AND NOT x.synthetic AND app.real_use_allowed(x.id))
+  -- The supplier record is one for the whole platform, so only the one Corridra staff workspace may write it: the
+  -- real intake workspace that the real-use configuration names. The owner of any other real workspace is refused.
+  OR NOT EXISTS(SELECT FROM customer_private.real_use_configuration c WHERE c.intake_tenant_id=t AND c.enabled) THEN
   RAISE EXCEPTION 'Issuer details are for the owner of the real staff workspace' USING ERRCODE='42501'; END IF;
  PERFORM 1 FROM identity.session s JOIN identity.principal p ON p.identity_id=s."userId"
  JOIN identity."user" u ON u.id=p.identity_id JOIN app.membership m ON m.user_id=p.id AND m.tenant_id=t
@@ -123,7 +120,10 @@ BEGIN
   OR NOT customer_private.billing_plain_ok(input->>'uen',3,60) OR NOT customer_private.billing_plain_ok(input->>'paymentInstructions',5,400)
   OR NOT customer_private.billing_plain_ok(input->>'financeLabel',2,120)
   OR (v_reg AND (v_no IS NULL OR NOT customer_private.billing_plain_ok(v_no,3,60))) OR (NOT v_reg AND v_no IS NOT NULL)
-  OR concat_ws(' ',input->>'legalName',input->>'address',input->>'uen',v_no,input->>'paymentInstructions',input->>'financeLabel') ~* '\(madeup\)' THEN
+  OR concat_ws(' ',input->>'legalName',input->>'address',input->>'uen',v_no,input->>'paymentInstructions',input->>'financeLabel') ~* '\(madeup\)'
+  -- The values the install step seeds are refused even with the "(madeup)" text taken off.
+  OR upper(btrim(input->>'uen'))='202600000A' OR upper(btrim(coalesce(v_no,'')))='M9-0000000-0'
+  OR lower(btrim(input->>'financeLabel'))='sadat fpa' OR position('000-000000-0' IN input->>'paymentInstructions')>0 THEN
   RAISE EXCEPTION 'Give every issuer detail in plain words, with no made-up value, link or address' USING ERRCODE='23514'; END IF;
  -- The same lock as the offline configuration, so two writers never take the same version number.
  PERFORM pg_advisory_xact_lock(hashtext('corridra:real-invoicing-configuration'));
@@ -174,6 +174,6 @@ BEGIN
 END $$;
 
 REVOKE ALL ON FUNCTION customer_private.real_invoicing_issuer_madeup(customer_private.real_invoicing_entity),
- customer_private.real_invoicing_issuer_complete(),customer_private.real_invoicing_issuer_owner(boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
+ customer_private.real_invoicing_issuer_owner(boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
 REVOKE ALL ON FUNCTION app.real_invoicing_issuer_view(),app.real_invoicing_issuer_save(uuid,jsonb) FROM PUBLIC,corridra_auth;
 GRANT EXECUTE ON FUNCTION app.real_invoicing_issuer_view(),app.real_invoicing_issuer_save(uuid,jsonb) TO corridra_runtime;

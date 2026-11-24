@@ -1,4 +1,4 @@
-# ADR-091: Invoice issuer details typed by the owner
+# ADR-092: Invoice issuer details typed by the owner
 
 Status: Proposed 23 November 2026 for the owner decision of 23 November 2026 (commercial-ready run, section 1, row "Invoice data"): "The owner types issuer details in a new Owner-only staff screen with an authenticator check". Unit B8. This record opens nothing: real invoices go live only on the owner's word "live", and real payments and payouts stay closed.
 
@@ -17,8 +17,9 @@ Amends ADR-064 forward. ADR-064 and its amendment of 17 November 2026 say the su
 
 - Address `/operator/invoice-issuer`, inside the staff area. It exists only while `CORRIDRA_INVOICE_ISSUER` is exactly `true` (default off); otherwise the page and its data route answer 404 before any session is read.
 - Owner only. The page offers itself to a staff member with the owner role; an admin, operator, reviewer or viewer gets one plain line. The service and the database repeat the rule.
+- One workspace only. The supplier record is one for the whole platform, so the database lets only the owner of the one Corridra staff workspace read or save it: the real intake workspace named by the real-use configuration. The owner of any other real workspace is refused.
 - Four short steps: Company (legal name, UEN, registered address), GST (status, and the number when registered), Payment (payment instructions, finance contact label), Check And Save (every answer shown, then the authenticator code).
-- A value that is still made up never reaches the screen: the field arrives empty and the owner types it. A typed value that contains "(madeup)", a link or an email address is refused.
+- A value that is still made up never reaches the screen: the field arrives empty and the owner types it. A typed value that contains "(madeup)", a link or an email address is refused. The values the install step seeds (the placeholder UEN, GST number, account number and finance label) are refused even with the "(madeup)" text taken off.
 - Country, tax name, tax rate and payment terms are not asked. They are carried from the version before and stay under the install step.
 
 ### The authenticator check
@@ -53,12 +54,13 @@ Amends ADR-064 forward. ADR-064 and its amendment of 17 November 2026 say the su
 ## Rollback
 
 1. Set `CORRIDRA_INVOICE_ISSUER` off. The screen and its route answer 404 at once; nothing else changes.
-2. If the database side must go: run `packages/db/customer-invoicing-real-migrations/rollback/0003_drop_owner_issuer_details.sql` as a reviewed forward run by the schema owner. It drops the two functions, the helpers, the command record and the `owner_entered_by` column, and removes the applied line so a later install puts the change back. Every saved supplier version stays, so issued documents and D3 read the same record as before.
+2. If the database side must go: run `packages/db/customer-invoicing-real-migrations/rollback/0003_drop_owner_issuer_details.sql` as a reviewed forward run by the schema owner. It drops the two functions, the two helpers, the command record and the `owner_entered_by` column, and removes the applied line so a later install puts the change back. Every saved supplier version stays, so issued documents and D3 read the same record as before.
 3. To refuse real invoices again after an owner save, close the real invoicing control with the existing `real_invoicing_action=pause` step, or write a new supplier version with `set_supplier`.
 
 ## Tests
 
-- `tests/integration/customer-invoicing-real-issuer.test.ts`: install and repeat; owner only (admin, other roles, sample workspace refused); a stale check answers `STEP_UP_REQUIRED` and writes nothing; every refusal rule in the service and again in the database; D3 before and after; one new version with the earlier one unchanged; event and audit line without values; command replay and conflict; stale version; unchanged save; a second owner; the kept tax-rate mark; closed tables and functions for the runtime logins; rollback.
+- `tests/integration/customer-invoicing-real-issuer.test.ts`: install and repeat; owner only (admin, other roles, sample workspace refused); a stale check answers `STEP_UP_REQUIRED` and writes nothing; every refusal rule in the service and again in the database; D3 before and after; one new version with the earlier one unchanged; event and audit line without values; command replay and conflict; stale version; unchanged save; a second owner; the kept tax-rate mark and D3 still refusing with it; the secret path after an owner save; the owner of another real workspace refused; the seeded values refused; closed tables and functions for the runtime logins; rollback.
 - `tests/integration/invoice-issuer-route.test.ts`: 404 with the switch off before anything is touched; session, workspace, origin, content type and size refusals; codes passed on, unexpected error text never sent.
 - `tests/operator/v3-invoice-issuer-ui.spec.ts`: the four steps, each refusal line, the code checked before the single save and never sent with it, retry under the same command, load latest, the denied, not installed and switched-off lines, phone width, axe.
+- `tests/integration/billing-dates.test.ts`: a billing day reads the same west of UTC, east of UTC and in UTC.
 - `tests/operator/v3-billing-ui.spec.ts`, `v3-invoicing-ui.spec.ts`, `v3-real-invoicing-ui.spec.ts`: the customer billing dates in the shared format.

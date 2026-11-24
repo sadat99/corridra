@@ -1,4 +1,4 @@
-/* Invoice issuer (ADR-091). One left-aligned column of at most 40rem; one step at a time; tokens only. */
+/* Invoice issuer (ADR-092). One left-aligned column of at most 40rem; one step at a time; tokens only. */
 .invoice-issuer,
 .invoice-issuer-form {
   display: grid;

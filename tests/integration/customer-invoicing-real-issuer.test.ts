@@ -17,8 +17,9 @@ import {
   CustomerRealInvoicingStaffService,
   madeupSupplierFields,
 } from '../../packages/delivery/src/customer-invoicing-real-staff';
+import { setSupplierFromSecret } from '../../packages/auth/src/customer-invoicing-real-supplier-secret';
 
-// ADR-091 (unit B8): the owner types the invoice issuer details on an Owner-only staff screen, behind an authenticator
+// ADR-092 (unit B8): the owner types the invoice issuer details on an Owner-only staff screen, behind an authenticator
 // check made for the save. A save writes a new append-only version with no made-up field left among the typed ones, so
 // the real-invoice refusal (D3) lifts only then. Nothing here opens real invoices: the control and the switch stay off.
 const issuer =
@@ -212,6 +213,12 @@ test('incomplete, made-up or unsafe details are refused in the service and in th
     { gstRegistered: true, gstRegistrationNo: null },
     { gstRegistered: false, gstRegistrationNo: 'M2-1234567-8' },
     { gstRegistered: 'yes' },
+    // The seeded placeholder values are refused even with the "(madeup)" text taken off.
+    { uen: '202600000A' },
+    { uen: ' 202600000a ' },
+    { gstRegistrationNo: 'M9-0000000-0' },
+    { financeLabel: 'Sadat FPA' },
+    { paymentInstructions: 'Pay by bank transfer to Corridra Pte Ltd, account 000-000000-0' },
     { country: 'BD' },
     { madeupFields: [] },
   ];
@@ -237,7 +244,7 @@ test('incomplete, made-up or unsafe details are refused in the service and in th
       db.release();
     }
   };
-  for (const over of bad.slice(0, 11))
+  for (const over of bad.slice(0, 16))
     await expect(direct(over), JSON.stringify(over)).rejects.toMatchObject({ code: '23514' });
   await expect(direct({ extra: 'x' })).rejects.toMatchObject({ code: '23514' });
   expect(await entities()).toHaveLength(1);
@@ -435,6 +442,95 @@ test('a made-up field the screen does not ask for is kept marked, so the details
   expect(await latest()).toMatchObject({ placeholder_fields: ['gst_rate_bps'] });
 });
 
+test('with the tax rate still marked, D3 keeps refusing a real invoice after the owner save', async () => {
+  const staff = new CustomerRealInvoicingStaffService(s.f.runtime, () => true);
+  expect(madeupSupplierFields((await staff.pending(owner())).supplier)).toEqual(['gst_rate_bps']);
+  await expect(
+    staff.command(owner(), {
+      action: 'prepare_invoice',
+      commandId: randomUUID(),
+      subscriptionId: randomUUID(),
+      periodStart: '2026-11-01',
+      dueOn: '2026-12-01',
+      billToName: 'Dhaka Imports Limited',
+      billToAddress: 'House 12, Road 5, Gulshan, Dhaka 1212, Bangladesh',
+    }),
+  ).rejects.toMatchObject({ status: 409, code: 'MADEUP_SUPPLIER_DETAILS' });
+});
+
+test('the protected secret path of ADR-064 still writes a version after an owner save, and the owner can save over it', async () => {
+  const change = await setSupplierFromSecret(s.f.owner, {
+    raw: JSON.stringify({
+      legalName: real.legalName,
+      address: real.address,
+      country: 'SG',
+      uen: real.uen,
+      gstRegistered: true,
+      gstRegistrationNo: real.gstRegistrationNo,
+      taxLabel: 'GST',
+      gstRateBps: 900,
+      paymentTermsDays: 14,
+      paymentInstructions: real.paymentInstructions,
+      financeLabel: real.financeLabel,
+      approverEmail: null,
+      madeupFields: [],
+    }),
+    reason: 'Fixture: supplier details from the protected secret after an owner save',
+  });
+  expect(change).toMatchObject({ entityChanged: true, version: 8, madeupFieldCount: 0 });
+  expect(await latest()).toMatchObject({
+    version: 8,
+    owner_entered_by: null,
+    placeholder_fields: [],
+    payment_terms_days: 14,
+  });
+  expect(await service.view(owner())).toMatchObject({
+    version: 8,
+    complete: true,
+    enteredByOwner: false,
+  });
+  // The owner confirms the same details: a new version in the owner's name, and the install-side value is carried.
+  expect(await save()).toMatchObject({ state: 'saved', version: 9, complete: true });
+  expect(await latest()).toMatchObject({
+    owner_entered_by: s.f.users.owner.id,
+    payment_terms_days: 14,
+  });
+});
+
+test('the owner of any other real workspace is refused: the issuer record belongs to the one Corridra staff workspace', async () => {
+  const other = randomUUID();
+  const client = await s.f.owner.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      "SELECT set_config('corridra.bootstrap_actor',$1,true),set_config('corridra.correlation_id',$2,true),set_config('corridra.causation_id',$3,true)",
+      [s.f.serviceId, randomUUID(), randomUUID()],
+    );
+    await client.query(
+      "INSERT INTO app.tenant(id,name,synthetic) VALUES($1,'Another real staff workspace',false)",
+      [other],
+    );
+    await client.query(
+      `INSERT INTO app.membership(tenant_id,user_id,role,allowed_purposes,allowed_classifications,allowed_countries)
+      SELECT $1,user_id,'owner',allowed_purposes,allowed_classifications,allowed_countries FROM app.membership WHERE tenant_id=$2 AND user_id=$3`,
+      [other, s.intakeTenantId, s.f.users.owner.id],
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+  // Same person, same fresh check, owner role there too: still refused, for reading and for saving.
+  const elsewhere = { ...owner(), tenantId: other };
+  const before = (await entities()).length;
+  await expect(service.view(elsewhere)).rejects.toMatchObject({ status: 403 });
+  await expect(save({}, elsewhere)).rejects.toMatchObject({ status: 403 });
+  expect(await entities()).toHaveLength(before);
+  await expect(service.view(owner())).resolves.toMatchObject({ version: 9 });
+});
+
 test('the runtime and auth logins reach no table and no private function, and history cannot be rewritten', async () => {
   for (const pool of [s.f.runtime, s.f.auth]) {
     await expect(
@@ -444,7 +540,9 @@ test('the runtime and auth logins reach no table and no private function, and hi
       pool.query('SELECT customer_private.real_invoicing_issuer_owner(true)'),
     ).rejects.toMatchObject({ code: '42501' });
     await expect(
-      pool.query('SELECT customer_private.real_invoicing_issuer_complete()'),
+      pool.query(
+        'SELECT customer_private.real_invoicing_issuer_madeup(e) FROM customer_private.real_invoicing_entity e',
+      ),
     ).rejects.toMatchObject({ code: '42501' });
   }
   await expect(s.f.auth.query('SELECT app.real_invoicing_issuer_view()')).rejects.toMatchObject({
@@ -493,5 +591,5 @@ test('the rollback file removes the screen functions and keeps every saved versi
   await expect(service.view(owner())).rejects.toMatchObject({ status: 503 });
   // The staff side still works on the saved versions.
   const staff = new CustomerRealInvoicingStaffService(s.f.runtime, () => true);
-  expect((await staff.pending(owner())).supplier).toMatchObject({ version: 7 });
+  expect((await staff.pending(owner())).supplier).toMatchObject({ version: 9 });
 });
