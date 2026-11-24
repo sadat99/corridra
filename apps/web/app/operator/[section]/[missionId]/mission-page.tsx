@@ -1,5 +1,10 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { StageBar } from '../../../../components/mr/stage-bar';
+import { mrLabels } from '../../../../components/mr/labels';
+import { statusToRoadStep } from '../../../../components/mr/road-status';
+import { CorridraIcon } from '../../../../components/corridra-icon';
+import { Dialog } from '../../../../components/ux/dialog';
 import { StatusChip } from '../../../../components/ux/status-chip';
 import { formatDate, formatDateTime } from '../../../../lib/ux/format';
 import { formatMoney } from '../../../../lib/ux/money';
@@ -12,6 +17,7 @@ import {
   MissionActionForm,
   MissionFacts,
   MissionHistory,
+  MissionStepForm,
   ReplyForm,
   canManage,
   missionCommandBody,
@@ -19,8 +25,20 @@ import {
   ownerName,
   type Queue,
 } from '../../missions';
-import { isOverdue, plainCode, stageChip } from './mission-labels';
+import {
+  actionTitle,
+  canPause,
+  isOverdue,
+  nextStep,
+  plainCode,
+  restingLine,
+  routeLine,
+  stageChip,
+  stepStatement,
+  type CustomerView,
+} from './mission-labels';
 import { bodyNotAvailable } from '../../../../lib/body-access';
+import { useOperatorFlags } from '../../operator-flags';
 
 // D15: one mission, seven tabs plus replies (CQ-40), and one side panel where actions open one at a time.
 // Every action here posts to the same reviewed workspace endpoints as the queue cards, so nothing gains
@@ -38,6 +56,24 @@ const tabs = [
 type Tab = (typeof tabs)[number][0];
 type Panel = 'action' | 'route' | 'reply' | 'move' | null;
 type Row = Record<string, unknown> & { id: string };
+
+/** What a customer reads for a stage: the Road step and its line, in the words their own page uses. */
+function customerView(stage: string): CustomerView {
+  const road = mrLabels.road;
+  const marker = statusToRoadStep(stage);
+  if (marker.kind === 'aside')
+    return {
+      step: null,
+      words:
+        marker.reason === 'unknown'
+          ? `${road.asides.unknown} ${plainCode(stage).toLowerCase()}`
+          : road.asides[marker.reason],
+    };
+  return {
+    step: road.steps[marker.step],
+    words: (road.sublines as Record<string, string>)[marker.status] ?? '',
+  };
+}
 
 async function read<T>(url: string): Promise<T> {
   const r = await fetch(url, { cache: 'no-store' });
@@ -60,12 +96,18 @@ export function MissionPage({
   replyId?: string;
   moveRecords: boolean;
 }) {
+  // Team desk v4.1, units D6 and D7 (`CORRIDRA_UX_TEAM_DESK_V41`, read on the server and handed down by
+  // OperatorFlags): the stage bar, the Next step card, the customer panel and actions in the centred dialog.
+  // Off, the page is exactly what it was.
+  const { teamDeskV41: desk } = useOperatorFlags();
   const [data, setData] = useState<Queue | null>(null),
     [failure, setFailure] = useState(''),
     [message, setMessage] = useState<{ kind: 'status' | 'alert'; text: string } | null>(null),
     [busy, setBusy] = useState(false),
     [tab, setTab] = useState<Tab>(replyId ? 'requirements' : 'overview'),
     [panel, setPanel] = useState<Panel>(null),
+    // The mission command the dialog is open on (desk only): the stage's next step, or assign, pause, cancel.
+    [stepAction, setStepAction] = useState('assign'),
     [revision, setRevision] = useState(0);
   const panelHeading = useRef<HTMLHeadingElement>(null),
     trigger = useRef<HTMLButtonElement | null>(null),
@@ -95,8 +137,8 @@ export function MissionPage({
     return () => window.removeEventListener('hashchange', fromHash);
   }, []);
   useEffect(() => {
-    if (panel) panelHeading.current?.focus();
-  }, [panel]);
+    if (panel && !desk) panelHeading.current?.focus();
+  }, [panel, desk]);
   function choose(next: Tab) {
     setTab(next);
     window.history.replaceState(null, '', `#${next}`);
@@ -121,6 +163,8 @@ export function MissionPage({
       await missionRequest(tenant, action, body);
       setData(await load());
       setMessage({ kind: 'status', text: done });
+      // Desk: a saved action closes its dialog, and the page says what was saved.
+      if (desk) setPanel(null);
       return true;
     } catch (e) {
       setMessage({ kind: 'alert', text: e instanceof Error ? e.message : 'Unable to save' });
@@ -133,16 +177,20 @@ export function MissionPage({
   if (!data)
     return (
       <div className="mission-page">
+        {desk && <MissionCrumb tenant={tenant} workspaceName={workspaceName} />}
         <p role={failure ? 'alert' : 'status'}>{failure || 'Loading the mission…'}</p>
-        <a className="text-link" href={sectionHref(tenant, 'missions')}>
-          Back to all missions
-        </a>
+        {!desk && (
+          <a className="text-link" href={sectionHref(tenant, 'missions')}>
+            Back to all missions
+          </a>
+        )}
       </div>
     );
   const m = data.missions[0]!;
   const manage = canManage(data.role);
   const open = !['CANCELLED', 'CLOSED'].includes(m.status);
   const overdue = isOverdue(m.due_at, m.status);
+  const step = nextStep(m.status);
   const feedback = message && (
     <p role={message.kind} className={message.kind === 'alert' ? 'ux-error-summary' : undefined}>
       {message.text}
@@ -150,12 +198,16 @@ export function MissionPage({
   );
   return (
     <div className="mission-page">
-      <nav aria-label="Breadcrumb">
-        <a className="text-link" href={sectionHref(tenant, 'missions')}>
-          All missions
-        </a>{' '}
-        · {workspaceName}
-      </nav>
+      {desk ? (
+        <MissionCrumb tenant={tenant} workspaceName={workspaceName} />
+      ) : (
+        <nav aria-label="Breadcrumb">
+          <a className="text-link" href={sectionHref(tenant, 'missions')}>
+            All missions
+          </a>{' '}
+          · {workspaceName}
+        </nav>
+      )}
       <header className="mission-page-summary">
         <h2>{m.brief.company}</h2>
         <p>
@@ -166,9 +218,178 @@ export function MissionPage({
           {ownerName(data.owners, m.owner_id)} · Due {formatDate(m.due_at)} · Route{' '}
           {m.route_label ?? 'not assigned yet'}
         </p>
-        <p>Next action: {m.next_action || 'Not recorded'}</p>
+        {!desk && <p>Next action: {m.next_action || 'Not recorded'}</p>}
         <WithdrawalNote tenant={tenant} missionId={m.id} />
       </header>
+      {desk && (
+        <div className="mission-desk">
+          <StageBar status={m.status} name={`Stage of ${m.brief.company}`} variant="room" />
+          <section className="mission-next" aria-labelledby="mission-next-heading">
+            <h3 id="mission-next-heading" tabIndex={-1}>
+              Next step
+            </h3>
+            <p>{step && open ? step.lead : restingLine(m.status)}</p>
+            {!panel && feedback}
+            {manage ? (
+              <>
+                {step && open && (
+                  <button
+                    type="button"
+                    className="primary-link"
+                    onClick={(e) => {
+                      setStepAction(step.action);
+                      openPanel('action', e.currentTarget);
+                    }}
+                  >
+                    {step.label}
+                  </button>
+                )}
+                <details className="mission-more">
+                  <summary aria-label={`More actions for ${m.brief.company}`}>
+                    More Actions
+                    <CorridraIcon name="chevron" size={16} className="mission-more-chevron" />
+                  </summary>
+                  <div className="mission-actions" aria-label="More mission actions">
+                    {open &&
+                      ['assign', ...(canPause(m.status) ? ['pause'] : []), 'cancel'].map(
+                        (action) => (
+                          <button
+                            key={action}
+                            type="button"
+                            className="secondary-link"
+                            onClick={(e) => {
+                              setStepAction(action);
+                              openPanel('action', e.currentTarget);
+                            }}
+                          >
+                            {actionTitle(action)}
+                          </button>
+                        ),
+                      )}
+                    {data.role === 'owner' && (
+                      <button
+                        type="button"
+                        className="secondary-link"
+                        onClick={(e) => openPanel('route', e.currentTarget)}
+                      >
+                        Assign Route
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="secondary-link"
+                      onClick={(e) => openPanel('reply', e.currentTarget)}
+                    >
+                      Reply on the Receipt
+                    </button>
+                    {moveRecords && (
+                      <button
+                        type="button"
+                        className="secondary-link"
+                        onClick={(e) => openPanel('move', e.currentTarget)}
+                      >
+                        Set the Customer&apos;s Next Move
+                      </button>
+                    )}
+                  </div>
+                </details>
+              </>
+            ) : (
+              <p className="guide-hint">
+                Your role can read this mission. An owner, admin or operator makes changes.
+              </p>
+            )}
+          </section>
+          <CustomerSees
+            tenant={tenant}
+            missionId={m.id}
+            status={m.status}
+            replies={data.replies}
+            moveRecords={moveRecords}
+            revision={revision}
+          />
+          <Dialog
+            open={panel !== null}
+            onClose={() => {
+              setPanel(null);
+              // A Move set in the dialog is read again by the customer panel.
+              if (panel === 'move') setRevision((v) => v + 1);
+            }}
+            title={
+              panel === 'action'
+                ? actionTitle(stepAction)
+                : panel === 'route'
+                  ? 'Assign Route'
+                  : panel === 'reply'
+                    ? 'Reply on the Receipt'
+                    : "Set the Customer's Next Move"
+            }
+            locked={busy}
+            returnFocusTo={() => document.getElementById('mission-next-heading')}
+          >
+            {panel === 'action' && (
+              <MissionStepForm
+                m={m}
+                owners={data.owners}
+                action={stepAction}
+                submitLabel={actionTitle(stepAction)}
+                customer={customerView}
+                busy={busy}
+                feedback={feedback}
+                onSubmit={(e) => {
+                  const body = missionCommandBody(e, m, (text) =>
+                    setMessage({ kind: 'alert', text }),
+                  );
+                  if (body)
+                    void act(
+                      'mission',
+                      body,
+                      `${actionTitle(stepAction)} saved. ${stepStatement(stepAction, m.status, customerView).customer}`,
+                    );
+                }}
+              />
+            )}
+            {panel === 'route' && (
+              <>
+                <p>
+                  This records the reviewed route and mission job for this mission. The stage the
+                  customer sees stays the same.
+                </p>
+                <p data-step-route>{routeLine(m.route_label, '')}</p>
+                {feedback}
+                <AssignRoute
+                  tenant={tenant}
+                  missionId={m.id}
+                  busy={busy}
+                  onAssign={(body) => act('mission-route', body, 'Route assigned.')}
+                />
+              </>
+            )}
+            {panel === 'reply' && (
+              <>
+                <p data-step-route>{routeLine(m.route_label, '')}</p>
+                <p>
+                  This posts one reply. The customer will read it on their private receipt, exactly
+                  as written.
+                </p>
+                {feedback}
+                <ReplyForm
+                  busy={busy}
+                  onSend={(body, replyId) =>
+                    act('mission-reply', { id: m.id, body, replyId }, 'Reply posted.')
+                  }
+                />
+              </>
+            )}
+            {panel === 'move' && (
+              <>
+                <p data-step-route>{routeLine(m.route_label, '')}</p>
+                <MissionMoves tenant={tenant} missionId={m.id} />
+              </>
+            )}
+          </Dialog>
+        </div>
+      )}
       <div className="mission-tabs" role="tablist" aria-label="Mission sections">
         {tabs.map(([key, label], index) => (
           <button
@@ -205,11 +426,11 @@ export function MissionPage({
           aria-labelledby={`mission-tab-${tab}`}
           tabIndex={0}
         >
-          {!panel && feedback}
+          {!panel && !desk && feedback}
           {tab === 'overview' && (
             <>
               <h3>Overview</h3>
-              {manage && (
+              {manage && !desk && (
                 <div className="mission-actions" aria-label="Mission actions">
                   {open && (
                     <button
@@ -310,7 +531,7 @@ export function MissionPage({
             </>
           )}
         </section>
-        {panel && (
+        {panel && !desk && (
           <aside className="mission-panel" aria-labelledby="mission-panel-heading">
             <div className="mission-panel-head">
               <h3 id="mission-panel-heading" ref={panelHeading} tabIndex={-1}>
@@ -364,6 +585,123 @@ export function MissionPage({
   );
 }
 
+/**
+ * Team desk v4.1, unit D6: what the customer can read about this mission today, built only from reads this
+ * page already makes (the stage, the receipt replies and, where Move records are on, the open Moves).
+ * Read-only: it holds no control that changes anything and sends nothing. Under 1024 px it is a closed
+ * disclosure whose summary already says the stage, so the page stays short on a phone.
+ */
+function CustomerSees({
+  tenant,
+  missionId,
+  status,
+  replies,
+  moveRecords,
+  revision,
+}: {
+  tenant: string;
+  missionId: string;
+  status: string;
+  replies: Queue['replies'];
+  moveRecords: boolean;
+  revision: number;
+}) {
+  const view = customerView(status);
+  const wide = useWide();
+  const latest = replies[0];
+  const facts = (
+    <>
+      <dl>
+        <dt>Stage</dt>
+        <dd data-customer-stage>
+          {view.step ? <b>{view.step}. </b> : null}
+          {view.words}
+        </dd>
+        <dt>Receipt replies</dt>
+        <dd data-customer-replies>
+          {latest
+            ? `${replies.length} posted. Latest${latest.created_at ? `, ${formatDateTime(latest.created_at)}` : ''}: ${latest.body}`
+            : 'None posted yet.'}
+        </dd>
+        {moveRecords && (
+          <>
+            <dt>Open Moves</dt>
+            <dd data-customer-moves>
+              <CustomerMoves tenant={tenant} missionId={missionId} revision={revision} />
+            </dd>
+          </>
+        )}
+      </dl>
+      <p className="guide-hint">Read from this mission&apos;s records. Nothing here is sent.</p>
+    </>
+  );
+  return (
+    <aside className="mission-customer" aria-labelledby="mission-customer-heading">
+      {wide ? (
+        <>
+          <h3 id="mission-customer-heading">What the customer sees</h3>
+          {facts}
+        </>
+      ) : (
+        <details>
+          <summary>
+            <span>
+              <span id="mission-customer-heading">What the customer sees</span>:{' '}
+              {view.step ? `${view.step}. ` : ''}
+              {view.words}
+            </span>
+            <CorridraIcon name="chevron" size={16} className="mission-more-chevron" />
+          </summary>
+          {facts}
+        </details>
+      )}
+    </aside>
+  );
+}
+
+/** True from 1024 px, where the desk has two columns. The page mounts in the browser, after its first read. */
+function useWide() {
+  const query = '(min-width: 1024px)';
+  const [wide, setWide] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
+  );
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const changed = () => setWide(media.matches);
+    media.addEventListener('change', changed);
+    return () => media.removeEventListener('change', changed);
+  }, []);
+  return wide;
+}
+
+function CustomerMoves({
+  tenant,
+  missionId,
+  revision,
+}: {
+  tenant: string;
+  missionId: string;
+  revision: number;
+}) {
+  const { value, error } = useRead<{ moves?: Row[] }>(
+    `/api/move/staff?tenant=${encodeURIComponent(tenant)}&mission=${encodeURIComponent(missionId)}`,
+    revision,
+  );
+  if (!value) return <>{error ? 'Moves could not be read.' : 'Reading Moves…'}</>;
+  const open = (value.moves ?? []).filter((move) => !move.closed);
+  if (!open.length) return <>No open Moves.</>;
+  return (
+    <>
+      {open
+        .map(
+          (move) =>
+            `${String(move.verb)} ${String(move.object)}${move.dueOn ? `, due ${String(move.dueOn)}` : ''}`,
+        )
+        .join(' · ')}
+    </>
+  );
+}
+
 function useRead<T>(url: string, revision = 0) {
   const [value, setValue] = useState<T | null>(null),
     [error, setError] = useState('');
@@ -377,6 +715,47 @@ function useRead<T>(url: string, revision = 0) {
     };
   }, [url, revision]);
   return { value, error };
+}
+
+/**
+ * Team desk v4.1 (owner rule, 24 Nov 2026: no navigation link twice on one screen): the mission page is one
+ * level under Missions, so it has one crumb, and that crumb is the page's only link to the list. It stands in
+ * every state of the page, so no "Back to" link repeats it.
+ */
+function MissionCrumb({ tenant, workspaceName }: { tenant: string; workspaceName: string }) {
+  return (
+    <nav aria-label="Breadcrumb">
+      <a className="text-link" href={sectionHref(tenant, 'missions')}>
+        Missions
+      </a>{' '}
+      · {workspaceName}
+    </nav>
+  );
+}
+
+/**
+ * Where the work of a tab is done when that place is in the menu. On the team desk v4.1 the menu is the one
+ * path to a place, so the tab names the place in words; off, it is the link it always was.
+ */
+function MenuPlace({
+  tenant,
+  slug,
+  label,
+  words,
+}: {
+  tenant: string;
+  slug: string;
+  label: string;
+  words: string;
+}) {
+  const { teamDeskV41 } = useOperatorFlags();
+  return teamDeskV41 ? (
+    <p className="guide-hint" data-menu-place={slug}>
+      {words}
+    </p>
+  ) : (
+    <SectionLink tenant={tenant} slug={slug} label={label} />
+  );
 }
 
 function Loading({ error, children }: { error: string; children?: ReactNode }) {
@@ -657,7 +1036,12 @@ function Meetings({ tenant, missionId }: { tenant: string; missionId: string }) 
       ) : (
         <p>No meetings for this mission yet.</p>
       )}
-      <SectionLink tenant={tenant} slug="meetings" label="Introductions and meetings" />
+      <MenuPlace
+        tenant={tenant}
+        slug="meetings"
+        label="Introductions and meetings"
+        words="Schedule and record meetings under Meetings in the menu."
+      />
     </>
   );
 }
@@ -699,7 +1083,12 @@ function Delivery({ tenant, missionId }: { tenant: string; missionId: string }) 
       ) : (
         <p>No reports approved for this mission yet.</p>
       )}
-      <SectionLink tenant={tenant} slug="delivery" label="Write, approve and share a report" />
+      <MenuPlace
+        tenant={tenant}
+        slug="delivery"
+        label="Write, approve and share a report"
+        words="Write, approve and share a report under Reports in the menu."
+      />
     </>
   );
 }
