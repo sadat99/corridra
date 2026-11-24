@@ -15,7 +15,7 @@ export default async function Page({
     <SupplyPage
       requested={(await searchParams).workspace}
       title="Supply Sources"
-      signedIn={(tenant, role) => <SupplyHub tenant={tenant} role={role} />}
+      signedIn={(tenant, role, desk) => <SupplyHub tenant={tenant} role={role} desk={desk} />}
     />
   );
 }

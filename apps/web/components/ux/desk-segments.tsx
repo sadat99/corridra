@@ -11,6 +11,7 @@ import { useSyncExternalStore, type ReactNode } from 'react';
 import { subscribeToHash } from '../../lib/address-store';
 import { sectionForSlug } from '../../lib/operator-urls';
 import {
+  deskOwnPages,
   deskPattern,
   deskSegmentsFor,
   isDeskPlace,
@@ -34,6 +35,8 @@ export function useDeskPlace(place: DeskPlaceId): DeskPlaceId {
     () => '',
   );
   const section = currentTeamSection(pathname, hash, sectionForSlug);
+  // A page of its own (the Inbox, a Supply page) is the place its server named: its address names no section.
+  if (Object.hasOwn(deskOwnPages, place)) return place;
   if (section) return isDeskPlace(section) ? section : place;
   // No `#` part and no section word: the workspace home, or a page of its own that named its place.
   return pathname === '/operator' ? 'home' : place;

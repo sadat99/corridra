@@ -4,11 +4,20 @@
 // exists; nothing here adds, renames or removes an address. Navigation is a convenience only: a segment is
 // listed for a role that may open its place, and the server still decides. Pure, so it is tested without a browser.
 import { workspaceSections } from '../workspace-navigation';
-import { teamSectionHref } from './shells';
+import { teamSectionHref, workspaceQuery } from './shells';
 
 type SectionId = (typeof workspaceSections)[number]['id'];
-/** A place of the team desk: the workspace home, a workspace section or the owner page. */
-export type DeskPlaceId = SectionId | 'home' | 'owner';
+/** A team page that is not one of the seventeen places and has its own address: the Inbox and the Supply pages. */
+export const deskOwnPages = {
+  inbox: '/operator/inbox',
+  supply: '/operator/supply',
+  'supply-dnc': '/operator/supply/do-not-contact',
+  'supply-mission': '/operator/supply',
+  'supply-candidate': '/operator/supply',
+} as const;
+export type DeskOwnPageId = keyof typeof deskOwnPages;
+/** A place of the team desk: the workspace home, a workspace section, the owner page or a page of its own. */
+export type DeskPlaceId = SectionId | 'home' | 'owner' | DeskOwnPageId;
 export type DeskGroupKey = 'companies' | 'status' | 'team' | 'settings';
 export type DeskSegment = { id: DeskPlaceId; label: string };
 
@@ -101,6 +110,26 @@ const places: Record<DeskPlaceId, { title?: string; purpose: string }> = {
     purpose: 'Readiness reviews, budgets, documents and effort records for each route.',
   },
   owner: { purpose: 'What is blocked, what is still open and which features are switched on.' },
+  inbox: {
+    title: 'Inbox',
+    purpose: 'Problem reports, erasure requests, programme applications and helper interest.',
+  },
+  supply: {
+    title: 'Supply Sources',
+    purpose: 'Where candidate companies come from, and the rules each source follows.',
+  },
+  'supply-dnc': {
+    title: 'Do Not Contact',
+    purpose: 'The companies the team must not contact, and the reason for each block.',
+  },
+  'supply-mission': {
+    title: 'Supply Candidates',
+    purpose: 'The candidate companies found for one mission, each with its source.',
+  },
+  'supply-candidate': {
+    title: 'Candidate',
+    purpose: 'One candidate company with its source, its review and its match.',
+  },
 };
 
 export function isDeskPlace(id: string): id is DeskPlaceId {
@@ -136,6 +165,8 @@ export function deskPattern(place: DeskPlaceId): {
 export function deskPlaceAllowed(place: DeskPlaceId, role: string | null): boolean {
   if (place === 'home') return true;
   if (place === 'owner') return role === 'owner' || role === 'admin';
+  // A page of its own is in no group, so it is never a segment: its own page and its routes decide.
+  if (Object.hasOwn(deskOwnPages, place)) return false;
   const roles = workspaceSections.find((section) => section.id === place)?.roles as
     readonly string[] | undefined;
   return !!roles?.includes(role ?? 'viewer');
@@ -144,6 +175,8 @@ export function deskPlaceAllowed(place: DeskPlaceId, role: string | null): boole
 /** The address of a place, exactly as the menu builds it; the chosen workspace is kept. */
 export function deskPlaceHref(place: DeskPlaceId, urls: boolean, workspace = ''): string {
   if (place === 'owner') return '/operator/owner';
+  if (Object.hasOwn(deskOwnPages, place))
+    return deskOwnPages[place as DeskOwnPageId] + workspaceQuery(workspace);
   return teamSectionHref(place === 'home' ? undefined : place, urls, workspace);
 }
 

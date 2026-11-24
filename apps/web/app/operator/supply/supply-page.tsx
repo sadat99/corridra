@@ -4,12 +4,15 @@ import { notFound, redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { TeamContextPublisher } from '../../../components/ux/team-context-publisher';
-import { deskFrameClass } from '../../../components/ux/desk-frame';
+import { deskFrame } from '../../../components/ux/desk-frame';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
+import type { DeskOwnPageId } from '../../../lib/ux/page-pattern';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 import { operatorSignInPath } from '../../../lib/workspace-navigation';
+import { OperatorFlags } from '../operator-flags';
 import { SupplyModeLine } from './supply-ui';
+import '../operator-overview.css';
 import './supply.css';
 
 /**
@@ -20,12 +23,16 @@ import './supply.css';
 export async function SupplyPage({
   requested,
   title,
+  place = 'supply',
   signedIn,
 }: {
   /** The `workspace` of the address, when the person chose one. */
   requested?: string;
   title: string;
-  signedIn: (tenant: string, role: string) => ReactNode;
+  /** Team desk v4.1: which Supply page this is, for the purpose line under the title. The title stays the page's own. */
+  place?: Exclude<DeskOwnPageId, 'inbox'>;
+  /** `desk` is true when the page is drawn with the team desk v4.1 header. */
+  signedIn: (tenant: string, role: string, desk: boolean) => ReactNode;
 }) {
   if (!uxSwitchOn('CORRIDRA_SUPPLY_SOURCES')) notFound();
   // Team desk v4.1: no label above the title. Off, the header is as it was.
@@ -59,11 +66,23 @@ export async function SupplyPage({
         </a>
       </WorkspaceShell>
     );
+  // Team desk v4.1 (unit D19): the shared header. The title as it was, one purpose line under it, no label above.
+  const frame = deskV41
+    ? deskFrame({ place, urls: uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS'), ownerPage: false, title })
+    : null;
   return (
-    <WorkspaceShell eyebrow={eyebrow} title={title} className={deskV41 ? deskFrameClass : ''}>
+    <WorkspaceShell
+      eyebrow={eyebrow}
+      title={frame?.title ?? title}
+      lead={frame?.lead}
+      className={frame ? 'ux-operator-home ' + frame.className : ''}
+    >
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
       <SupplyModeLine real={realUseEnabled()} />
-      {signedIn(tenant.id, tenant.role)}
+      {/* The client screens read the switch from here (a country shows its mark and name with it on). */}
+      <OperatorFlags replyReview={false} supplySources teamDeskV41={deskV41}>
+        {signedIn(tenant.id, tenant.role, deskV41)}
+      </OperatorFlags>
     </WorkspaceShell>
   );
 }

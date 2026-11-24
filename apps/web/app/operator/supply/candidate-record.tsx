@@ -31,6 +31,7 @@ import {
   useLoad,
   useScreenState,
 } from './supply-ui';
+import { CountryName } from '../country-name';
 
 type Detail = Candidate & {
   websiteHost: string | null;
@@ -315,7 +316,9 @@ export function CandidateRecord({
     <dl className="supply-facts">
       <div>
         <dt>Country</dt>
-        <dd>{detail.country}</dd>
+        <dd>
+          <CountryName code={detail.country} />
+        </dd>
       </div>
       <div>
         <dt>Website host</dt>
