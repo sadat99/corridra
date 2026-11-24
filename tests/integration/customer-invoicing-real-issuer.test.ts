@@ -480,7 +480,18 @@ test('a made-up mark on the tax rate is cleared by one owner save, which writes 
     )
   ).rows[0].payload as Record<string, unknown>;
   expect(event).toMatchObject({ version: 7, changedFields: ['gstRateBps'], madeupFieldsLeft: 0 });
-  expect(JSON.stringify(event)).not.toMatch(/900|700/);
+  // The initiator id is a random UUID and can itself contain "900" or "700", so it is checked on its own and
+  // left out of the search for a rate. It is the only id the payload holds.
+  const { initiator_id: initiator, ...carried } = event;
+  expect(initiator).toBe(s.f.users.owner.id);
+  expect(Object.keys(carried).sort()).toEqual([
+    'changedFields',
+    'initiator_kind',
+    'madeupFieldsLeft',
+    'synthetic',
+    'version',
+  ]);
+  expect(JSON.stringify(carried)).not.toMatch(/900|700/);
 });
 
 test('with the tax rate written by the owner save, D3 no longer refuses a real invoice', async () => {

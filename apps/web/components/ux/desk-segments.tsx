@@ -43,8 +43,20 @@ export function DeskTitle({ place }: { place: DeskPlaceId }) {
   return deskPattern(useDeskPlace(place)).title;
 }
 
+/**
+ * The header's primary-action slot for a workspace section whose one primary action needs the section's loaded
+ * data (unit D11: "Propose Meeting"). The section draws its button into this element; it stays empty, and takes
+ * no room, for a role or a state that has no such action.
+ */
+export const deskPrimarySlotId = 'ux-desk-primary-slot';
+const slotPlaces: readonly DeskPlaceId[] = ['workspace-meetings'];
+
 export function DeskLead({ place, primary }: { place: DeskPlaceId; primary?: ReactNode }) {
-  return <PageFrameLead helper={deskPattern(useDeskPlace(place)).purpose} primary={primary} />;
+  const current = useDeskPlace(place);
+  const slot = slotPlaces.includes(current) ? (
+    <div id={deskPrimarySlotId} className="ux-desk-primary-slot" />
+  ) : undefined;
+  return <PageFrameLead helper={deskPattern(current).purpose} primary={primary ?? slot} />;
 }
 
 export function TeamPageSegments({
