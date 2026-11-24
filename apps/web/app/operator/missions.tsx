@@ -2,6 +2,7 @@
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench, useFormChangeGuard } from '../../components/operator-workbench';
+import { useOperatorFlags } from './operator-flags';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
 import { StatusChip } from '../../components/ux/status-chip';
@@ -439,6 +440,7 @@ export function Missions({
   moveRecords?: boolean;
 }) {
   const { ref: formRootRef, onChangeCapture, onResetCapture, confirmChange } = useFormChangeGuard();
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [queue, setQueue] = useState<Queue | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -547,7 +549,7 @@ export function Missions({
       onResetCapture={onResetCapture}
     >
       <div className="section-heading">
-        <p className="label">OPS HOME</p>
+        {deskV41 ? null : <p className="label">OPS HOME</p>}
         <h2>Mission review queue</h2>
         <p>Start with the request. Give each mission an owner and a clear next step.</p>
       </div>
