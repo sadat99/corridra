@@ -183,7 +183,17 @@ describe('D-032 and the front door lines (added by the Guardian, 23 Nov 2026)', 
   it('calls the unsent request "your request" in English and keeps the key', async () => {
     const { translate } = await load('lib/i18n/messages.ts');
     expect(translate('en', 'move.card.draft.object')).toBe('your request');
-    const source = read('apps/web/lib/i18n/messages.ts');
+    // Since unit L0 each language keeps its words in its own file: English once here, each of the six once there.
+    const source = [
+      'apps/web/lib/i18n/messages.ts',
+      ...['bn', 'zh', 'es', 'ar', 'fr', 'de'].map((code) => `apps/web/lib/i18n/lang/${code}.ts`),
+    ]
+      .map((path) => {
+        const text = read(path);
+        expect(text.match(/'move\.card\.draft\.object':/g), path).toHaveLength(1);
+        return text;
+      })
+      .join('\n');
     expect(source.match(/'move\.card\.draft\.object':/g)).toHaveLength(7);
     expect(source).not.toContain("'your draft request'");
   });
