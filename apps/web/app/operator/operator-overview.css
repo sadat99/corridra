@@ -1834,6 +1834,198 @@
   }
 }
 
+/* Team desk v4.1 Today (CORRIDRA_UX_TEAM_DESK_V41, owner approved 24 Nov 2026). "Needs your decision" is one bounded
+   region on the desk table above; "Waiting on others" is a closed row under it. The page has one cobalt button: Review
+   in the first row that needs a decision. Region heading 18 px at 600, the reference 14 px in the mono face, every
+   Review and Open 44 px tall. */
+@media (max-width: 767.98px) {
+  .ux-operator-home .ux-today41 {
+    gap: var(--space-6);
+  }
+}
+.ux-operator-home .ux-today41 .ux-today41-region {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  box-shadow: none;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.ux-operator-home .ux-today41 .ux-today41-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  min-height: 3.5rem;
+  padding: 0 var(--space-4);
+}
+.ux-operator-home .ux-today41 .ux-today41-head h3 {
+  margin: 0;
+  font: 600 var(--text-lg) / 1.3 var(--font-ui);
+}
+.ux-operator-home .ux-today41 .ux-segments {
+  padding: 0 var(--space-4) var(--space-3);
+}
+.ux-operator-home .ux-today41 .ux-desk-open-missions {
+  flex-wrap: wrap;
+  min-width: 0;
+  margin: 0;
+}
+.ux-operator-home
+  .ux-today41
+  .ux-desk-fold-body
+  :is(.ux-today-more, .ux-needs-empty, .ux-today41-lead) {
+  margin: 0;
+  padding: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-operator-home .ux-today41 .ux-desk-fold-body .ux-needs-more {
+  margin: 0;
+  justify-self: start;
+}
+.ux-today41-table .ux-today41-reference {
+  display: block;
+  color: var(--text-2);
+  font: 400 var(--text-sm) / 1.3 var(--font-mono);
+}
+.ux-today41-table .ux-desk-due {
+  white-space: normal;
+}
+.ux-today41-table .ux-desk-due .ux-desk-chip {
+  margin-inline-end: var(--space-2);
+}
+.ux-today41-table .ux-today41-when {
+  display: inline-block;
+  margin-block: var(--space-1) 0;
+  margin-inline-end: var(--space-2);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-today41-table .ux-desk-due time {
+  display: inline;
+}
+.ux-today41-table .ux-today41-place {
+  display: block;
+}
+.ux-operator-home .ux-today41-table a.ux-today41-review {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  font-size: var(--text-base);
+}
+.ux-operator-home .ux-today41-table a.primary-link.ux-today41-review {
+  padding: 0 var(--space-4);
+  color: var(--paper);
+}
+.ux-operator-home .ux-today41 .ux-desk-part-failure {
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.ux-operator-home .ux-today41 .ux-today41-queues {
+  border-width: 1px 0 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+.ux-operator-home .ux-today41 .ux-today41-queues li {
+  margin: 0;
+  box-shadow: 0 0 0 1px var(--line);
+}
+/* The meetings tile holds two counts for one place: side by side, each a number over its words, one link. */
+.ux-operator-home .ux-today41 .ux-today41-queues a.ux-today41-pairs {
+  flex-flow: row wrap;
+  gap: var(--space-1) var(--space-6);
+}
+.ux-operator-home .ux-today41 .ux-today41-queues .ux-today41-pair {
+  display: flex;
+  flex: 1 1 8rem;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+/* The queue tiles follow the region's own width, in rem so larger text is counted: two to a row in a narrow region,
+   one to a row in a very narrow one or with large text. */
+@container (max-width: 48rem) {
+  .ux-operator-home .ux-today41 .ux-today41-queues li {
+    flex-basis: calc(50% - 1px);
+  }
+}
+@container (max-width: 20.5rem) {
+  .ux-operator-home .ux-today41 .ux-today41-queues li {
+    flex-basis: 100%;
+  }
+}
+/* From 768 px the pill and its date share one line and the column heading names the date. */
+@media (min-width: 768px) {
+  /* Blocks 24 px apart at every width, so the page as it opens fits one desktop screen. */
+  .ux-operator-home .ux-today41 {
+    gap: var(--space-6);
+  }
+  .ux-today41-table .ux-today41-when {
+    display: inline;
+    margin: 0;
+  }
+  .ux-today41-table .ux-today41-when-word {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+/* Up to 768 px a row stacks: what it is on the first line, then the pill and date beside its link. The table keeps
+   its roles in the markup, so a screen reader still reads rows and cells. */
+@media (max-width: 767.98px) {
+  .ux-today41-table,
+  .ux-today41-table tbody {
+    display: block;
+  }
+  .ux-today41-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ux-today41-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    height: auto;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ux-today41-table tbody tr[hidden] {
+    display: none;
+  }
+  .ux-today41-table tbody :is(th, td) {
+    border-bottom: 0;
+    padding-block: var(--space-1);
+  }
+  .ux-today41-table tbody th {
+    grid-column: 1 / -1;
+  }
+}
+/* Under 22.5 rem (360 px, or less room with larger text) the link takes its own line under the date. A 390 px phone
+   keeps the link beside the date, which keeps the page inside two screens. */
+@media (max-width: 22.49rem) {
+  .ux-today41-table tbody td {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+@media (forced-colors: active) {
+  .ux-operator-home .ux-today41 .ux-today41-region {
+    border-color: CanvasText;
+  }
+}
+
 /* Signal Desk density (AC/1): the Delivery list reads as a dense table with a quiet header fill, exceptions stay in the
    columns they already have. Scoped to the workspace body; column order, headers and row actions are unchanged. */
 /* Staff page budget (L21, owner 13 November 2026: desktop at most one screen, phone at most two, disclosures closed).
