@@ -132,7 +132,7 @@ test('the screen switch is off unless it is exactly "true"', () => {
   expect(invoiceIssuerEnabled({ CORRIDRA_INVOICE_ISSUER: 'true' } as never)).toBe(true);
 });
 
-test('installing adds the third migration, is repeatable and leaves the control closed', async () => {
+test('installing adds the issuer migrations, is repeatable and leaves the control closed', async () => {
   await migrateCustomerInvoicingReal(s.f.owner);
   expect(
     (
@@ -144,6 +144,7 @@ test('installing adds the third migration, is repeatable and leaves the control 
     '0001_real_invoicing.sql',
     '0002_payment_approval_and_reversal.sql',
     '0003_owner_issuer_details.sql',
+    '0004_issuer_tax_rate.sql',
   ]);
   expect((await s.f.owner.query('SELECT customer_private.real_invoicing_open() o')).rows[0].o).toBe(
     false,
@@ -161,6 +162,15 @@ test('before any save the owner sees which details are missing, never a made-up 
     realInvoicesOpen: false,
     synthetic: false,
     fixed: { country: 'SG', taxLabel: 'GST', gstRateBps: 900, paymentTermsDays: 30 },
+  });
+  // The rate each GST answer writes, shown on the Check And Save step before the save (ADR-092 addendum).
+  expect(view.fixed).toEqual({
+    country: 'SG',
+    taxLabel: 'GST',
+    gstRateBps: 900,
+    paymentTermsDays: 30,
+    rateWhenRegisteredBps: 900,
+    rateWhenNotRegisteredBps: 0,
   });
   expect([...view.madeupFields].sort()).toEqual(
     [...defaultRealInvoicingEntity.madeupFields].sort(),
@@ -221,6 +231,8 @@ test('incomplete, made-up or unsafe details are refused in the service and in th
     { paymentInstructions: 'Pay by bank transfer to Corridra Pte Ltd, account 000-000000-0' },
     { country: 'BD' },
     { madeupFields: [] },
+    // The tax rate is derived from the GST answer, never typed or sent.
+    { gstRateBps: 900 },
   ];
   for (const over of bad)
     await expect(save(over), JSON.stringify(over)).rejects.toMatchObject({ status: 400 });
@@ -247,6 +259,7 @@ test('incomplete, made-up or unsafe details are refused in the service and in th
   for (const over of bad.slice(0, 16))
     await expect(direct(over), JSON.stringify(over)).rejects.toMatchObject({ code: '23514' });
   await expect(direct({ extra: 'x' })).rejects.toMatchObject({ code: '23514' });
+  await expect(direct({ gstRateBps: 900 })).rejects.toMatchObject({ code: '23514' });
   expect(await entities()).toHaveLength(1);
 });
 
@@ -317,10 +330,11 @@ test('a complete save by the owner writes one new version with no made-up field 
     placeholder_fields: [],
     owner_entered_by: s.f.users.owner.id,
     executor_id: s.f.users.owner.id,
+    // GST registered in Singapore: the standard rate, written in the same version.
+    gst_rate_bps: 900,
     // What the screen does not ask for is carried from the version before.
     country: before[0]!.country,
     tax_label: before[0]!.tax_label,
-    gst_rate_bps: before[0]!.gst_rate_bps,
     payment_terms_days: before[0]!.payment_terms_days,
     approver_principal_id: before[0]!.approver_principal_id,
   });
@@ -418,12 +432,13 @@ test('D3 lifts once the owner has saved complete details', async () => {
   ).rejects.not.toMatchObject({ code: 'MADEUP_SUPPLIER_DETAILS' });
 });
 
-test('a made-up field the screen does not ask for is kept marked, so the details stay incomplete', async () => {
-  // The install path cannot mark the tax rate, so the fixture writes that version directly as the schema owner.
+test('a made-up mark on the tax rate is cleared by one owner save, which writes the rate from the GST answer', async () => {
+  // The install path cannot mark the tax rate, so the fixture writes that version directly as the schema owner, with a
+  // rate that is not the standard one.
   await s.f.owner.query(
     `INSERT INTO customer_private.real_invoicing_entity(version,legal_name,address,country,uen,gst_registered,gst_registration_no,tax_label,
       gst_rate_bps,payment_terms_days,payment_instructions,finance_label,approver_principal_id,placeholder_fields,executor_id,reason)
-     SELECT 6,legal_name,address,country,uen,gst_registered,gst_registration_no,tax_label,gst_rate_bps,payment_terms_days,
+     SELECT 6,legal_name,address,country,uen,gst_registered,gst_registration_no,tax_label,700,payment_terms_days,
       payment_instructions,finance_label,approver_principal_id,'{gst_rate_bps}',executor_id,'Fixture: the tax rate marked as made up'
      FROM customer_private.real_invoicing_entity WHERE version=5`,
   );
@@ -431,20 +446,45 @@ test('a made-up field the screen does not ask for is kept marked, so the details
     version: 6,
     complete: false,
     enteredByOwner: false,
+    madeupFields: ['gst_rate_bps'],
   });
+  // D3 refuses while the mark is there.
+  const staff = new CustomerRealInvoicingStaffService(s.f.runtime, () => true);
+  expect(madeupSupplierFields((await staff.pending(owner())).supplier)).toEqual(['gst_rate_bps']);
+  const before = await entities();
   const saved = await save();
   expect(saved).toMatchObject({
     state: 'saved',
     version: 7,
-    complete: false,
-    madeupFields: ['gst_rate_bps'],
+    complete: true,
+    madeupFields: [],
+    changedFields: ['gstRateBps'],
   });
-  expect(await latest()).toMatchObject({ placeholder_fields: ['gst_rate_bps'] });
+  const after = await entities();
+  // One new version; every earlier one, the marked one included, is exactly what it was.
+  expect(after).toHaveLength(before.length + 1);
+  expect(after.slice(0, -1)).toEqual(before);
+  expect(after.at(-1)).toMatchObject({
+    version: 7,
+    gst_registered: true,
+    gst_rate_bps: 900,
+    placeholder_fields: [],
+    owner_entered_by: s.f.users.owner.id,
+  });
+  expect(await service.view(owner())).toMatchObject({ version: 7, complete: true });
+  // The event names the field and carries no rate.
+  const event = (
+    await s.f.owner.query(
+      "SELECT payload FROM app.domain_event WHERE type='customer.real_invoicing.issuer_saved' AND aggregate_version=7",
+    )
+  ).rows[0].payload as Record<string, unknown>;
+  expect(event).toMatchObject({ version: 7, changedFields: ['gstRateBps'], madeupFieldsLeft: 0 });
+  expect(JSON.stringify(event)).not.toMatch(/900|700/);
 });
 
-test('with the tax rate still marked, D3 keeps refusing a real invoice after the owner save', async () => {
+test('with the tax rate written by the owner save, D3 no longer refuses a real invoice', async () => {
   const staff = new CustomerRealInvoicingStaffService(s.f.runtime, () => true);
-  expect(madeupSupplierFields((await staff.pending(owner())).supplier)).toEqual(['gst_rate_bps']);
+  expect(madeupSupplierFields((await staff.pending(owner())).supplier)).toEqual([]);
   await expect(
     staff.command(owner(), {
       action: 'prepare_invoice',
@@ -455,7 +495,7 @@ test('with the tax rate still marked, D3 keeps refusing a real invoice after the
       billToName: 'Dhaka Imports Limited',
       billToAddress: 'House 12, Road 5, Gulshan, Dhaka 1212, Bangladesh',
     }),
-  ).rejects.toMatchObject({ status: 409, code: 'MADEUP_SUPPLIER_DETAILS' });
+  ).rejects.not.toMatchObject({ code: 'MADEUP_SUPPLIER_DETAILS' });
 });
 
 test('the protected secret path of ADR-064 still writes a version after an owner save, and the owner can save over it', async () => {
@@ -531,6 +571,78 @@ test('the owner of any other real workspace is refused: the issuer record belong
   await expect(service.view(owner())).resolves.toMatchObject({ version: 9 });
 });
 
+test('an issuer that is not GST registered is saved with a rate of 0, and registering again restores the standard rate', async () => {
+  const off = await save({ gstRegistered: false, gstRegistrationNo: null });
+  expect(off).toMatchObject({ state: 'saved', version: 10, complete: true, madeupFields: [] });
+  expect([...off.changedFields].sort()).toEqual([
+    'gstRateBps',
+    'gstRegistered',
+    'gstRegistrationNo',
+  ]);
+  expect(await latest()).toMatchObject({
+    version: 10,
+    gst_registered: false,
+    gst_registration_no: null,
+    gst_rate_bps: 0,
+    placeholder_fields: [],
+  });
+  // The same answer again writes nothing.
+  expect(await save({ gstRegistered: false, gstRegistrationNo: null })).toMatchObject({
+    state: 'unchanged',
+    version: 10,
+  });
+  const on = await save();
+  expect(on).toMatchObject({ state: 'saved', version: 11, complete: true });
+  expect(await latest()).toMatchObject({ version: 11, gst_registered: true, gst_rate_bps: 900 });
+});
+
+test('an issuer outside Singapore GST keeps its rate and its mark', async () => {
+  // The fixture writes a version for another country as the schema owner, with the rate marked made up.
+  await s.f.owner.query(
+    `INSERT INTO customer_private.real_invoicing_entity(version,legal_name,address,country,uen,gst_registered,gst_registration_no,tax_label,
+      gst_rate_bps,payment_terms_days,payment_instructions,finance_label,approver_principal_id,placeholder_fields,executor_id,reason)
+     SELECT 12,legal_name,address,'MY',uen,gst_registered,gst_registration_no,'SST',800,payment_terms_days,
+      payment_instructions,finance_label,approver_principal_id,'{gst_rate_bps}',executor_id,'Fixture: an issuer outside Singapore GST'
+     FROM customer_private.real_invoicing_entity WHERE version=11`,
+  );
+  expect((await service.view(owner())).fixed).toMatchObject({
+    rateWhenRegisteredBps: null,
+    rateWhenNotRegisteredBps: null,
+  });
+  expect(await save()).toMatchObject({
+    state: 'saved',
+    version: 13,
+    complete: false,
+    madeupFields: ['gst_rate_bps'],
+  });
+  expect(await latest()).toMatchObject({
+    version: 13,
+    country: 'MY',
+    gst_rate_bps: 800,
+    placeholder_fields: ['gst_rate_bps'],
+  });
+  // Back to the Singapore issuer by the secret path of ADR-064, so the tests below read a complete record.
+  await setSupplierFromSecret(s.f.owner, {
+    raw: JSON.stringify({
+      legalName: real.legalName,
+      address: real.address,
+      country: 'SG',
+      uen: real.uen,
+      gstRegistered: true,
+      gstRegistrationNo: real.gstRegistrationNo,
+      taxLabel: 'GST',
+      gstRateBps: 900,
+      paymentTermsDays: 14,
+      paymentInstructions: real.paymentInstructions,
+      financeLabel: real.financeLabel,
+      approverEmail: null,
+      madeupFields: [],
+    }),
+    reason: 'Fixture: the Singapore issuer restored from the protected secret',
+  });
+  expect(await latest()).toMatchObject({ version: 14, country: 'SG', placeholder_fields: [] });
+});
+
 test('the runtime and auth logins reach no table and no private function, and history cannot be rewritten', async () => {
   for (const pool of [s.f.runtime, s.f.auth]) {
     await expect(
@@ -542,6 +654,11 @@ test('the runtime and auth logins reach no table and no private function, and hi
     await expect(
       pool.query(
         'SELECT customer_private.real_invoicing_issuer_madeup(e) FROM customer_private.real_invoicing_entity e',
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      pool.query(
+        'SELECT customer_private.real_invoicing_issuer_rate(e,true) FROM customer_private.real_invoicing_entity e',
       ),
     ).rejects.toMatchObject({ code: '42501' });
   }
@@ -579,6 +696,13 @@ test('the rollback file removes the screen functions and keeps every saved versi
       )
     ).rows[0],
   ).toEqual({ a: true, b: true, c: true });
+  expect(
+    (
+      await s.f.owner.query(
+        "SELECT to_regprocedure('customer_private.real_invoicing_issuer_rate(customer_private.real_invoicing_entity,boolean)') IS NULL gone",
+      )
+    ).rows[0].gone,
+  ).toBe(true);
   expect(await entities()).toEqual(before);
   expect(
     (
@@ -591,5 +715,5 @@ test('the rollback file removes the screen functions and keeps every saved versi
   await expect(service.view(owner())).rejects.toMatchObject({ status: 503 });
   // The staff side still works on the saved versions.
   const staff = new CustomerRealInvoicingStaffService(s.f.runtime, () => true);
-  expect((await staff.pending(owner())).supplier).toMatchObject({ version: 9 });
+  expect((await staff.pending(owner())).supplier).toMatchObject({ version: 14 });
 });
