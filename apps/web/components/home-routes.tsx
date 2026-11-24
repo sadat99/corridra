@@ -68,7 +68,7 @@ export const ctaWords: Record<Shown, MessageKey> = {
 };
 
 export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
-  const { t, locale, offered, pages } = useLanguage();
+  const { t } = useLanguage();
   const [shown, setShown] = useState<Shown>('none');
   const [opened, setOpened] = useState<RouteKey | null>(null);
   const [market, setMarket] = useState<MarketKey>('eu');
@@ -111,7 +111,6 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
   // The headline is the brand line until a door is chosen; then it is that route's own proposition (board 3c).
   const title = route ? t(key(`home.b3.hero.${route}.title`)) : t('home.title');
   const lead = route ? t(key(`home.b3.hero.${route}.sub`)) : t('home.tr.lead');
-  const draft = pages && locale !== 'en' && offered.some((o) => o.code === locale && o.draft);
   return (
     <>
       {/* UI/UX.v4.1 L4 (owner lock, 23 November 2026): the navy band holds the brand line, the headline and the lead,
@@ -123,11 +122,6 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
             <p className="tr-brandline">{route ? t('home.title') : t('home.eyebrow')}</p>
             <h1 id="home-title">{title}</h1>
             <p className="tr-lead">{lead}</p>
-            {draft ? (
-              <p className="tr-draft" lang="en" dir="ltr">
-                {t('home.b3.draft')}
-              </p>
-            ) : null}
           </div>
           {/* The identity mark, whole and never cropped; the name is written in the header, so it is decorative. */}
           <Image

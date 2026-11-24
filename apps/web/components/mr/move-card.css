@@ -50,3 +50,8 @@
     width: 100%;
   }
 }
+/* A long word in another language breaks inside the action instead of widening the page. */
+.mr-move-action {
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+}

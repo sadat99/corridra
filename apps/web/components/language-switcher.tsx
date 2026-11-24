@@ -34,7 +34,7 @@ export function LanguageSwitcher() {
         <span lang={localeMeta[locale].html}>{localeMeta[locale].name}</span>
       </summary>
       <ul>
-        {offered.map(({ code, draft }) => (
+        {offered.map(({ code }) => (
           <li key={code}>
             <button
               type="button"
@@ -47,7 +47,6 @@ export function LanguageSwitcher() {
               }}
             >
               {localeMeta[code].name}
-              {draft && <small> ({t('language.draft')})</small>}
             </button>
           </li>
         ))}

@@ -181,7 +181,7 @@ export const formEn = {
   'form.check.code': 'Receipt code',
   'form.check.submit': 'Check Status and Replies',
   'form.check.status': 'Status: {status}',
-  'form.check.noReply': 'No operator reply yet.',
+  'form.check.noReply': 'No reply from the Corridra team yet.',
 
   'form.side.realLabel': 'Your request',
   'form.side.sampleLabel': 'Your example request',

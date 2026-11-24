@@ -1558,11 +1558,6 @@
 .tr-hero-head .tr-lead {
   max-inline-size: 38rem;
 }
-.tr-draft {
-  margin: 0;
-  color: var(--on-brand);
-  font-size: var(--text-sm);
-}
 .tr-doors legend,
 .tr-doors-sub {
   inline-size: 100%;

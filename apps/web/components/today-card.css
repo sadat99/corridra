@@ -72,3 +72,10 @@
   clip: auto;
   white-space: normal;
 }
+/* A long word in another language (a 38 letter German compound) breaks inside the card instead of widening the page. */
+.today-card > *,
+.today-head > * {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+}

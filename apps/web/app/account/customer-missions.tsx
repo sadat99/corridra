@@ -26,7 +26,7 @@ export function CustomerMissions({ beforeSend = false }: { beforeSend?: boolean 
         u.pathname !== '/client' ||
         !/^#[a-f0-9]{64}$/.test(u.hash)
       )
-        throw Error('Use the complete private client link supplied by your operator.');
+        throw Error('Use the complete private client link supplied by the Corridra team.');
       const token = u.hash.slice(1);
       if (!missions.some((m) => m.token === token))
         setMissions((m) => [...m, { token, label: `Mission invitation ${m.length + 1}` }]);
