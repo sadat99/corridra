@@ -1178,6 +1178,30 @@
       "notes": ""
     },
     {
+      "route": "/operator/inbox",
+      "file": "apps/web/app/operator/inbox/page.tsx",
+      "wave": "D",
+      "decisions": {
+        "L1": "built",
+        "L2": "n/a",
+        "L3": "built",
+        "L4": "n/a",
+        "L5": "n/a",
+        "L6": "n/a",
+        "L7": "n/a",
+        "L8": "n/a",
+        "L9": "n/a",
+        "L10": "n/a"
+      },
+      "evidence": [
+        "tests/operator/p5c-desk.spec.ts",
+        "tests/integration/p5c-settings-inbox-supply.test.ts",
+        "apps/web/app/operator/inbox/page.tsx",
+        "apps/web/app/operator/country-name.tsx"
+      ],
+      "notes": "Team desk v4.1 unit D18: one page for problem reports, erasure requests, programme applications and helper interest, one tab row, no primary action in the header (each list keeps its own Load control). L1: the country of a helper interest entry shows its mark and name. No choice rows (L2) and no fact with a source and date (L10). Behind CORRIDRA_UX_TEAM_DESK_V41 (off by default; off, the page is unchanged). Not verified: a signed-in pass on the live site; six-width screenshots are not in the repository."
+    },
+    {
       "route": "/operator/invoice-issuer",
       "file": "apps/web/app/operator/invoice-issuer/page.tsx",
       "wave": "D",
@@ -1334,76 +1358,93 @@
       "file": "apps/web/app/operator/supply/page.tsx",
       "wave": "D",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "built",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "not_started"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/operator/p5c-desk.spec.ts",
+        "tests/integration/p5c-settings-inbox-supply.test.ts",
+        "apps/web/app/operator/supply/supply-page.tsx"
+      ],
+      "notes": "Team desk v4.1 unit D19: the shared header (title, one purpose line, no label above). No place name is shown on the hub. L3: no primary action in the header; each step form keeps its one primary. L10: source details are shown without a source stamp; not built here. Behind CORRIDRA_UX_TEAM_DESK_V41 (off by default; off, the page is unchanged). Not verified: a signed-in pass on the live site; six-width screenshots are not in the repository."
     },
     {
       "route": "/operator/supply/do-not-contact",
       "file": "apps/web/app/operator/supply/do-not-contact/page.tsx",
       "wave": "D",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "built",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "n/a"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/operator/p5c-desk.spec.ts",
+        "tests/integration/p5c-settings-inbox-supply.test.ts",
+        "apps/web/app/operator/supply/supply-page.tsx"
+      ],
+      "notes": "Team desk v4.1 unit D19: the shared header with its own purpose line. No place name is shown in the list. Behind CORRIDRA_UX_TEAM_DESK_V41 (off by default; off, the page is unchanged). Not verified: a signed-in pass on the live site; six-width screenshots are not in the repository."
     },
     {
       "route": "/operator/supply/missions/[missionId]",
       "file": "apps/web/app/operator/supply/missions/[missionId]/page.tsx",
       "wave": "D",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "n/a",
+        "L2": "n/a",
+        "L3": "built",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "not_started"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/operator/p5c-desk.spec.ts",
+        "tests/integration/p5c-settings-inbox-supply.test.ts",
+        "apps/web/app/operator/supply/supply-page.tsx"
+      ],
+      "notes": "Team desk v4.1 unit D19: the shared header with its own purpose line. The candidate rows show no country. L10: the source of a candidate is written without a source stamp; not built here. Behind CORRIDRA_UX_TEAM_DESK_V41 (off by default; off, the page is unchanged). Not verified: a signed-in pass on the live site; six-width screenshots are not in the repository."
     },
     {
       "route": "/operator/supply/missions/[missionId]/candidates/[candidateId]",
       "file": "apps/web/app/operator/supply/missions/[missionId]/candidates/[candidateId]/page.tsx",
       "wave": "D",
       "decisions": {
-        "L1": "not_assessed",
-        "L2": "not_assessed",
-        "L3": "not_assessed",
+        "L1": "built",
+        "L2": "n/a",
+        "L3": "built",
         "L4": "n/a",
         "L5": "n/a",
         "L6": "n/a",
         "L7": "n/a",
         "L8": "n/a",
         "L9": "n/a",
-        "L10": "not_assessed"
+        "L10": "not_started"
       },
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "tests/operator/p5c-desk.spec.ts",
+        "tests/integration/p5c-settings-inbox-supply.test.ts",
+        "apps/web/app/operator/supply/supply-page.tsx",
+        "apps/web/app/operator/country-name.tsx"
+      ],
+      "notes": "Team desk v4.1 unit D19: the shared header with its own purpose line. L1: the country of the candidate shows its mark and name. L10: the source of the candidate is written without a source stamp; not built here. Behind CORRIDRA_UX_TEAM_DESK_V41 (off by default; off, the page is unchanged). Not verified: a signed-in pass on the live site; six-width screenshots are not in the repository."
     },
     {
       "route": "/operator/view-as/[role]",

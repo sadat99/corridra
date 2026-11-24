@@ -70,6 +70,8 @@ export async function startSupplyFixture(root = resolve('.')) {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css', '.woff2': 'empty' },
+    // The flag pictures are static files (a country shows its mark with team desk v4.1 on); they are served below.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
@@ -98,7 +100,10 @@ export async function startSupplyFixture(root = resolve('.')) {
   const componentCss = result.outputFiles.find((file) => file.path.endsWith('.css'))?.text ?? '';
   const server = createServer((req, res) => {
     const path = new URL(req.url!, 'http://fixture.invalid').pathname;
-    if (path.startsWith('/fonts/')) {
+    if (/^\/flags\/[a-z]+\.svg$/.test(path)) {
+      res.setHeader('content-type', 'image/svg+xml');
+      res.end(readFileSync(resolve('apps/web/public/flags', basename(path))));
+    } else if (path.startsWith('/fonts/')) {
       res.setHeader('content-type', 'font/woff2');
       res.end(readFileSync(resolve('apps/web/app/fonts', basename(path))));
     } else if (path === '/fixture.js') {

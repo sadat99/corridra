@@ -38,6 +38,7 @@ export const reservedOperatorSegments = [
   'problem-reports',
   'supply',
   'invoice-issuer',
+  'inbox',
 ] as const;
 
 /** The section id for an address word, or null. Exact match on a closed list; nothing is parsed. */

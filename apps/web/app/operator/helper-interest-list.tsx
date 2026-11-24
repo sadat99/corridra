@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { HelperInterestRow } from '@corridra/auth/helper-interest';
 import '../../components/problem-reports/problem-reports.css';
 import { whenWords } from '../account/workspace-lifecycle-client';
+import { CountryName } from './country-name';
 import {
   canReadHelperInterest,
   deleteHelperInterest,
@@ -109,7 +110,9 @@ function Panel({ tenant }: { tenant: string }) {
                   <p className="pr-facts">
                     <strong>{row.name}</strong>
                     <span>{row.email}</span>
-                    <span className="ux-badge">{row.country}</span>
+                    <span className="ux-badge">
+                      <CountryName code={row.country} />
+                    </span>
                     <time dateTime={row.createdAt}>{whenWords(row.createdAt)}</time>
                   </p>
                   <dl className="pr-summary">

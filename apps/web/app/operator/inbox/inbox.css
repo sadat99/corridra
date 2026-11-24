@@ -1,0 +1,7 @@
+/* Team desk v4.1, unit D18: the Inbox page. The lists keep their own styles; this only spaces them under the
+   one tab row. Tokens only. */
+.inbox-lists > .ux-subtabs-panel:not([hidden]) {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
