@@ -9,6 +9,7 @@ import { translate } from '../../apps/web/lib/i18n/messages';
 // title is never touched. The real SiteTitle is mounted under the real LanguageProvider with every language offered.
 let server: Server, origin: string;
 const english = 'Corridra | Cross-border market access';
+const ownTitle = 'How It Works | Corridra';
 
 test.beforeEach(({}, info) => {
   test.skip(info.project.name !== 'desktop', 'one width is enough for the tab title');
@@ -47,7 +48,8 @@ test.beforeAll(async () => {
       res.setHeader('content-type', 'text/javascript');
       res.end(bundle);
     } else {
-      const title = url.searchParams.get('title') ?? english;
+      // A fixed choice, never text from the address: nothing a request sends is written into the page.
+      const title = url.searchParams.get('page') === 'own' ? ownTitle : english;
       res.setHeader('content-type', 'text/html');
       res.end(
         `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${title}</title></head><body><main><h1>Title fixture</h1><div id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
@@ -103,7 +105,7 @@ test('a remembered language is applied on load, and the title element is kept, n
 });
 
 test('a page with its own title keeps it in every language', async ({ page }) => {
-  await page.goto(`${origin}/?title=${encodeURIComponent('How It Works | Corridra')}`);
+  await page.goto(`${origin}/?page=own`);
   await choose(page, 'de');
   await expect(page.locator('#locale')).toHaveText('de');
   await expect(page).toHaveTitle('How It Works | Corridra');
