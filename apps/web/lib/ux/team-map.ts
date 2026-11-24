@@ -467,7 +467,6 @@ export function menuItemHref(
   role: string | null,
   urls: boolean,
   workspace = '',
-  options: MenuOptions = {},
 ): string {
   // Unit D18: the Inbox is a page of its own. It opens on its first list; the chosen workspace is kept.
   if (item.special === 'inbox') return inboxHref(workspace);

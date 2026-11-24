@@ -208,14 +208,13 @@ describe('Inbox (decision 5)', () => {
       expect(menuGroupsFor(role).some((group) => group.items.some((e) => e.key === 'inbox'))).toBe(
         canTriage(role),
       );
-    // One address, whatever the section addresses and whatever is offered: the page opens on its first list.
-    for (const urls of [true, false])
-      for (const options of [{}, { problemReports: true }, { problemReports: false }]) {
-        expect(menuItemHref(item('inbox'), 'owner', urls, workspace, options)).toBe(
-          `/operator/inbox?workspace=${workspace}`,
-        );
-        expect(menuItemHref(item('inbox'), 'admin', urls, '', options)).toBe('/operator/inbox');
-      }
+    // One address, whatever the section addresses: the page opens on its first list.
+    for (const urls of [true, false]) {
+      expect(menuItemHref(item('inbox'), 'owner', urls, workspace)).toBe(
+        `/operator/inbox?workspace=${workspace}`,
+      );
+      expect(menuItemHref(item('inbox'), 'admin', urls)).toBe('/operator/inbox');
+    }
     // The tab that led the queues inside Settings is still named, so an old link to it lights Inbox.
     expect(inboxLeadTab({ problemReports: true })).toBe('settings-reports');
     expect(inboxLeadTab()).toBe('settings-erasure');

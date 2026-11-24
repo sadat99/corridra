@@ -245,7 +245,7 @@ function TeamMenuV3({
             <ul>
               {group.items.map((item) => {
                 const { text, words } = labelFor(item.key, item.label, language);
-                const target = menuItemHref(item, role, urls, tenant, options);
+                const target = menuItemHref(item, role, urls, tenant);
                 const lead = menuPlacesFor(item, role)[0]?.id;
                 // "page" only on the item whose own address is open; "true" when a segment, another queue tab or a
                 // page inside it is open.
