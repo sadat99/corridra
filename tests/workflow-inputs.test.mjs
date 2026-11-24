@@ -107,6 +107,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'sourcing_workflow_enable',
     'sourcing_workflow_pause',
     'ai_model_policy_real',
+    'ai_real_install',
+    'ai_real_enable',
+    'ai_real_pause',
     'data_cleanup_inventory',
     'real_intake_owner_apply',
     'qa_data_retire',
@@ -160,6 +163,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['sourcing_workflow_enable', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_pause', u, u, u, u, u, u, u, u],
     ['ai_model_policy_real', u, u, u, u, u, u, u, u],
+    ['ai_real_install', u, u, u, u, u, u, u, u],
+    ['ai_real_enable', u, u, u, u, u, u, u, u],
+    ['ai_real_pause', u, u, u, u, u, u, u, u],
     ['data_cleanup_inventory', u, u, u, u, u, u, u, u],
     ['real_intake_owner_apply', u, u, u, u, u, u, u, u],
     ['qa_data_retire', u, u, u, u, u, u, u, u],
@@ -322,6 +328,63 @@ test('the supply source choices install, open and pause only the module control,
       .sort(),
     ['SUPPLY_SOURCES_ACTION', 'SUPPLY_SOURCES_REASON'],
   );
+});
+
+test('the AI for real workspaces choices install, open and pause only that module, each open or pause with a reason', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const env = workflow.jobs.install.steps.find(
+    (step) => step.name === 'Report or install the customer modules',
+  ).env;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    const expected =
+      { ai_real_install: 'install', ai_real_enable: 'enable', ai_real_pause: 'pause' }[choice] ??
+      'unchanged';
+    assert.equal(evaluate(env.AI_REAL_ACTION, inputs), expected, choice);
+    const reason = evaluate(env.AI_REAL_REASON, inputs);
+    if (expected === 'enable' || expected === 'pause') {
+      assert.ok(reason.length >= 10 && reason.length <= 500, `${choice} reason length`);
+      assert.match(reason, expected === 'enable' ? /opened/ : /paused/);
+    } else assert.equal(reason, '');
+    // No other module reacts to one of these choices, the ADR-089 model policy action included.
+    for (const name of Object.keys(env).filter(
+      (name) => name.endsWith('_ACTION') && name !== 'AI_REAL_ACTION',
+    ))
+      if (choice.startsWith('ai_real_'))
+        assert.equal(
+          evaluate(env[name], inputs),
+          defaults[name.toLowerCase()] ?? 'unchanged',
+          `${choice} ${name}`,
+        );
+  }
+  // ADR-091: no input is added, the default opens nothing and the installer still needs apply and a reason.
+  assert.equal(Object.keys(declared).length, 24);
+  assert.equal(declared.field_modules_action.default, 'unchanged');
+  assert.deepEqual(
+    Object.keys(env)
+      .filter((name) => name.startsWith('AI_REAL_'))
+      .sort(),
+    ['AI_REAL_ACTION', 'AI_REAL_REASON'],
+  );
+  assert.match(
+    declared.field_modules_action.description,
+    /ai_real_install, ai_real_enable and ai_real_pause \(ADR-091[^)]*leaves the one control closed[^)]*enable opens only that control[^)]*pause closes it and keeps every record[^)]*only when the owner approves\)/,
+  );
+  const installer = readFileSync('scripts/install-customer-modules.ts', 'utf8');
+  assert.match(
+    installer,
+    /AI_REAL_ACTION: z\.enum\(\['unchanged', 'install', 'enable', 'pause'\]\)\.default\('unchanged'\)/,
+  );
+  assert.match(installer, /AI for real workspaces changes require INSTALL_APPLY=yes/);
+  assert.match(installer, /AI for real workspaces changes require an explicit reason/);
 });
 
 test('the sourcing workflow choices install, open and pause only that module, each open or pause with a reason', () => {
