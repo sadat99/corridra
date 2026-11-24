@@ -350,10 +350,11 @@ test('switch on: a problem report queue that could not be read is never an all-c
   await expect(decide(page).getByText('problem reports open')).toHaveCount(0);
 });
 
-test('switch on: a capped meetings read is a lower bound, shown with a plus sign and never as an all-clear', async ({
+test('switch on: a capped read is a lower bound: only its own tile carries the plus sign, and it is never an all-clear', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
+  // Both reads stopped at one page.
   await open(page, { ...quiet, meetings: { ...meetings, next: 'more', followupsNext: 'more' } });
   await expect(headline(page)).toHaveText(
     'No new requests and nothing late. Some lists could not be checked.',
@@ -364,6 +365,39 @@ test('switch on: a capped meetings read is a lower bound, shown with a plus sign
   await expect(
     decide(page).getByText(
       'Follow-ups and meetings that need a new time cover the 50 earliest of each.',
+    ),
+  ).toBeVisible();
+  await page.unrouteAll();
+
+  // Only the follow-ups read stopped: the meetings count is exact and keeps its plain number.
+  await open(page, { ...quiet, meetings: { ...meetings, followupsNext: 'more' } });
+  await expect(queues.getByRole('link', { name: '1+ follow-up past its due date' })).toBeVisible();
+  await expect(
+    queues.getByRole('link', { name: '1 meeting needs a new time', exact: true }),
+  ).toBeVisible();
+  await expect(decide(page).getByText('Follow-ups cover the 50 earliest.')).toBeVisible();
+  await expect(waiting(page)).toContainText('1 on time');
+  await page.unrouteAll();
+
+  // Only the meetings read stopped, and it returned no coming meeting: Waiting on others gives no number and
+  // never says nothing is waiting.
+  await open(page, {
+    ...quiet,
+    meetings: { meetings: [meetings.meetings[1]], followups: meetings.followups, next: 'more' },
+  });
+  await expect(
+    queues.getByRole('link', { name: '1 follow-up past its due date', exact: true }),
+  ).toBeVisible();
+  await expect(queues.getByRole('link', { name: '1+ meeting needs a new time' })).toBeVisible();
+  await expect(
+    decide(page).getByText('Meetings that need a new time cover the 50 earliest.'),
+  ).toBeVisible();
+  await expect(waiting(page)).not.toContainText('0 on time');
+  await showWaiting(page);
+  await expect(waiting(page).getByText('Nothing is waiting on anyone else.')).toHaveCount(0);
+  await expect(
+    waiting(page).getByText(
+      'Meetings here cover the 50 earliest by date. The meetings section lists them all.',
     ),
   ).toBeVisible();
 });

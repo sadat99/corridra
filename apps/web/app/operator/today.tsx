@@ -87,6 +87,9 @@ type Today = {
     reschedule: Meeting[];
     lateFollowUps: FollowUp[];
     partial: boolean;
+    /** The meetings read, and the follow-ups read, each stopped at one page: its counts are a lower bound. */
+    meetingsPartial: boolean;
+    followupsPartial: boolean;
   } | null;
   /** Why meetings could not be read; null when they were read. */
   workFailure: ReadFailureKind | null;
@@ -938,7 +941,8 @@ function DecisionRegion({
   const erasureFailed = today.erasureRead && today.erasure === null;
   const reportsFailed = today.problemReportsRead && today.problemReports === null;
   // A capped read gives a lower bound, so its numbers carry a plus sign and never pose as exact.
-  const capped = today.work?.partial ?? false;
+  const meetingsCapped = today.work?.meetingsPartial ?? false;
+  const followUpsCapped = today.work?.followupsPartial ?? false;
   const { problemReports: reports, erasure } = today;
   // A queue is listed when it holds something or could not be counted: a zero is not a decision.
   const queue = (
@@ -987,7 +991,7 @@ function DecisionRegion({
       today.work !== null,
       '#workspace-meetings',
       plural(queues.followUps, 'follow-up past its due date', 'follow-ups past their due date'),
-      { tone: 'late', plus: capped },
+      { tone: 'late', plus: followUpsCapped },
     ),
     queue(
       'reschedule',
@@ -995,7 +999,7 @@ function DecisionRegion({
       today.work !== null,
       '#workspace-meetings',
       plural(queues.reschedule, 'meeting needs a new time', 'meetings need a new time'),
-      { plus: capped },
+      { plus: meetingsCapped },
     ),
     queue(
       'reports',
@@ -1087,9 +1091,13 @@ function DecisionRegion({
           {items}
         </ul>
       )}
-      {capped && (
+      {(meetingsCapped || followUpsCapped) && (
         <p className="ux-today-more">
-          Follow-ups and meetings that need a new time cover the {readLimit} earliest of each.
+          {meetingsCapped && followUpsCapped
+            ? `Follow-ups and meetings that need a new time cover the ${readLimit} earliest of each.`
+            : followUpsCapped
+              ? `Follow-ups cover the ${readLimit} earliest.`
+              : `Meetings that need a new time cover the ${readLimit} earliest.`}
         </p>
       )}
     </section>
@@ -1143,11 +1151,13 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
     .sort((a, b) => a.at - b.at || (a.view.key < b.view.key ? -1 : 1))
     .map((item) => item.view);
   const without = meetings.filter((m) => !m.location || m.location.trim() === '').length;
+  // A meetings read that stopped at one page may hold more: the row then gives no number and never says none.
+  const meetingsCapped = today.work?.meetingsPartial ?? false;
   // The closed row says how many are listed, or that a part could not be read: never blank, never a false zero.
   const summary =
     today.workFailure !== null
       ? 'Partly not available'
-      : today.open.missions.length < today.open.total
+      : meetingsCapped || today.open.missions.length < today.open.total
         ? 'On time'
         : `${views.length} on time`;
   return (
@@ -1159,7 +1169,9 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
         <span>{today.open.total} open in total</span>
       </p>
       {views.length === 0 ? (
-        <p className="ux-needs-empty">Nothing is waiting on anyone else.</p>
+        meetingsCapped ? null : (
+          <p className="ux-needs-empty">Nothing is waiting on anyone else.</p>
+        )
       ) : (
         <>
           <p className="ux-today41-lead">On time. Nothing to decide here yet.</p>
@@ -1188,6 +1200,11 @@ function WaitingRegion({ today, tenant }: { today: Today; tenant: string }) {
       {today.open.missions.length < today.open.total && (
         <p className="ux-today-more">
           Not every open mission is listed here. The full list is in Missions.
+        </p>
+      )}
+      {meetingsCapped && (
+        <p className="ux-today-more">
+          Meetings here cover the {readLimit} earliest by date. The meetings section lists them all.
         </p>
       )}
       {today.workFailure && (
@@ -1286,6 +1303,8 @@ export function TodayPanel({
                 (f) => f.status === 'OPEN' && Date.parse(f.due_at) < now,
               ),
               partial: Boolean(read.next || read.followupsNext),
+              meetingsPartial: Boolean(read.next),
+              followupsPartial: Boolean(read.followupsNext),
             }
           : null;
         setToday({
