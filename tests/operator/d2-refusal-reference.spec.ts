@@ -11,7 +11,8 @@ import { resolve } from 'node:path';
 // keeps what was typed and sends the same change once more; any other refusal is shown beside the form
 // with its reference. D2_ROOT bundles another checkout (a worktree of the old commit) in the same frame,
 // which is how the step-up cases were shown to fail before the change. D2_SHOTS names a folder for the
-// screenshots at the six widths.
+// screenshots at the six widths. `shells: false` leaves the code check out of the page, as the team pages are
+// while CORRIDRA_UX_SHELLS_V2 is off (the team frame mounts it): the form then says the kept line instead.
 const root = resolve(process.env.D2_ROOT ?? '.');
 const tenant = '00000000-0000-4000-8000-0000000000a1';
 const mission = '00000000-0000-4000-8000-0000000000b2';
@@ -37,14 +38,14 @@ test.beforeAll(async () => {
       import{MissionPage}from ${source('apps/web/app/operator/[section]/[missionId]/mission-page.tsx')};
       import{StepUpDialog}from ${source('apps/web/components/ux/step-up-dialog.tsx')};
       import ${source('apps/web/app/operator/operator-overview.css')};
-      const page=new URLSearchParams(location.search).get('page');
+      const q=new URLSearchParams(location.search);const page=q.get('page');
       createRoot(document.getElementById('fixture')).render(
         <main id="main" className="operator-page ux-workspace"><h1>Missions</h1>
         <OperatorFlags replyReview={false}>
         {page==='mission'
           ?<MissionPage tenant="${tenant}" workspaceName="Sample team" missionId="${mission}" moveRecords={false}/>
           :<Missions tenant="${tenant}"/>}
-        </OperatorFlags><StepUpDialog/></main>);`,
+        </OperatorFlags>{q.get('shells')==='off'?null:<StepUpDialog/>}</main>);`,
       loader: 'tsx',
       resolveDir: resolve(root, 'apps/web'),
     },
@@ -144,7 +145,7 @@ const stepUp: Answer = {
 };
 
 /** Opens the fixture. `answers` are given to the mission command in order; the last one repeats. */
-async function open(page: Page, where: 'queue' | 'mission', answers: Answer[]) {
+async function open(page: Page, where: 'queue' | 'mission', answers: Answer[], shells = true) {
   const sent: Record<string, unknown>[] = [];
   const codes: string[] = [];
   await page.route('**/api/**', async (route) => {
@@ -190,7 +191,7 @@ async function open(page: Page, where: 'queue' | 'mission', answers: Answer[]) {
                   : {};
     return route.fulfill({ json });
   });
-  await page.goto(`${origin}/?page=${where}`);
+  await page.goto(`${origin}/?page=${where}${shells ? '' : '&shells=off'}`);
   if (where === 'mission')
     await page.getByRole('button', { name: 'Change Stage, Owner or Next Action' }).click();
   const form = page.locator('form.operator-form', {
@@ -284,6 +285,20 @@ for (const where of ['queue', 'mission'] as const) {
     await expectKept(form);
   });
 
+  test(`D2 ${where}: with the team shell switch off there is no code check; the form is kept and says so`, async ({
+    page,
+  }) => {
+    const { sent, form } = await open(page, where, [stepUp, saved], false);
+    await fill(form);
+    await save(form).click();
+    await expect(page.getByText(keptLine)).toBeVisible();
+    await expect(codeCheck(page)).toHaveCount(0);
+    await expectKept(form);
+    await expect(save(form)).toBeEnabled();
+    expect(sent).toHaveLength(1);
+    expect(await axe(page)).toEqual([]);
+  });
+
   test(`D2 ${where}: a refused change shows what to do with its reference, keeps the form and shows no database words`, async ({
     page,
   }) => {
@@ -364,6 +379,19 @@ for (const width of [320, 390, 768, 1024, 1440, 1920]) {
       expect(frame.x + frame.width).toBeLessThanOrEqual(width);
       expect(await axe(page)).toEqual([]);
       if (shots) await page.screenshot({ path: `${shots}/code-check-${where}-${width}.png` });
+      await page.unrouteAll({ behavior: 'ignoreErrors' });
+
+      const plain = await open(page, where, [stepUp, saved], false);
+      await fill(plain.form);
+      await save(plain.form).click();
+      const kept = page.getByText(keptLine);
+      await expect(kept).toBeVisible();
+      await kept.scrollIntoViewIfNeeded();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        width,
+      );
+      expect(await axe(page)).toEqual([]);
+      if (shots) await page.screenshot({ path: `${shots}/shell-off-${where}-${width}.png` });
       await page.unrouteAll({ behavior: 'ignoreErrors' });
     }
   });
