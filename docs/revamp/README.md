@@ -57,6 +57,17 @@ Shared and frozen for every track: `globals.css`, tokens, `app/layout.tsx`, `pac
 
 The ledger, work log and gap register are shared. Each session appends its own entry and rebases before merge; nobody rewrites another session's entry.
 
+## Current lanes, 24 November 2026
+
+Team desk v4.1 Phase 1 ([plan](specs/team-desk-v4-1.md)), main `d7d55c0`. Guardian 49 `session_0187kU9um92VEoZR8PyZvvmT` places, reviews and merges; Guardian 48 handed over. Merge order D1 > D1b > D2 > D2b.
+
+| Unit          | Session                            | Branch                        |
+| ------------- | ---------------------------------- | ----------------------------- |
+| D1 (Class A)  | `session_0187kU9tYhPpzbFGqE5xJXLn` | `claude/d1-qualify-purpose`   |
+| D1b (Class A) | `session_0187kU9uG44XhxQ2ttYSfYWt` | `claude/d1b-inbox-purpose`    |
+| D2            | `session_0187kU9uhyGuhJ4TdcrMQ9BR` | `claude/d2-refusal-reference` |
+| D2b           | `session_0187kU9tueUXFHMbYbAEbJWM` | `claude/d2b-desk-words`       |
+
 ## Current lanes, 13 November 2026
 
 Snapshot at main `8c4500b` (PR 477, ADR-083 locked), 13 November 2026 about 10:40 UTC. The earlier snapshot (main `625747f2`, 11 and 12 Nov, sessions S40, S44, S45 and Orchestrators 3 and 4) is history and is kept in the ledger archives. Live state, open PRs, installs and owner items are in the [ledger](../V3_LEDGER.md) under Resume immediately; the CRUD order is in the [CRUD gap plan](crud/summary.md#order). Operating rules: the owner's "Parallel work operating rules" of 13 Nov 2026 in [AGENTS.md](../../AGENTS.md) (one orchestrator, one Guardian who reviews, merges and keeps the records, at most 4 builders, one session per PR, merge in announced windows). Merge rules still in force: exact-head green CI plus the Guardian's PASS; the owner merges any migration or installer change unless they say otherwise for that PR; one fix round at most. Sessions rotate by the [session rotation rule](../agents/session-rotation.md).
