@@ -1,5 +1,5 @@
 'use client';
-import { SubTabs } from '../../components/ux/sub-tabs';
+import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 import { FounderOverview } from '../../components/founder-overview';
 import { ReferencePicker } from '../../components/ux/reference-picker';
 import { PhoneFold } from '../../components/phone-fold';
@@ -239,6 +239,25 @@ function Table({
     <p>{empty}</p>
   );
 }
+/**
+ * The dashboard tabs. `keep` (team desk v4.1) names the tabs this page shows; one tab alone is drawn as its
+ * content, with no tab row above it. Without `keep` these are the shared tabs exactly as before.
+ */
+function DashboardTabs({
+  keep,
+  tabs,
+  ...rest
+}: {
+  keep?: (id: string) => boolean;
+  tabs: SubTab[];
+  label: string;
+  dormant: boolean;
+}) {
+  const shown = keep ? tabs.filter((tab) => keep(tab.id)) : tabs;
+  if (keep && shown.length === 1) return <div className="ux-desk-lone-tab">{shown[0].panel}</div>;
+  return <SubTabs tabs={shown} {...rest} />;
+}
+
 export function Operations({
   tenant,
   role,
@@ -678,9 +697,17 @@ export function Operations({
         {dashboard && (
           <>
             <p>{dashboard.definitions.scope}</p>
-            <SubTabs
+            <DashboardTabs
               label="Dashboard sections"
               dormant={activeSection !== 'ops-dashboard'}
+              keep={
+                // Team desk v4.1 (D15): Operations and Dashboard no longer draw the same body. Operations
+                // has the summary, the next actions and the records; Dashboard has the money. Nothing is
+                // removed: each tab is on one of the two pages, and both are segments of Status.
+                deskV41
+                  ? (id) => (section === 'ops-dashboard') === (id === 'dash-money')
+                  : undefined
+              }
               tabs={[
                 {
                   id: 'dash-summary',
@@ -797,9 +824,12 @@ export function Operations({
                             is complete.
                           </p>
                         )}
-                        <a className="text-link" href="#workspace-missions">
-                          Open mission review queue
-                        </a>
+                        {/* Team desk v4.1 (D15): Missions is in the menu; a place is not linked twice. */}
+                        {deskV41 ? null : (
+                          <a className="text-link" href="#workspace-missions">
+                            Open mission review queue
+                          </a>
+                        )}
                       </section>
                     </div>
                   ),
@@ -1694,12 +1724,22 @@ export function Operations({
             />
           </>
         )}
-        <p>
-          Continue manual missions in <a href="#workspace-missions">Mission operations</a>, review
-          failed drafts in <a href="#workspace-ai">AI assistance</a>, inspect contributor disputes
-          in <a href="#workspace-network">Execution network</a> and retry publication through{' '}
-          <a href="#workspace-delivery">Delivery</a>.
-        </p>
+        {deskV41 ? (
+          // Team desk v4.1 (D15): the same sentence in plain words. Each place it names is in the menu,
+          // and a place is not linked twice on one screen.
+          <p>
+            Continue manual missions in Mission operations, review failed drafts in AI assistance,
+            inspect contributor disputes in Execution network and retry publication through
+            Delivery.
+          </p>
+        ) : (
+          <p>
+            Continue manual missions in <a href="#workspace-missions">Mission operations</a>, review
+            failed drafts in <a href="#workspace-ai">AI assistance</a>, inspect contributor disputes
+            in <a href="#workspace-network">Execution network</a> and retry publication through{' '}
+            <a href="#workspace-delivery">Delivery</a>.
+          </p>
+        )}
       </section>
       <section
         id="ops-gates"
