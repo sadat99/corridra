@@ -6,7 +6,7 @@
 import './team-nav.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSyncExternalStore } from 'react';
+import { useContext, useSyncExternalStore } from 'react';
 import { useLanguage } from '../language-provider';
 import { subscribeToHash } from '../../lib/address-store';
 import { sectionForSlug } from '../../lib/operator-urls';
@@ -20,6 +20,7 @@ import {
   type TeamPlace,
   type TeamPlaceId,
 } from '../../lib/ux/team-map';
+import { TeamDeskV41Context } from '../../lib/ux/team-desk-v41';
 import {
   readServerTeamContext,
   readTeamContext,
@@ -35,6 +36,7 @@ export function TeamSecondLevel({
   ownerPage: boolean;
   desk?: boolean;
 }) {
+  const deskV41 = useContext(TeamDeskV41Context);
   const { locale } = useLanguage();
   const pathname = usePathname() ?? '/operator';
   const hash = useSyncExternalStore(
@@ -59,6 +61,8 @@ export function TeamSecondLevel({
       : [];
   // The row shows only on a page that is one of its places, and never for a single place. A mission page is
   // inside Missions, so it shows the Missions row.
+  // Team desk v4.1 (decision 1): no second level and no second tab bar. Menu v3 holds every item.
+  if (deskV41) return null;
   if (places.length < 2 || !places.some((entry) => entry.id === place)) return null;
   const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
   return (
