@@ -203,6 +203,7 @@ export const words = {
   },
   success: {
     heading: 'Saved, not switched on',
+    headingOn: 'Saved, AI was already on',
     another: 'Connect Another Provider',
     refreshFailed:
       'Corridra could not refresh the connection list just now. Your saved version is not affected.',
@@ -276,7 +277,10 @@ export const changeFact = (provider: string, latest: number) =>
     ? `This is the first version of the ${provider} connection. No route pack is pinned to an earlier version.`
     : `Saving makes version ${latest + 1} of the ${provider} connection. It replaces version ${latest}, so route packs pinned to version ${latest} stop using AI.`;
 
-export const savedText = (provider: string, version: number) =>
-  version === 1
-    ? `Version 1 of the ${provider} connection is saved. AI is not switched on. This save ran no AI and moved no money.`
-    : `Version ${version} of the ${provider} connection is saved. AI is not switched on. This save ran no AI and moved no money. Route packs pinned to version ${version - 1} no longer use AI.`;
+// aiOn: AI was already on for this workspace when the form was read (ADR-091). The save itself never switches it.
+export const savedText = (provider: string, version: number, aiOn = false) =>
+  `Version ${version} of the ${provider} connection is saved. ${
+    aiOn
+      ? 'AI was already on for this workspace, and this save did not change that. This save ran no AI and moved no money. A run starts only when a person starts one, and it must pass the checks.'
+      : 'AI is not switched on. This save ran no AI and moved no money.'
+  }${version === 1 ? '' : ` Route packs pinned to version ${version - 1} no longer use AI.`}`;

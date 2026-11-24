@@ -269,6 +269,8 @@ describe('installed and closed', () => {
     const result = await ai.run(f.ctx, command(missionId, policyId, c.claim));
     expect('output' in result && result.output).toBeTruthy();
     expect(requests).toHaveLength(1);
+    // The sample workspace has AI on, and the Connect AI form is told so, so its saved page never says AI is off.
+    expect(await ai.connectOptions(f.ctx)).toMatchObject({ realWorkspace: false, aiOn: true });
     expect(await rows()).toMatchObject({ run: 1, attempt: 1, result: 1, completion: 1 });
   });
 

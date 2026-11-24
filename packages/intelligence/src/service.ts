@@ -145,10 +145,10 @@ export class IntelligenceService {
       const markerInstalled = await locationMarker(t);
       const real = await isRealWorkspace(t);
       const blocked = await connectBlock(t, markerInstalled);
-      // ADR-091. Whether a run can start in this real workspace now, read exactly as run() reads it below: the deployment
-      // switch, then app.part4_enabled (the closed control and the owner's own setting). It only words the form's facts.
-      const realAiOn =
-        real &&
+      // ADR-091. Whether AI is on for this workspace now, read exactly as run() reads it below: the deployment switch,
+      // then app.part4_enabled (in a real workspace, the closed control and the owner's own setting). It only words
+      // the form's facts and its saved page.
+      const aiOn =
         this.enabled &&
         (await t.db.query("SELECT app.part4_enabled($1,'ai.enabled') AS enabled", [t.tenantId]))
           .rows[0].enabled === true;
@@ -180,7 +180,7 @@ export class IntelligenceService {
       return {
         moduleInstalled: markerInstalled,
         realWorkspace: real,
-        realAiOn,
+        aiOn,
         canConnect: blocked === null,
         canManage,
         blockedReason: blocked,

@@ -84,8 +84,8 @@ type Blocked = 'MODULE_NOT_INSTALLED' | 'REAL_USE_OFF';
 type Options = {
   moduleInstalled: boolean;
   realWorkspace: boolean;
-  /** A real workspace where a run can start now (ADR-091). Absent or false: no run can start here. */
-  realAiOn?: boolean;
+  /** AI is on for this workspace now (ADR-091). Absent or false: no run can start in a real workspace. */
+  aiOn?: boolean;
   canConnect: boolean;
   canManage: boolean;
   blockedReason: Blocked | null;
@@ -216,6 +216,7 @@ export function ConnectAiForm({
     provider: string;
     version: number;
     refreshFailed: boolean;
+    aiOn: boolean;
   } | null>(null);
   const savingNow = useRef(false);
   // Which flow this is. Starting again (Connect Another Provider, or closing after a save) begins a new one, so a read
@@ -484,7 +485,12 @@ export function ConnectAiForm({
           }),
         ),
       );
-      setSaved({ provider, version: result.version, refreshFailed: false });
+      setSaved({
+        provider,
+        version: result.version,
+        refreshFailed: false,
+        aiOn: options?.aiOn === true,
+      });
       focusSoon(id('saved'));
       void refreshAfterSave(draft.adapter);
     } catch (error) {
@@ -866,7 +872,7 @@ export function ConnectAiForm({
               question: words.beforeSave.run,
               fact: !options?.realWorkspace
                 ? words.beforeSave.runSample
-                : options.realAiOn
+                : options.aiOn
                   ? words.beforeSave.runRealOn
                   : words.beforeSave.runRealOff,
             },
@@ -891,9 +897,9 @@ export function ConnectAiForm({
         <div className="connect-ai-fields">
           <div role="status">
             <h3 id={id('saved')} tabIndex={-1} className="connect-ai-question">
-              {words.success.heading}
+              {saved.aiOn ? words.success.headingOn : words.success.heading}
             </h3>
-            <p>{savedText(saved.provider, saved.version)}</p>
+            <p>{savedText(saved.provider, saved.version, saved.aiOn)}</p>
             {saved.refreshFailed && (
               <p className="connect-ai-helper">{words.success.refreshFailed}</p>
             )}
