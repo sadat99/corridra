@@ -5147,3 +5147,13 @@ Change: the shortlist chooser shows "Company · plain stage label" through the e
 Proof: the new shortlist test, tests/operator/d2b-country-options.spec.ts and the helper-word assertions fail on d7d55c0 and pass on the PR. Design audit PASS with two should-fix items, both applied; code review, zero findings. CI green on the exact head.
 
 Follow-up: operations.tsx and workspace-controls.tsx still say Execution network or contributor; the reference-picker fallback says 'Contributor'; long select labels wrap.
+
+## 24 Nov 2026: D4 one page pattern (PR 639)
+
+Team desk v4.1 Phase 2, unit D4 (Class B), behind `CORRIDRA_UX_TEAM_DESK_V41` (off by default), placed by Guardian 50; builder session_0187kU9s4u2twoJRzuxje1mV. Reviewed and merged by Guardian 51.
+
+Change: with the switch and the team shell on, every desk page uses one pattern: the page title, one purpose line and, on grouped pages, one row of segment links (Companies, Status, Team and Access, Settings), with no small-caps label above the title and no Jump to bar. Title, purpose line and segments read one place in the browser, so an address with a # part shows matching words. Browser tab titles use words shown on the page (Network is Helpers). The scanning line shows on the Status pages only; a section opened by its own address opens at the top. Shared pieces for later units: deskFrame, operatorHeader, TeamPageSegments, SegmentLinks, page-pattern.ts; registered in the Shared components table. Addresses, permissions and payloads unchanged; switch off, the header words are pinned to main by a unit test.
+
+Proof: tests/integration/d4-page-pattern.test.ts and tests/operator/d4-page-pattern.spec.ts fail on 5c5f696 and pass. Code review and design audit, one fix round, fix-diff checked by the Guardian, zero open findings. CI green on the exact head.
+
+Follow-up: Settings shows the segments above its own in-page tabs (D17); supply, problem reports and the mission page have no purpose line yet (D19, D18, D6); no page has a header primary action yet; the tab permission rule copies team-map's strict rule (held equal by a test) until team-map exports it.
