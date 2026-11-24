@@ -10,6 +10,7 @@ import { CustomerShell } from '../../../components/customer-shell';
 import { neonAuth } from '../../../lib/neon-auth';
 import { companyProfilesTitle } from '../../../lib/workspace-choice';
 import { CompanyPortfolio } from './company-portfolio';
+import { CompaniesShared } from '../../../components/ux/journey-note';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -53,6 +54,7 @@ export default async function Page() {
         ) : undefined,
       }}
     >
+      <CompaniesShared />
       <CompanyPortfolio
         subject={session.data.user.id}
         issuer={issuer}

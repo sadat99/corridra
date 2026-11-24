@@ -20,6 +20,7 @@ import { translate, type MessageKey } from '../../../../lib/i18n/messages';
 import { afterSaveHref, roadRecords, type RoomLink, type RoomTask } from '../../../../lib/room';
 import { MissingTermNotice } from '../../../../components/missing-term-notice';
 import { classifyObjective } from '../../../../lib/work-items/classify';
+import { JourneyMismatchNote } from '../../../../components/ux/journey-mismatch-note';
 import { isCurrentOffer } from '../../../../lib/experience-offers';
 import { SavedCommercialReport, type ReportSection } from '../../missions/saved-commercial-report';
 import { useRoomDetail } from './room-data';
@@ -84,8 +85,11 @@ export function RoomView({
   hintClosed = false,
   unreadable = false,
   reportCount = 0,
+  reference,
 }: {
   requestId: string;
+  /** The request's short reference (RQ-000001), when the person's own list gave one. */
+  reference?: string;
   subject: string;
   issuer: string;
   link: RoomLink;
@@ -356,6 +360,7 @@ export function RoomView({
       {state === 'ready' && detail && !detail.available && <p role="status">{say('room.gone')}</p>}
       {state === 'ready' && detail?.available && detail.progress && (
         <>
+          <JourneyMismatchNote family={family} />
           <header className="room-head">
             <div className="room-tags" lang="en">
               {journey ? (
@@ -370,6 +375,11 @@ export function RoomView({
                 </span>
               ) : null}
               <ModeLabel real={realCustomerInput()} labels={labels.mode} />
+              {reference ? (
+                <span className="room-route" data-request-reference>
+                  {reference}
+                </span>
+              ) : null}
             </div>
             <h2 dir="auto">{title}</h2>
             <p className="room-meta">

@@ -9,6 +9,7 @@ import { CustomerShell } from '../../../../components/customer-shell';
 import { EmailNudge } from '../../../../components/email-nudge';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { CustomerRequestDetail } from '../request-detail';
+import { requestReference } from '../../../../lib/work-items/request-reference';
 import { savedRequestBack, savedRequestHelper } from '../../frame-copy';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 export const dynamic = 'force-dynamic';
@@ -61,6 +62,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
         framed
         roomHref={uxSwitchOn('CORRIDRA_UX_ROAD') ? `/account/rooms/${parsed.data}` : undefined}
         nudge={customerNotificationsEnabled() && <EmailNudge />}
+        reference={await requestReference(session.data.user.id, issuer, parsed.data)}
       />
     </CustomerShell>
   );

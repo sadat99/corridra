@@ -44,6 +44,7 @@ import {
   useSeen,
   useStorageBlocked,
 } from '../../../lib/ux/move-seen';
+import { rememberJourneyMode, useJourneyMode } from '../../../components/ux/journey-mode-context';
 import './move-view.css';
 
 const firstShown = 3;
@@ -211,20 +212,29 @@ export function MoveView({
   );
   // An address without ?journey= opens the journey last chosen in this browser, while it is still one of theirs.
   const memoryKey = viewer ? `${journeyKey}:${viewer}` : journeyKey;
-  const remembered = useSyncExternalStore(
+  // Journey modes: the cookie is the one source of truth. The page was given the journey the server read from it, so
+  // this browser's older memory is not consulted, and every choice here is written to the cookie as well.
+  const modes = useJourneyMode() !== null;
+  const stored = useSyncExternalStore(
     subscribeJourney,
     () => journeySnapshot(memoryKey),
     () => null,
   );
+  const remembered = modes ? null : stored;
   const journey: Journey | null =
     asked ??
     (present.length > 1 && isJourney(remembered) && present.includes(remembered)
       ? remembered
       : null);
-  const remember = (value: Journey | 'all') => rememberJourney(memoryKey, value);
+  const remember = (value: Journey | 'all') => {
+    rememberJourney(memoryKey, value);
+    if (modes) rememberJourneyMode(value);
+  };
   useEffect(() => {
-    if (asked) rememberJourney(memoryKey, asked);
-  }, [asked, memoryKey]);
+    if (!asked) return;
+    rememberJourney(memoryKey, asked);
+    if (modes) rememberJourneyMode(asked);
+  }, [asked, memoryKey, modes]);
   // A remembered journey is written into the address, so the page says which journey it shows and a reload keeps it.
   useEffect(() => {
     if (asked || !journey) return;
