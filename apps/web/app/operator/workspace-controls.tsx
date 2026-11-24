@@ -472,7 +472,14 @@ export function WorkspaceControls({
                 >
                   <div className="ux-controls-section-heading">
                     <div>
-                      <h3 id="workspace-members-heading">People and access</h3>
+                      {/* Team desk v4.1 (D16): the segment and the tab already say this; the heading stays
+                          for screen readers and still names the section. */}
+                      <h3
+                        id="workspace-members-heading"
+                        className={teamDeskV41 ? 'sr-only' : undefined}
+                      >
+                        People and access
+                      </h3>
                       <p>Change the role or access of an existing member.</p>
                     </div>
                     <button
@@ -582,7 +589,7 @@ export function WorkspaceControls({
           },
           {
             id: 'invite',
-            label: 'Invite a team member',
+            label: teamDeskV41 ? 'Invite a Team Member' : 'Invite a team member',
             panel: <TeamInvites tenant={tenant} workspaceName={workspaceName} />,
           },
           {

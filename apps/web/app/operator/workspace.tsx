@@ -393,13 +393,14 @@ function TenantWorkspace({
   }
   // True once the work is done and the records are refreshed; callers that only need the shared
   // status line ignore it.
-  async function act(work: () => Promise<unknown>): Promise<boolean> {
+  const loadedWord = deskV41 ? 'Loaded.' : 'Saved.';
+  async function act(work: () => Promise<unknown>, done = 'Saved.'): Promise<boolean> {
     setBusy(true);
     setMessage('');
     try {
       await work();
       await refresh();
-      setMessage('Saved.');
+      setMessage(done);
       return true;
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Request failed');
@@ -937,7 +938,8 @@ function TenantWorkspace({
                     setMembersLoaded(true);
                     setAudit(currentAudit);
                     setAuditLoaded(true);
-                  })
+                    // Team desk v4.1 (D16): a read changes nothing, so it does not say "Saved."
+                  }, loadedWord)
                 }
               />
             </section>
@@ -960,7 +962,7 @@ function TenantWorkspace({
                   void act(async () => {
                     setMembers(await request('members'));
                     setMembersLoaded(true);
-                  })
+                  }, loadedWord)
                 }
                 onUpdateMember={(value) => {
                   // A retry of the same change after an answer that never arrived reuses its command id, so it is

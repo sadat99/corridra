@@ -5,6 +5,7 @@ import { useOperatorFlags } from './operator-flags';
 import './desk-helpers-status-team.css';
 import { PhoneFold } from '../../components/phone-fold';
 import { ExampleTag } from '../../components/ux/example-tag';
+import { StatusBadge } from '../../components/access-state';
 import { ContributorInvitations } from './contributor-invitations';
 import { HelperInterestList } from './helper-interest-list';
 import {
@@ -426,7 +427,9 @@ export function ExecutionNetwork({
         <>
           <h2 className="sr-only">Assigned work</h2>
           <p className="ux-helpers-state">
-            <span className="ux-network-state">{networkState}</span>
+            <StatusBadge tone={data ? (data.enabled ? 'positive' : 'caution') : 'neutral'}>
+              {networkState}
+            </StatusBadge>
           </p>
         </>
       ) : (
@@ -606,7 +609,7 @@ export function ExecutionNetwork({
                       assignment remain required before work can start.
                     </p>
                     <p className="ux-helpers-example">
-                      <ExampleTag>Example</ExampleTag> A task could read: &ldquo;Visit the
+                      <ExampleTag>Sample</ExampleTag> A task could read: &ldquo;Visit the
                       supplier&rsquo;s factory, photograph the production line and send the
                       photographs within five working days.&rdquo; This shows the wording only. It
                       is not a record.

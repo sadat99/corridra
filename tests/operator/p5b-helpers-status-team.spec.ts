@@ -95,7 +95,18 @@ async function open(page: Page, path: string, options: Options) {
     }),
   );
   await page.route('**/api/workspace/mission-catalogue?*', (route) =>
-    route.fulfill({ json: { routes: [], packs: [] } }),
+    route.fulfill({
+      json: {
+        routes: [
+          {
+            id: '00000000-0000-4000-8000-0000000000d1',
+            origin_market: 'BD',
+            destination_market: 'DE',
+          },
+        ],
+        packs: [],
+      },
+    }),
   );
   await page.route('**/api/workspace/operations-dashboard?*', (route) =>
     route.fulfill({
@@ -115,14 +126,18 @@ async function open(page: Page, path: string, options: Options) {
           },
         ],
         owners: [],
-        ...empty(
-          'corridraMoney',
-          'economics',
-          'customerTrade',
-          'programmes',
-          'repeat',
-          'commercialActivityTotals',
-        ),
+        corridraMoney: [
+          {
+            origin_market: 'BD',
+            destination_market: 'EU',
+            mission_type: 'sourcing',
+            kind: 'CORRIDRA_INVOICE',
+            currency: 'USD',
+            observed_minor: '12500',
+            recorded_mission_denominator: 1,
+          },
+        ],
+        ...empty('economics', 'customerTrade', 'programmes', 'repeat', 'commercialActivityTotals'),
         financeAvailable: true,
         offset: 0,
         limit: 50,
@@ -251,8 +266,11 @@ test('Helpers, switch on: one title, the state word on the left edge, no label a
     panel.getByText('Invite the right person. Define the work. Review the evidence.'),
   ).toHaveCount(0);
   await expectReadersOnly(page, 'Assigned work');
-  const state = panel.locator('.ux-helpers-state .ux-network-state');
+  // The state is a status badge (a capsule with its word), not a bordered box that reads as a button.
+  const state = panel.locator('.ux-helpers-state .ux-status');
   await expect(state).toHaveText('Network enabled');
+  await expect(state).toHaveAttribute('data-tone', 'positive');
+  await expect(panel.locator('.ux-network-state')).toHaveCount(0);
   // The state word starts where the tabs under it start: the left edge of the content column.
   const stateBox = await state.boundingBox();
   const tabsBox = await panel.getByRole('tablist', { name: 'Network sections' }).boundingBox();
@@ -289,7 +307,7 @@ test('Helpers, switch on, no task: the empty state is in the open with one examp
   await expect(block).toContainText(
     'No disclosed tasks are recorded in this workspace. Eligibility and exact assignment remain required before work can start.',
   );
-  await expect(block.locator('.ux-example-tag')).toHaveText('Example');
+  await expect(block.locator('.ux-example-tag')).toHaveText('Sample');
   await expect(block.locator('.ux-helpers-example')).toContainText(
     'A task could read: “Visit the supplier’s factory, photograph the production line and send the photographs within five working days.” This shows the wording only. It is not a record.',
   );
@@ -317,7 +335,9 @@ test('Helpers, switch on, paused: the state word and the paused note both show',
 }) => {
   await open(page, '/operator/network', { v41: true, enabled: false });
   const panel = page.locator('#workspace-network');
-  await expect(panel.locator('.ux-helpers-state .ux-network-state')).toHaveText('Network paused');
+  const state = panel.locator('.ux-helpers-state .ux-status');
+  await expect(state).toHaveText('Network paused');
+  await expect(state).toHaveAttribute('data-tone', 'caution');
   await expect(panel.getByRole('complementary', { name: 'Network readiness' })).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Choose Workspace' })).toBeVisible();
 });
@@ -346,6 +366,12 @@ test('Status, switch off: the body is the one the desk has today', async ({ page
   await expect(heading).toHaveText('Global operations');
   await expect(heading).not.toHaveClass(/sr-only/);
   await expect(heading).toBeVisible();
+  await expect(page.locator('#workspace-operations .ops-heading button')).toHaveText(
+    'Refresh Operations',
+  );
+  await expect(
+    page.getByRole('heading', { name: 'Production readiness and activation' }),
+  ).toBeVisible();
   const back = page.locator('#ops-gates').getByRole('link', {
     name: 'Return to workspace navigation',
   });
@@ -370,7 +396,11 @@ for (const [slug, label, heading] of statusPages) {
       ),
     );
     await expectReadersOnly(page, 'Global operations');
-    await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
+    // The segment names the page; the old heading of the page stays for screen readers only.
+    await expectReadersOnly(page, heading);
+    await expect(
+      page.locator('#workspace-operations :is(h2, h3):not(.sr-only):visible'),
+    ).toHaveCount(0);
     // The link to a list that is not on the page with the team shell on is gone.
     await expect(page.getByRole('link', { name: 'Return to workspace navigation' })).toHaveCount(0);
     await expect(page.locator('a[href="#workspace-navigation"]:visible')).toHaveCount(
@@ -380,7 +410,7 @@ for (const [slug, label, heading] of statusPages) {
     // The load control is the one the desk has, on the left edge of the body.
     const load = page.locator('#workspace-operations .ops-heading button');
     // The desk loads the records on arrival; the control then offers a refresh.
-    await expect(load).toHaveText('Refresh Operations');
+    await expect(load).toHaveText('Refresh Status');
     const loadBox = await load.boundingBox();
     const bodyBox = await page.locator('#workspace-operations > p').first().boundingBox();
     expect(Math.abs(loadBox!.x - bodyBox!.x)).toBeLessThanOrEqual(1);
@@ -490,9 +520,105 @@ test('Status, switch on: Health names the other places in plain words, with no s
   await open(page, '/operator/health', { v41: true });
   const health = page.locator('#ops-health');
   await expect(health).toContainText(
-    'Continue manual missions in Mission operations, review failed drafts in AI assistance, inspect contributor disputes in Execution network and retry publication through Delivery.',
+    'Continue manual missions in Missions, review failed drafts in Settings, Assistance, check helper disputes in Helpers and retry publication in Reports.',
   );
   await expect(health.locator('a[href^="#workspace-"]')).toHaveCount(0);
+});
+
+test('Status, switch on: an address that names a tab opens the page that holds it', async ({
+  page,
+}) => {
+  // The fixture keeps the switch for the tab, so these are plain addresses, as an old link has them.
+  await open(page, '/operator/health', { v41: true });
+  await page.goto(`${fixture.origin}/operator/operations?tab=dash-money`);
+  await expect(page).toHaveURL(/\/operator\/dashboard\?tab=dash-money$/);
+  await expect(segments(page).locator('[aria-current="page"]')).toHaveText('Dashboard');
+  await expect(page.locator('#ops-dashboard .ops-money').first()).toBeVisible();
+  await page.goto(`${fixture.origin}/operator/dashboard?tab=dash-records`);
+  await expect(page).toHaveURL(/\/operator\/operations\?tab=dash-records$/);
+  await expect(segments(page).locator('[aria-current="page"]')).toHaveText('Operations');
+  await expect(page.getByRole('tab', { name: 'Records and notes' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  // An address that already names its own page stays where it is.
+  await page.goto(`${fixture.origin}/operator/operations?tab=dash-actions`);
+  await expect(page.getByRole('tab', { name: 'Next actions' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(page).toHaveURL(/\/operator\/operations\?tab=dash-actions$/);
+});
+
+test('Status, switch off: an address that names a tab opens that tab where it is, as today', async ({
+  page,
+}) => {
+  await open(page, '/operator/health', { v41: false });
+  await page.goto(`${fixture.origin}/operator/operations?tab=dash-money`);
+  await expect(page.getByRole('tab', { name: 'Money' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page).toHaveURL(/\/operator\/operations\?tab=dash-money$/);
+});
+
+test('Status: counts carry plain labels and place names carry their marks with the switch on', async ({
+  page,
+}) => {
+  await open(page, '/operator/operations', { v41: false });
+  await expect(page.locator('#ops-dashboard .operations-metrics dt').first()).toHaveText(
+    'submitted',
+  );
+  await expect(page.locator('#ops-dashboard select[name="route"] option').nth(1)).toHaveText(
+    'BD → DE',
+  );
+  await page.getByRole('tab', { name: 'Money' }).click();
+  const feeRow = page.getByRole('region', { name: 'Corridra financial observations' });
+  await expect(feeRow.locator('tbody td').first()).toHaveText('BD');
+  await expect(feeRow.locator('.ux-flag')).toHaveCount(0);
+
+  await open(page, '/operator/operations', { v41: true });
+  await expect(page.locator('#ops-dashboard .operations-metrics dt').first()).toHaveText(
+    'Submitted',
+  );
+  await expect(page.locator('#ops-dashboard .ux-desk-summary-note')).toHaveText(
+    'Submitted is every mission that matches the filters. The other counts are parts of it.',
+  );
+  // An option holds words only: the place names, no picture.
+  await expect(page.locator('#ops-dashboard select[name="route"] option').nth(1)).toHaveText(
+    'Bangladesh → Germany',
+  );
+  expect(
+    await page.locator('#ops-dashboard select[name="route"] option').nth(1).getAttribute('value'),
+  ).toBe('00000000-0000-4000-8000-0000000000d1');
+  await open(page, '/operator/dashboard', { v41: true });
+  const cells = page
+    .getByRole('region', { name: 'Corridra financial observations' })
+    .locator('tbody td');
+  await expect(cells.nth(0)).toHaveText('Bangladesh');
+  await expect(cells.nth(0).locator('.ux-flag')).toHaveAttribute('data-flag', 'bd');
+  await expect(cells.nth(1)).toHaveText('European Union');
+  await expect(cells.nth(1).locator('.ux-flag')).toHaveAttribute('data-flag', 'eu');
+  // The amount is the stored value, untouched.
+  await expect(page.getByRole('region', { name: 'Corridra financial observations' })).toContainText(
+    '12500',
+  );
+});
+
+test('Status, switch on: on a phone the four segments stay in one row', async ({ page }) => {
+  await open(page, '/operator/readiness', { v41: true, width: 375, height: 812 });
+  const tops = await segments(page)
+    .getByRole('link')
+    .evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().top)));
+  expect(tops).toHaveLength(4);
+  expect(new Set(tops).size).toBe(1);
+  const sizes = await page.evaluate(() => ({
+    page: document.documentElement.scrollWidth,
+    view: document.documentElement.clientWidth,
+  }));
+  expect(sizes.page).toBeLessThanOrEqual(sizes.view);
+  // The last segment can be brought into view inside the row.
+  const last = segments(page).getByRole('link', { name: 'Readiness' });
+  await last.scrollIntoViewIfNeeded();
+  const box = await last.boundingBox();
+  expect(box!.x + box!.width).toBeLessThanOrEqual(375);
 });
 
 test('Status: field names and ids are the same with the switch off and on', async ({ page }) => {
@@ -520,6 +646,9 @@ test('Team and access, switch off: the bodies are the ones the desk has today', 
   const button = audit.getByRole('button', { name: 'Load Access and Recent Changes' });
   const line = audit.locator('.ux-audit-toolbar p');
   expect((await button.boundingBox())!.x).toBeGreaterThan((await line.boundingBox())!.x + 100);
+  await button.click();
+  await expect(audit.getByRole('heading', { name: 'Workspace members' })).toBeVisible();
+  await expect(page.getByLabel('Workspace status')).toHaveText('Saved.');
   await open(page, '/operator/controls', { v41: false });
   const controls = page.locator('#workspace-controls');
   await expect(controls.locator('.ux-controls-heading .eyebrow')).toHaveText('Workspace settings');
@@ -551,6 +680,14 @@ test('Team and access, switch on: Audit has one title and its one action on the 
   await expect(audit.locator('.primary-link')).toHaveCount(1);
   await button.click();
   await expect(audit.getByRole('heading', { name: 'Workspace members' })).toBeVisible();
+  // A read changes nothing, so it does not say "Saved."
+  await expect(page.getByLabel('Workspace status')).toHaveText('Loaded.');
+  // The paging buttons start on the left edge, under the count.
+  const previous = audit.getByRole('button', { name: 'Previous Changes' });
+  const count = audit.locator('.ux-audit-pagination p');
+  expect(
+    Math.abs((await previous.boundingBox())!.x - (await count.boundingBox())!.x),
+  ).toBeLessThanOrEqual(1);
   // A membership state is a status word: it does not wear the action fill.
   const active = audit.locator('.ux-record-state.is-active').first();
   await expect(active).toHaveText('Active membership');
@@ -570,9 +707,17 @@ test('Team and access, switch on: People and access has one title; member and ro
 }) => {
   await open(page, '/operator/controls', { v41: false });
   const before = await namesAndIds(page, '#workspace-controls');
-  const formBefore = await page
-    .locator('#workspace-controls .ux-controls-members')
-    .evaluate((node) => node.innerHTML.replace(/[:«][^"\s]*[:»]|_r_\w+?_/g, ''));
+  const forms = (target: Page) =>
+    target
+      .locator('#workspace-controls')
+      .evaluate((node) =>
+        Array.from(node.querySelectorAll('form')).map((form) =>
+          form.outerHTML.replace(/[:«][^"\s]*[:»]|_r_\w+?_/g, ''),
+        ),
+      );
+  const formBefore = await forms(page);
+  await expect(page.getByRole('tab', { name: 'Invite a team member' })).toBeVisible();
+  await expect(page.locator('#workspace-members-heading')).not.toHaveClass(/sr-only/);
   await open(page, '/operator/controls', { v41: true });
   await expect(page.locator('h1')).toHaveText('Team and access');
   await expect(segments(page).locator('[aria-current="page"]')).toHaveText('People and access');
@@ -585,11 +730,28 @@ test('Team and access, switch on: People and access has one title; member and ro
     '#workspace-authenticator',
   );
   expect(await namesAndIds(page, '#workspace-controls')).toEqual(before);
-  // The member and role section is the same markup, element for element.
-  const formAfter = await controls
-    .locator('.ux-controls-members')
-    .evaluate((node) => node.innerHTML.replace(/[:«][^"\s]*[:»]|_r_\w+?_/g, ''));
-  expect(formAfter).toBe(formBefore);
+  // Every form of the page (member and role, authenticator reset, invitation) is the same markup,
+  // element for element.
+  const formAfter = await forms(page);
+  expect(formBefore.length).toBeGreaterThanOrEqual(2);
+  expect(formAfter).toEqual(formBefore);
+  // The name of the page is in view once in the body (the tab); its heading is for screen readers and
+  // still names the member section.
+  await expect(page.locator('#workspace-members-heading')).toHaveClass(/sr-only/);
+  await expect(controls.locator('.ux-controls-members')).toHaveAttribute(
+    'aria-labelledby',
+    'workspace-members-heading',
+  );
+  await expect(page.getByRole('tab', { name: 'Invite a Team Member' })).toBeVisible();
+  // The load control is on the left edge and a read does not say "Saved."
+  const load = controls.getByRole('button', { name: 'Load Workspace Members' });
+  const hint = controls.getByText('Change the role or access of an existing member.');
+  expect(
+    Math.abs((await load.boundingBox())!.x - (await hint.boundingBox())!.x),
+  ).toBeLessThanOrEqual(1);
+  await load.click();
+  await expect(controls.getByRole('button', { name: 'Refresh Workspace Members' })).toBeVisible();
+  await expect(page.getByLabel('Workspace status')).toHaveText('Loaded.');
 });
 
 test('Team and access, switch on: an admin sees Audit alone, with no segments and no People page', async ({
@@ -672,15 +834,12 @@ const sectionWords: Record<string, string> = {
   'workspace-controls': 'controls',
 };
 /**
- * The destinations of the links in view inside <main>, one entry per link. Named exceptions, both owned by
- * unit D3 (menu v3) and outside these bodies: the workspace row (workspace chooser, access help, sign out)
- * and the second row of links under the title, which D3 removes.
+ * The destinations of the links in view inside <main>, one entry per link. No exception is named: with menu
+ * v3 the workspace row and the second row of links are no longer in <main>.
  */
 const destinationsInView = (page: Page) =>
   page.locator('main#main').evaluate((main, words) => {
-    const exceptions = '.operator-toolbar, nav.ux-team-second';
     return Array.from(main.querySelectorAll<HTMLAnchorElement>('a[href]'))
-      .filter((link) => !link.closest(exceptions))
       .filter((link) => {
         const box = link.getBoundingClientRect();
         return box.width > 0 && box.height > 0 && getComputedStyle(link).visibility !== 'hidden';
@@ -743,8 +902,8 @@ for (const [slug, body] of places) {
         page.locator(`${body} a`).filter({ hasText: /^Back to|^Return to/ }),
       ).toHaveCount(0);
     }
-    // The page does have links (the segments at least, where it has them), so the check is not empty.
-    if (slug !== 'network') expect(seen).toBeGreaterThan(0);
+    // Links were found on every page, so the check is never empty.
+    expect(seen).toBeGreaterThan(0);
   });
 }
 

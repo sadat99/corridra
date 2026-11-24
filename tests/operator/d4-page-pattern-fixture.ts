@@ -58,7 +58,7 @@ export async function startPagePatternFixture(root = resolve('.')) {
         <LanguageProvider offered={[{code:'en',draft:false}]}>
           <div className="site-shell">
             <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
-            <TeamFrame urls ownerPage={ownerPage} problemReports={false}>
+            <TeamFrame urls ownerPage={ownerPage} problemReports={false} deskV41={v41}>
               <WorkspaceShell eyebrow={header.eyebrow} title={header.title} lead={header.lead} className={header.className}>
                 <TeamSecondLevel urls ownerPage={ownerPage}/>
                 {header.segments}
