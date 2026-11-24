@@ -264,7 +264,7 @@ test('an owner reads a real tax invoice with both parties, the tax lines, paymen
   ).toBeVisible();
   await expect(taxInvoice.getByText(/GST registration: M9-0000000-0 \(madeup\)/)).toBeVisible();
   await expect(taxInvoice.getByText('Acme Apparel Pte Ltd')).toBeVisible();
-  await expect(taxInvoice.getByText(/Issued 24 October 2026 · Due 23 November 2026/)).toBeVisible();
+  await expect(taxInvoice.getByText(/Issued 24 Oct 2026 · Due 23 Nov 2026/)).toBeVisible();
   await expect(taxInvoice.getByText(/GST at 9%/)).toBeVisible();
   await expect(taxInvoice.getByRole('row', { name: /Total.*SGD\s109\.00/ })).toBeVisible();
   await expect(taxInvoice.getByText('Partly paid', { exact: true })).toBeVisible();
@@ -282,12 +282,10 @@ test('an owner reads a real tax invoice with both parties, the tax lines, paymen
   ).toBeVisible();
   await taxInvoice.getByText('Payments and credit notes for INV-2026-000001').click();
   await expect(
-    taxInvoice.getByText(/Recorded by the Corridra team: SGD\s20\.00 on 25 October 2026/),
+    taxInvoice.getByText(/Recorded by the Corridra team: SGD\s20\.00 on 25 Oct 2026/),
   ).toBeVisible();
-  await expect(
-    taxInvoice.getByText(/SGD\s20\.00 on 25 October 2026 · Bank transfer/),
-  ).toBeVisible();
-  await expect(taxInvoice.getByText(/CN-2026-000001: SGD\s5\.00 on 26 October 2026/)).toBeVisible();
+  await expect(taxInvoice.getByText(/SGD\s20\.00 on 25 Oct 2026 · Bank transfer/)).toBeVisible();
+  await expect(taxInvoice.getByText(/CN-2026-000001: SGD\s5\.00 on 26 Oct 2026/)).toBeVisible();
   await expect(taxInvoice.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
   // A supplier that is not GST registered issues a plain invoice with no registration line and no made-up notice.
   const plain = page.getByRole('listitem').filter({ hasText: 'Invoice INV-2026-000002' });
@@ -358,7 +356,7 @@ test('an owner sees that a real payment was reversed, and never why', async ({ p
   await page.goto(origin + '/');
   await page.getByText('Payments and credit notes for INV-2026-000001').click();
   await expect(
-    page.getByText(/SGD\s20\.00 on 25 October 2026 · Bank transfer · Reversed/),
+    page.getByText(/SGD\s20\.00 on 25 Oct 2026 · Bank transfer · Reversed/),
   ).toBeVisible();
   await expect(page.getByText(/wrong invoice|duplicate|reason/i)).toHaveCount(0);
   expect(await axe(page)).toEqual([]);

@@ -1144,6 +1144,25 @@
       "notes": ""
     },
     {
+      "route": "/operator/invoice-issuer",
+      "file": "apps/web/app/operator/invoice-issuer/page.tsx",
+      "wave": "D",
+      "decisions": {
+        "L1": "not_assessed",
+        "L2": "not_assessed",
+        "L3": "not_assessed",
+        "L4": "n/a",
+        "L5": "n/a",
+        "L6": "n/a",
+        "L7": "n/a",
+        "L8": "n/a",
+        "L9": "n/a",
+        "L10": "not_assessed"
+      },
+      "evidence": [],
+      "notes": ""
+    },
+    {
       "route": "/operator/owner",
       "file": "apps/web/app/operator/owner/page.tsx",
       "wave": "D",

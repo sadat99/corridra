@@ -256,6 +256,6 @@ describe('Your Move with the Today card', () => {
     const inside = card.slice(0, card.indexOf('</section>'));
     expect(inside).toContain('move-tag');
     expect(inside).toContain('Sourcing');
-    expect(inside).toContain('The request is saved as a draft.');
+    expect(inside).toContain('The request is saved and not sent yet.');
   });
 });

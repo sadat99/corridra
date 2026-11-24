@@ -161,7 +161,7 @@ export const actionCatalogue: readonly ActionContract[] = [
   },
   {
     id: 'continue_draft',
-    label: 'Open Your Workspaces to Pick Up a Draft',
+    label: 'Open Your Workspaces to Pick Up a Saved Request',
     intent: {
       phrases: {
         en: [
