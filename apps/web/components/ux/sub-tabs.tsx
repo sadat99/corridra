@@ -198,3 +198,33 @@ export function SubTabs({
     </div>
   );
 }
+
+/**
+ * Segments that are links (team desk v4.1, unit D4): the pages of one group under the page title. Each segment
+ * opens an address that already exists, so this is a list of plain links and not a tablist: the current page
+ * carries aria-current="page" and nothing is hidden or shown here. It shares the segmented look of the tabs.
+ * The links are full page loads, like the menu links to a `#` address, so the workspace always re-reads the address.
+ */
+export function SegmentLinks({
+  label,
+  segments,
+}: {
+  /** The accessible name of the list, for example "Companies pages". */
+  label: string;
+  segments: readonly { id: string; label: string; href: string; current: boolean }[];
+}) {
+  if (segments.length < 2) return null;
+  return (
+    <nav className="ux-segments" aria-label={label} lang="en">
+      <ul>
+        {segments.map((segment) => (
+          <li key={segment.id}>
+            <a href={segment.href} aria-current={segment.current ? 'page' : undefined}>
+              {segment.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}

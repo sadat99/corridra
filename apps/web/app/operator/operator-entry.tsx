@@ -13,6 +13,9 @@ import { operatorSignInPath } from '../../lib/workspace-navigation';
 import { OperatorFlags } from './operator-flags';
 import { Workspace } from './workspace';
 import { teamSectionTitle } from '../../lib/ux/shells';
+import { deskFrame } from '../../components/ux/desk-frame';
+import { TeamPageSegments } from '../../components/ux/desk-segments';
+import { isDeskPlace } from '../../lib/ux/page-pattern';
 /**
  * The protected workspace, shared by `/operator` and (with the address switch on) `/operator/<section>`.
  * `section` is a section id from the closed list; the rendering is otherwise the same.
@@ -80,14 +83,28 @@ export async function OperatorEntry({
   // With the shells switch and section addresses on, each section has its own heading (CQ-36).
   const heading =
     shellsV2 && uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS') ? teamSectionTitle(section) : null;
+  // Team desk v4.1: the one page pattern (title, purpose line, segments; no label above the title). It needs the
+  // team shell, and section addresses for the title and purpose line to follow the page; off, nothing changes.
+  const deskV41 = shellsV2 && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41');
+  const place = section ?? 'home';
+  const frame =
+    deskV41 && heading && isDeskPlace(place) ? deskFrame({ place, urls: true, ownerPage }) : null;
   return (
     <WorkspaceShell
-      eyebrow={shellsV2 ? 'TEAM WORKSPACE' : 'OPERATOR WORKSPACE'}
-      title={heading ?? 'Your workspace.'}
+      eyebrow={deskV41 ? undefined : shellsV2 ? 'TEAM WORKSPACE' : 'OPERATOR WORKSPACE'}
+      title={frame?.title ?? heading ?? 'Your workspace.'}
+      lead={frame?.lead}
       // When the page heading already says Today, the Today panel keeps its heading for screen readers only.
-      className={heading === 'Today' ? 'ux-operator-home ux-titled-today' : 'ux-operator-home'}
+      className={
+        (heading === 'Today' ? 'ux-operator-home ux-titled-today' : 'ux-operator-home') +
+        (frame ? ' ' + frame.className : '')
+      }
     >
-      {shellsV2 ? (
+      {deskV41 ? (
+        (frame?.segments ?? (
+          <TeamPageSegments urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')} ownerPage={ownerPage} />
+        ))
+      ) : shellsV2 ? (
         <TeamSecondLevel
           urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
           ownerPage={ownerPage}
@@ -97,6 +114,7 @@ export async function OperatorEntry({
       <OperatorFlags
         replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
         supplySources={uxSwitchOn('CORRIDRA_SUPPLY_SOURCES')}
+        deskV41={deskV41}
       >
         <Workspace
           tenants={tenants}

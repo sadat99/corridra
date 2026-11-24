@@ -749,6 +749,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_TEAM_DESK_V41',
+    label: 'Team desk v4.1',
+    line: 'The team desk uses menu v3 (Work, People and companies, Results, Admin), one page pattern and the plainer desk screens. Every address, permission and payload stays the same. Off by default. Turn it off by removing the setting in Vercel and redeploying.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_NOTIFICATIONS_V2',
     label: 'Inbox and hand-off emails',
     line: 'Every hand-off writes an inbox item and sends an email when the person has chosen email. Needs the commercial readiness database module.',

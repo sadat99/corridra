@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { TeamContextPublisher } from '../../../components/ux/team-context-publisher';
+import { deskFrameClass } from '../../../components/ux/desk-frame';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { ProblemReportsUnavailable } from '../../../components/problem-reports/unavailable';
 import { foundations } from '../../../lib/foundations';
@@ -28,7 +29,13 @@ export async function TeamProblemReportsPage({
   filing?: boolean;
   signedIn: (workspace: string) => ReactNode;
 }) {
-  const eyebrow = uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? 'TEAM WORKSPACE' : 'OPERATOR WORKSPACE';
+  // Team desk v4.1: no label above the title. Off, the header is as it was.
+  const deskV41 = uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41');
+  const eyebrow = deskV41
+    ? undefined
+    : uxSwitchOn('CORRIDRA_UX_SHELLS_V2')
+      ? 'TEAM WORKSPACE'
+      : 'OPERATOR WORKSPACE';
   const s = foundations();
   if (!s)
     return (
@@ -55,7 +62,7 @@ export async function TeamProblemReportsPage({
     );
   const offered = await problemReportsOffered();
   return (
-    <WorkspaceShell eyebrow={eyebrow} title={title}>
+    <WorkspaceShell eyebrow={eyebrow} title={title} className={deskV41 ? deskFrameClass : ''}>
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
       {offered ? (
         signedIn(tenant.id)

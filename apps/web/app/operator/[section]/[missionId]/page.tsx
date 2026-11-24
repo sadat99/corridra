@@ -7,6 +7,7 @@ import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { TeamContextPublisher } from '../../../../components/ux/team-context-publisher';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { TeamSecondLevel } from '../../../../components/ux/team-second-level';
+import { deskFrameClass } from '../../../../components/ux/desk-frame';
 import { foundations } from '../../../../lib/foundations';
 import { isUuid } from '../../../../lib/reply-review-view';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
@@ -67,17 +68,23 @@ export default async function Page({
       </WorkspaceShell>
     );
   const tenant = chosen.id;
+  // Team desk v4.1: no label above the title and no second row of links.
+  const deskV41 = uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41');
   return (
-    <WorkspaceShell eyebrow="MISSION" title="Mission" className="ux-operator-home">
+    <WorkspaceShell
+      eyebrow={deskV41 ? undefined : 'MISSION'}
+      title="Mission"
+      className={deskV41 ? 'ux-operator-home ' + deskFrameClass : 'ux-operator-home'}
+    >
       <TeamContextPublisher tenant={tenant} role={chosen.role} />
-      {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
+      {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && !deskV41 ? (
         <TeamSecondLevel
           urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
           ownerPage={false}
           desk={uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
         />
       ) : null}
-      <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
+      <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')} deskV41={deskV41}>
         <MissionPage
           tenant={tenant}
           workspaceName={tenants.find((t) => t.id === tenant)?.name ?? ''}

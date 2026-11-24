@@ -1,5 +1,6 @@
 'use client';
 import { useId, useRef, useState, type FormEvent } from 'react';
+import { useOperatorFlags } from '../app/operator/operator-flags';
 import { revealInSubTabs } from './ux/sub-tabs';
 export function OperatorWorkbench({
   label,
@@ -14,6 +15,8 @@ export function OperatorWorkbench({
   // always shown and the button is not.
   const [shown, setShown] = useState(false);
   const listId = useId();
+  // Team desk v4.1: a page opens at the top with its segments under the title, and the jump links are gone.
+  const { deskV41 } = useOperatorFlags();
   function open(heading: string) {
     const root = nav.current?.closest('[data-operator-workbench]');
     const target = Array.from(root?.querySelectorAll<HTMLElement>('h2,h3,h4,summary') ?? []).find(
@@ -41,6 +44,7 @@ export function OperatorWorkbench({
     }
     setNotice('');
   }
+  if (deskV41) return null;
   return (
     <nav ref={nav} className="ux-operator-workbench" aria-label={label}>
       <p className="label">JUMP TO</p>

@@ -16,6 +16,7 @@ import { ShowMoreList } from '../../../components/ux/show-more';
 import { SubTabs } from '../../../components/ux/sub-tabs';
 import { TeamContextPublisher } from '../../../components/ux/team-context-publisher';
 import { TeamSecondLevel } from '../../../components/ux/team-second-level';
+import { deskFrame } from '../../../components/ux/desk-frame';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
 import { founderDoor, withWorkspace } from '../../../lib/front-doors';
@@ -95,10 +96,26 @@ export default async function Page({
   const deployment = activation.environment.deployment;
   // Owner only, and only while the Invoice issuer screen is switched on.
   const issuerLink = ownerIssuerLink(tenant);
+  // Team desk v4.1: the owner page is a Settings page, with the one page pattern. Off, the header is as it was.
+  const frame =
+    uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')
+      ? deskFrame({
+          place: 'owner',
+          urls: uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS'),
+          ownerPage: true,
+        })
+      : null;
   return (
-    <WorkspaceShell eyebrow="OWNER PAGE" title="What is on and off." className="ux-owner">
+    <WorkspaceShell
+      eyebrow={frame ? undefined : 'OWNER PAGE'}
+      title={frame?.title ?? 'What is on and off.'}
+      lead={frame?.lead}
+      className={frame ? 'ux-owner ' + frame.className : 'ux-owner'}
+    >
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
-      {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
+      {frame ? (
+        frame.segments
+      ) : uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
         <TeamSecondLevel
           urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
           ownerPage
