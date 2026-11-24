@@ -233,15 +233,11 @@ test('an owner reads the totals per currency and each invoice with its payments 
   await expect(page.getByText('Partly paid', { exact: true })).toBeVisible();
   await expect(page.getByText(/Tax added USD\s4\.90/)).toBeVisible();
   await expect(
-    page
-      .getByText(
-        /For 23 October 2026 until 23 November 2026. Issued 23 October 2026, due 6 November 2026/,
-      )
-      .first(),
+    page.getByText(/For 23 Oct 2026 until 23 Nov 2026. Issued 23 Oct 2026, due 6 Nov 2026/).first(),
   ).toBeVisible();
   await page.getByText('Payments and credit notes for SAMPLE-INV-000001').click();
-  await expect(page.getByText(/USD\s10\.00 on 24 October 2026 · Bank transfer/)).toBeVisible();
-  await expect(page.getByText(/SAMPLE-CN-000001: USD\s3\.00 on 25 October 2026/)).toBeVisible();
+  await expect(page.getByText(/USD\s10\.00 on 24 Oct 2026 · Bank transfer/)).toBeVisible();
+  await expect(page.getByText(/SAMPLE-CN-000001: USD\s3\.00 on 25 Oct 2026/)).toBeVisible();
   await expect(page.getByText(/Synthetic credit for a rehearsal correction/)).toBeVisible();
   // Customers never see a reference, who recorded a change, or any way to act on an invoice.
   await expect(page.getByRole('button')).toHaveCount(0);
@@ -274,7 +270,7 @@ test('an owner sees that a payment was reversed, and never why', async ({ page }
   await page.goto(origin + '/');
   await page.getByText('Payments and credit notes for SAMPLE-INV-000001').click();
   await expect(
-    page.getByText(/USD\s10\.00 on 24 October 2026 · Bank transfer · Reversed/),
+    page.getByText(/USD\s10\.00 on 24 Oct 2026 · Bank transfer · Reversed/),
   ).toBeVisible();
   await expect(page.getByText(/wrong invoice|Synthetic reversal/)).toHaveCount(0);
   expect(await axe(page)).toEqual([]);

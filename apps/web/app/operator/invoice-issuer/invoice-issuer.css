@@ -1,0 +1,80 @@
+/* Invoice issuer (ADR-092). One left-aligned column of at most 40rem; one step at a time; tokens only. */
+.invoice-issuer,
+.invoice-issuer-form {
+  display: grid;
+  gap: var(--space-4);
+  max-inline-size: 40rem;
+  min-inline-size: 0;
+}
+.invoice-issuer p,
+.invoice-issuer dl,
+.invoice-issuer dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.invoice-issuer-status {
+  display: grid;
+  gap: var(--space-2);
+}
+.invoice-issuer .invoice-issuer-help {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.invoice-issuer h2.invoice-issuer-step {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: 1.25;
+}
+.invoice-issuer-step:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.invoice-issuer-field {
+  display: grid;
+  gap: var(--space-2);
+}
+.invoice-issuer-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.invoice-issuer-choices legend {
+  margin-block-end: var(--space-2);
+  padding: 0;
+  font-weight: 600;
+}
+.invoice-issuer-summary {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+}
+.invoice-issuer-summary dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.invoice-issuer-actions,
+.invoice-issuer-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.invoice-issuer-result .billing-notice {
+  flex: 1 1 100%;
+  margin: 0;
+}
+/* From 48rem the answers sit in two columns, so the last step stays inside one desktop screen. */
+@media (min-width: 48rem) {
+  .invoice-issuer-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-4);
+  }
+}

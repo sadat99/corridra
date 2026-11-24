@@ -1704,6 +1704,11 @@
       "use": "Proposed 23 Nov 2026 for the owner decision that opened AI in real workspaces; runs, results and reviews in real workspaces behind one database control that starts closed, three hash-checked function replacements, approved-provider evaluation required for real work, contact-detail and human review rules unchanged, any of the three adapters; amends ADR-089 forward; nothing installed or opened"
     },
     {
+      "path": "docs/adr/0092-owner-entered-invoice-issuer-details.md",
+      "classification": "Architecture decision",
+      "use": "Proposed 23 Nov 2026 for the owner decision that the owner types the invoice issuer details on an Owner-only staff screen with an authenticator check; one new append-only supplier version per save, made-up marks cleared for the typed fields, the real-invoice refusal (D3) lifts only when nothing made up is left; screen switch off by default; real invoices, payments and payouts are not opened by it; amends ADR-064 forward"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v4 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"
