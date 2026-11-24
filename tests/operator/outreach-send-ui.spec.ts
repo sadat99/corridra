@@ -12,6 +12,8 @@ const waitingEmail = '00000000-0000-4000-8000-000000000901';
 const sinkEmail = '00000000-0000-4000-8000-000000000902';
 const listEmail = '00000000-0000-4000-8000-000000000903';
 const waitingSample = '00000000-0000-4000-8000-000000000904';
+const revokedEmail = '00000000-0000-4000-8000-000000000905';
+const optedOutEmail = '00000000-0000-4000-8000-000000000906';
 let server: Server, origin: string;
 
 test.beforeAll(async () => {
@@ -91,6 +93,16 @@ const messages = [
     delivery_note: 'Test, sent to a test address only',
   }),
   message(waitingSample, 'Sample Mill Four', { channel: 'SYNTHETIC', delivery_status: 'PENDING' }),
+  message(revokedEmail, 'Sample Mill Five', {
+    channel: 'EMAIL',
+    delivery_status: 'PENDING',
+    revoked: true,
+  }),
+  message(optedOutEmail, 'Sample Mill Six', {
+    channel: 'EMAIL',
+    delivery_status: 'PENDING',
+    contact_opted_out: true,
+  }),
 ];
 type Sent = { action: string; body: unknown };
 async function open(
@@ -164,6 +176,12 @@ test('one click on Send This Email posts exactly one message id, and only a wait
   ).toBeVisible();
   await expect(card(page, 'Sample Mill One')).toContainText('One click sends this one email only.');
   await expect(card(page, 'Sample Mill Four').getByRole('button')).toHaveCount(1);
+  // A waiting real email whose link is revoked, or whose contact opted out, offers no send.
+  await expect(card(page, 'Sample Mill Five')).toContainText('Link revoked.');
+  for (const company of ['Sample Mill Five', 'Sample Mill Six'])
+    await expect(card(page, company).getByRole('button', { name: /^Send This Email/ })).toHaveCount(
+      0,
+    );
   await expect(
     card(page, 'Sample Mill Four').getByRole('button', { name: 'Revoke Buyer Link' }),
   ).toBeVisible();
@@ -186,7 +204,7 @@ test('the test delivery notes read on their cards and the batch action still pos
     await expect(card(page, company)).not.toContainText('Delivery note');
   await expect(
     page.getByText(
-      'This starts waiting sample introductions only. A real email is sent one at a time with Send This Email on its own card.',
+      'This starts sample introductions and manual handoffs only. A real email is sent one at a time with Send This Email on its own card.',
     ),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Dispatch Pending Introductions', exact: true }).click();

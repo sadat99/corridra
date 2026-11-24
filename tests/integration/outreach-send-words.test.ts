@@ -29,6 +29,16 @@ test('only a waiting real email offers the one-message send', () => {
     expect(canSendOne({ channel, delivery_status: 'PENDING' })).toBe(false);
 });
 
+test('a real email the list already knows is revoked or opted out offers no send', () => {
+  const waiting = { channel: 'EMAIL', delivery_status: 'PENDING' };
+  expect(canSendOne({ ...waiting, revoked: true })).toBe(false);
+  expect(canSendOne({ ...waiting, contact_opted_out: true })).toBe(false);
+  expect(canSendOne({ ...waiting, revoked: true, contact_opted_out: true })).toBe(false);
+  // Absent or false leaves the send: the opt-out fact is present only when contact changes are installed.
+  expect(canSendOne({ ...waiting, revoked: false, contact_opted_out: false })).toBe(true);
+  expect(canSendOne({ ...waiting, revoked: null, contact_opted_out: null })).toBe(true);
+});
+
 test('one click names exactly one message and carries nothing else', () => {
   const id = '3f0c1a52-6f0e-4a3b-9a55-0d6d0f1f7a10';
   expect(sendOneBody({ id })).toEqual({ messageId: id });
@@ -45,6 +55,9 @@ test('the introductions list shows the note and sends one real email per click, 
   // The batch action keeps its name and its empty body, which the server limits to the sample lane.
   expect(access).toContain("onClick={() => void act('dispatch', {})}");
   expect(access).toContain('Dispatch Pending Introductions');
+  expect(access).toContain(
+    'This starts sample introductions and manual handoffs only. A real email is sent one at a time with Send This Email on its own card.',
+  );
   expect(access.match(/act\('dispatch'/g)).toHaveLength(2);
   expect(access).not.toMatch(/—|–/);
 });
@@ -55,6 +68,6 @@ test('the recovery queue says its batch start is for sample messages only and st
   expect(operations.match(/request\('dispatch'/g)).toHaveLength(1);
   expect(operations).toContain('Start or Recover Eligible Dispatch');
   expect(operations).toContain(
-    'This starts waiting sample messages only. A real email is sent one message at a time from Introductions and replies.',
+    'This starts sample messages and manual handoffs only. A real email is sent one message at a time from Introductions and replies.',
   );
 });

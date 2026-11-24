@@ -1598,8 +1598,8 @@ export function Operations({
                         Start or Recover Eligible Dispatch
                       </button>
                       <p>
-                        This starts waiting sample messages only. A real email is sent one message
-                        at a time from Introductions and replies.
+                        This starts sample messages and manual handoffs only. A real email is sent
+                        one message at a time from Introductions and replies.
                       </p>
                     </>
                   ),

@@ -690,8 +690,8 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 )}
                 {manage && (
                   <p>
-                    This starts waiting sample introductions only. A real email is sent one at a
-                    time with Send This Email on its own card.
+                    This starts sample introductions and manual handoffs only. A real email is sent
+                    one at a time with Send This Email on its own card.
                   </p>
                 )}
                 {comms.messages.map((m) => {
