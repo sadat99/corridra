@@ -14,7 +14,6 @@ import { OperatorFlags } from './operator-flags';
 import { Workspace } from './workspace';
 import { teamSectionTitle } from '../../lib/ux/shells';
 import { deskFrame } from '../../components/ux/desk-frame';
-import { TeamPageSegments } from '../../components/ux/desk-segments';
 import { isDeskPlace } from '../../lib/ux/page-pattern';
 /**
  * The protected workspace, shared by `/operator` and (with the address switch on) `/operator/<section>`.
@@ -100,14 +99,6 @@ export async function OperatorEntry({
         (frame ? ' ' + frame.className : '')
       }
     >
-      {deskV41
-        ? (frame?.segments ?? (
-            <TeamPageSegments
-              urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
-              ownerPage={ownerPage}
-            />
-          ))
-        : null}
       {shellsV2 ? (
         <TeamSecondLevel
           urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
@@ -115,6 +106,7 @@ export async function OperatorEntry({
           desk={uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
         />
       ) : null}
+      {frame?.segments}
       <OperatorFlags
         replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
         supplySources={uxSwitchOn('CORRIDRA_SUPPLY_SOURCES')}

@@ -113,7 +113,6 @@ export default async function Page({
       className={frame ? 'ux-owner ' + frame.className : 'ux-owner'}
     >
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
-      {frame?.segments}
       {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
         <TeamSecondLevel
           urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
@@ -121,6 +120,7 @@ export default async function Page({
           desk={uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
         />
       ) : null}
+      {frame?.segments}
       {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && (
         <FrontDoor label="Founder areas" items={withWorkspace(founderDoor, tenant.id)} />
       )}

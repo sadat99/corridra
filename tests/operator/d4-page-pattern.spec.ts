@@ -117,7 +117,8 @@ test('switch on: serif title, one purpose line, segments under the title, no lab
   const order = await page.evaluate(() => {
     const header = document.querySelector('main#main > header.ux-page-heading')!;
     const row = document.querySelector('main#main nav.ux-segments')!;
-    return header.nextElementSibling === row;
+    const next = header.nextElementSibling!;
+    return next === row || (next.matches('nav.ux-team-second') && next.nextElementSibling === row);
   });
   expect(order).toBe(true);
 });
