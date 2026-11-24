@@ -430,7 +430,15 @@ test('D8 on: Quotes sets what the customer asked for beside the replies to revie
   await expect(review.getByRole('button', { name: 'Ask for Missing Terms' })).toBeVisible();
   await expect(review.getByRole('button', { name: 'Reject', exact: true })).toBeVisible();
   // The recorded offers and both original links stay.
+  // The recorded offers wait behind a disclosure that carries their count.
   const recorded = page.getByRole('region', { name: 'Offers recorded on this mission' });
+  await expect(recorded.locator('details')).not.toHaveAttribute('open', '');
+  await expect(recorded.locator('summary')).toHaveText('Offers recorded on this mission: 1');
+  await recorded.locator('summary').click();
+  await expect(recorded.getByText('revision 1')).toBeVisible();
+  // The inner headings of a card sit under its h5 title.
+  await expect(card.locator('h4')).toHaveCount(0);
+  await expect(card.locator('h6', { hasText: 'What the supplier was shown' })).toBeVisible();
   await expect(recorded).toContainText('Invented Supplier Ltd');
   await expect(recorded).toContainText('revision 1');
   await expect(recorded.getByRole('link', { name: 'Open Money' })).toHaveAttribute(
@@ -471,6 +479,21 @@ test('D8 on: Reject, Ask and Publish send the same reply-review payloads as toda
     'responseId',
     'seen',
   ]);
+});
+
+test('D8 on, phone: what the customer asked for folds behind a summary that names the offer', async ({
+  page,
+}) => {
+  await open(page, 'mission', { desk: true, width: 390 });
+  await tab(page, 'Quotes').click();
+  const asked = page.getByRole('region', { name: 'What the customer asked for' });
+  await expect(asked.locator('details')).not.toHaveAttribute('open', '');
+  await expect(asked.locator('summary')).toHaveText(
+    'What the customer asked for: Invented curtain track, 4 m, 10 pieces',
+  );
+  await expect(asked.getByText('Three comparable quotes')).toBeHidden();
+  await asked.locator('summary').click();
+  await expect(asked.getByText('Three comparable quotes')).toBeVisible();
 });
 
 test('D8 on: a comparable reply makes Publish the one cobalt action', async ({ page }) => {

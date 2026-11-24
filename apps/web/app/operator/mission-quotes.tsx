@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { MissionBrief } from '@corridra/domain/missions';
 import { EmptyState } from '../../components/ux/empty-state';
+import { PhoneFold } from '../../components/phone-fold';
 import { bodyNotAvailable } from '../../lib/body-access';
 import { formatDateTime } from '../../lib/ux/format';
 import { formatMoney } from '../../lib/ux/money';
@@ -144,30 +145,36 @@ export function MissionQuotes({
       </p>
       <div className="mission-quotes-columns">
         <section className="mission-quotes-asked" aria-labelledby="mission-quotes-asked">
-          <h4 id="mission-quotes-asked">What the customer asked for</h4>
-          <dl>
-            <dt>Request</dt>
-            <dd>{brief.offer}</dd>
-            <dt>Goal</dt>
-            <dd>{brief.objective}</dd>
-            <dt>Market</dt>
-            <dd>{brief.market}</dd>
-            {brief.outcomes.length > 0 && (
+          {/* Open beside the replies on a wide screen; on a phone it folds behind the offer it names. */}
+          <PhoneFold
+            summary={
               <>
-                <dt>Wanted outcomes</dt>
-                <dd>{brief.outcomes.join(', ')}</dd>
+                <span id="mission-quotes-asked">What the customer asked for</span>: {brief.offer}
               </>
-            )}
-            {typeof product === 'string' && product && (
-              <>
-                <dt>Reviewed requirement, version {String(requirement?.version)}</dt>
-                <dd>{product}</dd>
-              </>
-            )}
-          </dl>
-          <p className="reply-review-note">
-            Self-declared by the customer. The team writes the reviewed requirement.
-          </p>
+            }
+          >
+            <dl>
+              <dt>Goal</dt>
+              <dd>{brief.objective}</dd>
+              <dt>Market</dt>
+              <dd>{brief.market}</dd>
+              {brief.outcomes.length > 0 && (
+                <>
+                  <dt>Wanted outcomes</dt>
+                  <dd>{brief.outcomes.join(', ')}</dd>
+                </>
+              )}
+              {typeof product === 'string' && product && (
+                <>
+                  <dt>Reviewed requirement, version {String(requirement?.version)}</dt>
+                  <dd>{product}</dd>
+                </>
+              )}
+            </dl>
+            <p className="reply-review-note">
+              Self-declared by the customer. The team writes the reviewed requirement.
+            </p>
+          </PhoneFold>
         </section>
         <div className="mission-quotes-replies">
           {!replyReview ? (
@@ -213,32 +220,39 @@ export function MissionQuotes({
         </div>
       </div>
       <section className="mission-quotes-recorded" aria-labelledby="mission-quotes-recorded">
-        <h4 id="mission-quotes-recorded">Offers recorded on this mission</h4>
-        {!commercial ? (
-          <p role={commercialError ? 'alert' : 'status'}>{commercialError || 'Loading…'}</p>
-        ) : commercial.quotations.length ? (
-          <ul>
-            {commercial.quotations.map((quote) => {
-              const terms = (quote.terms ?? {}) as Record<string, string>;
-              const total = terms.totalPriceMinor ?? terms.unitPriceMinor;
-              return (
-                <li key={quote.id}>
-                  {commercial.targets.find((t) => t.id === quote.target_id)?.name ?? 'Supplier'} ·
-                  revision {String(quote.revision)}
-                  {/* ADR-087 U1q: a staff viewer receives the quotation with its terms null. */}
-                  {quote.terms === null ? ` · ${String(quote.currency)} · ${bodyNotAvailable}` : ''}
-                  {total ? ` · ${safeMoney(total, String(quote.currency))}` : ''}
-                  {terms.totalPriceMinor ? ' total' : total ? ' per unit' : ''}
-                  {quote.created_at
-                    ? ` · recorded ${formatDateTime(String(quote.created_at))}`
-                    : ''}
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p>No supplier offers recorded yet.</p>
-        )}
+        <details>
+          <summary>
+            <span id="mission-quotes-recorded">Offers recorded on this mission</span>
+            {commercial ? `: ${commercial.quotations.length}` : ''}
+          </summary>
+          {!commercial ? (
+            <p role={commercialError ? 'alert' : 'status'}>{commercialError || 'Loading…'}</p>
+          ) : commercial.quotations.length ? (
+            <ul>
+              {commercial.quotations.map((quote) => {
+                const terms = (quote.terms ?? {}) as Record<string, string>;
+                const total = terms.totalPriceMinor ?? terms.unitPriceMinor;
+                return (
+                  <li key={quote.id}>
+                    {commercial.targets.find((t) => t.id === quote.target_id)?.name ?? 'Supplier'} ·
+                    revision {String(quote.revision)}
+                    {/* ADR-087 U1q: a staff viewer receives the quotation with its terms null. */}
+                    {quote.terms === null
+                      ? ` · ${String(quote.currency)} · ${bodyNotAvailable}`
+                      : ''}
+                    {total ? ` · ${safeMoney(total, String(quote.currency))}` : ''}
+                    {terms.totalPriceMinor ? ' total' : total ? ' per unit' : ''}
+                    {quote.created_at
+                      ? ` · recorded ${formatDateTime(String(quote.created_at))}`
+                      : ''}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p>No supplier offers recorded yet.</p>
+          )}
+        </details>
         <div className="mission-quotes-links">
           <button type="button" className="text-link" onClick={onRecord}>
             Record or Revise a Supplier Offer

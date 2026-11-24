@@ -193,6 +193,28 @@
   display: grid;
   gap: var(--space-3);
 }
+.reply-review-card h6 {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.mission-quotes-asked > details,
+.mission-quotes-recorded > details {
+  display: grid;
+  gap: var(--space-3);
+}
+.mission-quotes-asked > details > summary,
+.mission-quotes-recorded > details > summary {
+  padding-block: var(--space-2);
+  font-weight: 600;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.mission-quotes-asked > details > :not(summary),
+.mission-quotes-recorded > details > :not(summary) {
+  margin-block-start: var(--space-3);
+}
 .reply-review-title {
   margin: 0;
   font-size: var(--text-lg);
@@ -218,6 +240,7 @@
 .mission-quotes-asked dt {
   color: var(--text-muted);
   font-size: var(--text-sm);
+  overflow-wrap: anywhere;
 }
 .mission-quotes-asked dd {
   margin: 0;

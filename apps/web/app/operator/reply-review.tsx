@@ -230,7 +230,7 @@ function WithheldReply({
     <Card id={reply.id} desk={sender !== undefined}>
       <ReplyHeader reply={reply} state={reviewState(reviews)} ineligible={false} sender={sender} />
       <section aria-label="The reply">
-        <h4>The reply</h4>
+        {sender !== undefined ? <h6>The reply</h6> : <h4>The reply</h4>}
         <p>{bodyNotAvailable}</p>
       </section>
     </Card>
@@ -389,6 +389,8 @@ function ReplyCard({
   const han = (text: string) => (/\p{Script=Han}/u.test(text) ? 'zh' : undefined);
 
   const desk = sender !== undefined;
+  // Desk: the card's own title is an h5, so the headings inside it sit one level under it.
+  const Heading = desk ? 'h6' : 'h4';
   const termList = quotation?.terms ? (
     <dl className="reply-review-terms">
       {replyTermNames.map((key) => {
@@ -417,13 +419,13 @@ function ReplyCard({
 
       <div className="reply-review-columns">
         <section aria-label="Requirement shown to the supplier">
-          <h4>What the supplier was shown</h4>
+          <Heading>What the supplier was shown</Heading>
           <p lang={requirement ? han(requirement) : undefined}>
             {requirement ?? 'The shared requirement is not available.'}
           </p>
         </section>
         <section aria-label="The reply">
-          <h4>The reply</h4>
+          <Heading>The reply</Heading>
           <p lang={han(String(reply.body.body ?? ''))}>{String(reply.body.body ?? '')}</p>
           {!!reply.revision && (
             <p className="reply-review-note">
@@ -443,14 +445,14 @@ function ReplyCard({
 
       {quotation?.terms ? (
         <section aria-label="Quotation term by term">
-          <h4>
+          <Heading>
             Quotation term by term ({quotation.currency}){' '}
             {gaps.comparable ? (
               <span className="reply-review-ok">Comparable on supplied terms</span>
             ) : (
               <span className="reply-review-gap">Not comparable yet</span>
             )}
-          </h4>
+          </Heading>
           {desk ? (
             <details className="reply-review-history">
               <summary>
@@ -505,7 +507,7 @@ function ReplyCard({
 
       {prepared && (
         <div className="reply-review-prepared">
-          <h4>Prepared quotation</h4>
+          <Heading>Prepared quotation</Heading>
           {canRecord && (
             <div className="reply-handoff-status" role="status">
               {prefill.kind === 'loading' && <p>Checking whether this reply can be prepared.</p>}
