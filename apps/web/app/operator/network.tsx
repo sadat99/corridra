@@ -409,7 +409,7 @@ export function ExecutionNetwork({
     <section
       className="detail-card ux-governance-panel ux-network"
       data-operator-workbench
-      aria-label="Execution network"
+      aria-label="Corridra Network"
     >
       <header className="ux-network-heading">
         <div>

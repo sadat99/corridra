@@ -383,6 +383,12 @@ test('Network invitation form supports scoped submission and an editable paused 
   test.setTimeout(90000);
   await page.context().addCookies([{ name: 'fixture_owner', value: 'authorized', url: origin }]);
   await page.goto(origin + '/network-owner');
+  // The real Network screen names its region and its work in plain words.
+  await expect(
+    page
+      .getByRole('region', { name: 'Corridra Network', exact: true })
+      .getByRole('heading', { level: 2, name: 'Assigned work', exact: true }),
+  ).toBeVisible();
   // The Network page is cut into sub-tabs (L21): invitations are the last one.
   await openTab(page, 'Invite a Helper');
   const invitations = page.getByRole('region', { name: 'Helper invitations', exact: true });

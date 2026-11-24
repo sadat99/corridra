@@ -3040,7 +3040,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await expect(reviewerPage.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
     await openSection(reviewerPage, 'workspace-network');
     const networkPanel = reviewerPage
-      .getByRole('region', { name: 'Execution network' })
+      .getByRole('region', { name: 'Corridra Network' })
       .locator('article')
       .filter({ hasText: 'Review only the disclosed synthetic machine capacity statement.' });
     // The task list starts closed behind its summary (L21): open it first.
@@ -3078,7 +3078,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     // CQ-59: the message now appears next to the form that caused it (scoped feedback).
     await expect(
       reviewerPage
-        .getByRole('region', { name: 'Execution network' })
+        .getByRole('region', { name: 'Corridra Network' })
         .getByText(/Receipt not confirmed\./)
         .first(),
     ).toBeVisible();

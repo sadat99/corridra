@@ -200,7 +200,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
         )}
         <p>
           We send the invitation to their Corridra inbox and by email when email is switched on.
-          They verify their email, set a helper password and set up an authenticator. An invitation
+          They verify their email, set a work password and set up an authenticator. An invitation
           gives no team membership and no task.
         </p>
         <div className="ux-invitation-flow">
