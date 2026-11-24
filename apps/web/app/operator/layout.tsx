@@ -18,6 +18,8 @@ export default async function OperatorLayout({ children }: { children: ReactNode
       ownerPage={ownerPageEnabled()}
       desk={uxSwitchOn('CORRIDRA_UX_OPERATOR_DESK')}
       problemReports={await problemReportsOffered()}
+      deskV41={uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}
+      supply={uxSwitchOn('CORRIDRA_SUPPLY_SOURCES')}
     >
       {children}
     </TeamFrame>
