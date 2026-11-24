@@ -485,7 +485,6 @@ export const homeRouteWordKeys = [
   'home.b3.hero.delegation.sub',
   'home.b3.hero.other.title',
   'home.b3.hero.other.sub',
-  'home.b3.draft',
   'home.b3.to',
   'home.b3.talk',
   'home.b3.talk.where',

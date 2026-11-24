@@ -1,7 +1,9 @@
+import { inEveryLanguage } from './lang';
+
 // Words for the home page (owner decision of 25 October 2026: the pages follow the chosen language).
-// English is the source. The other six are drafts that need the owner's recorded review before
-// `CORRIDRA_LANGUAGES_PAGES` is switched on: until then every key here shows its English words,
-// whatever language is chosen (see lib/i18n/pages.ts). The five trust names stay English in every
+// English is the source and this file holds English only; each other language's words are in lang/<code>.ts.
+// A page key shows in the chosen language only while `CORRIDRA_LANGUAGES_PAGES` names that language
+// (see lib/i18n/pages.ts). The five trust names stay English in every
 // language (ADR-066, decision 3), so they are not here. Company names are invented examples.
 
 // Words added for the home page, concept G (owner decision of 6 November 2026). English only: no translation has
@@ -589,8 +591,8 @@ const homeTwoEn = {
 
 // Words added for the home page as the owner's board 3c in full (LP3, owner, 18 November 2026: "why didnt we implement
 // ... with all the provided feedbacks and updates here?"). English is the source. The board's Bangla, Chinese and
-// Spanish hero lines are drafts (homeBoardDrafts below), shown only while that language's page words are released and
-// marked "Draft translation. Native review pending."; every other language shows these English words.
+// Spanish hero lines (homeBoardDrafts below) are shown only while that language's page words are released, with no
+// note on the page (owner, 23 November 2026); every other language shows these English words.
 const homeBoardEn = {
   'home.b3.hero.china.title': 'Go to China knowing which suppliers deserve your time.',
   'home.b3.hero.china.sub':
@@ -604,7 +606,6 @@ const homeBoardEn = {
   'home.b3.hero.other.title': 'Tell us what is coming up. We say plainly if we can help.',
   'home.b3.hero.other.sub':
     'A trip, a purchase, a fair or a first look at a new market. Describe it in your own words. If it is not something we do well, we tell you.',
-  'home.b3.draft': 'Draft translation. Native review pending.',
   'home.b3.to': 'to',
   'home.b3.talk': 'Talk to a Person',
   'home.b3.talk.where': '(opens WhatsApp)',
@@ -675,91 +676,29 @@ const homeBoardEn = {
   'home.b3.note.when': 'Timing',
 } as const;
 
-// The board's draft hero lines (revision 3c). Native review pending: never shown as reviewed.
-export const homeBoardDrafts = {
-  bn: {
-    'home.tr.lead':
-      'Corridra আন্তর্জাতিক ব্যবসার লক্ষ্যকে সঠিক মানুষ, বিশ্বস্ত আলোচনা এবং পরিমাপযোগ্য অগ্রগতিতে রূপ দেয়। আমরা বাংলাদেশ থেকে চীন, ইইউ, যুক্তরাজ্য, যুক্তরাষ্ট্র, অস্ট্রেলিয়া এবং এশিয়ার প্রধান বাজারগুলোতে মিশন পরিচালনা করি। আপনারটি বেছে নিন।',
-    'home.tr.q': 'আপনার ব্যবসা কোন দিকে যাচ্ছে?',
-    'home.tr.cta.none': 'অনুরোধ শুরু করুন',
-    'home.tr.cta.china': 'আমার চীন সোর্সিং পরিকল্পনা করুন',
-    'home.tr.cta.sell': 'আমার ক্রেতা-মিটিং পরিকল্পনা করুন',
-    'home.tr.cta.delegation': 'আমার কর্মসূচি পরিকল্পনা করুন',
-    'home.tr.cta.other': 'আমার প্রয়োজন লিখুন',
-    'home.tr.door.china.title': 'চীন থেকে কেনা',
-    'home.tr.door.sell.title': 'বিদেশে বিক্রি',
-    'home.tr.door.delegation.title': 'প্রতিনিধিদলের নেতৃত্ব',
-    'home.tr.door.other.title': 'অন্য কিছু',
-    'home.b3.talk': 'একজন মানুষের সঙ্গে কথা বলুন',
-    'home.b3.hero.china.title': 'চীনে যান জেনে, কোন সরবরাহকারী আপনার সময়ের যোগ্য।',
-    'home.b3.hero.china.sub':
-      'সরবরাহকারী অনেক, তুলনা করা যায় অল্প কয়েকটি। আমরা সরবরাহকারী খুঁজি ও যাচাই করি, মূল কোটেশন পাশাপাশি রাখি, আর গুয়াংজু, ফোশান, শেনজেন বা ইউউ-তে কারখানা পরিদর্শনের পরিকল্পনা করি।',
-    'home.b3.hero.sell.title': 'যাত্রার আগেই জানুন কার সঙ্গে দেখা করা মূল্যবান।',
-    'home.b3.hero.sell.sub':
-      'মেলার তালিকার বাইরের কোম্পানিসহ। আমরা ইইউ, যুক্তরাজ্য, যুক্তরাষ্ট্র, অস্ট্রেলিয়া ও এশিয়ার প্রধান বাজারে ক্রেতা ও পরিবেশক খুঁজি, তাদের দাবি যাচাই করি এবং কাজের মিটিং ঠিক করতে সাহায্য করি।',
-    'home.b3.hero.delegation.title': 'আপনার প্রতিনিধিদলের প্রতিটি কোম্পানিকে দিন নিজস্ব পরিকল্পনা।',
-    'home.b3.hero.delegation.sub':
-      'প্রতিটি কোম্পানির নিজস্ব গোপন মিশন থাকে। আপনি দেখেন কর্মসূচির কার্যক্রম ও সামগ্রিক ফলাফল, কখনো তাদের ব্যক্তিগত তথ্য নয়।',
-    'home.b3.hero.other.title': 'সামনে কী আছে বলুন। আমরা সাহায্য করতে পারব কি না, সোজাসুজি জানাব।',
-    'home.b3.hero.other.sub':
-      'একটি সফর, একটি কেনাকাটা, একটি মেলা বা নতুন বাজারে প্রথম দৃষ্টি। নিজের ভাষায় লিখুন। আমরা ভালো না পারলে জানিয়ে দেব।',
-  },
-  zh: {
-    'home.tr.lead':
-      'Corridra 把国际业务目标变成合适的人、可信的沟通和可衡量的进展。我们开展从孟加拉国到中国、欧盟、英国、美国、澳大利亚和亚洲主要市场的任务。请选择您的路线。',
-    'home.tr.q': '您的业务往哪个方向走？',
-    'home.tr.cta.none': '开始提交需求',
-    'home.tr.cta.china': '规划我的中国采购',
-    'home.tr.cta.sell': '规划我的买家会面',
-    'home.tr.cta.delegation': '规划我的项目',
-    'home.tr.cta.other': '描述我的需求',
-    'home.tr.door.china.title': '从中国采购',
-    'home.tr.door.sell.title': '向海外销售',
-    'home.tr.door.delegation.title': '带领代表团',
-    'home.tr.door.other.title': '其他',
-    'home.b3.talk': '与真人沟通',
-    'home.b3.hero.china.title': '去中国之前，先知道哪些供应商值得您花时间。',
-    'home.b3.hero.china.sub':
-      '供应商很多，能直接比较的很少。我们寻找并核查供应商，把原始报价并排比较，并规划您在广州、佛山、深圳或义乌的看厂行程。',
-    'home.b3.hero.sell.title': '出发之前，先知道谁值得见。',
-    'home.b3.hero.sell.sub':
-      '包括展会名单之外的公司。我们在欧盟、英国、美国、澳大利亚和亚洲主要市场调研买家与分销商，核实其说法，并协助安排值得一趟的会面。',
-    'home.b3.hero.delegation.title': '让代表团里的每家公司都有自己的计划。',
-    'home.b3.hero.delegation.sub':
-      '每家公司都有独立、私密的任务。您能看到项目活动和整体成果，但看不到它们的私密数据。',
-    'home.b3.hero.other.title': '告诉我们接下来要做什么。能否帮忙，我们直说。',
-    'home.b3.hero.other.sub':
-      '一次出行、一次采购、一场展会，或初步了解新市场。用您自己的话描述。如果不是我们擅长的，我们会直接告诉您。',
-  },
-  es: {
-    'home.tr.lead':
-      'Corridra convierte un objetivo de negocio internacional en las personas adecuadas, conversaciones de confianza y avances que se pueden medir. Organizamos misiones desde Bangladés a China, la UE, el Reino Unido, Estados Unidos, Australia y los principales mercados de Asia. Elija la suya.',
-    'home.tr.q': '¿Hacia dónde avanza su empresa?',
-    'home.tr.cta.none': 'Iniciar una Solicitud',
-    'home.tr.cta.china': 'Planificar Mis Compras en China',
-    'home.tr.cta.sell': 'Planificar Mis Reuniones con Compradores',
-    'home.tr.cta.delegation': 'Planificar Mi Programa',
-    'home.tr.cta.other': 'Describir lo que Necesito',
-    'home.tr.door.china.title': 'Comprar en China',
-    'home.tr.door.sell.title': 'Vender en el extranjero',
-    'home.tr.door.delegation.title': 'Dirigir una delegación',
-    'home.tr.door.other.title': 'Otra cosa',
-    'home.b3.talk': 'Hablar con una Persona',
-    'home.b3.hero.china.title': 'Vaya a China sabiendo qué proveedores merecen su tiempo.',
-    'home.b3.hero.china.sub':
-      'Muchos proveedores, pocos que se puedan comparar. Buscamos y comprobamos proveedores, ponemos sus cotizaciones originales una al lado de otra y planificamos visitas a fábricas en Guangzhou, Foshan, Shenzhen o Yiwu.',
-    'home.b3.hero.sell.title': 'Sepa a quién vale la pena conocer antes de viajar.',
-    'home.b3.hero.sell.sub':
-      'Incluidas empresas que no están en la lista de la feria. Investigamos compradores y distribuidores en la UE, el Reino Unido, Estados Unidos, Australia y los principales mercados de Asia, comprobamos lo que afirman y le ayudamos a organizar reuniones que justifiquen el viaje.',
-    'home.b3.hero.delegation.title': 'Dé a cada empresa de su delegación su propio plan.',
-    'home.b3.hero.delegation.sub':
-      'Cada empresa mantiene una misión privada, con sus propios objetivos y reuniones. Usted ve la actividad del programa y los resultados generales, nunca sus datos privados.',
-    'home.b3.hero.other.title':
-      'Cuéntenos qué tiene por delante. Le diremos con claridad si podemos ayudarle.',
-    'home.b3.hero.other.sub':
-      'Un viaje, una compra, una feria o una primera mirada a un mercado nuevo. Descríbalo con sus propias palabras. Si no es algo que hagamos bien, se lo diremos.',
-  },
-} as const;
+// The keys of the board's own hero lines (revision 3c) in Bangla, Chinese and Spanish. The words are in lang/<code>.ts.
+const homeBoardKeys = [
+  'home.tr.lead',
+  'home.tr.q',
+  'home.tr.cta.none',
+  'home.tr.cta.china',
+  'home.tr.cta.sell',
+  'home.tr.cta.delegation',
+  'home.tr.cta.other',
+  'home.tr.door.china.title',
+  'home.tr.door.sell.title',
+  'home.tr.door.delegation.title',
+  'home.tr.door.other.title',
+  'home.b3.talk',
+  'home.b3.hero.china.title',
+  'home.b3.hero.china.sub',
+  'home.b3.hero.sell.title',
+  'home.b3.hero.sell.sub',
+  'home.b3.hero.delegation.title',
+  'home.b3.hero.delegation.sub',
+  'home.b3.hero.other.title',
+  'home.b3.hero.other.sub',
+] as const;
 
 export const homeEn = {
   ...homeBoardEn,
@@ -794,228 +733,13 @@ export const homeEn = {
 
 export type HomeKey = keyof typeof homeEn;
 
-export const homeWords: Record<'bn' | 'zh' | 'es' | 'ar' | 'fr' | 'de', Record<HomeKey, string>> = {
-  bn: {
-    ...homeLandingEn,
-    ...homeTwoEn,
-    ...homeBoardEn,
-    'home.country.bd': 'বাংলাদেশ',
-    'home.country.cn': 'চীন',
-    'home.country.es': 'স্পেন',
-    'home.country.eu': 'ইউরোপীয় ইউনিয়ন',
-    'home.country.uk': 'যুক্তরাজ্য',
-    'home.country.us': 'যুক্তরাষ্ট্র',
-    'home.country.au': 'অস্ট্রেলিয়া',
-    'home.country.asia': 'প্রধান এশীয় বাজার',
-    'home.pass.label': 'বাংলাদেশ থেকে {to}',
-    'home.other.title': 'অন্য কোনো রুট?',
-    'home.other.text':
-      'কোনো পরিচালনা প্রস্তাব ঘোষিত হয়নি। আমরা সাহায্য করতে পারলে স্পষ্টভাবে জানাই।',
-    'home.eyebrow': 'আন্তঃসীমান্ত বাজার প্রবেশাধিকার',
-    'home.title': 'বাজারে প্রবেশ হোক সুচিন্তিত।',
-    'home.jobs.aria': 'আপনার বাণিজ্যিক লক্ষ্য বেছে নিন',
-    'home.start.sell.title': 'আমার পণ্য বিক্রি করতে চাই',
-    'home.start.sell.text': 'বিদেশে ক্রেতা ও অংশীদার খুঁজুন।',
-    'home.start.sell.name': 'ক্রেতা ও অংশীদার খুঁজুন',
-    'home.start.buy.title': 'পণ্য বা যন্ত্র কিনুন',
-    'home.start.buy.text': 'সরবরাহকারী খুঁজুন। কোটেশন তুলনা করুন।',
-    'home.start.buy.name': 'সরবরাহকারী ও পণ্য খুঁজুন',
-    'home.start.trip.title': 'দলগত সফর পরিচালনা করুন',
-    'home.start.trip.text': 'কর্মসূচি ও বৈঠকের পরিকল্পনা করুন।',
-    'home.start.trip.name': 'প্রতিনিধিদল আয়োজন করুন',
-    'home.else': 'অন্য কিছু? আপনার ব্যবসায়িক লক্ষ্য আমাদের জানান',
-    'home.calm.account': 'শুরু করতে কোনো অ্যাকাউন্টের প্রয়োজন নেই',
-    'home.value.notConfirmed': 'নিশ্চিত করা হয়নি',
-    'home.fact.selfDeclared': 'কোম্পানি নিজে জানিয়েছে।',
-    'home.fact.evidence': 'প্রমাণ দেওয়া হয়েছে।',
-    'home.fact.verified': 'নির্দিষ্ট প্রক্রিয়ায় যাচাই করা হয়েছে।',
-    'home.facts.more': 'আমরা তথ্য কীভাবে লেবেল করি',
-    'home.other.link': 'সব রুট দেখুন',
-    ...homeBoardDrafts.bn,
-  },
-  zh: {
-    ...homeLandingEn,
-    ...homeTwoEn,
-    ...homeBoardEn,
-    'home.country.bd': '孟加拉国',
-    'home.country.cn': '中国',
-    'home.country.es': '西班牙',
-    'home.country.eu': '欧盟',
-    'home.country.uk': '英国',
-    'home.country.us': '美国',
-    'home.country.au': '澳大利亚',
-    'home.country.asia': '亚洲主要市场',
-    'home.pass.label': '孟加拉国至{to}',
-    'home.other.title': '其他路线？',
-    'home.other.text': '暂未公布运营服务。我们能否提供帮助，会如实告诉您。',
-    'home.eyebrow': '跨境市场准入',
-    'home.title': '让进入新市场有章可循。',
-    'home.jobs.aria': '选择您的商业目标',
-    'home.start.sell.title': '销售我的产品',
-    'home.start.sell.text': '在海外寻找买家和合作伙伴。',
-    'home.start.sell.name': '寻找买家与合作伙伴',
-    'home.start.buy.title': '采购产品或设备',
-    'home.start.buy.text': '寻找供应商，比较报价。',
-    'home.start.buy.name': '寻找供应商与产品',
-    'home.start.trip.title': '带领团组出访',
-    'home.start.trip.text': '规划行程安排与会面。',
-    'home.start.trip.name': '组织代表团',
-    'home.else': '还有其他需求？告诉我们您的业务目标',
-    'home.calm.account': '开始无需账户',
-    'home.value.notConfirmed': '未确认',
-    'home.fact.selfDeclared': '由公司自行声明。',
-    'home.fact.evidence': '已提供证明。',
-    'home.fact.verified': '经既定流程核查。',
-    'home.facts.more': '我们如何标注事实',
-    'home.other.link': '浏览所有路线',
-    ...homeBoardDrafts.zh,
-  },
-  es: {
-    ...homeLandingEn,
-    ...homeTwoEn,
-    ...homeBoardEn,
-    'home.country.bd': 'Bangladés',
-    'home.country.cn': 'China',
-    'home.country.es': 'España',
-    'home.country.eu': 'la UE',
-    'home.country.uk': 'el Reino Unido',
-    'home.country.us': 'EE. UU.',
-    'home.country.au': 'Australia',
-    'home.country.asia': 'mercados clave de Asia',
-    'home.pass.label': 'Desde Bangladés: {to}',
-    'home.other.title': '¿Otra ruta?',
-    'home.other.text':
-      'No hay oferta operativa anunciada. Le decimos con claridad si podemos ayudarle.',
-    'home.eyebrow': 'Acceso a mercados transfronterizos',
-    'home.title': 'Entrar en un mercado con método.',
-    'home.jobs.aria': 'Elija su objetivo comercial',
-    'home.start.sell.title': 'Vender mis productos',
-    'home.start.sell.text': 'Encuentre compradores y socios en el extranjero.',
-    'home.start.sell.name': 'Buscar compradores y socios',
-    'home.start.buy.title': 'Comprar productos o máquinas',
-    'home.start.buy.text': 'Encuentre proveedores. Compare cotizaciones.',
-    'home.start.buy.name': 'Buscar proveedores y productos',
-    'home.start.trip.title': 'Dirigir un viaje en grupo',
-    'home.start.trip.text': 'Planifique el programa y las reuniones.',
-    'home.start.trip.name': 'Organizar una delegación',
-    'home.else': '¿Otra cosa? Cuéntenos su objetivo empresarial',
-    'home.calm.account': 'No necesita una cuenta para empezar',
-    'home.value.notConfirmed': 'Sin confirmar',
-    'home.fact.selfDeclared': 'Declarado por la empresa.',
-    'home.fact.evidence': 'Se aportaron pruebas.',
-    'home.fact.verified': 'Comprobado mediante un proceso definido.',
-    'home.facts.more': 'Cómo etiquetamos los datos',
-    'home.other.link': 'Explorar todas las rutas',
-    ...homeBoardDrafts.es,
-  },
-  ar: {
-    ...homeLandingEn,
-    ...homeTwoEn,
-    ...homeBoardEn,
-    'home.country.bd': 'بنغلاديش',
-    'home.country.cn': 'الصين',
-    'home.country.es': 'إسبانيا',
-    'home.country.eu': 'الاتحاد الأوروبي',
-    'home.country.uk': 'المملكة المتحدة',
-    'home.country.us': 'الولايات المتحدة',
-    'home.country.au': 'أستراليا',
-    'home.country.asia': 'الأسواق الآسيوية الرئيسية',
-    'home.pass.label': 'من بنغلاديش إلى {to}',
-    'home.other.title': 'مسار آخر؟',
-    'home.other.text': 'لا يوجد عرض تشغيلي معلن. نخبرك بوضوح ما إذا كنا نستطيع المساعدة.',
-    'home.eyebrow': 'الوصول إلى الأسواق عبر الحدود',
-    'home.title': 'اجعل دخول السوق مدروسًا.',
-    'home.jobs.aria': 'اختر هدفك التجاري',
-    'home.start.sell.title': 'بيع منتجاتي',
-    'home.start.sell.text': 'ابحث عن مشترين وشركاء في الخارج.',
-    'home.start.sell.name': 'البحث عن مشترين وشركاء',
-    'home.start.buy.title': 'شراء منتجات أو آلات',
-    'home.start.buy.text': 'ابحث عن موردين. قارن عروض الأسعار.',
-    'home.start.buy.name': 'البحث عن موردين ومنتجات',
-    'home.start.trip.title': 'قيادة رحلة جماعية',
-    'home.start.trip.text': 'خطط للبرنامج واللقاءات.',
-    'home.start.trip.name': 'تنظيم وفد',
-    'home.else': 'شيء آخر؟ أخبرنا بهدفك التجاري',
-    'home.calm.account': 'لا حاجة إلى حساب للبدء',
-    'home.value.notConfirmed': 'غير مؤكد',
-    'home.fact.selfDeclared': 'صرّحت بها الشركة.',
-    'home.fact.evidence': 'قُدِّم دليل.',
-    'home.fact.verified': 'تم التحقق منها بإجراء محدد.',
-    'home.facts.more': 'كيف نصنّف المعلومات',
-    'home.other.link': 'استكشف كل المسارات',
-  },
-  fr: {
-    ...homeLandingEn,
-    ...homeTwoEn,
-    ...homeBoardEn,
-    'home.country.bd': 'Bangladesh',
-    'home.country.cn': 'Chine',
-    'home.country.es': 'Espagne',
-    'home.country.eu': "l'UE",
-    'home.country.uk': 'le Royaume-Uni',
-    'home.country.us': 'les États-Unis',
-    'home.country.au': "l'Australie",
-    'home.country.asia': "grands marchés d'Asie",
-    'home.pass.label': 'Depuis le Bangladesh : {to}',
-    'home.other.title': 'Un autre itinéraire ?',
-    'home.other.text':
-      'Aucune offre opérationnelle annoncée. Nous vous disons clairement si nous pouvons vous aider.',
-    'home.eyebrow': 'Accès aux marchés transfrontaliers',
-    'home.title': 'Entrer sur un marché avec méthode.',
-    'home.jobs.aria': 'Choisissez votre objectif commercial',
-    'home.start.sell.title': 'Vendre mes produits',
-    'home.start.sell.text': "Trouver des acheteurs et des partenaires à l'étranger.",
-    'home.start.sell.name': 'Trouver des acheteurs et des partenaires',
-    'home.start.buy.title': 'Acheter des produits ou des machines',
-    'home.start.buy.text': 'Trouver des fournisseurs. Comparer les devis.',
-    'home.start.buy.name': 'Trouver des fournisseurs et des produits',
-    'home.start.trip.title': 'Conduire un voyage de groupe',
-    'home.start.trip.text': 'Planifier le programme et les rencontres.',
-    'home.start.trip.name': 'Organiser une délégation',
-    'home.else': 'Autre chose ? Parlez-nous de votre objectif commercial',
-    'home.calm.account': "Aucun compte n'est nécessaire pour commencer",
-    'home.value.notConfirmed': 'Non confirmée',
-    'home.fact.selfDeclared': "Déclaré par l'entreprise.",
-    'home.fact.evidence': 'Une preuve a été fournie.',
-    'home.fact.verified': 'Vérifié par un processus défini.',
-    'home.facts.more': 'Comment nous étiquetons les faits',
-    'home.other.link': 'Explorer tous les itinéraires',
-  },
-  de: {
-    ...homeLandingEn,
-    ...homeTwoEn,
-    ...homeBoardEn,
-    'home.country.bd': 'Bangladesch',
-    'home.country.cn': 'China',
-    'home.country.es': 'Spanien',
-    'home.country.eu': 'die EU',
-    'home.country.uk': 'das Vereinigte Königreich',
-    'home.country.us': 'die USA',
-    'home.country.au': 'Australien',
-    'home.country.asia': 'wichtige asiatische Märkte',
-    'home.pass.label': 'Ab Bangladesch: {to}',
-    'home.other.title': 'Eine andere Route?',
-    'home.other.text':
-      'Kein operatives Angebot angekündigt. Wir sagen Ihnen klar, ob wir helfen können.',
-    'home.eyebrow': 'Marktzugang über Grenzen hinweg',
-    'home.title': 'Markteintritt mit Methode.',
-    'home.jobs.aria': 'Wählen Sie Ihr geschäftliches Ziel',
-    'home.start.sell.title': 'Meine Produkte verkaufen',
-    'home.start.sell.text': 'Käufer und Partner im Ausland finden.',
-    'home.start.sell.name': 'Käufer und Partner finden',
-    'home.start.buy.title': 'Produkte oder Maschinen kaufen',
-    'home.start.buy.text': 'Lieferanten finden. Preisangebote vergleichen.',
-    'home.start.buy.name': 'Lieferanten und Produkte finden',
-    'home.start.trip.title': 'Eine Gruppenreise leiten',
-    'home.start.trip.text': 'Das Programm und die Treffen planen.',
-    'home.start.trip.name': 'Eine Delegation organisieren',
-    'home.else': 'Etwas anderes? Nennen Sie uns Ihr geschäftliches Ziel',
-    'home.calm.account': 'Zum Einstieg ist kein Konto nötig',
-    'home.value.notConfirmed': 'Nicht bestätigt',
-    'home.fact.selfDeclared': 'Vom Unternehmen angegeben.',
-    'home.fact.evidence': 'Ein Nachweis wurde vorgelegt.',
-    'home.fact.verified': 'Nach einem festgelegten Verfahren geprüft.',
-    'home.facts.more': 'Wie wir Angaben kennzeichnen',
-    'home.other.link': 'Alle Routen erkunden',
-  },
-};
+/** The home page words in every other language (lang/<code>.ts), English where a language has none yet. */
+export const homeWords = inEveryLanguage<Record<HomeKey, string>>(homeEn);
+
+/** The board's hero lines as Bangla, Chinese and Spanish have them. */
+export const homeBoardDrafts = Object.fromEntries(
+  (['bn', 'zh', 'es'] as const).map((code) => [
+    code,
+    Object.fromEntries(homeBoardKeys.map((key) => [key, homeWords[code][key]])),
+  ]),
+) as Record<'bn' | 'zh' | 'es', Record<(typeof homeBoardKeys)[number], string>>;

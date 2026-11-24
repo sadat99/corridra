@@ -59,10 +59,6 @@
   font-weight: 600;
   background: var(--selected-surface);
 }
-.lang-switcher small {
-  font-size: var(--text-sm);
-  color: var(--text-2);
-}
 @media (max-width: 1000px) {
   .lang-switcher > summary {
     align-self: flex-start;

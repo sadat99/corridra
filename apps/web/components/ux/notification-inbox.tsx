@@ -27,7 +27,7 @@ const listLimit = 30;
 
 const typeTitle: Record<string, string> = {
   TEAM_INVITE: 'Team invitation',
-  CONTRIBUTOR_INVITE: 'Contributor invitation',
+  CONTRIBUTOR_INVITE: 'Helper invitation',
   PARTICIPANT_INVITE: 'Programme invitation',
   TASK_ASSIGNED: 'Task assigned to you',
   QUOTE_SENT: 'New quote',
