@@ -23,10 +23,15 @@ import {
   latestHandover,
   quietLabel,
   missionHref,
+  routeLine,
   sourceLabel,
   stageChip,
   stageLabel,
+  stepFields,
+  stepStatement,
+  type CustomerView,
 } from './[section]/[missionId]/mission-labels';
+import type { ReactNode } from 'react';
 export type Mission = {
   id: string;
   status: string;
@@ -366,6 +371,122 @@ export function MissionActionForm({
       </label>
       <button className="primary-link" disabled={busy}>
         Save Mission Action
+      </button>
+    </form>
+  );
+}
+
+/**
+ * Team desk v4.1, unit D7: one mission action with only its fields, for the centred dialog. It sends the same
+ * command as MissionActionForm (same element names, same payload, same command id rule through
+ * missionCommandBody); a field this action does not ask for travels as a hidden input holding the value the
+ * mission already has. Above the fields it says what changes, what the customer will read and the route state.
+ */
+export function MissionStepForm({
+  m,
+  owners,
+  action,
+  submitLabel,
+  customer,
+  busy,
+  feedback,
+  onSubmit,
+}: {
+  m: Mission;
+  owners: Owner[];
+  action: string;
+  submitLabel: string;
+  customer: (stage: string) => CustomerView;
+  busy: boolean;
+  /** The refusal, with its reference, shown beside the button that was pressed. */
+  feedback?: ReactNode;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+}) {
+  const asked = stepFields(action, m);
+  const shows = (field: (typeof asked)[number]) => asked.includes(field);
+  const statement = stepStatement(action, m.status, customer);
+  return (
+    <form
+      key={`${action}-${m.version}`}
+      className="operator-form mission-step-form"
+      onSubmit={onSubmit}
+    >
+      <div className="mission-step-facts" tabIndex={-1} data-autofocus>
+        <p data-step-changes>{statement.changes}</p>
+        <p data-step-customer>{statement.customer}</p>
+        <p data-step-route>{routeLine(m.route_label, action)}</p>
+      </div>
+      <input type="hidden" name="action" value={action} />
+      {shows('owner') ? (
+        <label className="field">
+          Assigned owner
+          <select name="owner" defaultValue={m.owner_id}>
+            {owners.map((o) => (
+              <option key={o.user_id} value={o.user_id}>
+                {o.name} · {o.role}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <input type="hidden" name="owner" value={m.owner_id} />
+      )}
+      {shows('nextAction') ? (
+        <label className="field">
+          Next action
+          <input
+            name="nextAction"
+            required
+            minLength={3}
+            maxLength={300}
+            defaultValue={m.next_action}
+          />
+        </label>
+      ) : (
+        <input type="hidden" name="nextAction" value={m.next_action} />
+      )}
+      {shows('dueAt') ? (
+        <DateTimeField label="Due at" name="dueAt" required initial={m.due_at} />
+      ) : (
+        <input type="hidden" name="dueAt" value={m.due_at} />
+      )}
+      {shows('marketCode') ? (
+        <label className="field">
+          Structured market
+          <select name="marketCode" defaultValue={m.country_code ?? 'OTHER'}>
+            <CountryOptions />
+            <option value="OTHER">Other / needs classification</option>
+          </select>
+        </label>
+      ) : (
+        <input type="hidden" name="marketCode" value={m.country_code ?? 'OTHER'} />
+      )}
+      {shows('targetProfile') ? (
+        <label className="field">
+          Target profile
+          <textarea
+            name="targetProfile"
+            required
+            minLength={3}
+            maxLength={1000}
+            defaultValue={m.target_profile ?? ''}
+          />
+        </label>
+      ) : (
+        <input type="hidden" name="targetProfile" value={m.target_profile ?? ''} />
+      )}
+      <label className="field">
+        Reason for change
+        <textarea name="reason" required minLength={3} maxLength={500} />
+        {shows('owner') && (
+          <span className="guide-hint">
+            If you pick a new owner, this note is kept as the hand-over note for them.
+          </span>
+        )}
+      </label>
+      {feedback}
+      <button className="primary-link" disabled={busy}>
+        {submitLabel}
       </button>
     </form>
   );

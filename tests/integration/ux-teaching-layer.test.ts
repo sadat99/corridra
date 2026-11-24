@@ -399,6 +399,8 @@ describe('the stylesheets of the teaching layer', () => {
       'app/about/page.tsx',
       'app/operator/problem-report-queue.tsx',
       'app/operator/supply/supply-ui.tsx',
+      // Team desk v4.1, unit D6: the mission page draws the stage bar the customer's Road reads.
+      'app/operator/[section]/[missionId]/mission-page.tsx',
     ];
     const importers = walk(app)
       .filter((f) => /\.(tsx?|css)$/.test(f))
