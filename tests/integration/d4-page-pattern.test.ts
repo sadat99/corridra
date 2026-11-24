@@ -234,7 +234,9 @@ describe('the browser tab title with the pattern on', () => {
   });
   test('the section page reads it only with the switch on', () => {
     const page = read('app/operator/[section]/page.tsx');
-    expect(page).toContain("if (section && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41'))");
+    expect(page).toMatch(
+      /section &&\s+uxSwitchOn\('CORRIDRA_UX_SHELLS_V2'\) &&\s+uxSwitchOn\('CORRIDRA_UX_TEAM_DESK_V41'\)/,
+    );
     expect(page).toContain('privatePageMetadata(teamSectionTitle(section))');
   });
 });

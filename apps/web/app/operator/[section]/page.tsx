@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ section: 
       : null;
   const section = named ? sectionForSlug(named.section) : null;
   // Team desk v4.1: the tab says what the page title and its segment say (Network is Helpers). Off, as before.
-  if (section && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41'))
+  if (section && uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41'))
     return privatePageMetadata(deskTabTitle(section));
   return section
     ? privatePageMetadata(teamSectionTitle(section))
