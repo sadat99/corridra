@@ -107,6 +107,8 @@ test.beforeAll(async () => {
       resolveDir: resolve('apps/web'),
     },
     loader: { '.css': 'css' },
+    // The flag stylesheet names its pictures by their public path; they are served files, not bundled ones.
+    external: ['/flags/*'],
   });
   replyBundle = reply.outputFiles.find((f) => f.path.endsWith('.js'))!.text;
   replyCss = reply.outputFiles.find((f) => f.path.endsWith('.css'))?.text ?? '';
