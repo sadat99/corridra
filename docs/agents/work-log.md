@@ -4958,3 +4958,131 @@ Review: verdict merge on 3fe7324.
 Follow-up: aria-pressed versus radio semantics; hover specificity; KI-26 race in tests/ux/choice-row.spec.ts.
 
 Merged as 9c81596.
+
+## 24 Nov 2026: records for PRs 617 to 626, how to read them
+
+Request: records only for the nine PRs merged after PR 616, the owner word of 01:47Z and two Guardian rulings. Written by the scribe on branch `claude/records-617-626` from main d3c9df16, authority stamp auth-12d72cb8f7f1. No ledger edit in this PR (rule 5 of `docs/agents/README.md`: only the run's last PR updates the ledger). PR 616 (37b3a75, records) has no entry of its own. PR 625 is an open draft and has no entry.
+
+Sources: each PR body, `git log origin/main`, and the commit status of each merge commit, read by the scribe at 03:15:02Z on 24 Nov 2026. A Vercel "success" is a deployment status only. It is not a smoke, not a signed-in journey and not acceptance. No install, switch flip, smoke or signed-in pass is recorded for any of these PRs. The Guardian's review receipts were not given to the scribe, so a review line below quotes the PR body only.
+
+## 23 Nov 2026: B7 real decision cards and short request references (PR 617)
+
+Scope: decision cards also answer when the publication tenant and the workspace are both real, never a sample and real mix, and only while the existing switch `CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED` is set for that transaction (card migration 0003). A new request reference family (migration 0001) gives each request a short reference (RQ-000001), merged into `CustomerRequestService.list()` as `reference`. The line "Decision cards are available for sample workspaces only." is removed from real workspace reports. 15 files, 13 plus 2 migrations, cap approved by the Guardian (PR body).
+
+Checks (PR body): on 3a93c75, `customer-decision-cards.test.ts` and the 22 suites that read the install script exit 0, 474 tests; format, lint, typecheck and `pnpm test` exit 0. On 1d643eb: 86 database files exit 0, 1793 tests; `pnpm build` exit 0.
+
+Not verified: full integration, full operator, e2e and the UX gate were not run locally. No screenshots. There is no truly real fixture and the split-owner database is untested. The PR turns no switch on. No production install is recorded.
+
+Follow-up: wording that still quotes the removed line, for a later records or ADR owner step: ADR-076 item 4, the header of card migration 0001, `docs/revamp/specs/decision-card-ui.md` line 12.
+
+Merged as 00b580bd303e7488a6c5cf973c0eedda7ea3b2a8 at 21:20:50Z; Vercel deployment success at 21:23:27Z.
+
+## 23 Nov 2026: B9 real outreach, test mode first (PR 620, ADR-090)
+
+Scope: a real email lane for introductions beside the sample lane; the two cannot mix (enforced in the database). Staff approval before each send, recorded consent, opt-out link and headers with a page at `/buyer?stop=1`, suppression by address hash, signed webhook for bounces and complaints, daily limits, and a test mode where a message leaves only for an address on the test list. New optional module `packages/db/outreach-real-migrations`, reached through `OUTREACH_REAL_ACTION=install`. 27 files.
+
+Checks (PR body, on 6951d4c): format, lint, typecheck, `pnpm test` (124) and build exit 0; static guards exit 0, 4019 passed; 89 database files exit 0, 1677 passed; UX set exit 0, 173 passed; `ux-reply-page.spec.ts` exit 0, 28 passed.
+
+Not verified and owner-gated: the switch `CORRIDRA_REAL_OUTREACH` defaults off and the mode defaults to test. The PR switches nothing on. The module install, the mail provider values and the webhook are owner checklist items in the PR body, none recorded as done. Full operator and e2e were not run locally. No screenshots.
+
+Follow-up: B9b (the staff screen does not offer the EMAIL channel, consent fields or the per-message Send action yet; real outreach is reachable only through the command API). `.github/workflows/install-customer-modules.yml` has no input for `OUTREACH_REAL_ACTION` yet. ADR-090 Status still reads Proposed and the ADR index has no line for it; the scribe does not edit ADRs.
+
+Merged as bf608ec8e8e9ab5a21110ff26c712f7ddf961f01 at 22:45:38Z; Vercel deployment success at 22:50:45Z.
+
+## 23 Nov 2026: B6b staff screens, dates, audit lines and words (PR 619)
+
+Scope: four staff files use the one product date format through `lib/ux/format.ts` (D-030); audit lines name known event kinds and keep the fallback only for unknown kinds (D-031); "Send your draft request" reads "Send your request" (D-032); the settings section reads "Routes and settings", "RFQs" reads "price requests (RFQs)" (D-033); helper words on the recovery and setup pages. Behaviour change approved in review (PR body): after setup a helper's sign-in link goes to `/contributor/signin` instead of `/operator/signin`, same form and same checks. 32 files, accepted in review (PR body).
+
+Checks (PR body, on 3ce02d1): format, lint, typecheck, `pnpm test`, build exit 0; six operator specs exit 0, 86 passed; `network-access.spec.ts` exit 0. On the earlier c04c365: full operator 2099 passed, 1 failed (`archived-workspace-hidden-ui.spec.ts:347`, passed when run alone); `pnpm test:ux` exit 0, 773 passed.
+
+Not verified: full operator and `pnpm test:ux` on 3ce02d1; any signed-in staff screen seen by a person; 390 px screenshots, real device, screen reader, Safari, Firefox.
+
+Merged as dab8e59bbc9102aa74208771ca237c635315d0d1 at 22:48:10Z. Vercel status FAILURE at 22:55:45Z, description "Canceled from the Vercel Dashboard". Who cancelled it and why are NOT VERIFIED. This sha has no successful deployment of its own. The next main commit, feef38e (PR 618), contains it and deployed with success at 22:55:46Z.
+
+## 23 Nov 2026: V41-0b place names carry their mark on /corridors (PR 618)
+
+Scope: the v4.1 place guard counts line by line and scans the words and copy files; the baseline was rebased once on the new method (d5bb3b36), after which counts only fall (`discovery-experience.tsx` 12 to 2, `corridor.tsx` 4 to 2). The `/corridors` quick picks, route heading and sample line write each place through `Flagged`. One sentence changed on the open-directions card, which no page imports today. Additive `placeMark(code)`. 5 files. Not a wave PR, so the conformance file is not edited.
+
+Checks (PR body, on ee6cdfd0): format, lint, typecheck, `pnpm test:docs` and build exit 0; five browser specs exit 0, 78 passed, 58 skipped; UX gate for `/corridors` exit 0, 4 passed.
+
+Not verified: full operator, full `pnpm test:ux`, full browser suite, any signed-in journey, real devices, Safari, Firefox. Screenshots not attached. Keyboard, focus and 44 px targets not rechecked by hand.
+
+Follow-up: quick-pick buttons wrap to two lines and "European Union" can break inside its box at 390 px. Known debt still counted by the guard is listed in the PR body.
+
+Merged as feef38e7ca76aa5c753ddc02b00f15d1b59ba183 at 22:49:40Z; Vercel deployment success at 22:55:46Z.
+
+## 24 Nov 2026: B10 AI in real workspaces behind a closed control (PR 621, ADR-091)
+
+Scope: second step of the AI model policy family (`0002_real_workspace_runs.sql` with its rollback). Three functions replaced after hash checks. Control `app.ai_real_control` starts closed and is written only by the installer with a reason. A workspace setting written before the control first opened never counts. For real workspaces a run needs a provider with an approved evaluation, and a cited statement with seven or more digits in a row is refused. The installer gains `ai_real_install`, `ai_real_enable`, `ai_real_pause`. No screen changed. 14 files.
+
+Checks (PR body, on the PR head): format, lint, typecheck, build exit 0; `pnpm test` exit 0, 131 passed; static guards exit 0, 4033 passed; 32 database files exit 0, 561 passed; two operator specs exit 0, 39 passed. Class A review passed on the earlier head, four findings fixed (PR body).
+
+Not verified and owner-gated: nothing was installed or verified in production. The order after merge in the PR body (`ai_real_install`, smoke, `ai_real_enable`, then the workspace owner switches AI on) has no step recorded as done. Full operator, `pnpm test:ux` and e2e were not run locally.
+
+Follow-up: `apps/web/lib/consequence-preview.ts` lines 133 to 137 still say runs stay sample-only in real workspaces. ADR-091 Status still reads Proposed and the ADR index has no line for it.
+
+Merged as 3122c5ca2b5cf70cd1b91e30ead109ae3c975997 at 00:53:22Z; Vercel deployment success at 00:56:54Z.
+
+## 24 Nov 2026: Journey modes, switch off by default (PR 623)
+
+Scope: unit J of `docs/revamp/specs/journey-modes.md`, behind `CORRIDRA_UX_JOURNEY_MODES` (also needs `CORRIDRA_UX_SHELLS_V2` and `CORRIDRA_UX_MOVE`). One Journey control in the signed-in sidebar and drawer: Everything, Sourcing, Organising, Selling. Home, Requests, Meetings and delivered reports show one journey; nothing that cannot be sorted is hidden. A request's short reference is drawn beside its title only while journey modes are on. With the switch on or off, the Kind column reads "Saved request" instead of "Draft request". No new table, migration, route or server write. 46 files.
+
+Checks (PR body, on b215df95): format, lint, typecheck exit 0; static guards exit 0, 4080 passed. On ec22cc70: `pnpm test` and build exit 0; database suites exit 0, 134 passed; four ux specs exit 0, 67 passed; operator set exit 0, 130 passed, 20 skipped. Switch-off proof on 3bcb7bcb against main 00b580bd, 132 page loads, the only difference the one word above; not repeated after later commits.
+
+Not verified and owner-gated: the switch is off by default and the PR body says the owner turns it on after a signed-in pass. No such pass is recorded. Not verified: the count of work in other journeys, the "Switch to" line on a real request, real-device drawer, screen readers, Safari, Firefox. No screenshots, no new axe run on the signed-in pages. Full e2e, full operator and the verification suite were not run locally.
+
+Merged as ebc7e83f4ffd6215c080a1b57d3c92021610eb75 at 01:26:35Z; Vercel deployment success at 01:30:12Z.
+
+## 24 Nov 2026: B8 real invoices, Owner-only Invoice issuer screen (PR 622, ADR-092)
+
+Scope: `/operator/invoice-issuer` in four steps (Company, GST, Payment, Check And Save), behind `CORRIDRA_INVOICE_ISSUER`, off by default; with it off the page and its data route answer 404. The authenticator code is checked at the save and never stored. Migration `0003_owner_issuer_details.sql` with its rollback, installed by the existing `real_invoicing_action=install` step. A save writes one new append-only version of the supplier record. Authority repeated in the database: owner role only, the one Corridra staff workspace, live session, authenticator check within five minutes. Customer billing dates go through `lib/ux/format.ts`. 43 files; files outside the unit's list were approved by the coordinator (PR body).
+
+Checks (PR body, on 04eba19): format, lint, typecheck, build exit 0; `pnpm test` exit 0, 130 passed; static guards exit 0, 4039 passed; 42 database files exit 0, 650 passed; operator specs exit 0, 59 passed; ux specs exit 0, 24 passed. Class A review passed on 927b176 (PR body). On the earlier 4fe08e6 the full integration run had 5 failures: one of this unit, fixed; three ClamAV scanner tests and the backup restore test, not compared with main.
+
+Not verified and owner-gated: the signed-in page was not opened in a browser with the switch on. Real invoices still need `CORRIDRA_CUSTOMER_REAL_INVOICING_ENABLED` and the database control, both off. Real payments and payouts are untouched. No page links to the screen yet. The last step measures 971 px at 1440 wide against a 900 px screen. Billing before and after screenshots not taken. Full `pnpm test:ux`, e2e and full operator not run locally. No production install is recorded.
+
+Follow-up: ADR-092 Status still reads Proposed and the ADR index has no line for it.
+
+Merged as 5e2747314df0955a72fe5f454b2385743c4422b5 at 02:24:05Z; Vercel deployment success at 02:29:17Z.
+
+## 24 Nov 2026: B5d saved request wording (PR 624)
+
+Scope: English words only on shared customer surfaces; keys, ids, routes and payloads unchanged. Phone plus row "Continue Your Saved Request"; action list "Open Your Workspaces to Pick Up a Saved Request"; Move card "Open Your Saved Request"; road subline "The request is saved and not sent yet." New `tests/integration/b5d-draft-words.test.ts` pins the values and refuses "draft" in any action catalogue label or phone plus label. 8 files.
+
+Checks (PR body, on 553f4a8c): format, lint, typecheck, `pnpm test` (131) and build exit 0; static guards exit 0, 4082 passed; three operator specs exit 0, 101 passed, 20 skipped; three ux specs exit 0, 148 passed.
+
+Not verified: the full database-backed integration suite and full operator were not run locally. No screenshots (words only).
+
+Follow-up: the six other languages still say "draft" for three keys (line numbers in the PR body), left for the L0 language base and native review. Draft words left for other units: `/plan` "Clear Draft", translation labels, owner switch labels, `customer-mission-drafts` error text (B3b), package strings, staff screens (B6, B9b).
+
+Merged as 7d99a1c7a95146305f4fb23f7006814766f4612a at 02:30:41Z; Vercel deployment success at 02:32:19Z.
+
+## 24 Nov 2026: V4.1-A public pages (PR 626)
+
+Scope: UI/UX.v4.1 wave A, presentation only, on home (L4 with L1 to L3), routes (L5), plan (L6), start here (L7) and the place labels on `/sell`, `/source`, `/enter-market`, `/trade-missions` and `/corridors/[corridor]`. Additive options on `Flag`, `RegionMark`, `Flagged` and `DoorCard`. One wording change: "Local Helper Sign-In". Conformance for wave A went from 128 not assessed, 4 not started, 0 built to 0 not assessed, 7 not started, 17 built. The guard baseline only fell. 25 files.
+
+Checks (PR body): on 2589c218, format, lint, typecheck, `pnpm test`, build exit 0; static guards exit 0, 4033 passed; full browser suite exit 0, 844 passed; full `pnpm test:ux` exit 0, 783 passed; seven operator fixtures exit 0, 229 passed. On the PR head: lint, typecheck, format, `pnpm test`, build exit 0; five browser specs exit 0, 139 passed; UX gate for `/` exit 0.
+
+Not verified: the rows are `built`, not `verified`; the six-width before and after screenshots are not in the repository. Full browser and UX suites were not rerun on the PR head. No real devices.
+
+Owner items raised in the PR body, undecided: the hero mark against `docs/brand/CORRIDRA_BRAND_IDENTITY.md` line 99; differences kept from the mockups; place labels left `not_started` on `/how-it-works`, `/delegations/[address]` and its flyer, `/fairs` and `/fairs/[slug]`.
+
+Merged as d3c9df160bd63272366aa2222e7e8fb88a22500f at 03:11:12Z. Vercel status was pending at 03:11:20Z (read by the launching agent) and success, "Deployment has completed", at 03:13:16Z (read by the scribe at 03:15:02Z).
+
+## 24 Nov 2026: owner word "live", relayed
+
+At 01:47Z on 24 Nov 2026 the owner said the exact word "live". It relates to opening outreach, AI in real workspaces and real invoices under the owner decision of 23 Nov 2026 ("outreach and money in test mode first, live only on the owner's word "live"").
+
+Source: relayed by Guardian 41 (session_0187kU9tuubfFGmpSZKRp6VQ) through the launching agent. The scribe did not see it first hand and it has no source in the repository. The time and the word are as relayed.
+
+Limits: it does NOT cover real payments or payouts, which stay closed (D01-D08, "not now"). Recording the word flips no switch, installs nothing and sets no mode. Switch flips and installs remain "Guardian, after proof" (merged, deployed, smoke passed). No flip, install or smoke is recorded here. The ledger is not changed by this PR; the run's last PR carries it.
+
+## 24 Nov 2026: Guardian rulings 40 and 41, relayed
+
+These are Guardian rulings relayed by the launching agent. They are not owner directions, they have no source in the repository and they do not amend `docs/revamp/commercial-ready-run-2026-11-23.md`. "B7b" is not a unit name in that plan.
+
+Guardian 40: unit B8b is granted up to 12 files. B7b is split into B7b-db (database only, additive migrations, installer first) and B7b-ui (after the install has run in production).
+
+Guardian 41 (session_0187kU9tuubfFGmpSZKRp6VQ): the B7b-db shape is 2 migration files (real-use 0022, plus workspace-lifecycle 0010 late), with up to 12 files only for test hide-list additions. The CP unit is widened to 10 files to include the false success page wording.
+
+Next action: the run's last PR updates the ledger. Open for the owner or an ADR author: the Status lines and index lines of ADR-090, 091 and 092.
