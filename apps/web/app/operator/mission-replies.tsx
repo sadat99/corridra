@@ -29,7 +29,7 @@ export function MissionReplies({
   busy: boolean;
   /** The mission page's save for a receipt reply: same body and reply id as the side panel form sends. */
   onSend: (body: string, replyId: string) => Promise<boolean>;
-  /** The existing Reports section address. */
+  /** The existing Reports section address, with this mission named in it. */
   reportsHref: string;
 }) {
   const ordered = replies
@@ -79,8 +79,8 @@ export function MissionReplies({
       <section aria-labelledby="mission-replies-reports" className="mission-replies-delegation">
         <h4 id="mission-replies-reports">Delegation, sharing and reports</h4>
         <p>
-          Delegation context, agenda, what is shared with the customer and billing are set under
-          Reports, where you choose the programme and the mission.
+          Approving what this customer sees, sharing with suppliers, delegation context, agenda and
+          billing are done under Reports. Choose this mission there.
         </p>
         <a className="text-link" href={reportsHref}>
           Open Reports

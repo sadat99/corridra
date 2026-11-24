@@ -157,6 +157,21 @@ const supplierReply = (id: string, linkId: string, words: string) => ({
     },
   },
 });
+const completeTerms = {
+  specification: 'Curtain track, 4 m',
+  quantity: '10',
+  unit: 'pieces',
+  unitPriceMinor: '1250',
+  totalPriceMinor: '12500',
+  leadTime: '6 weeks',
+  validUntil: '2099-12-31T23:59:59Z',
+  incoterm: 'FOB',
+  shipping: 'INCLUDED',
+  paymentTerms: '30 percent deposit',
+  toolingMinor: '0',
+  setupMinor: '0',
+  packagingMinor: '0',
+};
 const snapshot = (participants: unknown[]) => ({
   role: 'owner',
   programmes: [{ id: programmeId, name: 'Invented Trade Visit' }],
@@ -170,6 +185,10 @@ type Options = {
   desk: boolean;
   role?: string;
   review?: boolean;
+  /** The reply states every term the engine compares, so its verdict is "comparable". */
+  complete?: boolean;
+  /** The workspace read is at its limit of 100 replies, none of them through this mission's links. */
+  capped?: boolean;
   width?: number;
 };
 async function open(page: Page, where: 'mission' | 'research', options: Options) {
@@ -252,10 +271,31 @@ async function open(page: Page, where: 'mission' | 'research', options: Options)
         disclosures: [
           { link_id: link, role: 'SUPPLIER', shared_requirements: 'Curtain track, 10 pieces' },
         ],
-        responses: [
-          supplierReply(reply, link, 'We can quote the invented track.'),
-          supplierReply(otherReply, otherLink, 'A reply that belongs to another mission.'),
-        ],
+        responses: options.capped
+          ? Array.from({ length: 100 }, (_, index) =>
+              supplierReply(
+                `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+                otherLink,
+                'A reply that belongs to another mission.',
+              ),
+            )
+          : [
+              options.complete
+                ? {
+                    ...supplierReply(reply, link, 'We can quote the invented track.'),
+                    body: {
+                      body: 'We can quote the invented track.',
+                      meetingInterest: false,
+                      quotation: {
+                        currency: 'USD',
+                        terms: completeTerms,
+                        uncertainties: 'None stated',
+                      },
+                    },
+                  }
+                : supplierReply(reply, link, 'We can quote the invented track.'),
+              supplierReply(otherReply, otherLink, 'A reply that belongs to another mission.'),
+            ],
       };
     else if (path === '/api/workspace/delivery') {
       json = snapshot([]);
@@ -366,6 +406,19 @@ test('D8 on: Quotes sets what the customer asked for beside the replies to revie
   const review = page.getByRole('region', { name: 'Replies to review' });
   // The company is named and the link id is not shown; another mission's reply stays out.
   await expect(review.getByText('From Invented Supplier Ltd')).toBeVisible();
+  // Each card is its own region named by the company, with one date format.
+  const card = review.getByRole('article', { name: 'From Invented Supplier Ltd' });
+  await expect(card).toContainText('Received 20 Nov 2026');
+  // The term grid waits behind a disclosure; the verdict and the actions stay open.
+  const terms = card.locator('details', { hasText: 'Terms: 5 stated, 14 not stated' });
+  await expect(terms).not.toHaveAttribute('open', '');
+  await expect(card.getByText('Not comparable yet')).toBeVisible();
+  await expect(card.getByText('Minimum order')).toBeHidden();
+  await terms.locator('summary').click();
+  await expect(card.getByText('Minimum order')).toBeVisible();
+  // Exactly one cobalt action, and it follows the verdict: not comparable, so Ask.
+  await expect(card.locator('.primary-link')).toHaveCount(1);
+  await expect(card.locator('.primary-link')).toHaveText('Ask for Missing Terms');
   await expect(review).not.toContainText('Recipient link');
   await expect(review).not.toContainText(link.slice(0, 8));
   await expect(review).not.toContainText('A reply that belongs to another mission.');
@@ -380,7 +433,7 @@ test('D8 on: Quotes sets what the customer asked for beside the replies to revie
   const recorded = page.getByRole('region', { name: 'Offers recorded on this mission' });
   await expect(recorded).toContainText('Invented Supplier Ltd');
   await expect(recorded).toContainText('revision 1');
-  await expect(recorded.getByRole('link', { name: 'Money' })).toHaveAttribute(
+  await expect(recorded.getByRole('link', { name: 'Open Money' })).toHaveAttribute(
     'href',
     `/operator?workspace=${tenant}&mission=${mission}#workspace-commercial`,
   );
@@ -420,6 +473,44 @@ test('D8 on: Reject, Ask and Publish send the same reply-review payloads as toda
   ]);
 });
 
+test('D8 on: a comparable reply makes Publish the one cobalt action', async ({ page }) => {
+  await open(page, 'mission', { desk: true, complete: true });
+  await tab(page, 'Quotes').click();
+  const card = page.getByRole('article', { name: 'From Invented Supplier Ltd' });
+  await expect(card.getByText('Comparable on supplied terms')).toBeVisible();
+  await expect(card.locator('.primary-link')).toHaveCount(1);
+  await expect(card.locator('.primary-link')).toHaveText('Publish: Prepare As a Quotation');
+});
+
+test('D8 on: a reply read at its limit says so and never says no supplier replied', async ({
+  page,
+}) => {
+  await open(page, 'mission', { desk: true, capped: true });
+  await tab(page, 'Quotes').click();
+  const review = page.getByRole('region', { name: 'Replies to review' });
+  await expect(review).toContainText(
+    'Only the latest 100 supplier replies in this workspace are read here, so this list may not show everything. Every reply is under Reports.',
+  );
+  await expect(review).not.toContainText('No supplier has replied');
+  await expect(review.getByRole('link', { name: 'Open Reports' })).toHaveAttribute(
+    'href',
+    `/operator?workspace=${tenant}&mission=${mission}#workspace-delivery`,
+  );
+});
+
+for (const width of [390, 1024])
+  test(`D8 on at ${width}px with text at 200%: nothing scrolls sideways`, async ({ page }) => {
+    await open(page, 'mission', { desk: true, width });
+    await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
+    await tab(page, 'Quotes').click();
+    const card = page.getByRole('article', { name: 'From Invented Supplier Ltd' });
+    await card.locator('summary', { hasText: 'Terms:' }).click();
+    await expect(card.getByText('Minimum order')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+  });
+
 test('D8 on: no review control where the backend would refuse it', async ({ page }) => {
   // An operator may read but not decide (ADR-069: owner or admin).
   await open(page, 'mission', { desk: true, role: 'operator' });
@@ -433,6 +524,11 @@ test('D8 on: no review control where the backend would refuse it', async ({ page
   const off = page.getByRole('region', { name: 'Replies to review' });
   await expect(off).toContainText('Reply review is not switched on in this workspace');
   await expect(off.getByRole('button')).toHaveCount(0);
+  await expect(off).toContainText('You can read supplier replies under Reports.');
+  await expect(off.getByRole('link', { name: 'Open Reports' })).toHaveAttribute(
+    'href',
+    `/operator?workspace=${tenant}&mission=${mission}#workspace-delivery`,
+  );
   await expect(page.getByRole('region', { name: 'What the customer asked for' })).toBeVisible();
 });
 
@@ -469,8 +565,9 @@ test('D9 on: one timeline the customer can read, oldest first, and one message b
   await expect(page.getByText('Delegation context', { exact: true })).toHaveCount(0);
   await expect(panel(page).getByRole('link', { name: 'Open Reports' })).toHaveAttribute(
     'href',
-    `/operator?workspace=${tenant}#workspace-delivery`,
+    `/operator?workspace=${tenant}&mission=${mission}#workspace-delivery`,
   );
+  await expect(panel(page)).toContainText('Choose this mission there.');
 });
 
 test('D9 on: a role that cannot reply gets the timeline and no message box', async ({ page }) => {
@@ -507,6 +604,16 @@ test('D10 on: the mission from the address is named at the top and preselected, 
   expect(relationOption.endsWith('…')).toBe(true);
   await expect(page.locator('#main')).not.toContainText(namelessMission);
   await expect(page.locator('#main')).not.toContainText('Original record');
+  // Stored codes are shown in plain words; what is sent is still the code.
+  expect(await form.locator('select[name="fit"] option').allInnerTexts()).toEqual([
+    'Research',
+    'Possible',
+    'Strong',
+    'Unsuitable',
+  ]);
+  await expect(form.locator('select[name="fit"]')).toHaveValue('RESEARCH');
+  await expect(form).toContainText('Invented mill makes curtain track · Source-reported');
+  await expect(form).not.toContainText('SOURCE_REPORTED');
   // The reason keeps its field name and must be given.
   const reason = form.getByLabel('Reason this company belongs on the mission');
   await expect(reason).toHaveAttribute('name', 'rationale');
@@ -594,6 +701,13 @@ test('switch off: the Quotes and Replies tabs and the research section are today
   expect(
     await form.locator(`select[name="relationshipId"] option[value="${relationship}"]`).innerText(),
   ).toBe(longNote);
+  expect(await form.locator('select[name="fit"] option').allInnerTexts()).toEqual([
+    'RESEARCH',
+    'POSSIBLE',
+    'STRONG',
+    'UNSUITABLE',
+  ]);
+  await expect(form).toContainText('Invented mill makes curtain track · SOURCE_REPORTED');
   const rationale = form.getByLabel('Fit rationale');
   await expect(rationale).toHaveAttribute('name', 'rationale');
   expect(await rationale.getAttribute('minlength')).toBeNull();
@@ -620,6 +734,14 @@ for (const width of [320, 390, 768, 1024, 1440, 1920])
       if (desk) expect(await axe(page, '[role="tabpanel"]')).toEqual([]);
       if (shots)
         await page.screenshot({ path: `${shots}/quotes-${state}-${width}.png`, fullPage: true });
+      if (shots && desk && (width === 390 || width === 1440)) {
+        // The Quotes tab with one reply, in screens of 844 (phone) and 900 (desktop) px, disclosures closed.
+        const screen = width === 390 ? 844 : 900;
+        const height = await page.evaluate(() => document.documentElement.scrollHeight);
+        console.log(
+          `quotes-height ${width}: ${height}px = ${(height / screen).toFixed(2)} screens`,
+        );
+      }
       await tab(page, 'Replies').click();
       await expect(page.getByText('Second invented reply to the customer')).toBeVisible();
       await fits();

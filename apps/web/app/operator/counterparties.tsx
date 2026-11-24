@@ -5,7 +5,7 @@ import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
 import { missionHintNote, takeMissionHint } from './mission-hint';
-import { stageLabel } from './[section]/[missionId]/mission-labels';
+import { plainCode, stageLabel } from './[section]/[missionId]/mission-labels';
 import {
   ChangeAvailability,
   RecordItem,
@@ -59,7 +59,7 @@ const shortName = (value: string, limit = 60) =>
   value.length > limit ? `${value.slice(0, limit - 1).trimEnd()}…` : value;
 const missionName = (m: Row, desk: boolean) =>
   desk
-    ? txt(m, 'company_name') === m.id
+    ? !txt(m, 'company_name') || txt(m, 'company_name') === m.id
       ? 'Unnamed mission'
       : shortName(txt(m, 'company_name'))
     : txt(m, 'company_name');
@@ -353,7 +353,7 @@ export function Counterparties({
   const [validDefault] = useState(() => new Date(Date.now() + 29 * 86400000).toISOString());
   const ownerName = (id: unknown) =>
     (owners.find((o) => o.id === id)?.name as string | undefined) ??
-    (desk ? 'a former team member' : `a team member (id ${String(id ?? '').slice(0, 8)})`);
+    (desk ? 'a team member not listed here' : `a team member (id ${String(id ?? '').slice(0, 8)})`);
   const changeContext: ChangeContext = {
     role: detail?.role ?? catalogue?.role ?? '',
     changes: detail?.changes ?? { installed: false, open: false },
@@ -1256,7 +1256,9 @@ function AssessmentFields({
           defaultValue={initial ? txt(initial, 'fit') : 'RESEARCH'}
         >
           {['RESEARCH', 'POSSIBLE', 'STRONG', 'UNSUITABLE'].map((f) => (
-            <option key={f}>{f}</option>
+            <option key={f} value={f}>
+              {desk ? plainCode(f) : f}
+            </option>
           ))}
         </select>
       </label>
@@ -1272,7 +1274,7 @@ function AssessmentFields({
                 value={txt(a, 'claim_id')}
                 defaultChecked={!!initial}
               />
-              {txt(a, 'statement')} · {txt(a, 'status')}
+              {txt(a, 'statement')} · {desk ? stateWord(a.status) : txt(a, 'status')}
             </label>
           ))}
         <p>

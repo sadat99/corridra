@@ -287,6 +287,7 @@ export function MissionPage({
               revision={revision}
               onRecord={() => choose('requirements')}
               moneyHref={sectionHref(tenant, 'commercial', m.id)}
+              reportsHref={sectionHref(tenant, 'delivery', m.id)}
             />
           )}
           {tab === 'quotes' && !teamDeskV41 && (
@@ -308,7 +309,7 @@ export function MissionPage({
               onSend={(body, replyId) =>
                 act('mission-reply', { id: m.id, body, replyId }, 'Reply posted.')
               }
-              reportsHref={sectionHref(tenant, 'delivery')}
+              reportsHref={sectionHref(tenant, 'delivery', m.id)}
             />
           )}
           {tab === 'replies' && !teamDeskV41 && (

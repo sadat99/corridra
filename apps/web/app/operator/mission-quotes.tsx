@@ -41,6 +41,18 @@ async function read<T>(url: string): Promise<T> {
   return body as T;
 }
 
+/** The reply read answers at most this many links and this many replies for the whole workspace. */
+const replyReadLimit = 100;
+const repliesNotLoaded = 'The replies could not be loaded. Reload the page to try again.';
+
+function OpenReports({ href }: { href: string }) {
+  return (
+    <a className="text-link" href={href}>
+      Open Reports
+    </a>
+  );
+}
+
 function safeMoney(minor: string, currency: string) {
   try {
     return formatMoney(minor, currency);
@@ -57,6 +69,7 @@ export function MissionQuotes({
   revision,
   onRecord,
   moneyHref,
+  reportsHref,
 }: {
   tenant: string;
   missionId: string;
@@ -69,6 +82,8 @@ export function MissionQuotes({
   onRecord: () => void;
   /** The existing Money section address for this mission. */
   moneyHref: string;
+  /** The existing Reports section address, where every reply of the workspace is listed. */
+  reportsHref: string;
 }) {
   const { replyReview } = useOperatorFlags();
   const q = `tenant=${encodeURIComponent(tenant)}`;
@@ -94,7 +109,7 @@ export function MissionQuotes({
     let active = true;
     loadExperience()
       .then((v) => active && setExperience(v))
-      .catch((e) => active && setExperienceError(e.message));
+      .catch(() => active && setExperienceError(repliesNotLoaded));
     return () => {
       active = false;
     };
@@ -104,6 +119,19 @@ export function MissionQuotes({
   const links = experience?.links.filter((l) => l.mission_id === missionId) ?? [];
   const companies = Object.fromEntries(links.map((l) => [l.id, l.company]));
   const responses = experience?.responses.filter((r) => Object.hasOwn(companies, r.link_id)) ?? [];
+  // The read is cut off at its limit, so past it this mission's replies may be missing: say so, never "none".
+  const capped =
+    (experience?.links.length ?? 0) >= replyReadLimit ||
+    (experience?.responses.length ?? 0) >= replyReadLimit;
+  const cappedNote = capped && (
+    <div className="mission-quotes-capped">
+      <p>
+        Only the latest {replyReadLimit} supplier replies in this workspace are read here, so this
+        list may not show everything. Every reply is under Reports.
+      </p>
+      <OpenReports href={reportsHref} />
+    </div>
+  );
   const requirement = commercial?.requirements?.[0];
   const product = (requirement?.fields as { product?: unknown } | undefined)?.product;
 
@@ -138,8 +166,7 @@ export function MissionQuotes({
             )}
           </dl>
           <p className="reply-review-note">
-            Self-declared by the customer in the request. The reviewed requirement is written by the
-            team on the Requirements tab.
+            Self-declared by the customer. The team writes the reviewed requirement.
           </p>
         </section>
         <div className="mission-quotes-replies">
@@ -148,8 +175,9 @@ export function MissionQuotes({
               <h4 id="mission-quotes-review">Replies to review</h4>
               <p>
                 Reply review is not switched on in this workspace, so no reply can be published,
-                asked about or rejected here.
+                asked about or rejected here. You can read supplier replies under Reports.
               </p>
+              <OpenReports href={reportsHref} />
             </section>
           ) : !experience ? (
             <section aria-labelledby="mission-quotes-review">
@@ -161,21 +189,26 @@ export function MissionQuotes({
           ) : responses.length === 0 ? (
             <section aria-labelledby="mission-quotes-review">
               <h4 id="mission-quotes-review">Replies to review</h4>
-              <EmptyState icon="inbox">
-                No supplier has replied on this mission yet. A reply shows here as soon as it
-                arrives.
-              </EmptyState>
+              {cappedNote || (
+                <EmptyState icon="inbox">
+                  No supplier has replied on this mission yet. A reply shows here as soon as it
+                  arrives.
+                </EmptyState>
+              )}
             </section>
           ) : (
-            <ReplyReview
-              desk
-              tenant={tenant}
-              role={role}
-              responses={responses}
-              disclosures={experience.disclosures}
-              companies={companies}
-              onRefresh={async () => setExperience(await loadExperience())}
-            />
+            <>
+              {cappedNote}
+              <ReplyReview
+                desk
+                tenant={tenant}
+                role={role}
+                responses={responses}
+                disclosures={experience.disclosures}
+                companies={companies}
+                onRefresh={async () => setExperience(await loadExperience())}
+              />
+            </>
           )}
         </div>
       </div>
@@ -211,7 +244,7 @@ export function MissionQuotes({
             Record or Revise a Supplier Offer
           </button>
           <a className="text-link" href={moneyHref}>
-            Money
+            Open Money
           </a>
         </div>
       </section>
