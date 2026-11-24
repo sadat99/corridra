@@ -2624,9 +2624,16 @@ test('the done ticks are whole once the draw animation has finished, at 320, 768
   await open(page);
   for (const width of [320, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.waitForFunction(() =>
-      document.getAnimations().every((animation) => animation.playState !== 'running'),
-    );
+    // KI-66: after a resize the tick's draw animation starts with the next layout, so "nothing is running" could be
+    // true before it began and the read then landed mid-draw. Two frames let the resized layout start it; then every
+    // animation on the ticks is waited to its end.
+    await page.evaluate(async () => {
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const paths = document.querySelectorAll('[data-shape="done"] .corridra-icon path');
+      await Promise.all(
+        [...paths].flatMap((p) => p.getAnimations()).map((a) => a.finished.catch(() => undefined)),
+      );
+    });
     const ticks = await page
       .locator('[data-shape="done"] .corridra-icon path')
       .evaluateAll((paths) =>
