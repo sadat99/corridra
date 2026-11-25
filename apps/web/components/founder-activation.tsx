@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { StatusBadge } from './access-state';
+import { useOperatorFlags } from '../app/operator/operator-flags';
 
 type State = 'ON' | 'OFF' | 'WAITING_PREREQUISITE' | 'LOCKED_PRODUCTION' | 'LOCKED_NOT_SYNTHETIC';
 type Activation = {
@@ -74,6 +75,7 @@ export function FounderActivation({
   tenant: string;
   folded?: boolean;
 }) {
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [view, setView] = useState<
     { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: Activation }
   >({ status: 'loading' });
@@ -109,7 +111,7 @@ export function FounderActivation({
             <tr>
               <th scope="col">Module</th>
               <th scope="col">State</th>
-              <th scope="col">Flag</th>
+              {!deskV41 && <th scope="col">Flag</th>}
             </tr>
           </thead>
           <tbody>
@@ -119,14 +121,48 @@ export function FounderActivation({
                 <td>
                   <StatusBadge tone={states[m.state].tone}>{states[m.state].text}</StatusBadge>
                 </td>
-                <td>
-                  <code>{m.flag}</code>
-                </td>
+                {!deskV41 && (
+                  <td>
+                    <code>{m.flag}</code>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {/* Team desk v4.1: the setting names are not on the page face; they stay one click away, closed. */}
+      {deskV41 && (
+        <details className="desk-technical">
+          <summary>Technical details</summary>
+          <div
+            className="operations-table"
+            tabIndex={0}
+            role="region"
+            aria-label="Setting name for each customer module"
+          >
+            <table>
+              <caption>The setting that turns each customer module on</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Module</th>
+                  <th scope="col">Setting</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.modules.map((m) => (
+                  <tr key={m.key}>
+                    <th scope="row">{m.label}</th>
+                    <td>
+                      <code>{m.flag}</code>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      )}
     </>
   );
   return (

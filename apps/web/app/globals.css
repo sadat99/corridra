@@ -7716,55 +7716,9 @@ th {
 .ux-customer [role='region'][aria-label^='Quote costs'] table {
   min-width: 34rem;
 }
-/* Under 48 rem the table is narrower than its columns: the item column stays in view while the amounts scroll
-   under it, and the region keeps a visible thin scrollbar. No gradient (UI/UX.v4.1). */
-@media (max-width: 47.99rem) {
-  .ux-customer [role='region'][aria-label^='Quote costs'] {
-    scrollbar-width: thin;
-  }
-  .ux-customer [role='region'][aria-label^='Quote costs'] table {
-    min-width: 30rem;
-  }
-  .ux-customer [role='region'][aria-label^='Quote costs'] tbody th[scope='row'],
-  .ux-customer [role='region'][aria-label^='Quote costs'] thead th:first-child,
-  .ux-customer [role='region'][aria-label^='Quote costs'] tfoot th[scope='row'] {
-    position: sticky;
-    inset-inline-start: 0;
-    background: var(--surface-1);
-  }
-  .ux-customer [role='region'][aria-label^='Quote costs'] tbody th[scope='row'] {
-    min-width: 7rem;
-    max-width: 9rem;
-  }
-}
-@supports (container-type: scroll-state) {
-  @media (max-width: 47.99rem) {
-    .ux-customer [role='region'][aria-label^='Quote costs'] {
-      container-type: scroll-state;
-    }
-    @container scroll-state(scrollable: inline-start) {
-      .ux-customer
-        [role='region'][aria-label^='Quote costs']
-        :is(thead th:first-child, tbody th[scope='row'], tfoot th[scope='row']) {
-        box-shadow: var(--space-1) 0 var(--space-2) calc(var(--space-1) * -1)
-          color-mix(in srgb, var(--ink) 40%, transparent);
-      }
-    }
-  }
-}
 .ux-customer [role='region'][aria-label^='Quote costs'] :is(th, td) {
   padding: var(--space-2) var(--space-3);
   vertical-align: top;
-}
-/* A cost name is a name, not a column head: the text face at body size, left aligned, whole words (the head row
-   keeps the label style). */
-.ux-customer [role='region'][aria-label^='Quote costs'] :is(tbody, tfoot) th[scope='row'] {
-  font-family: var(--font-ui);
-  font-size: var(--text-base);
-  font-weight: 600;
-  text-align: start;
-  letter-spacing: normal;
-  text-transform: none;
 }
 .ux-customer [role='region'][aria-label^='Quote costs'] td {
   font-variant-numeric: tabular-nums;

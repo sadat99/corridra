@@ -193,7 +193,7 @@
   display: grid;
   gap: var(--space-3);
 }
-.ux-desk-frame .reply-review-card h6 {
+.reply-review-card h6 {
   margin: 0;
   font-size: var(--text-base);
   font-weight: 600;

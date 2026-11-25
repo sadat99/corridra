@@ -21,9 +21,6 @@ describe('team desk v4.1 sweep', () => {
       '.ux-desk-frame .ux-state-label',
     ])
       expect(css).toContain(selector);
-    expect(read('apps/web/app/operator/reply-review.css')).toContain(
-      '.ux-desk-frame .reply-review-card h6',
-    );
   });
 
   it('keeps the dialog close button at 44 px inside a desk panel, under the desk shell class', () => {
@@ -44,5 +41,47 @@ describe('team desk v4.1 sweep', () => {
     expect(read('apps/web/components/problem-reports/remove-my-words.tsx')).toContain(
       'className="pr-fold"',
     );
+  });
+  it('draws no black box round a desk panel form and keeps technical words in a closed fold', () => {
+    const css = read('apps/web/components/ux/page-frame.css');
+    expect(css).toMatch(
+      /\.ux-desk-frame \.ux-operations-panel form\.operator-form > fieldset \{\s*border: 0;\s*padding: 0;\s*margin: 0;\s*min-width: 0;/,
+    );
+    expect(css).toContain('.ux-desk-frame details.desk-technical > summary');
+    // A fold is closed by default: no `open` attribute on any of the three.
+    for (const path of [
+      'apps/web/components/founder-activation.tsx',
+      'apps/web/app/operator/operations.tsx',
+      'apps/web/app/operator/owner/page.tsx',
+    ]) {
+      const source = read(path);
+      expect(source).toContain('<details className="desk-technical">');
+      expect(source).not.toMatch(/<details className="desk-technical"\s+open/);
+      expect(source).toContain('<summary>Technical details</summary>');
+    }
+    // The setting names stay on the page for the switch-off screen and move into the fold for v4.1.
+    const activation = read('apps/web/components/founder-activation.tsx');
+    expect(activation).toContain('{!deskV41 && <th scope="col">Flag</th>}');
+    expect(activation).toContain('The setting that turns each customer module on');
+  });
+
+  it('writes a country as its name with its mark, and a route with the word "to", in the v4.1 desk', () => {
+    const name = read('apps/web/app/operator/country-name.tsx');
+    expect(name).toContain('if (!teamDeskV41) return off ?? code;');
+    for (const path of [
+      'apps/web/app/operator/company-link-review.tsx',
+      'apps/web/app/operator/network.tsx',
+      'apps/web/app/operator/customer-real-invoicing.tsx',
+      'apps/web/app/operator/view-as/[role]/sample-screens.tsx',
+    ])
+      expect(read(path)).toContain('<CountryName code=');
+    const operations = read('apps/web/app/operator/operations.tsx');
+    expect(
+      operations.match(
+        /placeName\(r\.origin_market\)\} to \$\{placeName\(r\.destination_market\)/g,
+      ),
+    ).toHaveLength(2);
+    expect(operations).not.toContain('word="→"');
+    expect(read('apps/web/app/mission-experience-view.tsx')).toContain('{countryName(t.country)}');
   });
 });

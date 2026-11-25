@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { displayMoney } from '@corridra/domain/locale';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { Dialog } from '../../components/ux/dialog';
+import { CountryName } from './country-name';
 
 // ADR-064: the staff side of real invoices. Staff prepare an invoice or a credit note; a second named person approves
 // it, and only then does it get its legal number. Payments are records of money the team received. Nothing is collected
@@ -449,7 +450,8 @@ function Scoped({ tenant }: { tenant: string }) {
         <section aria-label="Supplier details">
           <h4>Supplier on every document</h4>
           <p>
-            {s.legalName}, {s.address}, {s.country}.{s.uen ? ' UEN ' + s.uen + '.' : ''}{' '}
+            {s.legalName}, {s.address}, <CountryName code={s.country} />.
+            {s.uen ? ' UEN ' + s.uen + '.' : ''}{' '}
             {s.gstRegistered
               ? s.taxLabel +
                 ' registered' +

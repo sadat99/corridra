@@ -23,6 +23,8 @@ const page_ = (
   <div class="ux-workspace-body">
     <div id="panel" class="workspace-panel ux-panel"><p>Body</p>
       <dialog id="dialog" class="ux-dialog" open><div class="ux-dialog-head"><h2>Propose Meeting</h2><button id="close" type="button" class="ux-dialog-close">Close</button></div></dialog>
+      <section class="ux-operations-panel"><form class="operator-form"><fieldset id="box"><legend>Filter</legend><label class="field">Route<select name="route"><option>All</option></select></label></fieldset></form>
+        <details class="desk-technical" id="tech"><summary>Technical details</summary><p><code>CORRIDRA_CUSTOMER_X_ENABLED</code></p></details></section>
     </div>
   </div>
 </main></div>
@@ -68,5 +70,31 @@ for (const width of [390, 1440]) {
     expect(await summary.evaluate((el) => getComputedStyle(el).display)).toBe('list-item');
     expect(await summary.evaluate((el) => getComputedStyle(el).listStyleType)).not.toBe('none');
     expect((await box(page, '#fold > summary')).height).toBeGreaterThanOrEqual(44);
+  });
+
+  test(`switch on at ${width}: a panel form draws no box round its fieldset and the technical fold is closed and a full-size target`, async ({
+    page,
+  }) => {
+    await open(page, true, width);
+    const fieldset = await page.locator('#box').evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { border: s.borderTopWidth, padding: s.paddingTop, margin: s.marginTop };
+    });
+    expect(fieldset).toEqual({ border: '0px', padding: '0px', margin: '0px' });
+    const tech = page.locator('#tech');
+    expect(await tech.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(false);
+    expect(
+      await page.locator('#tech > summary').evaluate((el) => getComputedStyle(el).listStyleType),
+    ).not.toBe('none');
+    // 44 px on a phone; from 1024 px the desk's laptop density rule (36 px controls) applies to every desk fold.
+    expect((await box(page, '#tech > summary')).height).toBeGreaterThanOrEqual(
+      width < 1024 ? 44 : 36,
+    );
+  });
+
+  test(`switch off at ${width}: the fieldset keeps its box`, async ({ page }) => {
+    await open(page, false, width);
+    const border = await page.locator('#box').evaluate((el) => getComputedStyle(el).borderTopWidth);
+    expect(border).not.toBe('0px');
   });
 }

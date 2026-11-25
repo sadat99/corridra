@@ -105,3 +105,29 @@
   text-transform: none;
   color: var(--text-2);
 }
+
+/* Team desk v4.1: a form that groups its fields in a fieldset draws no black box round them; the legend and the
+   fields stay as they are. Panel forms only. */
+.ux-desk-frame .ux-operations-panel form.operator-form > fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+/* Team desk v4.1: setting names and repository paths sit in a closed "Technical details" fold. It stays a list
+   item, so the browser draws the disclosure marker, and the block padding makes the 44 px target. */
+.ux-desk-frame details.desk-technical > summary {
+  display: list-item;
+  min-height: 2.75rem;
+  padding-block: var(--space-3);
+  cursor: pointer;
+}
+.ux-desk-frame details.desk-technical > summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-desk-frame details.desk-technical code {
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
