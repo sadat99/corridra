@@ -17,11 +17,6 @@
   font-size: var(--text-base);
   font-weight: 600;
 }
-.ux-task-card .helper-task-hint {
-  margin: 0;
-  color: var(--text-2);
-  font-size: var(--text-sm);
-}
 /* Every disclosure line in a task is a full touch target. */
 .ux-task-card summary {
   min-block-size: 2.75rem;

@@ -186,10 +186,10 @@ describe('the privacy notice', () => {
   });
   it('keeps the request notice version the database pins, and the new date', async () => {
     expect(await text(real)).toContain(
-      'Updated 25 October 2026. Notice reference: real-intake-2026-10-21-v1.',
+      'Updated 25 October 2026. Request notice version: real-intake-2026-10-21-v1.',
     );
     expect(await text({ DATA_ENVIRONMENT: 'synthetic' })).toContain(
-      'Updated 25 October 2026. Test notice reference: synthetic-intake-2026-10-05-v1.',
+      'Updated 25 October 2026. Request notice version: synthetic-intake-2026-10-05-v1.',
     );
   });
   it('names the responsible company, the contact and the standard sections', async () => {
@@ -244,7 +244,7 @@ describe('notice for the optional confirmation and quote records', () => {
     'Requirement confirmations cannot be changed or deleted once saved and are kept as part of the request’s history.';
   const arrangementsKept =
     'Quote arrangements cannot be changed or deleted once saved and are kept as part of the request’s history.';
-  const updated = 'Updated 30 October 2026. Notice reference: real-intake-2026-10-21-v1.';
+  const updated = 'Updated 30 October 2026. Request notice version: real-intake-2026-10-21-v1.';
   it('names the stored confirmations, parties, terms and private staff costs when available', async () => {
     const page = await text(enabled);
     expect(page).toContain('Requirement confirmations');
@@ -287,7 +287,7 @@ describe('notice for the optional confirmation and quote records', () => {
     expect(neither).not.toContain(confirmationsKept);
     expect(neither).not.toContain(arrangementsKept);
     expect(neither).toContain(
-      'Updated 25 October 2026. Notice reference: real-intake-2026-10-21-v1.',
+      'Updated 25 October 2026. Request notice version: real-intake-2026-10-21-v1.',
     );
   });
   it('does not announce these real record types in sample mode or without workspace access', async () => {
@@ -332,7 +332,7 @@ describe('the language sentence follows the request form release', () => {
         expect(page).toContain('Updated 30 October 2026.');
       }
     expect(await text({ ...real, CORRIDRA_LANGUAGES_FORM: 'bn' })).toContain(
-      'Updated 30 October 2026. Notice reference: real-intake-2026-10-21-v1.',
+      'Updated 30 October 2026. Request notice version: real-intake-2026-10-21-v1.',
     );
   });
   it('reads only the request form release: releasing the home page words leaves the sentence as it was', async () => {

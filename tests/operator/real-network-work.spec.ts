@@ -316,7 +316,7 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
     },
   }));
   await worker.reload();
-  await expect(worker.getByRole('button', { name: 'Accept This Task' })).toBeVisible();
+  await expect(worker.getByRole('button', { name: 'Accept the Disclosed Task' })).toBeVisible();
   await inspect(worker, 'contributor-assigned');
   // Wave 6 Q-05: a refresh that cannot read says why in plain words, never a raw browser or server
   // message, and the button stays for another try.
@@ -345,14 +345,14 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
   }
   // One working refresh clears the interruption: the task forms are usable again.
   await worker.getByRole('button', { name: 'Refresh Tasks', exact: true }).click();
-  await expect(worker.getByRole('button', { name: 'Accept This Task' })).toBeEnabled();
+  await expect(worker.getByRole('button', { name: 'Accept the Disclosed Task' })).toBeEnabled();
   expect(await worker.locator('body').innerText()).not.toContain(
     'network-request-owner@business.test',
   );
   await worker
-    .getByLabel('I agree', { exact: true })
+    .getByLabel('Acceptance and relationship confirmation')
     .fill('Reviewed disclosure and no conflicting relationship');
-  await worker.getByRole('button', { name: 'Accept This Task' }).click();
+  await worker.getByRole('button', { name: 'Accept the Disclosed Task' }).click();
   await worker
     .getByLabel('Original work and evidence statement')
     .fill('Source-reported equipment finding. Availability remains unverified.');

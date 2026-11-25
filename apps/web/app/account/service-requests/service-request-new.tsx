@@ -62,7 +62,8 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
     [pending, setPending] = useState<Record<string, unknown> | null>(null),
-    [done, setDone] = useState<ServiceRequestSummary | null>(null);
+    [done, setDone] = useState<ServiceRequestSummary | null>(null),
+    [attempt, setAttempt] = useState(0);
   const alive = useRef(false);
   const sentHeading = useRef<HTMLHeadingElement>(null);
   // CQ-71: the confirmation is brought into view and focused, so it is never left off-screen.
@@ -124,7 +125,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
       alive.current = false;
       controller.abort();
     };
-  }, [subject, issuer, workspaceId]);
+  }, [subject, issuer, workspaceId, attempt]);
   useEffect(() => {
     if (!pending) return;
     const leave = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -216,6 +217,21 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
         <div className="ux-state" data-state="unavailable">
           <p className="ux-state-label">Temporarily unavailable</p>
           <div role="alert">{message}</div>
+          <div className="ux-state-actions">
+            <button
+              type="button"
+              className="button button-secondary"
+              onClick={() => {
+                setState('loading');
+                setAttempt((n) => n + 1);
+              }}
+            >
+              Try Again
+            </button>
+            <a className="text-link" href="/account">
+              Return to your account
+            </a>
+          </div>
         </div>
       )}
       {state === 'ready' &&

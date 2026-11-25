@@ -48,15 +48,16 @@ describe('the helper task words', () => {
   const board = read('apps/web/app/contributor/task-board.tsx');
   it('never prints the reviewer id and keeps the form field names', () => {
     expect(board).not.toContain('{task.reviewer}');
-    expect(board).toContain('<dd>Corridra reviewer</dd>');
+    expect(board).toContain('<dd>Independent reviewer</dd>');
     expect(board.match(/name="reason"/g)).toHaveLength(3);
     expect(board.match(/name="body"/g)).toHaveLength(1);
-    for (const old of [
+    // The live words stay (no owner approval for new wording); only the layout changed.
+    for (const kept of [
       'EXACT ASSIGNMENT',
       'Accept the Disclosed Task',
       'Acceptance and relationship confirmation',
     ])
-      expect(board).not.toContain(old);
+      expect(board).toContain(kept);
   });
 });
 
@@ -105,5 +106,14 @@ describe('round 2: the remaining repeats and Back-to links', () => {
     const view = read('apps/web/components/fairs-view.tsx');
     expect(view.match(/href="\/fairs"/g)).toHaveLength(1);
     expect(view).not.toMatch(/Back to/);
+  });
+});
+
+describe('the new help request page keeps a way out of its error state', () => {
+  const page = read('apps/web/app/account/service-requests/service-request-new.tsx');
+  it('offers Try Again and Return to your account, as the detail page does', () => {
+    expect(page).toContain('Try Again');
+    expect(page).toContain('Return to your account');
+    expect(page).toContain('setAttempt((n) => n + 1)');
   });
 });

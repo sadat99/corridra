@@ -97,8 +97,7 @@ export default function Page() {
           )}
           {/* The version the database pins. Without real use it names the preview notice, a made-up data setting. */}
           <p className="guide-hint" data-madeup-panel={real ? undefined : ''}>
-            Updated {updated}. {real ? 'Notice reference' : 'Test notice reference'}:{' '}
-            {noticeVersion}.
+            Updated {updated}. Request notice version: {noticeVersion}.
           </p>
         </div>
       </section>

@@ -2967,9 +2967,9 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
         .rowCount,
     ).toBe(0);
     await contributorPage
-      .getByLabel('I agree', { exact: true })
+      .getByLabel('Acceptance and relationship confirmation')
       .fill('I accept the disclosed synthetic task and relationship limits');
-    await contributorPage.getByRole('button', { name: 'Accept This Task' }).click();
+    await contributorPage.getByRole('button', { name: 'Accept the Disclosed Task' }).click();
     await expect(contributorPage.getByLabel('Original work and evidence statement')).toBeVisible();
     await contributorPage
       .getByLabel('Original work and evidence statement')

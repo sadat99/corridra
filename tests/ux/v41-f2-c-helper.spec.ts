@@ -103,7 +103,7 @@ for (const width of [320, 390, 768, 1440]) {
     await expect(card).toHaveCount(1);
     await expect(card.getByText('Your next step', { exact: true })).toBeVisible();
     await expect(card.getByRole('heading', { name: 'Supplier research' })).toBeVisible();
-    await expect(card.getByRole('button', { name: 'Accept This Task' })).toHaveClass(
+    await expect(card.getByRole('button', { name: 'Accept the Disclosed Task' })).toHaveClass(
       /primary-link/,
     );
     // The other task is a closed row, with its name, its state and the quiet word Open.
@@ -128,11 +128,11 @@ test('the other task still opens and is accepted with the same payload', async (
   const posted = await open(page, 390, twoWaiting);
   const row = page.locator('details.helper-task-row');
   await row.locator('summary').first().click();
-  const accept = row.getByRole('button', { name: 'Accept This Task' });
+  const accept = row.getByRole('button', { name: 'Accept the Disclosed Task' });
   await expect(accept).toBeVisible();
   await expect(accept).not.toHaveClass(/primary-link/);
   await expect(page.locator('main .primary-link')).toHaveCount(1);
-  await row.getByLabel('I agree', { exact: true }).fill('I accept and have no tie');
+  await row.getByLabel('Acceptance and relationship confirmation').fill('I accept and have no tie');
   await accept.click();
   await expect.poll(() => posted.length).toBe(1);
   expect(posted[0]).toMatchObject({
@@ -149,26 +149,24 @@ test('no id is shown as the reviewer and the words are plain', async ({ page }) 
   await page.locator('details.helper-task-row > summary').click();
   const text = await page.locator('main').innerText();
   expect(text).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-  expect(text).toContain('Corridra reviewer');
-  for (const old of [
+  expect(text).toContain('Independent reviewer');
+  // The live words are kept: only a raw status code ("Assign ·") is made plain.
+  for (const kept of [
     'EXACT ASSIGNMENT',
     'Accept the Disclosed Task',
     'Acceptance and relationship confirmation',
-    'Assign ·',
   ])
-    expect(text).not.toContain(old);
+    expect(text).toContain(kept);
+  expect(text).not.toContain('Assign ·');
   await expect(page.getByText('Assigned · China · work country Germany').first()).toBeVisible();
 });
 
-test('the acceptance field has a hint, and a fact name and value look different', async ({
+test('the acceptance field keeps its live label, and a fact name and value look different', async ({
   page,
 }) => {
   await open(page, 390, twoWaiting);
   const card = page.locator('article.helper-next');
-  const field = card.getByLabel('I agree', { exact: true });
-  const hint = await field.getAttribute('aria-describedby');
-  expect(hint).toBeTruthy();
-  await expect(page.locator(`[id="${hint}"]`)).toContainText('you accept this task');
+  const field = card.getByLabel('Acceptance and relationship confirmation');
   await expect(field).toHaveAttribute('name', 'reason');
   const styles = await card.evaluate((node) => {
     const read = (selector: string) => {
@@ -180,6 +178,15 @@ test('the acceptance field has a hint, and a fact name and value look different'
   expect(styles.dt.weight).not.toBe(styles.dd.weight);
   expect(styles.dt.size).not.toBe(styles.dd.size);
   expect(styles.dt.colour).not.toBe(styles.dd.colour);
+});
+
+test('no address is linked twice inside main on the task board', async ({ page }) => {
+  await open(page, 390, twoWaiting);
+  await page.locator('details.helper-task-row > summary').click();
+  const hrefs = await page
+    .locator('main a[href]')
+    .evaluateAll((list) => list.map((node) => node.getAttribute('href')));
+  expect(hrefs.filter((href, index) => hrefs.indexOf(href) !== index)).toEqual([]);
 });
 
 test('a single task that does not wait for the helper has no primary and stays open', async ({

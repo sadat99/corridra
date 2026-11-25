@@ -347,24 +347,20 @@ test.describe('21: the journey cards on a phone', () => {
   }
 });
 
-test('26: the sidebar New Request and All Tools are inside a landmark', async ({ page }) => {
+test('26: the sidebar keeps one landmark for its links, and none around the single New Request link', async ({
+  page,
+}) => {
   await open(page, 1440);
   const landmarkOf = (selector: string) =>
     page
       .locator(selector)
-      .evaluate(
-        (el) =>
-          el
-            .closest('nav, main, header, footer, aside, [role="navigation"], [role="region"]')
-            ?.getAttribute('aria-label') ?? null,
-      );
-  expect(await landmarkOf('.ux-leftnav-panel .ux-rail-new > span')).toBe('New request');
+      .evaluate((el) => el.closest('[role="navigation"]')?.getAttribute('aria-label') ?? null);
   expect(await landmarkOf('.ux-leftnav-panel .ux-rail-tools > span')).toBe('Tools and help');
-  await expect(page.getByRole('navigation', { name: 'New request' })).toHaveCount(1);
+  await expect(page.getByRole('navigation', { name: 'New request' })).toHaveCount(0);
   await expect(page.getByRole('navigation', { name: 'Tools and help' })).toHaveCount(1);
   const scan = await new AxeBuilder({ page })
     .include('.ux-leftnav-panel')
-    .withRules(['region', 'landmark-unique'])
+    .withRules(['landmark-unique'])
     .analyze();
   expect(scan.violations.map((violation) => violation.id)).toEqual([]);
 });

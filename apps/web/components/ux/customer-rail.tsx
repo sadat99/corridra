@@ -300,10 +300,7 @@ export function CustomerRailTop() {
       <div className="ux-drawer-topbar">
         <TopBarTools variant="drawer" />
       </div>
-      {/* A landmark of its own: the bar's top and foot are drawn outside the list's navigation landmark. */}
-      <div role="navigation" aria-label="New request">
-        <NewRequestLink />
-      </div>
+      <NewRequestLink />
     </>
   );
 }
@@ -316,7 +313,11 @@ export function CustomerRailTop() {
  */
 export function CustomerRailFoot({ href, allTools }: { href?: string | null; allTools?: boolean }) {
   return (
-    <div className="ux-rail-foot" role="navigation" aria-label="Tools and help">
+    // A navigation landmark only where the foot holds links; the Coming soon row is plain text, not a destination.
+    <div
+      className="ux-rail-foot"
+      {...(allTools || href ? { role: 'navigation', 'aria-label': 'Tools and help' } : {})}
+    >
       {allTools ? <RailAllTools /> : null}
       {href ? <RailHelpLink href={href} /> : <RailHelpSoon />}
     </div>

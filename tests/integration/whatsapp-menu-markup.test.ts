@@ -72,7 +72,7 @@ describe('the customer rail foot', () => {
   }
   test('without a number it is the same Coming soon words, with the name and the tag in one name span', async () => {
     const expected =
-      '<div class="ux-rail-foot" role="navigation" aria-label="Tools and help"><p class="ux-rail-soon">' +
+      '<div class="ux-rail-foot"><p class="ux-rail-soon">' +
       (await iconMarkup('help')) +
       '<span class="ux-rail-label"><span>Help on WhatsApp</span><span class="ux-soon-tag">Coming soon</span></span></p></div>';
     expect(await foot({})).toBe(expected);

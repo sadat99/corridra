@@ -272,6 +272,15 @@ test('14: a request that cannot be shown keeps the plain title and offers each d
   expect(links).toEqual(['/account']);
 });
 
+test('19: no address is linked twice inside main', async ({ page }) => {
+  await open(page, 390);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const hrefs = await page
+    .locator('main a[href]')
+    .evaluateAll((list) => list.map((node) => node.getAttribute('href')));
+  expect(hrefs.filter((href, index) => hrefs.indexOf(href) !== index)).toEqual([]);
+});
+
 test('18: the sample-mode rule is a hint tied to the field, not part of its label', async ({
   page,
 }) => {

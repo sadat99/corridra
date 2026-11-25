@@ -30,7 +30,7 @@ const statusWords = (code: string) => statusNames[code] ?? words(code);
 const waitsForHelper = (status: string) =>
   ['ASSIGN', 'ACCEPT', 'REQUEST_CORRECTION'].includes(status);
 import { readFailureKind, readFailureWords } from '../operator/read-failure';
-import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { dueToday } from '../../lib/ux/field-helper';
 type Task = {
   id: string;
@@ -202,7 +202,6 @@ function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boole
   const leadWaits = !!lead && waitsForHelper(lead.status);
   const rest = shown.filter((task) => task !== lead);
   const blocked = busy || !!pending || readInterrupted;
-  const hintId = useId();
   const statusLine = (task: Task) => (
     <>
       {statusWords(task.status)} ·{' '}
@@ -215,6 +214,7 @@ function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boole
   );
   const taskBody = (task: Task, primary: boolean) => (
     <>
+      <p className="label">EXACT ASSIGNMENT · VERSION {task.version}</p>
       <p>{task.disclosure.instructions}</p>
       <dl>
         <dt>Location</dt>
@@ -231,7 +231,7 @@ function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boole
         <dd>{task.disclosure.dataHandling}</dd>
         <dt>Reviewer</dt>
         {/* The record holds the reviewer as an id only; a helper is never shown an id. */}
-        <dd>Corridra reviewer</dd>
+        <dd>Independent reviewer</dd>
         <dt>Cancellation</dt>
         <dd>{task.disclosure.cancellationTerms}</dd>
         <dt>Disputes</dt>
@@ -252,21 +252,11 @@ function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boole
           <fieldset disabled={blocked}>
             <legend className="sr-only">Acceptance</legend>
             <label className="field">
-              I agree
-              <input
-                name="reason"
-                required
-                minLength={3}
-                maxLength={500}
-                aria-describedby={hintId + task.id}
-              />
+              Acceptance and relationship confirmation
+              <input name="reason" required minLength={3} maxLength={500} />
             </label>
-            <p className="helper-task-hint" id={hintId + task.id}>
-              Write in your own words that you accept this task and that you have no personal or
-              business relationship with the people or companies it involves.
-            </p>
             <button className={primary ? 'primary-link' : 'button-secondary'} disabled={blocked}>
-              Accept This Task
+              Accept the Disclosed Task
             </button>
           </fieldset>
         </form>
