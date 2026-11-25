@@ -379,52 +379,57 @@ test('a page opened by its own address opens at the top on a phone, switch off a
 
 // Audit of 25 Nov 2026, staff-admin-10, staff-core-20, public-customer-01: a row of tabs or segments that scrolls
 // sideways on a phone was cut with nothing to say more was there.
-test('switch on: a segments row that scrolls sideways fades at the edge that hides more, and only there', async ({
+test('switch on: a segments row that scrolls sideways marks the edge that hides more, and only that edge', async ({
   page,
 }) => {
-  const fades = (row: ReturnType<Page['locator']>) =>
-    row.evaluate((el) => {
-      const style = getComputedStyle(el);
-      return {
-        scrolls: el.scrollWidth > el.clientWidth + 1,
-        mask: style.maskImage !== 'none',
-        start: style.getPropertyValue('--ux-tabs-fade-start').trim(),
-        end: style.getPropertyValue('--ux-tabs-fade-end').trim(),
-      };
-    });
+  const cue = (row: ReturnType<Page['locator']>) =>
+    row.evaluate((el) => ({
+      scrolls: el.scrollWidth > el.clientWidth + 1,
+      start: getComputedStyle(el, '::before').display !== 'none',
+      end: getComputedStyle(el, '::after').display !== 'none',
+    }));
+  const to = (row: ReturnType<Page['locator']>, where: 'start' | 'middle' | 'end') =>
+    row.evaluate((el, place) => {
+      const far = el.scrollWidth - el.clientWidth;
+      el.scrollTo({
+        left: place === 'start' ? 0 : place === 'end' ? far : far / 2,
+        behavior: 'instant',
+      });
+    }, where);
   for (const width of [320, 390]) {
     await open(page, '/operator/settings', { v41: true, width, height: 800 });
     const row = segments(page).locator('ul');
-    await row.evaluate((el) => el.scrollTo({ left: 0, behavior: 'instant' }));
+    await to(row, 'start');
     await expect
-      .poll(() => fades(row), `rest at ${width}`)
-      .toEqual({
-        scrolls: true,
-        mask: true,
-        start: '0px',
-        end: '32px',
-      });
-    await row.evaluate((el) =>
-      el.scrollTo({ left: el.scrollWidth / 2 - el.clientWidth / 2, behavior: 'instant' }),
-    );
-    await expect.poll(async () => (await fades(row)).start, `middle at ${width}`).toBe('32px');
-    expect((await fades(row)).end).toBe('32px');
-    await row.evaluate((el) => el.scrollTo({ left: el.scrollWidth, behavior: 'instant' }));
+      .poll(() => cue(row), `rest at ${width}`)
+      .toEqual({ scrolls: true, start: false, end: true });
+    // The mark takes no room and no tap: the row is exactly as wide as its links.
+    const before = await row.evaluate((el) => el.scrollWidth);
+    await to(row, 'middle');
     await expect
-      .poll(() => fades(row), `end at ${width}`)
-      .toMatchObject({ start: '32px', end: '0px' });
+      .poll(() => cue(row), `middle at ${width}`)
+      .toEqual({ scrolls: true, start: true, end: true });
+    expect(await row.evaluate((el) => el.scrollWidth)).toBe(before);
+    expect(await row.evaluate((el) => getComputedStyle(el, '::after').pointerEvents)).toBe('none');
+    await to(row, 'end');
+    await expect
+      .poll(() => cue(row), `end at ${width}`)
+      .toEqual({ scrolls: true, start: true, end: false });
+    expect(await row.evaluate((el) => el.scrollWidth)).toBe(before);
     // One row, and the page itself never scrolls sideways.
     expect(await row.evaluate((el) => getComputedStyle(el).flexWrap)).toBe('nowrap');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
       width,
     );
+    const results = await new AxeBuilder({ page }).include('nav.ux-desk-segments').analyze();
+    expect(results.violations.map((violation) => violation.id)).toEqual([]);
   }
-  // A row that fits shows no fade at either edge.
+  // A row that fits shows no mark at either edge.
   await open(page, '/operator/settings', { v41: true, width: 1440 });
-  expect(await fades(segments(page).locator('ul'))).toMatchObject({
+  expect(await cue(segments(page).locator('ul'))).toEqual({
     scrolls: false,
-    start: '0px',
-    end: '0px',
+    start: false,
+    end: false,
   });
 });
 
