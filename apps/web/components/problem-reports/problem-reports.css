@@ -80,6 +80,17 @@
 .pr-history li {
   overflow-wrap: anywhere;
 }
+/* A row that opens more text is a 44 px target (the closed row measured 26 px) and keeps its disclosure marker:
+   it stays a list item, so the browser draws the triangle, and the block padding makes the height. */
+.pr-fold > summary {
+  display: list-item;
+  min-height: 2.75rem;
+  padding-block: var(--space-3);
+}
+.pr-column code,
+.pr-queue code {
+  font-size: var(--text-sm);
+}
 .pr-meanings {
   display: grid;
   gap: var(--space-2);

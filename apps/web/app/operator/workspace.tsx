@@ -784,7 +784,8 @@ function TenantWorkspace({
               {['owner', 'admin', 'reviewer'].includes(data.role) && (
                 <CompanyLinkReview key={`links-${tenant}`} tenant={tenant} />
               )}
-              {supplySources && (
+              {/* Team desk v4.1: Supply Sources is a menu place, so the page does not link it again. */}
+              {supplySources && !deskV41 && (
                 <p>
                   <Link
                     prefetch={false}

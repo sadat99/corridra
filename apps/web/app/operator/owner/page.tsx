@@ -382,10 +382,21 @@ export default async function Page({
                       </p>
                     </article>
                   ))}
-                  <p>
-                    Install steps for these records are in the owner technical setup runbook,
-                    docs/runbooks/owner-technical-setup.md in the repository.
-                  </p>
+                  {frame ? (
+                    // Team desk v4.1: the repository path is a technical detail, one click away and closed.
+                    <details className="desk-technical">
+                      <summary>Technical details</summary>
+                      <p>
+                        Install steps for these records are in the owner technical setup runbook,
+                        docs/runbooks/owner-technical-setup.md in the repository.
+                      </p>
+                    </details>
+                  ) : (
+                    <p>
+                      Install steps for these records are in the owner technical setup runbook,
+                      docs/runbooks/owner-technical-setup.md in the repository.
+                    </p>
+                  )}
                 </section>
               </div>
             ),
