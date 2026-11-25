@@ -1193,3 +1193,40 @@ test('item 21: counts kept across a refresh are dropped when their read expires 
   );
   await expect(room.locator('.room-next b')).toHaveText('Checking…');
 });
+
+// Final walk, public-customer-07 residual (25 Nov 2026): at 200% text the attention row's Open Participants button kept
+// its full width in a row that did not wrap, so the room was 478 px wide at 390 px and 1470 px at 1440 px. The widths
+// are the room's real column: inside the shell's 24 px gutter on a phone, and the 784 px the account frame leaves the
+// page beside its rail at 1440 px with 200% text. Fails on the code before; at the normal size the row is as it was.
+for (const [width, column] of [
+  [390, null],
+  [1440, 784],
+] as const)
+  for (const text of [100, 200])
+    test(`final walk: the attention row stays inside the window at ${width} px with ${text}% text`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await openSlowly(page, { participants: () => 0 });
+      const room = page.getByRole('article', { name: programme.name });
+      const button = room.locator('.programme-attention > li > .button-secondary').first();
+      await expect(button).toBeVisible();
+      await page.addStyleTag({
+        content: `html { font-size: ${text}%; } #fixture { padding-inline: 24px; ${
+          column ? `max-width: ${column}px; box-sizing: border-box;` : ''
+        } }`,
+      });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        ),
+        'sideways scroll in px',
+      ).toBeLessThanOrEqual(0);
+      const row = (await button.locator('xpath=..').boundingBox())!;
+      const box = (await button.boundingBox())!;
+      expect(box.x + box.width).toBeLessThanOrEqual(row.x + row.width + 0.5);
+      // The button keeps its words whole and its 44 px target.
+      expect(await button.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      await expect(button).toHaveText('Open Participants');
+    });

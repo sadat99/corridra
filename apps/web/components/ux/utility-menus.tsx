@@ -71,6 +71,8 @@ export function LanguageMenu() {
   return (
     <OverflowMenu
       label="Language"
+      // The code it shows comes first in its name (WCAG 2.5.3): "EN, Language".
+      buttonLabel={`${locale.toUpperCase()}, Language`}
       className="ux-util-language"
       trigger={
         <>
@@ -367,11 +369,13 @@ export function AvatarMenu({
     workspaces: offered,
     currentWorkspaceId: shown?.id,
   });
-  // The button's name stays person-neutral ("Account menu"); the initials are only what is drawn on it.
+  // Where the button shows initials, its name starts with them (WCAG 2.5.3): "SA, Account menu". With a picture or the
+  // people icon it shows no text, so the name is "Account menu". The menu it opens is always named "Account menu".
   const shownInitials = who && picture === null ? initials(who.name || who.email) : null;
   return (
     <OverflowMenu
       label={accountMenuName}
+      buttonLabel={shownInitials ? `${shownInitials}, ${accountMenuName}` : undefined}
       className="ux-util-avatar"
       trigger={
         who && picture !== null ? (

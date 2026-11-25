@@ -201,7 +201,7 @@ async function visit(page: Page, path: string) {
   await read;
 }
 async function openMenu(page: Page) {
-  const avatar = page.getByRole('button', { name: 'Account menu', exact: true });
+  const avatar = page.getByRole('button', { name: /^(?:[A-Z?]{1,2}, )?Account menu$/ });
   await avatar.focus();
   await page.keyboard.press('ArrowDown');
   const menu = page.getByRole('menu', { name: 'Account menu', exact: true });

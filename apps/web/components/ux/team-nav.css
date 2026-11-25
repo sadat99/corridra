@@ -1029,17 +1029,21 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
   }
 }
 @media (max-width: 479.98px) {
+  /* The row's spacing tokens are capped at their size at the normal text size, as the customer bar's gap is
+     (customer-bar.css). A rem token doubles with the text size: at 200% text the row took back 48 px of the shell's
+     24 px gutter (globals.css, .site-shell below 760 px) and its gaps and padding grew by 40 px, so it ran past the
+     edge of a 390 px screen (final walk W-3a, 25 Nov 2026). At the normal size nothing moves. */
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header {
-    gap: var(--space-1);
+    gap: min(var(--space-1), 4px);
     width: auto;
-    margin-inline: calc(-1 * var(--space-6));
-    padding-inline: var(--space-1);
+    margin-inline: calc(-1 * min(var(--space-6), 24px));
+    padding-inline: min(var(--space-1), 4px);
   }
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-app-status {
     flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
-    padding-inline: var(--space-2);
+    padding-inline: min(var(--space-2), 8px);
     font-size: var(--text-xs);
     white-space: nowrap;
     text-overflow: ellipsis;

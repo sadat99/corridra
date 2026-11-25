@@ -14,6 +14,9 @@
   line-height: var(--leading-title);
 }
 .mr-stage-wrap[data-variant='room'] .mr-stage {
+  /* Six columns that share the row and never push it wider than its box: at 200% text on a 390 px phone the six
+     shapes and their gaps needed 368 px of a 342 px row (final walk W-3b, 25 Nov 2026). */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   align-items: center;
   gap: var(--space-2);
 }
@@ -37,7 +40,7 @@
   place-items: center;
   box-sizing: border-box;
   inline-size: 1.5rem;
-  block-size: 1.5rem;
+  aspect-ratio: 1;
   border-radius: 50%;
   color: var(--surface-raised);
   background: transparent;
@@ -112,6 +115,14 @@
   .mr-stage-wrap[data-variant='room'] [data-shape='notTracked'] .mr-stage-shape {
     box-shadow: none;
     border: 2px dashed CanvasText;
+  }
+}
+
+/* The row of six (below 64rem): a shape is 1.5rem, or its column's width where that is less (very large text on a
+   phone), and always a circle. The desktop timeline below keeps 1.5rem. */
+@media (max-width: 63.99rem) {
+  .mr-stage-wrap[data-variant='room'] .mr-stage-shape {
+    inline-size: min(1.5rem, 100%);
   }
 }
 

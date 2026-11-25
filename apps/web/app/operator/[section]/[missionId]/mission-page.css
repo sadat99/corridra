@@ -114,6 +114,12 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+/* The status chip under the title may wrap its words: unbroken, "Received, waiting for review" was wider than a
+   390 px phone at 200% text (final walk W-3b, 25 Nov 2026). At the normal size it is one line, as before. */
+.mission-page-summary .ux-kit-chip {
+  max-width: 100%;
+  white-space: normal;
+}
 .mission-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -455,6 +461,9 @@ details[open] > summary .mission-more-chevron {
 /* Overview facts (team desk v4.1): named groups, a muted label beside its value. */
 .mission-facts {
   display: grid;
+  /* One column no wider than the page: a long address in a value wraps inside its card instead of widening the
+     column past the screen (390 px at 200% text, final walk W-3b, 25 Nov 2026). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   container-type: inline-size;
 }
@@ -469,6 +478,7 @@ details[open] > summary .mission-more-chevron {
 }
 .mission-facts dl {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1) var(--space-4);
   margin: 0;
 }
@@ -478,7 +488,7 @@ details[open] > summary .mission-more-chevron {
 }
 .mission-facts dd {
   margin: 0 0 var(--space-2);
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 .mission-facts dd a {
   overflow-wrap: anywhere;
