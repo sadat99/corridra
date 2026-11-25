@@ -244,6 +244,36 @@ function Queue({ tenant, role, problemReports = false, tabbed = false }: Props) 
     }
   }
 
+  const filterControls = (
+    <>
+      <label>
+        Show
+        <select
+          value={filter}
+          disabled={busy}
+          onChange={(e) => {
+            controller.current?.abort();
+            setFilter(e.target.value as Status | '');
+            setQueue(null);
+            setPending(null);
+            setBusy(false);
+            setMessage('Choose Load Erasure Requests to show this selection.');
+          }}
+        >
+          <option value="">All requests</option>
+          {statusValues.map((s) => (
+            <option key={s} value={s}>
+              {statusLabel[s]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button className="text-link" type="button" disabled={busy} onClick={() => void load()}>
+        Load Erasure Requests
+      </button>
+    </>
+  );
+
   return (
     <section aria-labelledby="erasure-queue-title" className="ux-panel">
       <h2 id="erasure-queue-title" className={tabbed ? 'sr-only' : undefined}>
@@ -255,33 +285,7 @@ function Queue({ tenant, role, problemReports = false, tabbed = false }: Props) 
         {tabbed ? 'the history of changes' : 'audit rows'} are kept as the record requires, and the
         note you write is what the person reads.
       </p>
-      <div className={tabbed ? 'inbox-filter' : undefined}>
-        <label>
-          Show
-          <select
-            value={filter}
-            disabled={busy}
-            onChange={(e) => {
-              controller.current?.abort();
-              setFilter(e.target.value as Status | '');
-              setQueue(null);
-              setPending(null);
-              setBusy(false);
-              setMessage('Choose Load Erasure Requests to show this selection.');
-            }}
-          >
-            <option value="">All requests</option>
-            {statusValues.map((s) => (
-              <option key={s} value={s}>
-                {statusLabel[s]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="text-link" type="button" disabled={busy} onClick={() => void load()}>
-          Load Erasure Requests
-        </button>
-      </div>
+      {tabbed ? <div className="inbox-filter">{filterControls}</div> : filterControls}
       {message && <p role="status">{message}</p>}
       {queue && queue.items.length > 0 && (
         <ul>

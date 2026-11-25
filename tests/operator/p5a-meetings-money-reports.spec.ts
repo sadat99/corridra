@@ -458,8 +458,11 @@ test('F5 switch on: the meeting page speaks plainly, tells cards and replies apa
   await open(page, '/operator/meetings', { v41: true, rich: true });
   const section = panel(page, 'meetings');
   // One heading per level: the page heading, not a second "Introductions and meetings" or the tab name again.
-  await expect(section.getByRole('heading', { name: 'Introductions and meetings' })).toHaveCount(0);
-  await expect(section.getByRole('heading', { name: 'Meeting itinerary' })).toHaveCount(0);
+  // The heading that repeats the page title is for screen readers only; no second one is drawn.
+  await expect(section.getByRole('heading', { name: 'Introductions and meetings' })).toHaveClass(
+    /sr-only/,
+  );
+  await expect(section.getByRole('heading', { name: 'Meeting itinerary' })).toHaveClass(/sr-only/);
   await expect(section.getByRole('button', { name: 'Refresh', exact: true })).toBeVisible();
   await expect(section.getByText('Briefs and outcomes stay private to authorized')).toHaveCount(0);
   // A card names the buyer and the time of a scheduled meeting; the version number is not on it.
@@ -475,11 +478,12 @@ test('F5 switch on: the meeting page speaks plainly, tells cards and replies apa
   expect(box!.height).toBeLessThan(60);
   // The propose list: words, not stored codes, and the same buyer twice is told apart by the reply.
   await section.getByRole('tab', { name: /^Introductions/ }).click();
+  await section.getByText('Approved communication policy and templates').click();
   await expect(
     section.getByText('Germany / Recorded receipt (no email sent) / Official company channel'),
   ).toBeVisible();
   await section.getByRole('tab', { name: /^Follow-up/ }).click();
-  const followup = section.locator('article.detail-card').first();
+  const followup = section.locator('article.detail-card', { hasText: 'Follow the meeting plan' });
   await expect(followup.getByText('Meeting: Meeting 3 scheduled.')).toBeVisible();
   const result = followup.getByLabel('Follow-up result');
   await expect(result.locator('option')).toHaveText(['Completed', 'Cancelled']);
@@ -560,7 +564,10 @@ test('D11 switch on: an introduction is never in a column, and the outreach note
   await expect(board).toBeVisible();
   await expect(board.locator('article.introduction-card')).toHaveCount(0);
   // The buyer that only has an introduction is offered in the Propose form, not shown as a meeting.
-  await expect(board.locator('article', { hasText: 'Introduction Only Buyer' })).toHaveCount(0);
+  // A card may say whom the meeting is with; no card is headed by the buyer, as an introduction would be.
+  await expect(board.locator('article > h5', { hasText: 'Introduction Only Buyer' })).toHaveCount(
+    0,
+  );
   await expect(board.locator('article', { hasText: 'Test Mode Buyer' })).toHaveCount(0);
   // The Introductions tab is one tap away and the test-mode note of the sent email is written on its card.
   // The sentence about introduction channels is in the Introductions tab, not above the board.

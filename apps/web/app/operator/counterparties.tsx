@@ -984,10 +984,8 @@ export function Counterparties({
                 </details>
               )}
             </PhoneFold>
-            <PhoneFold
-              summary={desk ? 'Show possible matches' : 'Show entity matching and ambiguity'}
-            >
-              <h4>{desk ? 'Possible matches' : 'Entity matching and ambiguity'}</h4>
+            <PhoneFold summary="Show entity matching and ambiguity">
+              <h4>Entity matching and ambiguity</h4>
               {manage && (
                 <button
                   disabled={busy}

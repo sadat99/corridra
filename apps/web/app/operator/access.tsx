@@ -382,7 +382,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   if (!comms || !meetings)
     return (
       <section data-operator-workbench className="operator-section">
-        {deskV41 ? null : <h2>Introductions and meetings</h2>}
+        <h2 className={deskV41 ? 'sr-only' : undefined}>Introductions and meetings</h2>
         <OperatorWorkbench
           label="Introduction and meeting sections"
           sections={[
@@ -493,7 +493,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
     <section className="operator-section">
       <div className="section-heading">
         {deskV41 ? null : <p className="label">CONTROLLED ACCESS</p>}
-        {deskV41 ? null : <h2>Introductions and meetings</h2>}
+        <h2 className={deskV41 ? 'sr-only' : undefined}>Introductions and meetings</h2>
         <p>Give the buyer a reason to respond. Keep the meeting and its next step owned.</p>
       </div>
       <p role="status" aria-live="polite" aria-label="Access status">
@@ -784,7 +784,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                     <p>Keep this link private. It permits one response to this introduction.</p>
                   </div>
                 )}
-                {deskV41 ? null : <h3>Introductions and replies</h3>}
+                <h3 className={deskV41 ? 'sr-only' : undefined}>Introductions and replies</h3>
                 <p>
                   Latest 50 introductions. A receipt shows the introduction went out through its
                   channel. It is not a held meeting or a commercial result.
@@ -962,7 +962,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                     {proposeForm}
                   </PhoneFold>
                 )}
-                {deskV41 ? null : <h3>Meeting itinerary</h3>}
+                <h3 className={deskV41 ? 'sr-only' : undefined}>Meeting itinerary</h3>
                 <p>
                   {deskV41
                     ? 'Times are shown in your time zone. Only team members with access see briefs and outcomes.'
@@ -1028,7 +1028,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             label: `Follow-up (${meetings.followups.length})`,
             panel: (
               <>
-                {deskV41 ? null : <h3>Owned follow-up</h3>}
+                <h3 className={deskV41 ? 'sr-only' : undefined}>Owned follow-up</h3>
                 {meetings.followups.map((f) => (
                   <article key={f.id} className="detail-card">
                     <h4>{f.next_action}</h4>
