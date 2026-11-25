@@ -19,9 +19,18 @@ export function countryName(code: string): string {
   }
 }
 
-export function CountryName({ code, size }: { code: string; size?: 'row' }) {
+export function CountryName({
+  code,
+  size,
+  off,
+}: {
+  code: string;
+  size?: 'row';
+  /** What the switch-off screen shows instead of the code, for a sample that always wrote the name. */
+  off?: string;
+}) {
   const { teamDeskV41 } = useOperatorFlags();
-  if (!teamDeskV41) return code;
+  if (!teamDeskV41) return off ?? code;
   return (
     <Flagged code={placeMark(code)} size={size}>
       {countryName(code)}

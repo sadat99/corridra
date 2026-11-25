@@ -234,7 +234,7 @@ describe('removing the words', () => {
         onRemoved: () => undefined,
       }),
     );
-    expect(html).toContain('<details>');
+    expect(html).toContain('<details class="pr-fold">');
     expect(html).not.toContain('<details open');
     expect(html).toContain('Remove the text of your problem reports?');
     expect(html).not.toMatch(/Text removed from|no text left/);

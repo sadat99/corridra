@@ -33,6 +33,7 @@ import {
 } from './[section]/[missionId]/mission-labels';
 import { RouteState, RouteWords } from './[section]/[missionId]/route-words';
 import { Flagged, placeMark } from '../../components/ux/flag';
+import { placeName } from '../account/request-words';
 import type { ReactNode } from 'react';
 export type Mission = {
   id: string;
@@ -78,19 +79,26 @@ export type Queue = {
   replies: { id: string; mission_id: string; body: string; created_at?: string }[];
 };
 type RouteOption = { id: string; label: string };
-const routeOptions = (catalogue: {
-  routes?: { id: string; origin_market: string; destination_market: string }[];
-  packs: { route_id: string; origin_market: string; destination_market: string }[];
-}): RouteOption[] =>
+const routeOptions = (
+  catalogue: {
+    routes?: { id: string; origin_market: string; destination_market: string }[];
+    packs: { route_id: string; origin_market: string; destination_market: string }[];
+  },
+  names = false,
+): RouteOption[] =>
   // CQ-09: the filter lists every route in the workspace, not only routes with a published pack.
   catalogue.routes?.length
     ? catalogue.routes.map((r) => ({
         id: r.id,
-        label: `${r.origin_market} → ${r.destination_market}`,
+        label: names
+          ? `${placeName(r.origin_market)} → ${placeName(r.destination_market)}`
+          : `${r.origin_market} → ${r.destination_market}`,
       }))
     : catalogue.packs.map((p) => ({
         id: p.route_id,
-        label: `${p.origin_market} → ${p.destination_market}`,
+        label: names
+          ? `${placeName(p.origin_market)} → ${placeName(p.destination_market)}`
+          : `${p.origin_market} → ${p.destination_market}`,
       }));
 export const canManage = (role: string | undefined) =>
   !!role && ['owner', 'admin', 'operator'].includes(role);
@@ -739,13 +747,13 @@ export function Missions({
       .then(async (r) => {
         if (!r.ok) return;
         const v = await r.json();
-        if (active) setRoutes(routeOptions(v));
+        if (active) setRoutes(routeOptions(v, deskV41));
       })
       .catch(() => {});
     return () => {
       active = false;
     };
-  }, [tenant]);
+  }, [tenant, deskV41]);
   async function act(action: string, body: unknown) {
     // One change at a time: a second submit while the first is still out (slow network, or the code
     // check is open) is ignored, so nothing is sent twice.
@@ -853,7 +861,7 @@ export function Missions({
               void Promise.all([request('missions'), request('mission-catalogue')])
                 .then(([missions, catalogue]) => {
                   setQueue(missions);
-                  setRoutes(routeOptions(catalogue));
+                  setRoutes(routeOptions(catalogue, deskV41));
                 })
                 .catch((e) => setMessage(e.message))
                 .finally(() => setBusy(false));

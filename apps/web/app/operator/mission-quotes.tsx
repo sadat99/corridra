@@ -7,6 +7,7 @@ import { bodyNotAvailable } from '../../lib/body-access';
 import { formatDateTime } from '../../lib/ux/format';
 import { formatMoney } from '../../lib/ux/money';
 import { useOperatorFlags } from './operator-flags';
+import { CountryName } from './country-name';
 import { ReplyReview } from './reply-review';
 import './reply-review.css';
 
@@ -160,7 +161,9 @@ export function MissionQuotes({
               <dt>Goal</dt>
               <dd>{brief.objective}</dd>
               <dt>Market</dt>
-              <dd>{brief.market}</dd>
+              <dd>
+                <CountryName code={brief.market} />
+              </dd>
               {brief.outcomes.length > 0 && (
                 <>
                   <dt>Wanted outcomes</dt>

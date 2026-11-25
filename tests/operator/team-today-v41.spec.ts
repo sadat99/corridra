@@ -690,6 +690,32 @@ test('switch on: no address is linked twice in the page body, and no menu place 
   await expect(page.locator('main nav.workspace-navigation')).toHaveCount(0);
 });
 
+test('switch on with section addresses: the queue tiles open each section at its own address, with the workspace kept', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, busy, '/?v41=on&sections=on');
+  const queues = decide(page).getByRole('list', { name: 'Also needs your decision' });
+  await expect(queues.getByRole('link', { name: '2 replies to review' })).toHaveAttribute(
+    'href',
+    `/operator/delivery?workspace=${tenant}`,
+  );
+  await expect(
+    queues.getByRole('link', { name: '1 paid-service request to quote' }),
+  ).toHaveAttribute('href', `/operator/delivery?workspace=${tenant}#billing-services`);
+  await expect(
+    queues.getByRole('link', {
+      name: /1\s*follow-up past its due date\s*1\s*meeting needs a new time/,
+    }),
+  ).toHaveAttribute('href', `/operator/meetings?workspace=${tenant}`);
+  // Section addresses off (the default): the page keeps the addresses it has always used.
+  await open(page, busy, '/?v41=on&sections=off');
+  await expect(queues.getByRole('link', { name: '2 replies to review' })).toHaveAttribute(
+    'href',
+    '#workspace-delivery',
+  );
+});
+
 test('switch off and on at 320, 390, 768, 1024, 1440 and 1920: off is unchanged, on has no sideways scroll, 44 px targets and is axe clean', async ({
   page,
 }) => {

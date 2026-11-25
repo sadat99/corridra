@@ -10,7 +10,7 @@ let server: Server, origin: string;
 test.beforeAll(async () => {
   const result = await build({
     stdin: {
-      contents: `import {createRoot} from 'react-dom/client';import {FounderActivation} from ${JSON.stringify(resolve('apps/web/components/founder-activation.tsx'))};const root=createRoot(document.getElementById('fixture'));const render=tenant=>root.render(<FounderActivation key={tenant} tenant={tenant}/>);render(${JSON.stringify(tenant)});window.addEventListener('fixture-tenant',event=>render(event.detail));`,
+      contents: `import {createRoot} from 'react-dom/client';import {FounderActivation} from ${JSON.stringify(resolve('apps/web/components/founder-activation.tsx'))};import {OperatorFlags} from ${JSON.stringify(resolve('apps/web/app/operator/operator-flags.tsx'))};const root=createRoot(document.getElementById('fixture'));const v41=new URLSearchParams(location.search).get('v41')==='on';const render=tenant=>root.render(<OperatorFlags replyReview={false} teamDeskV41={v41}><FounderActivation key={tenant} tenant={tenant}/></OperatorFlags>);render(${JSON.stringify(tenant)});window.addEventListener('fixture-tenant',event=>render(event.detail));`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -156,6 +156,29 @@ test('shows the environment, the count and each module with a plain reason', asy
   await expect(page.getByText('checked separately by the owner')).toBeVisible();
   expect(seen).toHaveLength(1);
   expect(new URL(seen[0]!.url).searchParams.get('tenant')).toBe(tenant);
+});
+
+test('team desk v4.1: the setting names are not in the table; they sit in a closed Technical details fold', async ({
+  page,
+}) => {
+  await mock(page, () => ({ json: body() }));
+  await page.goto(origin + '/?v41=on');
+  const table = page.getByRole('region', { name: 'Customer modules' });
+  await expect(table.getByRole('row')).toHaveCount(6);
+  await expect(table.getByRole('columnheader', { name: 'Flag' })).toHaveCount(0);
+  await expect(table.getByRole('row', { name: /Private requests/ })).toContainText(
+    'Off, flag unset',
+  );
+  const fold = page.locator('details.desk-technical');
+  await expect(fold).toHaveCount(1);
+  expect(await fold.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(false);
+  await expect(page.getByText('CORRIDRA_CUSTOMER_REQUESTS_ENABLED')).toBeHidden();
+  await fold.getByText('Technical details').click();
+  await expect(
+    page
+      .getByRole('region', { name: 'Setting name for each customer module' })
+      .getByText('CORRIDRA_CUSTOMER_REQUESTS_ENABLED'),
+  ).toBeVisible();
 });
 
 test('says plainly when production is unlocked and accounts are admitted automatically', async ({

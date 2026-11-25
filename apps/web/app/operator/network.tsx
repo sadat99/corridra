@@ -21,6 +21,7 @@ import { ReferencePicker } from '../../components/ux/reference-picker';
 import { DateTimeInput } from '../../components/ux/date-time-input';
 import type { PickerKind } from '../../lib/ux/picker';
 import { ShowMore } from './show-more';
+import { CountryName } from './country-name';
 type Profile = {
   id: string;
   principal_id: string;
@@ -648,7 +649,7 @@ export function ExecutionNetwork({
                       <article key={task.id}>
                         <h3>
                           {task.configuration.kind.replaceAll('_', ' ')} ·{' '}
-                          {task.configuration.market}
+                          <CountryName code={task.configuration.market} />
                         </h3>
                         <p>{task.configuration.instructions}</p>
                         {task.late_submission && (
@@ -819,7 +820,7 @@ export function ExecutionNetwork({
                   {data?.performance.map((p) => (
                     <article key={p.principal_id + p.task_kind + p.market}>
                       <h3>
-                        {p.task_kind.replaceAll('_', ' ')} · {p.market}
+                        {p.task_kind.replaceAll('_', ' ')} · <CountryName code={p.market} />
                       </h3>
                       <p>
                         {p.completed_reviewed_tasks} completed reviewed tasks · evidence quality{' '}
