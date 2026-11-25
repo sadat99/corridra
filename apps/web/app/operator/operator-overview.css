@@ -3799,9 +3799,17 @@
   display: none;
 }
 
-/* A panel heading whose words the page title already says: the label, the icon and the line stay, and the
-   panel's own copy of the name is kept for screen readers only (the same rules as .sr-only). */
-[data-title-said] > .ux-panel-heading h2 {
+/* A heading whose words the page title already says (the server adds ux-titled-<section id> to the page, see
+   operator-header.ts): the label, the icon and the line stay, and the panel's own copy of the name is kept for
+   screen readers only (the same rules as .sr-only). The first paint is already right; nothing reads the page. */
+:is(
+  .ux-titled-workspace-delivery h2[data-page-title='workspace-delivery'],
+  .ux-titled-workspace-operations h2[data-page-title='workspace-operations'],
+  .ux-titled-ops-health h3[data-page-title='ops-health'],
+  .ux-titled-workspace-controls h2[data-page-title='workspace-controls'],
+  .ux-titled-workspace-audit [data-page-title='workspace-audit'] > .ux-panel-heading h2,
+  .ux-titled-workspace-sources [data-page-title='workspace-sources'] > .ux-panel-heading h2
+) {
   position: absolute;
   width: 1px;
   height: 1px;

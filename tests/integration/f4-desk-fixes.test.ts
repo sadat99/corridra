@@ -23,16 +23,9 @@ const { DeskParts } = (await import(/* @vite-ignore */ `${web}${'desk-sections.t
 const { OperatorFlags } = (await import(/* @vite-ignore */ `${web}${'operator-flags.tsx'}`)) as {
   OperatorFlags: (props: Record<string, unknown>) => unknown;
 };
-const { usePageTitleSays } = (await import(/* @vite-ignore */ `${web}${'desk-sections.tsx'}`)) as {
-  usePageTitleSays: (words: string) => boolean;
-};
 const { sourceTitle } = (await import(/* @vite-ignore */ `${web}${'sources-panel.tsx'}`)) as {
   sourceTitle: (row: { id: string; locator?: string; kind?: string }) => string;
 };
-/** A heading that goes to screen readers only once the page title says its words. */
-function TitleProbe() {
-  return createElement('h2', usePageTitleSays('Probe') ? { className: 'sr-only' } : null, 'Probe');
-}
 const source = (path: string) => readFileSync(new URL(web + path, import.meta.url), 'utf8');
 const tabs = [
   { id: 'one', label: 'First part', panel: 'first body' },
@@ -101,7 +94,7 @@ describe('words and structure behind the switch', () => {
     expect(source('delivery.tsx')).not.toContain('Client and programme delivery');
     expect(
       source('delivery.tsx').match(
-        /<h2 className=\{deskV41 \|\| titled \? 'sr-only' : undefined\}>Reports<\/h2>/g,
+        /<h2 className=\{deskV41 \? 'sr-only' : undefined\} data-page-title="workspace-delivery">\s*Reports\s*<\/h2>/g,
       ),
     ).toHaveLength(3);
     const money = source('opportunities.tsx');
@@ -127,24 +120,34 @@ describe('words and structure behind the switch', () => {
 
 // Unit F4b: the switch-off audit items that are plain defects in both switch states.
 describe('names that were printed more than once', () => {
-  it('a panel reads the page title, so its own copy of the name is for screen readers only', () => {
-    expect(source('operations.tsx')).toContain(
-      "<h3 className={deskV41 || titledHealth ? 'sr-only' : undefined}>Recovery and health</h3>",
-    );
-    expect(source('operations.tsx')).toContain("deskV41 || titledOperations ? 'sr-only'");
-    expect(source('workspace-controls.tsx')).toContain(
-      "<h2 className={teamDeskV41 || titled ? 'sr-only' : undefined}>Workspace controls</h2>",
-    );
-    expect(source('workspace-audit.tsx')).toContain('data-title-said={titled || undefined}');
-    expect(source('sources-panel.tsx')).toContain('data-title-said={titled || undefined}');
+  it('the server marks the page whose title says the name, and the panel heading is hidden by that mark', () => {
+    for (const [file, mark] of [
+      ['operations.tsx', 'workspace-operations'],
+      ['operations.tsx', 'ops-health'],
+      ['workspace-controls.tsx', 'workspace-controls'],
+      ['workspace-audit.tsx', 'workspace-audit'],
+      ['sources-panel.tsx', 'workspace-sources'],
+      ['delivery.tsx', 'workspace-delivery'],
+    ]) {
+      expect(source(file)).toContain(`data-page-title="${mark}"`);
+      expect(source('operator-overview.css')).toContain(`.ux-titled-${mark} `);
+    }
+    // No panel reads the page to decide: the name is in the server markup from the first paint.
+    for (const file of [
+      'operations.tsx',
+      'workspace-controls.tsx',
+      'workspace-audit.tsx',
+      'sources-panel.tsx',
+      'delivery.tsx',
+      'desk-sections.tsx',
+    ])
+      expect(source(file)).not.toMatch(/usePageTitleSays|querySelector\('main h1'\)/);
     // The shared heading keeps its label, icon and line; only its name goes to one pixel.
     const css = source('operator-overview.css');
-    const rule = css.slice(css.indexOf('[data-title-said] > .ux-panel-heading h2 {'));
+    const rule = css.slice(
+      css.indexOf("[data-page-title='workspace-sources'] > .ux-panel-heading h2"),
+    );
     expect(rule.slice(0, rule.indexOf('}'))).toContain('clip-path: inset(50%)');
-  });
-  it('the first server render shows the heading, so a page without that title never loses its name', () => {
-    const html = renderToStaticMarkup(createElement(TitleProbe as never));
-    expect(html).toBe('<h2>Probe</h2>');
   });
   it('each Money opportunity names its own Evidence and accounting history heading', () => {
     expect(source('opportunities.tsx')).toMatch(

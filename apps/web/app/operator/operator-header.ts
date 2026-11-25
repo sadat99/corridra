@@ -26,8 +26,11 @@ export function operatorHeaderWords(options: {
     eyebrow: on ? undefined : shellsV2 ? 'TEAM WORKSPACE' : 'OPERATOR WORKSPACE',
     title: place ? deskPattern(place).title : (heading ?? 'Your workspace.'),
     // When the page heading already says Today, the Today panel keeps its heading for screen readers only.
+    // The same holds for a section whose own heading says the title (ux-titled-<section id>, operator-overview.css):
+    // decided here on the server, so the first paint is right and no panel reads the page.
     className:
       (heading === 'Today' ? 'ux-operator-home ux-titled-today' : 'ux-operator-home') +
+      (heading && section && !place ? ` ux-titled-${section}` : '') +
       (place ? ' ux-desk-frame' : ''),
     place,
   };

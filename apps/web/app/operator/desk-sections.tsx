@@ -9,36 +9,11 @@
 //   - every part stays in the server HTML, so entries in a closed part survive.
 // Navigation only: a part never grants or removes access; its content still checks the role.
 // Used only with CORRIDRA_UX_TEAM_DESK_V41 on; with it off the callers draw the shared tabs as before.
-import { useEffect, useId, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 import { useOperatorFlags } from './operator-flags';
 import './desk-helpers-status-team.css';
 import { resolveSubTab, safeDecode } from '../../lib/ux/sub-tabs';
-
-const onAddressChange = (changed: () => void) => {
-  window.addEventListener('hashchange', changed);
-  window.addEventListener('popstate', changed);
-  return () => {
-    window.removeEventListener('hashchange', changed);
-    window.removeEventListener('popstate', changed);
-  };
-};
-const pageTitle = () => document.querySelector('main h1')?.textContent?.trim() ?? '';
-
-/**
- * Whether the title of the page already says `words`. A panel whose own heading is the same words then keeps
- * that heading for screen readers only, so a name is printed once in either state of the team desk v4.1
- * switch. Where the title says something else (the old "Your workspace." header) the heading stays in view.
- * The title is read from the page, so a panel needs no knowledge of the shell switches; it is read again after
- * every render, and the first server render shows the heading.
- */
-export function usePageTitleSays(words: string): boolean {
-  return useSyncExternalStore(
-    onAddressChange,
-    () => pageTitle() === words,
-    () => false,
-  );
-}
 
 /** Opens the part of the nearest sections that holds `id`. Does nothing when there is no such part. */
 export function openDeskSection(from: Element | null, id: string) {

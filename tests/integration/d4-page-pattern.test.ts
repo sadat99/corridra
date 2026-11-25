@@ -268,9 +268,31 @@ describe('switch off, every header is the one it was', () => {
       ).toEqual({
         eyebrow: 'TEAM WORKSPACE',
         title: teamSectionTitle(section),
-        className: section ? 'ux-operator-home' : 'ux-operator-home ux-titled-today',
+        // A section whose heading says the page title is marked by the server (ux-titled-<section id>), so the
+        // panel's own copy of the name is hidden from the first paint.
+        className: section
+          ? `ux-operator-home ux-titled-${section}`
+          : 'ux-operator-home ux-titled-today',
         place: null,
       });
+    }
+    // Every panel heading that is hidden for the page title has a marked page to match, and no other has.
+    const marked = [
+      'workspace-delivery',
+      'workspace-operations',
+      'ops-health',
+      'workspace-controls',
+      'workspace-audit',
+      'workspace-sources',
+    ];
+    for (const section of marked) {
+      expect(
+        operatorHeaderWords({ shellsV2: true, urls: true, teamDeskV41: false, section }).className,
+      ).toBe(`ux-operator-home ux-titled-${section}`);
+      // Pattern on: the page has its own title and the panels hide their headings by the switch.
+      expect(
+        operatorHeaderWords({ shellsV2: true, urls: true, teamDeskV41: true, section }).className,
+      ).not.toContain('ux-titled-' + section);
     }
     expect(teamSectionTitle(undefined)).toBe('Today');
     expect(teamSectionTitle('workspace-network')).toBe('Network');

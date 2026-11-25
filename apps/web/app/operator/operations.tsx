@@ -1,6 +1,6 @@
 'use client';
 import { type SubTab } from '../../components/ux/sub-tabs';
-import { DeskParts, usePageTitleSays } from './desk-sections';
+import { DeskParts } from './desk-sections';
 import { FounderOverview } from '../../components/founder-overview';
 import { ReferencePicker } from '../../components/ux/reference-picker';
 import { PhoneFold } from '../../components/phone-fold';
@@ -322,9 +322,6 @@ export function Operations({
     : 'ops-dashboard';
   const admin = ['owner', 'admin'].includes(role);
   const { teamDeskV41: deskV41 } = useOperatorFlags();
-  // A heading that the page title already prints stays for screen readers only, with the switch on or off.
-  const titledOperations = usePageTitleSays('Global operations');
-  const titledHealth = usePageTitleSays('Recovery and health');
   // Team desk v4.1 (D15): Operations and Dashboard each hold some of the dashboard tabs. An address that
   // names a tab (`?tab=dash-money`) on the page that no longer holds it opens the page that does, so every
   // address still shows what it named.
@@ -612,7 +609,7 @@ export function Operations({
       <div className="ops-heading">
         {/* Team desk v4.1 (D15): the page title is Status and the segment names the page, so this heading
             stays for screen readers only and the page keeps its outline. */}
-        <h2 className={deskV41 || titledOperations ? 'sr-only' : undefined}>
+        <h2 className={deskV41 ? 'sr-only' : undefined} data-page-title="workspace-operations">
           {deskV41
             ? // Each Status page has its own name in the outline, the one its segment shows.
               ({ 'ops-health': 'Health', 'ops-gates': 'Readiness', 'ops-center': 'Control Center' }[
@@ -1725,7 +1722,9 @@ export function Operations({
         className="ux-operations-panel"
         hidden={activeSection !== 'ops-health'}
       >
-        <h3 className={deskV41 || titledHealth ? 'sr-only' : undefined}>Recovery and health</h3>
+        <h3 className={deskV41 ? 'sr-only' : undefined} data-page-title="ops-health">
+          Recovery and health
+        </h3>
         {deskV41 ? (
           // Team desk v4.1: the rule in plain words first; the engineering note stays, behind one fold.
           <>

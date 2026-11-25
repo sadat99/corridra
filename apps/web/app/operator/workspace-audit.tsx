@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { formatDateTime } from '../../lib/ux/format';
-import { usePageTitleSays } from './desk-sections';
 import { useOperatorFlags } from './operator-flags';
 import { PanelHeading } from './panel-heading';
 import './desk-helpers-status-team.css';
@@ -106,13 +105,12 @@ export function WorkspaceAudit({
   const { teamDeskV41: deskV41 } = useOperatorFlags();
   // With the switch off the page title can already say Access and audit: the panel heading keeps its label,
   // icon and line, and its own copy of the name stays for screen readers only (operator-overview.css).
-  const titled = usePageTitleSays('Access and audit');
   const [requestedPage, setRequestedPage] = useState(0);
   const pageCount = Math.max(1, Math.ceil(events.length / 10));
   const page = Math.min(requestedPage, pageCount - 1);
   const visibleEvents = events.slice(page * 10, (page + 1) * 10);
   return (
-    <div className="ux-audit-workspace" data-title-said={titled || undefined}>
+    <div className="ux-audit-workspace" data-page-title="workspace-audit">
       {deskV41 ? (
         // Team desk v4.1 (D16): the page title and its purpose line say this once; the heading stays for
         // screen readers so the page keeps its outline.

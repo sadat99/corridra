@@ -5,7 +5,6 @@ import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback'
 import { ReferencePicker } from '../../components/ux/reference-picker';
 import { SearchSelect } from '../../components/ux/search-select';
 import type { PickerOption } from '../../lib/ux/options';
-import { usePageTitleSays } from './desk-sections';
 import { PanelHeading } from './panel-heading';
 import type { MoreKind, OperatorSnapshot } from './workspace-types';
 import { ShowMore } from './show-more';
@@ -158,7 +157,6 @@ export function SourcesPanel({
   const feedback = useActionFeedback();
   // Where the page title already says Sources and claims, the panel heading keeps its label, icon and line
   // and its own copy of the name stays for screen readers only (operator-overview.css).
-  const titled = usePageTitleSays('Sources and claims');
   const sources = [
     ...recent.filter((r) => !data.sources.some((s) => s.id === r.id)),
     ...(data.sources as SourceRow[]),
@@ -224,7 +222,7 @@ export function SourcesPanel({
       className="detail-grid workspace-panel ux-panel"
       hidden={view !== 'workspace-sources'}
     >
-      <div className="ux-sources-heading" data-title-said={titled || undefined}>
+      <div className="ux-sources-heading" data-page-title="workspace-sources">
         <PanelHeading
           title="Sources and claims"
           icon="document"
