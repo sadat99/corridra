@@ -331,9 +331,10 @@ function TenantWorkspace({
   // drafts through useFormDraft. Off, every panel stays mounted and is only hidden.
   const shown = (panel: string) => !shellsV2 || view === panel;
   const unavailableSection =
-    (!!fragment && fragment !== 'main' && fragment !== 'workspace-navigation' && !sectionAllowed) ||
-    // Sent to Today by the server from a section this role may not open, and still on Today.
-    (turnedAway && (!fragment || fragment === 'main'));
+    !!fragment && fragment !== 'main' && fragment !== 'workspace-navigation' && !sectionAllowed;
+  // Sent to Today by the server from a section this role may not open (Health, Readiness), and still on Today: the same
+  // note says so. It ends as soon as the person goes anywhere else.
+  const turnedAwayHere = turnedAway && (!fragment || fragment === 'main');
   useEffect(() => {
     if (!loaded) return;
     const allowed = fragment === 'main' || fragment === 'workspace-navigation' || sectionAllowed;
@@ -597,7 +598,7 @@ function TenantWorkspace({
             <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
               {/* A page this role may not open shows Today, and says so first, in the open: never as the last line
                   of a card far from the title, or inside a closed row. */}
-              {unavailableSection && (
+              {(unavailableSection || turnedAwayHere) && (
                 <AccessState kind="denied">
                   <p>
                     This section is unavailable for your current workspace role, or the link is
