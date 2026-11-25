@@ -399,7 +399,11 @@ export function Counterparties({
   return (
     <section
       data-operator-workbench
-      className="operator-section research-workspace"
+      className={
+        desk
+          ? 'operator-section research-workspace research-v41'
+          : 'operator-section research-workspace'
+      }
       aria-labelledby="research-heading"
     >
       <h2 id="research-heading">{desk ? 'Companies' : 'Counterparty research'}</h2>
@@ -422,7 +426,7 @@ export function Counterparties({
         strong fit assessment does not verify a commercial claim.
       </p>
       {desk && deskMission && (
-        <p data-desk-mission>
+        <p data-desk-mission className="research-mission-banner">
           Adding companies to <strong>{missionName(deskMission, true)}</strong> ·{' '}
           {stageLabel(txt(deskMission, 'status'))}.{' '}
           {shortlistStages.includes(txt(deskMission, 'status'))

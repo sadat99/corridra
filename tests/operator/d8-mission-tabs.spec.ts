@@ -643,6 +643,12 @@ test('D10 on: the mission from the address is named at the top and preselected, 
   const banner = page.locator('[data-desk-mission]');
   await expect(banner).toContainText('Adding companies to Invented Machinery Co');
   await expect(banner).toContainText('Finding companies');
+  // staff-core-33: every button on the page is a 44 px target.
+  const heights = await page
+    .locator('.research-workspace button:not(.text-link):visible')
+    .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
+  expect(heights.length).toBeGreaterThan(0);
+  for (const height of heights) expect(height).toBeGreaterThanOrEqual(44);
   await openAddForm(page);
   const form = page.locator('form.operator-form', {
     has: page.getByRole('button', { name: 'Add Mission Target' }),

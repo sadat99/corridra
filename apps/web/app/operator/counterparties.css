@@ -24,3 +24,14 @@
 .ux-operator-home .research-workspace form.research-search > button {
   min-block-size: 2.75rem;
 }
+/* Team desk v4.1 (staff-core-33): the mission the page was opened for is named in a banner at the top, and every
+   button on the page is at least 44 px tall, the touch target of the rest of the desk. */
+.ux-operator-home .research-workspace.research-v41 .research-mission-banner {
+  padding: var(--space-3) var(--space-4);
+  border-inline-start: var(--space-1) solid var(--accent);
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+}
+.ux-operator-home .research-workspace.research-v41 button:not(.text-link) {
+  min-block-size: 2.75rem;
+}

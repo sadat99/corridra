@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useInboxOpenLoad } from './inbox/inbox-check';
 import type { HelperInterestRow } from '@corridra/auth/helper-interest';
 import '../../components/problem-reports/problem-reports.css';
 import { whenWords } from '../account/workspace-lifecycle-client';
@@ -57,6 +58,9 @@ function Panel({ tenant, known, tabbed }: { tenant: string; known: boolean; tabb
     };
   }, [tenant, known]);
 
+  // Team desk v4.1 (staff-core-29): in the Inbox, this list loads itself when its tab opens after one passed check.
+  const readPassed = useInboxOpenLoad(fragment, () => void load(0), page !== null);
+
   async function load(offset: number) {
     if (busy) return;
     const token = ++run.current;
@@ -69,6 +73,7 @@ function Panel({ tenant, known, tabbed }: { tenant: string; known: boolean; tabb
         setInstalled(false);
         return;
       }
+      readPassed();
       setRows((current) => (offset === 0 ? fresh.rows : [...current, ...fresh.rows]));
       setPage({ total: fresh.total, nextOffset: fresh.nextOffset });
     } catch (error) {
