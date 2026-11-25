@@ -5409,9 +5409,19 @@ What changed: the public home `/` v4.2 composition and the trimmed footer behind
 
 Checks (PR body): format:check, lint, typecheck pass; test 135; test:integration 7614 passed, 4 need Docker (KI-15); test:ux (off build) 908; browser 864 passed (2 parallel-run failures, 144 of 144 alone); home-v42 plus off 190 at `--repeat-each 10`; real ON production build at six widths, 100% and 200% text, axe, keyboard and no-JS 13 of 13; after review fixes (head 8e7252e) the must-run sets pass again. Not run: native review.
 
-## 25 Nov 2026: LATER fix unit (PR number pending)
+## 25 Nov 2026: Team desk v4.1 later fixes: team session marker, place marks, home text-link actions, review minors (PR 658)
 
-SLOT: G64 sends the PR number, merge SHA and body; this entry is filled in the second push of the records PR. Until then nothing is recorded here.
+Builder L1 for Guardian 64, Class A parts (session marker, step-up audit) and Class B, merge SHA MERGE_SHA_PENDING (head branch `claude/v41-fix-later`, head d8c179d9 at review). Condensed from the PR body. No real-operation switch touched.
+
+What changed: public-customer-12 and -16 (flat intake form on `/account/request/[ws]`, All Tools rows and Clear Search 44 px at every width, scroll-state edge cue on `.room-lenses` and `.move-seg`); public-customer-10 (on the switch-off home every section action is a quiet text link, `#home-start` the one primary, same words, ids and addresses, `data-start-action` kept for the phone start bar; `home-v42-off.spec.ts` applies exactly these two server-HTML edits to the a054c51c capture); public-customer-24 (team session marker: `/api/operator-auth` sets a plain `corridra-team=1` cookie, Path=/, SameSite=Lax, Max-Age 86400, Secure on https, no secret, and clears it on sign-out, the two-factor first step or an empty session read, `lib/team-session-hint.ts`; `apps/web/proxy.ts` backfills it for older Better Auth sessions; the public header asks `/api/operator-auth/get-session` only when it is present); `/account/companies` failed read shows "Companies could not be loaded." with Try Again. public-customer-08 already on main (PR 651).
+
+Place marks: new shared `Place` in `components/ux/flag.tsx` on personal and organisation profiles, request detail, room view, guided request, company portfolio, company link, programme context editor and projections, real invoices section and fairs view. Customer copy: a stored code reads as its name with its mark (for example "(BD)" reads "(Bangladesh)", "SG" reads "Singapore", "EU" reads "European Union", "Frankfurt, DE" reads "Frankfurt, Germany"); free text kept as written; `/flags/*` external in every esbuild bundling spec.
+
+Review minors: operator `countryName('OTHER')` reads "Other"; Missions route filter option text pinned off and on; two-place section switch restored in `team-nav-v1`; reference picker with a lapsed check keeps value and hidden input; withdrawal note clears before the re-read; Today treats a signed-out 401 on the erasure queue as no read; `?unavailable=1` removed from the address once read; audit of every `deliveryError` route that can send STEP_UP_REQUIRED (none customer, recipient, contributor or public; all check role before freshness; seven staff dead-end screens listed as follow-ups). Authority (G64 audit B2): `ui-ux-v4-2.md` lines 3 and 40 name the switch-off baseline as a054c51c plus the public-customer-10 style change. New `tests/ux/home-v42-server.spec.ts` checks the switch-on server HTML and stylesheet on a separate build (`CORRIDRA_NEXT_DIST_DIR`, opt-in, unset in real builds).
+
+Off-path changes: home section actions as text links; customer place marks and code-to-name wordings; company portfolio Try Again; flat request form, All Tools 44 px rows, chip cue; Today signed-out erasure line and the `?unavailable=1` address; withdrawal note; public header team request.
+
+Checks (PR body): format:check, lint, typecheck, test (135), build exit 0; integration 55 files 1035 pass plus `team-session-hint` 8 of 8; blast radius operator 2203 passed, 1 skipped, ux 868, browser 191; `--repeat-each 10` operator 1330, ux 80, browser 720. Not run locally: full test:operator, test:e2e, test:verification, full test:integration. Screenshots not attached.
 
 ## 25 Nov 2026: Team desk v4.1 audit fixes and home v4.2 records (Guardian 64)
 
@@ -5435,6 +5445,8 @@ Follow-ups (not done in this run):
 - A06p: the OFF path of the shared report's country words (the mark and its name show in both switch states).
 - staff-core-33: the Companies banner keeps the live words "Adding companies to <mission>".
 - Handover named A07/A08 conformance cells; no source found in repo, audits or PRs 648-656; owner or next Guardian to confirm or drop.
+- New readable team marker cookie corridra-team (24 h, no secret, team browsers only) is not yet named in the privacy notice (app/privacy/page.tsx ~569); privacy wording needs the owner's approval.
+- Staff screens that receive STEP_UP_REQUIRED but end in a dead-end message (PR 658 audit, not a regression): billing-group POSTs, service catalogue, company link review, specification requests, decision disclosures approve, mission delivery assign, delivery experience POSTs.
 - Native language review gate OPEN for the `home.v42.*` words (`home.v42.line.buys`, `home.v42.line.sells`, `home.v42.not.eyebrow`).
 
-Next action: the owner's word on `CORRIDRA_UX_HOME_V42`; the LATER fix unit's record (slot above).
+Next action: the owner's word on `CORRIDRA_UX_HOME_V42`; the owner's privacy wording for the corridra-team cookie.
