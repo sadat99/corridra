@@ -129,7 +129,8 @@ describe('the switch and every switch-off path', () => {
   });
   it('the founder page shows the door only with the switch on, above everything else', () => {
     const page = read('apps/web/app/operator/owner/page.tsx');
-    expect(page).toContain("{uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && (");
+    // With the team desk v4.1 frame the menu is the way around, so the door is not drawn there either.
+    expect(page).toContain("{uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && !frame && (");
     expect(page.indexOf('<FrontDoor')).toBeGreaterThan(page.indexOf('className="ux-owner"'));
     // The owner page now opens on the status board (commercial readiness UX-03); the door stays above it.
     expect(page.indexOf('className="owner-board"')).toBeGreaterThan(-1);

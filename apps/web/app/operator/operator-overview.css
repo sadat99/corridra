@@ -701,6 +701,8 @@
 }
 .ux-operator-home .ux-tool-index .operator-nav-copy {
   min-width: 0;
+  /* A long word (Introductions) breaks inside its tile with larger text instead of running past the edge. */
+  overflow-wrap: anywhere;
 }
 .ux-operator-home .ux-tool-index a:not(:first-child) > .operator-icon {
   display: none;
@@ -841,6 +843,54 @@
   }
   .ux-operator-home .operator-landscape {
     display: none;
+  }
+}
+/* Larger text (200%) in a wide window: the lists are measured by their own width in text sizes, not by the
+   window, so a narrow list stacks as it does on a phone. A mission row puts its chips under the name instead
+   of squeezing the name to one letter a line; a This week group puts its link under its lines, which wrap. */
+.ux-operator-home :is(.ux-needs, .ux-week) {
+  container-type: inline-size;
+}
+@container (max-width: 26rem) {
+  .ux-operator-home .ux-needs-list a {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'text arrow' 'chips arrow';
+    row-gap: var(--space-1);
+  }
+  .ux-operator-home .ux-needs-text {
+    grid-area: text;
+  }
+  .ux-operator-home .ux-needs-chips {
+    grid-area: chips;
+    justify-content: flex-start;
+  }
+  .ux-operator-home .ux-needs-arrow {
+    grid-area: arrow;
+  }
+}
+@container (max-width: 20rem) {
+  .ux-operator-home .ux-needs-heading {
+    flex-wrap: wrap;
+    row-gap: 0;
+    padding-block-start: var(--space-2);
+  }
+  .ux-operator-home .ux-needs :is(.ux-needs-chip, .ux-needs-due) {
+    white-space: normal;
+  }
+  .ux-operator-home .ux-week-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ux-operator-home .ux-week-link {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  /* In so narrow a list one line holds a few words only, so an item wraps and is read whole. At the usual
+     text size an item stays on one line: wrapped, Today runs past its page length (1.02 screens at 1440,
+     2.10 at 390 against limits of 1.0 and 2.0). */
+  .ux-operator-home .ux-week-group li {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 @media (max-width: 560px) {
@@ -2352,6 +2402,9 @@
   }
   .ux-operator-home .ux-workspace-body .ux-governance-panel > .ux-operations-panel {
     border-width: 1px;
+    /* The panel's rule sets a colour for its top edge only; without this the other three sides took the text
+       colour and read as a heavy black box around the Status filters. */
+    border-color: var(--border-subtle);
     padding-inline: var(--space-3);
     padding-bottom: var(--space-2);
   }
@@ -3736,6 +3789,47 @@
   color: var(--brand);
   font-weight: 600;
   text-decoration: underline;
+}
+/* The note under "Revoke membership" is body-small text from the scale, never the browser's smaller default. */
+.ux-workspace-body .ux-controls-revoke .ux-controls-revoke-note {
+  font-size: var(--text-sm);
+}
+/* Money, team desk v4.1: an opportunity kept behind "Show All" stays in the page and is not drawn. */
+.ux-workspace-body .opportunity-card[hidden] {
+  display: none;
+}
+
+/* A heading whose words the page title already says (the server adds ux-titled-<section id> to the page, see
+   operator-header.ts): the label, the icon and the line stay, and the panel's own copy of the name is kept for
+   screen readers only (the same rules as .sr-only). The first paint is already right; nothing reads the page. */
+:is(
+  .ux-titled-workspace-delivery :is(h2, h3)[data-page-title='workspace-delivery'],
+  .ux-titled-workspace-operations h2[data-page-title='workspace-operations'],
+  .ux-titled-ops-health h3[data-page-title='ops-health'],
+  .ux-titled-workspace-controls h2[data-page-title='workspace-controls'],
+  .ux-titled-workspace-audit [data-page-title='workspace-audit'] > .ux-panel-heading h2,
+  .ux-titled-workspace-sources [data-page-title='workspace-sources'] > .ux-panel-heading h2
+) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+/* Sources and claims: a record reference and the full description behind "Source reference" are secondary
+   text at a size of the scale, never a fraction of it. */
+.ux-copy-reference code,
+.ux-source-locator {
+  font-size: var(--text-sm);
+}
+.ux-source-locator {
+  margin: 0;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
 }
 .ux-workspace-body #workspace-delivery .delivery-table {
   border: 1px solid var(--ac-border);

@@ -18,6 +18,26 @@ type SourceRow = {
   organisation_name?: string | null;
 };
 
+const recordId = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+const kindWords: Record<string, string> = {
+  observation: 'Observed information',
+  public_record: 'Existing public record',
+  self_declaration: 'Original declaration',
+};
+
+/**
+ * The name a source is listed under. A description a person wrote is shown as written. One that carries a
+ * record id (the description the system writes for a mission intake) is shown as the words before the id, or
+ * as its source type when no words come first; the full description stays under Source reference.
+ */
+export function sourceTitle(row: SourceRow): string {
+  const locator = row.locator ?? '';
+  const at = locator.search(recordId);
+  if (at < 0 && locator) return locator;
+  const words = at > 0 ? locator.slice(0, at).replace(/[\s:;,(#-]+$/, '') : '';
+  return words || kindWords[row.kind ?? ''] || 'Source';
+}
+
 /** Company search over the existing research catalogue (CQ-80). Names only, never IDs. */
 function CompanyPicker({
   tenant,
@@ -135,6 +155,8 @@ export function SourcesPanel({
   const [recent, setRecent] = useState<SourceRow[]>([]);
   const [saving, setSaving] = useState(false);
   const feedback = useActionFeedback();
+  // Where the page title already says Sources and claims, the panel heading keeps its label, icon and line
+  // and its own copy of the name stays for screen readers only (operator-overview.css).
   const sources = [
     ...recent.filter((r) => !data.sources.some((s) => s.id === r.id)),
     ...(data.sources as SourceRow[]),
@@ -200,7 +222,7 @@ export function SourcesPanel({
       className="detail-grid workspace-panel ux-panel"
       hidden={view !== 'workspace-sources'}
     >
-      <div className="ux-sources-heading">
+      <div className="ux-sources-heading" data-page-title="workspace-sources">
         <PanelHeading
           title="Sources and claims"
           icon="document"
@@ -212,7 +234,7 @@ export function SourcesPanel({
         <ul>
           {sources.map((r) => (
             <li key={r.id}>
-              {r.locator}
+              {sourceTitle(r)}
               {(r.mission_name || r.organisation_name) && (
                 <span className="ux-source-links">
                   {r.mission_name ? ` · Mission: ${r.mission_name}` : ''}
@@ -221,6 +243,9 @@ export function SourcesPanel({
               )}
               <details>
                 <summary>Source reference</summary>
+                {r.locator && r.locator !== sourceTitle(r) ? (
+                  <p className="ux-source-locator">Full description: {r.locator}</p>
+                ) : null}
                 <CopyReference label="Source reference" value={r.id} />
               </details>
             </li>

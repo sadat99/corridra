@@ -1,5 +1,6 @@
 'use client';
-import { SubTabs } from '../../components/ux/sub-tabs';
+import { DeskParts } from './desk-sections';
+import { useOperatorFlags } from './operator-flags';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { StatusBadge } from '../../components/access-state';
 import {
@@ -50,6 +51,9 @@ type Snapshot = {
   drafts: Draft[];
 };
 export function GovernedAssistance({ tenant, role }: { tenant: string; role: string }) {
+  // Team desk v4.1: Missions, Sources and claims and Settings are in the menu; a place is not linked twice on
+  // one screen. The authenticator check has no menu entry and stays.
+  const { teamDeskV41 } = useOperatorFlags();
   const [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -221,8 +225,8 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
         >
           Refresh AI Review
         </button>
-        <a href="#workspace-missions">Open missions</a>
-        <a href="#workspace-sources">Open sources and claims</a>
+        {teamDeskV41 ? null : <a href="#workspace-missions">Open missions</a>}
+        {teamDeskV41 ? null : <a href="#workspace-sources">Open sources and claims</a>}
         <a href="#workspace-authenticator">Verify current access</a>
       </div>
       {!data && (
@@ -243,21 +247,30 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
         {data && !data.enabled && (
           <p>
             AI assistance is awaiting provider and policy activation. Existing manual work remains
-            available. <a href="#workspace-missions">Continue with manual mission work</a>.
+            available.{' '}
+            {teamDeskV41 ? (
+              'Continue with manual mission work in Missions'
+            ) : (
+              <a href="#workspace-missions">Continue with manual mission work</a>
+            )}
+            .
           </p>
         )}
         {data && !data.policies.length && (
           <p>
             No reviewed model policy is available. Ask a workspace owner to review the source rights
             and provider policy.{' '}
-            {['owner', 'admin'].includes(role) && (
-              <a href="#workspace-settings">Open owner policy settings</a>
-            )}
+            {['owner', 'admin'].includes(role) &&
+              (teamDeskV41 ? (
+                'The policies are in Settings'
+              ) : (
+                <a href="#workspace-settings">Open owner policy settings</a>
+              ))}
             .
           </p>
         )}
       </details>
-      <SubTabs
+      <DeskParts
         label="AI assistance sections"
         tabs={[
           {
