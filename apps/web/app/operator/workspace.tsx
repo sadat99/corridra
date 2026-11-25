@@ -592,8 +592,8 @@ function TenantWorkspace({
               {unavailableSection && (
                 <AccessState kind="denied">
                   <p>
-                    That page is not available for your role in this workspace, or the link is out
-                    of date. You are on Today. Ask your workspace owner if you need access.
+                    This section is unavailable for your current workspace role, or the link is
+                    outdated. You are on Today. Ask your workspace owner to review your membership.
                   </p>
                 </AccessState>
               )}
