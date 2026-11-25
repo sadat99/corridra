@@ -431,12 +431,34 @@ test('fix run: a count this role can never read is left out; an owner still sees
   await expect(decide(page).getByText('Not available').first()).toBeVisible();
 });
 
-test('fix run: the page has one heading that says Today', async ({ page }) => {
+test('fix run: the Today heading of the panel stays in the outline and only one Today is shown', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, quiet);
   await expect(page.locator('.ux-today41')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toHaveCount(1);
+  // The panel keeps its own heading for the outline and for the region's name, as it does with the switch off.
+  const panelHeading = page.locator('.ux-today41 h2#today-title');
+  await expect(panelHeading).toBeAttached();
+  await expect(panelHeading).toHaveText('Today');
+  await expect(page.locator('.ux-today41')).toHaveAttribute('aria-labelledby', 'today-title');
   await expect(page.getByRole('region', { name: 'Today', exact: true })).toBeVisible();
+  // Shown once: the page title. The panel heading is a 1 px box, so the word is not on screen twice.
+  const boxes = await page
+    .getByRole('heading', { name: 'Today', exact: true })
+    .evaluateAll((headings) =>
+      headings.map((heading) => {
+        const { width, height } = heading.getBoundingClientRect();
+        return { id: heading.id, width: Math.round(width), height: Math.round(height) };
+      }),
+    );
+  expect(boxes).toHaveLength(2);
+  expect(boxes.filter((box) => box.width > 1 || box.height > 1)).toHaveLength(1);
+  expect(boxes.find((box) => box.id === 'today-title')).toEqual({
+    id: 'today-title',
+    width: 1,
+    height: 1,
+  });
   // Show and Hide are 44 px targets in both directions.
   const show = waiting(page).getByRole('button', { name: 'Show Waiting on others' });
   const box = (await show.boundingBox())!;

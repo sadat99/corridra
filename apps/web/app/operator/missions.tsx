@@ -937,11 +937,25 @@ export function Missions({
         </p>
       ) : queue.missions.length === 0 ? (
         <AccessState kind="empty">
-          {filtered ? (
-            <p>No missions match these filters. Change a filter or refresh.</p>
-          ) : (
+          {!deskV41 ? (
             <>
               <p>No mission requests yet.</p>
+              <p>
+                No matching accessible records are shown. Change the filters or refresh; this does
+                not establish an outcome of zero.
+              </p>
+            </>
+          ) : filtered ? (
+            <>
+              <p>
+                No missions you can see match these filters. Records you cannot open are not
+                counted.
+              </p>
+              <p>Change a filter or refresh.</p>
+            </>
+          ) : (
+            <>
+              <p>No mission requests you can see yet. Records you cannot open are not counted.</p>
               <p>A new request shows here when a customer sends one. Refresh to check again.</p>
             </>
           )}

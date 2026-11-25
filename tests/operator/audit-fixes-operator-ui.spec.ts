@@ -43,6 +43,8 @@ const dashboardMissions = [
 const empty = (...names: string[]) => Object.fromEntries(names.map((name) => [name, []]));
 
 let loads = 0;
+/** The Missions list read answers with no missions (the empty state), for the test that sets it. */
+let noMissions = false;
 async function open(page: Page, hash: string, role = 'owner', purpose = 'synthetic_validation') {
   // Any read not answered below gets a plain refusal, never the fixture page.
   await page.route('**/api/**', (route) =>
@@ -73,37 +75,41 @@ async function open(page: Page, hash: string, role = 'owner', purpose = 'synthet
   await page.route('**/api/workspace/missions?*', (route) =>
     new URL(route.request().url()).searchParams.get('view') === 'today'
       ? route.fulfill({ json: { missions: [], total: 0 } })
-      : route.fulfill({
-          json: {
-            total: 240,
-            role,
-            owners: [owner],
-            history: [],
-            replies: [],
-            missions: [
-              {
-                id: id(21),
-                status: 'OUTREACH',
-                owner_id: owner.user_id,
-                due_at: daysAgo(36),
-                updated_at: daysAgo(37),
-                next_action: 'Call the invented buyer',
-                route_label: 'Bangladesh to Germany',
-                source_kind: 'self_declaration',
-                claim_status: 'SELF_DECLARED',
-                acknowledged_at: daysAgo(40),
-                notice_version: 'invented-notice-1',
-                brief: {
-                  company: 'Invented Machinery Co',
-                  objective: 'Source suppliers',
-                  offer: 'Invented machine parts',
-                  outcomes: ['Find suppliers'],
-                  attendance: 'No',
+      : noMissions
+        ? route.fulfill({
+            json: { total: 0, role, owners: [owner], history: [], replies: [], missions: [] },
+          })
+        : route.fulfill({
+            json: {
+              total: 240,
+              role,
+              owners: [owner],
+              history: [],
+              replies: [],
+              missions: [
+                {
+                  id: id(21),
+                  status: 'OUTREACH',
+                  owner_id: owner.user_id,
+                  due_at: daysAgo(36),
+                  updated_at: daysAgo(37),
+                  next_action: 'Call the invented buyer',
+                  route_label: 'Bangladesh to Germany',
+                  source_kind: 'self_declaration',
+                  claim_status: 'SELF_DECLARED',
+                  acknowledged_at: daysAgo(40),
+                  notice_version: 'invented-notice-1',
+                  brief: {
+                    company: 'Invented Machinery Co',
+                    objective: 'Source suppliers',
+                    offer: 'Invented machine parts',
+                    outcomes: ['Find suppliers'],
+                    attendance: 'No',
+                  },
                 },
-              },
-            ],
-          },
-        }),
+              ],
+            },
+          }),
   );
   await page.route('**/api/workspace/operations-dashboard?*', (route) =>
     route.fulfill({
@@ -323,6 +329,58 @@ test('Previous Missions and Next Missions share one line on desktop and one 44 p
         44,
       );
     }
+  }
+});
+
+// An empty Missions list never claims an outcome of zero: the list holds only the records this person can open.
+// Switch off, the words are the ones the desk has always shown; on, the same meaning in plain words.
+test('an empty Missions list says no record you can see matches, never that there are none', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  noMissions = true;
+  try {
+    await open(page, '&v41=off#workspace-missions');
+    const off = page.locator('#workspace-missions');
+    await expect(off.getByText('No mission requests yet.', { exact: true })).toBeVisible();
+    await expect(
+      off.getByText(
+        'No matching accessible records are shown. Change the filters or refresh; this does not establish an outcome of zero.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(off.getByText(/you can see/)).toHaveCount(0);
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+
+    await open(page, '&v41=on#workspace-missions');
+    const on = page.locator('#workspace-missions');
+    await expect(
+      on.getByText(
+        'No mission requests you can see yet. Records you cannot open are not counted.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      on.getByText('A new request shows here when a customer sends one. Refresh to check again.', {
+        exact: true,
+      }),
+    ).toBeVisible();
+    // A focus view is a filter: the words change to "no match", still without a claim of zero.
+    await page
+      .getByRole('group', { name: 'Mission focus views' })
+      .getByRole('button', { name: 'China sourcing' })
+      .click();
+    await expect(
+      on.getByText(
+        'No missions you can see match these filters. Records you cannot open are not counted.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(on.getByText('Change a filter or refresh.', { exact: true })).toBeVisible();
+    await expect(on.getByText(/No mission requests yet|outcome of zero/)).toHaveCount(0);
+  } finally {
+    noMissions = false;
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
   }
 });
 

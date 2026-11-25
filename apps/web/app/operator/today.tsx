@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { OperatorIcon } from '../../components/operator-icon';
 import { SegmentedFilter } from '../../components/ux/segmented-filter';
 import { formatDate, formatDateTime } from '../../lib/ux/format';
@@ -1439,12 +1439,6 @@ export function TodayPanel({
     setToday(null);
     setAttempt((n) => n + 1);
   };
-  // Whether the page's own title (the shell's h1) already reads "Today": then this panel adds no second heading.
-  const panel = useRef<HTMLElement>(null);
-  const [titled, setTitled] = useState(false);
-  useEffect(() => {
-    setTitled(panel.current?.closest('.ux-titled-today') != null);
-  }, []);
   const work = today?.work ?? null;
   const rows = today ? needsYouNow(today.fresh, today.overdue) : [];
   const summary = today ? needsSummary(today.fresh, today.overdue, rows) : null;
@@ -1470,15 +1464,9 @@ export function TodayPanel({
       ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
       : null;
     return (
-      <section
-        ref={panel}
-        className="ux-today ux-desk ux-today41"
-        aria-labelledby={titled ? undefined : 'today-title'}
-        aria-label={titled ? 'Today' : undefined}
-      >
+      <section className="ux-today ux-desk ux-today41" aria-labelledby="today-title">
         <header className="operator-today-heading">
-          {/* The page title already says Today: one heading, not two with the same words. */}
-          {titled ? null : <h2 id="today-title">Today</h2>}
+          <h2 id="today-title">Today</h2>
           {today && !failure && totals && (
             <p className="ux-desk-sentence">{deskHeadline(totals, otherDecisions(today))}</p>
           )}
@@ -1523,14 +1511,9 @@ export function TodayPanel({
       ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
       : null;
     return (
-      <section
-        ref={panel}
-        className="ux-today ux-desk"
-        aria-labelledby={titled ? undefined : 'today-title'}
-        aria-label={titled ? 'Today' : undefined}
-      >
+      <section className="ux-today ux-desk" aria-labelledby="today-title">
         <header className="operator-today-heading">
-          {titled ? null : <h2 id="today-title">Today</h2>}
+          <h2 id="today-title">Today</h2>
           {today && !failure && totals && (
             <p className="ux-desk-sentence">{deskSentence(totals)}</p>
           )}
@@ -1566,14 +1549,9 @@ export function TodayPanel({
     );
   }
   return (
-    <section
-      ref={panel}
-      className="ux-today"
-      aria-labelledby={titled ? undefined : 'today-title'}
-      aria-label={titled ? 'Today' : undefined}
-    >
+    <section className="ux-today" aria-labelledby="today-title">
       <header className="operator-today-heading">
-        {titled ? null : <h2 id="today-title">Today</h2>}
+        <h2 id="today-title">Today</h2>
         {today && (
           <time dateTime={today.observedAt}>
             {new Intl.DateTimeFormat('en-GB', {
