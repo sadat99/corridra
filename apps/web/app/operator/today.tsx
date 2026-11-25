@@ -35,12 +35,15 @@ import {
 } from '../../lib/ux/also-waiting';
 import { ageWords } from '../../lib/problem-report-queue';
 import { readFailureKind, readFailureWords, type ReadFailureKind } from './read-failure';
+import { STEP_UP_REQUIRED, requestStepUp } from '../../lib/ux/step-up';
 import { clearPinCounts, publishPinCounts } from '../../lib/ux/team-pin-counts';
 import {
   DeskChip,
   DeskFold,
   DeskTable,
+  CodeCheckLine,
   PartFailure,
+  PartFailures,
   RegionTable,
   type DeskRowView,
   type RegionRowView,
@@ -101,7 +104,21 @@ type Today = {
   erasureRead: boolean;
   /** The role reads the problem report queue (so a null `problemReports` means the read failed). */
   problemReportsRead: boolean;
+  /**
+   * These lists were refused only because the authenticator check is no longer fresh (decision 5). That is not a
+   * failed read: nothing is wrong and Try Again cannot help, so the page asks for the code in one quiet line.
+   */
+  needsCode: { erasure: boolean; problemReports: boolean };
 };
+
+/** Answered in place of a list when it needs a fresh authenticator check. */
+const needsCode = 'needs-code' as const;
+/** True for the refusal a stale authenticator check gets: HTTP 401 with the step-up code. */
+async function refusedForCode(response: Response) {
+  if (response.status !== 401) return false;
+  const body = (await response.json().catch(() => null)) as { code?: unknown } | null;
+  return body?.code === STEP_UP_REQUIRED;
+}
 
 const week = 7 * 24 * 60 * 60 * 1000;
 /** One server page (CRUD G12): the meetings read is ordered by date, earliest first. */
@@ -138,6 +155,7 @@ async function readProblemReports(tenant: string, signal: AbortSignal) {
       `/api/workspace/problem-reports?${new URLSearchParams({ tenant, view: 'queue' })}`,
       { signal, cache: 'no-store' },
     );
+    if (await refusedForCode(r.clone())) return needsCode;
     return r.ok ? problemReportsTile(await r.json(), new Date()) : null;
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') throw error;
@@ -153,6 +171,8 @@ async function readErasure(tenant: string, signal: AbortSignal) {
         `/api/workspace/customer-erasure-queue?${new URLSearchParams({ tenant, status, pageSize: '100' })}`,
         { signal, cache: 'no-store' },
       );
+      // The erasure queue answers a stale authenticator check with a plain 401 and no code; any 401 is that check.
+      if (r.status === 401) return needsCode;
       if (!r.ok) return null;
       const body = (await r.json()) as { items?: unknown; nextAfter?: unknown };
       if (!Array.isArray(body.items)) return null;
@@ -193,8 +213,9 @@ function WeekGroup({
   title: string;
   count: number;
   empty: string;
-  href: string;
-  link: string;
+  /** Left out where an earlier group already links to the same place: one address, one link. */
+  href?: string;
+  link?: string;
   children?: ReactNode;
 }) {
   return (
@@ -213,9 +234,11 @@ function WeekGroup({
           {children ? <ul>{children}</ul> : null}
         </>
       )}
-      <a className="text-link ux-week-link" href={href}>
-        {link}
-      </a>
+      {href && link ? (
+        <a className="text-link ux-week-link" href={href}>
+          {link}
+        </a>
+      ) : null}
     </section>
   );
 }
@@ -540,8 +563,6 @@ function ThisWeek({
             title="Meetings that need a new time"
             count={work.reschedule.length}
             empty="No meetings need a new time"
-            href="#workspace-meetings"
-            link="Open Meetings"
           >
             {work.reschedule.slice(0, weekRows).map((m) => (
               <Item
@@ -709,7 +730,7 @@ function DeskQueue({
           {total.count}. The full list is in Missions.
         </p>
       )}
-      {today.erasureRead && today.erasure === null && (
+      {today.erasureRead && today.erasure === null && !today.needsCode.erasure && (
         <p className="ux-today-more">
           Erasure requests could not be checked just now, so overdue ones may be missing here.
         </p>
@@ -755,7 +776,15 @@ function WaitingItem({
 }
 
 /** "Also waiting" collapsed row (operator desk). Accepted quotes and paid-service requests join the two queues. */
-function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void }) {
+function DeskAlsoWaiting({
+  today,
+  role,
+  onRetry,
+}: {
+  today: Today;
+  role?: string;
+  onRetry: () => void;
+}) {
   const { team, teamFailure, problemReports: reports, erasure } = today;
   const unread = (name: 'acceptedQuotesNotStarted' | 'serviceRequestsToQuote') =>
     team?.unavailable?.includes(name) ?? false;
@@ -764,8 +793,13 @@ function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void
   // A short line beside the title only when every number behind it was read.
   const all = [quotes, services, reports?.count ?? null, erasure?.count ?? null];
   // A failed read hides only its own numbers: the queues that were read stay visible (never a false zero).
-  const erasureFailed = today.erasureRead && erasure === null;
-  const hasTiles = team !== null || reports !== null || erasure !== null;
+  const erasureFailed = today.erasureRead && erasure === null && !today.needsCode.erasure;
+  // A count this role can never read is left out; for an owner or admin a count that failed still says so.
+  const mayCount = countsForRole(role);
+  const hasTiles =
+    (team !== null && (mayCount || quotes !== null || services !== null)) ||
+    reports !== null ||
+    erasure !== null;
   const summary =
     teamFailure === null &&
     !erasureFailed &&
@@ -783,11 +817,12 @@ function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void
         <PartFailure part="Also waiting" kind={teamFailure} onRetry={onRetry} />
       ) : null}
       {erasureFailed ? (
-        <PartFailure part="Erasure Requests" kind="unavailable" onRetry={onRetry} />
+        <PartFailure part="Erasure requests" kind="unavailable" onRetry={onRetry} />
       ) : null}
+      <CodeCheck today={today} onRetry={onRetry} />
       {hasTiles && (
         <ul className="ux-today-tiles" aria-label="Also waiting">
-          {team && (
+          {team && (mayCount || quotes !== null) && (
             <WaitingItem
               href="#workspace-commercial"
               value={quotes ?? 'Not available'}
@@ -795,7 +830,7 @@ function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void
               words={plural(quotes, 'accepted quote not started', 'accepted quotes not started')}
             />
           )}
-          {team && (
+          {team && (mayCount || services !== null) && (
             <WaitingItem
               /* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */
               href="#billing-services"
@@ -845,6 +880,34 @@ function DeskAlsoWaiting({ today, onRetry }: { today: Today; onRetry: () => void
         </ul>
       )}
     </DeskFold>
+  );
+}
+
+/** Owner and admin read the paid-service counts; for every other role they can never be read. */
+const countsForRole = (role: string | undefined) => role === 'owner' || role === 'admin';
+
+/**
+ * The one quiet line for the lists that wait for a fresh authenticator check. Confirm Code opens the check in
+ * place; once it passes, Today is read again. Nothing is drawn when no list is waiting for the code.
+ */
+function CodeCheck({ today, onRetry }: { today: Today; onRetry: () => void }) {
+  const { erasure, problemReports } = today.needsCode;
+  if (!erasure && !problemReports) return null;
+  return (
+    <CodeCheckLine
+      parts={
+        erasure && problemReports
+          ? 'erasure requests and problem reports'
+          : erasure
+            ? 'erasure requests'
+            : 'problem reports'
+      }
+      onConfirm={() =>
+        void requestStepUp().then((verified) => {
+          if (verified) onRetry();
+        })
+      }
+    />
   );
 }
 
@@ -899,12 +962,14 @@ function DecisionRegion({
   list,
   totals,
   tenant,
+  role,
   onRetry,
 }: {
   today: Today;
   list: DeskRow[];
   totals: ReturnType<typeof deskTotals>;
   tenant: string;
+  role?: string;
   onRetry: () => void;
 }) {
   const { filter, all, setAll, choose } = useNeedsFilter();
@@ -951,8 +1016,11 @@ function DecisionRegion({
         : 'No new requests and nothing past its due date.';
   const more = shownLine(all ? views.length : Math.min(views.length, firstRows), counts[filter]);
   const queues = decisionCounts(today);
-  const erasureFailed = today.erasureRead && today.erasure === null;
-  const reportsFailed = today.problemReportsRead && today.problemReports === null;
+  const erasureFailed = today.erasureRead && today.erasure === null && !today.needsCode.erasure;
+  const reportsFailed =
+    today.problemReportsRead && today.problemReports === null && !today.needsCode.problemReports;
+  // A count this role can never read is left out: "Not available" is only for a read that could have worked.
+  const mayCount = countsForRole(role);
   // A capped read gives a lower bound, so its numbers carry a plus sign and never pose as exact.
   const meetingsCapped = today.work?.meetingsPartial ?? false;
   const followUpsCapped = today.work?.followupsPartial ?? false;
@@ -986,7 +1054,7 @@ function DecisionRegion({
     queue(
       'services',
       queues.services,
-      today.team !== null,
+      today.team !== null && (mayCount || queues.services !== null),
       /* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */
       '#billing-services',
       plural(queues.services, 'paid-service request to quote', 'paid-service requests to quote'),
@@ -994,7 +1062,7 @@ function DecisionRegion({
     queue(
       'quotes',
       queues.quotes,
-      today.team !== null,
+      today.team !== null && (mayCount || queues.quotes !== null),
       '#workspace-commercial',
       plural(queues.quotes, 'accepted quote not started', 'accepted quotes not started'),
     ),
@@ -1100,16 +1168,20 @@ function DecisionRegion({
         </button>
       )}
       {more && <p className="ux-today-more">{more}</p>}
-      {erasureFailed && (
-        <PartFailure part="Erasure requests" kind="unavailable" onRetry={onRetry} />
-      )}
-      {reportsFailed && <PartFailure part="Problem reports" kind="unavailable" onRetry={onRetry} />}
-      {today.teamFailure && (
-        <PartFailure part="Replies and quotes" kind={today.teamFailure} onRetry={onRetry} />
-      )}
-      {today.workFailure && (
-        <PartFailure part="Meetings and follow-ups" kind={today.workFailure} onRetry={onRetry} />
-      )}
+      {/* One message for each cause, naming every part it took: never the same words twice. */}
+      <PartFailures
+        parts={[
+          erasureFailed ? { part: 'Erasure requests', kind: 'unavailable' } : null,
+          reportsFailed ? { part: 'Problem reports', kind: 'unavailable' } : null,
+          // Each name is one item, so the joined sentence has one "and" ("..., meetings and follow-ups").
+          today.teamFailure ? { part: 'Replies', kind: today.teamFailure } : null,
+          today.teamFailure ? { part: 'Quotes', kind: today.teamFailure } : null,
+          today.workFailure ? { part: 'Meetings', kind: today.workFailure } : null,
+          today.workFailure ? { part: 'Follow-ups', kind: today.workFailure } : null,
+        ]}
+        onRetry={onRetry}
+      />
+      <CodeCheck today={today} onRetry={onRetry} />
       {items.length > 0 && (
         <ul className="ux-today-tiles ux-today41-queues" aria-label="Also needs your decision">
           {items}
@@ -1336,8 +1408,12 @@ export function TodayPanel({
           teamFailure: 'failure' in teamRead ? teamRead.failure : null,
           work,
           workFailure: 'failure' in meetingRead ? meetingRead.failure : null,
-          problemReports: reportsTile,
-          erasure,
+          problemReports: reportsTile === needsCode ? null : reportsTile,
+          erasure: erasure === needsCode ? null : erasure,
+          needsCode: {
+            erasure: erasure === needsCode,
+            problemReports: reportsTile === needsCode,
+          },
           erasureRead: reads.erasure,
           problemReportsRead: reads.problemReports,
           observedAt: new Date(now).toISOString(),
@@ -1346,9 +1422,9 @@ export function TodayPanel({
         // The pinned queues in the sidebar show a number only when its read succeeded (null: no number).
         if (desk)
           publishPinCounts({
-            problemReports: reportsTile?.count ?? null,
-            erasure: erasure?.count ?? null,
-            erasureAtLeast: erasure?.atLeast ?? false,
+            problemReports: reportsTile === needsCode ? null : (reportsTile?.count ?? null),
+            erasure: erasure === needsCode ? null : (erasure?.count ?? null),
+            erasureAtLeast: erasure === needsCode ? false : (erasure?.atLeast ?? false),
           });
       })
       .catch((error: unknown) => {
@@ -1387,9 +1463,12 @@ export function TodayPanel({
     const list = today
       ? deskRows(today.fresh, today.overdue, today.erasure?.rows ?? [], today.observedAt)
       : [];
-    const erasureUnread = !!today && today.erasureRead && today.erasure === null;
+    // A list waiting for the code is not a failed read: the page asks for the code and never claims an all-clear.
+    const erasureUnread =
+      !!today && today.erasureRead && today.erasure === null && !today.needsCode.erasure;
+    const erasureNeedsCode = !!today && today.needsCode.erasure;
     const totals = today
-      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
+      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread, erasureNeedsCode)
       : null;
     return (
       <section className="ux-today ux-desk ux-today41" aria-labelledby="today-title">
@@ -1419,6 +1498,7 @@ export function TodayPanel({
               list={list}
               totals={totals}
               tenant={tenant}
+              role={role}
               onRetry={retry}
             />
             <WaitingRegion today={today} tenant={tenant} />
@@ -1433,9 +1513,12 @@ export function TodayPanel({
       ? deskRows(today.fresh, today.overdue, today.erasure?.rows ?? [], today.observedAt)
       : [];
     // A role that reads the erasure queue and got nothing back could not check it: not the same as none waiting.
-    const erasureUnread = !!today && today.erasureRead && today.erasure === null;
+    // A list waiting for the code is not a failed read: the page asks for the code and never claims an all-clear.
+    const erasureUnread =
+      !!today && today.erasureRead && today.erasure === null && !today.needsCode.erasure;
+    const erasureNeedsCode = !!today && today.needsCode.erasure;
     const totals = today
-      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
+      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread, erasureNeedsCode)
       : null;
     return (
       <section className="ux-today ux-desk" aria-labelledby="today-title">
@@ -1467,7 +1550,7 @@ export function TodayPanel({
               tenant={tenant}
               openCount={today.open.total}
             />
-            <DeskAlsoWaiting today={today} onRetry={retry} />
+            <DeskAlsoWaiting today={today} role={role} onRetry={retry} />
             <ThisWeek today={today} desk onRetry={retry} />
           </>
         )}
@@ -1597,57 +1680,61 @@ export function TodayPanel({
               </li>
             </>
           )}
-          {today.team && (
-            <li
-              data-tone={
-                today.team.unavailable?.includes('acceptedQuotesNotStarted')
-                  ? 'unavailable'
-                  : today.team.acceptedQuotesNotStarted === 0
-                    ? 'zero'
-                    : undefined
-              }
-            >
-              <a href="#workspace-commercial">
-                <strong>
-                  {today.team.unavailable?.includes('acceptedQuotesNotStarted')
-                    ? 'Not available'
-                    : today.team.acceptedQuotesNotStarted}
-                </strong>
-                <span>
-                  {today.team.acceptedQuotesNotStarted === 1 &&
-                  !today.team.unavailable?.includes('acceptedQuotesNotStarted')
-                    ? 'accepted quote not started'
-                    : 'accepted quotes not started'}
-                </span>
-              </a>
-            </li>
-          )}
-          {today.team && (
-            <li
-              data-tone={
-                today.team.unavailable?.includes('serviceRequestsToQuote')
-                  ? 'unavailable'
-                  : today.team.serviceRequestsToQuote === 0
-                    ? 'zero'
-                    : undefined
-              }
-            >
-              {/* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */}
-              <a href="#billing-services">
-                <strong>
-                  {today.team.unavailable?.includes('serviceRequestsToQuote')
-                    ? 'Not available'
-                    : today.team.serviceRequestsToQuote}
-                </strong>
-                <span>
-                  {today.team.serviceRequestsToQuote === 1 &&
-                  !today.team.unavailable?.includes('serviceRequestsToQuote')
-                    ? 'paid-service request to quote'
-                    : 'paid-service requests to quote'}
-                </span>
-              </a>
-            </li>
-          )}
+          {today.team &&
+            (countsForRole(role) ||
+              !today.team.unavailable?.includes('acceptedQuotesNotStarted')) && (
+              <li
+                data-tone={
+                  today.team.unavailable?.includes('acceptedQuotesNotStarted')
+                    ? 'unavailable'
+                    : today.team.acceptedQuotesNotStarted === 0
+                      ? 'zero'
+                      : undefined
+                }
+              >
+                <a href="#workspace-commercial">
+                  <strong>
+                    {today.team.unavailable?.includes('acceptedQuotesNotStarted')
+                      ? 'Not available'
+                      : today.team.acceptedQuotesNotStarted}
+                  </strong>
+                  <span>
+                    {today.team.acceptedQuotesNotStarted === 1 &&
+                    !today.team.unavailable?.includes('acceptedQuotesNotStarted')
+                      ? 'accepted quote not started'
+                      : 'accepted quotes not started'}
+                  </span>
+                </a>
+              </li>
+            )}
+          {today.team &&
+            (countsForRole(role) ||
+              !today.team.unavailable?.includes('serviceRequestsToQuote')) && (
+              <li
+                data-tone={
+                  today.team.unavailable?.includes('serviceRequestsToQuote')
+                    ? 'unavailable'
+                    : today.team.serviceRequestsToQuote === 0
+                      ? 'zero'
+                      : undefined
+                }
+              >
+                {/* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */}
+                <a href="#billing-services">
+                  <strong>
+                    {today.team.unavailable?.includes('serviceRequestsToQuote')
+                      ? 'Not available'
+                      : today.team.serviceRequestsToQuote}
+                  </strong>
+                  <span>
+                    {today.team.serviceRequestsToQuote === 1 &&
+                    !today.team.unavailable?.includes('serviceRequestsToQuote')
+                      ? 'paid-service request to quote'
+                      : 'paid-service requests to quote'}
+                  </span>
+                </a>
+              </li>
+            )}
         </ul>
       )}
       {today && !failure && (today.problemReports || today.erasure) && (
