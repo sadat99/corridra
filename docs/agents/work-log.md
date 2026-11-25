@@ -5172,7 +5172,7 @@ Local gates on the merged tree, Node 24: format:check, lint, typecheck, test and
 
 Follow-up: the "Workspace access is unavailable" pages on a workspace address keep an empty gap where the workspace switch would be; TeamPalette still uses the old maps; D18 re-points Inbox to its own page; labels other than Today, Missions, Companies and Meetings are English only.
 
-## 24 Nov 2026: D5 Today in two regions (team desk v4.1)
+## 24 Nov 2026: D5 Today in two regions (team desk v4.1) (PR 642)
 
 Team desk v4.1 Phase 3, unit D5 (Class B), launched by Guardian 50 and reviewed by Guardians 51 to 53; builder session_0187kU9sNonzKDeVYQM23BxK. Branch claude/d5-today, base main df5836f. Authority stamp auth-3bc17b3aeada at 5c5f696, plan docs/revamp/specs/team-desk-v4-1.md FOLLOW.
 
@@ -5188,7 +5188,7 @@ Local gates on the merged tree, Node 24: format:check, lint, typecheck, test and
 
 Follow-up: a staff read of the request reference (Class A); the workspace list has no fixed order and a workspace chosen in the picker before the page's script takes over is lost (product behaviour, not changed here); the team header and the Start card run wider than the window at 320 px with 200% text, with the switch off as well.
 
-## 24 Nov 2026: D6 and D7 mission page next step and action dialogs
+## 24 Nov 2026: D6 and D7 mission page next step and action dialogs (PR 641)
 
 Team desk v4.1 Phase 3, units D6 and D7 (Class B, one PR), behind `CORRIDRA_UX_TEAM_DESK_V41` (off by default), placed by Guardian 50; builder session_0187kU9up2AYBZsPzUDdCB6b. Reviewed by Guardians 51 to 53.
 
@@ -5219,3 +5219,100 @@ Local gates on the merged tree, Node 24: format:check, lint, typecheck, test and
 Also in this PR, on the Guardian's word (test only, outside the unit): KI-67 fixed in tests/integration/customer-invoicing-real-issuer.test.ts, where a random id could fail the search for a rate in an event; cause and proof are in KNOWN_ISSUES.md. After PR 641 merged, main c90ecad was merged in (it brings the screen list fix that failed integration (2) on c5d1320).
 
 Follow-up: programme id on the mission read, so the delegation block can show on programme missions; a per-mission reply read in place of the workspace read capped at 100; Reports to open on the mission named in the address (unit D13).
+
+## 24 Nov 2026: D11 Meetings, D12 Money, D13 Reports (team desk v4.1, P5a) (PR 644)
+
+Scope: Phase 5 units D11 to D13 behind CORRIDRA_UX_TEAM_DESK_V41, switch-off markup unchanged. D11: Meetings opens on five columns of real statuses, Proposed (PROPOSED), Accepted (ACCEPTED), Scheduled (SCHEDULED), Needs a New Time (NO_SHOW, RESCHEDULE_REQUIRED), Finished (HELD, DECLINED, CANCELLED); mapping in `apps/web/app/operator/meeting-columns.ts`, verified by the Guardian against `packages/domain/src/access.ts`, which closes plan section 7 "that meeting statuses map to five columns". Each card shows its exact status word; introductions are never in a column; card is title, status, next step and one control; change form and Propose Meeting open in the shared Dialog with unchanged payloads; columns fold on a phone (1.33 screens at 390x844, 1.76 at 375x667). D12: five exact figures per currency (Proposals, Commitments, Recorded contracts, Invoiced, Confirmed cash) from the existing read, then the list; Reported receipts and Repeat cash stay in Mission yield. D13: Reports tab lists publications as Approved or Withdrawn; `?mission=` preselects only a listed mission and is silent otherwise; programme chooser and pager inside the Programmes tab. One link per address inside main on the three pages (owner rule, 24 Nov).
+
+Review: Guardian review and design audit on f4cce0d, fix-diff review on 2f1052e, no blocking finding left; fixes in 9517ae9, 2f1052e, 3b1bf82, 7ba7ded.
+
+Verification: on 1857803 (main c90ecad8 merged): format:check, lint, typecheck, test, build exit 0; p5a and d4-page-pattern specs at ten repeats 370 passed; 11 integration files naming touched files passed; operator specs naming touched files 66 passed, 2 failed (zz-mission-hint, sign-in needs an authenticator enrolled by earlier specs of the full suite). Full test:operator (2176 passed) and test:ux (814 passed) on pre-merge abe5ce7 only. Not run on the final head: full test:operator, test:ux, test:e2e, test:integration (owner order 24 Nov, CI runs them).
+
+Not built: a code check in place on meeting actions (`/api/workspace/[action]` returns no STEP_UP_REQUIRED). Known limit: a `?mission=` id beyond the first 100 loaded missions is not preselected.
+
+Preserved: addresses, element names and ids, payloads, role gates, fresh authenticator rule, RLS, trust labels, exact money, immutable history; no migration; invoice issue and the owner-only issuer screen untouched (ADR-092); no outreach send outside test mode (ADR-090); real payments closed.
+
+Shared files: `apps/web/components/ux/desk-segments.tsx` (header slot), `tests/operator/d4-page-pattern-fixture.ts` (switch passed to the frame), `docs/agents/ui-direction.md` (one row), `docs/revamp/v4-1-conformance.json` (row note).
+
+Next action: Guardian watches CI on the draft PR, merges on green and verifies the release.
+
+Tested head: 1857803.
+
+## 24 Nov 2026: D14 to D16 Helpers, Status, Team and access (team desk v4.1) (PR 645)
+
+Team desk v4.1, units D14, D15 and D16 (Class B, one PR), behind `CORRIDRA_UX_TEAM_DESK_V41` (off by default), placed by the Guardian; turned by builder session_0187kU9rvFP4pFDPgtYMQZhW for Guardian 54.
+
+Change: with the switch on, Helpers follows the page pattern with an example task in the empty state and no helper interest list (Inbox owns it); Status is split so that Operations holds Summary, Next actions and Records and Dashboard holds Money, a `?tab=dash-*` address goes to the page holding that tab, and a record's route line and market cells show the place mark before the name (UI/UX.v4.1 L1, partly built, Status only); Team and access bodies follow the page pattern; the link back to the section list is not drawn. Commands, routes, ids and payloads are unchanged. Off, the pages are what they were.
+
+Rulings recorded: `#dash-money` is left as it is (Class A follow-up).
+
+Proof: `tests/operator/p5b-helpers-status-team.spec.ts` (42 cases). One code review and one design audit, findings fixed. On the merge of main `c90ecad` one source check in `tests/integration/d4-page-pattern.test.ts` was updated to the new shape of the Helpers heading (same words with the switch off).
+
+Local gates on the merged tree (main c90ecad), Node 24.22.3: format:check, lint, typecheck, test and build pass; the p5b, d4-page-pattern, team-menu-v3, team-today-v41 and team-today-layout specs pass 1020 of 1020 over ten repeats; the 16 integration files naming a touched file pass; real-network-work, workspace, y-ux05-governance and zz-authenticator-result pass 15 of 15; three verification specs pass 20 with 22 skipped. Not run, on the owner's order: test:operator, test:ux and test:e2e in full; also not run to its end: test:integration in full (scanner tests need a Docker daemon), scanner:local, any signed-in pass in the real team shell or on a deployment.
+
+Follow-up: `#dash-money` (Class A); the "Network enabled" and "Network paused" words; "contributor" in body copy; the Readiness "Rules and runbook" copy (owner wording); L1 on the other operator sections and L2, L3 and L10 on this route are not assessed; six-width screenshots are not in the conformance row.
+
+## 24 Nov 2026: P5c Settings, Inbox and Supply (team desk v4.1) (PR 646)
+
+Team desk v4.1 units D17, D18 and D19 (one PR), behind `CORRIDRA_UX_TEAM_DESK_V41` (off by default), placed by Guardian 54; two builder sessions (the second, session_0187kU9t1vyRJ3G5WdhoQxDx, took the review fixes and the turn).
+
+Change: with the switch on Settings shows the shared header with one row under its title and routes first with their pack state; the four lists (problem reports, erasure requests, programme applications, helper interest) move to a new Inbox page at `/operator/inbox` under one tab row, the menu points there and the old addresses of the lists lead there; the four Supply pages take the shared header, with Do Not Contact at the end of the hub's tab row line. The header is one row (60 px from 320 to 1000 px, 64 px from 1024 px). Off, every page is the markup it was and `/operator/inbox` answers 404.
+
+Rulings recorded: the v3 sidebar at 1440x900 scrolls with the page; helper interest is hidden on Helpers by P5b; the Do Not Contact purpose line and the 40 px route flags are accepted.
+
+Proof: code review and design audit, 15 findings fixed, then three more from the review of 813207ff: the tab row is brought into view only inside the desk frame (a customer programme page on a phone keeps its row at the start; the new test fails without the fix), the Supply link follows the tabs in page order on a grid, and the segments row is moved only when the page in view changes.
+
+Local gates on the merged tree (main f4adf82), Node 22.23.5: format:check, lint, typecheck, test and build pass; over ten repeats p5c-desk 520 of 520, team-menu-v3 180 of 180, d4-page-pattern 110 of 110, l18-programme-tabs 20 of 20, supply-screens 250 of 250, tests/ux/sub-tabs 120 of 120; real-network-work 3 of 3 once; `/operator/inbox` answers 404 on a running server with the switch off. Not run, on the owner's order: test:operator, test:ux and test:e2e in full; also not run: test:integration in full, any signed-in pass in the real team shell or on a deployment.
+
+Follow-up: the v3 sidebar at 1440x900 (about 858 of 929 px) scrolls with the page; KI-28 watch, the header at 320 px has about 10 px spare, so CI's wider fonts could cut it; a scrolled segments row staying put after a redraw has no test of its own.
+
+https://claude.ai/code/session_0187kU9t1vyRJ3G5WdhoQxDx
+
+## 24 Nov 2026: Team desk v4.1 phases 2 to 5 run and final records (Guardians 54 and 55)
+
+Records only (Class records, docs only), written by a records builder for Guardian 55 (session_0187kU9t2r2o8aYBP9tsH9YG) under authority stamp auth-3bc17b3aeada. No application code, test or ADR changed.
+
+Merges of the run, in order, each read on main by the records builder (`git log origin/main`): 639 c05b30c (D4), 640 df5836f (D3), 641 c90ecad8 (D6 and D7), 642 a1e5ef71 (D5), 643 c2b2f555 (D8 to D10), 644 f4adf828 (D11 to D13), 645 448ef072 (D14 to D16), 646 7e5dd73b (D17 to D19). Production READY after each merge is the Guardian's report; the records builder did not read the deployments. With Phase 1 (PRs 634 to 638), team desk v4.1 phases 1 to 5 are built behind `CORRIDRA_UX_TEAM_DESK_V41`, which is off in production (Guardian's report, not read here). No signed-in live pass is claimed.
+
+Records applied here: the work-log entries of PRs 644, 645 and 646, copied from their PR bodies with the PR number added to each heading; "(PR 641)" added to the D6 and D7 heading; PR 646's conformance note appended to the `/operator/[section]` row of `docs/revamp/v4-1-conformance.json`; the ledger; the lanes table; the plan register and the plan's Document status line (drift "Not built" repaired from the merged PRs); the conformance record registered in the documentation map.
+
+Run rules recorded in `docs/agents/conductor/SKILL.md` (Corridra profile) and `docs/agents/ui-direction.md`:
+
+- Builders push branches without a PR; review happens before the PR; one PR is one CI run.
+- Builders run format:check, lint, typecheck, test and build, the touched specs with `--repeat-each 10`, and any test file naming a touched file. No local full test:operator, test:ux or test:e2e; CI runs them.
+- Earliest-stage rule: a failure is fixed at its cause in one push.
+- Cost rules: builders run no scheduled self-checks and send no interim status; at about 250k context a builder hands over in 30 lines to a fresh builder; feature PRs carry no `docs/agents/work-log.md` edit and no shared conformance-row edit (the entry text goes in the PR body and the final records PR applies it).
+- No repeated links: in `<main>` one link per destination; the menu is the only global path (full rule and allowed exceptions in ui-direction.md).
+
+Follow-ups (not done in this run):
+
+- purpose helper in packages/db.
+- withTenant purpose rule.
+- /api/workspace screens show the reference only in JSON.
+- "Execution network" wording (workspace-navigation.ts, operations.tsx, workspace-controls.tsx), reference-picker 'Contributor', wrapping select labels.
+- staff RQ reference read (Class A).
+- programme id on the mission read (the delegation block is not shown on programme missions).
+- ADR-078, 080, 085, 090, 091 and 092 status "Proposed".
+- Resend webhook to https://c.obsidianglobal.studio/api/outreach/webhook.
+- CORRIDRA_LANGUAGES_PREVIEW true in production.
+- per-mission reply read (the workspace read is capped at 100).
+- mission Overview facts list page length (Quotes tab 2.54 screens at 390 with D6).
+- mission page flag ignores SHELLS_V2.
+- placeAllowedStrict is not exported.
+- the team-context mocked test forced lib/ux/team-desk-v41.ts.
+- "Workspace access is unavailable" pages keep the empty switcher gap.
+- TeamPalette old maps.
+- workspace picker list is unordered and an early choice is lost (KI-65 cause).
+- Germany has no flag file.
+- Readiness "Rules and runbook" copy (owner wording).
+- #dash-money is never opened (Class A address).
+- "Network enabled", "Network paused" and "contributor" in body copy.
+- the v3 sidebar at 1440x900 (about 858 of 929 px) scrolls with the page (owner).
+- KI-28: the header at 320 px has about 10 px spare.
+- meeting code check in place is not built (no route returns STEP_UP_REQUIRED).
+- zz-mission-hint and y-ux05 need the full-suite order (KI-15, KI-16, KI-19).
+- 4 local-only integration files need ClamAV or backup tooling.
+
+Checks on this records branch: in the PR body.
+
+Next action: the owner's switch preview, then the owner live steps, each only on the owner's word: PR 607 owner switch; reassign the 11 missions; China, EU, UK and US routes and packs; retire the 8 sample companies and the AL>AU route; turn `CORRIDRA_UX_TEAM_DESK_V41` on.

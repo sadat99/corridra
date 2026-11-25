@@ -1,6 +1,6 @@
 # Team desk in UI/UX.v4.1: fixes first, then the frame and the screens
 
-Document status: CURRENT. Owner-approved plan (24 November 2026). Nothing in it is built yet.
+Document status: CURRENT. Owner-approved plan (24 November 2026). Built behind CORRIDRA_UX_TEAM_DESK_V41 (phases 1 to 5, PRs 635 to 646, 24 November 2026); owner switch pending.
 
 Written 24 Nov 2026 against main `b4d43f1`. Built from the code and from a read of the live database, not from other plans. Every fact below was read in the repository or the database; items under "Not verified" were not. If the Authority Brief of a later run contradicts a fact here, the repository wins and the run says so.
 

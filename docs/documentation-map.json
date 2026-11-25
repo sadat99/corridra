@@ -1756,7 +1756,7 @@
     {
       "path": "docs/revamp/specs/team-desk-v4-1.md",
       "classification": "Current guide/contract",
-      "use": "Owner-approved team desk plan of 24 Nov 2026: the proven Begin Qualification defect in real workspaces, the live state read that day, five owner decisions, units D1 to D19 in five phases behind a new switch that is off by default; not built"
+      "use": "Owner-approved team desk plan of 24 Nov 2026: the proven Begin Qualification defect in real workspaces, the live state read that day, five owner decisions, units D1 to D19 in five phases behind CORRIDRA_UX_TEAM_DESK_V41 (off by default); built in PRs 635 to 646, owner switch pending"
     },
     {
       "path": "docs/revamp/specs/ui-ux-v4-1.md",
@@ -1766,7 +1766,7 @@
     {
       "path": "docs/revamp/specs/ui-ux-v4-1-rollout.md",
       "classification": "Current guide/contract",
-      "use": "UI/UX.v4.1 platform rollout and handoff: waves V4.1-0 to D, mechanical enforcement (conformance ledger, ratchet guard), PR evidence, collision rules, owner decisions and the brief for the implementing agent"
+      "use": "UI/UX.v4.1 platform rollout and handoff: waves V4.1-0 to D, mechanical enforcement (conformance record docs/revamp/v4-1-conformance.json, checked by scripts/v4-1-conformance.mjs and tests/v4-1-guard.test.mjs; ratchet guard), PR evidence, collision rules, owner decisions and the brief for the implementing agent"
     },
     {
       "path": "docs/revamp/CONTRACT.md",
