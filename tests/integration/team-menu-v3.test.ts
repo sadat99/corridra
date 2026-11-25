@@ -10,6 +10,7 @@ import {
   menuGroupsFor,
   menuItemForAddress,
   menuItemHref,
+  menuPaletteLinks,
   menuPlacesFor,
   menuV3,
   placeHref,
@@ -22,6 +23,9 @@ import {
   type MenuItemKey,
   type TeamPlaceId,
 } from '../../apps/web/lib/ux/team-map';
+import { sortTeamWorkspaces, teamPageForWorkspace } from '../../apps/web/lib/ux/team-desk-v41';
+import { deskGroups, deskTabTitle } from '../../apps/web/lib/ux/page-pattern';
+import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
 
 // Menu v3 (team desk v4.1 unit D3, Class A; docs/revamp/specs/team-desk-v4-1.md decision 1): navigation only regroups
 // the same seventeen places, so no role gains or loses a place and no address moves.
@@ -87,7 +91,7 @@ describe('four visible groups, one click to every item, no second level', () => 
       ['Work', ['Today', 'Missions', 'Meetings', 'Inbox']],
       ['People and companies', ['Companies', 'Helpers', 'Supply']],
       ['Results', ['Money', 'Reports']],
-      ['Admin', ['Team and Access', 'Settings', 'Status']],
+      ['Admin', ['Team and access', 'Settings', 'Status']],
     ]);
     expect(menuGroupsFor('owner', { supply: true }).map((group) => group.items.length)).toEqual([
       4, 3, 2, 3,
@@ -335,9 +339,11 @@ describe('the switch', () => {
     );
   });
   test('off, the sidebar is the one before it: the frame and the sidebar default to off', () => {
-    expect(read('app/operator/layout.tsx')).toContain(
-      "deskV41={uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}",
-    );
+    const layout = read('app/operator/layout.tsx');
+    expect(layout).toContain("const deskV41 = uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41');");
+    expect(layout).toContain('deskV41={deskV41}');
+    // The workspace list for the menu's switch is read only while the switch is on.
+    expect(layout).toContain('workspaces={deskV41 ? await teamWorkspaces() : []}');
     expect(read('components/ux/team-frame.tsx')).toContain('deskV41 = false');
     const sidebar = read('components/ux/team-sidebar.tsx');
     expect(sidebar).toContain('deskV41 = false');
@@ -360,7 +366,9 @@ describe('the switch', () => {
     expect(workspace.match(/Switch workspace\? Unsaved entries/g)).toHaveLength(1);
     expect(workspace.match(/id="operator-workspace-select"/g)).toHaveLength(1);
     expect(sidebar.match(/id="operator-workspace-select"/g)).toHaveLength(1);
-    expect(sidebar).toContain('onChange={(event) => switcher.choose(event.target.value)}');
+    expect(sidebar).toContain('onChange={(event) => chooseWorkspace(event.target.value)}');
+    // The loaded workspace's own guarded change is used whenever it has published one.
+    expect(sidebar).toContain('switcher ? switcher.choose(id) :');
     // The legacy maps are the objects they were.
     expect(teamMap.map((entry) => entry.label)).toEqual([
       'Today',
@@ -370,5 +378,116 @@ describe('the switch', () => {
       'Money',
       'Admin',
     ]);
+  });
+});
+
+// Audit of 25 Nov 2026 (staff-admin-03): the search palette listed the old maps ("Open Network / Missions"), so
+// typing "helpers" found nothing. With the switch on its places are the menu's, word for word.
+describe('the search palette lists the places of menu v3', () => {
+  const links = (role: (typeof roles)[number], ownerPage = true) =>
+    menuPaletteLinks(role, true, workspace, { supply: true, problemReports: true, ownerPage });
+  test('a page is found by the word the menu shows, under the group or item that holds it', () => {
+    const byLabel = new Map(links('owner').map((link) => [link.label, link]));
+    expect(byLabel.get('Helpers')).toMatchObject({
+      detail: 'People and companies',
+      href: `/operator/network?workspace=${workspace}`,
+      icon: 'network',
+    });
+    expect(byLabel.has('Network')).toBe(false);
+    expect(byLabel.get('Dashboard')?.detail).toBe('Status');
+    expect(byLabel.get('Operations')?.detail).toBe('Status');
+    expect(byLabel.get('People and access')?.detail).toBe('Team and access');
+    expect(byLabel.get('Audit')?.detail).toBe('Team and access');
+    expect(byLabel.get('Routes and settings')?.detail).toBe('Settings');
+    expect(byLabel.get('Inbox')).toMatchObject({
+      detail: 'Work',
+      href: expect.stringContaining('/operator/inbox'),
+    });
+    expect(byLabel.get('Supply')?.href).toBe(`/operator/supply?workspace=${workspace}`);
+    expect(byLabel.get('Authenticator')?.detail).toBe('Account');
+    // Only the menu's four groups, its items and Account describe a place.
+    const details = new Set(links('owner').map((link) => link.detail));
+    for (const detail of details)
+      expect([
+        'Work',
+        'People and companies',
+        'Results',
+        'Admin',
+        'Status',
+        'Settings',
+        'Companies',
+        'Team and access',
+        'Account',
+      ]).toContain(detail);
+  });
+  for (const role of roles)
+    test(`${role}: every section the role may open is listed once, and no other`, () => {
+      const list = links(role);
+      const hrefs = list.map((link) => link.href);
+      expect(new Set(hrefs).size).toBe(hrefs.length);
+      expect(new Set(list.map((link) => link.id)).size).toBe(list.length);
+      for (const section of workspaceSections) {
+        const href = `/operator/${operatorSlugs[section.id]}?workspace=${workspace}`;
+        expect(hrefs.includes(href), `${role} ${section.id}`).toBe(
+          (section.roles as readonly string[]).includes(role ?? 'viewer'),
+        );
+      }
+      expect(hrefs.includes('/operator/owner')).toBe(role === 'owner' || role === 'admin');
+      expect(list.some((link) => link.id === 'inbox')).toBe(role === 'owner' || role === 'admin');
+      expect(list.some((link) => link.id === 'supply')).toBe(role !== null);
+    });
+  test('the owner page is not listed while it is switched off', () => {
+    expect(links('owner', false).map((link) => link.href)).not.toContain('/operator/owner');
+  });
+});
+
+describe('one word and one casing for a place (audit staff-admin-07 and -08)', () => {
+  test('the menu item and the page title are both "Team and access"', () => {
+    expect(item('team').label).toBe('Team and access');
+    expect(deskGroups.team.title).toBe(item('team').label);
+  });
+  test('the Settings page has no segment called "Settings"', () => {
+    const labels = deskGroups.settings.segments.map((segment) => segment.label);
+    expect(labels).not.toContain('Settings');
+    expect(labels[0]).toBe('Routes and settings');
+    expect(deskTabTitle('workspace-settings')).toBe('Routes and settings \u00b7 Settings');
+    // The menu's places and the page's segments use the same words, in the same order.
+    for (const key of ['companies', 'team', 'settings', 'status'] as const)
+      expect(deskGroups[key].segments.map((segment) => segment.label)).toEqual(
+        item(key).places.map((place) => place.label),
+      );
+  });
+});
+
+describe('the workspace switch (work-log follow-up, KI-65 cause)', () => {
+  test('the list is in one order whatever order it was read in', () => {
+    const a = { id: '2', name: 'beta works' };
+    const b = { id: '1', name: 'Alpha Trading' };
+    const c = { id: '3', name: 'Alpha Trading' };
+    const d = { id: '4', name: 'Workspace 10' };
+    const e = { id: '5', name: 'Workspace 9' };
+    const sorted = [b, c, a, e, d];
+    expect(sortTeamWorkspaces([a, b, c, d, e])).toEqual(sorted);
+    expect(sortTeamWorkspaces([e, d, c, b, a])).toEqual(sorted);
+    const given = [a, b];
+    sortTeamWorkspaces(given);
+    expect(given).toEqual([a, b]);
+  });
+  test('a choice on a page that does not mount the workspace opens that page for the chosen workspace', () => {
+    const to = (path: string) => teamPageForWorkspace(path, workspace);
+    expect(to('/operator/inbox')).toBe(`/operator/inbox?workspace=${workspace}`);
+    expect(to('/operator/supply')).toBe(`/operator/supply?workspace=${workspace}`);
+    expect(to('/operator/supply/do-not-contact')).toBe(
+      `/operator/supply/do-not-contact?workspace=${workspace}`,
+    );
+    // A page about one record opens the list it came from: the record is not in the other workspace.
+    expect(to('/operator/missions/abc')).toBe(`/operator/missions?workspace=${workspace}`);
+    expect(to('/operator/supply/missions/abc')).toBe(`/operator/supply?workspace=${workspace}`);
+    expect(to('/operator/owner')).toBe(`/operator/owner?workspace=${workspace}`);
+    expect(to('/operator')).toBe(`/operator?workspace=${workspace}`);
+    expect(to('/elsewhere')).toBe(`/operator?workspace=${workspace}`);
+    expect(teamPageForWorkspace('/operator/inbox', 'a b&c')).toBe(
+      '/operator/inbox?workspace=a%20b%26c',
+    );
   });
 });

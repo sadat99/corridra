@@ -11,6 +11,7 @@ import './team-nav.css';
 import {
   Fragment,
   useCallback,
+  useContext,
   useEffect,
   useId,
   useRef,
@@ -59,7 +60,8 @@ import {
   settleDelay,
   type SearchOutcome,
 } from '../../lib/ux/palette-status';
-import { placeHref } from '../../lib/ux/team-map';
+import { menuPaletteLinks, placeHref } from '../../lib/ux/team-map';
+import { TeamDeskV41Context } from '../../lib/ux/team-desk-v41';
 import { operatorSignInPath } from '../../lib/workspace-navigation';
 import {
   readServerTeamContext,
@@ -109,7 +111,8 @@ const placeIcons: Record<string, string> = {
 };
 const workspaceId = /^[0-9a-f-]{36}$/i;
 
-function rowIcon(entry: PaletteEntry): string | null {
+function rowIcon(entry: PaletteEntry, placeIcon?: string): string | null {
+  if (placeIcon) return placeIcon;
   if (entry.command === 'retry') return 'refresh';
   if (entry.command === 'clear-recents') return null;
   if (entry.key === 'link:signin') return 'arrow';
@@ -161,6 +164,7 @@ function Marked({ text, match }: { text: string; match?: PaletteEntry['match'] }
 
 function PaletteRow({
   entry,
+  placeIcon,
   id,
   active,
   onSelect,
@@ -168,13 +172,15 @@ function PaletteRow({
   onRun,
 }: {
   entry: PaletteEntry;
+  /** Menu v3: the icon the menu draws for the item that holds this place. */
+  placeIcon?: string;
   id: string;
   active: boolean;
   onSelect: () => void;
   onOpen: () => void;
   onRun: () => void;
 }) {
-  const icon = rowIcon(entry);
+  const icon = rowIcon(entry, placeIcon);
   const facts = entry.facts;
   const content = (
     <>
@@ -238,11 +244,19 @@ export function TeamPalette({
   urls,
   ownerPage,
   desk = false,
+  supply = false,
+  problemReports = false,
 }: {
   urls: boolean;
   ownerPage: boolean;
   desk?: boolean;
+  /** CORRIDRA_SUPPLY_SOURCES: menu v3 lists Supply, so the search does too. */
+  supply?: boolean;
+  /** Report a Problem is offered, as the menu is told. */
+  problemReports?: boolean;
 }) {
+  // Team desk v4.1: the places come from menu v3, so a search finds a page by the word the menu shows.
+  const deskV41 = useContext(TeamDeskV41Context);
   const { tenant, role } = useSyncExternalStore(
     subscribeTeamContext,
     readTeamContext,
@@ -435,7 +449,19 @@ export function TeamPalette({
   const outcome = searchable ? currentOutcome(answer, key) : null;
   const found = outcome?.kind === 'ok' ? outcome.found : null;
 
-  const actions = paletteActions(role, urls, tenant, ownerPage, desk);
+  const menuLinks = deskV41
+    ? menuPaletteLinks(role, urls, tenant, { supply, problemReports, ownerPage })
+    : null;
+  const menuIcons = new Map(menuLinks?.map((link) => ['action:' + link.id, link.icon]));
+  const actions: PaletteEntry[] = menuLinks
+    ? menuLinks.map((link) => ({
+        key: 'action:' + link.id,
+        group: 'Actions',
+        label: 'Open ' + link.label,
+        detail: link.detail,
+        href: link.href,
+      }))
+    : paletteActions(role, urls, tenant, ownerPage, desk);
   const sectionHref = placeHref('workspace-missions', urls, tenant);
   const companiesHref = placeHref('workspace-research', urls, tenant);
   const opensMissions = missionPages ? '' : 'Opens Missions';
@@ -752,6 +778,7 @@ export function TeamPalette({
                             <PaletteRow
                               key={entry.key}
                               entry={entry}
+                              placeIcon={menuIcons.get(entry.key)}
                               id={`${listId}-${index}`}
                               active={index === active}
                               onSelect={() => setSelected(index)}
