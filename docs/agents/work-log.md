@@ -5450,3 +5450,52 @@ Follow-ups (not done in this run):
 - Native language review gate OPEN for the `home.v42.*` words (`home.v42.line.buys`, `home.v42.line.sells`, `home.v42.not.eyebrow`).
 
 Next action: the owner's privacy wording for the corridra-team cookie; native review of the home.v42 words.
+
+## 25 Nov 2026: Final walk fixes W-1 to W-3c (PR 659)
+
+PR 659 merged as 187a2391851db0cf34fd1cabe17e87f4348ff68d. Production deploy dpl_4UsBGpV9fVcK73EZ8mCxPVDrmHm6 READY; live home v4.2 re-checked by Guardian 65 (Start a Request goes to /plan, a door opens its route, trimmed footer, no console errors). Guardian's report, not read by the scribe.
+
+Fixes (from the PR body):
+
+- W-1: the customer account button name now starts with the initials, "SA, Account menu" (WCAG 2.5.3 label in name); the menu stays "Account menu". This re-opened public-customer-08. CORRECTION: the earlier entry saying "public-customer-08 already on main (PR 651)" was wrong; PR 659 fixed it.
+- W-2: the team language button name is "EN, Language" (new optional `buttonLabel` on OverflowMenu).
+- W-3a: team header below 480px gives back the 24px gutter in px; row gap and padding in px; no change at normal size.
+- W-3b: Overview facts grid uses minmax(0,1fr) and overflow-wrap anywhere; room stage bar columns minmax(0,1fr); the summary chip may wrap.
+- W-3c: the two-column All Tools finder needs the finder 40rem wide (container query).
+- public-customer-07 residual: the attention row wraps when the list is narrower than 21rem; the Open Participants button may shrink.
+
+Checks on the PR (from the PR body): format:check, lint, typecheck, test, build 0; design-system, guard, v4-1-guard, documents tests 0; v4-1-conformance check 0; test:ux 0; test:e2e 0 (867 passed); test:operator 0 at a3ac47ef (2426 passed, 32 skipped); CI on a3ac47ef 23 success, CodeQL neutral. Not run: the verification suite (needs a real database and sign-in).
+
+Noted, not changed: container queries are in rem, so at the Large and Largest app text sizes the All Tools chips go under search and attention rows wrap at about 1024 to 1300px (intended).
+
+## 25 Nov 2026: Final walk audit and records (Guardian 65)
+
+Records only (docs only), written by the scribe on branch `claude/v41-records-walk` from main 187a2391, authority stamp auth-98b003673bb1. No application code, test, switch or ADR changed.
+
+Final walk: read-only Opus audit at a171f4e0, verdict FIX NEEDED, fixed by PR 659.
+
+Re-checks:
+
+- public-customer-15: PASS.
+- staff-admin-24: still present; part of the STEP_UP follow-up.
+- A06n is not defined in the repo; the nearest is the A06 country-words item (Helpers fold "ACTIVE ... DE", app/operator/network.tsx:869), still open, minor.
+- A11 and A12: not traceable anywhere in the repo; owner follow-up, like A07 and A08.
+- A09 and public-customer-27: intentional 404s.
+
+New minor follow-ups:
+
+- m2: signed-out 401 console error on /operator/signin.
+- m3: on /client and /programme the first Tab lands on "Try again".
+- m4: 9px overflow from a.move-card-link at 1440 with 200% text.
+- m5: about 7 aria-live regions fire on one door choice.
+- Team header at 320px with 200% text is still 20px wide.
+
+State: main 187a2391; home v4.2 switch ON, unchanged; batch v4.1 plus home v4.2 complete, pending owner follow-ups. The native language review gate stays OPEN. No signed-in live journey pass is claimed.
+
+Ledger trim: to keep the always-read guides within 36 KiB, this 23 Nov ledger bullet moved here word for word (its facts are also in the 23 Nov entry above):
+
+- QA proven this session (Guardian; receipt paths not supplied to the scribe): production code sign-in final step returns 404 on /api/auth/sign-in/email-otp, as the proxy allowlist in `apps/web/app/api/auth/[...all]/route.ts` lacks that path (allowlist read by the scribe); 8 public pages without og:image; COOP header missing; live sw.js revision d6a0865 at 09:10Z. Vercel deployment state of 43c2bbc and main CI on it not read. Not called green.
+
+Records checks (scribe, this branch): `node scripts/v3-context.mjs verify` 0 (ledger 10241 bytes); `pnpm format:check` 0; `pnpm test:docs` 0 (135 passed); `node scripts/authority.mjs check` 0 (77 documents, no drift).
+
+Next action: the owner's privacy wording for the corridra-team cookie; native review of the home.v42 words; then the follow-ups above.
