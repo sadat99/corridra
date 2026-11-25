@@ -48,4 +48,16 @@
   text-decoration: underline;
   text-underline-offset: 0.2em;
   cursor: pointer;
+  /* In a wrapping row a quiet button keeps the width of its words (up to the row), so a label wraps between words
+     and never inside one, and a wrapped row sits a full space below the one above. */
+  flex: none;
+  max-inline-size: 100%;
+  margin-block-start: var(--space-2);
+  text-align: start;
+}
+/* On the narrowest phones the quiet choices stack, each the full width of the row. */
+@media (max-width: 22.49rem) {
+  .ux-quiet-button {
+    inline-size: 100%;
+  }
 }

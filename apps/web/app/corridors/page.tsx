@@ -89,15 +89,14 @@ export default function Page() {
               <h3>Another route?</h3>
               <p>No operating offer announced. We tell you plainly if we can help.</p>
             </div>
+            {/* One link per destination and one primary on the page: the route picker below holds the primary, so
+                this block has one quiet action to the request form (it was written twice here). */}
             <div className="guide-other-actions">
               <Link prefetch={false} className="button-secondary" href="/plan">
                 Plan a Mission on Another Route <Arrow />
               </Link>
               <Link prefetch={false} className="text-link" href="#mission-example">
                 See a Sample Mission
-              </Link>
-              <Link prefetch={false} className="primary-link" href="/plan">
-                Start a Request
               </Link>
             </div>
           </div>

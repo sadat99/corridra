@@ -89,7 +89,7 @@ export default async function Page({
           </>
         )}
         <Link prefetch={false} className="text-link" href="/">
-          Back to Corridra
+          Corridra Home
         </Link>
       </WorkspaceShell>
     );
