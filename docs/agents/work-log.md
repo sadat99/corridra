@@ -5172,7 +5172,7 @@ Local gates on the merged tree, Node 24: format:check, lint, typecheck, test and
 
 Follow-up: the "Workspace access is unavailable" pages on a workspace address keep an empty gap where the workspace switch would be; TeamPalette still uses the old maps; D18 re-points Inbox to its own page; labels other than Today, Missions, Companies and Meetings are English only.
 
-## 24 Nov 2026: D5 Today in two regions (team desk v4.1)
+## 24 Nov 2026: D5 Today in two regions (team desk v4.1) (PR 642)
 
 Team desk v4.1 Phase 3, unit D5 (Class B), launched by Guardian 50 and reviewed by Guardians 51 to 53; builder session_0187kU9sNonzKDeVYQM23BxK. Branch claude/d5-today, base main df5836f. Authority stamp auth-3bc17b3aeada at 5c5f696, plan docs/revamp/specs/team-desk-v4-1.md FOLLOW.
 
