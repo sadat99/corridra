@@ -337,14 +337,38 @@ test('19: the new-request page, when the services cannot load, links the account
   await expect(page.getByRole('link', { name: 'Cancel and return to your account' })).toHaveCount(
     0,
   );
-  // A successful retry removes the old alert, so it is not announced again over the form.
+  // A retry that fails again puts focus on the alert, since the button it was pressed on is gone.
+  await page.getByRole('button', { name: 'Try Again' }).click();
+  await expect(page.getByText('Temporarily unavailable')).toBeVisible();
+  await expect(page.getByRole('alert')).toBeFocused();
+  // A successful retry removes the old alert, so it is not announced again over the form, and focus moves to the form.
   failing = false;
   await page.getByRole('button', { name: 'Try Again' }).click();
   await expect(page.getByRole('button', { name: 'Send Help Request' })).toBeVisible();
+  await expect(page.getByRole('form', { name: 'Help request details' })).toBeFocused();
   await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Cancel and return to your account' })).toHaveCount(
     1,
   );
+});
+
+test('19: with help requests switched off the new-request page offers no Try Again and links the account once', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.route('**/api/customer-service-requests**', (route) =>
+    route.fulfill({ status: 503, json: { error: 'off' } }),
+  );
+  await page.route('**' + fixturePath + '*', (route) =>
+    route.fulfill({ contentType: 'text/html', body: htmlNew }),
+  );
+  await page.goto(fixturePath);
+  await expect(page.getByText('Temporarily unavailable')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try Again' })).toHaveCount(0);
+  const links = await page
+    .locator('main a[href]')
+    .evaluateAll((list) => list.map((node) => node.getAttribute('href')));
+  expect(links).toEqual(['/account']);
 });
 
 test('18: the sample-mode rule is a hint tied to the field, not part of its label', async ({

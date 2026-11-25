@@ -65,6 +65,16 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
     [done, setDone] = useState<ServiceRequestSummary | null>(null),
     [attempt, setAttempt] = useState(0);
   const alive = useRef(false);
+  // After Try Again the button is gone, so focus follows the answer: the form when the services load, the alert
+  // when they do not.
+  const retried = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const alertRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!retried.current || state === 'loading') return;
+    retried.current = false;
+    (state === 'ready' ? formRef.current : alertRef.current)?.focus();
+  }, [state]);
   const sentHeading = useRef<HTMLHeadingElement>(null);
   // CQ-71: the confirmation is brought into view and focused, so it is never left off-screen.
   useEffect(() => {
@@ -216,19 +226,24 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
       {(state === 'error' || state === 'off') && (
         <div className="ux-state" data-state="unavailable">
           <p className="ux-state-label">Temporarily unavailable</p>
-          <div role="alert">{message}</div>
+          <div role="alert" ref={alertRef} tabIndex={-1}>
+            {message}
+          </div>
           <div className="ux-state-actions">
-            <button
-              type="button"
-              className="button button-secondary"
-              onClick={() => {
-                setMessage('');
-                setState('loading');
-                setAttempt((n) => n + 1);
-              }}
-            >
-              Try Again
-            </button>
+            {state === 'error' && (
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => {
+                  retried.current = true;
+                  setMessage('');
+                  setState('loading');
+                  setAttempt((n) => n + 1);
+                }}
+              >
+                Try Again
+              </button>
+            )}
             <a className="text-link" href="/account">
               Return to your account
             </a>
@@ -267,7 +282,12 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
           </div>
         )}
       {state === 'ready' && catalogue && (workspaceId || (workspaces && workspaces.length > 0)) && (
-        <form onSubmit={(e) => void submit(e)} aria-label="Help request details">
+        <form
+          ref={formRef}
+          tabIndex={-1}
+          onSubmit={(e) => void submit(e)}
+          aria-label="Help request details"
+        >
           <fieldset disabled={busy}>
             {!workspaceId && workspaces && workspaces.length > 1 && (
               <div className="field">
