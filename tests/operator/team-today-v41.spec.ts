@@ -660,7 +660,7 @@ test('switch on with section addresses: the queue tiles open each section at its
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await open(page, busy, '/?v41=on&urls=on');
+  await open(page, busy, '/?v41=on&sections=on');
   const queues = decide(page).getByRole('list', { name: 'Also needs your decision' });
   await expect(queues.getByRole('link', { name: '2 replies to review' })).toHaveAttribute(
     'href',
@@ -675,7 +675,7 @@ test('switch on with section addresses: the queue tiles open each section at its
     }),
   ).toHaveAttribute('href', `/operator/meetings?workspace=${tenant}`);
   // Section addresses off (the default): the page keeps the addresses it has always used.
-  await open(page, busy, '/?v41=on');
+  await open(page, busy, '/?v41=on&sections=off');
   await expect(queues.getByRole('link', { name: '2 replies to review' })).toHaveAttribute(
     'href',
     '#workspace-delivery',

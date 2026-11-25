@@ -62,9 +62,9 @@ export async function startTodayFixture(root = resolve('.')) {
       const role = flag('role') ?? 'owner';
       // ?v41=on is the team desk v4.1 switch read on the server and handed down with the team flags. Off or missing, nothing changes.
       const v41 = shells && flag('v41') === 'on';
-      // ?urls=on is CORRIDRA_UX_OPERATOR_URLS: each section has its own address.
+      // ?sections=on is CORRIDRA_UX_OPERATOR_URLS handed to the Today links: they open /operator/(section word). Off or missing, the # addresses.
       const workspace = (
-        <OperatorFlags replyReview={false} teamDeskV41={v41} sectionAddresses={shells && flag('urls') === 'on'}>
+        <OperatorFlags replyReview={false} teamDeskV41={v41} sectionAddresses={shells && flag('sections') === 'on'}>
           <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:role}]}
             initialTenant=${JSON.stringify(fixtureTenant)} shellsV2={shells} problemReports={reports} programmeApplications={applications}/>
         </OperatorFlags>

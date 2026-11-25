@@ -83,11 +83,11 @@ describe('team desk v4.1 sweep', () => {
   });
   it('opens a Today link at its section address when the desk and section addresses are on', () => {
     const today = read('apps/web/app/operator/today.tsx');
-    expect(today).toContain('const real = desk && teamDeskV41 && sectionAddresses;');
+    expect(today).toContain('const real = teamDeskV41 && sectionAddresses;');
     expect(today).toContain("sectionLink('workspace-delivery', '#billing-services')");
-    // Only the Today list that has the other desk addresses switched: no raw `#workspace-meetings` or delivery address is
-    // left in the v4.1 regions (the switch-off list keeps its `#` addresses).
-    expect(today).not.toContain('href="#workspace-meetings"\n            link="Open Meetings"');
+    // The v4.1 queue tiles take the helper; the desk list without v4.1 (ThisWeek, DeskAlsoWaiting) keeps its `#` addresses.
+    expect(today).toContain("sectionLink('workspace-meetings')");
+    expect(today).toContain('href="#workspace-meetings"\n            link="Open Meetings"');
     expect(read('apps/web/app/operator/operator-entry.tsx')).toContain(
       'sectionAddresses={shellsV2',
     );

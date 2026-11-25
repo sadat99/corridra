@@ -331,13 +331,13 @@ function useMissionPages() {
 }
 
 /**
- * Where a link to a workspace section goes. With the desk on and section addresses on, it is the section's own
+ * Where a link to a workspace section goes on the v4.1 Today. With section addresses on, it is the section's own
  * address (the workspace kept, as the mission page does); otherwise it is the `#` address the page has always used.
  * `hash` is the old address; a block inside a section (`#billing-services`) rides along after the section address.
  */
-function useSectionLink(tenant: string, desk: boolean) {
+function useSectionLink(tenant: string) {
   const { teamDeskV41, sectionAddresses } = useOperatorFlags();
-  const real = desk && teamDeskV41 && sectionAddresses;
+  const real = teamDeskV41 && sectionAddresses;
   return (sectionId: string, hash = `#${sectionId}`) => {
     const page = real ? operatorSectionPath(sectionId) : null;
     if (!page) return hash;
@@ -521,18 +521,15 @@ function AlsoWaiting({ today }: { today: Today }) {
 
 function ThisWeek({
   today,
-  tenant,
   desk = false,
   onRetry,
 }: {
   today: Today;
-  tenant: string;
   /** Operator desk: the parts that could not be read name "This week" and offer Try Again where it can help. */
   desk?: boolean;
   onRetry?: () => void;
 }) {
   const { work, team } = today;
-  const sectionLink = useSectionLink(tenant, desk);
   const repliesUnavailable = team?.unavailable?.includes('repliesToReview') ?? false;
   const body = (
     <>
@@ -542,7 +539,7 @@ function ThisWeek({
             title="Meetings in the next 7 days"
             count={work.upcoming.length}
             empty="No meetings in the next 7 days"
-            href={sectionLink('workspace-meetings')}
+            href="#workspace-meetings"
             link="Open Meetings"
           >
             {work.upcoming
@@ -562,7 +559,7 @@ function ThisWeek({
             title="Follow-ups past their due date"
             count={work.lateFollowUps.length}
             empty="No follow-ups past their due date"
-            href={sectionLink('workspace-meetings')}
+            href="#workspace-meetings"
             link="Open Follow-ups"
           >
             {work.lateFollowUps.slice(0, weekRows).map((f) => (
@@ -613,7 +610,7 @@ function ThisWeek({
           title="Replies to review"
           count={team.repliesToReview}
           empty="No replies to review"
-          href={sectionLink('workspace-delivery')}
+          href="#workspace-delivery"
           link="Open Replies"
         />
       ) : desk && !repliesUnavailable && today.teamFailure && !today.workFailure && onRetry ? (
@@ -797,17 +794,14 @@ function WaitingItem({
 /** "Also waiting" collapsed row (operator desk). Accepted quotes and paid-service requests join the two queues. */
 function DeskAlsoWaiting({
   today,
-  tenant,
   role,
   onRetry,
 }: {
   today: Today;
-  tenant: string;
   role?: string;
   onRetry: () => void;
 }) {
   const { team, teamFailure, problemReports: reports, erasure } = today;
-  const sectionLink = useSectionLink(tenant, true);
   const unread = (name: 'acceptedQuotesNotStarted' | 'serviceRequestsToQuote') =>
     team?.unavailable?.includes(name) ?? false;
   const quotes = team && !unread('acceptedQuotesNotStarted') ? team.acceptedQuotesNotStarted : null;
@@ -846,7 +840,7 @@ function DeskAlsoWaiting({
         <ul className="ux-today-tiles" aria-label="Also waiting">
           {team && (mayCount || quotes !== null) && (
             <WaitingItem
-              href={sectionLink('workspace-commercial')}
+              href="#workspace-commercial"
               value={quotes ?? 'Not available'}
               tone={quotes === 0 ? 'zero' : quotes === null ? 'unavailable' : undefined}
               words={plural(quotes, 'accepted quote not started', 'accepted quotes not started')}
@@ -855,7 +849,7 @@ function DeskAlsoWaiting({
           {team && (mayCount || services !== null) && (
             <WaitingItem
               /* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */
-              href={sectionLink('workspace-delivery', '#billing-services')}
+              href="#billing-services"
               value={services ?? 'Not available'}
               tone={services === 0 ? 'zero' : services === null ? 'unavailable' : undefined}
               words={plural(
@@ -996,7 +990,7 @@ function DecisionRegion({
 }) {
   const { filter, all, setAll, choose } = useNeedsFilter();
   const missionPages = useMissionPages();
-  const sectionLink = useSectionLink(tenant, true);
+  const sectionLink = useSectionLink(tenant);
   const tableId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-decide`;
   const views: RegionRowView[] = deskFilter(list, filter).map((row) => {
     const shared = {
@@ -1573,8 +1567,8 @@ export function TodayPanel({
               tenant={tenant}
               openCount={today.open.total}
             />
-            <DeskAlsoWaiting today={today} tenant={tenant} role={role} onRetry={retry} />
-            <ThisWeek today={today} tenant={tenant} desk onRetry={retry} />
+            <DeskAlsoWaiting today={today} role={role} onRetry={retry} />
+            <ThisWeek today={today} desk onRetry={retry} />
           </>
         )}
         {start}
@@ -1770,7 +1764,7 @@ export function TodayPanel({
           )}
         </div>
         <div className="ux-today-side">
-          {today && !failure && <ThisWeek today={today} tenant={tenant} />}
+          {today && !failure && <ThisWeek today={today} />}
           {start}
         </div>
       </div>
