@@ -13,7 +13,16 @@ describe('the place a problem report was filed from', () => {
     expect(
       reportedPlaceWords('/operator/missions/00000000-0000-4000-8000-000000000001?tab=quotes'),
     ).toBe('Missions');
-    expect(reportedPlaceWords('/operator')).toBe('Today');
+    // The bare workspace address can be any section whose query or hash was stripped: no guess, the caller shows it.
+    expect(reportedPlaceWords('/operator')).toBeNull();
+    expect(reportedPlaceWords('/operator/audit')).toBe('Audit');
+    expect(reportedPlaceWords('/operator/health')).toBe('Health');
+    expect(reportedPlaceWords('/operator/readiness')).toBe('Readiness');
+    expect(reportedPlaceWords('/operator/controls')).toBe('People and access');
+    expect(reportedPlaceWords('/operator/owner')).toBe('Owner page');
+    expect(reportedPlaceWords('/operator/supply')).toBe('Supply');
+    expect(reportedPlaceWords('/operator/inbox')).toBe('Inbox');
+    expect(reportedPlaceWords('/operator/authenticator')).toBe('Authenticator');
     expect(reportedPlaceWords('/operator/research')).toBe('Companies');
     expect(reportedPlaceWords('/operator/meetings#workspace-meetings')).toBe('Meetings');
   });
@@ -32,11 +41,9 @@ describe('reply review styles reach the desk with the switch off as they were (R
     expect(start, selector).toBeGreaterThanOrEqual(0);
     return css.slice(start, css.indexOf('}', start));
   };
-  it('keeps the 14rem column minimum unless the desk is on', () => {
-    expect(rule('.reply-review-columns')).toContain('minmax(14rem, 1fr)');
-    expect(rule(".reply-review[data-desk='true'] .reply-review-columns")).toContain(
-      'minmax(min(14rem, 100%), 1fr)',
-    );
+  it('lets a column be narrower than 14rem on a phone with the switch on or off (320 px overflow)', () => {
+    expect(rule('.reply-review-columns')).toContain('minmax(min(14rem, 100%), 1fr)');
+    expect(css).not.toContain(".reply-review[data-desk='true'] .reply-review-columns");
   });
   it('gives the small reply heading its size and weight only on the desk', () => {
     expect(css).not.toMatch(/^\.reply-review-card h6 \{/m);

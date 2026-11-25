@@ -252,7 +252,8 @@ const richCommunications = {
 const richMeetings = {
   ...meetings,
   meetings: meetings.meetings.map((m) =>
-    m.status === 'SCHEDULED'
+    // A cancelled meeting keeps the time it had (starts_at is never cleared): its card must not say it "Meets".
+    m.status === 'SCHEDULED' || m.status === 'CANCELLED'
       ? {
           ...m,
           starts_at: '2026-12-10T09:00:00.000Z',
@@ -472,6 +473,10 @@ test('F5 switch on: the meeting page speaks plainly, tells cards and replies apa
   const scheduled = section.locator('.ux-meeting-column').nth(2).locator('article.meeting-card');
   await expect(scheduled).toContainText('Meets');
   await expect(cards.first()).not.toContainText('Meets');
+  // A cancelled meeting still holds its old time but is not meeting then: no "Meets" on its card.
+  const cancelled = section.locator('article.meeting-card', { hasText: 'Meeting 6 cancelled' });
+  await expect(cancelled).toHaveCount(1);
+  await expect(cancelled).not.toContainText('Meets');
   // The change button stays on one line.
   const button = cards.first().getByRole('button', { name: /^Update Meeting/ });
   const box = await button.boundingBox();
@@ -568,6 +573,10 @@ test('D11 switch on: an introduction is never in a column, and the outreach note
   await expect(board.locator('article > h5', { hasText: 'Introduction Only Buyer' })).toHaveCount(
     0,
   );
+  // Stronger than the heading check: the buyer may appear on a meeting card ("With ...") and nowhere else.
+  await expect(
+    board.locator('article:not(.meeting-card)', { hasText: 'Introduction Only Buyer' }),
+  ).toHaveCount(0);
   await expect(board.locator('article', { hasText: 'Test Mode Buyer' })).toHaveCount(0);
   // The Introductions tab is one tap away and the test-mode note of the sent email is written on its card.
   // The sentence about introduction channels is in the Introductions tab, not above the board.

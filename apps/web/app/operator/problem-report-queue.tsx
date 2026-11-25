@@ -321,7 +321,15 @@ function QueuePanel({ tenant, tabbed }: { tenant: string; tabbed: boolean }) {
                         <>
                           <div>
                             <dt>{queueWords.where}</dt>
-                            <dd>{(tabbed ? reportedPlaceWords(item.page) : null) ?? item.page}</dd>
+                            <dd>
+                              {tabbed && reportedPlaceWords(item.page) ? (
+                                <>
+                                  {reportedPlaceWords(item.page)} <code>{item.page}</code>
+                                </>
+                              ) : (
+                                item.page
+                              )}
+                            </dd>
                           </div>
                           <div>
                             <dt>{queueWords.details}</dt>

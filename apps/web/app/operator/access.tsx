@@ -19,7 +19,7 @@ import {
   type MeetingStatus,
 } from '@corridra/domain/access';
 import { formatDateTime } from '../../lib/ux/format';
-import { countryName } from '../../lib/ux/options';
+import { countryName } from './country-name';
 import { ShowMore } from './show-more';
 import { Dialog } from '../../components/ux/dialog';
 import { meetingColumns, meetingStatusTone } from './meeting-columns';
@@ -965,7 +965,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 <h3 className={deskV41 ? 'sr-only' : undefined}>Meeting itinerary</h3>
                 <p>
                   {deskV41
-                    ? 'Times are shown in your time zone. Only team members with access see briefs and outcomes.'
+                    ? "Times show the meeting's time zone and yours. Only team members with access see briefs and outcomes."
                     : 'Times below show both the meeting timezone and your browser timezone. Briefs and outcomes stay private to authorized operators.'}
                 </p>
                 {deskV41 ? (
@@ -1379,7 +1379,7 @@ function MeetingCard({
           </span>
         </p>
         {response?.presentation.company && <p>With {response.presentation.company}.</p>}
-        {m.starts_at && <p>Meets {formatDateTime(m.starts_at)}.</p>}
+        {m.status === 'SCHEDULED' && m.starts_at && <p>Meets {formatDateTime(m.starts_at)}.</p>}
         <p>
           Next: {m.next_action} ·{' '}
           {data.owners.find((o) => o.user_id === m.owner_id)?.name ?? 'Not assigned'} · due{' '}
