@@ -228,59 +228,6 @@ function QueuePanel({ tenant, tabbed }: { tenant: string; tabbed: boolean }) {
     })),
   ];
 
-  /** The form that answers a move, for the report it is open on. */
-  const moveForm = (item: Item) =>
-    pending?.item.id === item.id ? (
-      <form
-        className="pr-queue-move"
-        onSubmit={(event) => void save(event)}
-        aria-label={`${pending.move.label} ${item.reference}`}
-        noValidate
-      >
-        <label htmlFor={`note-${item.id}`}>
-          {queueWords.noteLabel}
-          <span className="pr-tag">
-            {pending.move.noteRequired ? queueWords.noteRequired : queueWords.noteOptional}
-          </span>
-        </label>
-        <textarea
-          id={`note-${item.id}`}
-          rows={3}
-          value={note}
-          maxLength={problemReportLimits.note.max}
-          disabled={saving}
-          aria-required={pending.move.noteRequired}
-          aria-invalid={noteError ? true : undefined}
-          aria-describedby={`note-${item.id}-hint note-${item.id}-caution`}
-          onChange={(event) => setNote(event.target.value)}
-        />
-        <span id={`note-${item.id}-hint`} className="guide-hint">
-          {queueWords.noteHint}
-        </span>
-        <strong id={`note-${item.id}-caution`}>{queueWords.caution}</strong>
-        {noteError ? <p role="alert">{noteError}</p> : null}
-        {moveLine ? <ReportFailure failure={moveLine} links={links} /> : null}
-        <div className="pr-actions">
-          <button className="primary-link" type="submit" disabled={saving}>
-            {saving ? queueWords.saving : queueWords.save}
-          </button>
-          <button className="text-link" type="button" disabled={saving} onClick={cancel}>
-            {queueWords.cancel}
-          </button>
-          {moveFailure?.reload ? (
-            <button
-              className="text-link"
-              type="button"
-              disabled={busy || saving}
-              onClick={() => void load(null)}
-            >
-              {busy ? queueWords.reloading : queueWords.reload}
-            </button>
-          ) : null}
-        </div>
-      </form>
-    ) : null;
-
   return (
     <details ref={details} id={fragment} tabIndex={-1} className="receipt-disclosure ux-panel">
       <summary>
@@ -446,4 +393,59 @@ function QueuePanel({ tenant, tabbed }: { tenant: string; tabbed: boolean }) {
       </div>
     </details>
   );
+
+  // Declared here so the filter and the list read first; hoisted, so the return above uses it.
+  /** The form that answers a move, for the report it is open on. */
+  function moveForm(item: Item) {
+    return pending?.item.id === item.id ? (
+      <form
+        className="pr-queue-move"
+        onSubmit={(event) => void save(event)}
+        aria-label={`${pending.move.label} ${item.reference}`}
+        noValidate
+      >
+        <label htmlFor={`note-${item.id}`}>
+          {queueWords.noteLabel}
+          <span className="pr-tag">
+            {pending.move.noteRequired ? queueWords.noteRequired : queueWords.noteOptional}
+          </span>
+        </label>
+        <textarea
+          id={`note-${item.id}`}
+          rows={3}
+          value={note}
+          maxLength={problemReportLimits.note.max}
+          disabled={saving}
+          aria-required={pending.move.noteRequired}
+          aria-invalid={noteError ? true : undefined}
+          aria-describedby={`note-${item.id}-hint note-${item.id}-caution`}
+          onChange={(event) => setNote(event.target.value)}
+        />
+        <span id={`note-${item.id}-hint`} className="guide-hint">
+          {queueWords.noteHint}
+        </span>
+        <strong id={`note-${item.id}-caution`}>{queueWords.caution}</strong>
+        {noteError ? <p role="alert">{noteError}</p> : null}
+        {moveLine ? <ReportFailure failure={moveLine} links={links} /> : null}
+        <div className="pr-actions">
+          <button className="primary-link" type="submit" disabled={saving}>
+            {saving ? queueWords.saving : queueWords.save}
+          </button>
+          <button className="text-link" type="button" disabled={saving} onClick={cancel}>
+            {queueWords.cancel}
+          </button>
+          {moveFailure?.reload ? (
+            <button
+              className="text-link"
+              type="button"
+              disabled={busy || saving}
+              onClick={() => void load(null)}
+            >
+              {busy ? queueWords.reloading : queueWords.reload}
+            </button>
+          ) : null}
+        </div>
+      </form>
+    ) : null;
+  }
 }
