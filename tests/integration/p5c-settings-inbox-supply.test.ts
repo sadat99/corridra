@@ -177,10 +177,10 @@ describe('the Inbox', () => {
   test('the page draws the lists the desk already has and adds no read and no count of its own', () => {
     const lists = read('app/operator/inbox/inbox-lists.tsx');
     for (const list of [
-      '<ProblemReportQueue tenant={tenant} role={role} />',
-      '<ErasureQueue tenant={tenant} role={role} problemReports={problemReports} />',
-      '<ProgrammeApplicationQueue tenant={tenant} role={role} />',
-      '<HelperInterestList tenant={tenant} role={role} installed />',
+      '<ProblemReportQueue tenant={tenant} role={role} tabbed />',
+      '<ErasureQueue tenant={tenant} role={role} problemReports={problemReports} tabbed />',
+      '<ProgrammeApplicationQueue tenant={tenant} role={role} tabbed />',
+      '<HelperInterestList tenant={tenant} role={role} installed tabbed />',
     ])
       expect(lists).toContain(list);
     // The only request the page itself makes asks whether the helper interest register is installed.
