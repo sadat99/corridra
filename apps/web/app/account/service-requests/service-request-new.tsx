@@ -1,5 +1,6 @@
 'use client';
 import '../page-budget.css';
+import './service-request.css';
 import { realCustomerInput, customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import {
@@ -215,11 +216,6 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
         <div className="ux-state" data-state="unavailable">
           <p className="ux-state-label">Temporarily unavailable</p>
           <div role="alert">{message}</div>
-          <div className="ux-state-actions">
-            <a className="text-link" href="/account">
-              Return to your account
-            </a>
-          </div>
         </div>
       )}
       {state === 'ready' &&
@@ -278,7 +274,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
               <legend>Which help do you need?</legend>
               {catalogue.services.length === 0 && <p>No services are offered right now.</p>}
               {catalogue.services.map((s) => (
-                <div key={s.key} className="detail-card">
+                <div key={s.key} className="sr-choice">
                   <label>
                     <input
                       type="radio"
@@ -331,13 +327,10 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor={id + 'need'}>
-                    {realCustomerInput()
-                      ? 'What do you need?'
-                      : 'What do you need? (start with Synthetic)'}
-                  </label>
+                  <label htmlFor={id + 'need'}>What do you need?</label>
                   <textarea
                     id={id + 'need'}
+                    aria-describedby={realCustomerInput() ? undefined : id + 'need-hint'}
                     required
                     minLength={realCustomerInput() ? 2 : 11}
                     maxLength={1000}
@@ -345,6 +338,11 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
                     value={need}
                     onChange={(e) => edit(setNeed)(e.target.value)}
                   />
+                  {!realCustomerInput() && (
+                    <p id={id + 'need-hint'}>
+                      Sample mode: start your text with the word Synthetic.
+                    </p>
+                  )}
                 </div>
                 <div className="field">
                   <label htmlFor={id + 'from'}>Earliest date (optional)</label>

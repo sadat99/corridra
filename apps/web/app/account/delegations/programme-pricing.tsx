@@ -1,10 +1,11 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
-import { lazy, Suspense, useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { currencies, formatMoney } from '@corridra/domain/opportunities';
 import './programme-pricing.css';
 import { FeeScheduleActions } from './fee-schedule-actions';
 import { MoneyInput } from '../../../components/ux/money-input';
+import { SegmentedFilter, type SegmentOption } from '../../../components/ux/segmented-filter';
 import { CurrencySelect } from '../../../components/ux/pickers';
 import { useFormDraft } from '../../../lib/ux/use-form-draft';
 import {
@@ -174,34 +175,13 @@ export function ProgrammePricing(props: Props) {
 
 function ScopedPricing(props: Props) {
   const [section, setSection] = useState<Section>('pricing');
-  const tabs = useRef<Record<Section, HTMLButtonElement | null>>({
-    pricing: null,
-    series: null,
-    exports: null,
-  });
-  const order: Section[] = ['pricing', 'series', 'exports'];
-  const labels: Record<Section, string> = {
-    pricing: 'Pricing',
-    series: 'Series',
-    exports: 'Exports',
-  };
-  function move(event: KeyboardEvent, current: Section) {
-    const i = order.indexOf(current);
-    const next =
-      event.key === 'ArrowRight'
-        ? order[(i + 1) % order.length]
-        : event.key === 'ArrowLeft'
-          ? order[(i + order.length - 1) % order.length]
-          : event.key === 'Home'
-            ? order[0]
-            : event.key === 'End'
-              ? order[order.length - 1]
-              : null;
-    if (!next) return;
-    event.preventDefault();
-    setSection(next);
-    tabs.current[next]?.focus();
-  }
+  // One tab row per page (UI/UX.v4.1): the page tabs are the only tablist, so the three sections are a
+  // segmented choice. The panel keeps its id; the section not chosen is not drawn, as before.
+  const sections: SegmentOption<Section>[] = [
+    { value: 'pricing', label: 'Pricing' },
+    { value: 'series', label: 'Series' },
+    { value: 'exports', label: 'Exports' },
+  ];
   return (
     <section className="detail-card pricing-area" aria-label="Pricing, series and exports">
       <h3>Pricing, series and exports</h3>
@@ -209,31 +189,15 @@ function ScopedPricing(props: Props) {
         Your own price lists, repeat editions and downloads. Everything here is a record you keep.
         Corridra collects, holds and moves no money.
       </p>
-      <div className="pricing-tabs" role="tablist" aria-label="Pricing sections">
-        {order.map((key) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            id={'pricing-tab-' + key}
-            aria-selected={section === key}
-            aria-controls={'pricing-panel-' + key}
-            tabIndex={section === key ? 0 : -1}
-            ref={(node) => {
-              tabs.current[key] = node;
-            }}
-            onClick={() => setSection(key)}
-            onKeyDown={(event) => move(event, key)}
-          >
-            {labels[key]}
-          </button>
-        ))}
+      <div className="pricing-tabs">
+        <SegmentedFilter
+          label="Pricing sections"
+          value={section}
+          options={sections}
+          onChange={setSection}
+        />
       </div>
-      <div
-        role="tabpanel"
-        id={'pricing-panel-' + section}
-        aria-labelledby={'pricing-tab-' + section}
-      >
+      <div className="pricing-panel" id={'pricing-panel-' + section}>
         {section === 'pricing' && <PricingSection {...props} />}
         {section === 'series' && (
           <Suspense fallback={<p role="status">Loading series…</p>}>

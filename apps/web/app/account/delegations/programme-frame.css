@@ -16,12 +16,13 @@
   border-radius: var(--radius-sm);
   background: var(--surface-1);
 }
-@media (min-width: 48rem) {
+/* 44 px targets up to and including 768 px; the smaller menu button starts above it. */
+@media (min-width: 48.01rem) {
   .ux-prog .ux-prog-more .ux-menu-button {
     min-height: 2.25rem;
   }
 }
-@media (max-width: 47.99rem) {
+@media (max-width: 48rem) {
   .ux-prog :is(button.text-link, button.primary-link, .ux-menu-button) {
     min-height: 44px;
   }

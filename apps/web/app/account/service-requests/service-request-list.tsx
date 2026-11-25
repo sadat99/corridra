@@ -1,5 +1,6 @@
 'use client';
 import '../page-budget.css';
+import './service-request.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   basisText,
@@ -122,11 +123,11 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
                 </div>
               </div>
             ) : (
-              <ul className="guide-list">
+              <ul className="sr-rows">
                 {list.requests.map((r) => {
                   const label = statusLabel[r.status];
                   return (
-                    <li key={r.id} className="detail-card">
+                    <li key={r.id}>
                       <h3>
                         <a href={'/account/service-requests/' + workspaceId + '/' + r.id}>
                           {r.serviceTitle}
@@ -165,7 +166,7 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
           </div>
           <div>
             {catalogue && catalogue.services.length > 0 && (
-              <details className="ux-journey-disclosure">
+              <details className="account-fold">
                 <summary>What we can help with</summary>
                 <ul>
                   {catalogue.services.map((s) => (
@@ -181,7 +182,7 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
               </details>
             )}
             {list.canRequest && (
-              <section aria-labelledby="start-help-title" className="detail-card">
+              <section aria-labelledby="start-help-title" className="sr-part">
                 <h3 id="start-help-title">Ask for help</h3>
                 <p>
                   Help is requested from the place it is about. Open one and choose Request help.
@@ -204,11 +205,6 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
           </div>
         </div>
       )}
-      <p>
-        <a className="text-link" href="/account">
-          Return to your account
-        </a>
-      </p>
     </section>
   );
 }
