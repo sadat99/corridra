@@ -8,7 +8,8 @@ if (
   process.env.APP_ORIGIN === 'http://127.0.0.1:3200' &&
   process.env.DATA_ENVIRONMENT === 'synthetic' &&
   !process.env.VERCEL_ENV &&
-  f && existsSync(f)
+  f &&
+  existsSync(f)
 ) {
   const c = JSON.parse(readFileSync(f, 'utf8'));
   process.env.CORRIDRA_NEON_AUTH_ENABLED = 'true';

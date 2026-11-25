@@ -5316,3 +5316,124 @@ Follow-ups (not done in this run):
 Checks on this records branch: in the PR body.
 
 Next action: the owner's switch preview, then the owner live steps, each only on the owner's word: PR 607 owner switch; reassign the 11 missions; China, EU, UK and US routes and packs; retire the 8 sample companies and the AL>AU route; turn `CORRIDRA_UX_TEAM_DESK_V41` on.
+
+## 25 Nov 2026: Team desk v4.1 fixes: shared shell, tabs, menu, palette (PR 648)
+
+Unit F1 of the 25 Nov team desk v4.1 audits, Class B, merged as 060a8b41f6578ed8e24363d73964588260756ac4 (head branch `audit/v41-switch-off`, reused at the branch limit). Condensed from the PR body.
+
+What changed: the workspace switch is on every team page from a server-read list, in name order, with no empty gap; a page the role may not open shows Today with one access notice at the top and no menu focus; old `#` page links open at the top with no focus box; the search palette lists menu v3; "Team and access" has one casing; the first Settings segment is "Routes and settings"; scrolling tab rows show an edge shadow; the menu fits 1440 x 900; quiet footer links are 44 px; the Missions name cell reads as a name. Off-state changes: note position (same sentence), no self-scroll on address open, sorted workspace select, footer link height, mission name cell.
+
+Fixed: staff-admin-01, -02, -03, -07 (casing), -08 (segment name), -10, -16, -17 (picker), -23; staff-core-02 (globals), -06, -07 (focus), -20; public-customer-01 (sub-tabs), -16 (footer); switch-off F7, F9; follow-ups TeamPalette old maps, picker order, empty switcher gap.
+
+Rejected or elsewhere: staff-core-16 Dialog Close (already 44 px); public-customer-16 menu button and small targets (F2 files); public-customer-12 globals part; Status focus box (fieldset, F4); second tab rows and "Reports (0)" (F4); switch-off F10, F13 (F3, F4); KI-28 header spare (team header); server workspace order (`app.my_tenants`, SQL).
+
+Checks (PR body, on e0559ba): format:check, lint, typecheck, test (135), build exit 0; d4-page-pattern 180 and team-menu-v3 plus p5c-desk 730 at `--repeat-each 10`; nine shell specs 245. Not verified: database-backed operator specs, `tests/ux`, a real server render of the layout, 200% text by eye, Safari and Firefox for the scroll cue.
+
+## 25 Nov 2026: Team desk v4.1 fixes: status and admin (PR 649)
+
+Unit F4, Class B, merged as 49c478d1ed3ca507a3f31575e7787135779d20a0. Condensed from the PR body.
+
+What changed (switch on): one page instead of inner tabs on the desk sections; staff-admin -04 -05 -06 -07 (part) -09 -13 -14 -15 -17 -18 -20 -21 -22 -25; wording. Switch-off audit: F10, F13, F12 (an inner heading repeating the page title is screen-reader only, decided on the server by `ux-titled-<section id>`); F15 (Sources and claims list a readable name, the id behind "Source reference"); F2, F3 (Today lists stack at 200% text by container queries); R2 (Supply breadcrumb rules only with the v4.1 frame).
+
+Off-state changes (Guardian approved): Delivery heading "Reports"; `ux-titled-<section id>` class with headings one pixel where the title says the same; Sources readable names; Money history heading names its opportunity for screen readers; Today container queries and tool tile wrapping; Status panel border at 1024 px and up and revoke note at `--text-sm`; `data-label` cells in `operations.tsx`; Supply breadcrumbs as before when off; Owner page "not configured" (switch on only).
+
+Rejected or not done: F11 two-line clamp (Today 1.019 screens at 1440 x 900 against 1.0); staff-admin -24 (step-up, went to PR 654); -25 raw switch names (final sweep, PR 653); `lib/workspace-navigation.ts` label (legacy bars only).
+
+## 25 Nov 2026: Team desk v4.1 fixes: inbox, meetings, companies (PR 650)
+
+Unit F5b, Class B, merged as 1c40465bd403b92fe86d9e26a83224cc9cd413d3. Condensed from the PR body. No auth, RLS, money, API or payload change (option values added before any option text changed).
+
+Fixed (switch on): Meetings (core-21 to -24, F12) cards name the buyer and, only when SCHEDULED, the time; plain words; country by name (`countryName`). Inbox (core-27, -28, -30, -31, G55) repeated headings screen-reader only, "Erasure requests" casing, plain "history of changes", labelled problem report facts with menu words, answer form in the shared dialog, no "Return to Today". Companies (core-33, admin-11/F14, -12, -13 part) heading, new `counterparties.css` search row, one date form, country by mark and name, source ids hidden, "Find Possible Matches".
+
+Off-visible: "1 company record" grammar; R1 revert; reply review column minimum `min(14rem, 100%)` in both states (320 px overflow fix). Review fix c76ba0e: `countryName` in `lib/ux/options.ts` catches the `Intl.DisplayNames` RangeError, so `access.tsx` no longer pulls `flag.css` into its bundles.
+
+Rejected or blocked: core-26 erasure STEP_UP_REQUIRED (Class A, went to PR 654); core-25, core-29 (need API; core-25 and core-29 went to PR 655); core-21 mission name on cards (pinned by D11); "Meeting command reason", "Dispatch Pending Introductions", "Show entity matching and ambiguity" (pinned); core-23, core-24 (went to PR 655); core-31 type sizes.
+
+Checks (PR body, head c76ba0e): format:check, lint, typecheck, test, build exit 0; ten vitest files pass; p5a at `--repeat-each 10` 270; operator blast radius 507 plus 296 passed (10 skipped). Not run locally: full test:operator, test:ux, test:e2e.
+
+## 25 Nov 2026: Team desk v4.1 fixes: public and customer screens (PR 651)
+
+Units F2c and F2d, Class B, merged as a054c51c099e70846b556273901ba8f6c803eb0d (head branch `audit/v41-public-customer`). Condensed from the PR body. Ships whatever `CORRIDRA_UX_TEAM_DESK_V41` is set to: no changed code reads it; no address, element name, id, payload, role gate or money text changed.
+
+Fixed: public-customer-01 to -09, -11, -17 to -23, -25, -26. Partly: -12, -13, -14, -16, -24. Not changed: -10 (owner's locked public-home spec), -15 (sr-only h1 pinned), -27 (fairs link), -21 (Quick room rejected). Account menu keeps the name "Account menu". New `tests/browser/no-repeated-links.spec.ts` on /, /corridors, /privacy, /signup, /how-it-works, /sell (kept repeats: home `/plan`, How It Works `/plan` variants). Helper board keeps its live words; the Reviewer row reads "Independent reviewer" (main printed a raw id): a recorded builder decision, NOT owner-approved wording. New help request: Try Again only on a real error, focus kept after retry. Quote costs containment moved to `globals.css` (operator shard 6 phone overflow). Programmes tab kept beside the create view (removing it broke the two-screen phone budget); owner note: the plan wanted the empty tab gone.
+
+Checks (PR body): format:check, lint, typecheck, test, build pass; touched ux specs 2690 then 1080 at `--repeat-each 10`; operator shard 6 394 passed; integration 7563 passed (4 files need ClamAV or pg_dump). Not covered by the link-repeat check: billing, new help request, contributor me, profile, saved request, member report, company portfolio, workspace. Not run locally: full test:operator, test:ux, test:e2e.
+
+## 25 Nov 2026: Team desk v4.1 fixes: missions, mission page, today (PR 652)
+
+Unit F3 (finished in F3c), Class B, merged as 2f94afa04af9b1b61a68534baf1dda182bd38ff6 (head branch `audit/v41-staff-core`). Copied from the PR body.
+
+FIXED: staff-core -01 to -05, -07 (mission part), -08 to -12, -13 (part), -15, -16 (mission part), -17, -18, -19 (part), -32 (link part); Today double message and grammar (G55); Overview 2.13 to 1.71 screens at 390; mission page flag needs SHELLS_V2; switch-off F1, F5, F6, F10, F11, F16, R1. F3c: Today heading kept in all three panel paths; empty Missions words (off equals main); a stale authenticator check on the erasure read is the one quiet Confirm Code line; the erasure read and tile are owner only (members.manage).
+
+REJECTED: -08 crumb and stage word (plan D6); -13 rename Delivery and per-meeting links (plan decision 2); -14 stale-check 403 (Class A, PR 654); -07 Today tiles and -19 title size (shell files).
+
+OFF-STATE CHANGES: Missions table stacks at 320 and 390; always-unavailable Today tiles hidden; admin erasure read and tile removed; Confirm Code line on the operator desk; "could not be read" wording; duplicate Open Meetings link removed; pager hidden on one page; Replies Open Reports link removed (no-repeated-links rule of 24 Nov supersedes option C); Today h2 kept.
+
+Checks (PR body): format:check, lint, typecheck, test, build exit 0; 43 integration files 987 passed; design-system guards 41 pass; five operator specs 940 at `--repeat-each 10`. NOT VERIFIED: `workspace.spec` and `zz-*` (CI); a real signed-in pass; 1024 and 1920 by eye.
+
+## 25 Nov 2026: Team desk v4.1: final sweep (PR 653)
+
+Final sweep of the four v4.1 audits, Class B, merged as 7f48e112928748cb044512c25824dc185bc5f6c0. Condensed from the PR body.
+
+Desk-only under `.ux-desk-frame` (off unchanged, measured at 390 and 1440): no outer card round a desk page; Propose Meeting on the left edge; Dialog Close 44 px in a desk panel; quiet denied or empty label; no Supply Sources link from Companies under menu v3; no fieldset box in panel forms (staff-admin-05); Control Center Flag column and repository path paragraphs in closed "Technical details" folds (staff-admin-25, S03); v4.1 Today queue tiles open section addresses when section addresses are on (S04, `OperatorFlags.sectionAddresses`, default false); place names in words for A06a-d (route option, `RouteWords`, route-pack option, Missions route filter, Quotes Market line); country words (L1) for A05 sample Room, A06f company link review, A06g Status route option, A06h helper headings, A06i invoicing supplier line.
+
+Not switch-scoped, with reasons: `problem-reports.css` closed rows to 44 px; `/workspace` sign-in block card-in-card and footer links; `home-routes-data.ts` goal links to their own jobs (public bug fix); A06p shared report shortlist country shows the written name in its mark ("Bangladesh", was "BD"), pinned by `l1-country-mark.test.ts`.
+
+Kept as live copy after review: forgot-password words, Control Center Flag column, state words, the Status route arrow. For the record, 29 of 30 module labels equal the registry; "Guided request drafts" differs from "Saved guided requests". Not done: pc-12 card in card, All Tools rows, chips cue (later builder); S02 quote cost table (PR 651 owns it); workspace list order (`packages/auth/src/access.ts:31` has no ORDER BY; follow-up); "Back to Corridra" and forgot-password words (joint pass with the owner's words); F7 API items (PR 654).
+
+Checks (PR body, head 8ddb86d): format:check, lint, typecheck, test, build exit 0; integration 1196; guards 58; whole operator suite on 7c489a4 2401 passed, 32 skipped; 24 files after the 651 merge 550 passed; ux 306; browser 465. Watch: `p5b-helpers-status-team.spec.ts:494` failed once in a subset run (unwaited read of `data-desk-section` nodes), passed 10 of 10 alone. Not run: full test:e2e, full test:ux, axe, 200% text, a separate switch-OFF walk.
+
+## 25 Nov 2026: Team desk v4.1 access fixes: step-up on lapsed-check reads, Health and Readiness owner and admin only (PR 654)
+
+Unit F7 and review round F7b, Class A, merged as 83635486adaa2f6f073961589410455a36b7179f. Condensed from the PR body. Behaviour is the same with `CORRIDRA_UX_TEAM_DESK_V41` ON and OFF. Findings: staff-core sc-14, sc-17, sc-26, sc-29, sc-32; staff-admin sa-24; switch-off F4, F5, F8.
+
+Behaviour changes, each with a denial and an allowed-path test: `deliveryError` keeps `STEP_UP_REQUIRED` on a refused lapsed-check read (erasure queue, service requests, billing and the other `deliveryError` routes; admin still 403 with no code on the erasure queue); network invitations, invite and revoke POST and the contributor picker answer 401 `STEP_UP_REQUIRED` only when the role may read and `app.fresh_mfa()` is false (`lib/step-up-refusal.ts`, `stepUpWhenRoleAllows`), else the honest 403, so Confirm Code cannot loop; mission withdrawal read checks role first (reviewer, viewer 403 without calling the function); one shared `ReverifyLine` (Reports billing group probe, Helpers invitations, `ReferencePicker`); erasure queue list and move through `withStepUp` with plain owner-only and confirm-code lines.
+
+Permission changes (owner ruling 25 Nov 2026, "block"): Health and Readiness are owner and admin only, on the server, with the switch ON or OFF; `GET /api/workspace/operations-health` refuses every role but owner and admin; an operator, reviewer or viewer typing `/operator/health` or `/operator/readiness` is redirected to Today (`?unavailable=1`) with the existing role note; the avatar menu offers an operator only the Authenticator. KI-40 is superseded; the frozen role tables in `staff-parity`, `team-navigation-map` and `d4-page-pattern` tests were edited (G58 approved). New `AccessService.authority(ctx)`.
+
+Checks (PR body): prettier, lint, typecheck, build clean; docs 135; new vitest files pass with bite proofs (5 of 11, 8 of 15 fail without the source); 53 operator spec files on a fresh database 804 passed, 10 skipped; six edited specs 560 at `--repeat-each 10`; vitest 347 in 18 files. No jsdom test for the probe group and the in-place check in the browser.
+
+## 25 Nov 2026: Team desk v4.1 fixes: inbox addendum (unit F5c) (PR 655)
+
+Unit F5c, Class B, merged as 53da18fcdb51398270f3b110cbcb5f02da344219. Condensed from the PR body. Everything visible behind `CORRIDRA_UX_TEAM_DESK_V41`; the switch-off path unchanged. No API, auth, RLS, money or payload change.
+
+What changed: staff-core-23 Propose Meeting offered on interested replies only, in two steps of one form (field names and the single `propose` payload unchanged; Enter on step 1 is Continue; empty case says so); staff-core-24 Approve Policy, Approve Template and Create Private Introduction are secondary in their folds; staff-core-25 a reader who may not manage meetings reads "No meetings you can see."; staff-core-29 in the Inbox, after one list read passes the fresh check, each opened tab loads its own list once (`inbox/inbox-check.tsx`, client only; byte-identical HTML without the provider); staff-core-33 the mission banner keeps its live words "Adding companies to <mission>" (Guardian review) with banner styling and 44 px buttons under `.research-v41`; A06e policy list country by mark and name, policy choice in words; scheduled card reads "Meets <time in the meeting's zone>. Your time: <reader's time>."
+
+Checks (PR body, merged head 8c29162f): format:check, lint, typecheck, test (135), build exit 0; vitest 218; four touched specs 1100 at `--repeat-each 10`; full test:operator on 53c93f91 2393 passed, 32 skipped, 0 failed. Review fixes on 9e56a487 re-checked. Not run locally: test:ux, test:e2e, test:verification.
+
+## 25 Nov 2026: Home v4.2 behind CORRIDRA_UX_HOME_V42 (PR 656)
+
+Owner, 25 Nov 2026, first hand: "lock this v4.2", "Add a switch, off by default". Class B, visible UI only, merged as 7a93d7f09c3dc75fc2e827629099f2ada83f7024 (head branch `ccr-6f12d452-jiebrb`). Condensed from the PR body.
+
+What changed: the public home `/` v4.2 composition and the trimmed footer behind `CORRIDRA_UX_HOME_V42` (on only when exactly `true`). Off (default): home `<main>` and footer byte for byte main a054c51c (`tests/ux/home-v42-off.spec.ts`), and no v4.2 stylesheet or code on the off home (lazy chunk via `components/home-v42-page.tsx` and `next/dynamic`). On: navy hero with the live headline and lead and a flat route map; "Which way is your business moving?" as option 1 with "Bangladesh buys from China" and "Bangladesh sells to EU, UK, US, Australia"; the chosen route under the choice; the request brief always on the page; How it works with the four rules, Trust, Who it is for as tiles; route statuses; Straight answers (3, 4, 6, 8 open); Plain limits on navy; live closing band; trimmed footer on every public page using it. Words `home.v42.line.buys`, `home.v42.line.sells`, `home.v42.not.eyebrow` in all seven catalogs; English freeze regenerated. Native language review NOT done; that gate stays OPEN. Records in the PR: `docs/revamp/specs/ui-ux-v4-2.md`, ui-direction v4.2 amendment and rows, PLAN_STATUS row, documentation map. Decisions: see the decision record in `ui-ux-v4-2.md` (records PR of 25 Nov).
+
+Checks (PR body): format:check, lint, typecheck pass; test 135; test:integration 7614 passed, 4 need Docker (KI-15); test:ux (off build) 908; browser 864 passed (2 parallel-run failures, 144 of 144 alone); home-v42 plus off 190 at `--repeat-each 10`; real ON production build at six widths, 100% and 200% text, axe, keyboard and no-JS 13 of 13; after review fixes (head 8e7252e) the must-run sets pass again. Not run: native review.
+
+## 25 Nov 2026: LATER fix unit (PR number pending)
+
+SLOT: G64 sends the PR number, merge SHA and body; this entry is filled in the second push of the records PR. Until then nothing is recorded here.
+
+## 25 Nov 2026: Team desk v4.1 audit fixes and home v4.2 records (Guardian 64)
+
+Records only (docs only), written by records builder R1 for Guardian 64 (session_0187kU9vEECr6R7YjH1YQFmA) on branch `audit/v41-env`. Authority stamp named in the brief: auth-011a44290375; `node scripts/authority.mjs stamp` on origin/main 53da18f printed auth-c0a636cc7e69 (reported to the Guardian). No application code, test or ADR changed.
+
+Merges recorded, each read with `gh api repos/sadat99/corridra/pulls/N`: 648 060a8b41, 649 49c478d1, 650 1c40465b, 652 2f94afa0, 651 a054c51c, 654 83635486, 653 7f48e112, 656 7a93d7f0, 655 53da18fc (merge order by time). Production READY after each merge is the Guardian's report; the records builder did not read the deployments. No signed-in live pass is claimed.
+
+Records applied: the nine PR entries above, condensed from their PR bodies; the four audit files kept in `docs/revamp/audits/` with `preview-env`, their 35 screenshots dropped; the conformance notes in `docs/revamp/v4-1-conformance.json`; the ledger and the lanes table; the home v4.2 decision record and the H1 order fix in `docs/revamp/specs/ui-ux-v4-2.md`.
+
+Owner ruling, 25 Nov 2026 (relayed by the Guardian; built in PR 654): Health and Readiness are blocked for the operator role on the server too, not only in the menu. KI-40 is superseded.
+
+Switch state: `CORRIDRA_UX_TEAM_DESK_V41` (v4.1 desk) is live per the Guardian; `CORRIDRA_UX_HOME_V42` recorded OFF (default) until the Guardian says otherwise.
+
+Follow-ups (not done in this run):
+
+- Module label "Guided request drafts" differs from the registry label "Saved guided requests" (29 of 30 match).
+- Workspace list order: `packages/auth/src/access.ts:31` has no ORDER BY outside real use, if still deferred.
+- `/how-it-works` repeated `/plan` links: deferred, kept as a recorded repeat in `no-repeated-links.spec.ts`.
+- Flake watch: `tests/operator/p5b-helpers-status-team.spec.ts:494` reads `data-desk-section` nodes with an unwaited `evaluateAll`.
+- Helper board Reviewer row "Independent reviewer" (contributor wording): for owner review, not owner-approved.
+- A06p: the OFF path of the shared report's country words (the mark and its name show in both switch states).
+- staff-core-33: the Companies banner keeps the live words "Adding companies to <mission>".
+- Native language review gate OPEN for the `home.v42.*` words (`home.v42.line.buys`, `home.v42.line.sells`, `home.v42.not.eyebrow`).
+
+Next action: the owner's word on `CORRIDRA_UX_HOME_V42`; the LATER fix unit's record (slot above).

@@ -36,7 +36,9 @@ await step('modules', () => installLocalModules(db));
 await step('controls', () => openLocalControls(db));
 await step('issuer', () => pinLocalCustomerIssuer(db, customers.base));
 await step('supply', () => configureSupplySources(db, { enabled: true, reason }));
-await step('counterpartyChanges', () => configureCounterpartyChanges(db, { enabled: true, reason }));
+await step('counterpartyChanges', () =>
+  configureCounterpartyChanges(db, { enabled: true, reason }),
+);
 await step('sourcingInstall', () => migrateSourcingWorkflow(db));
 await step('sourcing', () => configureSourcingWorkflow(db, { enabled: true, reason }));
 await db.end();

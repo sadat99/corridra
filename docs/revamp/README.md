@@ -57,6 +57,23 @@ Shared and frozen for every track: `globals.css`, tokens, `app/layout.tsx`, `pac
 
 The ledger, work log and gap register are shared. Each session appends its own entry and rebases before merge; nobody rewrites another session's entry.
 
+## Current lanes, 25 November 2026
+
+Team desk v4.1 audit fixes and home v4.2, Guardian 64 `session_0187kU9vEECr6R7YjH1YQFmA`. Team desk v4.1 is live (Guardian's report, not read by the scribe). Home v4.2 is merged behind `CORRIDRA_UX_HOME_V42`, recorded OFF (default); turning it on is the owner's step. Records: branch `audit/v41-env`.
+
+| Unit                               | PR   | Main       | State                             |
+| ---------------------------------- | ---- | ---------- | --------------------------------- |
+| F1 shell, tabs, menu, palette      | 648  | `060a8b41` | merged                            |
+| F4 status and admin                | 649  | `49c478d1` | merged                            |
+| F5b inbox, meetings, companies     | 650  | `1c40465b` | merged                            |
+| F3 missions, mission page, Today   | 652  | `2f94afa0` | merged                            |
+| F2 public and customer screens     | 651  | `a054c51c` | merged                            |
+| F7 access fixes (Class A)          | 654  | `83635486` | merged                            |
+| Final sweep                        | 653  | `7f48e112` | merged                            |
+| Home v4.2 (`CORRIDRA_UX_HOME_V42`) | 656  | `7a93d7f0` | merged, switch OFF                |
+| F5c inbox addendum                 | 655  | `53da18fc` | merged                            |
+| LATER fix unit                     | slot | slot       | pending, number from the Guardian |
+
 ## Current lanes, 24 November 2026
 
 Team desk v4.1 Phase 1 ([plan](specs/team-desk-v4-1.md)), main `d7d55c0`. Guardian 49 `session_0187kU9um92VEoZR8PyZvvmT` places, reviews and merges; Guardian 48 handed over. Merge order D1 > D1b > D2 > D2b.

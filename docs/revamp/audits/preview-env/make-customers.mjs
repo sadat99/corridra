@@ -1,6 +1,16 @@
 import { randomBytes } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
-const roles = ['customer', 'organiser', 'participant', 'seller', 'admin', 'operator', 'reviewer', 'viewer', 'helper'];
+const roles = [
+  'customer',
+  'organiser',
+  'participant',
+  'seller',
+  'admin',
+  'operator',
+  'reviewer',
+  'viewer',
+  'helper',
+];
 writeFileSync(
   process.argv[2],
   JSON.stringify({

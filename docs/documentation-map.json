@@ -1867,6 +1867,31 @@
       "path": "docs/revamp/specs/navigation-v1/team-reachability.md",
       "classification": "Current guide/contract",
       "use": "Navigation v1 team shell: every old team menu item and route with its new place in the header, sidebar and avatar menu, and the tests that prove it"
+    },
+    {
+      "path": "docs/revamp/audits/v41-public-customer.md",
+      "classification": "Product audit",
+      "use": "Audit record, 25 Nov 2026: team desk v4.1 audit of public pages, /account and /contributor (findings public-customer-01 to -27); fixed by PRs 648, 651 and 653; screenshots dropped, names kept as references; live state stays in the ledger"
+    },
+    {
+      "path": "docs/revamp/audits/v41-staff-admin.md",
+      "classification": "Product audit",
+      "use": "Audit record, 25 Nov 2026: team desk v4.1 audit of Status, Team and access, Helpers, Reports, Money, Supply and the owner page (staff-admin findings, PARTIAL); fixed by PRs 648, 649, 653 and 654; live state stays in the ledger"
+    },
+    {
+      "path": "docs/revamp/audits/v41-staff-core.md",
+      "classification": "Product audit",
+      "use": "Audit record, 25 Nov 2026: team desk v4.1 audit of Today, Missions, mission page, Meetings, Inbox and Companies (staff-core findings, PARTIAL); fixed by PRs 648, 650, 652, 653, 654 and 655; live state stays in the ledger"
+    },
+    {
+      "path": "docs/revamp/audits/v41-switch-off.md",
+      "classification": "Product audit",
+      "use": "Audit record, 25 Nov 2026: team desk with CORRIDRA_UX_TEAM_DESK_V41 OFF (findings F1 to F16, R1, R2); fixed by PRs 648, 649, 652 and 654; live state stays in the ledger"
+    },
+    {
+      "path": "docs/revamp/audits/preview-env/README.md",
+      "classification": "Program scaffolding",
+      "use": "Audit tooling guide: how the 25 Nov 2026 v4.1 audits seeded and served a local preview environment (scripts beside it); not a release or deployment runbook"
     }
   ]
 }
