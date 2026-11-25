@@ -30,7 +30,7 @@ export function HomeV42Hero() {
           <h1 id="home-title">{t('home.title')}</h1>
           <p className="tr-lead">{t('home.tr.lead')}</p>
         </div>
-        <figure className="hv42-map" role="img" aria-label={name}>
+        <figure className="hv42-map" aria-label={name}>
           <div className="hv42-map-body" aria-hidden="true">
             <p className="hv42-map-from">
               <Flagged code="bd" size="row">

@@ -3,7 +3,8 @@
    only: no raw colour, no gradient, glass or glow; weights 400, 500 and 600; radii 12 (cards) and 16 (panels and
    tiles); the capsule only for status. Text on navy is solid --on-brand. */
 
-/* The hero: the live brand line, headline and lead on the left, the route map on the right from 64 rem. */
+/* The hero: the live brand line, headline and lead on the left, the route map on the right from 48 rem, so the four
+   doors stay on the first screen (Public home: the first screen shows the jobs). */
 .ux-guide-home.tr-home .hv42 .hv42-hero {
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
@@ -11,13 +12,14 @@
   margin-top: var(--space-4);
   padding-block: var(--space-12);
 }
-@media (min-width: 64rem) {
+@media (min-width: 48rem) {
   .ux-guide-home.tr-home .hv42 .hv42-hero {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 47.99rem) {
   .ux-guide-home.tr-home .hv42 .hv42-hero {
+    gap: var(--space-5);
     padding-block: var(--space-8);
   }
 }
@@ -120,6 +122,43 @@
 @media (forced-colors: active) {
   .hv42 .hv42-map {
     --hv42-rule: 2px solid CanvasText;
+  }
+}
+/* Below 48 rem the map is one compact row: Bangladesh, then the five places, each flag with its name, no rails. */
+@media (max-width: 47.99rem) {
+  .hv42 .hv42-map .hv42-map-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+  .hv42 .hv42-map .hv42-map-from {
+    display: block;
+    flex-basis: 100%;
+  }
+  .hv42 .hv42-map .hv42-map-from::after,
+  .hv42 .hv42-map .hv42-map-to li::before,
+  .hv42 .hv42-map .hv42-map-to li::after {
+    content: none;
+  }
+  .hv42 .hv42-map .hv42-map-to {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
+    padding: 0;
+  }
+  .hv42 .hv42-map .hv42-map-to li {
+    min-block-size: 0;
+    padding: 0;
+  }
+  .hv42 .hv42-map .ux-flagged {
+    gap: var(--space-2);
+    font-size: var(--text-base);
+  }
+  .hv42 .hv42-map .ux-flag {
+    inline-size: 1.375rem;
+    block-size: auto;
   }
 }
 
@@ -225,27 +264,39 @@
   min-inline-size: 0;
 }
 
-/* How it works, Trust and Who it is for as tiles. One column on a phone; two from 64 rem. */
+/* How it works, Trust and Who it is for as tiles. One column below 80 rem. From 80 rem twelve columns: How it works
+   (7) with its four rules under it, Trust (5) beside both, then Who it is for across, so no tile leaves a gap. */
 .hv42 .hv42-bento {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   margin-top: var(--space-12);
 }
-@media (min-width: 64rem) {
+@media (min-width: 48rem) {
   .hv42 .hv42-bento {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: var(--space-6);
   }
+}
+@media (min-width: 80rem) {
+  .hv42 .hv42-bento {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
   .hv42 .hv42-bento > #how {
-    grid-column: span 7;
+    grid-column: 1 / span 7;
+    grid-row: 1;
+  }
+  .hv42 .hv42-bento > .hv42-rules {
+    grid-column: 1 / span 7;
+    grid-row: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .hv42 .hv42-bento > .hv42-trust {
-    grid-column: span 5;
+    grid-column: 8 / -1;
+    grid-row: 1 / span 2;
   }
-  .hv42 .hv42-bento > #who,
-  .hv42 .hv42-bento > .hv42-rules {
+  .hv42 .hv42-bento > #who {
     grid-column: 1 / -1;
+    grid-row: 3;
   }
 }
 .hv42 .hv42-tile,
@@ -350,6 +401,17 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+/* Who it is for: eight static cards, each an owned icon, the person and the full live promise. */
+.hv42 .hv42-people li {
+  padding: var(--space-4);
+  border-radius: var(--guided-card-radius);
+  background: var(--surface-2);
+}
+.hv42 .hv42-people .hv42-person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 .hv42 .hv42-rules > div,
 .hv42 .hv42-people li,

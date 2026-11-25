@@ -55,8 +55,9 @@ for (const width of widths) {
       await hero.locator('.hv42-hero').evaluate((el) => getComputedStyle(el).backgroundImage),
     ).toBe('none');
     const map = hero.locator('figure.hv42-map');
-    // One picture named from the live words; the names inside are not read a second time.
-    await expect(map).toHaveAttribute('role', 'img');
+    // One figure named from the live words; the names inside are not read a second time.
+    // A named figure, not role=img over text (UI spec, accessibility).
+    await expect(map).not.toHaveAttribute('role', /.+/);
     await expect(map).toHaveAttribute(
       'aria-label',
       'Bangladesh to China, the EU, the UK, the US, Australia',

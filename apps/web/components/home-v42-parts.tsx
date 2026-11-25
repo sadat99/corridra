@@ -1,5 +1,6 @@
 'use client';
 
+import { CorridraIcon, type IconName } from './corridra-icon';
 import { useT } from './language-provider';
 import type { HomeRoutesKey } from '../lib/home-routes-keys';
 
@@ -7,6 +8,17 @@ import type { HomeRoutesKey } from '../lib/home-routes-keys';
 // works, on every route.", "Trust, on every route(black)", "who it is for", "Plain Limits(black)""). Every word is an
 // existing key except the "Plain limits" eyebrow, which is the owner's own name for the section.
 const key = (name: string) => name as HomeRoutesKey;
+/** One owned icon per person, in the order of the live words (UI spec D3). */
+const personIcon: IconName[] = [
+  'sell',
+  'buy',
+  'work',
+  'company',
+  'globe',
+  'inbox',
+  'people',
+  'network',
+];
 /** Steps 8 to 13 are optional, the same rule as the live rail. */
 const optional = (i: number) => i >= 7 && i <= 12;
 
@@ -69,7 +81,8 @@ export function RulesTile() {
   );
 }
 
-/** Who it is for: the eight people, each with the full live promise (Conductor decision D3: no "You give"). */
+/** Who it is for: the eight people as static cards, each with an owned icon and the full live promise (Conductor
+ * decision D3: no "You give"). */
 export function PeopleTile() {
   const t = useT();
   return (
@@ -79,7 +92,10 @@ export function PeopleTile() {
       <ul className="hv42-people">
         {Array.from({ length: 8 }, (_, i) => (
           <li key={i}>
-            <strong>{t(key(`home.tr.pe.${i}`))}</strong>
+            <strong className="hv42-person">
+              <CorridraIcon name={personIcon[i]!} size={20} />
+              {t(key(`home.tr.pe.${i}`))}
+            </strong>
             <span>{t(key(`home.tr.pe.${i}.get`))}</span>
           </li>
         ))}
