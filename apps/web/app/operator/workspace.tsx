@@ -51,10 +51,14 @@ import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
 import { useOperatorFlags } from './operator-flags';
-import { deskStatusPlace } from '../../lib/ux/page-pattern';
+import { deskStatusPlace, isDeskPlace } from '../../lib/ux/page-pattern';
 import { EvidencePanel } from './evidence-panel';
 import { publishTeamContext } from '../../lib/ux/team-context';
-import { TeamDeskV41Context, publishTeamSwitcher } from '../../lib/ux/team-desk-v41';
+import {
+  TeamDeskV41Context,
+  publishTeamSwitcher,
+  sortTeamWorkspaces,
+} from '../../lib/ux/team-desk-v41';
 import { forgetDeviceRecents } from '../../lib/ux/palette-recents';
 import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 type RecordRow = OperatorRecordRow;
@@ -351,8 +355,18 @@ function TenantWorkspace({
     }
     if (target) openFoldsAround(target);
     const land = () => {
-      // Team desk v4.1: a section opened by its own address (no # part) opens at the top, under its title.
-      if (deskV41 && destination?.id === sectionId && !window.location.hash) return;
+      if (deskV41) {
+        // Team desk v4.1: a page opens at the top, under its title, and nothing is focused for the person: no
+        // box is drawn round the page body or the menu. That holds for a page opened by its own address, by an
+        // old `#` link that names the page (#workspace-research, #ops-dashboard), for a page whose body is still
+        // loading, and for a page the role may not open, where the note at the top of Today says so. The menu is
+        // focused only by its own address (#workspace-navigation). A block inside a page still gets the focus.
+        if (place === 'directory') return;
+        if (destination && isDeskPlace(fragment) && destination.id === fragment) {
+          if (window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          return;
+        }
+      }
       destination?.scrollIntoView();
       destination?.focus({ preventScroll: true });
     };
@@ -476,7 +490,7 @@ function TenantWorkspace({
   useEffect(() => {
     if (!menuV3) return;
     publishTeamSwitcher({
-      workspaces: tenants.map((entry) => ({ id: entry.id, name: entry.name })),
+      workspaces: sortTeamWorkspaces(tenants).map((entry) => ({ id: entry.id, name: entry.name })),
       current: tenant,
       busy,
       choose: (next) => chooseRef.current(next),
@@ -501,7 +515,7 @@ function TenantWorkspace({
               value={tenant}
               onChange={(e) => chooseTenant(e.target.value)}
             >
-              {tenants.map((t) => (
+              {sortTeamWorkspaces(tenants).map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
                 </option>
@@ -570,6 +584,13 @@ function TenantWorkspace({
           )}
           {shown('overview') && (
             <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
+              {/* Team desk v4.1: a page this role may not open shows Today, and says so first, in the open. */}
+              {deskV41 && unavailableSection && (
+                <p role="alert" className="ux-testmode">
+                  That page is not available for your role in this workspace, or the link is out of
+                  date. You are on Today. Ask your workspace owner if you need access.
+                </p>
+              )}
               <TodayPanel
                 key={`today-${tenant}`}
                 tenant={tenant}
@@ -599,13 +620,6 @@ function TenantWorkspace({
                       <a className="text-link" href="#workspace-missions">
                         Start a Mission
                       </a>
-                      {unavailableSection && (
-                        <p role="alert">
-                          This section is unavailable for your current workspace role or the link is
-                          outdated. Choose a place in the menu, or ask your workspace owner to
-                          review your membership.
-                        </p>
-                      )}
                     </DeskFold>
                   ) : (
                     <section

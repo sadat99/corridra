@@ -96,7 +96,12 @@ describe('where the seventeen places go', () => {
     expect(ids('team')).toEqual(['workspace-controls', 'workspace-audit']);
     expect(labels('team')).toEqual(['People and access', 'Audit']);
     expect(ids('settings')).toEqual(['workspace-settings', 'workspace-ai', 'ops-center', 'owner']);
-    expect(labels('settings')).toEqual(['Settings', 'Assistance', 'Control Center', 'Owner page']);
+    expect(labels('settings')).toEqual([
+      'Routes and settings',
+      'Assistance',
+      'Control Center',
+      'Owner page',
+    ]);
   });
   test('no place sits in two groups and the stand-alone places show no segments', () => {
     const grouped = Object.values(deskGroups).flatMap((group) => group.segments.map((s) => s.id));
@@ -228,7 +233,7 @@ describe('the browser tab title with the pattern on', () => {
     expect(deskTabTitle('workspace-sources')).toBe('Sources and claims \u00b7 Companies');
     expect(deskTabTitle('ops-gates')).toBe('Readiness \u00b7 Status');
     expect(deskTabTitle('workspace-controls')).toBe('People and access \u00b7 Team and access');
-    expect(deskTabTitle('workspace-settings')).toBe('Settings');
+    expect(deskTabTitle('workspace-settings')).toBe('Routes and settings \u00b7 Settings');
     expect(deskTabTitle('owner')).toBe('Owner page \u00b7 Settings');
     for (const place of everyPlace) expect(deskTabTitle(place).length).toBeGreaterThan(0);
   });

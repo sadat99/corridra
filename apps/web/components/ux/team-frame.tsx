@@ -10,7 +10,7 @@ import { useLanguage } from '../language-provider';
 import { localeMeta } from '../../lib/i18n/locales';
 import { subscribeToHash } from '../../lib/address-store';
 import { teamSidebarShown } from '../../lib/ux/shells';
-import { TeamDeskV41Context } from '../../lib/ux/team-desk-v41';
+import { TeamDeskV41Context, type TeamWorkspace } from '../../lib/ux/team-desk-v41';
 import { publishTeamFlags } from '../../lib/ux/team-flags';
 import { LeftNavFrame } from './left-nav';
 import { setLeftNavOpen } from './left-nav-store';
@@ -27,6 +27,7 @@ export function TeamFrame({
   desk = false,
   deskV41 = false,
   supply = false,
+  workspaces = [],
 }: {
   children: ReactNode;
   urls: boolean;
@@ -39,6 +40,8 @@ export function TeamFrame({
   deskV41?: boolean;
   /** CORRIDRA_SUPPLY_SOURCES: the Supply Sources pages exist, so menu v3 may list Supply. */
   supply?: boolean;
+  /** Menu v3: the workspaces this person belongs to, for the switch on a page that does not mount the workspace. */
+  workspaces?: readonly TeamWorkspace[];
 }) {
   const pathname = usePathname();
   const { locale, t } = useLanguage();
@@ -80,12 +83,19 @@ export function TeamFrame({
             problemReports={problemReports}
             deskV41={deskV41}
             supply={supply}
+            workspaces={workspaces}
           />
         }
       >
         {children}
       </LeftNavFrame>
-      <TeamPalette urls={urls} ownerPage={ownerPage} desk={desk} />
+      <TeamPalette
+        urls={urls}
+        ownerPage={ownerPage}
+        desk={desk}
+        supply={supply}
+        problemReports={problemReports}
+      />
       <StepUpDialog />
     </TeamDeskV41Context.Provider>
   );

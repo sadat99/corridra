@@ -54,7 +54,7 @@ export const deskGroups: Record<DeskGroupKey, { title: string; segments: readonl
     settings: {
       title: 'Settings',
       segments: [
-        { id: 'workspace-settings', label: 'Settings' },
+        { id: 'workspace-settings', label: 'Routes and settings' },
         { id: 'workspace-ai', label: 'Assistance' },
         { id: 'ops-center', label: 'Control Center' },
         { id: 'owner', label: 'Owner page' },
