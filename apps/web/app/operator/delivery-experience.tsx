@@ -3,6 +3,7 @@ import { DateTimeField } from '../../components/ux/date-time-input';
 import { CustomerMissionDelivery } from './customer-mission-delivery';
 import { DecisionDisclosures } from './decision-disclosures';
 import { SpecificationRequests } from './specification-requests';
+import { StepUpReads } from '../../components/ux/step-up-reads';
 import { CustomerServiceRequests } from './customer-service-requests';
 import { CustomerBilling } from './customer-billing';
 import { CustomerInvoicing } from './customer-invoicing';
@@ -618,21 +619,23 @@ export function DeliveryExperience(props: Props) {
             <a href="#billing-invoices">Invoices</a>
             <a href="#billing-payments">Payments</a>
           </nav>
-          <div id="billing-services" tabIndex={-1}>
-            <CustomerServiceRequests tenant={tenant} />
-          </div>
-          <div id="billing-plans" tabIndex={-1}>
-            <CustomerBilling tenant={tenant} />
-          </div>
-          <div id="billing-sample-invoices" tabIndex={-1}>
-            <CustomerInvoicing tenant={tenant} />
-          </div>
-          <div id="billing-invoices" tabIndex={-1}>
-            <CustomerRealInvoicing tenant={tenant} />
-          </div>
-          <div id="billing-payments" tabIndex={-1}>
-            <CustomerSimulatedPayments tenant={tenant} />
-          </div>
+          <StepUpReads what="plans, invoices and payments">
+            <div id="billing-services" tabIndex={-1}>
+              <CustomerServiceRequests tenant={tenant} />
+            </div>
+            <div id="billing-plans" tabIndex={-1}>
+              <CustomerBilling tenant={tenant} />
+            </div>
+            <div id="billing-sample-invoices" tabIndex={-1}>
+              <CustomerInvoicing tenant={tenant} />
+            </div>
+            <div id="billing-invoices" tabIndex={-1}>
+              <CustomerRealInvoicing tenant={tenant} />
+            </div>
+            <div id="billing-payments" tabIndex={-1}>
+              <CustomerSimulatedPayments tenant={tenant} />
+            </div>
+          </StepUpReads>
         </section>
       )}
       <h3>Counterparty declarations awaiting review</h3>

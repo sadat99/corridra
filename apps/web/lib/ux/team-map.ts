@@ -221,7 +221,7 @@ export function itemForPlace(
     return 'admin';
   if (id === 'ops-center' || id === 'owner') return 'admin';
   const found = teamMap.find((i) => i.key !== 'admin' && i.places.some((p) => p.id === id));
-  // The Authenticator, and Health and Readiness for a role with no Admin, live in the avatar menu: no sidebar item is current.
+  // The Authenticator lives in the avatar menu: no sidebar item is current.
   return found ? found.key : 'none';
 }
 
@@ -236,9 +236,9 @@ export function placeHref(id: TeamPlaceId, urls: boolean, workspace = ''): strin
 }
 
 /**
- * The places the avatar menu carries: the Authenticator for every role, and Health and Readiness for a role that may
- * open them but is not shown Admin (an operator). Owner and admin find those two in Admin. With the role unknown only
- * what every role may open is offered.
+ * The places the avatar menu carries: the Authenticator for every role. Health and Readiness are for owner and admin
+ * only (the sections' roles, and the server turns anyone else away); they find those two in Admin, so the menu offers
+ * them to no one. With the role unknown only what every role may open is offered.
  */
 const accountPlaces: readonly TeamPlace[] = [
   { id: 'workspace-authenticator', label: 'Authenticator' },

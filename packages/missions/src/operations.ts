@@ -515,8 +515,10 @@ export class OperationsService {
   }
   reliability(ctx: RequestContext) {
     return withTenant(this.pool, ctx, 'missions.read', async ({ db, role }) => {
-      if (!['owner', 'admin', 'operator'].includes(role))
-        throw new DomainError('Operations access denied');
+      // Recovery and health (the recovery queue, last errors, owner ids) are for the owner and admin only, as the
+      // Health and Readiness pages are: an operator, reviewer or viewer is refused here, not only in the screen.
+      if (!['owner', 'admin'].includes(role))
+        throw new DomainError('Operations access denied', 403);
       const communications = (
         await db.query(
           `SELECT j.id,j.status,j.attempts,j.available_at,j.lease_until,j.last_error,j.workflow_run_id,c.target_id,m.owner_id FROM app.communication_dispatch j JOIN app.communication c ON c.tenant_id=j.tenant_id AND c.id=j.id JOIN app.target_account t ON t.tenant_id=c.tenant_id AND t.id=c.target_id JOIN app.mission m ON m.tenant_id=t.tenant_id AND m.id=t.mission_id WHERE j.tenant_id=$1 AND j.status<>'DELIVERED' ORDER BY j.available_at LIMIT 100`,

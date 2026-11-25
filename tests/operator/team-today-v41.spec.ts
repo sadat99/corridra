@@ -60,17 +60,21 @@ type Scenario = {
   erasureStatus?: number;
   /** Both queues answer as they do when the authenticator check is no longer fresh: 401 with the step-up code. */
   staleCode?: boolean;
+  /** The erasure queue answers as a signed-out person: 401 with no code. */
+  erasureSignedOut?: boolean;
   /** The signed-in person's role, as the workspace read gives it. Default owner. */
   role?: string;
   /** Counts the team read lists as not readable. */
   unavailable?: string[];
 };
 const stale = { status: 401, json: { error: 'Confirm your code', code: 'STEP_UP_REQUIRED' } };
-/** The erasure queue's real answer to a stale check: a 401 with no code (the route throws before the database). */
+/** The erasure queue's real answer to a stale check: 401 with the step-up code (deliveryError keeps it for this queue). */
 const staleErasure = {
   status: 401,
-  json: { error: 'Verify your authenticator again to continue' },
+  json: { error: 'Verify your authenticator again to continue', code: 'STEP_UP_REQUIRED' },
 };
+/** A signed-out person: 401 with no code. It is not the check, so it never draws the Confirm Code line. */
+const signedOutErasure = { status: 401, json: { error: 'Sign in to continue' } };
 const fresh: Row = { id: id(1), status: 'DRAFT', company: 'Sample Towels Ltd', dueAt: inDays(4) };
 const late36: Row = {
   id: id(2),
@@ -186,6 +190,7 @@ async function open(page: Page, scenario: Scenario, query = '/?v41=on') {
         : route.fulfill({ status: 503, json: { error: 'Sample' } }),
   );
   await page.route('**/api/workspace/customer-erasure-queue?*', (route) => {
+    if (scenario.erasureSignedOut) return route.fulfill(signedOutErasure);
     if (scenario.staleCode) return route.fulfill(staleErasure);
     if (scenario.erasureStatus)
       return route.fulfill({ status: scenario.erasureStatus, json: { error: 'Sample' } });
@@ -404,6 +409,15 @@ test('fix run: a stale authenticator check is one quiet line with Confirm Code, 
   // Confirm Code opens the check in place.
   await line.getByRole('button', { name: 'Confirm Code' }).click();
   await expect(page.getByRole('dialog', { name: 'Confirm it is you' })).toBeVisible();
+});
+
+test('fix run: a signed-out 401 on the erasure queue is not the code, so no Confirm Code line', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, { ...quiet, erasureSignedOut: true }, '/?v41=on&reports=on');
+  await expect(decide(page).locator('[data-code-check]')).toHaveCount(0);
+  await expect(decide(page).getByRole('button', { name: 'Confirm Code' })).toHaveCount(0);
 });
 
 test('fix run: an admin never reads the erasure queue and sees no erasure tile or failure line', async ({

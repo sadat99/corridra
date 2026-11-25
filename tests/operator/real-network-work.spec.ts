@@ -545,7 +545,16 @@ test('expired five-minute MFA permits drafting but denies invitation reads and w
     await openTab(page, 'Invite a Helper');
     const invitations = page.getByRole('region', { name: 'Helper invitations', exact: true });
     await expect(page.getByText('Network enabled', { exact: true })).toBeVisible();
-    await expect(invitations.getByRole('alert')).toContainText('last five minutes');
+    // A lapsed check is ONE plain line with the in-place check (owner ruling, 25 Nov 2026), never a dead-end alert or a
+    // false "could not be read". The other refusals (a 403 for any other reason) keep the alert above.
+    await expect(invitations.getByTestId('reverify-line')).toHaveCount(1);
+    await expect(invitations.getByTestId('reverify-line')).toContainText(
+      'Confirm your code to see helper invitations.',
+    );
+    await expect(
+      invitations.getByRole('button', { name: 'Confirm Code', exact: true }),
+    ).toBeVisible();
+    await expect(invitations.getByRole('alert')).toHaveCount(0);
     await invitations.getByLabel('Helper name', { exact: true }).fill('Retained expired MFA draft');
     await invitations
       .getByLabel('Helper email', { exact: true })
@@ -560,8 +569,11 @@ test('expired five-minute MFA permits drafting but denies invitation reads and w
     const list = await page.request.get(
       origin + '/api/workspace/network-invitations?tenant=' + f.realTenant,
     );
-    expect(list.status()).toBe(403);
-    expect((await list.json()).countries).toBeUndefined();
+    // The check is what is missing (the owner's role and the workspace are fine), so the answer asks for the code.
+    expect(list.status()).toBe(401);
+    const listed = await list.json();
+    expect(listed.code).toBe('STEP_UP_REQUIRED');
+    expect(listed.countries).toBeUndefined();
     const rejected = await page.request.post(endpoint, {
       headers: { origin },
       data: {
@@ -572,7 +584,8 @@ test('expired five-minute MFA permits drafting but denies invitation reads and w
         operatingCountry: 'DE',
       },
     });
-    expect(rejected.status()).toBe(403);
+    expect(rejected.status()).toBe(401);
+    expect((await rejected.json()).code).toBe('STEP_UP_REQUIRED');
     expect(
       (
         await f.owner.query(
