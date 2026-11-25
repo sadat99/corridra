@@ -31,6 +31,8 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
+    // access.tsx draws a country mark (CountryName), whose stylesheet names the flag files by address.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',

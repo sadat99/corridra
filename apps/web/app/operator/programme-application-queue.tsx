@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useInboxOpenLoad } from './inbox/inbox-check';
 import type { StaffApplicationRow } from '@corridra/auth/customer-programme-publication';
 import '../../components/problem-reports/problem-reports.css';
 import { whenWords } from '../account/workspace-lifecycle-client';
@@ -46,6 +47,9 @@ function Panel({ tenant, tabbed }: { tenant: string; tabbed: boolean }) {
     return () => window.removeEventListener('hashchange', open);
   }, []);
 
+  // Team desk v4.1 (staff-core-29): in the Inbox, this list loads itself when its tab opens after one passed check.
+  const readPassed = useInboxOpenLoad(fragment, () => void load(null), page !== null);
+
   async function load(after: string | null) {
     if (busy) return;
     const token = ++run.current;
@@ -54,6 +58,7 @@ function Panel({ tenant, tabbed }: { tenant: string; tabbed: boolean }) {
     try {
       const fresh = await readApplications(tenant, after);
       if (token !== run.current) return;
+      readPassed();
       setRows((current) =>
         after === null ? fresh.applications : [...current, ...fresh.applications],
       );
