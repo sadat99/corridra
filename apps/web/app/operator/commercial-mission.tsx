@@ -31,6 +31,8 @@ import {
   type EligiblePrefill,
 } from '../../lib/reply-review-view';
 import { bodyNotAvailable } from '../../lib/body-access';
+import { RouteWords } from './[section]/[missionId]/route-words';
+import { placeName } from '../account/request-words';
 import '../../components/ux/row-list.css';
 import './reply-handoff.css';
 
@@ -833,9 +835,22 @@ export function CommercialMission({
         <>
           <h4>Commercial mission execution</h4>
           <p>
-            {assignment?.status === 'ASSIGNED'
-              ? `${assignment.origin_market} → ${assignment.destination_market} · ${template?.label ?? typeKey}`
-              : 'Route not classified. An owner must supply an available reviewed route pack.'}
+            {assignment?.status === 'ASSIGNED' ? (
+              desk ? (
+                // Team desk v4.1 (UI/UX.v4.1 L1): each place by name, with its mark where it has one.
+                <>
+                  <RouteWords
+                    label={`${assignment.origin_market} to ${assignment.destination_market}`}
+                    none=""
+                  />{' '}
+                  · {template?.label ?? typeKey}
+                </>
+              ) : (
+                `${assignment.origin_market} → ${assignment.destination_market} · ${template?.label ?? typeKey}`
+              )
+            ) : (
+              'Route not classified. An owner must supply an available reviewed route pack.'
+            )}
           </p>
           <p>
             These records are operator observations. Assessments do not certify engineering,
@@ -1236,8 +1251,10 @@ export function CommercialMission({
                           )
                           .map((p) => (
                             <option value={p.id} key={p.id}>
-                              {String(p.origin_market)} → {String(p.destination_market)} · version{' '}
-                              {p.version}
+                              {desk
+                                ? `${placeName(String(p.origin_market))} → ${placeName(String(p.destination_market))}`
+                                : `${String(p.origin_market)} → ${String(p.destination_market)}`}{' '}
+                              · version {p.version}
                             </option>
                           ))}
                       </select>

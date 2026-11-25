@@ -71,13 +71,13 @@ export const workspaceSections = [
     id: 'ops-health',
     label: 'Recovery and health',
     part: 'V2 5',
-    roles: ['owner', 'admin', 'operator'],
+    roles: ['owner', 'admin'],
   },
   {
     id: 'ops-gates',
     label: 'Production readiness',
     part: 'V2 5',
-    roles: ['owner', 'admin', 'operator'],
+    roles: ['owner', 'admin'],
   },
   {
     id: 'workspace-settings',
@@ -94,6 +94,17 @@ export const workspaceSections = [
   },
   { id: 'workspace-controls', label: 'Workspace controls', part: 'Access', roles: ['owner'] },
 ] as const;
+
+// Sections only the owner and admin may open, even by their address. The server turns anyone else away before the page is
+// built; every other section is checked by the screen, which says so in words.
+const ownerAdminOnlySections: readonly string[] = ['ops-health', 'ops-gates'];
+
+/** True when this role must not be given the section by its address (Health and Readiness, for an ordinary member). */
+export function sectionRefusedForRole(section: string, role: string | null | undefined): boolean {
+  if (!ownerAdminOnlySections.includes(section)) return false;
+  const entry = workspaceSections.find((item) => item.id === section);
+  return !role || !(entry?.roles as readonly string[] | undefined)?.includes(role);
+}
 
 export function operatorReturnTo(value: string | undefined): string {
   if (!value || value.length > 240) return '/operator';

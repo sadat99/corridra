@@ -46,7 +46,7 @@ export function RemoveMyWords({
   }
 
   return (
-    <details>
+    <details className="pr-fold">
       <summary>{removalWords.summary}</summary>
       <div className="pr-column">
         <div className="pr-actions">

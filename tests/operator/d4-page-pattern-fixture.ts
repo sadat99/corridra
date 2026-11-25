@@ -64,7 +64,8 @@ export async function startPagePatternFixture(root = resolve('.')) {
                 {header.segments}
                 <OperatorFlags replyReview={false} teamDeskV41={v41}>
                   <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:role}]}
-                    initialTenant=${JSON.stringify(fixtureTenant)} initialSection={section} shellsV2 ownerPage={ownerPage}/>
+                    initialTenant=${JSON.stringify(fixtureTenant)} initialSection={section} shellsV2 ownerPage={ownerPage}
+                    turnedAway={new URLSearchParams(location.search).get('unavailable') === '1'}/>
                 </OperatorFlags>
               </WorkspaceShell>
             </TeamFrame>

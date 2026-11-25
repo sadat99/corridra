@@ -97,6 +97,7 @@ export function Workspace({
   desk = false,
   problemReports = false,
   programmeApplications = false,
+  turnedAway = false,
 }: {
   tenants: Tenant[];
   initialTenant: string;
@@ -118,6 +119,8 @@ export function Workspace({
   problemReports?: boolean;
   /** Whether the staff list of programme applications is offered (switch on and module installed). Fail closed. */
   programmeApplications?: boolean;
+  /** The server turned this person away from a section address they may not open: Today says so, in the open. */
+  turnedAway?: boolean;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
@@ -142,6 +145,7 @@ export function Workspace({
       desk={desk}
       problemReports={problemReports}
       programmeApplications={programmeApplications}
+      turnedAway={turnedAway}
     />
   );
 }
@@ -156,6 +160,7 @@ function TenantWorkspace({
   desk,
   problemReports,
   programmeApplications,
+  turnedAway,
 }: {
   tenants: Tenant[];
   tenant: string;
@@ -167,6 +172,7 @@ function TenantWorkspace({
   desk: boolean;
   problemReports: boolean;
   programmeApplications: boolean;
+  turnedAway: boolean;
 }) {
   const { supplySources, teamDeskV41: deskV41 } = useOperatorFlags();
   const edited = useRef(false);
@@ -326,6 +332,9 @@ function TenantWorkspace({
   const shown = (panel: string) => !shellsV2 || view === panel;
   const unavailableSection =
     !!fragment && fragment !== 'main' && fragment !== 'workspace-navigation' && !sectionAllowed;
+  // Sent to Today by the server from a section this role may not open (Health, Readiness), and still on Today: the same
+  // note says so. It ends as soon as the person goes anywhere else.
+  const turnedAwayHere = turnedAway && (!fragment || fragment === 'main');
   useEffect(() => {
     if (!loaded) return;
     const allowed = fragment === 'main' || fragment === 'workspace-navigation' || sectionAllowed;
@@ -589,7 +598,7 @@ function TenantWorkspace({
             <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
               {/* A page this role may not open shows Today, and says so first, in the open: never as the last line
                   of a card far from the title, or inside a closed row. */}
-              {unavailableSection && (
+              {(unavailableSection || turnedAwayHere) && (
                 <AccessState kind="denied">
                   <p>
                     This section is unavailable for your current workspace role, or the link is
@@ -775,7 +784,8 @@ function TenantWorkspace({
               {['owner', 'admin', 'reviewer'].includes(data.role) && (
                 <CompanyLinkReview key={`links-${tenant}`} tenant={tenant} />
               )}
-              {supplySources && (
+              {/* Team desk v4.1: Supply Sources is a menu place, so the page does not link it again. */}
+              {supplySources && !deskV41 && (
                 <p>
                   <Link
                     prefetch={false}

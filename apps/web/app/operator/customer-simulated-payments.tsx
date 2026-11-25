@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayMoney } from '@corridra/domain/locale';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
 
 // ADR-065: the staff side of the simulated payment provider "Corridra Pay (madeup)". Staff can see every simulated
 // attempt and record a made-up refund inside the made-up window. Nothing here is real money and no invoice changes.
@@ -71,6 +72,7 @@ function Scoped({ tenant }: { tenant: string }) {
   const task = useRef<AbortController | null>(null);
   const endpoint =
     '/api/workspace/customer-simulated-payments?tenant=' + encodeURIComponent(tenant);
+  const { allowed, epoch, settle } = useStepUpRead();
   const call = useCallback(
     async (body?: Record<string, unknown>) => {
       task.current?.abort();
@@ -86,7 +88,8 @@ function Scoped({ tenant }: { tenant: string }) {
           signal: controller.signal,
         });
         if (controller.signal.aborted) return null;
-        if (!r.ok) return { status: r.status, body: null as unknown };
+        if (!r.ok)
+          return { status: r.status, body: null as unknown, check: await refusedForCheck(r) };
         return { status: 200, body: (await r.json()) as unknown };
       } catch {
         return controller.signal.aborted ? null : { status: 0, body: null as unknown };
@@ -97,6 +100,12 @@ function Scoped({ tenant }: { tenant: string }) {
   const load = useCallback(async () => {
     const r = await call();
     if (!r) return;
+    if (r.check) {
+      settle(true);
+      setFault('');
+      return;
+    }
+    settle(false);
     if (r.status === 503) {
       setOff(true);
       return;
@@ -109,9 +118,9 @@ function Scoped({ tenant }: { tenant: string }) {
     }
     setFault('');
     setData(body);
-  }, [call]);
+  }, [call, settle]);
   useEffect(() => {
-    void Promise.resolve().then(() => load());
+    if (allowed) void Promise.resolve().then(() => load());
     const hide = () => {
       if (document.visibilityState === 'hidden') {
         task.current?.abort();
@@ -125,7 +134,7 @@ function Scoped({ tenant }: { tenant: string }) {
       task.current?.abort();
       document.removeEventListener('visibilitychange', hide);
     };
-  }, [load]);
+  }, [load, allowed, epoch]);
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!refunding || busy) return;
@@ -172,7 +181,7 @@ function Scoped({ tenant }: { tenant: string }) {
       </p>
       {fault && <p role="alert">{fault}</p>}
       {message && <p role={ok ? 'status' : 'alert'}>{message}</p>}
-      {data === null && !fault && <p role="status">Loading simulated payments…</p>}
+      {data === null && !fault && allowed && <p role="status">Loading simulated payments…</p>}
       {data && (
         <section aria-label="Simulated attempts">
           {data.attempts.length === 0 ? (

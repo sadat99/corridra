@@ -124,3 +124,20 @@ test('shows nothing at all when the person may not read it or the module is not 
     await expect(page.getByTestId('withdrawn-by-customer')).toHaveCount(0);
   }
 });
+
+test('a lapsed authenticator check shows ONE plain line with the in-place check, never "could not be read"', async ({
+  page,
+}) => {
+  await open(page, {
+    status: 401,
+    body: { error: 'Verify your authenticator again to continue', code: 'STEP_UP_REQUIRED' },
+  });
+  const line = page.getByTestId('reverify-line');
+  await expect(line).toHaveCount(1);
+  await expect(line).toContainText('Confirm your code to see whether the customer withdrew.');
+  await expect(line.getByRole('button', { name: 'Confirm Code' })).toBeVisible();
+  await expect(page.getByText('could not be read')).toHaveCount(0);
+  await expect(page.getByTestId('withdrawn-by-customer')).toHaveCount(0);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});

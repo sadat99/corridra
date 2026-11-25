@@ -198,14 +198,14 @@ describe('the shared report body of /client and /programme', () => {
     );
     expect(html.match(/data-flag=/g)).toHaveLength(1);
   });
-  it('the words of the heading do not change', async () => {
+  it('the words of the heading are the written name, also for a stored code', async () => {
     expect(words(await draw(experience('China')))).toContain('Zhejiang Jingwei (China)');
-    expect(words(await draw(experience('BD', '达卡纺织')))).toContain('达卡纺织 (BD)');
+    expect(words(await draw(experience('BD', '达卡纺织')))).toContain('达卡纺织 (Bangladesh)');
   });
-  it('a stored code is read the same way and a company name in Chinese keeps its language', async () => {
+  it('a stored code reads as its name and a company name in Chinese keeps its language', async () => {
     const html = await draw(experience('BD', '达卡纺织'));
     expect(html).toContain(
-      `<h4><span lang="zh">达卡纺织</span> (${flag('bd')}<span>BD</span></span>)</h4>`,
+      `<h4><span lang="zh">达卡纺织</span> (${flag('bd')}<span>Bangladesh</span></span>)</h4>`,
     );
   });
   it('a country outside the nine flags shows its name only', async () => {

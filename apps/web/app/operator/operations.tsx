@@ -409,7 +409,8 @@ export function Operations({
       try {
         const [d, h, c, a] = await Promise.all([
           request('operations-dashboard', undefined, query),
-          request('operations-health'),
+          // Health is read only for the roles that may open it (owner, admin); the other roles never ask.
+          admin ? request('operations-health') : Promise.resolve(null),
           request('mission-catalogue'),
           admin ? request('operations-controls') : Promise.resolve(null),
         ]);
@@ -1212,7 +1213,10 @@ export function Operations({
                             <option value="">Choose a configured route</option>
                             {catalogue?.routes.map((r) => (
                               <option key={r.id} value={r.id}>
-                                {r.origin_market} → {r.destination_market}
+                                {/* Team desk v4.1 (UI/UX.v4.1 L1): the place names; an option holds words only. */}
+                                {deskV41
+                                  ? `${placeName(r.origin_market)} → ${placeName(r.destination_market)}`
+                                  : `${r.origin_market} → ${r.destination_market}`}
                               </option>
                             ))}
                           </select>
@@ -1983,14 +1987,27 @@ export function Operations({
               label: 'Rules and runbook',
               panel: (
                 <>
-                  {admin && (
-                    <p>
-                      Repository settings for these controls (branch rules, secret scanning and code
-                      analysis) are described in the owner technical setup runbook,
-                      docs/runbooks/owner-technical-setup.md. Nothing on this page changes a setting
-                      or clears a control.
-                    </p>
-                  )}
+                  {admin &&
+                    (deskV41 ? (
+                      // Team desk v4.1: the repository path is a technical detail, one click away and closed.
+                      // The words are the same as the switch-off paragraph.
+                      <details className="desk-technical">
+                        <summary>Technical details</summary>
+                        <p>
+                          Repository settings for these controls (branch rules, secret scanning and
+                          code analysis) are described in the owner technical setup runbook,
+                          docs/runbooks/owner-technical-setup.md. Nothing on this page changes a
+                          setting or clears a control.
+                        </p>
+                      </details>
+                    ) : (
+                      <p>
+                        Repository settings for these controls (branch rules, secret scanning and
+                        code analysis) are described in the owner technical setup runbook,
+                        docs/runbooks/owner-technical-setup.md. Nothing on this page changes a
+                        setting or clears a control.
+                      </p>
+                    ))}
                   <p>
                     Bangladesh to China: sourcing and machinery come before delegations. Bangladesh
                     to Spain and the EU: buyer and export market access come before reverse

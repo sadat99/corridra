@@ -10,6 +10,8 @@ import {
   staffQueueSchema,
   staffReviewSchema,
 } from '../../lib/organisation-link-replies';
+import { CountryName, countryName } from './country-name';
+import { useOperatorFlags } from './operator-flags';
 type Queue = z.infer<typeof staffQueueSchema>;
 type Review = z.infer<typeof staffReviewSchema>;
 type Decision = (typeof staffDecisions)[number];
@@ -50,6 +52,7 @@ export function CompanyLinkReview(props: Props) {
   return <Reviewer key={props.tenant} {...props} />;
 }
 function Reviewer({ tenant }: Props) {
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [queue, setQueue] = useState<Queue | null>(null),
     [review, setReview] = useState<Review | null>(null),
     [scope, setScope] = useState<'open' | 'closed'>('open'),
@@ -275,8 +278,8 @@ function Reviewer({ tenant }: Props) {
         <ul>
           {queue.items.map((i) => (
             <li key={i.claimId}>
-              <strong>{i.legalName}</strong> ({i.country}) · {i.workspaceName} ·{' '}
-              {stateLabel[i.state] ?? i.state} ·{' '}
+              <strong>{i.legalName}</strong> (<CountryName code={i.country} />) · {i.workspaceName}{' '}
+              · {stateLabel[i.state] ?? i.state} ·{' '}
               {i.kind === 'EXISTING' ? 'asks to match a listed company' : 'proposes a new company'}{' '}
               · {i.evidenceCount} evidence · {i.candidateCount} possible match
               {i.candidateCount === 1 ? '' : 'es'} · sent {displayDate(i.filedAt)}{' '}
@@ -311,7 +314,9 @@ function Reviewer({ tenant }: Props) {
           </p>
           <dl>
             <dt>Country</dt>
-            <dd>{review.profile.countryCode}</dd>
+            <dd>
+              <CountryName code={review.profile.countryCode} />
+            </dd>
             <dt>Website</dt>
             <dd>{review.profile.website ?? 'Not provided'}</dd>
             <dt>Roles and size</dt>
@@ -345,8 +350,8 @@ function Reviewer({ tenant }: Props) {
           {review.activeLink && (
             <p>
               This workspace is currently linked to {review.activeLink.organisation.name} (
-              {review.activeLink.organisation.country}). Approving a different company replaces that
-              link and keeps the history.
+              <CountryName code={review.activeLink.organisation.country} />
+              ). Approving a different company replaces that link and keeps the history.
             </p>
           )}
           <h4>Evidence from the customer ({review.evidence.length})</h4>
@@ -374,7 +379,8 @@ function Reviewer({ tenant }: Props) {
             <ul aria-label="Matching companies on the list">
               {review.candidates.organisations.map((o) => (
                 <li key={o.id}>
-                  {o.name} ({o.country}) · {o.reasons.map((r) => reasonLabel[r] ?? r).join(', ')}
+                  {o.name} (<CountryName code={o.country} />) ·{' '}
+                  {o.reasons.map((r) => reasonLabel[r] ?? r).join(', ')}
                   {o.linkedWorkspaces > 0
                     ? ` · already linked to ${o.linkedWorkspaces} other workspace${o.linkedWorkspaces === 1 ? '' : 's'}`
                     : ''}
@@ -386,8 +392,9 @@ function Reviewer({ tenant }: Props) {
             <ul aria-label="Other workspaces with a similar request">
               {review.candidates.workspaces.map((w) => (
                 <li key={w.claimId}>
-                  Another workspace: {w.legalName} ({w.country}) · {stateLabel[w.state] ?? w.state}{' '}
-                  · {w.reasons.map((r) => reasonLabel[r] ?? r).join(', ')}
+                  Another workspace: {w.legalName} (<CountryName code={w.country} />) ·{' '}
+                  {stateLabel[w.state] ?? w.state} ·{' '}
+                  {w.reasons.map((r) => reasonLabel[r] ?? r).join(', ')}
                 </li>
               ))}
             </ul>
@@ -440,7 +447,9 @@ function Reviewer({ tenant }: Props) {
                         <option value="">Choose a company</option>
                         {review.candidates.organisations.map((o) => (
                           <option key={o.id} value={o.id}>
-                            {o.name} ({o.country})
+                            {deskV41
+                              ? `${o.name} (${countryName(o.country)})`
+                              : `${o.name} (${o.country})`}
                           </option>
                         ))}
                       </select>
