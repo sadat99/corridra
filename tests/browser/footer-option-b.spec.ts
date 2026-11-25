@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
+import { mountHomeV42 } from '../ux/home-v42-fixture';
 
 // The footer, Option B (owner decision of 12 November 2026, locked mockups revision 2; it replaces the Ledger layout
 // of 6 November): a full-width navy band with the logo, promise and actions on the left, three family tiles (Buy
@@ -431,3 +432,28 @@ for (const [name, size] of Object.entries(sizes))
       .analyze();
     expect(result.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 120)}`)).toEqual([]);
   });
+
+// Home page v4.2, CORRIDRA_UX_HOME_V42 exactly "true" (owner, 25 Nov 2026: "lock this v4.2", "Add a switch, off by
+// default", "current footer without redundancy", footer "Trim as shown"). The cases above stay the switch-off truth and
+// are unchanged; this case mounts the real v4.2 components on the live home's styles (tests/ux/home-v42-fixture.ts), so
+// the suite keeps one build with the switch off.
+test('switch on (v4.2): the trimmed footer drops its four repeats, keeps the rest and still fits 844 px at 390', async ({
+  page,
+}) => {
+  await mountHomeV42(page, { width: 390 });
+  const trimmed = page.locator('footer.guide-footer-trim');
+  await expect(trimmed.locator('details.guide-footer-details').first()).toHaveAttribute('open', '');
+  await expect(
+    trimmed.locator('.guide-footer-promise, .guide-footer-trust, .guide-footer-routes'),
+  ).toHaveCount(0);
+  await expect(trimmed.getByRole('link', { name: 'Start a Request', exact: true })).toHaveCount(0);
+  await expect(trimmed.getByRole('link', { name: 'Sign In', exact: true })).toHaveCount(1);
+  await expect(trimmed.locator('details.guide-footer-details')).toHaveCount(4);
+  await expect(trimmed.locator('.guide-footer-copy')).toHaveText('© 2026 Corridra');
+  expect((await trimmed.boundingBox())!.height).toBeLessThanOrEqual(844);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBe(0);
+});
