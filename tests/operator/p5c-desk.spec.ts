@@ -1076,3 +1076,20 @@ test.describe('Design audit of 24 Nov 2026 (switch on)', () => {
       await noSidewaysScroll(page);
     });
 });
+
+// Review minor 6(b): the route filter's option text, rendered, not read from the source. Off, the codes the desk has
+// always shown; on (v4.1), the place names.
+for (const v41 of [false, true])
+  test(`the Missions route filter lists each route in its ${v41 ? 'place names' : 'stored codes'} with the switch ${v41 ? 'on' : 'off'}`, async ({
+    page,
+  }) => {
+    await openWorkspace(page, '/operator/missions', { v41 });
+    // The select sits inside its label, so the label's own words find it.
+    const filter = page.locator('label.field', { hasText: /^Filter by route/ }).locator('select');
+    await expect(filter.locator('option')).toHaveCount(catalogue.routes.length + 1);
+    expect(await filter.locator('option').allTextContents()).toEqual(
+      v41
+        ? ['All routes', 'Bangladesh → China', 'Bangladesh → European Union', 'Taiwan → Australia']
+        : ['All routes', 'BD → CN', 'BD → EU', 'TW → AU'],
+    );
+  });

@@ -163,14 +163,17 @@
    far edge at rest, both edges in the middle, none at the end. It follows the row's own scroll state, so a row
    that fits (or wraps) shows nothing. The shadow is a zero-width mark pinned to the edge: it takes no room, moves
    nothing and never takes a tap from a tab. No fade, no animation. Where the browser cannot tell the scroll state
-   the thin scrollbar above stays the cue. */
+   the thin scrollbar above stays the cue. The customer chip rows that scroll sideways on a phone (the Room's views,
+   the account home's chips) take the same cue. */
 @supports (container-type: scroll-state) {
   .ux-subtabs-list,
-  .ux-desk-segments ul {
+  .ux-desk-segments ul,
+  .room-lenses,
+  .move-seg {
     container-type: scroll-state;
   }
-  :is(.ux-subtabs-list, .ux-desk-segments ul)::before,
-  :is(.ux-subtabs-list, .ux-desk-segments ul)::after {
+  :is(.ux-subtabs-list, .ux-desk-segments ul, .room-lenses, .move-seg)::before,
+  :is(.ux-subtabs-list, .ux-desk-segments ul, .room-lenses, .move-seg)::after {
     content: '';
     display: none;
     flex: none;
@@ -181,21 +184,21 @@
     pointer-events: none;
     box-shadow: 0 0 var(--space-3) var(--space-1) color-mix(in srgb, var(--ink) 40%, transparent);
   }
-  :is(.ux-subtabs-list, .ux-desk-segments ul)::before {
+  :is(.ux-subtabs-list, .ux-desk-segments ul, .room-lenses, .move-seg)::before {
     inset-inline-start: 0;
     margin-inline-end: calc(var(--space-1) * -1);
   }
-  :is(.ux-subtabs-list, .ux-desk-segments ul)::after {
+  :is(.ux-subtabs-list, .ux-desk-segments ul, .room-lenses, .move-seg)::after {
     inset-inline-end: 0;
     margin-inline-start: calc(var(--space-1) * -1);
   }
   @container scroll-state(scrollable: inline-start) {
-    :is(.ux-subtabs-list, .ux-desk-segments ul)::before {
+    :is(.ux-subtabs-list, .ux-desk-segments ul, .room-lenses, .move-seg)::before {
       display: block;
     }
   }
   @container scroll-state(scrollable: inline-end) {
-    :is(.ux-subtabs-list, .ux-desk-segments ul)::after {
+    :is(.ux-subtabs-list, .ux-desk-segments ul, .room-lenses, .move-seg)::after {
       display: block;
     }
   }

@@ -16,6 +16,7 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     write: false,
     format: 'esm',
     platform: 'browser',

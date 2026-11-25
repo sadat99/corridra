@@ -199,6 +199,7 @@ test('the sample form completes in German and Arabic against the real intake and
       },
       nodePaths: [resolve('apps/web/node_modules')],
       bundle: true,
+      external: ['/flags/*'],
       write: false,
       format: 'esm',
       platform: 'browser',

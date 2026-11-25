@@ -286,6 +286,30 @@ test('choosing the Authenticator from the Account menu switches the section, wit
   );
 });
 
+test('an owner moves from Health in Admin to the Authenticator in the Account menu, with section addresses off', async ({
+  page,
+}) => {
+  // Two places, one workspace: Health is an Admin link in the sidebar (owner and admin only), the Authenticator is in
+  // the avatar menu. Each `#` address must switch the section in view and leave the one before it off the screen.
+  const sidebar = await open(page, 'owner', '#workspace-missions', 1280, true, false);
+  await expect(page.locator('#workspace-missions')).toBeVisible();
+  const health = sidebar.getByRole('link', { name: 'Health', exact: true });
+  if (!(await health.isVisible())) await sidebar.locator('summary', { hasText: 'Admin' }).click();
+  await health.click();
+  await expect(page.locator('#ops-health')).toBeVisible();
+  await expect(page.locator('#workspace-missions')).toHaveCount(0);
+  const menu = page.locator('header.ux-app-header').getByRole('button', { name: 'Account menu' });
+  await menu.click();
+  await page.getByRole('menuitem', { name: 'Authenticator', exact: true }).click();
+  await expect(page.locator('#workspace-authenticator')).toBeVisible();
+  await expect(page.locator('#ops-health')).toHaveCount(0);
+  await menu.click();
+  await expect(page.getByRole('menuitem', { name: 'Authenticator', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+});
+
 test('the team inbox panel offers no Mark All Read and asks for no server count, because the staff inbox cannot answer either', async ({
   page,
 }) => {

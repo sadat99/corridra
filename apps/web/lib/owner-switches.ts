@@ -460,6 +460,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'setting',
   },
   {
+    name: 'CORRIDRA_NEXT_DIST_DIR',
+    label: 'Test build folder',
+    line: 'Folder for a second test build of the site, set only by the home v4.2 server test. Never set it in Vercel: unset, the site builds as always.',
+    group: 'Safety and checks',
+    kind: 'setting',
+  },
+  {
     name: 'CORRIDRA_OPENAI_PROCESSING_LOCATIONS',
     label: 'AI processing locations',
     line: 'Where an AI provider may process data. Its value is never shown.',

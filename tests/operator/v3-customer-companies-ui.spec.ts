@@ -16,6 +16,7 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
@@ -260,7 +261,9 @@ test('malformed,unavailable and empty original scopes have honest recovery with 
   await page.getByRole('button', { name: 'Refresh approved companies' }).click();
   await expect(page.getByRole('alert')).toContainText('could not be loaded');
   await expect(page.getByRole('rowheader', { name: context.company })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Refresh approved companies' }).click();
+  // The failed read offers one action, Try Again, in place (public-customer-24); Refresh is for a loaded list.
+  await expect(page.getByRole('button', { name: 'Refresh approved companies' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Try Again', exact: true }).click();
   await expect(
     page.getByText('No companies are approved in these saved mission reports yet.'),
   ).toBeVisible();

@@ -157,6 +157,11 @@ test('the header shows the team workspace link, not Sign in, for a signed-in tea
     }).toPass({ timeout: 15000 });
     let signedIn = true;
     const signOuts: string[] = [];
+    // A real team sign-in through /api/operator-auth leaves this plain marker beside the HttpOnly session cookie
+    // (lib/team-session-hint.ts); the header asks the team session only when it is present (public-customer-24).
+    await page
+      .context()
+      .addCookies([{ name: 'corridra-team', value: '1', url: 'http://127.0.0.1:3404' }]);
     // No customer account is signed in; the team sign-in is a separate service.
     await page.route('**/api/auth/get-session', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: 'null' }),

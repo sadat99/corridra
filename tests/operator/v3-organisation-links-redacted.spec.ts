@@ -100,6 +100,7 @@ createRoot(document.getElementById('fixture')).render(staff?<CompanyLinkReview t
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     loader: { '.css': 'empty' },
     write: false,
     format: 'esm',

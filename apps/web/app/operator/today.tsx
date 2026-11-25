@@ -114,6 +114,8 @@ type Today = {
 
 /** Answered in place of a list when it needs a fresh authenticator check. */
 const needsCode = 'needs-code' as const;
+/** Answered in place of the erasure list when the person is signed out: not a failed check, so no failure line. */
+const signedOut = 'signed-out' as const;
 /** True for the refusal a stale authenticator check gets: HTTP 401 with the step-up code. */
 async function refusedForCode(response: Response) {
   if (response.status !== 401) return false;
@@ -173,8 +175,10 @@ async function readErasure(tenant: string, signal: AbortSignal) {
         { signal, cache: 'no-store' },
       );
       // A stale authenticator check is 401 with the step-up code (the server keeps it for this queue now). A 401 without
-      // it is a signed-out person: not the code, so no false "confirm your code" line; the tile is simply not drawn.
+      // it is a signed-out person: not the code, so no false "confirm your code" line, and not a failed check either, so
+      // no "could not be checked" line; the tile is simply not drawn.
       if (await refusedForCode(r.clone())) return needsCode;
+      if (r.status === 401) return signedOut;
       if (!r.ok) return null;
       const body = (await r.json()) as { items?: unknown; nextAfter?: unknown };
       if (!Array.isArray(body.items)) return null;
@@ -1427,12 +1431,13 @@ export function TodayPanel({
           work,
           workFailure: 'failure' in meetingRead ? meetingRead.failure : null,
           problemReports: reportsTile === needsCode ? null : reportsTile,
-          erasure: erasure === needsCode ? null : erasure,
+          erasure: erasure === needsCode || erasure === signedOut ? null : erasure,
           needsCode: {
             erasure: erasure === needsCode,
             problemReports: reportsTile === needsCode,
           },
-          erasureRead: reads.erasure,
+          // A signed-out answer is no read at all: nothing was checked, so nothing says the check failed.
+          erasureRead: reads.erasure && erasure !== signedOut,
           problemReportsRead: reads.problemReports,
           observedAt: new Date(now).toISOString(),
         });
@@ -1441,8 +1446,10 @@ export function TodayPanel({
         if (desk)
           publishPinCounts({
             problemReports: reportsTile === needsCode ? null : (reportsTile?.count ?? null),
-            erasure: erasure === needsCode ? null : (erasure?.count ?? null),
-            erasureAtLeast: erasure === needsCode ? false : (erasure?.atLeast ?? false),
+            erasure:
+              erasure === needsCode || erasure === signedOut ? null : (erasure?.count ?? null),
+            erasureAtLeast:
+              erasure === needsCode || erasure === signedOut ? false : (erasure?.atLeast ?? false),
           });
       })
       .catch((error: unknown) => {

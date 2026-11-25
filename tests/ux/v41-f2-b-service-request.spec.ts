@@ -123,6 +123,7 @@ async function page_html(contents: string) {
     stdin: { contents, loader: 'tsx', resolveDir: resolve('apps/web') },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },

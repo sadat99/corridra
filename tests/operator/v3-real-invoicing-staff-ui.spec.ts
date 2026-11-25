@@ -23,6 +23,7 @@ createRoot(document.getElementById('fixture')).render(<CustomerRealInvoicing ten
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     loader: { '.css': 'empty' },
     write: false,
     format: 'esm',

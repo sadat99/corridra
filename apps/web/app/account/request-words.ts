@@ -161,7 +161,13 @@ function factValue(key: string, item: unknown, original: Record<string, unknown>
   return item;
 }
 
-export type RequestFact = { key: string; label: string; value: string | string[] };
+export type RequestFact = {
+  key: string;
+  label: string;
+  value: string | string[];
+  /** Set when the value is a place, so the page can draw its mark before the name (UI/UX.v4.1 L1). */
+  place?: true;
+};
 
 /**
  * The original brief as facts a customer reads (D-017): every nested part is opened, a field of the form itself
@@ -221,6 +227,7 @@ export function requestFacts(
     .map((group) => ({
       title: group.title,
       rows: group.leaves.map(({ key, path, value, nested }) => ({
+        ...(placeKeys.has(key) ? { place: true as const } : {}),
         key: path,
         label: factLabel(key, nested),
         value: Array.isArray(value)

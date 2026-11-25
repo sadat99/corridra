@@ -39,6 +39,7 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     outdir: 'out',
     loader: { '.css': 'css' },
     write: false,

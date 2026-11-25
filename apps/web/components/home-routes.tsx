@@ -478,7 +478,12 @@ export function China() {
                   ))}
                 </ul>
                 <p>{t('home.tr.q.keep')}</p>
-                <Link prefetch={false} className="primary-link" href={routeHref.china}>
+                <Link
+                  prefetch={false}
+                  data-start-action
+                  className="ac1-quiet tr-light-link"
+                  href={routeHref.china}
+                >
                   {t('home.tr.q.cta')}
                 </Link>
               </>
@@ -682,7 +687,7 @@ export function Delegation({ whatsapp }: { whatsapp: string | null }) {
         </div>
       </div>
       <div className="tr-actions">
-        <Link prefetch={false} className="primary-link" href={routeHref.delegation}>
+        <Link prefetch={false} data-start-action className="ac1-quiet" href={routeHref.delegation}>
           {t('home.tr.dl.cta')}
         </Link>
         <TalkLink href={whatsapp} />
@@ -702,7 +707,7 @@ export function Other({ whatsapp }: { whatsapp: string | null }) {
         </h2>
         <p className="tr-sub">{t('home.tr.ot.lead')}</p>
         <div className="tr-actions">
-          <Link prefetch={false} className="primary-link" href={routeHref.other}>
+          <Link prefetch={false} data-start-action className="ac1-quiet" href={routeHref.other}>
             {t('home.tr.ot.cta')}
           </Link>
           <TalkLink href={whatsapp} />

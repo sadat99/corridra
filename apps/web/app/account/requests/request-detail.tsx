@@ -18,6 +18,7 @@ import { requestFacts, requestTitle } from '../request-words';
 import { limitWords } from '../../../lib/account-limit';
 import { classifyObjective } from '../../../lib/work-items/classify';
 import { JourneyMismatchNote } from '../../../components/ux/journey-mismatch-note';
+import { Place } from '../../../components/ux/flag';
 
 const displayDate = (value: string) => formatDateTime(value);
 
@@ -62,9 +63,11 @@ function RequestFacts({ value }: { value: Record<string, unknown> }) {
                   {Array.isArray(row.value) ? (
                     <ul>
                       {row.value.map((entry, index) => (
-                        <li key={index}>{entry}</li>
+                        <li key={index}>{row.place ? <Place value={entry} /> : entry}</li>
                       ))}
                     </ul>
+                  ) : row.place ? (
+                    <Place value={row.value} />
                   ) : (
                     row.value
                   )}

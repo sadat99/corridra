@@ -1056,6 +1056,12 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+/* A quiet action on a navy band keeps its light colour on hover (the light-ground hover colour would fail contrast). */
+.ac1-quiet.tr-light-link:hover,
+.tr-navy .ac1-quiet:hover {
+  color: var(--on-brand);
+  text-decoration-thickness: 2px;
+}
 .tr-tabs {
   display: flex;
   flex-wrap: wrap;
