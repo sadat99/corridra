@@ -1769,6 +1769,11 @@
       "use": "UI/UX.v4.1 platform rollout and handoff: waves V4.1-0 to D, mechanical enforcement (conformance record docs/revamp/v4-1-conformance.json, checked by scripts/v4-1-conformance.mjs and tests/v4-1-guard.test.mjs; ratchet guard), PR evidence, collision rules, owner decisions and the brief for the implementing agent"
     },
     {
+      "path": "docs/revamp/specs/ui-ux-v4-2.md",
+      "classification": "Current guide/contract",
+      "use": "UI/UX.v4.2 public home amendment of 25 Nov 2026: owner words verbatim, decisions H1 to H10 (option 2 hero with route map, option 1 choice block with one-line route sentences, bento, Plain limits, trimmed footer) behind CORRIDRA_UX_HOME_V42, off by default"
+    },
+    {
       "path": "docs/revamp/CONTRACT.md",
       "classification": "Current guide/contract",
       "use": "Owner's V3 controlled revamp execution contract of 4 Nov 2026, byte for byte (sha256 93230e4b...d4ea); never edit, amend forward in docs/revamp/README.md"

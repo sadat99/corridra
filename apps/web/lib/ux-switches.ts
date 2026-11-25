@@ -36,6 +36,8 @@ export const uxSwitchNames = [
   'CORRIDRA_UX_BUYER_STEPS',
   // Team desk v4.1 (owner approved 24 Nov 2026): menu v3, one page pattern and the desk screens of docs/revamp/specs/team-desk-v4-1.md phases 2 to 5. Presentation only.
   'CORRIDRA_UX_TEAM_DESK_V41',
+  // Home page v4.2 (owner approved 25 Nov 2026): the new home composition and the trimmed public footer. Off unless exactly "true"; read at build time, so a change needs a redeploy. Presentation only.
+  'CORRIDRA_UX_HOME_V42',
   'CORRIDRA_NOTIFICATIONS_V2',
   'CORRIDRA_TEAM_INVITES',
   'CORRIDRA_ROUTE_PACK_FORM',

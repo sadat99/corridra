@@ -16,9 +16,21 @@ const marketMarks: Record<MarketKey, FlagCode | 'region'> = {
   asia: 'region',
 };
 
-export function RouteLine({ route }: { route: 'china' | 'sell' }) {
+export function RouteLine({
+  route,
+  markets: which = 'all',
+}: {
+  route: 'china' | 'sell';
+  /**
+   * Home page v4.2 (owner, 25 Nov 2026: remove "Key Asian Markets" from the Sell Abroad route line and the route
+   * status card): `noKeyAsian` leaves the region out of the Sell line. Left out, every market shows as before.
+   */
+  markets?: 'all' | 'noKeyAsian';
+}) {
   const t = useT();
-  const markets = Object.keys(marketMarks) as MarketKey[];
+  const markets = (Object.keys(marketMarks) as MarketKey[]).filter(
+    (m) => which === 'all' || m !== 'asia',
+  );
   return (
     <SharedRouteLine
       from={{ name: t('home.country.bd'), mark: 'bd' }}

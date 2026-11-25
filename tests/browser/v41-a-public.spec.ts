@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { mountHomeV42 } from '../ux/home-v42-fixture';
 
 // UI/UX.v4.1 wave A, public pages (owner lock of 23 November 2026, docs/revamp/specs/ui-ux-v4-1.md): L4 home, L5
 // routes, L6 plan and L7 start here, with L1 (a mark before every place name), L2 (one owned icon per choice) and L3
@@ -497,3 +498,26 @@ for (const [path, words, flags] of corridorLabels)
     ).toEqual([...flags]);
     expect(await overflow(page)).toBeLessThanOrEqual(0);
   });
+
+// Home page v4.2, CORRIDRA_UX_HOME_V42 exactly "true" (owner, 25 Nov 2026: "lock this v4.2", "Add a switch, off by
+// default", "like option 2 for hero section", "Which way is your business moving?" "must be always like in the option
+// 1"). The cases above stay the switch-off truth and are unchanged; this case mounts the real v4.2 components on the
+// live home's styles (tests/ux/home-v42-fixture.ts), so the suite keeps one build with the switch off.
+test('switch on (v4.2) L4 home: a left aligned flat navy band, then four choices each with one owned icon and one primary action', async ({
+  page,
+}) => {
+  await mountHomeV42(page, { width: 1440 });
+  const band = page.locator('#hero .tr-hero');
+  expect(await band.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(
+    await token(page, '--brand-deep'),
+  );
+  expect(await band.evaluate((el) => getComputedStyle(el).backgroundImage)).toBe('none');
+  expect(await page.locator('#hero h1').evaluate((el) => getComputedStyle(el).textAlign)).toMatch(
+    /^(start|left)$/,
+  );
+  const doors = page.locator('.hv42-choose .ux-door');
+  await expect(doors).toHaveCount(4);
+  for (const d of await doors.all()) await expect(d.locator('.ux-door-tile svg')).toHaveCount(1);
+  await expect(page.locator('.hv42-choose .primary-link')).toHaveCount(1);
+  expect(await overflow(page)).toBe(0);
+});
