@@ -36,9 +36,6 @@
     margin-block-end: var(--space-3);
     padding-block: var(--space-2);
   }
-  .ux-customer .ux-tools-grid > section > .ux-tools-fold > summary {
-    min-height: 2.25rem;
-  }
 }
 @media (min-width: 64rem) {
   .ux-tools-grid {
@@ -122,8 +119,5 @@
     grid-template-columns: minmax(16rem, 22rem) 1fr;
     gap: var(--space-4);
     align-items: end;
-  }
-  .ux-tools-status-row .text-link {
-    min-height: auto;
   }
 }

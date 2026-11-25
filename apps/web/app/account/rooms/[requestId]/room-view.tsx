@@ -29,6 +29,7 @@ import { RoomSave } from './room-save';
 import { TripList } from './trip-list';
 import './room-view.css';
 import './room-frame.css';
+import '../../../../components/ux/sub-tabs.css';
 import './room-budget.css';
 
 type Lens = 'overview' | 'compare' | 'evidence' | 'trip';

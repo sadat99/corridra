@@ -284,7 +284,22 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
       )}
       {status === 'unavailable' && <p role="status">Approved companies are unavailable.</p>}
       {status === 'failed' && (
-        <p role="alert">Companies could not be loaded. Refresh and try again.</p>
+        <>
+          <p role="alert">Companies could not be loaded.</p>
+          <button
+            type="button"
+            className="button button-secondary"
+            disabled={busy}
+            onClick={() => {
+              clear();
+              setBusy(true);
+              setStatus('loading');
+              void load();
+            }}
+          >
+            Try Again
+          </button>
+        </>
       )}
       {status === 'expired' && (
         <p role="status">
@@ -407,7 +422,7 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
           )}
         </>
       )}
-      {status !== 'loading' && !empty && (
+      {status !== 'loading' && status !== 'failed' && !empty && (
         <button
           type="button"
           className="text-link"
