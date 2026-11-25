@@ -42,7 +42,7 @@ Recorded by the records builder for Guardian 64 from PR 656 and the Guardian's b
 | Width | Hero two columns from 48rem; bento from 80rem, one column below.                                                                                                                                                         | Review fixes, head 8e7252e                         |
 | 320   | At 320 x 568 the first door sits just below the fold. The owner was informed and did not veto.                                                                                                                           | Guardian, owner informed                           |
 
-Release state: built and merged as PR 656 (7a93d7f), `CORRIDRA_UX_HOME_V42` OFF by default; turning it on is the owner's step. Native language review of the `home.v42.*` words NOT done; that gate stays OPEN.
+Release state: built and merged as PR 656 (7a93d7f), `CORRIDRA_UX_HOME_V42` ON in production: owner said "on" first hand in the Guardian session (25 Nov 2026, about 17:06Z); Guardian 65 set `CORRIDRA_UX_HOME_V42=true`, redeploy dpl_9SyRZVNuawfEZqrn6GetPdfxXGbL of main 53da18fc READY, checked live at 390 and 1440 (Guardian's report, not read by the scribe). Native language review of the `home.v42.*` words NOT done; that gate stays OPEN.
 
 ## What it replaces (only while the switch is on)
 

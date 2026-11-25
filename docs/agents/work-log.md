@@ -5433,7 +5433,7 @@ Records applied: the nine PR entries above, condensed from their PR bodies; the 
 
 Owner ruling, 25 Nov 2026 (relayed by the Guardian; built in PR 654): Health and Readiness are blocked for the operator role on the server too, not only in the menu. KI-40 is superseded.
 
-Switch state: `CORRIDRA_UX_TEAM_DESK_V41` (v4.1 desk) is live per the Guardian; `CORRIDRA_UX_HOME_V42` recorded OFF (default) until the Guardian says otherwise.
+Switch state: `CORRIDRA_UX_TEAM_DESK_V41` (v4.1 desk) is live per the Guardian; `CORRIDRA_UX_HOME_V42` ON in production: owner said "on" first hand in the Guardian session (25 Nov 2026, about 17:06Z); Guardian 65 set `CORRIDRA_UX_HOME_V42=true`, redeploy dpl_9SyRZVNuawfEZqrn6GetPdfxXGbL of main 53da18fc READY, checked live at 390 and 1440 (Guardian's report, not read by the scribe).
 
 Follow-ups (not done in this run):
 
@@ -5449,4 +5449,4 @@ Follow-ups (not done in this run):
 - Staff screens that receive STEP_UP_REQUIRED but end in a dead-end message (PR 658 audit, not a regression): billing-group POSTs, service catalogue, company link review, specification requests, decision disclosures approve, mission delivery assign, delivery experience POSTs.
 - Native language review gate OPEN for the `home.v42.*` words (`home.v42.line.buys`, `home.v42.line.sells`, `home.v42.not.eyebrow`).
 
-Next action: the owner's word on `CORRIDRA_UX_HOME_V42`; the owner's privacy wording for the corridra-team cookie.
+Next action: the owner's privacy wording for the corridra-team cookie; native review of the home.v42 words.
