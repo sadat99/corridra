@@ -189,7 +189,7 @@ test.describe('Settings (D17)', () => {
     await openWorkspace(page, '/operator/settings', { v41: true });
     const nav = page.getByRole('navigation', { name: 'Settings pages' });
     await expect(nav.getByRole('link')).toHaveText([
-      'Settings',
+      'Routes and settings',
       'Assistance',
       'Control Center',
       'Owner page',

@@ -38,7 +38,10 @@ import {
 import {
   readServerTeamSwitcher,
   readTeamSwitcher,
+  sortTeamWorkspaces,
   subscribeTeamSwitcher,
+  teamPageForWorkspace,
+  type TeamWorkspace,
 } from '../../lib/ux/team-desk-v41';
 import {
   readPinCounts,
@@ -126,12 +129,24 @@ type SidebarProps = {
   deskV41?: boolean;
   /** CORRIDRA_SUPPLY_SOURCES: the Supply Sources pages exist, so menu v3 may list Supply. */
   supply?: boolean;
+  /** Menu v3: the workspaces this person belongs to, as the server read them. Empty when it could not. */
+  workspaces?: readonly TeamWorkspace[];
 };
 
 /** The team sidebar: menu v3 behind CORRIDRA_UX_TEAM_DESK_V41, otherwise the sidebar as it was. */
-export function TeamSidebar({ deskV41 = false, supply = false, ...legacy }: SidebarProps) {
+export function TeamSidebar({
+  deskV41 = false,
+  supply = false,
+  workspaces = [],
+  ...legacy
+}: SidebarProps) {
   return deskV41 ? (
-    <TeamMenuV3 urls={legacy.urls} supply={supply} problemReports={!!legacy.problemReports} />
+    <TeamMenuV3
+      urls={legacy.urls}
+      supply={supply}
+      problemReports={!!legacy.problemReports}
+      workspaces={workspaces}
+    />
   ) : (
     <TeamSidebarV1 {...legacy} />
   );
@@ -162,11 +177,13 @@ function TeamMenuV3({
   urls,
   supply,
   problemReports,
+  workspaces,
 }: {
   urls: boolean;
   supply: boolean;
   /** Report a Problem is offered (the Inbox page then has its Problem reports list). */
   problemReports: boolean;
+  workspaces: readonly TeamWorkspace[];
 }) {
   const language = useLanguage();
   const { t, locale } = language;
@@ -183,6 +200,14 @@ function TeamMenuV3({
     readServerTeamSwitcher,
   );
   const base = useId();
+  // The workspace switch is on every team page. The loaded workspace publishes its list and its guarded change
+  // (the unsaved-entries question). A page that does not mount it (the Inbox, a Supply page, a mission page) uses
+  // the list the server read and opens the same page for the chosen workspace. The list is in one order always.
+  const choices = sortTeamWorkspaces(switcher?.workspaces ?? workspaces);
+  const chosen = switcher?.current ?? tenant;
+  const switchReady = choices.some((entry) => entry.id === chosen);
+  const chooseWorkspace = (id: string) =>
+    switcher ? switcher.choose(id) : window.location.assign(teamPageForWorkspace(pathname, id));
   const cut = address.indexOf('#');
   const search = cut < 0 ? address : address.slice(0, cut);
   const hash = cut < 0 ? '' : address.slice(cut);
@@ -199,32 +224,31 @@ function TeamMenuV3({
       data-menu="v3"
       aria-label={t('wse.team.nav')}
     >
-      {/* The workspace switch sits at the top of the menu. The loaded workspace publishes its list and its own
-          guarded change (the unsaved-entries question); a page that does not mount it leaves only the link. */}
+      {/* The workspace switch sits at the top of the menu, on every team page. */}
       <div className="ux-team-menu-workspace">
-        {switcher ? (
+        {switchReady ? (
           <div className="ux-team-menu-switch" lang={locale !== 'en' ? 'en' : undefined}>
             <label htmlFor="operator-workspace-select">Workspace</label>
             <select
               id="operator-workspace-select"
-              disabled={switcher.busy}
-              value={switcher.current}
-              title={switcher.workspaces.find((w) => w.id === switcher.current)?.name}
-              onChange={(event) => switcher.choose(event.target.value)}
+              disabled={switcher?.busy}
+              value={chosen}
+              title={choices.find((entry) => entry.id === chosen)?.name}
+              onChange={(event) => chooseWorkspace(event.target.value)}
             >
-              {switcher.workspaces.map((entry) => (
+              {choices.map((entry) => (
                 <option key={entry.id} value={entry.id}>
                   {entry.name}
                 </option>
               ))}
             </select>
           </div>
-        ) : plain || /^\/operator\/[^/]+\/[^/]+/.test(pathname) ? null : (
-          // A workspace page whose workspace has not published its list yet (the server render and the first
-          // paint): the room the control takes is kept, so the menu below does not move when it arrives. A
-          // mission page (an address below a section) never mounts the workspace, so it keeps no room.
+        ) : choices.length > 0 ? (
+          // The page has not said which workspace is open yet (the server render and the first paint): the room
+          // the control takes is kept, so the menu below does not move when it arrives. A page with no workspace
+          // to offer ("Workspace access is unavailable") keeps no room.
           <div className="ux-team-menu-switch" data-pending="true" aria-hidden="true" />
-        )}
+        ) : null}
         <a href="/workspace" title="All Workspaces">
           <OperatorIcon name="grid" />
           <span>{english(locale, 'All Workspaces')}</span>

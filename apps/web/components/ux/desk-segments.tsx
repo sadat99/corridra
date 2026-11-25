@@ -13,6 +13,7 @@ import { sectionForSlug } from '../../lib/operator-urls';
 import {
   deskOwnPages,
   deskPattern,
+  deskPlaceAllowed,
   deskSegmentsFor,
   isDeskPlace,
   type DeskPlaceId,
@@ -35,8 +36,17 @@ export function useDeskPlace(place: DeskPlaceId): DeskPlaceId {
     () => '',
   );
   const section = currentTeamSection(pathname, hash, sectionForSlug);
+  const { role } = useSyncExternalStore(
+    subscribeTeamContext,
+    readTeamContext,
+    readServerTeamContext,
+  );
   // A page of its own (the Inbox, a Supply page) is the place its server named: its address names no section.
   if (Object.hasOwn(deskOwnPages, place)) return place;
+  // A section the loaded role may not open shows Today (the workspace says so there), so the header is Today's
+  // and never the title and purpose line of a page that is not on screen. Until the role is known nothing moves.
+  if (section && isDeskPlace(section) && role !== null && !deskPlaceAllowed(section, role))
+    return 'home';
   if (section) return isDeskPlace(section) ? section : place;
   // No `#` part and no section word: the workspace home, or a page of its own that named its place.
   return pathname === '/operator' ? 'home' : place;

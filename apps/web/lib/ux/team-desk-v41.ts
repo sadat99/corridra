@@ -38,3 +38,28 @@ export function subscribeTeamSwitcher(listener: () => void) {
 }
 export const readTeamSwitcher = () => switcher;
 export const readServerTeamSwitcher = () => null;
+
+/** A workspace as the menu lists it. */
+export type TeamWorkspace = { id: string; name: string };
+
+/** The workspace list in one order everywhere: by name, then by id, so it never changes between visits. */
+export function sortTeamWorkspaces<T extends TeamWorkspace>(workspaces: readonly T[]): T[] {
+  return [...workspaces].sort(
+    (a, b) =>
+      a.name.localeCompare(b.name, 'en', { sensitivity: 'base', numeric: true }) ||
+      a.id.localeCompare(b.id),
+  );
+}
+
+/**
+ * Where the menu's workspace switch leads on a team page that does not mount the workspace (the Inbox, a Supply
+ * page, a mission page, the owner page): the same page for the chosen workspace. A page that belongs to one
+ * workspace's record (a mission, a supply candidate) opens the list it came from instead, because that record is
+ * not in the other workspace. Only the address is built here; the server decides what the workspace shows.
+ */
+export function teamPageForWorkspace(pathname: string, workspace: string): string {
+  const parts = pathname.split('/').filter(Boolean);
+  const keep = parts[1] === 'supply' && parts[2] === 'do-not-contact' ? 3 : 2;
+  const page = parts[0] === 'operator' ? '/' + parts.slice(0, keep).join('/') : '/operator';
+  return page + '?workspace=' + encodeURIComponent(workspace);
+}
