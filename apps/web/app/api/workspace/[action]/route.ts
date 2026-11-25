@@ -8,6 +8,7 @@ import { communicationOrchestrator } from '../../../../lib/communication-orchest
 import { notify } from '../../../../lib/notify';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { refusalReference, workspaceRefusal } from '../../../../lib/staff-db-error';
+import { stepUpWhenRoleAllows } from '../../../../lib/step-up-refusal';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 async function handle(request: Request, { params }: { params: Promise<{ action: string }> }) {
@@ -71,7 +72,9 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           });
         },
         'network-invitations': () =>
-          s.networkInvitations.list(ctx, new URL(request.url).searchParams.get('after')),
+          stepUpWhenRoleAllows(s, ctx, ['owner', 'admin'], () =>
+            s.networkInvitations.list(ctx, new URL(request.url).searchParams.get('after')),
+          ),
         'mission-catalogue': () => s.corridors.catalogue(ctx),
         'founder-activation': async () => ({
           ...(await s.operations.founderAccess(ctx)),
@@ -287,7 +290,9 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       'ai-review': () => s.intelligence.review(ctx, input),
       'network-profile': () => s.network.profile(ctx, input),
       'network-invitation': async () => {
-        const result = await s.networkInvitations.command(ctx, input);
+        const result = await stepUpWhenRoleAllows(s, ctx, ['owner', 'admin'], () =>
+          s.networkInvitations.command(ctx, input),
+        );
         const invite = input as { action?: string; email?: string; name?: string };
         const created = result as { principalId?: string; duplicate?: boolean };
         // CQ-65: the invited person gets an inbox item and, when email is on, an email. A failed

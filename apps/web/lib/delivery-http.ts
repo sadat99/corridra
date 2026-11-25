@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DomainError } from '@corridra/domain';
+import { DomainError, STEP_UP_REQUIRED } from '@corridra/domain';
 export const deliveryHeaders = {
   'Cache-Control': 'no-store',
   'Referrer-Policy': 'no-referrer',
@@ -50,6 +50,11 @@ export function deliveryError(error: unknown) {
               : status === 409
                 ? 'The request conflicts with the current scope or state. Refresh and review it again.'
                 : 'The request could not be completed. Please try again.',
+      // A refusal that only needs a fresh authenticator check keeps its code, so the screen can ask for the code in
+      // place (withStepUp) instead of ending in a dead-end message. No other code leaves here.
+      ...(error instanceof DomainError && error.code === STEP_UP_REQUIRED
+        ? { code: STEP_UP_REQUIRED }
+        : {}),
     },
     { status, headers: deliveryHeaders },
   );

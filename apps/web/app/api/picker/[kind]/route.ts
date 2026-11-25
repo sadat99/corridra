@@ -4,6 +4,7 @@ import { DomainError } from '@corridra/domain';
 import { foundations } from '../../../../lib/foundations';
 import { pickerKinds, type PickerKind } from '../../../../lib/ux/picker';
 import { countryName } from '../../../../lib/ux/options';
+import { stepUpWhenRoleAllows } from '../../../../lib/step-up-refusal';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
@@ -31,7 +32,10 @@ const country = (code: unknown) => {
  */
 const readers: Record<PickerKind, (s: Services, ctx: Context) => Promise<Option[]>> = {
   async contributor(s, ctx) {
-    const list = await s.networkInvitations.list(ctx);
+    // The same read as the invitations list: a lapsed authenticator check for an owner or admin asks for the code.
+    const list = await stepUpWhenRoleAllows(s, ctx, ['owner', 'admin'], () =>
+      s.networkInvitations.list(ctx),
+    );
     return (list.invitations as { principalId: string; name: string; state: string }[])
       .filter((item) => item.state === 'READY_FOR_PROFILE')
       .map((item) => ({ value: item.principalId, label: item.name, hint: 'Contributor' }));

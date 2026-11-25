@@ -356,6 +356,8 @@ test('recovery dashboard uses current queues without revealing payloads or crede
     s.command(f.users.owner.ctx, { ...c, id: randomUUID(), version: 2, state: 'RESOLVED' }),
   ).rejects.toThrow();
   await expect(s.reliability(f.users.viewer.ctx)).rejects.toThrow('denied');
+  // Health is owner and admin only (owner ruling, 25 Nov 2026): the operator is refused by the server itself.
+  await expect(s.reliability(f.users.operator.ctx)).rejects.toThrow('denied');
 });
 test('exponential backoff, dead-letter owner and idempotent effect recovery retain every attempt', async () => {
   const i = await f.introduction(),
