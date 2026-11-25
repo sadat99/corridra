@@ -1,0 +1,427 @@
+/* Home page v4.2 (owner, 25 Nov 2026; docs/revamp/specs/ui-ux-v4-2.md). Loaded only while CORRIDRA_UX_HOME_V42 is
+   exactly "true", and every rule is scoped under .hv42, so the live home and every other page are untouched. Tokens
+   only: no raw colour, no gradient, glass or glow; weights 400, 500 and 600; radii 12 (cards) and 16 (panels and
+   tiles); the capsule only for status. Text on navy is solid --on-brand. */
+
+/* The hero: the live brand line, headline and lead on the left, the route map on the right from 64 rem. */
+.ux-guide-home.tr-home .hv42 .hv42-hero {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-8);
+  margin-top: var(--space-4);
+  padding-block: var(--space-12);
+}
+@media (min-width: 64rem) {
+  .ux-guide-home.tr-home .hv42 .hv42-hero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 47.99rem) {
+  .ux-guide-home.tr-home .hv42 .hv42-hero {
+    padding-block: var(--space-8);
+  }
+}
+.ux-guide-home.tr-home .hv42 .hv42-hero-head {
+  justify-items: start;
+  margin-inline: 0;
+  text-align: start;
+}
+.ux-guide-home.tr-home .hv42 .hv42-hero .tr-lead {
+  color: var(--on-brand);
+}
+
+/* The route map. Narrow: Bangladesh on top and a rail down the left with a short tick into each place. Wide enough:
+   Bangladesh on the left, one line into a bus, a tick into each of the five places in equal rows. The lines are CSS
+   rules with no meaning of their own; the names are the content. */
+.hv42 .hv42-map {
+  container-type: inline-size;
+  min-inline-size: 0;
+  margin: 0;
+  --hv42-rule: 2px solid color-mix(in srgb, var(--on-brand) 60%, transparent);
+}
+.hv42 .hv42-map-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.hv42 .hv42-map .ux-flagged {
+  gap: var(--space-3);
+  color: var(--on-brand);
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+.hv42 .hv42-map .ux-flag {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 40%, transparent);
+}
+.hv42 .hv42-map-from {
+  margin: 0;
+}
+.hv42 .hv42-map-to {
+  display: grid;
+  margin: 0 0 0 var(--space-5);
+  padding: var(--space-2) 0 0;
+  list-style: none;
+}
+.hv42 .hv42-map-to li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  padding-inline-start: var(--space-6);
+}
+.hv42 .hv42-map-to li::before,
+.hv42 .hv42-map-to li::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+}
+.hv42 .hv42-map-to li::before {
+  inset-block-start: 50%;
+  inline-size: var(--space-4);
+  border-block-start: var(--hv42-rule);
+}
+.hv42 .hv42-map-to li::after {
+  inset-block: 0;
+  border-inline-start: var(--hv42-rule);
+}
+.hv42 .hv42-map-to li:first-child::after {
+  inset-block-start: calc(-1 * var(--space-2));
+}
+.hv42 .hv42-map-to li:last-child::after {
+  inset-block-end: 50%;
+}
+@container (min-width: 24rem) {
+  .hv42 .hv42-map-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .hv42 .hv42-map-from {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .hv42 .hv42-map-from::after {
+    content: '';
+    flex: 1 1 var(--space-12);
+    min-inline-size: var(--space-12);
+    border-block-start: var(--hv42-rule);
+  }
+  .hv42 .hv42-map-to {
+    grid-auto-rows: 1fr;
+    margin: 0;
+    padding: 0;
+  }
+  .hv42 .hv42-map-to li {
+    min-block-size: 3.5rem;
+  }
+  .hv42 .hv42-map-to li:first-child::after {
+    inset-block-start: 50%;
+  }
+}
+@media (forced-colors: active) {
+  .hv42 .hv42-map {
+    --hv42-rule: 2px solid CanvasText;
+  }
+}
+
+/* "Which way is your business moving?": the live light choice block, the two big doors first, then the two small.
+   Two big doors side by side only where each still holds its sentence on one line. */
+.ux-guide-home.tr-home .hv42 .hv42-choose {
+  margin-top: var(--space-8);
+  padding-inline: 0;
+}
+.ux-guide-home.tr-home .hv42 .hv42-choose :is(.tr-doors, .tr-start) {
+  padding-inline: 0;
+}
+.hv42 .hv42-doors-grid {
+  display: grid;
+  gap: var(--space-4);
+  container-type: inline-size;
+}
+.hv42 .hv42-doors-big,
+.hv42 .hv42-doors-small {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+@container (min-width: 40rem) {
+  .hv42 .hv42-doors-small {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (min-width: 70rem) {
+  .hv42 .hv42-doors-big {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+}
+
+/* The route sentence. Each flag stays with its name. Where the sentence fits it is one line (the supply sentence fits
+   at every width from 320 px); where the demand sentence does not, it breaks at one fixed point, "Bangladesh sells
+   to" on the first row and the four places together on the second (Guardian decision B1). Only enlarged text can
+   break it further, and then only between whole units, so nothing ever scrolls sideways. */
+.hv42 .hv42-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-2);
+  row-gap: var(--space-1);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+.hv42 .hv42-line-head,
+.hv42 .hv42-line-places {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-inline-size: 0;
+}
+.hv42 .hv42-line :is(.ux-flagged, .hv42-line-head > span) {
+  white-space: nowrap;
+}
+@container (max-width: 18rem) {
+  .hv42 .hv42-line,
+  .hv42 .hv42-line-head,
+  .hv42 .hv42-line-places,
+  .hv42 .hv42-line .ux-flagged {
+    column-gap: var(--space-1);
+  }
+}
+/* In the two big doors the sentence takes the whole width of the card, under the icon and the radio dot, so it has
+   the most room at every width (at 16 rem and less the live card is already one column). On the narrowest cards the
+   gaps inside the sentence tighten to the 4 px step, so "Bangladesh buys from China" keeps one line at 320 px with
+   22 px flags. */
+@container (min-width: 16rem) {
+  .hv42 .hv42-door-wide.has-icon label > .ux-door-tile {
+    grid-row: 1 / span 2;
+  }
+  .hv42 .hv42-door-wide.has-icon label > .ux-door-side {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .hv42 .hv42-door-wide.has-icon label > strong {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .hv42 .hv42-door-wide.has-icon label > .ux-door-route {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin-block-start: var(--space-2);
+    margin-inline-end: -1.75rem;
+  }
+  .hv42 .hv42-door-wide.has-icon label > .ux-door-text {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+  .hv42 .hv42-door-wide.has-icon label > .ux-door-picked {
+    grid-column: 1 / -1;
+    grid-row: 5;
+  }
+}
+
+/* The chosen route opens here, directly under the choice. */
+.hv42 .hv42-reveal {
+  display: grid;
+  min-inline-size: 0;
+}
+
+/* How it works, Trust and Who it is for as tiles. One column on a phone; two from 64 rem. */
+.hv42 .hv42-bento {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-12);
+}
+@media (min-width: 64rem) {
+  .hv42 .hv42-bento {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+  .hv42 .hv42-bento > #how {
+    grid-column: span 7;
+  }
+  .hv42 .hv42-bento > .hv42-trust {
+    grid-column: span 5;
+  }
+  .hv42 .hv42-bento > #who,
+  .hv42 .hv42-bento > .hv42-rules {
+    grid-column: 1 / -1;
+  }
+}
+.hv42 .hv42-tile,
+.ux-guide-home.tr-home .hv42 .hv42-trust .tr-section {
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--space-8);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-hero-radius);
+  background: var(--surface-1);
+}
+.ux-guide-home.tr-home .hv42 .hv42-trust .tr-section {
+  block-size: 100%;
+  border-color: var(--brand-deep);
+  background: var(--brand-deep);
+  box-shadow: none;
+  clip-path: none;
+}
+@media (max-width: 47.99rem) {
+  .hv42 .hv42-tile,
+  .ux-guide-home.tr-home .hv42 .hv42-trust .tr-section {
+    padding: var(--space-6) var(--space-4);
+  }
+}
+.hv42 .hv42-tile.is-soft {
+  border-color: transparent;
+  background: var(--surface-2);
+}
+.ux-guide-home.tr-home .hv42 .hv42-bento h2 {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: var(--text-h1);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.ux-guide-home.tr-home .hv42 .tr-navy :is(.label, .tr-small, .tr-sub, .tr-five p) {
+  color: var(--on-brand);
+}
+
+/* The fourteen steps in two lists; steps 8 to 13 dashed and named as optional. */
+.hv42 .hv42-step-lists {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: var(--space-8);
+}
+@media (min-width: 40rem) {
+  .hv42 .hv42-step-lists {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.hv42 .hv42-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv42 .hv42-steps li {
+  display: grid;
+  grid-template-columns: 2rem 0.75rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: 2.75rem;
+  border-block-end: 1px solid var(--line);
+}
+.hv42 .hv42-step-no {
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+.hv42 .hv42-step-dot {
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border: 2px solid var(--text-1);
+  border-radius: 50%;
+  background: var(--text-1);
+}
+.hv42 .hv42-steps .is-optional .hv42-step-dot {
+  border-style: dashed;
+  background: transparent;
+}
+.hv42 .hv42-steps .is-optional {
+  border-block-end-style: dashed;
+}
+.hv42 .hv42-step-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The four rules, the eight people and Plain limits: a strong head and its line. */
+.hv42 .hv42-rules,
+.hv42 .hv42-people,
+.hv42 .hv42-nots {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4) var(--space-6);
+}
+.hv42 .hv42-people,
+.hv42 .hv42-nots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv42 .hv42-rules > div,
+.hv42 .hv42-people li,
+.hv42 .hv42-nots li {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+.hv42 .hv42-rules span,
+.hv42 .hv42-people span {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+@media (min-width: 40rem) {
+  .hv42 .hv42-rules,
+  .hv42 .hv42-people,
+  .hv42 .hv42-nots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .hv42 .hv42-rules,
+  .hv42 .hv42-people,
+  .hv42 .hv42-nots {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.hv42 .hv42-nots li {
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid color-mix(in srgb, var(--on-brand) 40%, transparent);
+}
+.hv42 .hv42-nots span {
+  color: var(--on-brand);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+/* Trust in its tile: the five labels one under another, each with its line. */
+.ux-guide-home.tr-home .hv42 .hv42-trust .tr-five {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+.ux-guide-home.tr-home .hv42 .hv42-trust .tr-five li {
+  grid-template-columns: minmax(0, 11rem) minmax(0, 1fr);
+  align-items: center;
+  justify-items: start;
+}
+.ux-guide-home.tr-home .hv42 .hv42-trust .tr-five p {
+  margin: 0;
+}
+@container (max-width: 22rem) {
+  .ux-guide-home.tr-home .hv42 .hv42-trust .tr-five li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.ux-guide-home.tr-home .hv42 .hv42-trust {
+  container-type: inline-size;
+  min-inline-size: 0;
+}
+
+/* Route statuses: two columns from 48 rem; the two open routes carry a 4 px selected edge. */
+@media (min-width: 48rem) {
+  .ux-guide-home.tr-home .hv42 .tr-routes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.ux-guide-home.tr-home .hv42 .tr-routes > div {
+  padding: var(--space-6);
+  border-radius: var(--guided-card-radius);
+}
+.ux-guide-home.tr-home .hv42 .tr-routes > div:has(> .tr-status.is-open) {
+  border-inline-start: 4px solid var(--selected);
+}
