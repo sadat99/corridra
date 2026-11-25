@@ -66,6 +66,11 @@ type Scenario = {
   unavailable?: string[];
 };
 const stale = { status: 401, json: { error: 'Confirm your code', code: 'STEP_UP_REQUIRED' } };
+/** The erasure queue's real answer to a stale check: a 401 with no code (the route throws before the database). */
+const staleErasure = {
+  status: 401,
+  json: { error: 'Verify your authenticator again to continue' },
+};
 const fresh: Row = { id: id(1), status: 'DRAFT', company: 'Sample Towels Ltd', dueAt: inDays(4) };
 const late36: Row = {
   id: id(2),
@@ -181,7 +186,7 @@ async function open(page: Page, scenario: Scenario, query = '/?v41=on') {
         : route.fulfill({ status: 503, json: { error: 'Sample' } }),
   );
   await page.route('**/api/workspace/customer-erasure-queue?*', (route) => {
-    if (scenario.staleCode) return route.fulfill(stale);
+    if (scenario.staleCode) return route.fulfill(staleErasure);
     if (scenario.erasureStatus)
       return route.fulfill({ status: scenario.erasureStatus, json: { error: 'Sample' } });
     const status = new URL(route.request().url()).searchParams.get('status');
@@ -398,6 +403,28 @@ test('fix run: a stale authenticator check is one quiet line with Confirm Code, 
   // Confirm Code opens the check in place.
   await line.getByRole('button', { name: 'Confirm Code' }).click();
   await expect(page.getByRole('dialog', { name: 'Confirm it is you' })).toBeVisible();
+});
+
+test('fix run: an admin never reads the erasure queue and sees no erasure tile or failure line', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const erasureReads: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/workspace/customer-erasure-queue'))
+      erasureReads.push(request.url());
+  });
+  // Even a queue that would answer 403 (members.manage is owner only) is never asked.
+  await open(
+    page,
+    { ...quiet, role: 'admin', erasureStatus: 403 },
+    '/?v41=on&role=admin&reports=on',
+  );
+  await expect(page.locator('.ux-today41')).toBeVisible();
+  await expect(page.locator('[data-code-check]')).toHaveCount(0);
+  await expect(page.locator('.ux-today41')).not.toContainText(/erasure/i);
+  await expect(decide(page).getByRole('button', { name: 'Try Again' })).toHaveCount(0);
+  expect(erasureReads).toEqual([]);
 });
 
 test('fix run: two lists that failed for one reason are named in one message with one Try Again', async ({

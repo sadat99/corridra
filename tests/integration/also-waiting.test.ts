@@ -27,7 +27,7 @@ const item = (n: number, daysLeft: number, status = 'received') => ({
 describe('role gate', () => {
   test.each([
     ['owner', true, true],
-    ['admin', true, true],
+    ['admin', true, false],
     ['operator', false, false],
     ['viewer', false, false],
     [undefined, false, false],
@@ -38,8 +38,12 @@ describe('role gate', () => {
   test('an operator never starts a read, whatever is installed', () => {
     expect(alsoWaitingReads('operator', true)).toEqual({ problemReports: false, erasure: false });
   });
-  test('Report a Problem not installed: no problem report read for an owner, erasure still allowed', () => {
+  test('Report a Problem not installed: no problem report read for an owner, erasure still read', () => {
     expect(alsoWaitingReads('owner', false)).toEqual({ problemReports: false, erasure: true });
+  });
+  test('an admin reads problem reports but never the erasure queue (members.manage is owner only)', () => {
+    expect(alsoWaitingReads('admin', true)).toEqual({ problemReports: true, erasure: false });
+    expect(alsoWaitingReads('admin', false)).toEqual({ problemReports: false, erasure: false });
   });
 });
 

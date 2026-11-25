@@ -365,10 +365,10 @@ test('an empty Missions list says no record you can see matches, never that ther
         exact: true,
       }),
     ).toBeVisible();
-    // A focus view is a filter: the words change to "no match", still without a claim of zero.
+    // A focus view that needs no route is a filter: the words change to "no match", still without a claim of zero.
     await page
       .getByRole('group', { name: 'Mission focus views' })
-      .getByRole('button', { name: 'China sourcing' })
+      .getByRole('button', { name: 'Awaiting qualification' })
       .click();
     await expect(
       on.getByText(
