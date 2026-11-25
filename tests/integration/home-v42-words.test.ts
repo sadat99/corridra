@@ -20,6 +20,7 @@ vi.mock('next/link', () => ({
     createElement('a', { href, ...rest, children }),
 }));
 
+const load = async (path: string) => await import(/* @vite-ignore */ `../../apps/web/${path}`);
 const newKeys = ['home.v42.line.buys', 'home.v42.line.sells', 'home.v42.not.eyebrow'] as const;
 const text = (html: string) =>
   html
@@ -60,7 +61,7 @@ describe('the v4.2 words', () => {
 
 describe('the route lines', () => {
   it('leave Key Asian Markets out of the Sell line only where v4.2 asks; left out, every market shows', async () => {
-    const { RouteLine } = await import('../../apps/web/components/home-route-line');
+    const { RouteLine } = await load('components/home-route-line.tsx');
     const all = renderToStaticMarkup(createElement(RouteLine, { route: 'sell' }));
     const trimmed = renderToStaticMarkup(
       createElement(RouteLine, { route: 'sell', markets: 'noKeyAsian' }),
@@ -76,7 +77,7 @@ describe('the route lines', () => {
   });
 
   it('read "Bangladesh buys from China" and "Bangladesh sells to EU, UK, US, Australia" in the two big doors', async () => {
-    const { HomeV42Choice } = await import('../../apps/web/components/home-v42-choice');
+    const { HomeV42Choice } = await load('components/home-v42-choice.tsx');
     const html = renderToStaticMarkup(
       createElement(HomeV42Choice, {
         shown: 'none',
@@ -107,7 +108,7 @@ describe('the route lines', () => {
   });
 
   it('name the hero route map from live words only, without Key Asian Markets', async () => {
-    const { HomeV42Hero } = await import('../../apps/web/components/home-v42-hero');
+    const { HomeV42Hero } = await load('components/home-v42-hero.tsx');
     const html = renderToStaticMarkup(createElement(HomeV42Hero));
     const name = [
       en['home.country.bd'],
