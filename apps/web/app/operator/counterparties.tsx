@@ -6,12 +6,15 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
 import { missionHintNote, takeMissionHint } from './mission-hint';
 import { plainCode, stageLabel } from './[section]/[missionId]/mission-labels';
+import { CountryName } from './country-name';
+import './counterparties.css';
 import {
   ChangeAvailability,
   RecordItem,
   chains,
   shown,
   stateWord,
+  at,
   type ChangeContext,
   type Changes,
 } from './record-changes';
@@ -52,7 +55,20 @@ const ingestWarningWords: Record<IngestWarning, string> = {
 const txt = (r: Row, key: string) => String(r[key] ?? '');
 // ADR-087 U1r: a staff viewer receives the statement of a quotation-linked claim as null (residue: quotationLinkedClaimSql).
 const statement = (r: Row) => (r.statement === null ? bodyNotAvailable : txt(r, 'statement'));
-const when = (v: unknown) => (v ? new Date(String(v)).toLocaleString() : 'Not recorded');
+const whenLegacy = (v: unknown) => (v ? new Date(String(v)).toLocaleString() : 'Not recorded');
+/** Team desk v4.1: the stored claim words of a record in words ("SELF_DECLARED" reads "Self-declared"). */
+const claimWords: Record<string, string> = {
+  SELF_DECLARED: 'Self-declared',
+  SOURCE_REPORTED: 'Source-reported',
+  INDEPENDENTLY_VERIFIED: 'Independently verified',
+};
+/** Team desk v4.1: what a stored AI policy means for the record, in words. */
+const aiPolicyWords = (policy: string) =>
+  policy === 'DENY'
+    ? 'not allowed'
+    : policy === 'ALLOW'
+      ? 'allowed'
+      : plainCode(policy).toLowerCase();
 // Team desk v4.1, unit D10 (CORRIDRA_UX_TEAM_DESK_V41). A record name in a list is kept to one short line, and
 // a mission whose request has no company name is named in words, never by its id.
 const shortName = (value: string, limit = 60) =>
@@ -149,6 +165,10 @@ export function Counterparties({
   purpose?: string;
 }) {
   const { teamDeskV41: desk } = useOperatorFlags();
+  // One date form on the page: "20 Dec 2026, 02:48 UTC" with the switch on, the browser's own form as it was with it off.
+  const when = (v: unknown) => (desk ? at(v) : whenLegacy(v));
+  /** A stored code in words with the switch on; the code itself with it off. */
+  const words = (v: unknown) => (desk ? plainCode(String(v ?? '')) : String(v ?? ''));
   const [catalogue, setCatalogue] = useState<{
       role: string;
       total: number;
@@ -382,11 +402,14 @@ export function Counterparties({
       className="operator-section research-workspace"
       aria-labelledby="research-heading"
     >
-      <h2 id="research-heading">Counterparty research</h2>
+      <h2 id="research-heading">{desk ? 'Companies' : 'Counterparty research'}</h2>
       <OperatorWorkbench
         label="Research sections"
         sections={[
-          { label: 'Search and sources', heading: 'Counterparty research' },
+          {
+            label: 'Search and sources',
+            heading: desk ? 'Companies' : 'Counterparty research',
+          },
           { label: 'Public identities', heading: 'Original public identities' },
           { label: 'Evidence and claims', heading: 'Evidence and capabilities' },
           { label: 'Private relationships', heading: 'Private relationships' },
@@ -418,7 +441,7 @@ export function Counterparties({
         </ul>
       )}
       <form
-        className="operator-toolbar"
+        className={desk ? 'operator-toolbar research-search' : 'operator-toolbar'}
         onSubmit={(e) => {
           e.preventDefault();
           setQuery(q);
@@ -447,8 +470,9 @@ export function Counterparties({
       {catalogue ? (
         <>
           <p>
-            {catalogue.total} company records. Shared identities are source-reported; private
-            knowledge is shown only when your workspace permits it.
+            {catalogue.total} company {catalogue.total === 1 ? 'record' : 'records'}. Shared
+            identities are source-reported; private knowledge is shown only when your workspace
+            permits it.
           </p>
           <div className="research-results">
             {catalogue.organisations.map((o) => (
@@ -465,7 +489,8 @@ export function Counterparties({
               >
                 <strong>{o.name}</strong>
                 <span>
-                  {o.country} · {o.domain ?? 'No Public Identifier'} ·{' '}
+                  {desk ? <CountryName code={o.country} /> : o.country} ·{' '}
+                  {o.domain ?? 'No Public Identifier'} ·{' '}
                   {o.identity_status === 'EXPIRED'
                     ? 'Identity Evidence Expired'
                     : o.identity_status === 'UNKNOWN'
@@ -633,7 +658,12 @@ export function Counterparties({
           <div className="research-panel" key={selected}>
             <h3>{detail.organisation.name}</h3>
             <p>
-              {detail.organisation.country} · {detail.aliasIds.length} original record
+              {desk ? (
+                <CountryName code={detail.organisation.country} />
+              ) : (
+                detail.organisation.country
+              )}{' '}
+              · {detail.aliasIds.length} original record
               {detail.aliasIds.length === 1 ? '' : 's'} in this workspace attribution. Original
               sources and relationship ownership are preserved.
             </p>
@@ -642,12 +672,13 @@ export function Counterparties({
               {detail.identities.map((i) => (
                 <article className="research-evidence" key={i.id}>
                   <strong>
-                    {txt(i, 'name')} · {txt(i, 'country')}
+                    {txt(i, 'name')} ·{' '}
+                    {desk ? <CountryName code={txt(i, 'country')} /> : txt(i, 'country')}
                     {desk ? '' : ` · Original record ${i.id.slice(0, 8)}`}
                   </strong>
                   <p>
-                    {txt(i, 'status')} · {txt(i, 'domain')} · {txt(i, 'identifier_type')}:{' '}
-                    {txt(i, 'identifier')} · {txt(i, 'address')}
+                    {desk ? stateWord(i.status) : txt(i, 'status')} · {txt(i, 'domain')} ·{' '}
+                    {words(i.identifier_type)}: {txt(i, 'identifier')} · {txt(i, 'address')}
                   </p>
                   <p>
                     Public source: {txt(i, 'source_locator') || 'Not recorded'} · Observed{' '}
@@ -669,15 +700,21 @@ export function Counterparties({
               {attrs.map((a) => (
                 <article className="research-evidence" key={a.id}>
                   <strong>
-                    {txt(a, 'kind')}: {statement(a)}
+                    {words(a.kind)}: {statement(a)}
                   </strong>
                   <p className="evidence-label">
-                    {txt(a, 'status')} · Original claim: {txt(a, 'claim_status')}
+                    {desk ? stateWord(a.status) : txt(a, 'status')} · Original claim:{' '}
+                    {desk
+                      ? (claimWords[txt(a, 'claim_status')] ?? plainCode(txt(a, 'claim_status')))
+                      : txt(a, 'claim_status')}
                   </p>
                   <p>
-                    Source: {txt(a, 'locator')} · {txt(a, 'source_kind')} · Observed{' '}
+                    Source: {txt(a, 'locator')} · {words(a.source_kind)} · Observed{' '}
                     {when(a.observed_at)} · Valid until {when(a.valid_until)} · Retention{' '}
-                    {when(a.retention_until)} · AI: {txt(a, 'ai_policy')}
+                    {when(a.retention_until)} ·{' '}
+                    {desk
+                      ? `AI use: ${aiPolicyWords(txt(a, 'ai_policy'))}`
+                      : `AI: ${txt(a, 'ai_policy')}`}
                   </p>
                   {a.fact_id ? (
                     <p>
@@ -694,8 +731,9 @@ export function Counterparties({
                 <article className="research-evidence" key={a.id}>
                   <strong>Shared public fact: {txt(a, 'statement')}</strong>
                   <p>
-                    {txt(a, 'status')} · {txt(a, 'kind')} · {txt(a, 'source_locator')} · Observed{' '}
-                    {when(a.observed_at)} · Until {when(a.valid_until)}
+                    {desk ? stateWord(a.status) : txt(a, 'status')} · {words(a.kind)} ·{' '}
+                    {txt(a, 'source_locator')} · Observed {when(a.observed_at)} · Until{' '}
+                    {when(a.valid_until)}
                   </p>
                   <p>
                     Review: {txt(a, 'method')} · Scope: {txt(a, 'scope')} · Malware scan:{' '}
@@ -841,7 +879,8 @@ export function Counterparties({
                       .map((c) => (
                         <p key={c.id}>
                           {txt(c, 'name')} · {txt(c, 'job_title')} · {txt(c, 'email')} ·{' '}
-                          {txt(c, 'status')} · Source {txt(c, 'source_id')} · Until{' '}
+                          {desk ? stateWord(c.status) : txt(c, 'status')}
+                          {desk ? '' : ` · Source ${txt(c, 'source_id')}`} · Until{' '}
                           {when(c.valid_until)}
                         </p>
                       ))}
@@ -850,8 +889,8 @@ export function Counterparties({
                       .filter((n) => n.relationship_id === r.id)
                       .map((n) => (
                         <p key={n.id}>
-                          Private note: {txt(n, 'body')} · Source {txt(n, 'source_id')} ·{' '}
-                          {when(n.created_at)}
+                          Private note: {txt(n, 'body')}
+                          {desk ? '' : ` · Source ${txt(n, 'source_id')}`} · {when(n.created_at)}
                         </p>
                       ))}
                 </article>
@@ -945,8 +984,10 @@ export function Counterparties({
                 </details>
               )}
             </PhoneFold>
-            <PhoneFold summary="Show entity matching and ambiguity">
-              <h4>Entity matching and ambiguity</h4>
+            <PhoneFold
+              summary={desk ? 'Show possible matches' : 'Show entity matching and ambiguity'}
+            >
+              <h4>{desk ? 'Possible matches' : 'Entity matching and ambiguity'}</h4>
               {manage && (
                 <button
                   disabled={busy}
@@ -954,7 +995,7 @@ export function Counterparties({
                     void act(() => send({ action: 'candidates', organisationId: selected }))
                   }
                 >
-                  Find Deterministic Candidates
+                  {desk ? 'Find Possible Matches' : 'Find Deterministic Candidates'}
                 </button>
               )}
               {detail.candidates.length === 0 && (

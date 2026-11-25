@@ -1,0 +1,26 @@
+/* Team desk v4.1, Companies: the search row. The label sits above a full-width field and never breaks inside a
+   word; the two buttons follow it on the same line when there is room and under it on a phone. The shared toolbar
+   rule of the desk home (operator-overview.css) puts the label and field in one row, which leaves a phone field
+   about 75 px wide, so this page restyles its own row with its own class. Tokens only. */
+.ux-operator-home .research-workspace form.research-search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.ux-operator-home .research-workspace form.research-search > .field {
+  display: grid;
+  flex: 1 1 18rem;
+  gap: var(--space-2);
+  max-width: none;
+  min-inline-size: 0;
+  white-space: nowrap;
+}
+.ux-operator-home .research-workspace form.research-search > .field > input {
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 2.75rem;
+}
+.ux-operator-home .research-workspace form.research-search > button {
+  min-block-size: 2.75rem;
+}
