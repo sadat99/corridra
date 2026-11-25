@@ -463,3 +463,76 @@ test('footer trimmed at 390px fits the phone budget of the Option B footer (844 
     .evaluate((el) => Math.round(el.getBoundingClientRect().height));
   expect(height).toBeLessThanOrEqual(844);
 });
+
+// Design audit of 8ce549c (G64, 25 Nov 2026). Public home: "The first screen shows the three jobs". The fixture has no
+// header, so the live header heights (60 px phone, 72 px at 768, measured on a production build) are added back.
+for (const [width, height, header] of [
+  [390, 844, 60],
+  [768, 1024, 72],
+] as const)
+  test(`at ${width} x ${height} the first door is whole on the first screen`, async ({ page }) => {
+    await mountHomeV42(page, { width, height });
+    const bottom = await page
+      .locator('.hv42-choose .ux-door')
+      .first()
+      .evaluate((d) => d.getBoundingClientRect().bottom + window.scrollY);
+    expect(bottom + header).toBeLessThanOrEqual(height);
+    // Below 48 rem the map is one compact row with no rails; from 48 rem it sits beside the headline.
+    const [head, map] = await page
+      .locator('.hv42-hero-head, .hv42-map')
+      .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+    if (width >= 768) expect(Math.abs(head! - map!)).toBeLessThan(200);
+    else
+      expect(
+        await page
+          .locator('.hv42-map-to li')
+          .first()
+          .evaluate((li) => getComputedStyle(li, '::before').content),
+      ).toBe('none');
+  });
+
+test('bento: from 80 rem the rules sit under How it works and Trust fills both rows, no empty gap; one column below', async ({
+  page,
+}) => {
+  const box = (selector: string) =>
+    page.locator(selector).evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return { left: r.left, top: r.top, bottom: r.bottom, width: r.width };
+    });
+  await mountHomeV42(page, { width: 1440 });
+  const [how, rules, trust, who] = [
+    await box('#how'),
+    await box('.hv42-rules'),
+    await box('.hv42-trust'),
+    await box('#who'),
+  ];
+  expect(rules.left).toBe(how.left);
+  expect(rules.top).toBeGreaterThan(how.bottom);
+  expect(trust.left).toBeGreaterThan(how.left + how.width);
+  expect(Math.abs(trust.top - how.top)).toBeLessThan(1);
+  expect(Math.abs(trust.bottom - rules.bottom)).toBeLessThan(1);
+  expect(who.top).toBeGreaterThan(trust.bottom);
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const lefts = await page
+    .locator('.hv42-bento > *')
+    .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+  expect(new Set(lefts).size, 'one column at 1024').toBe(1);
+  // Reading order follows the layout: How it works, its rules, Trust, Who it is for.
+  expect(
+    await page.locator('.hv42-bento > *').evaluateAll((els) => els.map((e) => e.id || e.className)),
+  ).toEqual(['how', 'hv42-tile is-soft hv42-rules', 'hv42-trust', 'who']);
+});
+
+test('Who it is for: eight cards, each with its own icon, the person and the full promise', async ({
+  page,
+}) => {
+  await mountHomeV42(page, { width: 1440 });
+  const cards = page.locator('#who .hv42-people > li');
+  await expect(cards).toHaveCount(8);
+  for (const card of await cards.all()) {
+    await expect(card.locator('.hv42-person svg[aria-hidden="true"]')).toHaveCount(1);
+    expect(await card.evaluate((li) => getComputedStyle(li).borderRadius)).toBe('12px');
+  }
+  const icons = await cards.evaluateAll((li) => li.map((l) => l.querySelector('svg')!.innerHTML));
+  expect(new Set(icons).size, 'eight different icons').toBe(8);
+});

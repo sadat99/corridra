@@ -111,6 +111,7 @@ export function HomeV42({ whatsapp = null }: { whatsapp?: string | null }) {
 
       <div className="hv42-bento">
         <HowTile />
+        <RulesTile />
         <div className="hv42-trust">
           <TrustSection>
             <div className="tr-proof">
@@ -121,7 +122,6 @@ export function HomeV42({ whatsapp = null }: { whatsapp?: string | null }) {
           </TrustSection>
         </div>
         <PeopleTile />
-        <RulesTile />
       </div>
 
       <RoutesSection
