@@ -1323,6 +1323,10 @@ function ScopedProgrammes({
   // view takes the place of the tabs while it is open, and both stay mounted so nothing typed is lost. The old
   // addresses still land: `?tab=new` and `#new` open it, and opening it writes `?tab=new`.
   const creating = newChoice ?? startHere;
+  // A workspace with no programme yet opens on the create view. When it also has Templates (or Pricing) to reach,
+  // their tabs stay in the page beside it, as they did when creating was a tab: only the person's own choice, or the
+  // address, takes the tabs away.
+  const tabsHidden = creating && (newChoice === true || !templatesEnabled);
   const newLabel = realCustomerInput() ? 'New Programme' : 'New Sample Programme';
   const showNew = (open: boolean) => {
     const url = new URL(window.location.href);
@@ -1431,7 +1435,7 @@ function ScopedProgrammes({
               </>
             )}
           </section>
-          <div className="programme-page-body" hidden={creating}>
+          <div className="programme-page-body" hidden={tabsHidden}>
             <SubTabs
               label="Delegation planning"
               className="programme-page-tabs account-compact"
