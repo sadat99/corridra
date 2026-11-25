@@ -66,7 +66,7 @@ describe('L9: one next step card with one primary action', () => {
     expect(flat).toContain(
       'href="/contributor/setup" action="Accept a Reviewed Helper Invitation"',
     );
-    for (const line of ['How assigned work works', 'Choose your sign-in route', 'Back to Corridra'])
+    for (const line of ['How assigned work works', 'Choose your sign-in route', 'Corridra Home'])
       expect(page).toContain(line);
     // Helper Sign-In is written once: beside the action with the switch off. With the switch on the sign-in door
     // is the one way there, and the card has no title that repeats its button.
@@ -150,14 +150,14 @@ describe('L1: the places of a task carry their mark', () => {
   it('the market and the work country go through the shared flag component with their plain names', () => {
     const board = read('apps/web/app/contributor/task-board.tsx').replace(/\s+/g, ' ');
     expect(board).toContain(
-      '<Flagged code={placeMark(task.disclosure.market)}> {place(task.disclosure.market)} </Flagged>',
+      '<Flagged code={placeMark(task.disclosure.market)}>{place(task.disclosure.market)}</Flagged>',
     );
     expect(board).toContain(
       '<Flagged code={placeMark(task.disclosure.workCountry)}> {place(task.disclosure.workCountry)} </Flagged>',
     );
     // The line keeps its words and its order: state, market, then the work country.
     expect(board).toMatch(
-      /\{words\(task\.status\)\} ·\{' '\} <Flagged[^>]*>[^<]*<\/Flagged>\{' '\} · work country\{' '\} <Flagged/,
+      /\{statusWords\(task\.status\)\} ·\{' '\} <Flagged[^>]*>[^<]*<\/Flagged> · work country\{' '\} <Flagged/,
     );
   });
 });

@@ -67,7 +67,7 @@ const LEFTOVERS = [
   ['apps/web/app/account/drafts/guided-request.tsx', 10, 'B7b-ui'],
   ['apps/web/app/account/profile/company-link.tsx', 2, 'B7b-ui'],
   ['apps/web/app/account/profile/organisation-profile.tsx', 2, 'B7b-ui'],
-  ['apps/web/app/account/service-requests/service-request-detail.tsx', 5, 'B7b-ui'],
+  ['apps/web/app/account/service-requests/service-request-detail.tsx', 2, 'B7b-ui'],
   ['apps/web/app/account/service-requests/service-request-new.tsx', 2, 'B7b-ui'],
   ['apps/web/components/commercial-arrangement-fields.tsx', 1, 'B7b-ui'],
   // The three "Start ... with Synthetic" refusals of the programme pages.

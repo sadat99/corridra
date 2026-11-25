@@ -63,6 +63,7 @@ test.beforeAll(async () => {
     'components/ux/page-frame.css',
     'components/ux/overflow-menu.css',
     'components/ux/money-input.css',
+    'components/ux/segmented-filter.css',
     'app/account/delegations/fee-schedule-actions.css',
     // The stylesheet of this change does not exist on the code before it; a missing file is an empty one.
     'app/account/delegations/programme-pricing.css',
@@ -104,7 +105,7 @@ async function open(page: Page, width: number, list: Row[], tab: 'Series' | 'Exp
   await page.setViewportSize({ width, height: 844 });
   await page.goto(fixturePath);
   const area = page.getByRole('region', { name: 'Pricing, series and exports', exact: true });
-  await area.getByRole('tab', { name: tab }).click();
+  await area.getByRole('radio', { name: tab, exact: true }).click();
   return { area, posts };
 }
 
@@ -186,10 +187,10 @@ for (const width of [390, 768, 1440]) {
       await expect(area.getByRole('heading', { name: 'Series', level: 4 })).toBeVisible();
       const gaps = await area.evaluate((el) => {
         const box = (node: Element | null) => node!.getBoundingClientRect();
-        const heading = el.querySelector('[role="tabpanel"] h4');
+        const heading = el.querySelector('.pricing-panel h4');
         const intro = heading!.nextElementSibling;
         const tabs = el.querySelector('.pricing-tabs');
-        const rows = [...el.querySelectorAll('[role="tabpanel"] > div > ul > li')];
+        const rows = [...el.querySelectorAll('.pricing-panel > div > ul > li')];
         return {
           inside: box(intro).top - box(heading).bottom,
           tabsToSection: box(heading).top - box(tabs).bottom,
@@ -239,7 +240,8 @@ test('on a phone the menu button, the actions and the tabs are 44 px targets', a
     area.getByRole('button', { name: 'More actions for Sample series 1' }),
     area.getByRole('button', { name: 'Edit Series Sample series 1' }),
     area.getByRole('button', { name: 'Create the Next Edition of Sample series 1' }),
-    area.getByRole('tab', { name: 'Series' }),
+    // The section choice is a radio drawn as a segment: the segment (its label) is the target.
+    area.locator('.ux-segment', { hasText: 'Series' }),
   ])
     expect((await locator.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   const trigger = await area
@@ -271,7 +273,7 @@ test('page length: three series rows fit one desktop screen, and Exports on a ph
   // Desktop hard limit: one screen (the code before this change measured 904 px, a first version of it 965 px).
   expect(await mainHeight()).toBeLessThanOrEqual(900);
   await page.setViewportSize({ width: 390, height: 844 });
-  await area.getByRole('tab', { name: 'Exports' }).click();
+  await area.getByRole('radio', { name: 'Exports', exact: true }).click();
   await expect(area.getByRole('button', { name: 'Download CSV' })).toBeVisible();
   // Before this change the Exports tab measured 798 px on a phone (0.95 screens); a first version of it 855 px.
   expect(await mainHeight()).toBeLessThanOrEqual(801);

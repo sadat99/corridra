@@ -60,8 +60,7 @@ test.beforeAll(async () => {
         import { WorkspaceShell } from ${JSON.stringify(resolve('apps/web/components/workspace-shell.tsx'))};
         import { pageFrameSlots } from ${JSON.stringify(resolve('apps/web/components/ux/page-frame.tsx'))};
         import { WorkspaceChooser } from ${JSON.stringify(resolve('apps/web/components/workspace-chooser.tsx'))};
-        import { programmesChooserBack } from ${JSON.stringify(resolve('apps/web/app/account/frame-copy.ts'))};
-        const slots = pageFrameSlots({ back: programmesChooserBack });
+        const slots = pageFrameSlots({});
         WorkspaceChooser({ kind: 'programmes', enabled: true }).then((chooser) => {
           createRoot(document.getElementById('app')).render(
             <WorkspaceShell title="Programmes" customer above={slots.above} lead={slots.lead}>{chooser}</WorkspaceShell>);

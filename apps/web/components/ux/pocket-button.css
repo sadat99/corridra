@@ -1,8 +1,7 @@
-/* Pocket (phone). The one plus button, its list (the Next Move first), and the short phone header that goes with it. Tokens only. Everything
-   here is inside the phone width (640 px and under, the installed app included) and keyed on the button being in the
-   page, so a wider window, a form step, a staff page and a public page are untouched. */
-.ux-pocket,
-.ux-pocket-title {
+/* Pocket (phone). The one plus button and its list (the Next Move first). Tokens only. Everything here is inside the
+   phone width (640 px and under, the installed app included) and keyed on the button being in the page, so a wider
+   window, a form step, a staff page and a public page are untouched. */
+.ux-pocket {
   display: none;
 }
 @media (max-width: 640px) {
@@ -180,42 +179,8 @@
     justify-content: flex-start;
   }
 
-  /* The short phone header, only on a page that has the button: the menu, the page title, the inbox and the account.
-     Brand, Search, New Request and the language and Help menus are in the list, the tabs or the account menu. */
-  body:has(.ux-pocket) .ux-customer-header .brand,
-  body:has(.ux-pocket) .ux-customer-header .ux-csearch-trigger,
-  body:has(.ux-pocket) .ux-customer-header .ux-bar-new-narrow,
-  body:has(.ux-pocket) .ux-customer-header .ux-menu.ux-util-language,
-  body:has(.ux-pocket) .ux-customer-header .ux-menu.ux-util-help {
-    display: none;
-  }
-  /* The account menu carries language and Help below 640 px already; at 640 itself it must too. */
-  body:has(.ux-pocket) .ux-customer-header .ux-phone-only {
-    display: block;
-  }
-  body:has(.ux-pocket) .ux-customer-header .ux-pocket-title {
-    display: block;
-    flex: 1 1 0;
-    min-width: 0;
-    overflow: hidden;
-    color: var(--ink);
-    font: 600 var(--text-lg) var(--font-ui);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  body:has(.ux-pocket) .ux-customer-header .ux-bar-tools {
-    flex: none;
-  }
-  /* Listen and the language code are in the top bar now (UI/UX.v4, owner option 1a), so below 480 px the bar has no
-     room left for the page title; the page's own heading is the first thing under the header. From 480 px it stays. */
-  @media (max-width: 479.98px) {
-    body:has(.ux-pocket) .ux-customer-header .ux-pocket-title {
-      display: none;
-    }
-    body:has(.ux-pocket) .ux-customer-header .ux-bar-tools {
-      margin-inline-start: auto;
-    }
-  }
+  /* The short phone header that goes with the switch is in customer-bar.css: it is drawn on form steps too, where the
+     button is not. */
 }
 @media (prefers-reduced-motion: reduce) {
   .ux-pocket {

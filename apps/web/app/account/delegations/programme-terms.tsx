@@ -1,7 +1,8 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PlacesReport, TermsState } from '@corridra/auth/customer-programme-terms';
+import { SegmentedFilter } from '../../../components/ux/segmented-filter';
 import { MyReminders } from './my-reminders';
 import {
   failureText,
@@ -87,7 +88,6 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
   const writing = useRef(false);
   const intent = useRef<{ signature: string; commandId: string } | null>(null);
   const api = useRef(termsApi(subject, issuer));
-  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const clear = useCallback(() => {
     setState(null);
@@ -335,19 +335,6 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
   }
   const toggle = (set: (v: string[]) => void, current: string[], value: string) =>
     set(current.includes(value) ? current.filter((x) => x !== value) : [...current, value]);
-  function onTabKey(event: KeyboardEvent<HTMLButtonElement>) {
-    const i = tabs.indexOf(tab);
-    let next = i;
-    if (event.key === 'ArrowRight') next = (i + 1) % tabs.length;
-    else if (event.key === 'ArrowLeft') next = (i + tabs.length - 1) % tabs.length;
-    else if (event.key === 'Home') next = 0;
-    else if (event.key === 'End') next = tabs.length - 1;
-    else return;
-    event.preventDefault();
-    setTab(tabs[next]);
-    tabRefs.current[tabs[next]]?.focus();
-  }
-
   const t = state?.terms.current ?? null;
   const e = state?.eligibility.current ?? null;
   return (
@@ -375,35 +362,21 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
       )}
       {phase === 'ready' && state && report && (
         <>
-          <div role="tablist" aria-label="Programme settings" className="terms-tabs">
-            {tabs.map((id) => (
-              <button
-                key={id}
-                id={'terms-tab-' + programmeId + '-' + id}
-                ref={(el) => {
-                  tabRefs.current[id] = el;
-                }}
-                type="button"
-                role="tab"
-                aria-selected={tab === id}
-                aria-controls={'terms-panel-' + programmeId + '-' + id}
-                tabIndex={tab === id ? 0 : -1}
-                onClick={() => setTab(id)}
-                onKeyDown={onTabKey}
-              >
-                {tabLabel[id]}
-              </button>
-            ))}
+          {/* One tab row per page (UI/UX.v4.1): the page tabs are the only tablist, so these four are a
+              segmented choice. Each section keeps its id. */}
+          <div className="terms-tabs">
+            <SegmentedFilter
+              label="Programme settings"
+              value={tab}
+              options={tabs.map((id) => ({ value: id, label: tabLabel[id] }))}
+              onChange={setTab}
+            />
           </div>
           {notice && <p role="status">{notice}</p>}
           {error && <p role="alert">{error}</p>}
 
           {tab === 'terms' && (
-            <div
-              role="tabpanel"
-              id={'terms-panel-' + programmeId + '-terms'}
-              aria-labelledby={'terms-tab-' + programmeId + '-terms'}
-            >
+            <div id={'terms-panel-' + programmeId + '-terms'}>
               <h5>Programme terms</h5>
               {t ? (
                 <dl>
@@ -531,11 +504,7 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
           )}
 
           {tab === 'eligibility' && (
-            <div
-              role="tabpanel"
-              id={'terms-panel-' + programmeId + '-eligibility'}
-              aria-labelledby={'terms-tab-' + programmeId + '-eligibility'}
-            >
+            <div id={'terms-panel-' + programmeId + '-eligibility'}>
               <h5>Who can take part</h5>
               {e ? (
                 <ul>
@@ -669,11 +638,7 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
           )}
 
           {tab === 'capacity' && (
-            <div
-              role="tabpanel"
-              id={'terms-panel-' + programmeId + '-capacity'}
-              aria-labelledby={'terms-tab-' + programmeId + '-capacity'}
-            >
+            <div id={'terms-panel-' + programmeId + '-capacity'}>
               <h5>Places</h5>
               <table>
                 <caption>Capacity, acceptance and satisfaction</caption>
@@ -848,11 +813,7 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
           )}
 
           {tab === 'reminders' && (
-            <div
-              role="tabpanel"
-              id={'terms-panel-' + programmeId + '-reminders'}
-              aria-labelledby={'terms-tab-' + programmeId + '-reminders'}
-            >
+            <div id={'terms-panel-' + programmeId + '-reminders'}>
               <h5>Who does what</h5>
               {!coordinationEnabled ? (
                 <p>Tasks are not switched on for this workspace.</p>

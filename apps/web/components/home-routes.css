@@ -1957,6 +1957,7 @@
     .tr-bar-buttons button[aria-pressed='true'],
     .tr-pick[aria-pressed='true'],
     .tr-tabs button[aria-selected='true'],
+    .tr-tabs button[aria-pressed='true'],
     .tr-stops button[aria-pressed='true']
   ) {
   border-color: var(--selected);
@@ -2096,7 +2097,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 var(--space-4);
+  gap: var(--space-2) var(--space-4);
   margin: var(--space-3) 0 0;
   color: var(--text-2);
   font-size: var(--text-sm);
@@ -2106,6 +2107,21 @@
 }
 .tr-open-more > p {
   margin: 0;
+}
+/* A quiet choice is a short label: it wraps between its words and never inside one (the page's wrap-anywhere rule for
+   the largest text is for long running text, not for these), so it keeps at least the width of its longest word. */
+.tr-home .tr-open-more > button {
+  min-inline-size: min-content;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-align: start;
+}
+/* On the narrowest phones the quiet choices stack, each the full width of the row. */
+@media (max-width: 22.49rem) {
+  .tr-open-more {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /* On one line the step names break between words only, over the page's wrap-anywhere rule for the largest text

@@ -254,6 +254,14 @@ describe('D-021: a help request page title matches its heading', () => {
     const page = source(path);
     const title = /title: '([^']+) \| Corridra'/.exec(page)?.[1];
     const headings = [...page.matchAll(/<CustomerShell[^>]*\btitle="([^"]+)"/g)].map((m) => m[1]);
+    // UI/UX.v4.1: the request page's h1 names the service once the request is read. Until then, and whenever the
+    // request cannot be shown, the heading component says the page title; the tab title follows the h1.
+    if (/<CustomerShell[^>]*\btitle=\{<ServiceRequestHeading \/>\}/.test(page)) {
+      const view = source('app/account/service-requests/service-request-detail.tsx');
+      headings.push(/const pageTitle = '([^']+)';/.exec(view)?.[1] ?? '');
+      expect(view).toContain('return <>{title || pageTitle}</>;');
+      expect(view).toContain("document.title = (serviceTitle || pageTitle) + ' | Corridra';");
+    }
     expect(title).toBeTruthy();
     expect(headings.length).toBeGreaterThan(0);
     for (const heading of headings) expect(heading).toBe(title);

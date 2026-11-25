@@ -41,7 +41,8 @@ export function HomeMissionMore() {
         </p>
       </section>
 
-      <People />
+      {/* This page already has one tab row (the phases of the approach), so the people are a group of choices. */}
+      <People choices />
     </div>
   );
 }
@@ -79,7 +80,16 @@ export function HomeRoutesMore() {
 export function People({
   current: held,
   onChange,
-}: { current?: number; onChange?: (index: number) => void } = {}) {
+  choices = false,
+}: {
+  current?: number;
+  onChange?: (index: number) => void;
+  /**
+   * True on a page that already has a tab row: the same eight names, words and looks, as a group of buttons where
+   * the chosen one is pressed and the words below are announced when they change. A page has one tab row.
+   */
+  choices?: boolean;
+} = {}) {
   const t = useT();
   const [own, setOwn] = useState(0);
   const current = held ?? own;
@@ -108,7 +118,11 @@ export function People({
     <section className="tr-section" id="who" aria-labelledby="who-title">
       <p className="label ac1-rule">{t('home.tr.pe.eyebrow')}</p>
       <h2 id="who-title">{t('home.tr.pe.title')}</h2>
-      <div className="tr-tabs" role="tablist" aria-label={t('home.tr.pe.aria')}>
+      <div
+        className="tr-tabs"
+        role={choices ? 'group' : 'tablist'}
+        aria-label={t('home.tr.pe.aria')}
+      >
         {Array.from({ length: 8 }, (_, i) => (
           <button
             key={i}
@@ -116,13 +130,17 @@ export function People({
               tabs.current[i] = node;
             }}
             type="button"
-            role="tab"
             id={`who-tab-${i}`}
             aria-controls="who-panel"
-            aria-selected={current === i}
-            tabIndex={current === i ? 0 : -1}
+            {...(choices
+              ? { 'aria-pressed': current === i }
+              : {
+                  role: 'tab',
+                  'aria-selected': current === i,
+                  tabIndex: current === i ? 0 : -1,
+                  onKeyDown: (event: KeyboardEvent) => move(event, i),
+                })}
             onClick={() => setCurrent(i)}
-            onKeyDown={(event) => move(event, i)}
           >
             {t(key(`home.tr.pe.${i}`))}
           </button>
@@ -131,9 +149,10 @@ export function People({
       <div
         className="tr-people"
         id="who-panel"
-        role="tabpanel"
+        {...(choices
+          ? { role: 'region', 'aria-live': 'polite' as const }
+          : { role: 'tabpanel', tabIndex: 0 })}
         aria-labelledby={`who-tab-${current}`}
-        tabIndex={0}
       >
         <div>
           <p className="label">{t('home.tr.pe.give')}</p>

@@ -133,6 +133,16 @@ function Stage({
   );
 }
 
+// A value still on its way: a quiet bar holds its place, so the room does not read "Checking…" in six places
+// (UI/UX.v4.1). The words stay for assistive technology; the stage line above is the one visible loading line.
+function Waiting() {
+  return (
+    <span className="programme-wait">
+      <span className="sr-only">Checking…</span>
+    </span>
+  );
+}
+
 // The one next step, from the boarding counts. Its line is the boarding line, always out of a total, and
 // "Refresh Counts" reads again.
 function NextStep({
@@ -160,9 +170,9 @@ function NextStep({
       </span>
       <span className="room-next-words">
         <small>Your next step</small>
-        <b>{checking ? 'Checking…' : next.title}</b>
+        <b>{checking ? <Waiting /> : next.title}</b>
         <span className="programme-boarding">
-          <strong>Boarding</strong> {checking ? 'Checking…' : boardingLine(live.counts)}
+          <strong>Boarding</strong> {checking ? <Waiting /> : boardingLine(live.counts)}
           {onRefresh && (
             <button type="button" className="text-link programme-refresh" onClick={onRefresh}>
               Refresh Counts
@@ -216,12 +226,11 @@ function Glance({
   /** True until the first participants read answers; the boarding tiles then say they are checking. */
   countsChecking?: boolean;
 }) {
-  // A tile not known yet says "Checking…" while its read is still on its way, and "Not measured yet" only after it.
-  const tiles = programmeGlance(counts, projection, projectionsOn).map((tile) =>
-    !tile.known && (boardingTiles.has(tile.key) ? countsChecking : checking)
-      ? { ...tile, value: 'Checking…' }
-      : tile,
-  );
+  // A tile not known yet waits while its read is still on its way, and says "Not measured yet" only after it.
+  const tiles = programmeGlance(counts, projection, projectionsOn).map((tile) => ({
+    ...tile,
+    waiting: !tile.known && (boardingTiles.has(tile.key) ? countsChecking : checking),
+  }));
   const coverage = meetingCoverage(projection);
   const attention = programmeAttention(projection);
   const checklist = projectionsOn || termsOn ? programmeChecklist(counts, projection, terms) : [];
@@ -234,7 +243,7 @@ function Glance({
             <div key={tile.key} data-known={tile.known ? undefined : 'false'}>
               <dt>{tile.label}</dt>
               <dd>
-                {tile.value}
+                {tile.waiting ? <Waiting /> : tile.value}
                 {tile.of ? <small> {tile.of}</small> : null}
               </dd>
             </div>
@@ -283,11 +292,13 @@ function Glance({
           </h5>
           {attention.length === 0 ? (
             <p className="programme-quiet">
-              {projection
-                ? 'Nothing needs you right now.'
-                : checking
-                  ? 'Checking…'
-                  : 'Not measured yet.'}
+              {projection ? (
+                'Nothing needs you right now.'
+              ) : checking ? (
+                <Waiting />
+              ) : (
+                'Not measured yet.'
+              )}
             </p>
           ) : (
             <ul className="programme-attention">

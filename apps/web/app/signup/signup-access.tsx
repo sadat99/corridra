@@ -21,7 +21,7 @@ export function SignupAccess() {
     <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Create your account." compact>
       <section className="ux-account-access" aria-label="Customer account access">
         <p>Create your account to send and follow requests.</p>
-        <PendingRequestNotice where="signup" />
+        <PendingRequestNotice where="signup" enabled={realUseEnabled()} />
         <p id="password-rule" className="ux-password-rule">
           Your password needs at least {passwordMinimum} characters. A short sentence you can
           remember works well.

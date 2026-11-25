@@ -558,6 +558,27 @@ function ScopedProgrammes({
     url.searchParams.set('programme', id);
     window.history.replaceState(window.history.state, '', url);
   };
+  // Whether the create view is open: the person's own choice, or the address they arrived with. Null until either
+  // is known, and the page then opens on it only for a workspace with no programme yet.
+  const [newChoice, setNewChoice] = useState<boolean | null>(null);
+  const tabBeforeNew = useRef<string | null>(null);
+  const newMoved = useRef(false);
+  const newToggle = useRef<HTMLButtonElement>(null);
+  const newView = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const asked = new URLSearchParams(window.location.search).get('tab');
+    void Promise.resolve().then(() => {
+      if (window.location.hash === '#new' || asked === 'new') setNewChoice(true);
+      else if (asked) setNewChoice(false);
+    });
+  }, []);
+  // After Show Programmes or the create button is pressed the pressed button is gone, so focus follows the view.
+  useEffect(() => {
+    if (!newMoved.current) return;
+    newMoved.current = false;
+    if (newChoice) newView.current?.focus();
+    else newToggle.current?.focus();
+  }, [newChoice]);
   // The first run published a new programme: show it, on its public page section, where the address to share is.
   const published = (id: string) => {
     const url = new URL(window.location.href);
@@ -572,6 +593,7 @@ function ScopedProgrammes({
     setChosenId(id);
     setLinkTarget(null);
     setMessage(pp('pp.first.published'));
+    setNewChoice(false);
     if (roomEnabled) resolveSubTabsAgain();
     void load();
   };
@@ -1297,10 +1319,33 @@ function ScopedProgrammes({
       </p>
     </>
   );
-  const roomTabs = <T extends { id: string }>(tabs: T[]): T[] =>
-    startHere
-      ? [...tabs.filter((t) => t.id === 'new'), ...tabs.filter((t) => t.id !== 'new')]
-      : tabs;
+  // One tab row per page (UI/UX.v4.1): creating a programme is the page's one primary action, not a tab. Its
+  // view takes the place of the tabs while it is open, and both stay mounted so nothing typed is lost. The old
+  // addresses still land: `?tab=new` and `#new` open it, and opening it writes `?tab=new`.
+  const creating = newChoice ?? startHere;
+  // A workspace with no programme yet opens on the create view. When it also has Templates (or Pricing) to reach,
+  // their tabs stay in the page beside it, as they did when creating was a tab: only the person's own choice, or the
+  // address, takes the tabs away.
+  const tabsHidden = creating && (newChoice === true || !templatesEnabled);
+  // With the tabs beside the create view, the way back to the programmes is the tab row itself, so the Show
+  // Programmes button is not drawn. The Programmes tab stays first: without it the Templates panel would be the one
+  // open under the create form, and on a phone that page runs past the two-screen budget (del-s0 phone test).
+  const tabsBeside = creating && !tabsHidden;
+  const newLabel = realCustomerInput() ? 'New Programme' : 'New Sample Programme';
+  const showNew = (open: boolean) => {
+    const url = new URL(window.location.href);
+    if (open) {
+      tabBeforeNew.current = url.searchParams.get('tab');
+      url.searchParams.set('tab', 'new');
+    } else if (tabBeforeNew.current && tabBeforeNew.current !== 'new')
+      url.searchParams.set('tab', tabBeforeNew.current);
+    else url.searchParams.delete('tab');
+    if (url.hash === '#new') url.hash = '';
+    window.history.replaceState(window.history.state, '', url);
+    newMoved.current = true;
+    setNewChoice(open);
+    if (!open) resolveSubTabsAgain();
+  };
   if (!visible)
     return (
       <p role="status">Planning details are hidden. Access will be checked when you return.</p>
@@ -1316,6 +1361,8 @@ function ScopedProgrammes({
       }
       aria-label={realCustomerInput() ? 'Delegation planning' : 'Sample delegation planning'}
     >
+      {/* Only a section drawn on its own (fixtures) has this link. On the page, `framed` is always set and the
+          menu is the way back (UI/UX.v4.1: no back links). */}
       {!framed && (
         <a className="text-link ux-back" href="/account#customer-workspaces">
           Back to my workspaces
@@ -1355,54 +1402,92 @@ function ScopedProgrammes({
         </>
       )}
       {status === 'ready' && roomEnabled && (
-        <SubTabs
-          label="Delegation planning"
-          className="programme-page-tabs account-compact"
-          tabs={roomTabs([
-            {
-              id: 'programmes',
-              label: 'Programmes',
-              panel: (
-                <>
-                  {visibleRows.length > 1 && (
-                    <label className="field programme-picker">
-                      Programme
-                      <select
-                        aria-label="Programme"
-                        value={chosenProgramme}
-                        onChange={(event) => choose(event.target.value)}
-                      >
-                        {visibleRows.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  {programmeList}
-                  {morePrograms}
-                </>
-              ),
-            },
-            ...(templatesEnabled
-              ? [{ id: 'templates', label: 'Templates', panel: programmeTemplates }]
-              : []),
-            ...(templatesEnabled && pricingEnabled
-              ? [{ id: 'pricing', label: 'Pricing, Series and Exports', panel: programmePricing }]
-              : []),
-            {
-              id: 'new',
-              label: realCustomerInput() ? 'New Programme' : 'New Sample Programme',
-              panel: newProgramme ?? (
-                <>
-                  {intro}
-                  {createForm}
-                </>
-              ),
-            },
-          ])}
-        />
+        <>
+          {!tabsBeside && (
+            <div className="programme-page-lead">
+              {creating ? (
+                <button
+                  ref={newToggle}
+                  type="button"
+                  className="text-link"
+                  onClick={() => showNew(false)}
+                >
+                  Show Programmes
+                </button>
+              ) : (
+                <button
+                  ref={newToggle}
+                  type="button"
+                  className="primary-link"
+                  onClick={() => showNew(true)}
+                >
+                  {newLabel}
+                </button>
+              )}
+            </div>
+          )}
+          <section
+            ref={newView}
+            id="programme-new"
+            className="programme-new account-compact"
+            aria-label={newLabel}
+            tabIndex={-1}
+            hidden={!creating}
+          >
+            {newProgramme ?? (
+              <>
+                {intro}
+                {createForm}
+              </>
+            )}
+          </section>
+          <div className="programme-page-body" hidden={tabsHidden}>
+            <SubTabs
+              label="Delegation planning"
+              className="programme-page-tabs account-compact"
+              tabs={[
+                {
+                  id: 'programmes',
+                  label: 'Programmes',
+                  panel: (
+                    <>
+                      {visibleRows.length > 1 && (
+                        <label className="field programme-picker">
+                          Programme
+                          <select
+                            aria-label="Programme"
+                            value={chosenProgramme}
+                            onChange={(event) => choose(event.target.value)}
+                          >
+                            {visibleRows.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      {programmeList}
+                      {morePrograms}
+                    </>
+                  ),
+                },
+                ...(templatesEnabled
+                  ? [{ id: 'templates', label: 'Templates', panel: programmeTemplates }]
+                  : []),
+                ...(templatesEnabled && pricingEnabled
+                  ? [
+                      {
+                        id: 'pricing',
+                        label: 'Pricing, Series and Exports',
+                        panel: programmePricing,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </div>
+        </>
       )}
       {message && <p role="status">{message}</p>}
       {roomEnabled ? <div className="programme-page-foot">{pageFoot}</div> : pageFoot}
