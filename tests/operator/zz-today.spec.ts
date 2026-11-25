@@ -49,17 +49,17 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   // paid-service counts, because only they can ever read them (a role that cannot read them has no tile for them).
   const role = (await page.getByText('Your access:').first().locator('strong').innerText()).trim();
   const everyRole = [
-    'new requests to review',
-    'missions past their due date',
-    'open missions',
-    'replies to review',
-    'follow-ups past their due date',
-    'meetings in the next 7 days',
+    /^new requests? to review$/,
+    /^missions? past their due date$/,
+    /^open missions?$/,
+    /^repl(y|ies) to review$/,
+    /^follow-ups? past (their|its) due date$/,
+    /^meetings? in the next 7 days$/,
   ];
-  const paidServices = ['accepted quotes not started', 'paid-service requests to quote'];
-  await expect
-    .poll(() => counts.getByRole('listitem').locator('span').allInnerTexts())
-    .toEqual(['owner', 'admin'].includes(role) ? [...everyRole, ...paidServices] : everyRole);
+  const paidServices = [/^accepted quotes? not started$/, /^paid-service requests? to quote$/];
+  await expect(counts.getByRole('listitem').locator('span')).toHaveText(
+    ['owner', 'admin'].includes(role) ? [...everyRole, ...paidServices] : everyRole,
+  );
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   // Synthetic answers prove the new-request and overdue lists.
   await page.route('**/api/workspace/missions?*view=today*', async (route) => {
