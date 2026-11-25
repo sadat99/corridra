@@ -376,6 +376,8 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
+  /* A touch target of at least 44 px on every page that shows the quiet footer. */
+  min-height: 44px;
   padding: 10px 0;
 }
 /* L14 (owner, 13 Nov 2026): inside a signed-in workspace the quiet footer sits at the bottom of the window on a
@@ -7944,6 +7946,16 @@ th {
   font-family: var(--font-mono);
   font-weight: 500;
   letter-spacing: 0.08em;
+}
+/* A row header that holds a name (the customer on the Missions list) is read as the name it is: the label
+   style of a column head (mono, capitals, wide tracking, 12 px) is for column heads only. */
+.mission-queue tbody th {
+  font-family: var(--font-ui);
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink);
 }
 code,
 kbd,
