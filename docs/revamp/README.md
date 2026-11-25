@@ -72,7 +72,7 @@ Team desk v4.1 audit fixes and home v4.2, Guardian 64 `session_0187kU9vEECr6R7Yj
 | Final sweep                                                              | 653 | `7f48e112` | merged                            |
 | Home v4.2 (`CORRIDRA_UX_HOME_V42`)                                       | 656 | `7a93d7f0` | merged, switch ON (owner, 25 Nov) |
 | F5c inbox addendum                                                       | 655 | `53da18fc` | merged                            |
-| Later fixes: session marker, place marks, home text links, review minors | 658 | pending    | open, merge SHA from the Guardian |
+| Later fixes: session marker, place marks, home text links, review minors | 658 | `da5c8f8e` | merged                            |
 
 ## Current lanes, 24 November 2026
 

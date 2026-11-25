@@ -5411,7 +5411,7 @@ Checks (PR body): format:check, lint, typecheck pass; test 135; test:integration
 
 ## 25 Nov 2026: Team desk v4.1 later fixes: team session marker, place marks, home text-link actions, review minors (PR 658)
 
-Builder L1 for Guardian 64, Class A parts (session marker, step-up audit) and Class B, merge SHA MERGE_SHA_PENDING (head branch `claude/v41-fix-later`, head d8c179d9 at review). Condensed from the PR body. No real-operation switch touched.
+Builder L1 for Guardian 64, Class A parts (session marker, step-up audit) and Class B, merged as da5c8f8e7e648dd837fcccbef3f03abf0f394645 (head branch `claude/v41-fix-later`, head d8c179d9 at review). Condensed from the PR body. No real-operation switch touched.
 
 What changed: public-customer-12 and -16 (flat intake form on `/account/request/[ws]`, All Tools rows and Clear Search 44 px at every width, scroll-state edge cue on `.room-lenses` and `.move-seg`); public-customer-10 (on the switch-off home every section action is a quiet text link, `#home-start` the one primary, same words, ids and addresses, `data-start-action` kept for the phone start bar; `home-v42-off.spec.ts` applies exactly these two server-HTML edits to the a054c51c capture); public-customer-24 (team session marker: `/api/operator-auth` sets a plain `corridra-team=1` cookie, Path=/, SameSite=Lax, Max-Age 86400, Secure on https, no secret, and clears it on sign-out, the two-factor first step or an empty session read, `lib/team-session-hint.ts`; `apps/web/proxy.ts` backfills it for older Better Auth sessions; the public header asks `/api/operator-auth/get-session` only when it is present); `/account/companies` failed read shows "Companies could not be loaded." with Try Again. public-customer-08 already on main (PR 651).
 
@@ -5427,7 +5427,7 @@ Checks (PR body): format:check, lint, typecheck, test (135), build exit 0; integ
 
 Records only (docs only), written by records builder R1 for Guardian 64 (session_0187kU9vEECr6R7YjH1YQFmA) on branch `audit/v41-env`. Authority stamp auth-c0a636cc7e69 (`node scripts/authority.mjs stamp` on origin/main 53da18f); the brief's auth-011a44290375 predates #656, and the Guardian confirmed the new stamp. No application code, test or ADR changed.
 
-Merges recorded, each read with `gh api repos/sadat99/corridra/pulls/N`: 648 060a8b41, 649 49c478d1, 650 1c40465b, 652 2f94afa0, 651 a054c51c, 654 83635486, 653 7f48e112, 656 7a93d7f0, 655 53da18fc (merge order by time). Production READY after each merge is the Guardian's report; the records builder did not read the deployments. No signed-in live pass is claimed.
+Merges recorded, each read with `gh api repos/sadat99/corridra/pulls/N`: 648 060a8b41, 649 49c478d1, 650 1c40465b, 652 2f94afa0, 651 a054c51c, 654 83635486, 653 7f48e112, 656 7a93d7f0, 655 53da18fc, 658 da5c8f8e (merge order by time). Production READY after each merge is the Guardian's report; the records builder did not read the deployments. No signed-in live pass is claimed.
 
 Records applied: the nine PR entries above, condensed from their PR bodies; the four audit files kept in `docs/revamp/audits/` with `preview-env`, their 35 screenshots dropped; the conformance notes in `docs/revamp/v4-1-conformance.json`; the ledger and the lanes table; the home v4.2 decision record and the H1 order fix in `docs/revamp/specs/ui-ux-v4-2.md`.
 
