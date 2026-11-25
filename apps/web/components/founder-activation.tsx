@@ -16,8 +16,8 @@ type Activation = {
 };
 const states: Record<State, { text: string; tone: 'positive' | 'caution' | 'unknown' }> = {
   ON: { text: 'On', tone: 'positive' },
-  OFF: { text: 'Off, switch not set', tone: 'unknown' },
-  WAITING_PREREQUISITE: { text: 'Switch on, waiting for a prerequisite module', tone: 'caution' },
+  OFF: { text: 'Off, flag unset', tone: 'unknown' },
+  WAITING_PREREQUISITE: { text: 'Flag set, waiting for a prerequisite module', tone: 'caution' },
   LOCKED_PRODUCTION: { text: 'Locked, never runs in production', tone: 'caution' },
   LOCKED_NOT_SYNTHETIC: { text: 'Locked by the data environment setting', tone: 'caution' },
 };
@@ -109,6 +109,7 @@ export function FounderActivation({
             <tr>
               <th scope="col">Module</th>
               <th scope="col">State</th>
+              <th scope="col">Flag</th>
             </tr>
           </thead>
           <tbody>
@@ -117,6 +118,9 @@ export function FounderActivation({
                 <th scope="row">{m.label}</th>
                 <td>
                   <StatusBadge tone={states[m.state].tone}>{states[m.state].text}</StatusBadge>
+                </td>
+                <td>
+                  <code>{m.flag}</code>
                 </td>
               </tr>
             ))}

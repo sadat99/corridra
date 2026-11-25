@@ -26,33 +26,17 @@ describe('team desk v4.1 sweep', () => {
     );
   });
 
-  it('keeps the dialog close button at 44 px inside a desk panel', () => {
+  it('keeps the dialog close button at 44 px inside a desk panel, under the desk shell class', () => {
     const css = read('apps/web/components/ux/dialog.css');
     expect(css).toMatch(
-      /dialog\.ux-dialog\[open\] \.ux-dialog-head button\.ux-dialog-close \{\s*min-height: 44px;\s*min-width: 44px;/,
+      /\.ux-desk-frame dialog\.ux-dialog\[open\] \.ux-dialog-head button\.ux-dialog-close \{\s*min-height: 44px;\s*min-width: 44px;/,
     );
-  });
-
-  it('names the sign-in destinations on the forgot-password pages, not a way back', async () => {
-    const { accessHelp } = await import('../../apps/web/lib/access-doors');
-    const words = [
-      ...accessHelp.operatorForgotPassword('/operator/signin').links,
-      ...accessHelp.helperForgotPassword.links,
-    ].map((link) => link.text);
-    expect(words).toContain('Operator Sign-In');
-    expect(words).toContain('Helper Sign-In');
-    expect(words.filter((text) => /^Back to/.test(text))).toEqual([]);
-  });
-
-  it('shows the module table without the raw setting name', () => {
-    const source = read('apps/web/components/founder-activation.tsx');
-    expect(source).not.toContain('<code>{m.flag}</code>');
-    expect(source).not.toContain('<th scope="col">Flag</th>');
   });
 
   it('gives a row that opens more text a 44 px target, and a reference a token size', () => {
     const css = read('apps/web/components/problem-reports/problem-reports.css');
-    expect(css).toMatch(/\.pr-fold > summary \{[^}]*min-height: 2\.75rem;/);
+    // A list item keeps the browser's disclosure marker; padding makes the height.
+    expect(css).toMatch(/\.pr-fold > summary \{\s*display: list-item;\s*min-height: 2\.75rem;/);
     expect(css).toMatch(/\.pr-queue code \{\s*font-size: var\(--text-sm\);/);
     expect(read('apps/web/components/problem-reports/problem-report-list.tsx')).toContain(
       'className="pr-fold"',

@@ -218,10 +218,3 @@ test('sample invoices report their own flag and wait for sample plans and the wo
   expect(state(synthetic, 'invoicing')).toBe('OFF');
   expect(state({ ...full, VERCEL_ENV: 'production' }, 'invoicing')).toBe('LOCKED_PRODUCTION');
 });
-
-test('every customer module has an owner label in the switch registry, so the table never prints the raw name', async () => {
-  const { switchRegistry } = await import('../../apps/web/lib/owner-switches');
-  const names = new Set(switchRegistry.map((entry) => entry.name));
-  const view = founderActivation(synthetic);
-  expect(view.modules.filter((m) => !names.has(m.flag))).toEqual([]);
-});

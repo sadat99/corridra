@@ -36,9 +36,9 @@
   font: 600 var(--text-md) var(--font-ui);
   cursor: pointer;
 }
-/* The dialog is drawn inside the desk panel, whose laptop density rule makes every button 36 px: the close
-   button keeps its 44 px target (measured 36 px on the Propose Meeting dialog, audit staff-core-23). */
-dialog.ux-dialog[open] .ux-dialog-head button.ux-dialog-close {
+/* Team desk v4.1: the dialog is drawn inside the desk panel, whose laptop density rule makes every button 36 px:
+   the close button keeps its 44 px target (measured 36 px on the Propose Meeting dialog, audit staff-core-23). */
+.ux-desk-frame dialog.ux-dialog[open] .ux-dialog-head button.ux-dialog-close {
   min-height: 44px;
   min-width: 44px;
 }
