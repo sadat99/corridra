@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
 import { Dialog } from '../../components/ux/dialog';
+import { ActionError, withStepUp } from '../../lib/ux/step-up';
 import '../../components/problem-reports/problem-reports.css';
 import {
   queueFailure,
@@ -106,9 +107,23 @@ export function movedMessage(reference: string, reloadFailure: string | null) {
     ? 'Request ' + reference + ' moved.'
     : 'Request ' + reference + ' moved, but the list could not be reloaded. ' + reloadFailure;
 }
+// Throws the refusal with its status and the server's code, so withStepUp can open the check for STEP_UP_REQUIRED.
+export async function answered(r: Response) {
+  if (r.ok) return r;
+  let code: string | undefined;
+  try {
+    const body = (await r.clone().json()) as { code?: unknown };
+    if (typeof body.code === 'string') code = body.code;
+  } catch {
+    code = undefined;
+  }
+  throw new ActionError(failureText(r.status), r.status, code);
+}
 function failureText(status: number) {
-  if (status === 401 || status === 403)
-    return 'Your sign-in or authenticator check is not current, or this role cannot manage requests. Check it and try again.';
+  // A lapsed authenticator check never reaches this: the in-place check opens first (withStepUp), and only a declined
+  // check, a signed-out person or a role that may not manage requests is told here.
+  if (status === 401) return 'Confirm your code to see and move erasure requests.';
+  if (status === 403) return 'Only the workspace owner can manage erasure requests.';
   if (status === 409) return 'That request changed or is not in this queue. Reload the list.';
   if (status === 503) return 'The erasure queue is not available yet.';
   return 'The request could not be completed. Please try again.';
@@ -154,13 +169,16 @@ function Queue({ tenant, role, problemReports = false, tabbed = false }: Props) 
     setMessage('');
     setPending(null);
     try {
-      const r = await fetch(
-        endpoint +
-          (filter ? '&status=' + filter : '') +
-          (after === undefined ? '' : '&after=' + after),
-        { cache: 'no-store', signal: task.signal },
+      const r = await withStepUp(async () =>
+        answered(
+          await fetch(
+            endpoint +
+              (filter ? '&status=' + filter : '') +
+              (after === undefined ? '' : '&after=' + after),
+            { cache: 'no-store', signal: task.signal },
+          ),
+        ),
       );
-      if (!r.ok) throw Error(failureText(r.status));
       const v = queueSchema.parse(await r.json());
       if (task.signal.aborted) return;
       setQueue(after === undefined || !queue ? v : { ...v, items: [...queue.items, ...v.items] });
@@ -201,18 +219,22 @@ function Queue({ tenant, role, problemReports = false, tabbed = false }: Props) 
     setBusy(true);
     setMessage('');
     try {
-      const r = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          commandId: pending.commandId,
-          requestId: pending.item.id,
-          expectedState: pending.item.status,
-          toState: pending.toState,
-          ...(needsNote ? { note: text } : {}),
-        }),
-      });
-      if (!r.ok) throw Error(failureText(r.status));
+      // The same command id is sent again after the in-place check, so a repeat never moves the request twice.
+      await withStepUp(async () =>
+        answered(
+          await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              commandId: pending.commandId,
+              requestId: pending.item.id,
+              expectedState: pending.item.status,
+              toState: pending.toState,
+              ...(needsNote ? { note: text } : {}),
+            }),
+          }),
+        ),
+      );
       const reference = pending.item.reference;
       setPending(null);
       setNote('');
