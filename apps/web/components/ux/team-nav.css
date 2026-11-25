@@ -1048,3 +1048,23 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
     gap: 0;
   }
 }
+
+/* Menu v3 on a short desktop window (a 1440 x 900 laptop): the gaps between groups and rows close up so the whole
+   menu, down to Status and "Collapse menu", is on the first screen. Every row keeps its 44 px target and its
+   words; only the space between them changes. A taller window keeps the roomier spacing above. */
+@media (min-width: 1024px) and (max-height: 60rem) {
+  nav.ux-team-sidebar[data-menu='v3'] {
+    gap: var(--space-2);
+  }
+  nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-group,
+  nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-group > ul,
+  nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-workspace {
+    gap: 0;
+  }
+  nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-workspace {
+    padding-bottom: var(--space-2);
+  }
+  .ux-leftnav-panel:has(nav[data-menu='v3']) .ux-leftnav-collapse {
+    margin-top: var(--space-1);
+  }
+}
