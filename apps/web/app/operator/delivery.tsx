@@ -12,6 +12,7 @@ import type { ImportRow } from '@corridra/delivery/import';
 import { DeliveryExperience } from './delivery-experience';
 import { EmptyState } from '../../components/ux/empty-state';
 import { takeMissionHint } from './mission-hint';
+import { usePageTitleSays } from './desk-sections';
 import { useOperatorFlags } from './operator-flags';
 import './report-list.css';
 import { DateTimeInput } from '../../components/ux/date-time-input';
@@ -105,6 +106,9 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     [signInNeeded, setSignInNeeded] = useState(false);
   // Team desk v4.1 (unit D13): the one list of reports, and the mission a mission page asked for.
   const { teamDeskV41: deskV41 } = useOperatorFlags();
+  // The panel is named Reports, as the menu and the page title name it. Where the title already says it the
+  // heading stays for screen readers only, with the switch on or off.
+  const titled = usePageTitleSays('Reports');
   const [missionsLoaded, setMissionsLoaded] = useState(false);
   const [missions, setMissions] = useState<MissionChoice[]>([]),
     [missionId, setMissionId] = useState(''),
@@ -369,7 +373,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   if (unavailable)
     return (
       <section data-operator-workbench className="detail-card">
-        <h2 className={deskV41 ? 'sr-only' : undefined}>Client and programme delivery</h2>
+        <h2 className={deskV41 || titled ? 'sr-only' : undefined}>Reports</h2>
         <OperatorWorkbench
           label="Publication and reporting sections"
           sections={[
@@ -401,7 +405,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   if (!data || dataScope !== scope)
     return (
       <section data-operator-workbench className="detail-card">
-        <h2 className={deskV41 ? 'sr-only' : undefined}>Client and programme delivery</h2>
+        <h2 className={deskV41 || titled ? 'sr-only' : undefined}>Reports</h2>
         <OperatorWorkbench
           label="Publication and reporting sections"
           sections={[
@@ -444,8 +448,8 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     label: `Reports (${data.publications.length})`,
     panel: (
       <>
-        {/* Team desk v4.1: the page title and the tab both say Reports; the heading stays for screen readers. */}
-        <h3 className="sr-only">Reports</h3>
+        {/* Team desk v4.1: the page title and the tab both say Reports; the list keeps a heading for screen readers. */}
+        <h3 className="sr-only">Report list</h3>
         {missionId && (
           <p className="ux-report-scope">
             Showing reports for {missionName ?? 'the chosen mission'}.{' '}
@@ -529,7 +533,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       onChangeCapture={onChangeCapture}
       onResetCapture={onResetCapture}
     >
-      <h2 className={deskV41 ? 'sr-only' : undefined}>Client and programme delivery</h2>
+      <h2 className={deskV41 || titled ? 'sr-only' : undefined}>Reports</h2>
       <OperatorWorkbench
         label="Publication and reporting sections"
         sections={[

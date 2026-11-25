@@ -251,7 +251,11 @@ test('W3-6 as an owner, the paid-service requests tile opens the Delivery sectio
   await tile.getByRole('link').click();
   const delivery = page.locator('#workspace-delivery');
   await expect(delivery).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('heading', { name: 'Reports', exact: true, level: 2 }),
+  ).toBeVisible();
   await expect(unavailableAlert(page)).toHaveCount(0);
   await expect(page).toHaveURL(/#billing-services$/);
   await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toHaveCount(0);
@@ -282,7 +286,11 @@ test('W3-7 when the count is Not available, the tile still opens the Delivery se
   await tile.getByRole('link').click();
   await expect(page).toHaveURL(/#billing-services$/);
   await expect(page.locator('#workspace-delivery')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('heading', { name: 'Reports', exact: true, level: 2 }),
+  ).toBeVisible();
   await expect(unavailableAlert(page)).toHaveCount(0);
   await expect(
     page

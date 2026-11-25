@@ -1,6 +1,6 @@
 'use client';
 
-import { DeskParts } from './desk-sections';
+import { DeskParts, usePageTitleSays } from './desk-sections';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorIcon } from '../../components/operator-icon';
@@ -449,6 +449,8 @@ export function WorkspaceControls({
   onChangeFeature: (key: string, value: boolean) => void;
 }) {
   const { teamDeskV41 } = useOperatorFlags();
+  // With the switch off the page title can already say Workspace controls; the heading is then not printed twice.
+  const titled = usePageTitleSays('Workspace controls');
   const tenant = useCurrentTenant(tenantProp);
   return (
     <div className="ux-workspace-controls">
@@ -457,7 +459,7 @@ export function WorkspaceControls({
           {teamDeskV41 ? null : <p className="eyebrow">Workspace settings</p>}
           {/* Team desk v4.1 (D16): the page title is Team and access; this heading stays for screen
               readers only. Nothing about members, roles or the authenticator rule changes. */}
-          <h2 className={teamDeskV41 ? 'sr-only' : undefined}>Workspace controls</h2>
+          <h2 className={teamDeskV41 || titled ? 'sr-only' : undefined}>Workspace controls</h2>
           <p>
             Manage member access and available tools for <strong>{workspaceName}</strong>.
           </p>

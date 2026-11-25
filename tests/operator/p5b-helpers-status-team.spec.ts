@@ -42,9 +42,11 @@ type Options = {
   height?: number;
   tasks?: unknown[];
   enabled?: boolean;
+  sources?: unknown[];
 };
 async function open(page: Page, path: string, options: Options) {
   const { v41, role = 'owner', width = 1440, height = 900, tasks = [], enabled = true } = options;
+  const sources = options.sources ?? [];
   await page.setViewportSize({ width, height });
   await page.route('**/api/**', (route) =>
     route.fulfill({ status: 404, json: { error: 'Not part of this fixture' } }),
@@ -59,7 +61,7 @@ async function open(page: Page, path: string, options: Options) {
         uploadsConfigured: false,
         scanMode: 'bypass',
         role,
-        sources: [],
+        sources,
         claims: [],
         evidence: [],
         facts: [],
@@ -711,7 +713,157 @@ test('Team and access, switch off: the bodies are the ones the desk has today', 
   const controls = page.locator('#workspace-controls');
   await expect(controls.locator('.ux-controls-heading .eyebrow')).toHaveText('Workspace settings');
   await expect(controls.locator('.ux-controls-heading h2')).toHaveText('Workspace controls');
-  await expect(controls.locator('.ux-controls-heading h2')).not.toHaveClass(/sr-only/);
+  // The page title says Workspace controls here, so the panel's copy is for screen readers only (audit F10).
+  await expect(page.locator('h1')).toHaveText('Workspace controls');
+  await expect(controls.locator('.ux-controls-heading h2')).toHaveClass(/sr-only/);
+});
+
+// A name is printed once (audit of 25 November 2026, F10 and F13) ---------------------------------------
+
+/** The headings in <main> that can be seen (not the one-pixel ones kept for screen readers) and say `words`. */
+const seenHeadings = (page: Page, words: string) =>
+  page.locator('main#main').evaluate(
+    (main, text) =>
+      Array.from(main.querySelectorAll('h1, h2, h3, h4'))
+        .filter((heading) => (heading.textContent ?? '').trim() === text)
+        .filter((heading) => {
+          const box = heading.getBoundingClientRect();
+          return box.width > 1 && box.height > 1;
+        })
+        .map((heading) => heading.tagName),
+    words,
+  );
+for (const [slug, title, panelHeading] of [
+  ['operations', 'Global operations', '#workspace-operations .ops-heading h2'],
+  ['health', 'Recovery and health', '#ops-health > h3'],
+  ['audit', 'Access and audit', '#workspace-audit .ux-panel-heading h2'],
+  ['controls', 'Workspace controls', '#workspace-controls .ux-controls-heading h2'],
+  ['sources', 'Sources and claims', '#workspace-sources .ux-panel-heading h2'],
+  ['delivery', 'Reports', '#workspace-delivery h2'],
+] as const) {
+  test(`switch off: /operator/${slug} prints "${title}" once, and the panel keeps its heading for screen readers`, async ({
+    page,
+  }) => {
+    await open(page, `/operator/${slug}`, { v41: false });
+    await expect(page.locator('h1')).toHaveText(title);
+    await expect.poll(() => seenHeadings(page, title)).toEqual(['H1']);
+    // The panel heading is still in the outline, with the same words, one pixel on the page.
+    const kept = page.locator(panelHeading).first();
+    await expect(kept).toHaveText(title);
+    const box = await kept.boundingBox();
+    expect(box!.width).toBeLessThanOrEqual(1);
+    expect(box!.height).toBeLessThanOrEqual(1);
+    await expect(page.getByRole('heading', { name: title, exact: true })).toHaveCount(2);
+  });
+}
+
+test('switch off: a panel heading the page title does not say stays in view', async ({ page }) => {
+  // On Health the title is Recovery and health, so the heading of the whole Status body is not a repeat.
+  await open(page, '/operator/health', { v41: false });
+  expect(await seenHeadings(page, 'Global operations')).toEqual(['H2']);
+  // The label, the icon and the line of a panel heading stay when only its name is a repeat.
+  await open(page, '/operator/audit', { v41: false });
+  const audit = page.locator('#workspace-audit');
+  await expect(audit.locator('.ux-panel-heading .eyebrow')).toBeVisible();
+  await expect(
+    audit.getByText('See who has access and what changed in this workspace.'),
+  ).toBeVisible();
+});
+
+for (const v41 of [false, true]) {
+  test(`Reports, switch ${v41 ? 'on' : 'off'}: the panel is named Reports, never by a third name`, async ({
+    page,
+  }) => {
+    await open(page, '/operator/delivery', { v41 });
+    await expect(page.locator('h1')).toHaveText('Reports');
+    await expect(page.locator('#workspace-delivery h2').first()).toHaveText('Reports');
+    await expect(page.locator('main#main').getByText('Client and programme delivery')).toHaveCount(
+      0,
+    );
+  });
+}
+
+// Sources and claims (audit F15) ------------------------------------------------------------------------
+
+const intakeId = '2db88616-465f-4935-8a51-0000000000e1';
+const sourceRows = [
+  {
+    id: '00000000-0000-4000-8000-0000000000e1',
+    kind: 'self_declaration',
+    locator: `Mission intake ${intakeId}; notice synthetic-intake-2026-10-05-v1`,
+    mission_name: 'Invented Machinery Co',
+    organisation_name: null,
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000e2',
+    kind: 'public_record',
+    locator: `${intakeId}`,
+    mission_name: null,
+    organisation_name: null,
+  },
+  {
+    id: '00000000-0000-4000-8000-0000000000e3',
+    kind: 'observation',
+    locator: 'Invented trade fair catalogue, page 4',
+    mission_name: null,
+    organisation_name: 'Invented Foods Co',
+  },
+];
+for (const v41 of [false, true]) {
+  test(`Sources, switch ${v41 ? 'on' : 'off'}: a source is listed by a readable name; its full description and reference stay behind Source reference`, async ({
+    page,
+  }) => {
+    await open(page, '/operator/sources', { v41, sources: sourceRows });
+    const rows = page.locator('#workspace-sources > section').first().locator('ul > li');
+    await expect(rows).toHaveCount(3);
+    // No record id is in view until a person opens the reference.
+    expect(
+      await rows.evaluateAll((items) =>
+        items.map((item) =>
+          Array.from(item.childNodes)
+            .filter((node) => !(node instanceof HTMLDetailsElement))
+            .map((node) => node.textContent)
+            .join('')
+            .trim(),
+        ),
+      ),
+    ).toEqual([
+      'Mission intake · Mission: Invented Machinery Co',
+      'Existing public record',
+      'Invented trade fair catalogue, page 4 · Company: Invented Foods Co',
+    ]);
+    await expect(rows.first().getByText(intakeId)).toBeHidden();
+    await rows.first().getByText('Source reference', { exact: true }).click();
+    await expect(
+      rows
+        .first()
+        .getByText(
+          `Full description: Mission intake ${intakeId}; notice synthetic-intake-2026-10-05-v1`,
+        ),
+    ).toBeVisible();
+    const reference = rows.first().locator('.ux-copy-reference code');
+    await expect(reference).toHaveText(sourceRows[0]!.id);
+    // The reference is text of the scale (14 px), not a fraction of the text around it (it was 12.9 px).
+    expect(await reference.evaluate((node) => getComputedStyle(node).fontSize)).toBe('14px');
+    // A description a person wrote is the name already, so it is not printed a second time.
+    await rows.nth(2).getByText('Source reference', { exact: true }).click();
+    await expect(rows.nth(2).getByText('Full description')).toHaveCount(0);
+    // The source a claim is recorded against is chosen by the full description, as before.
+    await expect(page.locator('#workspace-sources select[name="source"] option')).toHaveText([
+      'Choose a source',
+      ...sourceRows.map((row) => row.locator),
+    ]);
+  });
+}
+
+test('switch on: /operator/sources links each destination once', async ({ page }) => {
+  await open(page, '/operator/sources', { v41: true, sources: sourceRows });
+  await expect(page.locator('#workspace-sources ul > li')).toHaveCount(3);
+  const destinations = await destinationsInView(page);
+  expect(
+    destinations.filter((value, index) => destinations.indexOf(value) !== index),
+    `links in main are ${JSON.stringify(destinations)}`,
+  ).toEqual([]);
 });
 
 test('Team and access, switch on: Audit has one title and its one action on the left edge', async ({

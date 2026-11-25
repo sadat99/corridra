@@ -319,7 +319,11 @@ async function openDelivery(page: Page, address: string, width: number) {
   await page.goto('about:blank');
   await page.goto(address);
   await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' });
-  await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('heading', { name: 'Reports', exact: true, level: 2 }),
+  ).toBeVisible();
   // The billing hub sits in the tab for mission and delegation experience (L-03).
   await openTab(page.locator('#workspace-delivery'), 'Mission and delegation experience');
 }

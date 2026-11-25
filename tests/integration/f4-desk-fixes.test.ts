@@ -23,6 +23,16 @@ const { DeskParts } = (await import(/* @vite-ignore */ `${web}${'desk-sections.t
 const { OperatorFlags } = (await import(/* @vite-ignore */ `${web}${'operator-flags.tsx'}`)) as {
   OperatorFlags: (props: Record<string, unknown>) => unknown;
 };
+const { usePageTitleSays } = (await import(/* @vite-ignore */ `${web}${'desk-sections.tsx'}`)) as {
+  usePageTitleSays: (words: string) => boolean;
+};
+const { sourceTitle } = (await import(/* @vite-ignore */ `${web}${'sources-panel.tsx'}`)) as {
+  sourceTitle: (row: { id: string; locator?: string; kind?: string }) => string;
+};
+/** A heading that goes to screen readers only once the page title says its words. */
+function TitleProbe() {
+  return createElement('h2', usePageTitleSays('Probe') ? { className: 'sr-only' } : null, 'Probe');
+}
 const source = (path: string) => readFileSync(new URL(web + path, import.meta.url), 'utf8');
 const tabs = [
   { id: 'one', label: 'First part', panel: 'first body' },
@@ -87,6 +97,13 @@ describe('words and structure behind the switch', () => {
   });
   it('Reports and Money keep one visible title; Money row actions are quiet with the switch on', () => {
     expect(source('delivery.tsx')).not.toMatch(/<h2>Client and programme delivery<\/h2>/);
+    // The panel carries the menu's name in both switch states; the old third name is not on the screen.
+    expect(source('delivery.tsx')).not.toContain('Client and programme delivery');
+    expect(
+      source('delivery.tsx').match(
+        /<h2 className=\{deskV41 \|\| titled \? 'sr-only' : undefined\}>Reports<\/h2>/g,
+      ),
+    ).toHaveLength(3);
     const money = source('opportunities.tsx');
     expect(money).toContain("desk ? 'button button-secondary' : 'primary-link'");
     expect((money.match(/className="primary-link"/g) ?? []).length).toBe(1);
@@ -105,5 +122,79 @@ describe('words and structure behind the switch', () => {
     expect(owner).toMatch(/\{frame \? null : \(\s*<Link[^>]*>\s*Back to your workspace/);
     expect(owner).toContain("uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && !frame");
     expect(owner).toContain('const Parts = frame ? DeskSections : SubTabs;');
+  });
+});
+
+// Unit F4b: the switch-off audit items that are plain defects in both switch states.
+describe('names that were printed more than once', () => {
+  it('a panel reads the page title, so its own copy of the name is for screen readers only', () => {
+    expect(source('operations.tsx')).toContain(
+      "<h3 className={deskV41 || titledHealth ? 'sr-only' : undefined}>Recovery and health</h3>",
+    );
+    expect(source('operations.tsx')).toContain("deskV41 || titledOperations ? 'sr-only'");
+    expect(source('workspace-controls.tsx')).toContain(
+      "<h2 className={teamDeskV41 || titled ? 'sr-only' : undefined}>Workspace controls</h2>",
+    );
+    expect(source('workspace-audit.tsx')).toContain('data-title-said={titled || undefined}');
+    expect(source('sources-panel.tsx')).toContain('data-title-said={titled || undefined}');
+    // The shared heading keeps its label, icon and line; only its name goes to one pixel.
+    const css = source('operator-overview.css');
+    const rule = css.slice(css.indexOf('[data-title-said] > .ux-panel-heading h2 {'));
+    expect(rule.slice(0, rule.indexOf('}'))).toContain('clip-path: inset(50%)');
+  });
+  it('the first server render shows the heading, so a page without that title never loses its name', () => {
+    const html = renderToStaticMarkup(createElement(TitleProbe as never));
+    expect(html).toBe('<h2>Probe</h2>');
+  });
+  it('each Money opportunity names its own Evidence and accounting history heading', () => {
+    expect(source('opportunities.tsx')).toMatch(
+      /Evidence and accounting history\s*<span className="sr-only">, \{o\.title\}<\/span>/,
+    );
+  });
+});
+
+describe('a source in Sources and claims', () => {
+  const id = '2db88616-465f-4935-8a51-0000000000e1';
+  it('is named by the words before a record id, never by the id', () => {
+    expect(
+      sourceTitle({
+        id: 'a',
+        locator: `Mission intake ${id}; notice synthetic-intake-2026-10-05-v1`,
+      }),
+    ).toBe('Mission intake');
+    expect(sourceTitle({ id: 'a', locator: `Record: ${id}` })).toBe('Record');
+  });
+  it('is named by its source type when the description is only an id or is missing', () => {
+    expect(sourceTitle({ id: 'a', locator: id, kind: 'public_record' })).toBe(
+      'Existing public record',
+    );
+    expect(sourceTitle({ id: 'a', kind: 'self_declaration' })).toBe('Original declaration');
+    expect(sourceTitle({ id: 'a', locator: id })).toBe('Source');
+  });
+  it('keeps a description a person wrote exactly as written', () => {
+    expect(sourceTitle({ id: 'a', locator: 'Invented trade fair catalogue, page 4' })).toBe(
+      'Invented trade fair catalogue, page 4',
+    );
+  });
+  it('shows record references at a size of the type scale', () => {
+    const css = source('operator-overview.css');
+    const rule = css.slice(css.indexOf('.ux-copy-reference code,'));
+    expect(rule.slice(0, rule.indexOf('}'))).toContain('font-size: var(--text-sm)');
+  });
+});
+
+describe('Today with larger text and the Supply breadcrumb', () => {
+  it('the Today lists stack by their own width, so text at 200% never squeezes a name to one letter a line', () => {
+    const css = source('operator-overview.css');
+    expect(css).toMatch(
+      /\.ux-operator-home :is\(\.ux-needs, \.ux-week\) \{\s*container-type: inline-size;/,
+    );
+    expect(css).toContain('@container (max-width: 26rem)');
+  });
+  it('the Supply breadcrumb rules apply with the team desk v4.1 frame only', () => {
+    const css = source('supply/supply.css');
+    expect(css).not.toMatch(/^\.supply-head > \.ux-kit-crumbs/m);
+    expect(css).toContain('.ux-desk-frame .supply-head > .ux-kit-crumbs {');
+    expect(css).toContain('.ux-desk-frame .supply-head > .ux-kit-crumbs a {');
   });
 });

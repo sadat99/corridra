@@ -976,8 +976,10 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                         </>
                       )}
                       <RecordsFold desk={deskV41} count={records.length}>
+                        {/* One per opportunity: the name after it tells the headings apart in a list of headings. */}
                         <h4 className={deskV41 ? 'sr-only' : undefined}>
                           Evidence and accounting history
+                          <span className="sr-only">, {o.title}</span>
                         </h4>
                         <p>
                           {records.length} of{' '}

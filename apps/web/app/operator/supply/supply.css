@@ -335,11 +335,11 @@
 .ux-desk-frame .supply-disclosure[open] > summary::after {
   content: '−';
 }
-/* The breadcrumb of a page under Supply Sources takes the first line of the head on its own. */
-.supply-head > .ux-kit-crumbs {
+/* Team desk v4.1 only: the breadcrumb of a page under Supply Sources takes the first line of the head on its own. */
+.ux-desk-frame .supply-head > .ux-kit-crumbs {
   flex-basis: 100%;
 }
-.supply-head > .ux-kit-crumbs a {
+.ux-desk-frame .supply-head > .ux-kit-crumbs a {
   display: inline-flex;
   align-items: center;
   min-block-size: 44px;
