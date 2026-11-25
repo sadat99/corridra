@@ -343,12 +343,12 @@ test('the first run goes from an empty workspace to a published page, and nothin
   const run = firstRun(page);
   await expect(firstRunRegion(page)).toBeVisible();
   await expect(run).toBeVisible();
-  // A workspace with no programme opens on the first run: it is the first tab and the one shown.
-  await expect(page.getByRole('tab').first()).toHaveText('New Sample Programme');
-  await expect(page.getByRole('tab', { name: 'New Sample Programme' })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
+  // A workspace with no programme opens on the first run. UI/UX.v4.1: it is the page's create view, not a tab,
+  // With Templates on, its tab sits beside the create view and the redundant Show Programmes button is not drawn,
+  // since the tab row is the way on.
+  await expect(page.getByRole('tab', { name: /New .*Programme/ })).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: 'Templates' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Show Programmes' })).toHaveCount(0);
   await expect(run.getByRole('heading', { name: 'Step 1 of 4: Name and place' })).toBeVisible();
   const form = run.locator('form');
   // Step 1: name, destination and the template choice. One to three fields.
@@ -553,6 +553,9 @@ test('a failed publish keeps the draft, and a second press never creates the pro
   const state = await standIn(page, { publishAnswers: [429] });
   await page.goto(`${origin}/?room=1&first=1&pages=1`);
   const run = firstRun(page);
+  // With Templates off there is no tab row beside the create view, so Show Programmes is the way on.
+  await expect(page.getByRole('button', { name: 'Show Programmes' })).toBeVisible();
+  await expect(page.getByRole('tab')).toHaveCount(0);
   await fillToLastStep(page);
   await run.getByLabel('I am using made-up information for sample planning only.').check();
   await run.getByLabel(/^I checked this page\./).check();
@@ -567,9 +570,9 @@ test('a failed publish keeps the draft, and a second press never creates the pro
   expect((await draftKeys(page)).text).toContain(createdId);
   // Even after a reload the next press continues from the saved programme.
   await page.reload();
-  // The programme now exists, so the room opens on its own programmes; the kept draft waits in the new programme tab.
+  // The programme now exists, so the room opens on its own programmes; the kept draft waits behind the create button.
   await expect(page.getByRole('tab').first()).toHaveText('Programmes');
-  await page.getByRole('tab', { name: /^New .*Programme$/ }).click();
+  await page.getByRole('button', { name: /^New .*Programme$/ }).click();
   await expect(run.getByRole('heading', { name: 'Step 4 of 4: Review and publish' })).toBeVisible();
   await expect(
     run.getByText('Your programme is saved in this workspace. Its page is not public yet.'),
@@ -604,7 +607,7 @@ test('with the switch off, or without public pages, the page is the one on main'
   await plain.locator('summary').click();
   await expect(plain.getByRole('heading', { name: 'Create a sample programme' })).toBeVisible();
   await expect(plain.getByRole('button', { name: 'Save Sample Programme' })).toBeVisible();
-  // Off, and on without public pages: no first run, the Programmes tab first, the create form in its own tab.
+  // Off, and on without public pages: no first run, the Programmes tab first, the create form behind its button.
   for (const query of ['room=1&first=0&pages=1', 'room=1&first=1&pages=0', 'room=1&pages=1']) {
     await page.goto(`${origin}/?${query}`);
     await expect(page.getByRole('tab').first()).toHaveText('Programmes');
@@ -614,7 +617,7 @@ test('with the switch off, or without public pages, the page is the one on main'
     );
     await expect(page.getByText('No sample programmes yet.')).toBeVisible();
     await expect(page.locator('.first-run, .first-run-plain')).toHaveCount(0);
-    await page.getByRole('tab', { name: 'New Sample Programme' }).click();
+    await page.getByRole('button', { name: 'New Sample Programme' }).click();
     await expect(page.getByRole('heading', { name: 'Create a sample programme' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Save Sample Programme' })).toBeVisible();
     await expect(page.getByLabel('Programme name')).toBeVisible();

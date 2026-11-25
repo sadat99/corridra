@@ -44,7 +44,8 @@
 }
 .notifications-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  /* Never wider than the form: at 200% text on a narrow phone 9rem is more than the page has. */
+  grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
   gap: var(--space-3);
 }
 .notifications-note {

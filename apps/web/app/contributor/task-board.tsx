@@ -4,6 +4,8 @@ import { displayMoney } from '@corridra/domain/locale';
 import { formatDateTime } from '../../lib/ux/format';
 import { countryName } from '../../lib/ux/options';
 import { Flagged, placeMark } from '../../components/ux/flag';
+import './next-step.css';
+import './task-board.css';
 
 // D11: one date and time style. CQ-61: plain words for the task state and places, never raw codes.
 const displayDate = (value: string) => formatDateTime(value);
@@ -12,6 +14,21 @@ const words = (code: string) => {
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
 const place = (value: string) => (/^[A-Z]{2}$/.test(value) ? countryName(value) : value);
+// The state of a task in the words a helper uses. A state this list does not know is shown in its own words.
+const statusNames: Record<string, string> = {
+  ASSIGN: 'Assigned',
+  ACCEPT: 'Accepted',
+  SUBMIT: 'Submitted',
+  REVIEW: 'Reviewed',
+  COMPLETE: 'Completed',
+  REJECT: 'Rejected',
+  REQUEST_CORRECTION: 'Correction requested',
+  DISPUTE: 'Disputed',
+};
+const statusWords = (code: string) => statusNames[code] ?? words(code);
+// A task waits for the helper while it can be accepted or its work can be sent.
+const waitsForHelper = (status: string) =>
+  ['ASSIGN', 'ACCEPT', 'REQUEST_CORRECTION'].includes(status);
 import { readFailureKind, readFailureWords } from '../operator/read-failure';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { dueToday } from '../../lib/ux/field-helper';
@@ -179,6 +196,142 @@ function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boole
   }
   // Today is the same list narrowed to what is due on the person's current day: no new read, no new data.
   const shown = today ? tasks.filter((task) => dueToday(task.deadline)) : tasks;
+  // UI/UX.v4.1 L9: one next step card with the one primary action. The first task that waits for the helper is that
+  // card; every other task is a row that opens in place with the same facts and the same forms, drawn quietly.
+  const lead = shown.find((task) => waitsForHelper(task.status)) ?? shown[0];
+  const leadWaits = !!lead && waitsForHelper(lead.status);
+  const rest = shown.filter((task) => task !== lead);
+  const blocked = busy || !!pending || readInterrupted;
+  const statusLine = (task: Task) => (
+    <>
+      {statusWords(task.status)} ·{' '}
+      <Flagged code={placeMark(task.disclosure.market)}>{place(task.disclosure.market)}</Flagged> ·
+      work country{' '}
+      <Flagged code={placeMark(task.disclosure.workCountry)}>
+        {place(task.disclosure.workCountry)}
+      </Flagged>
+    </>
+  );
+  const taskBody = (task: Task, primary: boolean) => (
+    <>
+      <p className="label">EXACT ASSIGNMENT · VERSION {task.version}</p>
+      <p>{task.disclosure.instructions}</p>
+      <dl>
+        <dt>Location</dt>
+        <dd>{task.disclosure.location}</dd>
+        <dt>Deadline</dt>
+        <dd>{displayDate(task.deadline)}</dd>
+        <dt>Late submission cutoff</dt>
+        <dd>{displayDate(task.expiresAt)}</dd>
+        <dt>Evidence required</dt>
+        <dd>{task.disclosure.evidenceRequired}</dd>
+        <dt>Expected effort</dt>
+        <dd>{task.disclosure.effort}</dd>
+        <dt>Data handling</dt>
+        <dd>{task.disclosure.dataHandling}</dd>
+        <dt>Reviewer</dt>
+        {/* The record holds the reviewer as an id only; a helper is never shown an id. */}
+        <dd>Independent reviewer</dd>
+        <dt>Cancellation</dt>
+        <dd>{task.disclosure.cancellationTerms}</dd>
+        <dt>Disputes</dt>
+        <dd>{task.disclosure.disputeTerms}</dd>
+        <dt>Reward rule</dt>
+        <dd>
+          {task.reward
+            ? `${displayMoney(task.reward.amountMinor, task.reward.currency)}, conditional on reviewed work and independent approval`
+            : 'No monetary reward is offered for this task.'}
+        </dd>
+      </dl>
+      <p>
+        Task completion does not guarantee earnings or payment. Late submissions require reviewer
+        assessment.
+      </p>
+      {task.status === 'ASSIGN' && (
+        <form className="operator-form" onSubmit={(e) => submit(e, task, 'ACCEPT')}>
+          <fieldset disabled={blocked}>
+            <legend className="sr-only">Acceptance</legend>
+            <label className="field">
+              Acceptance and relationship confirmation
+              <input name="reason" required minLength={3} maxLength={500} />
+            </label>
+            <button className={primary ? 'primary-link' : 'button-secondary'} disabled={blocked}>
+              Accept the Disclosed Task
+            </button>
+          </fieldset>
+        </form>
+      )}
+      {['ACCEPT', 'REQUEST_CORRECTION'].includes(task.status) && (
+        <form className="operator-form" onSubmit={(e) => submit(e, task, 'SUBMIT')}>
+          <fieldset disabled={blocked}>
+            <legend className="sr-only">Original submission</legend>
+            <label className="field">
+              Original work and evidence statement
+              <textarea name="body" required minLength={3} maxLength={2000} />
+            </label>
+            <label className="field">
+              Submission context
+              <input name="reason" required minLength={3} maxLength={500} />
+            </label>
+            <button className={primary ? 'primary-link' : 'button-secondary'} disabled={blocked}>
+              Submit for Evidence Review
+            </button>
+          </fieldset>
+        </form>
+      )}
+      {['SUBMIT', 'REVIEW', 'COMPLETE', 'REJECT'].includes(task.status) && (
+        <form className="operator-form" onSubmit={(e) => submit(e, task, 'DISPUTE')}>
+          <fieldset disabled={blocked}>
+            <legend className="sr-only">Dispute request</legend>
+            <label className="field">
+              Dispute reason
+              <textarea name="reason" required minLength={3} maxLength={500} />
+            </label>
+            <button className="text-link" disabled={blocked}>
+              Request Dispute Review
+            </button>
+          </fieldset>
+        </form>
+      )}
+      <details>
+        <summary>Work and review history</summary>
+        <ol>
+          {task.history?.map((h) => (
+            <li key={h.version}>
+              <p>
+                Version {h.version} · {statusWords(h.action)}: {h.reason}
+                <br />
+                {displayDate(h.createdAt)}
+              </p>
+              {h.details.body && <p>{h.details.body}</p>}
+              {h.details.rationale && (
+                <p>
+                  Evidence quality {h.details.evidenceQuality}/4; timeliness {h.details.timeliness}
+                  /4. {h.details.rationale}{' '}
+                  {h.details.verificationId
+                    ? 'Linked independently verified evidence'
+                    : 'Source-reported work; no independent verification'}
+                </p>
+              )}
+            </li>
+          ))}
+        </ol>
+      </details>
+      {!!task.obligations?.length && (
+        <div>
+          <h3>Reviewed reward obligations</h3>
+          <ul>
+            {task.obligations.map((o) => (
+              <li key={o.id}>
+                {displayMoney(o.amountMinor, o.currency)}
+                {o.reverseOf ? ' compensating reversal' : ' obligation'}, payment not guaranteed
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
   return (
     <section aria-label="Assigned tasks">
       <p role="status" aria-live="polite">
@@ -253,135 +406,28 @@ function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boole
           <a href={'/contributor?workspace=' + encodeURIComponent(workspace)}>Tasks</a>.
         </p>
       )}
-      {shown.map((task) => (
-        <article className="detail-card ux-task-card" key={task.id}>
-          <p className="label">EXACT ASSIGNMENT · VERSION {task.version}</p>
-          <h2>{words(task.disclosure.kind)}</h2>
-          <p>
-            {words(task.status)} ·{' '}
-            <Flagged code={placeMark(task.disclosure.market)}>
-              {place(task.disclosure.market)}
-            </Flagged>{' '}
-            · work country{' '}
-            <Flagged code={placeMark(task.disclosure.workCountry)}>
-              {place(task.disclosure.workCountry)}
-            </Flagged>
-          </p>
-          <p>{task.disclosure.instructions}</p>
-          <dl>
-            <dt>Location</dt>
-            <dd>{task.disclosure.location}</dd>
-            <dt>Deadline</dt>
-            <dd>{displayDate(task.deadline)}</dd>
-            <dt>Late submission cutoff</dt>
-            <dd>{displayDate(task.expiresAt)}</dd>
-            <dt>Evidence required</dt>
-            <dd>{task.disclosure.evidenceRequired}</dd>
-            <dt>Expected effort</dt>
-            <dd>{task.disclosure.effort}</dd>
-            <dt>Data handling</dt>
-            <dd>{task.disclosure.dataHandling}</dd>
-            <dt>Reviewer</dt>
-            <dd>{task.reviewer}</dd>
-            <dt>Cancellation</dt>
-            <dd>{task.disclosure.cancellationTerms}</dd>
-            <dt>Disputes</dt>
-            <dd>{task.disclosure.disputeTerms}</dd>
-            <dt>Reward rule</dt>
-            <dd>
-              {task.reward
-                ? `${displayMoney(task.reward.amountMinor, task.reward.currency)}, conditional on reviewed work and independent approval`
-                : 'No monetary reward is offered for this task.'}
-            </dd>
-          </dl>
-          <p>
-            Task completion does not guarantee earnings or payment. Late submissions require
-            reviewer assessment.
-          </p>
-          {task.status === 'ASSIGN' && (
-            <form className="operator-form" onSubmit={(e) => submit(e, task, 'ACCEPT')}>
-              <fieldset disabled={busy || !!pending || readInterrupted}>
-                <legend className="sr-only">Acceptance</legend>
-                <label className="field">
-                  Acceptance and relationship confirmation
-                  <input name="reason" required minLength={3} maxLength={500} />
-                </label>
-                <button className="primary-link" disabled={busy || !!pending || readInterrupted}>
-                  Accept the Disclosed Task
-                </button>
-              </fieldset>
-            </form>
-          )}
-          {['ACCEPT', 'REQUEST_CORRECTION'].includes(task.status) && (
-            <form className="operator-form" onSubmit={(e) => submit(e, task, 'SUBMIT')}>
-              <fieldset disabled={busy || !!pending || readInterrupted}>
-                <legend className="sr-only">Original submission</legend>
-                <label className="field">
-                  Original work and evidence statement
-                  <textarea name="body" required minLength={3} maxLength={2000} />
-                </label>
-                <label className="field">
-                  Submission context
-                  <input name="reason" required minLength={3} maxLength={500} />
-                </label>
-                <button className="primary-link" disabled={busy || !!pending || readInterrupted}>
-                  Submit for Evidence Review
-                </button>
-              </fieldset>
-            </form>
-          )}
-          {['SUBMIT', 'REVIEW', 'COMPLETE', 'REJECT'].includes(task.status) && (
-            <form className="operator-form" onSubmit={(e) => submit(e, task, 'DISPUTE')}>
-              <fieldset disabled={busy || !!pending || readInterrupted}>
-                <legend className="sr-only">Dispute request</legend>
-                <label className="field">
-                  Dispute reason
-                  <textarea name="reason" required minLength={3} maxLength={500} />
-                </label>
-                <button className="text-link" disabled={busy || !!pending || readInterrupted}>
-                  Request Dispute Review
-                </button>
-              </fieldset>
-            </form>
-          )}
-          <details>
-            <summary>Work and review history</summary>
-            <ol>
-              {task.history?.map((h) => (
-                <li key={h.version}>
-                  <p>
-                    Version {h.version} · {h.action}: {h.reason}
-                    <br />
-                    {displayDate(h.createdAt)}
-                  </p>
-                  {h.details.body && <p>{h.details.body}</p>}
-                  {h.details.rationale && (
-                    <p>
-                      Evidence quality {h.details.evidenceQuality}/4; timeliness{' '}
-                      {h.details.timeliness}/4. {h.details.rationale}{' '}
-                      {h.details.verificationId
-                        ? 'Linked independently verified evidence'
-                        : 'Source-reported work; no independent verification'}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </details>
-          {!!task.obligations?.length && (
-            <div>
-              <h3>Reviewed reward obligations</h3>
-              <ul>
-                {task.obligations.map((o) => (
-                  <li key={o.id}>
-                    {displayMoney(o.amountMinor, o.currency)}
-                    {o.reverseOf ? ' compensating reversal' : ' obligation'}, payment not guaranteed
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+      {lead && (
+        <article
+          className={'detail-card ux-task-card' + (leadWaits ? ' helper-next' : '')}
+          key={lead.id}
+        >
+          <p className="label">{leadWaits ? 'Your next step' : 'Your task'}</p>
+          <h2>{words(lead.disclosure.kind)}</h2>
+          <p>{statusLine(lead)}</p>
+          {taskBody(lead, leadWaits)}
         </article>
+      )}
+      {rest.map((task) => (
+        <details className="detail-card ux-task-card helper-task-row" key={task.id}>
+          <summary>
+            <span className="helper-task-row-text">
+              <strong>{words(task.disclosure.kind)}</strong>
+              <span>{statusLine(task)}</span>
+            </span>
+            <span className="helper-task-row-open">Open</span>
+          </summary>
+          {taskBody(task, false)}
+        </details>
       ))}
     </section>
   );

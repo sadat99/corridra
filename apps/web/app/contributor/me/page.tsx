@@ -12,6 +12,15 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
+/** True when a helper session exists. Any failure reads as signed out (fail closed), as on the task page. */
+async function hasSession(s: NonNullable<ReturnType<typeof foundations>>) {
+  try {
+    await s.ready;
+    return !!(await s.provider.getSession(await headers()));
+  } catch {
+    return false;
+  }
+}
 // The field helper's Me tab (Navigation v1, FieldHelper board): language, reading aloud, the private-link note and
 // Sign Out in one place. Same access rule as the task page: a valid workspace link and a contributor session, and
 // nothing about the workspace is read here. A control that is not real yet says Coming soon.
@@ -22,18 +31,32 @@ export default async function Page({
 }) {
   const s = foundations();
   const workspace = z.uuid().safeParse((await searchParams).workspace);
-  if (!s || !workspace.success)
+  if (!s || !workspace.success) {
+    // Without a workspace link this page has nothing of the helper's to show. It says so and gives a real way on:
+    // a signed-in helper can sign out here (the menu already leads to the task page); anyone else gets the helper
+    // sign-in. The session check is the one this page already makes below; nothing else is read.
+    const signedIn = s ? await hasSession(s) : false;
     return (
       <WorkspaceShell eyebrow="Assigned work" title="My Assigned Work" compact>
+        {signedIn ? (
+          <p role="status">
+            <strong>You are signed in.</strong> Your settings open with your tasks.
+          </p>
+        ) : null}
         <p>
           Open the workspace link supplied with your reviewed invitation. A customer account does
           not grant assigned-task access.
         </p>
-        <Link prefetch={false} className="text-link" href="/contributor">
-          Back to assigned work
-        </Link>
+        {signedIn ? (
+          <ContributorSignout />
+        ) : (
+          <Link prefetch={false} className="text-link" href="/contributor/signin">
+            Helper Sign-In
+          </Link>
+        )}
       </WorkspaceShell>
     );
+  }
   await s.ready;
   const identity = await s.provider.getSession(await headers());
   if (!identity)

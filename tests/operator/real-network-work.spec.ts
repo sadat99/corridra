@@ -359,7 +359,7 @@ test('reviewed invitation, real password/TOTP setup and non-member task submissi
   await worker.getByLabel('Submission context').fill('Only the scoped task disclosure was used');
   await worker.getByRole('button', { name: 'Submit for Evidence Review' }).click();
   await expect(
-    worker.getByText('Submit · Spain · work country Germany', { exact: true }),
+    worker.getByText('Submitted · Spain · work country Germany', { exact: true }),
   ).toBeVisible();
   await inspect(worker, 'contributor-submitted');
   const events = await f.owner.query(

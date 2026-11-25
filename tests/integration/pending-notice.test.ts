@@ -76,7 +76,10 @@ describe('the saved request notice', () => {
   it('is placed on sign-in, sign-up, verify and the account page, never on reset screens', () => {
     const access = readFileSync(resolve('apps/web/components/account-access.tsx'), 'utf8');
     expect(access).toContain("(mode === 'signin' || mode === 'signup' || mode === 'verify')");
-    expect(access).toContain('<PendingRequestNotice where={mode} />');
+    expect(access).toContain('<PendingRequestNotice where={mode} enabled={realUseEnabled()} />');
+    // Where real request intake is closed the route answers 503, so no access page asks it (audit row 23).
+    const signup = readFileSync(resolve('apps/web/app/signup/signup-access.tsx'), 'utf8');
+    expect(signup).toContain('<PendingRequestNotice where="signup" enabled={realUseEnabled()} />');
     expect((access.match(/<PendingRequestNotice/g) ?? []).length).toBe(1);
     const account = readFileSync(resolve('apps/web/app/account/page.tsx'), 'utf8');
     expect(account).toContain(

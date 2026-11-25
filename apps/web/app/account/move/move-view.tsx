@@ -338,6 +338,13 @@ export function MoveView({
     (!journey || latestItem?.journey === journey)
       ? model.latest
       : null;
+  // One link per destination: a journey card whose page a task above already opens (Today, the list or the latest
+  // request) keeps its facts and drops its own link.
+  const linkedAbove = new Set([
+    ...unread.filter((reply) => shown(`reply:${reply.requestId}`)).map((reply) => reply.href),
+    ...model.cards.filter((card) => shown(card.id)).map((card) => card.href),
+    ...(latestShown ? [latestShown.href] : []),
+  ]);
 
   const waitingLine = (row: WaitingRow) =>
     row.kind === 'move'
@@ -726,6 +733,7 @@ export function MoveView({
               key={card.journey}
               card={card}
               lead={index === 0}
+              linked={!linkedAbove.has(card.href)}
               facts={facts?.[card.journey] ?? null}
               labels={labels.road}
               locale={locale}

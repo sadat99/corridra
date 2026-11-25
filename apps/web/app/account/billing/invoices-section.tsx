@@ -1,4 +1,5 @@
 'use client';
+import './billing.css';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   callBillingApi,
@@ -173,9 +174,9 @@ function ScopedInvoices({ subject, issuer, workspaceId }: Props) {
               </tbody>
             </table>
           </div>
-          <ul className="guide-list">
+          <ul className="billing-rows">
             {data.invoices.map((i) => (
-              <li key={i.id} className="detail-card">
+              <li key={i.id}>
                 <h3>
                   {i.number} · {i.planTitle}
                 </h3>
@@ -199,7 +200,7 @@ function ScopedInvoices({ subject, issuer, workspaceId }: Props) {
                   {money(i.paidMinor, i.currency)} · Credited {money(i.creditedMinor, i.currency)} ·
                   Still to pay <strong>{money(i.outstandingMinor, i.currency)}</strong>
                 </p>
-                <details className="ux-journey-disclosure">
+                <details className="account-fold">
                   <summary>Payments and credit notes for {i.number}</summary>
                   <p>Payments the team recorded</p>
                   {i.payments.length === 0 ? (
