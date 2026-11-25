@@ -17,6 +17,17 @@ const kindLabel: Record<PickerKind, string> = {
   publication: 'Report',
 };
 
+// The plural noun for the quiet line, said outright: a label ("Request owner") never becomes "request owners" by
+// adding a letter.
+const kindPlural: Record<PickerKind, string> = {
+  contributor: 'contributors',
+  source: 'sources',
+  mission: 'missions',
+  route: 'routes',
+  reviewer: 'reviewers',
+  publication: 'reports',
+};
+
 export function ReferencePicker({
   kind,
   tenant,
@@ -76,14 +87,7 @@ export function ReferencePicker({
     }, 200);
     return () => window.clearTimeout(timer);
   }, [kind, tenant, query, value, needsCheck]);
-  if (needsCheck)
-    return (
-      <ReverifyLine
-        what={`the list of ${(label ?? kindLabel[kind]).toLowerCase()}s`}
-        onVerified={() => setNeedsCheck(false)}
-      />
-    );
-  return (
+  const field = (
     <SearchSelect
       {...rest}
       label={label ?? kindLabel[kind]}
@@ -91,8 +95,22 @@ export function ReferencePicker({
       value={value}
       onChange={onChange}
       onQuery={setQuery}
+      disabled={needsCheck || rest.disabled}
       error={rest.error ?? (failed ? 'Search is not available right now. Try again.' : undefined)}
       emptyText={query ? 'No matches. Try another word.' : 'Start typing to search.'}
     />
   );
+  // While the check is waiting the field stays in the form, disabled, with its hidden input, so a chosen value is not
+  // dropped from what the form posts; the one quiet line sits beside it.
+  if (needsCheck)
+    return (
+      <>
+        {field}
+        <ReverifyLine
+          what={`the list of ${kindPlural[kind]}`}
+          onVerified={() => setNeedsCheck(false)}
+        />
+      </>
+    );
+  return field;
 }

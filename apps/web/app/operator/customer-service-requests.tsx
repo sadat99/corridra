@@ -193,9 +193,17 @@ function Scoped({ tenant }: { tenant: string }) {
     },
     [endpoint],
   );
+  // True when the list read was cut short (the tab was hidden, or a newer read replaced it): the gate must not wait for
+  // an answer that will never come, and the read is made again when the person is back.
+  const cutShort = useRef(false);
   const loadList = useCallback(async () => {
     const r = await call('&scope=list');
-    if (!r) return;
+    if (!r) {
+      cutShort.current = true;
+      settle(false);
+      return;
+    }
+    cutShort.current = false;
     if (r.check) {
       settle(true);
       setFault('');
@@ -237,6 +245,16 @@ function Scoped({ tenant }: { tenant: string }) {
   useEffect(() => {
     if (allowed) void Promise.resolve().then(() => loadList());
     const hide = () => {
+      if (document.visibilityState === 'visible') {
+        // A list read that was cut short while the tab was hidden is made again now, so the group's first read is never
+        // left unanswered; the note about cleared details goes with it, because the list is back.
+        if (allowed && cutShort.current) {
+          cutShort.current = false;
+          setMessage('');
+          void loadList();
+        }
+        return;
+      }
       if (document.visibilityState === 'hidden') {
         task.current?.abort();
         setDetail(null);

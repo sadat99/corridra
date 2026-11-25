@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
 import { Dialog } from '../../components/ux/dialog';
-import { ActionError, withStepUp } from '../../lib/ux/step-up';
+import { ActionError, STEP_UP_REQUIRED, withStepUp } from '../../lib/ux/step-up';
 import '../../components/problem-reports/problem-reports.css';
 import {
   queueFailure,
@@ -117,16 +117,25 @@ export async function answered(r: Response) {
   } catch {
     code = undefined;
   }
-  throw new ActionError(failureText(r.status), r.status, code);
+  throw new ActionError(failureText(r.status, code), r.status, code);
 }
-function failureText(status: number) {
-  // A lapsed authenticator check never reaches this: the in-place check opens first (withStepUp), and only a declined
-  // check, a signed-out person or a role that may not manage requests is told here.
-  if (status === 401) return 'Confirm your code to see and move erasure requests.';
+const needsCodeText = 'Confirm your code to see and move erasure requests.';
+const signedOutText = 'Sign in again to see and move erasure requests.';
+function failureText(status: number, code?: string) {
+  // A lapsed authenticator check normally never reaches this: the in-place check opens first (withStepUp), and only a
+  // declined check, a signed-out person or a role that may not manage requests is told here.
+  if (status === 401) return code === STEP_UP_REQUIRED ? needsCodeText : signedOutText;
   if (status === 403) return 'Only the workspace owner can manage erasure requests.';
   if (status === 409) return 'That request changed or is not in this queue. Reload the list.';
   if (status === 503) return 'The erasure queue is not available yet.';
   return 'The request could not be completed. Please try again.';
+}
+// What the list read says when it ends in a refusal. A declined in-place check is the queue's own needs-code line, not
+// the generic "Your changes are kept." (a list read has no changes); a 401 with no code is a signed-out person.
+export function readFailureText(error: unknown) {
+  if (error instanceof ActionError && error.status === 401)
+    return error.code === STEP_UP_REQUIRED ? needsCodeText : signedOutText;
+  return error instanceof Error ? error.message : 'The list could not be loaded.';
 }
 
 type Props = {
@@ -187,7 +196,7 @@ function Queue({ tenant, role, problemReports = false, tabbed = false }: Props) 
         setMessage('No erasure requests to show.');
     } catch (e) {
       if (!task.signal.aborted) {
-        const reason = e instanceof Error ? e.message : 'The list could not be loaded.';
+        const reason = readFailureText(e);
         if (moved) {
           setQueue(null);
           setMessage(movedMessage(moved, reason));

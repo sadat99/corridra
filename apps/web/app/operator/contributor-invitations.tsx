@@ -5,6 +5,7 @@ import { useOperatorFlags } from './operator-flags';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback';
 import { ReverifyLine } from '../../components/ux/reverify-line';
+import { ActionError, STEP_UP_REQUIRED, isStepUpRequired, withStepUp } from '../../lib/ux/step-up';
 import { displayDate } from '@corridra/domain/locale';
 import {
   SubmissionFailure,
@@ -94,20 +95,43 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
       controller.abort();
     };
   }, [tenant, cursor, revision]);
-  async function request(action: string, input: unknown) {
+  async function once(action: string, input: unknown) {
     const r = await fetch('/api/workspace/' + action + '?tenant=' + encodeURIComponent(tenant), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     });
     const body = await r.json();
-    if (!r.ok)
+    if (!r.ok) {
+      // A lapsed authenticator check opens the in-place check and the same command is sent again (same command id).
+      // Any other refusal, a 403 for another reason included, keeps its own honest words.
+      if (r.status === 401 && body.code === STEP_UP_REQUIRED)
+        throw new ActionError(
+          body.error ?? 'Confirm your code to continue.',
+          401,
+          STEP_UP_REQUIRED,
+        );
       throw new SubmissionFailure(
         body.error ?? 'Invitation could not be confirmed.',
         r.status,
         r.headers.get('X-Corridra-Request-ID'),
       );
+    }
     return body;
+  }
+  async function request(action: string, input: unknown) {
+    try {
+      return await withStepUp(() => once(action, input));
+    } catch (error) {
+      // The check was not passed: the server refused before recording anything, so it is a plain refusal (the entries
+      // stay in the form and the next try is a new command), not an unconfirmed receipt.
+      if (isStepUpRequired(error))
+        throw new SubmissionFailure(
+          'Confirm your code to finish this. Your entries are kept.',
+          401,
+        );
+      throw error;
+    }
   }
   async function save(event: FormEvent<HTMLFormElement>, invitationId?: string) {
     event.preventDefault();

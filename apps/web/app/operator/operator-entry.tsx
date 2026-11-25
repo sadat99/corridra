@@ -20,9 +20,12 @@ import { operatorHeader } from '../../components/ux/desk-frame';
 export async function OperatorEntry({
   requested,
   section,
+  turnedAway = false,
 }: {
   requested?: string;
   section?: string;
+  /** The address was a section this role may not open and the server sent the person to Today: say so there. */
+  turnedAway?: boolean;
 }) {
   const s = foundations();
   if (!s)
@@ -76,11 +79,11 @@ export async function OperatorEntry({
       </WorkspaceShell>
     );
   // Health and Readiness are for the owner and admin only. The role of the workspace in view decides here, on the server,
-  // so an ordinary member who types the address lands on Today, whatever the switches say. Every other section keeps
-  // the screen's own "unavailable for your role" note.
+  // so an ordinary member who types the address lands on Today, whatever the switches say, with the same "unavailable
+  // for your current workspace role" note every other refused section shows (carried by the unavailable flag).
   const role = tenants.find((t) => t.id === selected)?.role;
   if (section && sectionRefusedForRole(section, role))
-    redirect(selected ? '/operator?workspace=' + selected : '/operator');
+    redirect((selected ? '/operator?workspace=' + selected + '&' : '/operator?') + 'unavailable=1');
   const shellsV2 = uxSwitchOn('CORRIDRA_UX_SHELLS_V2');
   const ownerPage = ownerPageEnabled() && ownerCapable(tenants).length > 0;
   // The header for these switches and this address: as it always was, or the team desk v4.1 page pattern.
@@ -115,6 +118,7 @@ export async function OperatorEntry({
           tenants={tenants}
           initialTenant={selected!}
           initialSection={section}
+          turnedAway={turnedAway}
           ownerPage={ownerPage}
           moveRecords={customerMovesEnabled()}
           shellsV2={shellsV2}

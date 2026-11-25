@@ -94,7 +94,9 @@ describe.each([
       for (const role of ['operator', 'reviewer', 'viewer']) {
         state.tenants = [{ id: tenant, name: 'Team', role }];
         expect(await open(section), role).toBe('redirected');
-        expect(state.redirected, role).toEqual(['/operator?workspace=' + tenant]);
+        expect(state.redirected, role).toEqual([
+          '/operator?workspace=' + tenant + '&unavailable=1',
+        ]);
       }
     });
     test(`${section}: owner and admin still open it`, async () => {

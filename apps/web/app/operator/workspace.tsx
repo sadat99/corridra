@@ -97,6 +97,7 @@ export function Workspace({
   desk = false,
   problemReports = false,
   programmeApplications = false,
+  turnedAway = false,
 }: {
   tenants: Tenant[];
   initialTenant: string;
@@ -118,6 +119,8 @@ export function Workspace({
   problemReports?: boolean;
   /** Whether the staff list of programme applications is offered (switch on and module installed). Fail closed. */
   programmeApplications?: boolean;
+  /** The server turned this person away from a section address they may not open: Today says so, in the open. */
+  turnedAway?: boolean;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
@@ -142,6 +145,7 @@ export function Workspace({
       desk={desk}
       problemReports={problemReports}
       programmeApplications={programmeApplications}
+      turnedAway={turnedAway}
     />
   );
 }
@@ -156,6 +160,7 @@ function TenantWorkspace({
   desk,
   problemReports,
   programmeApplications,
+  turnedAway,
 }: {
   tenants: Tenant[];
   tenant: string;
@@ -167,6 +172,7 @@ function TenantWorkspace({
   desk: boolean;
   problemReports: boolean;
   programmeApplications: boolean;
+  turnedAway: boolean;
 }) {
   const { supplySources, teamDeskV41: deskV41 } = useOperatorFlags();
   const edited = useRef(false);
@@ -325,7 +331,9 @@ function TenantWorkspace({
   // drafts through useFormDraft. Off, every panel stays mounted and is only hidden.
   const shown = (panel: string) => !shellsV2 || view === panel;
   const unavailableSection =
-    !!fragment && fragment !== 'main' && fragment !== 'workspace-navigation' && !sectionAllowed;
+    (!!fragment && fragment !== 'main' && fragment !== 'workspace-navigation' && !sectionAllowed) ||
+    // Sent to Today by the server from a section this role may not open, and still on Today.
+    (turnedAway && (!fragment || fragment === 'main'));
   useEffect(() => {
     if (!loaded) return;
     const allowed = fragment === 'main' || fragment === 'workspace-navigation' || sectionAllowed;

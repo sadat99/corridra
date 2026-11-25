@@ -4,8 +4,9 @@ import { isStepUpRequired, withStepUp } from '../../apps/web/lib/ux/step-up';
 // staff-core-26: the erasure list asks for the code in place (withStepUp) instead of ending in a dead-end message.
 // Held in a variable so the root type check does not follow a .tsx file (it has no JSX setting).
 const screen = '../../apps/web/app/operator/erasure-queue';
-const { answered } = (await import(/* @vite-ignore */ screen)) as {
+const { answered, readFailureText } = (await import(/* @vite-ignore */ screen)) as {
   answered: (response: Response) => Promise<Response>;
+  readFailureText: (error: unknown) => string;
 };
 const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
 
@@ -18,6 +19,7 @@ describe('the erasure queue answers', () => {
   test('a signed-out 401 and a role refusal are not a request for the code', async () => {
     const signedOut = await answered(reply(401, { error: 'Sign in to continue' })).catch((e) => e);
     expect(isStepUpRequired(signedOut)).toBe(false);
+    expect(signedOut.message).toBe('Sign in again to see and move erasure requests.');
     const role = await answered(reply(403, { error: 'Access denied' })).catch((e) => e);
     expect(isStepUpRequired(role)).toBe(false);
     expect(role.status).toBe(403);
@@ -41,5 +43,30 @@ describe('the erasure queue answers', () => {
       message: 'Confirm your authenticator code to finish this. Your changes are kept.',
     });
     expect(calls).toBe(1);
+  });
+});
+
+// The visible message on each path of the list read (what the page puts in its status line).
+describe('what the list read shows', () => {
+  const shown = async (status: number, body: unknown) => {
+    const failed = await withStepUp(() => answered(reply(status, body))).catch((e) => e);
+    return readFailureText(failed);
+  };
+  test('a declined check shows the queue\'s own line, never "Your changes are kept."', async () => {
+    // No dialog is mounted, so the check is declined.
+    expect(await shown(401, { code: 'STEP_UP_REQUIRED' })).toBe(
+      'Confirm your code to see and move erasure requests.',
+    );
+  });
+  test('a signed-out 401 shows a sign-in message', async () => {
+    expect(await shown(401, { error: 'Sign in to continue' })).toBe(
+      'Sign in again to see and move erasure requests.',
+    );
+  });
+  test('a role refusal and a missing queue keep their own words', async () => {
+    expect(await shown(403, { error: 'Access denied' })).toBe(
+      'Only the workspace owner can manage erasure requests.',
+    );
+    expect(await shown(503, {})).toBe('The erasure queue is not available yet.');
   });
 });
