@@ -306,8 +306,9 @@ test('switch on: a page the role may not open shows Today, says so in the open a
     await expect(note).toHaveCount(1);
     await expect(note).toBeVisible();
     await expect(note).toContainText('not available for your role');
-    // In the open: not inside a closed row.
+    // In the open: the desk's own access notice, not inside a closed row and not the preview banner.
     expect(await note.evaluate((el) => !!el.closest('details'))).toBe(false);
+    expect(await note.evaluate((el) => !!el.closest('.ux-state[data-state="denied"]'))).toBe(true);
     await expect(page.locator('#workspace-navigation')).not.toBeFocused();
     expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('BODY');
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
@@ -346,11 +347,16 @@ test('switch off: a page the role may not open says so at the top of the page, o
   await expect(note).toHaveCount(1);
   await expect(note).toBeVisible();
   await expect(note).toContainText('not available for your role');
+  // The desk's own access notice, first in the page body and outside every card.
   expect(
-    await note.evaluate(
-      (el) => el.parentElement?.firstElementChild === el && !el.closest('section'),
-    ),
+    await note.evaluate((el) => {
+      const state = el.closest('.ux-state[data-state="denied"]');
+      return (
+        !!state && state.parentElement?.firstElementChild === state && !state.closest('section')
+      );
+    }),
   ).toBe(true);
+  await expect(page.locator('main#main .ux-testmode[role="alert"]')).toHaveCount(0);
 });
 
 // Switch OFF audit of 25 Nov 2026, F9: on a phone a page opened by its own address scrolled itself to its body

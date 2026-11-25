@@ -31,6 +31,8 @@ async function teamWorkspaces(): Promise<TeamWorkspace[]> {
     const tenants = await services.access.tenants(identity.token);
     return tenants.map((tenant) => ({ id: tenant.id, name: tenant.name }));
   } catch {
+    // The menu then shows no switch; the page itself still reads and reports its own access. No personal data.
+    console.error(JSON.stringify({ event: 'team_menu_workspaces_read_failed' }));
     return [];
   }
 }

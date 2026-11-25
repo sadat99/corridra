@@ -590,10 +590,12 @@ function TenantWorkspace({
               {/* A page this role may not open shows Today, and says so first, in the open: never as the last line
                   of a card far from the title, or inside a closed row. */}
               {unavailableSection && (
-                <p role="alert" className="ux-testmode">
-                  That page is not available for your role in this workspace, or the link is out of
-                  date. You are on Today. Ask your workspace owner if you need access.
-                </p>
+                <AccessState kind="denied">
+                  <p>
+                    That page is not available for your role in this workspace, or the link is out
+                    of date. You are on Today. Ask your workspace owner if you need access.
+                  </p>
+                </AccessState>
               )}
               <TodayPanel
                 key={`today-${tenant}`}
