@@ -158,3 +158,62 @@
     white-space: nowrap;
   }
 }
+
+/* The scroll cue. A row that scrolls sideways fades at the edge that still hides tabs: the far edge at rest, both
+   edges in the middle, none at the end. It follows the row's own scroll position, so a row that fits (or wraps)
+   shows no fade at all, and nothing is drawn over a tab: the fade is a mask on the row, never a covering layer.
+   Where the browser cannot follow the scroll position the thin scrollbar above stays the cue. */
+@property --ux-tabs-fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --ux-tabs-fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@keyframes ux-tabs-fade-start {
+  from {
+    --ux-tabs-fade-start: 0px;
+  }
+  to {
+    --ux-tabs-fade-start: var(--space-8);
+  }
+}
+@keyframes ux-tabs-fade-end {
+  from {
+    --ux-tabs-fade-end: var(--space-8);
+  }
+  to {
+    --ux-tabs-fade-end: 0px;
+  }
+}
+@supports (animation-timeline: scroll()) {
+  .ux-subtabs-list,
+  .ux-desk-segments ul {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      var(--ink) var(--ux-tabs-fade-start),
+      var(--ink) calc(100% - var(--ux-tabs-fade-end)),
+      transparent
+    );
+    animation:
+      ux-tabs-fade-start linear both,
+      ux-tabs-fade-end linear both;
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-range:
+      0% var(--space-6),
+      calc(100% - var(--space-6)) 100%;
+  }
+  [dir='rtl'] :is(.ux-subtabs-list, .ux-desk-segments ul) {
+    mask-image: linear-gradient(
+      to left,
+      transparent,
+      var(--ink) var(--ux-tabs-fade-start),
+      var(--ink) calc(100% - var(--ux-tabs-fade-end)),
+      transparent
+    );
+  }
+}
