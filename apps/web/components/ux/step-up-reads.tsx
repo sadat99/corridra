@@ -1,0 +1,70 @@
+'use client';
+// One quiet re-verify line for a group of reads that all need the same fresh authenticator check (the billing panels
+// of Reports). The first read of the group (the probe) goes alone; only when it is not refused for the check do the
+// others read, so a lapsed check costs one refused request, not one per panel, and the screen shows ONE line with the
+// in-place check instead of four dead-end messages. After the code is accepted every panel reads again.
+// Without a provider (a panel mounted alone) a read is always allowed and nothing here changes.
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { ReverifyLine } from './reverify-line';
+
+type Gate = 'probing' | 'open' | 'needs-check';
+type Reads = {
+  gate: Gate;
+  epoch: number;
+  settle: (refusedForCheck: boolean) => void;
+};
+const Context = createContext<Reads | null>(null);
+
+export function StepUpReads({ what, children }: { what: string; children: ReactNode }) {
+  const [gate, setGate] = useState<Gate>('probing');
+  const [epoch, setEpoch] = useState(0);
+  const settle = useCallback(
+    (refused: boolean) =>
+      setGate((now) => (refused ? 'needs-check' : now === 'probing' ? 'open' : now)),
+    [],
+  );
+  const value = useMemo<Reads>(() => ({ gate, epoch, settle }), [gate, epoch, settle]);
+  return (
+    <Context.Provider value={value}>
+      {gate === 'needs-check' ? (
+        <ReverifyLine
+          what={what}
+          onVerified={() => {
+            setGate('open');
+            setEpoch((n) => n + 1);
+          }}
+        />
+      ) : null}
+      {children}
+    </Context.Provider>
+  );
+}
+
+/**
+ * What one panel of the group uses. `allowed` is false while the group waits for the probe or for the code; `epoch`
+ * changes after the code is accepted; `settle(true)` says this read was refused for the check, `settle(false)` that it
+ * was answered (or failed some other way, which the panel shows itself).
+ */
+const noSettle: (refusedForCheck: boolean) => void = () => undefined;
+const alone = { allowed: true, epoch: 0, settle: noSettle };
+export function useStepUpRead(probe = false) {
+  const reads = useContext(Context);
+  if (!reads) return alone;
+  return {
+    allowed: reads.gate === 'open' || (probe && reads.gate === 'probing'),
+    epoch: reads.epoch,
+    settle: reads.settle,
+  };
+}
+
+/** True when a refused read was refused only for the authenticator check (401 STEP_UP_REQUIRED). */
+export async function refusedForCheck(response: Response): Promise<boolean> {
+  if (response.status !== 401) return false;
+  try {
+    return (
+      ((await response.clone().json()) as { code?: unknown } | null)?.code === 'STEP_UP_REQUIRED'
+    );
+  } catch {
+    return false;
+  }
+}

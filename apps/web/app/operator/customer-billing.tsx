@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObject } from 'react';
 import { displayMoney } from '@corridra/domain/locale';
 import { formatDate, formatDateTime } from '../../lib/ux/format';
+import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
 
 type Summary = {
   id: string;
@@ -187,6 +188,7 @@ function Scoped({ tenant }: { tenant: string }) {
   const prefix = sample === false ? '' : starter;
   const hint = sample === false ? '' : ', start with Synthetic';
   const endpoint = '/api/workspace/customer-billing?tenant=' + encodeURIComponent(tenant);
+  const { allowed, epoch, settle } = useStepUpRead();
   const call = useCallback(
     async (query: string, body?: Record<string, unknown>) => {
       task.current?.abort();
@@ -202,7 +204,8 @@ function Scoped({ tenant }: { tenant: string }) {
           signal: controller.signal,
         });
         if (controller.signal.aborted) return null;
-        if (!r.ok) return { status: r.status, body: null as unknown };
+        if (!r.ok)
+          return { status: r.status, body: null as unknown, check: await refusedForCheck(r) };
         return { status: 200, body: (await r.json()) as unknown };
       } catch {
         return controller.signal.aborted ? null : { status: 0, body: null as unknown };
@@ -213,6 +216,12 @@ function Scoped({ tenant }: { tenant: string }) {
   const loadList = useCallback(async () => {
     const r = await call('&scope=list');
     if (!r) return;
+    if (r.check) {
+      settle(true);
+      setFault('');
+      return;
+    }
+    settle(false);
     if (r.status !== 200) {
       setRows(null);
       setFault(plainError(r.status));
@@ -231,7 +240,7 @@ function Scoped({ tenant }: { tenant: string }) {
     setSample(isSample);
     setFault('');
     setRows(body.subscriptions);
-  }, [call]);
+  }, [call, settle]);
   const loadPlans = useCallback(async () => {
     const r = await call('&scope=plans');
     if (!r) return;
@@ -262,7 +271,7 @@ function Scoped({ tenant }: { tenant: string }) {
     [call],
   );
   useEffect(() => {
-    void Promise.resolve().then(() => loadList());
+    if (allowed) void Promise.resolve().then(() => loadList());
     const hide = () => {
       if (document.visibilityState === 'hidden') {
         task.current?.abort();
@@ -277,7 +286,7 @@ function Scoped({ tenant }: { tenant: string }) {
       task.current?.abort();
       document.removeEventListener('visibilitychange', hide);
     };
-  }, [loadList]);
+  }, [loadList, allowed, epoch]);
   async function send(body: Record<string, unknown>, after: 'detail' | 'plans') {
     if (busy) return;
     setPending(body);
@@ -412,7 +421,7 @@ function Scoped({ tenant }: { tenant: string }) {
       </p>
       {fault && <p role="alert">{fault}</p>}
       {at === 'top' && <Notice text={message} innerRef={noticeRef} />}
-      {rows === null && !fault && <p role="status">Loading plan requests…</p>}
+      {rows === null && !fault && allowed && <p role="status">Loading plan requests…</p>}
       {rows && rows.length === 0 && <p>No customer has asked for a plan.</p>}
       {rows && rows.length > 0 && (
         <ul className="billing-requests">

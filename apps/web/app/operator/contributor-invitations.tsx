@@ -4,6 +4,7 @@ import { PhoneFold } from '../../components/phone-fold';
 import { useOperatorFlags } from './operator-flags';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback';
+import { ReverifyLine } from '../../components/ux/reverify-line';
 import { displayDate } from '@corridra/domain/locale';
 import {
   SubmissionFailure,
@@ -46,10 +47,12 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
   const [message, setMessage] = useState('');
   const sent = useActionFeedback();
   const [readError, setReadError] = useState('');
+  // The read was refused only because the authenticator check lapsed (401 STEP_UP_REQUIRED): one quiet line, not an error.
+  const [needsCheck, setNeedsCheck] = useState(false);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
   // The list is being read: no data yet and no failure to show. A failed read leaves the button usable.
-  const loading = data === null && !readError;
+  const loading = data === null && !readError && !needsCheck;
   const submit = useRetainedSubmission();
   useEffect(() => {
     const controller = new AbortController();
@@ -62,15 +65,23 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
     })
       .then(async (r) => {
         const body = await r.json();
-        if (!r.ok)
+        if (!r.ok) {
+          if (r.status === 401 && body.code === 'STEP_UP_REQUIRED') return 'check' as const;
           throw new SubmissionFailure(body.error ?? 'Invitation access is unavailable.', r.status);
+        }
         return body as Snapshot;
       })
       .then((snapshot) => {
-        if (live) {
-          setData(snapshot);
+        if (!live) return;
+        if (snapshot === 'check') {
+          setData(null);
           setReadError('');
+          setNeedsCheck(true);
+          return;
         }
+        setNeedsCheck(false);
+        setData(snapshot);
+        setReadError('');
       })
       .catch((error) => {
         if (live) {
@@ -167,6 +178,15 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
       <p role="status" aria-live="polite">
         {message}
       </p>
+      {needsCheck && (
+        <ReverifyLine
+          what="helper invitations"
+          onVerified={() => {
+            setNeedsCheck(false);
+            setRevision((n) => n + 1);
+          }}
+        />
+      )}
       {readError && (
         <div role="alert" className="ux-network-paused">
           <p>{readError}</p>
@@ -181,7 +201,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
           </a>
         </div>
       )}
-      {!data && !readError && <p>Loading helper invitations…</p>}
+      {!data && !readError && !needsCheck && <p>Loading helper invitations…</p>}
       {data?.installed && !data.enabled && (
         <p>
           {teamDeskV41

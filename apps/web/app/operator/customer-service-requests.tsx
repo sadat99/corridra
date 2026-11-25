@@ -12,6 +12,7 @@ import {
   emptyArrangementForm,
 } from '../../components/commercial-arrangement-fields';
 import { CommercialArrangementSummary } from '../../components/commercial-arrangement';
+import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
 import type {
   CommercialArrangement,
   InternalSupplyEconomics,
@@ -167,6 +168,7 @@ function Scoped({ tenant }: { tenant: string }) {
   const [arrangement, setArrangement] = useState(emptyArrangementForm);
   const task = useRef<AbortController | null>(null);
   const endpoint = '/api/workspace/customer-service-requests?tenant=' + encodeURIComponent(tenant);
+  const { allowed, epoch, settle } = useStepUpRead(true);
   const call = useCallback(
     async (query: string, body?: Record<string, unknown>) => {
       task.current?.abort();
@@ -182,7 +184,8 @@ function Scoped({ tenant }: { tenant: string }) {
           signal: controller.signal,
         });
         if (controller.signal.aborted) return null;
-        if (!r.ok) return { status: r.status, body: null as unknown };
+        if (!r.ok)
+          return { status: r.status, body: null as unknown, check: await refusedForCheck(r) };
         return { status: 200, body: (await r.json()) as unknown };
       } catch {
         return controller.signal.aborted ? null : { status: 0, body: null as unknown };
@@ -193,6 +196,12 @@ function Scoped({ tenant }: { tenant: string }) {
   const loadList = useCallback(async () => {
     const r = await call('&scope=list');
     if (!r) return;
+    if (r.check) {
+      settle(true);
+      setFault('');
+      return;
+    }
+    settle(false);
     if (r.status !== 200) {
       setRows(null);
       setFault(plainError(r.status));
@@ -205,7 +214,7 @@ function Scoped({ tenant }: { tenant: string }) {
     }
     setFault('');
     setRows(body.requests);
-  }, [call]);
+  }, [call, settle]);
   const open = useCallback(
     async (id: string) => {
       const r = await call('&scope=detail&request=' + encodeURIComponent(id));
@@ -226,7 +235,7 @@ function Scoped({ tenant }: { tenant: string }) {
     [call],
   );
   useEffect(() => {
-    void Promise.resolve().then(() => loadList());
+    if (allowed) void Promise.resolve().then(() => loadList());
     const hide = () => {
       if (document.visibilityState === 'hidden') {
         task.current?.abort();
@@ -241,7 +250,7 @@ function Scoped({ tenant }: { tenant: string }) {
       task.current?.abort();
       document.removeEventListener('visibilitychange', hide);
     };
-  }, [loadList]);
+  }, [loadList, allowed, epoch]);
   async function send(body: Record<string, unknown>) {
     if (busy || !detail) return;
     setPending(body);
@@ -341,7 +350,7 @@ function Scoped({ tenant }: { tenant: string }) {
       </p>
       {fault && <p role="alert">{fault}</p>}
       {message && <p role={message === 'Saved.' ? 'status' : 'alert'}>{message}</p>}
-      {rows === null && !fault && <p role="status">Loading customer requests…</p>}
+      {rows === null && !fault && allowed && <p role="status">Loading customer requests…</p>}
       {rows && rows.length === 0 && <p>No customer requests are waiting.</p>}
       {rows && rows.length > 0 && (
         <ul>
