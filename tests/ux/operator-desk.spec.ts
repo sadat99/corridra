@@ -58,9 +58,12 @@ window.fetch = (input) => {
         });
   if (url.includes('/api/workspace/problem-reports'))
     return json({ counts: { received: none ? 0 : 2, in_review: 1 }, oldestReceivedAt: iso(-3) });
-  // A stale authenticator check: the real answer of the erasure route is a 401 with a message and no code.
+  // A stale authenticator check: the real answer of the erasure route is a 401 with the step-up code.
   if (scenario === 'stale' && url.includes('/api/workspace/customer-erasure-queue'))
-    return json({ error: 'Verify your authenticator again to continue' }, 401);
+    return json(
+      { error: 'Verify your authenticator again to continue', code: 'STEP_UP_REQUIRED' },
+      401,
+    );
   if (url.includes('/api/workspace/customer-erasure-queue'))
     return json({
       items: none || url.includes('in_progress') ? [] : [{ id: 'e1', reference: 'ER-SAMPLE-1', dueAt: iso(-2), daysLeft: -2, status: 'received' }],
