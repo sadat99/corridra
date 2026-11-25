@@ -55,10 +55,13 @@ for (const width of widths) {
       await hero.locator('.hv42-hero').evaluate((el) => getComputedStyle(el).backgroundImage),
     ).toBe('none');
     const map = hero.locator('figure.hv42-map');
+    // One picture named from the live words; the names inside are not read a second time.
+    await expect(map).toHaveAttribute('role', 'img');
     await expect(map).toHaveAttribute(
       'aria-label',
       'Bangladesh to China, the EU, the UK, the US, Australia',
     );
+    await expect(map.locator('.hv42-map-body')).toHaveAttribute('aria-hidden', 'true');
     await expect(map.locator('.hv42-map-from')).toHaveText('Bangladesh');
     await expect(map.locator('.hv42-map-to > li')).toHaveText([
       'China',
@@ -131,8 +134,13 @@ for (const width of widths) {
       'Nothing is sent until you check your request',
       'Stop any time',
     ]);
-    // Collapsed until a door is chosen; no link on the page points at a part that is not there.
-    await expect(page.locator('#reveal, #brief, [id^="route-"]')).toHaveCount(0);
+    // Collapsed until a door is chosen, the request brief directly under the choice (G64: always render #brief, as
+    // live); no link on the page points at a part that is not there.
+    await expect(page.locator('#reveal, [id^="route-"]')).toHaveCount(0);
+    await expect(page.locator('#brief')).toHaveCount(1);
+    expect(
+      await page.locator('.hv42-choose').evaluate((el) => el.nextElementSibling?.id ?? ''),
+    ).toBe('brief');
     for (const href of await page
       .locator('main a[href^="#"]')
       .evaluateAll((a) => a.map((l) => l.getAttribute('href')!)))
@@ -150,16 +158,17 @@ for (const width of widths) {
   });
 }
 
-test('page order: hero, the choice, How it works, Trust, Who it is for, routes, answers, Plain limits, closing band', async ({
+test('page order: hero, the choice, the request brief, How it works, Trust, Who it is for, routes, answers, Plain limits, closing band', async ({
   page,
 }) => {
   await mountHomeV42(page, { width: 1440 });
   const heads = await page
-    .locator('main h1, main h2, main legend')
+    .locator('main h1, main h2, #hv42-question')
     .evaluateAll((els) => els.map((e) => (e as HTMLElement).innerText.trim()));
-  expect(heads.slice(0, 8)).toEqual([
+  expect(heads.slice(0, 9)).toEqual([
     'Make market entry deliberate.',
     'Which way is your business moving?',
+    'Your first request in 60 seconds.',
     'One mission, from first intent to repeat business.',
     'Every fact says how it is known.',
     'Eight people. One clear promise each.',
@@ -167,7 +176,7 @@ test('page order: hero, the choice, How it works, Trust, Who it is for, routes, 
     'Questions people ask before they start.',
     'What Corridra is not.',
   ]);
-  expect(heads).toHaveLength(9);
+  expect(heads).toHaveLength(10);
   await expect(page.locator('main [class*="tr-strip"], main .ux-region-mark')).toHaveCount(0);
 });
 
@@ -192,12 +201,14 @@ for (const width of [390, 1440] as const)
       'Selected',
     );
     await expect(page.locator('.hv42-choose .ux-door-picked')).toHaveCount(1);
-    // The reveal is the next block after the choice and holds the route, the Example tag and the request brief.
+    // The reveal is the next block after the choice and holds the route; the request brief follows it.
     expect(
       await page.locator('.hv42-choose').evaluate((el) => el.nextElementSibling?.id ?? ''),
     ).toBe('reveal');
     await expect(page.locator('#reveal #route-china')).toHaveCount(1);
-    await expect(page.locator('#reveal #brief')).toHaveCount(1);
+    expect(await page.locator('#reveal').evaluate((el) => el.nextElementSibling?.id ?? '')).toBe(
+      'brief',
+    );
     await page.keyboard.press('ArrowDown');
     await expect(sell).toBeChecked();
     await expect(page.locator('#reveal #route-sell')).toHaveCount(1);
@@ -213,8 +224,47 @@ for (const width of [390, 1440] as const)
       .getByRole('button', { name: 'All Routes', exact: true })
       .click();
     await expect(page.locator('#reveal')).toHaveCount(0);
+    await expect(page.locator('#brief')).toHaveCount(1);
     await expect(page.locator('#home-start')).toHaveAttribute('href', '/plan');
     expect(await overflow(page)).toBe(0);
+  });
+
+test('the request brief is always on the page: before a choice, with each route, and after All Routes', async ({
+  page,
+}) => {
+  await mountHomeV42(page, { width: 1440 });
+  const brief = page.locator('main #brief');
+  await expect(brief).toHaveCount(1);
+  await expect(brief.locator('#brief-start')).toHaveAttribute('href', /^\/plan/);
+  for (const value of ['china', 'sell', 'delegation', 'other']) {
+    await page.locator(`.hv42-choose .tr-door:has(input[value="${value}"]) label`).click();
+    await expect(brief, value).toHaveCount(1);
+  }
+  await page
+    .getByRole('group', { name: 'Choose which route this page shows' })
+    .getByRole('button', { name: 'All Routes', exact: true })
+    .click();
+  await expect(page.locator('#reveal')).toHaveCount(0);
+  await expect(brief).toHaveCount(1);
+});
+
+for (const how of ['keyboard', 'pointer'] as const)
+  test(`All Routes by ${how} closes the route and puts focus on Start a Request, never on the page (WCAG 2.4.3)`, async ({
+    page,
+  }) => {
+    await mountHomeV42(page, { width: 390 });
+    await page.locator('.hv42-choose .tr-door:has(input[value="sell"]) label').click();
+    const all = page
+      .getByRole('group', { name: 'Choose which route this page shows' })
+      .getByRole('button', { name: 'All Routes', exact: true });
+    if (how === 'keyboard') {
+      await all.focus();
+      await page.keyboard.press('Enter');
+    } else await all.click();
+    await expect(page.locator('#reveal')).toHaveCount(0);
+    await expect(page.locator('#home-start')).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY');
   });
 
 test('How it works, Trust and Who it is for: optional steps named, the navy Trust tile with five labels and the history', async ({
@@ -268,6 +318,11 @@ test('How it works, Trust and Who it is for: optional steps named, the navy Trus
   await expect(page.locator('#who .hv42-people > li')).toHaveCount(8);
   await expect(page.locator('#who')).not.toContainText('You give');
   await expect(page.locator('.hv42-rules > div')).toHaveCount(4);
+  // The four rules are not a second "How it works" group (one name per landmark).
+  await expect(page.locator('.hv42-rules')).not.toHaveAttribute('role', /.+/);
+  await expect(
+    page.getByRole('group', { name: 'One mission, from first intent to repeat business.' }),
+  ).toHaveCount(0);
 });
 
 test('route statuses keep their claims; the Sell card has no Key Asian Markets; four answers open, four closed; Plain limits on navy', async ({

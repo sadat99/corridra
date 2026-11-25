@@ -58,7 +58,7 @@ export function HowTile() {
 export function RulesTile() {
   const t = useT();
   return (
-    <div className="hv42-tile is-soft hv42-rules" role="group" aria-labelledby="how-title">
+    <div className="hv42-tile is-soft hv42-rules">
       {[1, 2, 3, 4].map((n) => (
         <div key={n}>
           <strong>{t(key(`home.tr.nv.${n}`))}</strong>

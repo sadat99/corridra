@@ -5,10 +5,11 @@ import { useT } from './language-provider';
 import type { HomeRoutesKey } from '../lib/home-routes-keys';
 
 // Home page v4.2 (owner, 25 Nov 2026: "like option 2 for hero section"): the navy band keeps the live brand line,
-// headline and lead word for word (the lead is unchanged and still names every open market), and beside it a flat map of the open
-// routes: Bangladesh joined to China, the EU, the UK, the US and Australia. Real flag files through the shared flag
-// component and real words; the connectors are plain CSS rules with no meaning of their own, so screen readers hear
-// only the names. No gradient, no glow, no sphere, no node for the regional market (a region, not a place on a line).
+// headline and lead word for word (the lead is unchanged and still names every open market), and beside it a flat map
+// of the open routes: Bangladesh joined to China, the EU, the UK, the US and Australia. Real flag files through the
+// shared flag component and real words; the connectors are plain CSS rules. Screen readers hear the map once, as one
+// picture named from the live words ("Bangladesh to China, the EU, ..."), not the names a second time. No gradient, no
+// glow, no sphere, no node for the regional market (a region, not a place on a line).
 const key = (name: string) => name as HomeRoutesKey;
 const places: { code: FlagCode; short: HomeRoutesKey; full: HomeRoutesKey }[] = [
   { code: 'cn', short: key('home.country.cn'), full: key('home.country.cn') },
@@ -29,8 +30,8 @@ export function HomeV42Hero() {
           <h1 id="home-title">{t('home.title')}</h1>
           <p className="tr-lead">{t('home.tr.lead')}</p>
         </div>
-        <figure className="hv42-map" aria-label={name}>
-          <div className="hv42-map-body">
+        <figure className="hv42-map" role="img" aria-label={name}>
+          <div className="hv42-map-body" aria-hidden="true">
             <p className="hv42-map-from">
               <Flagged code="bd" size="row">
                 {t('home.country.bd')}
