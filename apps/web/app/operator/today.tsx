@@ -49,6 +49,7 @@ import {
   type RegionRowView,
 } from './today-desk-parts';
 import { useOperatorFlags } from './operator-flags';
+import { operatorSectionPath } from '../../lib/operator-urls';
 import { Flagged, placeMark } from '../../components/ux/flag';
 import { missionHref, stageLabel } from './[section]/[missionId]/mission-labels';
 
@@ -328,6 +329,21 @@ function useMissionPages() {
     };
   }, []);
   return missionPages;
+}
+
+/**
+ * Where a link to a workspace section goes on the v4.1 Today. With section addresses on, it is the section's own
+ * address (the workspace kept, as the mission page does); otherwise it is the `#` address the page has always used.
+ * `hash` is the old address; a block inside a section (`#billing-services`) rides along after the section address.
+ */
+function useSectionLink(tenant: string) {
+  const { teamDeskV41, sectionAddresses } = useOperatorFlags();
+  const real = teamDeskV41 && sectionAddresses;
+  return (sectionId: string, hash = `#${sectionId}`) => {
+    const page = real ? operatorSectionPath(sectionId) : null;
+    if (!page) return hash;
+    return `${page}?workspace=${encodeURIComponent(tenant)}${hash === `#${sectionId}` ? '' : hash}`;
+  };
 }
 
 /** "Needs you now": new requests and late missions as one list, with a filter and "Show N More". */
@@ -975,6 +991,7 @@ function DecisionRegion({
 }) {
   const { filter, all, setAll, choose } = useNeedsFilter();
   const missionPages = useMissionPages();
+  const sectionLink = useSectionLink(tenant);
   const tableId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-decide`;
   const views: RegionRowView[] = deskFilter(list, filter).map((row) => {
     const shared = {
@@ -1049,7 +1066,7 @@ function DecisionRegion({
       'replies',
       queues.replies,
       today.team !== null,
-      '#workspace-delivery',
+      sectionLink('workspace-delivery'),
       plural(queues.replies, 'reply to review', 'replies to review'),
     ),
     queue(
@@ -1057,20 +1074,20 @@ function DecisionRegion({
       queues.services,
       today.team !== null && (mayCount || queues.services !== null),
       /* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */
-      '#billing-services',
+      sectionLink('workspace-delivery', '#billing-services'),
       plural(queues.services, 'paid-service request to quote', 'paid-service requests to quote'),
     ),
     queue(
       'quotes',
       queues.quotes,
       today.team !== null && (mayCount || queues.quotes !== null),
-      '#workspace-commercial',
+      sectionLink('workspace-commercial'),
       plural(queues.quotes, 'accepted quote not started', 'accepted quotes not started'),
     ),
     // Follow-ups and meetings to rebook are handled in one place, so they share one tile and one link.
     today.work !== null && (queues.followUps !== 0 || queues.reschedule !== 0) ? (
       <li key="meetings" data-tone={queues.followUps ? 'late' : undefined}>
-        <a className="ux-today41-pairs" href="#workspace-meetings">
+        <a className="ux-today41-pairs" href={sectionLink('workspace-meetings')}>
           {queues.followUps ? (
             <span className="ux-today41-pair">
               <strong>{followUpsCapped ? `${queues.followUps}+` : queues.followUps}</strong>

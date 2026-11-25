@@ -1,4 +1,5 @@
 import { HolderBadge, MoveCard, Road, mrLabels } from '../../../../components/mr';
+import { CountryName } from '../../country-name';
 import { emblemFor } from '../../../../lib/room';
 import { fill } from '../../../../lib/i18n/fill';
 import { translate, type MessageKey } from '../../../../lib/i18n/messages';
@@ -71,7 +72,9 @@ export function SampleScreens() {
           </span>
           <div>
             <h3>{roomTitle}</h3>
-            <p>Spain · Received 2 Oct 2026</p>
+            <p>
+              <CountryName code="ES" off="Spain" /> · Received 2 Oct 2026
+            </p>
             <HolderBadge holder="team" />
           </div>
         </header>
