@@ -68,6 +68,7 @@ export function MissionQuotes({
   role,
   brief,
   revision,
+  canRecord,
   onRecord,
   moneyHref,
   reportsHref,
@@ -79,8 +80,10 @@ export function MissionQuotes({
   brief: MissionBrief;
   /** Raised by the mission page when an offer was recorded, so the list is read again. */
   revision: number;
-  /** Opens the existing offer form on the Requirements tab. */
-  onRecord: () => void;
+  /** Owner, admin or operator: the roles that record an offer. The server checks again. */
+  canRecord: boolean;
+  /** Opens the existing offer form in the centred dialog; focus returns to the button that opened it. */
+  onRecord: (from: HTMLButtonElement) => void;
   /** The existing Money section address for this mission. */
   moneyHref: string;
   /** The existing Reports section address, where every reply of the workspace is listed. */
@@ -254,9 +257,15 @@ export function MissionQuotes({
           )}
         </details>
         <div className="mission-quotes-links">
-          <button type="button" className="text-link" onClick={onRecord}>
-            Record or Revise a Supplier Offer
-          </button>
+          {canRecord && (
+            <button
+              type="button"
+              className="secondary-link"
+              onClick={(e) => onRecord(e.currentTarget)}
+            >
+              Record or Revise a Supplier Offer
+            </button>
+          )}
           <a className="text-link" href={moneyHref}>
             Open Money
           </a>

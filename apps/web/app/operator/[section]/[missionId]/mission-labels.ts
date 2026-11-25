@@ -309,3 +309,12 @@ export function routeLine(routeLabel: string | null | undefined, action: string)
     ? `${state} You can begin qualification without a route.`
     : state;
 }
+
+/**
+ * The two places of a stored route label ("BD to CN", as the mission read writes it), or null when the label is
+ * not two codes. The codes are returned as stored; the page turns each into its name and mark.
+ */
+export function routePlaces(routeLabel: string | null | undefined): [string, string] | null {
+  const match = /^\s*([A-Za-z]{2})\s+to\s+([A-Za-z]{2})\s*$/.exec(routeLabel ?? '');
+  return match ? [match[1]!.toUpperCase(), match[2]!.toUpperCase()] : null;
+}

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   alsoWaitingReads,
+  canReadErasureQueue,
   capOverdue,
   erasureTile,
   overdueChip,
@@ -27,7 +28,7 @@ const item = (n: number, daysLeft: number, status = 'received') => ({
 describe('role gate', () => {
   test.each([
     ['owner', true, true],
-    ['admin', true, true],
+    ['admin', true, false],
     ['operator', false, false],
     ['viewer', false, false],
     [undefined, false, false],
@@ -38,8 +39,28 @@ describe('role gate', () => {
   test('an operator never starts a read, whatever is installed', () => {
     expect(alsoWaitingReads('operator', true)).toEqual({ problemReports: false, erasure: false });
   });
-  test('Report a Problem not installed: no problem report read for an owner, erasure still allowed', () => {
+  test('Report a Problem not installed: no problem report read for an owner, erasure still read', () => {
     expect(alsoWaitingReads('owner', false)).toEqual({ problemReports: false, erasure: true });
+  });
+  test('an admin reads problem reports but never the erasure queue (members.manage is owner only)', () => {
+    expect(alsoWaitingReads('admin', true)).toEqual({ problemReports: true, erasure: false });
+    expect(alsoWaitingReads('admin', false)).toEqual({ problemReports: false, erasure: false });
+  });
+});
+
+describe('erasure queue gate', () => {
+  test.each([
+    ['owner', true],
+    ['admin', false],
+    ['operator', false],
+    ['reviewer', false],
+    ['viewer', false],
+    ['unknown-role', false],
+    ['', false],
+    [undefined, false],
+    [null, false],
+  ])('%s reads the erasure queue: %s', (role, expected) => {
+    expect(canReadErasureQueue(role)).toBe(expected);
   });
 });
 
