@@ -273,7 +273,7 @@ test('Helpers, switch on: one title, the state word on the left edge, no label a
   await expectReadersOnly(page, 'Assigned work');
   // The state is a status badge (a capsule with its word), not a bordered box that reads as a button.
   const state = panel.locator('.ux-helpers-state .ux-status');
-  await expect(state).toHaveText('Network enabled');
+  await expect(state).toHaveText('Helpers on');
   await expect(state).toHaveAttribute('data-tone', 'positive');
   await expect(panel.locator('.ux-network-state')).toHaveCount(0);
   // The state word starts where the tabs under it start: the left edge of the content column.
@@ -296,7 +296,7 @@ test('Helpers, switch on: one title, the state word on the left edge, no label a
   await panel.getByRole('tab', { name: 'Invite a Helper' }).click();
   await expect(panel.getByText('01 · INVITE', { exact: true })).toHaveCount(0);
   await expect(panel.getByRole('heading', { name: 'Invite a helper' })).toBeVisible();
-  const overview = panel.getByRole('link', { name: 'Network Access and Work Overview' });
+  const overview = panel.getByRole('link', { name: 'Helper Access and Work Overview' });
   await expect(overview).toBeVisible();
   expect(await overview.getAttribute('href')).toBe('/network');
 });
@@ -341,10 +341,18 @@ test('Helpers, switch on, paused: the state word and the paused note both show',
   await open(page, '/operator/network', { v41: true, enabled: false });
   const panel = page.locator('#workspace-network');
   const state = panel.locator('.ux-helpers-state .ux-status');
-  await expect(state).toHaveText('Network paused');
+  await expect(state).toHaveText('Helpers paused');
   await expect(state).toHaveAttribute('data-tone', 'caution');
-  await expect(panel.getByRole('complementary', { name: 'Network readiness' })).toBeVisible();
+  const note = panel.getByRole('complementary', { name: 'Network readiness' });
+  await expect(note).toBeVisible();
+  await expect(note.getByRole('heading')).toHaveText(/^Helpers are paused in /);
+  // The workspace picker is in the menu; the page has no second control for it.
+  await expect(panel.getByRole('button', { name: 'Choose Workspace' })).toHaveCount(0);
+  await expect(panel).not.toContainText(/Network (is )?(enabled|paused)/);
+  // Off, the words and the control are the ones the desk has today.
+  await open(page, '/operator/network', { v41: false, enabled: false });
   await expect(panel.getByRole('button', { name: 'Choose Workspace' })).toBeVisible();
+  await expect(panel.getByRole('heading', { name: /^Network is paused in / })).toBeVisible();
 });
 
 test('Helpers: the helper interest list is drawn here with the switch off and not with it on', async ({
@@ -415,7 +423,9 @@ for (const [slug, label, heading] of statusPages) {
         expect.stringMatching(new RegExp(`^/operator/${word}(\\?|$)`)),
       ),
     );
-    await expectReadersOnly(page, 'Global operations');
+    // Each Status page has its own name in the outline, the one its segment shows.
+    await expectReadersOnly(page, label);
+    await expect(page.getByRole('heading', { name: 'Global operations' })).toHaveCount(0);
     // The segment names the page; the old heading of the page stays for screen readers only.
     await expectReadersOnly(page, heading);
     await expect(
@@ -446,7 +456,7 @@ test('Status: a route in the next actions has each place mark before its name wi
   await expect(row).toContainText('Bangladesh to Germany');
   await expect(row.locator('.ux-flag')).toHaveCount(0);
   await open(page, '/operator/operations', { v41: true });
-  await page.getByRole('tab', { name: 'Next actions' }).click();
+  await page.locator('#ops-dashboard summary', { hasText: 'Next actions' }).click();
   // Bangladesh is one of the nine flags; Germany has none, so it shows its name only. Never a flag alone.
   await expect(row.locator('.ux-route-line')).toHaveText(/Bangladesh\s+to\s+Germany/);
   await expect(row.locator('.ux-flag')).toHaveCount(1);
@@ -483,14 +493,27 @@ test('Status, switch on: Operations has the summary, next actions and records; D
   page,
 }) => {
   await open(page, '/operator/operations', { v41: true });
-  const tabs = page.getByRole('tablist', { name: 'Dashboard sections' }).getByRole('tab');
-  await expect(tabs).toHaveText(['Summary', 'Next actions', 'Records and notes']);
+  // Status has segments under its title, so the three parts are sections of one page, not a second tab row:
+  // the first in the open, each later one a closed fold that keeps its content in the page.
+  await expect(page.locator('#workspace-operations [role="tablist"]')).toHaveCount(0);
+  await expect(page.locator('#workspace-operations [role="tab"]')).toHaveCount(0);
+  const sections = page.locator('#ops-dashboard [data-desk-section]');
+  expect(
+    await sections.evaluateAll((nodes) =>
+      nodes.map((node) => node.getAttribute('data-desk-section')),
+    ),
+  ).toEqual(['dash-summary', 'dash-actions', 'dash-records']);
+  const tabs = page.locator('#ops-dashboard details[data-desk-section] > summary');
+  await expect(tabs).toHaveText(['Next actions', 'Records and notes']);
   await expect(page.locator('#ops-dashboard .operations-metrics').first()).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Recorded next actions on this page' }),
+  ).toBeHidden();
   await expect(
     page.getByRole('heading', { name: 'Corridra fee revenue and delivery economics' }),
   ).toHaveCount(0);
-  // Each tab still opens its own content.
-  await tabs.nth(1).click();
+  // Each fold opens its own content.
+  await tabs.nth(0).click();
   await expect(
     page.getByRole('heading', { name: 'Recorded next actions on this page' }),
   ).toBeVisible();
@@ -508,7 +531,13 @@ test('Status, switch on: Operations has the summary, next actions and records; D
   ).toHaveCount(0);
   // The filters and the scope line are on both pages.
   await expect(page.getByText('Filter the records (10 filters)')).toBeVisible();
-  await expect(page.getByText('Invented scope line.')).toBeVisible();
+  // The scope is said in plain words; the stored sentence written for engineers is not drawn.
+  await expect(
+    page.getByText('These counts cover every mission in this workspace that matches the filters.', {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await expect(page.getByText('Invented scope line.')).toHaveCount(0);
 });
 
 test('Status, switch on: nothing is lost by the split, every dashboard part is on one of the two pages', async ({
@@ -531,7 +560,13 @@ test('Status, switch on: nothing is lost by the split, every dashboard part is o
   const after = new Set([...operations, ...dashboard]);
   expect(before.size).toBeGreaterThan(8);
   // The tab row itself is the only thing not drawn on Dashboard; every heading, fold and table is kept.
-  for (const part of before) expect(after.has(part), `kept: ${part}`).toBe(true);
+  // The fold of further counts is kept with plain words in its label.
+  const plain = (part: string) =>
+    part.replace(
+      'more counts: denominators, unknown values and timing',
+      'more counts, with totals, unknown values and timing',
+    );
+  for (const part of before) expect(after.has(plain(part)), `kept: ${part}`).toBe(true);
 });
 
 test('Status, switch on: Health names the other places in plain words, with no second link to a menu place', async ({
@@ -557,15 +592,18 @@ test('Status, switch on: an address that names a tab opens the page that holds i
   await page.goto(`${fixture.origin}/operator/dashboard?tab=dash-records`);
   await expect(page).toHaveURL(/\/operator\/operations\?tab=dash-records$/);
   await expect(segments(page).locator('[aria-current="page"]')).toHaveText('Operations');
-  await expect(page.getByRole('tab', { name: 'Records and notes' })).toHaveAttribute(
-    'aria-selected',
-    'true',
+  await expect(page.locator('#ops-dashboard [data-desk-section="dash-records"]')).toHaveAttribute(
+    'open',
+    '',
   );
+  await expect(
+    page.locator('#ops-dashboard [data-desk-section="dash-actions"]'),
+  ).not.toHaveAttribute('open', '');
   // An address that already names its own page stays where it is.
   await page.goto(`${fixture.origin}/operator/operations?tab=dash-actions`);
-  await expect(page.getByRole('tab', { name: 'Next actions' })).toHaveAttribute(
-    'aria-selected',
-    'true',
+  await expect(page.locator('#ops-dashboard [data-desk-section="dash-actions"]')).toHaveAttribute(
+    'open',
+    '',
   );
   await expect(page).toHaveURL(/\/operator\/operations\?tab=dash-actions$/);
 });
@@ -762,7 +800,16 @@ test('Team and access, switch on: People and access has one title; member and ro
     'aria-labelledby',
     'workspace-members-heading',
   );
-  await expect(page.getByRole('tab', { name: 'Invite a Team Member' })).toBeVisible();
+  // One row under the title (the segments): the former tabs are parts of the page, the later ones folds.
+  await expect(controls.locator('[role="tablist"], [role="tab"]')).toHaveCount(0);
+  await expect(controls.locator('details[data-desk-section] > summary')).toHaveText([
+    'Invite a Team Member',
+    'Available tools',
+  ]);
+  // The tool list says Helpers, the word the menu uses; the setting it changes is the same.
+  const helpers = controls.locator('[data-feature="network.enabled"]');
+  await expect(helpers.locator('h5')).toHaveText('Helpers');
+  await expect(controls).not.toContainText('Execution network');
   // The load control is on the left edge and a read does not say "Saved."
   const load = controls.getByRole('button', { name: 'Load Workspace Members' });
   const hint = controls.getByText('Change the role or access of an existing member.');
@@ -891,7 +938,10 @@ for (const [slug, body] of places) {
     if (slug === 'controls')
       await page.getByRole('button', { name: 'Load Workspace Members' }).click();
     // The screen as it opens, then each tab of the body in turn: every state is one screen.
-    const tabs = page.locator(`${body} [role="tab"]:visible`);
+    // A page with segments has no tab row: its later parts are folds, opened here one after the other.
+    const tabs = page.locator(
+      `${body} [role="tab"]:visible, ${body} details[data-desk-section] > summary:visible`,
+    );
     const states = [null, ...(await tabs.evaluateAll((nodes) => nodes.map((_, index) => index)))];
     let seen = 0;
     for (const state of states) {

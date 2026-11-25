@@ -91,16 +91,10 @@ export function DeskSections({
         const id = tab.anchor ?? `${base}-part-${tab.id}`;
         return index === 0 ? (
           // The first part is the page itself: the title and the segment already name it, so it has no
-          // heading of its own and is named for assistive technology only.
-          <section
-            key={tab.id}
-            id={id}
-            className="ux-desk-section"
-            data-desk-section={tab.id}
-            aria-label={typeof tab.label === 'string' ? tab.label : undefined}
-          >
+          // heading and is no landmark of its own.
+          <div key={tab.id} id={id} className="ux-desk-section" data-desk-section={tab.id}>
             {tab.panel}
-          </section>
+          </div>
         ) : (
           <details key={tab.id} id={id} className="ux-desk-section" data-desk-section={tab.id}>
             <summary>{tab.label}</summary>

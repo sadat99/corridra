@@ -444,7 +444,7 @@
 }
 /* Team desk v4.1: the owner page is a Settings page, so its title is the size of every other team page title. */
 .ux-owner.ux-desk-frame .ux-page-heading h1 {
-  font-size: max(2rem, var(--text-h1));
+  font-size: max(calc(2 * var(--text-base)), var(--text-h1));
 }
 /* Team desk v4.1: the former tabs are parts of one page. A later part is a fold: one row that opens. */
 .ux-owner.ux-desk-frame .ux-desk-sections > details.ux-desk-section {
