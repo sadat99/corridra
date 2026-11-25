@@ -61,6 +61,8 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css', '.woff2': 'empty' },
+    // The flag pictures are static files of the site, not modules to bundle.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
@@ -445,8 +447,33 @@ test('D8 on: Quotes sets what the customer asked for beside the replies to revie
     'href',
     `/operator?workspace=${tenant}&mission=${mission}#workspace-commercial`,
   );
-  await recorded.getByRole('button', { name: 'Record or Revise a Supplier Offer' }).click();
-  await expect(tab(page, 'Requirements')).toHaveAttribute('aria-selected', 'true');
+  // Decision 4: the offer form opens in the centred dialog. The reader stays on Quotes; the dialog holds only
+  // the offer form (no task chooser, no review blocks), and closing it returns focus to the button.
+  const record = recorded.getByRole('button', { name: 'Record or Revise a Supplier Offer' });
+  await record.click();
+  const dialog = page.getByRole('dialog', { name: 'Record or Revise a Supplier Offer' });
+  await expect(dialog).toBeVisible();
+  await expect(tab(page, 'Quotes')).toHaveAttribute('aria-selected', 'true');
+  await expect(dialog.locator('select[name="rfqId"]')).toBeVisible();
+  await expect(dialog.getByLabel('Next task')).toHaveCount(0);
+  await expect(
+    dialog.getByRole('button', { name: 'Review Requirements, Offers and Visits' }),
+  ).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Record Offer' })).toBeVisible();
+  await expect(dialog).not.toContainText('does not establish');
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(record).toBeFocused();
+});
+
+test('D8 on: a role that cannot record an offer is not offered the button', async ({ page }) => {
+  await open(page, 'mission', { desk: true, role: 'viewer' });
+  await tab(page, 'Quotes').click();
+  const recorded = page.getByRole('region', { name: 'Offers recorded on this mission' });
+  await expect(recorded.getByRole('link', { name: 'Open Money' })).toBeVisible();
+  await expect(
+    recorded.getByRole('button', { name: 'Record or Revise a Supplier Offer' }),
+  ).toHaveCount(0);
 });
 
 test('D8 on: Reject, Ask and Publish send the same reply-review payloads as today', async ({
@@ -568,7 +595,12 @@ test('D9 on: one timeline the customer can read, oldest first, and one message b
   await expect(panel(page).locator('textarea')).toHaveCount(1);
   const box = panel(page).locator('textarea[name="body"]');
   await box.fill('Third invented reply to the customer');
-  await panel(page).getByRole('button', { name: 'Post Receipt Reply' }).click();
+  // Send Reply is the quiet button: the page's one primary action is the next step (D6: one primary, not two).
+  const send = panel(page).getByRole('button', { name: 'Send Reply' });
+  await expect(send).toHaveClass(/secondary-link/);
+  await expect(page.locator('.mission-page .primary-link:visible')).toHaveCount(1);
+  await expect(panel(page)).not.toContainText(/receipt/i);
+  await send.click();
   await expect(page.getByText('Reply posted.')).toBeVisible();
   expect(posted).toHaveLength(1);
   expect(posted[0]!.path).toBe('/api/workspace/mission-reply');
@@ -586,11 +618,10 @@ test('D9 on: one timeline the customer can read, oldest first, and one message b
     page.getByRole('heading', { name: 'Mission and delegation experience' }),
   ).toHaveCount(0);
   await expect(page.getByText('Delegation context', { exact: true })).toHaveCount(0);
-  await expect(panel(page).getByRole('link', { name: 'Open Reports' })).toHaveAttribute(
-    'href',
-    `/operator?workspace=${tenant}&mission=${mission}#workspace-delivery`,
-  );
-  await expect(panel(page)).toContainText('Choose this mission there.');
+  // D9: the delegation block is for programme missions only. No read names a mission's programme, so the tab
+  // shows nothing about delegations at all: no heading, no pointer and no link.
+  await expect(page.getByRole('heading', { name: /Delegation/ })).toHaveCount(0);
+  await expect(panel(page).getByRole('link')).toHaveCount(0);
 });
 
 test('D9 on: a role that cannot reply gets the timeline and no message box', async ({ page }) => {
@@ -601,7 +632,7 @@ test('D9 on: a role that cannot reply gets the timeline and no message box', asy
   ).toHaveCount(2);
   await expect(panel(page).locator('textarea')).toHaveCount(0);
   await expect(panel(page)).toContainText(
-    'Only an owner, admin or operator can post a reply on the receipt.',
+    'Only an owner, admin or operator can send a reply to the customer.',
   );
 });
 
@@ -775,8 +806,8 @@ test('switch on: no address is linked twice inside main on Quotes, Replies or Ad
 
   await open(page, 'mission', { desk: true });
   await tab(page, 'Replies').click();
-  await expect(page.getByRole('link', { name: 'Open Reports' })).toBeVisible();
-  await expectNoRepeat('Replies', 2);
+  await expect(page.getByRole('region', { name: 'What the customer can read' })).toBeVisible();
+  await expectNoRepeat('Replies', 1);
 
   await open(page, 'research', { desk: true });
   await openAddForm(page);

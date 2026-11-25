@@ -8,9 +8,10 @@ import './reply-review.css';
 // what the customer can read on the private receipt, oldest first, and one message box under it. The box
 // is the existing receipt reply form and posts through the mission page's own save, so the payload, the
 // permission and the in-place authenticator check are the same. The delegation block (context, agenda,
-// sharing and billing) is not drawn here: no read names a mission's programme, so the page cannot tell a
-// programme mission from any other and guesses nothing. The block stays, unchanged, at its address under
-// Reports, and this tab links there. Supplier replies are reviewed on the Quotes tab.
+// sharing and billing) is for programme missions only (unit D9) and no read names a mission's programme,
+// so the page cannot tell a programme mission from any other: it draws nothing about delegations and
+// guesses nothing. That work stays, unchanged, under Reports in the menu. Supplier replies are reviewed
+// on the Quotes tab. The Send Reply button is the quiet one: the page's one primary action is the next step.
 type Reply = { id: string; mission_id: string; body: string; created_at?: string };
 
 export function MissionReplies({
@@ -19,7 +20,6 @@ export function MissionReplies({
   canReply,
   busy,
   onSend,
-  reportsHref,
 }: {
   missionId: string;
   /** The receipt replies of the workspace's mission read; only this mission's are shown. */
@@ -29,8 +29,6 @@ export function MissionReplies({
   busy: boolean;
   /** The mission page's save for a receipt reply: same body and reply id as the side panel form sends. */
   onSend: (body: string, replyId: string) => Promise<boolean>;
-  /** The existing Reports section address, with this mission named in it. */
-  reportsHref: string;
 }) {
   const ordered = replies
     .filter((r) => r.mission_id === missionId)
@@ -41,8 +39,8 @@ export function MissionReplies({
       <section aria-labelledby="mission-replies-timeline">
         <h4 id="mission-replies-timeline">What the customer can read</h4>
         <p className="reply-review-note">
-          Every reply the team posted on the customer&apos;s private receipt, oldest first. A posted
-          reply stays as it was written.
+          Every reply the team sent to this customer, oldest first. A sent reply stays as it was
+          written.
         </p>
         {ordered.length ? (
           <ol className="mission-timeline">
@@ -63,29 +61,19 @@ export function MissionReplies({
           </ol>
         ) : (
           <EmptyState icon="inbox">
-            Nothing has been posted on the receipt yet. The first reply you post shows here and on
-            the customer&apos;s receipt.
+            No reply has been sent yet. The first reply you send shows here and on the
+            customer&apos;s own request page.
           </EmptyState>
         )}
       </section>
       {canReply ? (
         <section aria-labelledby="mission-replies-write">
           <h4 id="mission-replies-write">Write to the customer</h4>
-          <ReplyForm busy={busy} onSend={onSend} />
+          <ReplyForm desk quiet busy={busy} onSend={onSend} />
         </section>
       ) : (
-        <p>Only an owner, admin or operator can post a reply on the receipt.</p>
+        <p>Only an owner, admin or operator can send a reply to the customer.</p>
       )}
-      <section aria-labelledby="mission-replies-reports" className="mission-replies-delegation">
-        <h4 id="mission-replies-reports">Delegation, sharing and reports</h4>
-        <p>
-          Approving what this customer sees, sharing with suppliers, delegation context, agenda and
-          billing are done under Reports. Choose this mission there.
-        </p>
-        <a className="text-link" href={reportsHref}>
-          Open Reports
-        </a>
-      </section>
     </div>
   );
 }

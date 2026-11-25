@@ -19,13 +19,25 @@ export function readFailureWords(kind: ReadFailureKind): string {
 
 /**
  * The words for one part of a screen that could not be read while the rest worked (operator desk). The part is named
- * as the person sees it. An unavailable read says so and that their work is safe; a refusal keeps the role words (and
- * no retry is offered, since asking again cannot change it); too many requests keeps its words and may be retried.
+ * as the person sees it, one name or several ("Erasure requests and problem reports"), so the sentence never needs a
+ * verb that must agree with it. An unavailable read says so and that their work is safe; a refusal keeps the role
+ * words (and no retry is offered, since asking again cannot change it); too many requests keeps its words and may be
+ * retried.
  */
 export function partFailureWords(part: string, kind: ReadFailureKind): string {
   return kind === 'unavailable'
-    ? `${part} is not available. It could not be read just now. Your work is safe.`
-    : `${part} is not available. ${readFailureWords(kind)}`;
+    ? `${part} could not be read just now. Your work is safe.`
+    : `${part} could not be read. ${readFailureWords(kind)}`;
+}
+
+/** "Erasure requests, problem reports and meetings": several part names as one, the first keeping its capital. */
+export function joinParts(parts: string[]): string {
+  const names = parts.map((part, index) =>
+    index === 0 ? part : part.charAt(0).toLowerCase() + part.slice(1),
+  );
+  return names.length < 2
+    ? (names[0] ?? '')
+    : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
 /** Try Again is shown for an unavailable read and for "later"; never for a refusal. */

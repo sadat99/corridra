@@ -249,12 +249,10 @@ test('one part failing names the part, keeps the rest and offers Try Again', asy
   await page.getByRole('button', { name: 'Show Also waiting' }).click();
   await page.getByRole('button', { name: 'Show This week' }).click();
   await expect(
-    page.getByText(
-      'Also waiting is not available. It could not be read just now. Your work is safe.',
-    ),
+    page.getByText('Also waiting could not be read just now. Your work is safe.'),
   ).toBeVisible();
   await expect(
-    page.getByText('This week is not available. It could not be read just now. Your work is safe.'),
+    page.getByText('This week could not be read just now. Your work is safe.'),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try Again' }).first()).toBeVisible();
   await shot(page, 'today-partfail-390');

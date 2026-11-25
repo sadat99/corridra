@@ -56,7 +56,16 @@ type Scenario = {
   erasure?: unknown[];
   /** The problem report queue answer; missing, the read is refused (503). */
   problemReports?: unknown;
+  /** The erasure queue read fails with this status. */
+  erasureStatus?: number;
+  /** Both queues answer as they do when the authenticator check is no longer fresh: 401 with the step-up code. */
+  staleCode?: boolean;
+  /** The signed-in person's role, as the workspace read gives it. Default owner. */
+  role?: string;
+  /** Counts the team read lists as not readable. */
+  unavailable?: string[];
 };
+const stale = { status: 401, json: { error: 'Confirm your code', code: 'STEP_UP_REQUIRED' } };
 const fresh: Row = { id: id(1), status: 'DRAFT', company: 'Sample Towels Ltd', dueAt: inDays(4) };
 const late36: Row = {
   id: id(2),
@@ -125,7 +134,7 @@ async function open(page: Page, scenario: Scenario, query = '/?v41=on') {
         purpose: 'synthetic_validation',
         uploadsConfigured: false,
         scanMode: 'bypass',
-        role: 'owner',
+        role: scenario.role ?? 'owner',
         sources: [],
         claims: [],
         evidence: [],
@@ -154,19 +163,27 @@ async function open(page: Page, scenario: Scenario, query = '/?v41=on') {
     scenario.teamStatus
       ? route.fulfill({ status: scenario.teamStatus, json: { error: 'Sample' } })
       : route.fulfill({
-          json: scenario.team ?? {
-            acceptedQuotesNotStarted: 0,
-            serviceRequestsToQuote: 0,
-            repliesToReview: 0,
+          json: {
+            ...(scenario.team ?? {
+              acceptedQuotesNotStarted: 0,
+              serviceRequestsToQuote: 0,
+              repliesToReview: 0,
+            }),
+            ...(scenario.unavailable ? { unavailable: scenario.unavailable } : {}),
           },
         }),
   );
   await page.route('**/api/workspace/problem-reports?*', (route) =>
-    scenario.problemReports
-      ? route.fulfill({ json: scenario.problemReports })
-      : route.fulfill({ status: 503, json: { error: 'Sample' } }),
+    scenario.staleCode
+      ? route.fulfill(stale)
+      : scenario.problemReports
+        ? route.fulfill({ json: scenario.problemReports })
+        : route.fulfill({ status: 503, json: { error: 'Sample' } }),
   );
   await page.route('**/api/workspace/customer-erasure-queue?*', (route) => {
+    if (scenario.staleCode) return route.fulfill(stale);
+    if (scenario.erasureStatus)
+      return route.fulfill({ status: scenario.erasureStatus, json: { error: 'Sample' } });
     const status = new URL(route.request().url()).searchParams.get('status');
     const items = (scenario.erasure ?? []).filter(
       (item) => (item as { status: string }).status === status,
@@ -356,6 +373,74 @@ test('switch on: a problem report queue that could not be read is never an all-c
   await expect(decide(page).getByText(/Problem reports/)).toBeVisible();
   await expect(decide(page).getByRole('button', { name: 'Try Again' })).toBeVisible();
   await expect(decide(page).getByText('problem reports open')).toHaveCount(0);
+});
+
+// Team desk v4.1 fix run (staff-core-17, -18, -19 and the two preview findings on Today).
+test('fix run: a stale authenticator check is one quiet line with Confirm Code, never a failed read', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, { ...quiet, staleCode: true }, '/?v41=on&reports=on');
+  const line = decide(page).locator('[data-code-check]');
+  await expect(line).toHaveCount(1);
+  await expect(line).toContainText(
+    'Confirm your code to see erasure requests and problem reports.',
+  );
+  await expect(line.getByRole('button', { name: 'Confirm Code' })).toBeVisible();
+  // Nothing failed, so nothing says it could not be read and nothing offers Try Again.
+  await expect(decide(page).getByText(/could not be read|is not available/)).toHaveCount(0);
+  await expect(decide(page).getByRole('button', { name: 'Try Again' })).toHaveCount(0);
+  // Decision 5: no count before the fresh check, and the headline does not claim an all-clear.
+  await expect(decide(page).getByText(/problem reports? open|erasure requests? open/)).toHaveCount(
+    0,
+  );
+  await expect(headline(page)).not.toHaveText('Nothing needs your decision now.');
+  // Confirm Code opens the check in place.
+  await line.getByRole('button', { name: 'Confirm Code' }).click();
+  await expect(page.getByRole('dialog', { name: 'Confirm it is you' })).toBeVisible();
+});
+
+test('fix run: two lists that failed for one reason are named in one message with one Try Again', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, { ...quiet, erasureStatus: 503 }, '/?v41=on&reports=on');
+  await expect(
+    decide(page).getByText(
+      'Erasure requests and problem reports could not be read just now. Your work is safe.',
+      { exact: true },
+    ),
+  ).toHaveCount(1);
+  await expect(decide(page).getByRole('button', { name: 'Try Again' })).toHaveCount(1);
+  // The grammar fault of the preview ("Erasure requests is not available") is gone.
+  await expect(page.locator('.ux-today41')).not.toContainText(/requests is |reports is /);
+});
+
+test('fix run: a count this role can never read is left out; an owner still sees that it failed', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const unavailable = ['acceptedQuotesNotStarted', 'serviceRequestsToQuote'];
+  await open(page, { ...quiet, unavailable, role: 'operator' }, '/?v41=on&role=operator');
+  await expect(page.locator('.ux-today41')).toBeVisible();
+  await expect(page.locator('.ux-today41')).not.toContainText('Not available');
+  await expect(decide(page).getByText(/paid-service|accepted quotes?/)).toHaveCount(0);
+  await page.unrouteAll();
+  await open(page, { ...quiet, unavailable }, '/?v41=on&role=owner');
+  await expect(decide(page).getByText('paid-service requests to quote')).toBeVisible();
+  await expect(decide(page).getByText('Not available').first()).toBeVisible();
+});
+
+test('fix run: the page has one heading that says Today', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, quiet);
+  await expect(page.locator('.ux-today41')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Today', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('region', { name: 'Today', exact: true })).toBeVisible();
+  // Show and Hide are 44 px targets in both directions.
+  const show = waiting(page).getByRole('button', { name: 'Show Waiting on others' });
+  const box = (await show.boundingBox())!;
+  expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
 });
 
 test('switch on: a capped read is a lower bound: only its own tile carries the plus sign, and it is never an all-clear', async ({

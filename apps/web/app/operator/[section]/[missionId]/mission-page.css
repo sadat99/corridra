@@ -1,5 +1,6 @@
 /* D15 mission queue and mission page. Tokens only (tests/design-system.test.mjs). */
 .mission-queue {
+  container-type: inline-size;
   overflow-x: auto;
   max-width: 100%;
   border: 1px solid var(--border-subtle);
@@ -27,6 +28,64 @@
   color: var(--text-muted);
   font-weight: 600;
 }
+/* The customer's name is a name, not a column label: the table-head style (mono capitals, wide tracking) that
+   every th takes is put back to running text, so the list, the mission page and Today write it the same way. */
+.mission-queue tbody th {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink);
+}
+.mission-queue :is(th, td) {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+/* As a table: every value sits on the name's centre line, and the name has room for two or three words a line. */
+.mission-queue tbody :is(th, td) {
+  vertical-align: middle;
+}
+.mission-queue tbody th {
+  min-width: 11rem;
+}
+/* Too narrow for six columns (a phone, or the list beside the menu on a tablet): one stacked row for each mission.
+   The name leads, then each value under the name of its column. No sideways scroll and no word is broken. */
+@container (max-width: 44rem) {
+  .mission-queue table,
+  .mission-queue tbody,
+  .mission-queue tbody tr,
+  .mission-queue tbody :is(th, td) {
+    display: block;
+  }
+  .mission-queue thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .mission-queue tbody tr {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .mission-queue tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .mission-queue tbody :is(th, td) {
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .mission-queue tbody td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+  }
+}
 .mission-queue tbody th a {
   display: inline-block;
   min-height: 44px;
@@ -43,6 +102,7 @@
   display: grid;
   gap: var(--space-4);
   min-width: 0;
+  container-type: inline-size;
 }
 .mission-page-summary dl {
   display: grid;
@@ -117,9 +177,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  min-width: 0;
 }
 .mission-actions button {
   min-height: 44px;
+  max-width: 100%;
 }
 
 /* Team desk v4.1, units D6 and D7 (CORRIDRA_UX_TEAM_DESK_V41): the stage bar, the Next step card and the
@@ -132,11 +194,15 @@
 .mission-desk > * {
   min-width: 0;
 }
-/* From 1024 px the stage timeline stands beside the two cards, so the desk stays inside one screen. */
+/* From 1024 px the stage timeline stands beside the two cards, so the desk stays inside one screen. The page
+   must also be at least 40rem wide (the same numbers as useWide in mission-page.tsx): with text set to 200% the
+   same window holds half as many rem, and the desk keeps one column instead of pushing its cards past the edge. */
 @media (min-width: 1024px) {
-  .mission-desk {
-    grid-template-columns: minmax(12rem, 15rem) minmax(0, 3fr) minmax(0, 2fr);
-    align-items: start;
+  @container (min-width: 40rem) {
+    .mission-desk {
+      grid-template-columns: minmax(12rem, 15rem) minmax(0, 3fr) minmax(0, 2fr);
+      align-items: start;
+    }
   }
 }
 .mission-next,
@@ -171,6 +237,7 @@
 .mission-more summary,
 .mission-customer summary {
   display: inline-flex;
+  max-width: 100%;
   align-items: center;
   gap: var(--space-2);
   min-height: 44px;
@@ -270,4 +337,207 @@ details[open] > summary .mission-more-chevron {
     width: 100%;
     min-height: var(--bottom-action-h);
   }
+}
+
+/* Missions list controls (team desk v4.1 fix run). Every control is a 44 px target; a label never wraps inside
+   its button, the buttons wrap as whole buttons; the count has its own line above the pager. */
+.ux-operator-home .ux-workspace-body .workspace-panel .missions-home .mission-lenses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ux-operator-home .ux-workspace-body .workspace-panel .missions-home .mission-lenses > button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  white-space: nowrap;
+}
+.ux-operator-home
+  .ux-workspace-body
+  .workspace-panel
+  .missions-home
+  .hero-actions
+  > button.text-link {
+  min-height: 44px;
+}
+.ux-operator-home .ux-workspace-body .workspace-panel .missions-home .mission-pager {
+  margin-block: var(--space-3) var(--space-2);
+}
+
+/* The one crumb of the mission page: a quiet link and the workspace name on one line, not a boxed button. */
+.mission-crumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.ux-operator-home .mission-page .mission-crumb > a.text-link,
+.mission-page .mission-crumb > a.text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--action);
+  font-weight: 600;
+}
+.mission-page .mission-crumb > a.text-link:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* One tab row (team desk v4.1). It scrolls sideways when the tabs do not fit and shows a cue at the edge that has
+   more tabs past it; the page itself never scrolls sideways and no tab label wraps. */
+.mission-tabs-row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.mission-tabs-row::-webkit-scrollbar {
+  display: none;
+}
+.mission-tabs-row [role='tab'] {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  scroll-snap-align: start;
+}
+.mission-tabs-row [role='tab']:focus-visible {
+  outline-offset: -3px;
+}
+/* The cue: a chevron on a solid ground at the edge that has more tabs past it. It takes no clicks and is not
+   read out; the tabs under it are reached by scrolling the row or with the arrow keys. */
+.mission-tabs-wrap {
+  position: relative;
+  min-width: 0;
+}
+.mission-tabs-cue {
+  position: absolute;
+  top: 0;
+  bottom: 1px;
+  display: none;
+  align-items: center;
+  padding-inline: var(--space-1);
+  background: var(--paper);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.mission-tabs-cue.is-end {
+  right: 0;
+  border-left: 1px solid var(--border-subtle);
+}
+.mission-tabs-cue.is-start {
+  left: 0;
+  border-right: 1px solid var(--border-subtle);
+}
+.mission-tabs-cue.is-start svg {
+  transform: rotate(180deg);
+}
+.mission-tabs-row:is([data-more='end'], [data-more='both']) ~ .mission-tabs-cue.is-end,
+.mission-tabs-row:is([data-more='start'], [data-more='both']) ~ .mission-tabs-cue.is-start {
+  display: flex;
+}
+
+/* Narrow page: the stage, the next step and the customer panel belong to Overview. On every other tab the tab's
+   own content starts right under the tab row, so choosing a tab never leaves the reader above it. */
+.mission-page[data-wide='no']:not([data-tab='overview']) > .mission-desk {
+  display: none;
+}
+
+/* Overview facts (team desk v4.1): named groups, a muted label beside its value. */
+.mission-facts {
+  display: grid;
+  gap: var(--space-4);
+  container-type: inline-size;
+}
+.mission-facts :is(section, details) {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  padding: var(--space-3) var(--space-4);
+}
+.mission-facts h4 {
+  margin: 0 0 var(--space-3);
+}
+.mission-facts dl {
+  display: grid;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+.mission-facts dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.mission-facts dd {
+  margin: 0 0 var(--space-2);
+  overflow-wrap: break-word;
+}
+.mission-facts dd a {
+  overflow-wrap: anywhere;
+}
+.mission-facts summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--action);
+  font-weight: 600;
+  cursor: pointer;
+}
+.mission-facts summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.mission-facts details[open] > summary {
+  margin-bottom: var(--space-2);
+}
+/* Label beside value from 20rem of card width (a 390 px phone), so the page stays short; under that, stacked. */
+@container (min-width: 20rem) {
+  .mission-facts dl {
+    grid-template-columns: minmax(6.5rem, 2fr) minmax(0, 3fr);
+  }
+  .mission-facts dd {
+    margin-bottom: 0;
+  }
+}
+@container (min-width: 30rem) {
+  .mission-facts dl {
+    grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+  }
+}
+@container (min-width: 56rem) {
+  .mission-facts {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .mission-facts details {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Replies tab: the form starts at the card's own left edge, under its heading. */
+.mission-replies .operator-form {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  justify-items: start;
+}
+.mission-replies .operator-form .field {
+  width: 100%;
+}
+.mission-quotes-links > button {
+  min-height: 44px;
+}
+
+/* Today (team desk v4.1 fix run): Show and Hide are 44 px targets in both directions. */
+.ux-operator-home .ux-desk .ux-desk-fold-head .ux-desk-toggle {
+  min-width: 44px;
+  min-height: 44px;
 }

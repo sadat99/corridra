@@ -326,6 +326,79 @@ test('Previous Missions and Next Missions share one line on desktop and one 44 p
   }
 });
 
+// Team desk v4.1 fix run (staff-core-01, -02, -03, -05): the Missions list on a phone. Before the fix the six
+// columns collapsed to a few px each and the customer's name broke one letter to a line, in mono capitals.
+test('fix run: the Missions list is one readable stacked row for each mission on a phone, and the name is written as a name', async ({
+  page,
+}) => {
+  const shots = process.env.F3_SHOTS;
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, '#workspace-missions');
+    const row = page.locator('[data-mission-row]');
+    await expect(row).toBeVisible();
+    const name = row.getByRole('link', { name: 'Invented Machinery Co' });
+    if (shots) await page.screenshot({ path: `${shots}/missions-${width}.png`, fullPage: true });
+    // The page does not scroll sideways and neither does the list.
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+      `page at ${width}`,
+    ).toBeLessThanOrEqual(width);
+    const queue = page.locator('.mission-queue');
+    expect(
+      await queue.evaluate((node) => node.scrollWidth - node.clientWidth),
+      `list at ${width}`,
+    ).toBeLessThanOrEqual(1);
+    // The name: running text, not the table-head style, and never broken inside a word (one line here).
+    const head = row.locator('th');
+    await expect(head).toHaveCSS('text-transform', 'none');
+    await expect(head).toHaveCSS('letter-spacing', 'normal');
+    expect(await head.evaluate((node) => getComputedStyle(node).fontFamily)).not.toMatch(/mono/i);
+    const box = (await name.boundingBox())!;
+    const line = await name.evaluate((node) => {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      return range.getClientRects().length;
+    });
+    // Stacked, the name has the full row; as a table it may wrap between words, never inside one.
+    expect(line, `name lines at ${width}`).toBeLessThanOrEqual(width < 1024 ? 1 : 2);
+    expect(box.height, `name target at ${width}`).toBeGreaterThanOrEqual(44);
+    // Every value is still a cell of a real table for a screen reader, and on a phone names its column.
+    await expect(page.getByRole('table', { name: 'Missions' })).toBeVisible();
+    await expect(row.getByRole('cell')).toHaveCount(5);
+    if (width < 700) {
+      const label = await row
+        .locator('td[data-label="Owner"]')
+        .evaluate((node) => getComputedStyle(node, '::before').content);
+      expect(label).toBe('"Owner"');
+      // The row is short: one mission is not most of a screen.
+      expect((await row.boundingBox())!.height, `row at ${width}`).toBeLessThanOrEqual(360);
+    }
+    // The focus views: 44 px targets whose labels never wrap, at least 8 px apart.
+    const lenses = page.getByRole('group', { name: 'Mission focus views' }).getByRole('button');
+    await expect(lenses).toHaveCount(5);
+    const boxes = await lenses.evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const { x, y, width, height } = node.getBoundingClientRect();
+        return { x, y, width, height, nowrap: getComputedStyle(node).whiteSpace };
+      }),
+    );
+    for (const lens of boxes) {
+      expect(lens.height, `lens height at ${width}`).toBeGreaterThanOrEqual(44);
+      expect(lens.height, `lens on one line at ${width}`).toBeLessThanOrEqual(56);
+      expect(lens.nowrap).toBe('nowrap');
+      expect(lens.x + lens.width, `lens inside at ${width}`).toBeLessThanOrEqual(width);
+    }
+    for (let i = 1; i < boxes.length; i += 1) {
+      const a = boxes[i - 1]!;
+      const b = boxes[i]!;
+      if (Math.abs(a.y - b.y) < 1) expect(b.x - (a.x + a.width)).toBeGreaterThanOrEqual(8);
+      else expect(b.y - (a.y + a.height)).toBeGreaterThanOrEqual(8);
+    }
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  }
+});
+
 test('the network jump list wraps instead of clipping its last link at laptop widths', async ({
   page,
 }) => {

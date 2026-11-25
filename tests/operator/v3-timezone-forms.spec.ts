@@ -30,6 +30,8 @@ test.beforeAll(async () => {
     platform: 'browser',
     jsx: 'automatic',
     loader: { '.css': 'empty' },
+    // The flag pictures are static files of the site, not modules to bundle.
+    external: ['/flags/*'],
     define: { 'process.env.NODE_ENV': '"production"', 'process.env': '{}' },
     metafile: true,
   });

@@ -27,6 +27,7 @@ import {
   type TodayMission,
 } from '../../apps/web/lib/ux/team-today';
 import {
+  joinParts,
   partFailureWords,
   readFailureCanRetry,
   readFailureWords,
@@ -284,14 +285,25 @@ describe('Today: one set, one number', () => {
 describe('a part that could not be read', () => {
   test('names the part; Try Again only where asking again can help', () => {
     expect(partFailureWords('Also waiting', 'unavailable')).toBe(
-      'Also waiting is not available. It could not be read just now. Your work is safe.',
+      'Also waiting could not be read just now. Your work is safe.',
     );
     expect(partFailureWords('This week', 'denied')).toBe(
-      `This week is not available. ${readFailureWords('denied')}`,
+      `This week could not be read. ${readFailureWords('denied')}`,
     );
     expect(partFailureWords('Today', 'later')).toBe(
-      `Today is not available. ${readFailureWords('later')}`,
+      `Today could not be read. ${readFailureWords('later')}`,
     );
+    // A plural part needs no verb that agrees with it ("Erasure requests is not available" was the fault).
+    expect(partFailureWords('Erasure requests', 'unavailable')).toBe(
+      'Erasure requests could not be read just now. Your work is safe.',
+    );
+    expect(joinParts(['Erasure requests', 'Problem reports'])).toBe(
+      'Erasure requests and problem reports',
+    );
+    expect(joinParts(['Erasure requests', 'Problem reports', 'Meetings and follow-ups'])).toBe(
+      'Erasure requests, problem reports and meetings and follow-ups',
+    );
+    expect(joinParts(['This week'])).toBe('This week');
     expect(readFailureCanRetry('unavailable')).toBe(true);
     expect(readFailureCanRetry('later')).toBe(true);
     expect(readFailureCanRetry('denied')).toBe(false);
@@ -348,7 +360,9 @@ describe('a failed read is never a false all-clear', () => {
     expect(body).not.toMatch(/teamFailure \? \(\s*<PartFailure[^]*?\) : \(\s*<ul/);
     expect(body).toMatch(/\{hasTiles && \(\s*<ul/);
     expect(body).toContain("'Partly not available'");
-    expect(body).toMatch(/\{team && \(\s*<WaitingItem/);
+    // A count is drawn for a role that can read it, or when it was read: never "Not available" for a role that never can.
+    expect(body).toMatch(/\{team && \(mayCount \|\| quotes !== null\) && \(\s*<WaitingItem/);
+    expect(body).toMatch(/\{team && \(mayCount \|\| services !== null\) && \(\s*<WaitingItem/);
     expect(body).toMatch(/\{reports && \(/);
     expect(body).toMatch(/\{erasure && \(/);
   });
