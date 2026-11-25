@@ -300,8 +300,9 @@ describe('a part that could not be read', () => {
     expect(joinParts(['Erasure requests', 'Problem reports'])).toBe(
       'Erasure requests and problem reports',
     );
-    expect(joinParts(['Erasure requests', 'Problem reports', 'Meetings and follow-ups'])).toBe(
-      'Erasure requests, problem reports and meetings and follow-ups',
+    // One "and", before the last name: a part that is itself two things is passed as two names.
+    expect(joinParts(['Erasure requests', 'Problem reports', 'Meetings', 'Follow-ups'])).toBe(
+      'Erasure requests, problem reports, meetings and follow-ups',
     );
     expect(joinParts(['This week'])).toBe('This week');
     expect(readFailureCanRetry('unavailable')).toBe(true);

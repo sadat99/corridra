@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   alsoWaitingReads,
+  canReadErasureQueue,
   capOverdue,
   erasureTile,
   overdueChip,
@@ -44,6 +45,22 @@ describe('role gate', () => {
   test('an admin reads problem reports but never the erasure queue (members.manage is owner only)', () => {
     expect(alsoWaitingReads('admin', true)).toEqual({ problemReports: true, erasure: false });
     expect(alsoWaitingReads('admin', false)).toEqual({ problemReports: false, erasure: false });
+  });
+});
+
+describe('erasure queue gate', () => {
+  test.each([
+    ['owner', true],
+    ['admin', false],
+    ['operator', false],
+    ['reviewer', false],
+    ['viewer', false],
+    ['unknown-role', false],
+    ['', false],
+    [undefined, false],
+    [null, false],
+  ])('%s reads the erasure queue: %s', (role, expected) => {
+    expect(canReadErasureQueue(role)).toBe(expected);
   });
 });
 

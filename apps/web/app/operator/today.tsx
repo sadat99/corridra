@@ -1173,8 +1173,11 @@ function DecisionRegion({
         parts={[
           erasureFailed ? { part: 'Erasure requests', kind: 'unavailable' } : null,
           reportsFailed ? { part: 'Problem reports', kind: 'unavailable' } : null,
-          today.teamFailure ? { part: 'Replies and quotes', kind: today.teamFailure } : null,
-          today.workFailure ? { part: 'Meetings and follow-ups', kind: today.workFailure } : null,
+          // Each name is one item, so the joined sentence has one "and" ("..., meetings and follow-ups").
+          today.teamFailure ? { part: 'Replies', kind: today.teamFailure } : null,
+          today.teamFailure ? { part: 'Quotes', kind: today.teamFailure } : null,
+          today.workFailure ? { part: 'Meetings', kind: today.workFailure } : null,
+          today.workFailure ? { part: 'Follow-ups', kind: today.workFailure } : null,
         ]}
         onRetry={onRetry}
       />
