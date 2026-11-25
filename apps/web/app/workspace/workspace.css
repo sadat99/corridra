@@ -36,7 +36,7 @@
     padding-bottom: var(--space-2);
   }
   .ux-start .ux-start-foot a {
-    min-height: 2rem;
+    min-height: 2.75rem;
   }
   .ux-workspace .ux-start {
     gap: var(--space-3);
@@ -149,4 +149,12 @@
     padding: var(--space-3) var(--space-4);
     border: 1px solid var(--line);
   }
+}
+
+/* One border level: the three doors are the cards, so the block that holds them is not a fourth card around them. */
+.ux-start .ux-start-signin {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
 }

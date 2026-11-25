@@ -343,7 +343,7 @@ test('every way into operator sign-in from the access pages is a full page load'
   page,
 }) => {
   for (const [path, name] of [
-    ['/operator/forgot-password', 'Back to operator sign-in'],
+    ['/operator/forgot-password', 'Operator Sign-In'],
     ['/operator/setup', 'Operator sign-in and authenticator'],
     ['/operator/reset-password', 'Back to operator sign-in'],
   ]) {

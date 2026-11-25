@@ -370,7 +370,7 @@ export const accessHelp = {
     label: 'Recovery options',
     links: [
       { href: '/operator/setup', text: 'Finish a pending invitation' },
-      { href: signInHref, text: 'Back to operator sign-in', plainAnchor: true },
+      { href: signInHref, text: 'Operator Sign-In', plainAnchor: true },
       { href: '/forgot-password', text: 'Reset a customer account password' },
     ],
   }),
@@ -379,7 +379,7 @@ export const accessHelp = {
     label: 'Recovery options',
     links: [
       { href: helperWays.setup.href, text: 'Finish a pending invitation' },
-      { href: helperWays.signIn.href, text: 'Back to helper sign-in', plainAnchor: true },
+      { href: helperWays.signIn.href, text: 'Helper Sign-In', plainAnchor: true },
       { href: '/forgot-password', text: 'Reset a customer account password' },
     ],
   },

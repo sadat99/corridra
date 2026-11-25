@@ -80,6 +80,16 @@
 .pr-history li {
   overflow-wrap: anywhere;
 }
+/* A row that opens more text is a 44 px target (the closed row measured 26 px), and a reference is on the type scale. */
+.pr-fold > summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+.pr-column code,
+.pr-queue code {
+  font-size: var(--text-sm);
+}
 .pr-meanings {
   display: grid;
   gap: var(--space-2);

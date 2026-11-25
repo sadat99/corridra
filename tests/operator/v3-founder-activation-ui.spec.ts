@@ -140,7 +140,7 @@ test('shows the environment, the count and each module with a plain reason', asy
   await expect(table.getByRole('row')).toHaveCount(6);
   await expect(table.getByRole('row', { name: /Customer workspaces/ })).toContainText('On');
   await expect(table.getByRole('row', { name: /Private requests/ })).toContainText(
-    'Off, flag unset',
+    'Off, switch not set',
   );
   await expect(table.getByRole('row', { name: /Repeatable programme templates/ })).toContainText(
     'waiting for a prerequisite module',
@@ -151,7 +151,9 @@ test('shows the environment, the count and each module with a plain reason', asy
   await expect(table.getByRole('row', { name: /Company continuity/ })).toContainText(
     'Locked by the data environment setting',
   );
-  await expect(table.getByText('CORRIDRA_CUSTOMER_REQUESTS_ENABLED')).toBeVisible();
+  // Owner words only: the setting's own name is never printed, and there is no separate switch column.
+  await expect(table.getByText('CORRIDRA_CUSTOMER_REQUESTS_ENABLED')).toHaveCount(0);
+  await expect(table.getByRole('columnheader')).toHaveCount(2);
   await expect(page.getByText('checked separately by the owner')).toBeVisible();
   expect(seen).toHaveLength(1);
   expect(new URL(seen[0]!.url).searchParams.get('tenant')).toBe(tenant);

@@ -123,12 +123,12 @@ describe('the recovery page reached from the helper door', () => {
     const { accessHelp } = await load('lib/access-doors.ts');
     const html = render(ce(AccessOptions, accessHelp.helperForgotPassword));
     expect(html).toContain('href="/contributor/signin"');
-    expect(html).toContain('Back to helper sign-in');
+    expect(html).toContain('Helper Sign-In');
     expect(html).toContain('href="/contributor/setup"');
     expect(html).not.toMatch(/operator/i);
     // The operator page keeps its own list.
     const staff = render(ce(AccessOptions, accessHelp.operatorForgotPassword('/operator/signin')));
-    expect(staff).toContain('Back to operator sign-in');
+    expect(staff).toContain('Operator Sign-In');
     expect(staff).toContain('href="/operator/signin"');
   });
   it('keeps the operator words for the operator and says "work account" in the request form for a helper', () => {

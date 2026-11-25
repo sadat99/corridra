@@ -226,16 +226,6 @@ export const programmeRows: readonly (readonly boolean[])[] = [
   [true, false, false, false, false],
 ];
 
-/** The six goals that open a real request. Every key is one the /plan page already accepts. */
-export const goalLinks: readonly { key: string; label: MessageKey; href: string }[] = [
-  { key: 'china', label: 'home.tr.br.g.china', href: '/plan?job=sourcing' },
-  { key: 'machinery', label: 'home.tr.br.g.machinery', href: '/plan?job=sourcing' },
-  { key: 'sell', label: 'home.tr.br.g.sell', href: '/plan?job=buyers' },
-  { key: 'fair', label: 'home.tr.br.g.fair', href: '/plan?job=buyers' },
-  { key: 'delegation', label: 'home.tr.br.g.delegation', href: '/plan?job=delegations' },
-  { key: 'other', label: 'home.tr.br.g.other', href: '/plan' },
-];
-
 /** The six goals of the home page brief (board 3c), in the board's order. */
 export const briefGoals = ['china', 'machinery', 'sell', 'fair', 'delegation', 'other'] as const;
 export type GoalKey = (typeof briefGoals)[number];
@@ -280,3 +270,17 @@ export function briefHref(goal: GoalKey | null, note: string): string {
   const text = query.toString();
   return text ? `/plan?${text}` : '/plan';
 }
+
+/**
+ * The six goals that open a real request, one destination each: every goal opens its own job, taken from the same
+ * table as the brief (`goalJob`), so two goals never share an address (china and machinery both used to open the
+ * sourcing job, sell and fair the buyers job). Every job is a key the /plan page already accepts.
+ */
+export const goalLinks: readonly { key: GoalKey; label: MessageKey; href: string }[] = [
+  { key: 'china', label: 'home.tr.br.g.china', href: briefHref('china', '') },
+  { key: 'machinery', label: 'home.tr.br.g.machinery', href: briefHref('machinery', '') },
+  { key: 'sell', label: 'home.tr.br.g.sell', href: briefHref('sell', '') },
+  { key: 'fair', label: 'home.tr.br.g.fair', href: briefHref('fair', '') },
+  { key: 'delegation', label: 'home.tr.br.g.delegation', href: briefHref('delegation', '') },
+  { key: 'other', label: 'home.tr.br.g.other', href: briefHref('other', '') },
+];
