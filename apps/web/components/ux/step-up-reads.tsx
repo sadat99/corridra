@@ -4,7 +4,15 @@
 // others read, so a lapsed check costs one refused request, not one per panel, and the screen shows ONE line with the
 // in-place check instead of four dead-end messages. After the code is accepted every panel reads again.
 // Without a provider (a panel mounted alone) a read is always allowed and nothing here changes.
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { ReverifyLine } from './reverify-line';
 
 type Gate = 'probing' | 'open' | 'needs-check';
@@ -18,6 +26,16 @@ const Context = createContext<Reads | null>(null);
 export function StepUpReads({ what, children }: { what: string; children: ReactNode }) {
   const [gate, setGate] = useState<Gate>('probing');
   const [epoch, setEpoch] = useState(0);
+  // A panel stops its read when the page is hidden (customer details are cleared while away). If that was the probe
+  // before it answered, the group would wait for ever, so coming back reads the probe again.
+  useEffect(() => {
+    if (gate !== 'probing') return;
+    const back = () => {
+      if (document.visibilityState === 'visible') setEpoch((n) => n + 1);
+    };
+    document.addEventListener('visibilitychange', back);
+    return () => document.removeEventListener('visibilitychange', back);
+  }, [gate]);
   const settle = useCallback(
     (refused: boolean) =>
       setGate((now) => (refused ? 'needs-check' : now === 'probing' ? 'open' : now)),

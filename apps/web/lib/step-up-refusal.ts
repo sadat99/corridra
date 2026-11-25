@@ -1,13 +1,18 @@
 import { DomainError, stepUpRequired } from '@corridra/domain';
 
-// Some team reads are decided by one database function that refuses with the same 403 whether the role is wrong or the
-// authenticator check has aged (network invitations). For a role that may read them the only remaining cause is the
-// check, so the answer becomes 401 STEP_UP_REQUIRED and the screen can ask for the code in place. A role that may
-// never read them keeps the plain 403. The role is read from the session's own memberships, never from the request.
-type Tenants = { access: { tenants(token: string): Promise<{ id: string; role: string }[]> } };
+// Some team reads are decided by one database function that refuses with the same 403 whether the role is wrong, the
+// workspace is outside the network's scope, the network is off, or the authenticator check has aged (network
+// invitations). The answer becomes 401 STEP_UP_REQUIRED only when the person's role may read it AND the database says
+// the check is not fresh right now: nothing else can be fixed by confirming a code, and asking would loop. Every other
+// refusal keeps its honest 403. The role and freshness come from the session's own authority, never from the request.
+type Authority = {
+  access: {
+    authority(ctx: { token: string; tenantId: string }): Promise<{ role: string; fresh: boolean }>;
+  };
+};
 
 export async function stepUpWhenRoleAllows<T>(
-  s: Tenants,
+  s: Authority,
   ctx: { token: string; tenantId: string },
   roles: readonly string[],
   work: () => Promise<T>,
@@ -16,13 +21,14 @@ export async function stepUpWhenRoleAllows<T>(
     return await work();
   } catch (error) {
     if (!(error instanceof DomainError) || error.status !== 403 || error.code) throw error;
-    let role: string | undefined;
+    let lapsed = false;
     try {
-      role = (await s.access.tenants(ctx.token)).find((t) => t.id === ctx.tenantId)?.role;
+      const { role, fresh } = await s.access.authority(ctx);
+      lapsed = roles.includes(role) && !fresh;
     } catch {
       throw error;
     }
-    if (role && roles.includes(role)) throw stepUpRequired();
+    if (lapsed) throw stepUpRequired();
     throw error;
   }
 }

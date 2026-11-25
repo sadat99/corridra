@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { DomainError, stepUpRequired } from '../../packages/domain/src';
 import { CustomerErasureQueue } from '../../packages/auth/src/customer-erasure-queue';
 import { NetworkInvitations } from '../../packages/auth/src/network-invitations';
+import { AccessService } from '../../packages/auth/src/access';
+import { OperationsService } from '../../packages/missions/src/operations';
 import { RequestWithdrawalSignalService } from '../../packages/missions/src/request-withdrawal-signal';
 
 // Team desk v4.1 access fixes. A read that is refused because the authenticator check has lapsed answers 401 with
@@ -16,6 +18,7 @@ const session = vi.hoisted(() => ({
   fresh: false,
   withdrawalInstalled: true,
   invitationRefusal: false,
+  healthRows: false,
   statements: [] as string[],
 }));
 
@@ -31,6 +34,8 @@ function fakePool() {
         return { rows: [{ present: session.withdrawalInstalled }] };
       if (text.includes('app.mission_request_withdrawal($1)'))
         return { rows: [{ signal: { withdrawn: true, at: '2026-11-20T10:00:00Z' } }] };
+      if (text.includes('app.config_version')) return { rows: [] };
+      if (session.healthRows && /^\s*SELECT/.test(text)) return { rows: [{}] };
       throw new Error('unexpected statement: ' + text.slice(0, 80));
     },
     release: () => undefined,
@@ -58,7 +63,8 @@ vi.mock('../../apps/web/lib/foundations', () => ({
       ready: Promise.resolve(),
       provider: { getSession: async () => ({ token: 'staff-token' }) },
       config: { APP_ORIGIN: origin },
-      access: { tenants: async () => [{ id: tenant, name: 'Team', role: session.role }] },
+      access: new AccessService(pool),
+      operations: new OperationsService(pool),
       customerErasureQueue: new CustomerErasureQueue(pool),
       networkInvitations: new NetworkInvitations(pool, true),
       withdrawalSignal: new RequestWithdrawalSignalService(pool),
@@ -86,6 +92,7 @@ beforeEach(() => {
   session.statements = [];
   session.withdrawalInstalled = true;
   session.invitationRefusal = false;
+  session.healthRows = false;
   vi.stubEnv('DATA_ENVIRONMENT', 'synthetic');
   vi.stubEnv('CORRIDRA_CUSTOMER_WORKSPACES_ENABLED', 'true');
   vi.stubEnv('CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED', 'true');
@@ -141,31 +148,57 @@ describe('sa-24 and sc-32: network invitations and the contributor picker', () =
     workspace.GET(get(`/api/workspace/network-invitations?tenant=${tenant}`), {
       params: Promise.resolve({ action: 'network-invitations' }),
     });
+  const invite = () =>
+    workspace.POST(
+      new Request(`${origin}/api/workspace/network-invitation?tenant=${tenant}`, {
+        method: 'POST',
+        headers: { Origin: origin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'revoke',
+          commandId: crypto.randomUUID(),
+          invitationId: mission,
+          reason: 'No longer needed',
+        }),
+      }),
+      { params: Promise.resolve({ action: 'network-invitation' }) },
+    );
   const contributors = () =>
     picker.GET(get(`/api/picker/contributor?tenant=${tenant}`), {
       params: Promise.resolve({ kind: 'contributor' }),
     });
-  test('an owner or admin refused by the database (check lapsed) gets 401 STEP_UP_REQUIRED on both reads', async () => {
+  test('an owner or admin refused by the database while the check is NOT fresh gets 401 STEP_UP_REQUIRED on every read and write', async () => {
     session.invitationRefusal = true;
     for (const role of ['owner', 'admin']) {
       as(role, false);
-      for (const read of [invitations, contributors]) {
+      for (const read of [invitations, contributors, invite]) {
         const answer = await json(await read());
         expect(answer.status, role).toBe(401);
         expect(answer.body.code, role).toBe('STEP_UP_REQUIRED');
       }
     }
   });
-  test('an operator, reviewer or viewer keeps the plain 403 with no code', async () => {
+  test('an owner or admin with a FRESH check who is refused for another reason (outside network scope, network off) keeps the honest 403, with no code and no loop', async () => {
     session.invitationRefusal = true;
-    for (const role of ['operator', 'reviewer', 'viewer']) {
-      as(role, false);
-      for (const read of [invitations, contributors]) {
+    for (const role of ['owner', 'admin']) {
+      as(role, true);
+      for (const read of [invitations, contributors, invite]) {
         const answer = await json(await read());
         expect(answer.status, role).toBe(403);
         expect(answer.body.code, role).toBeUndefined();
       }
     }
+  });
+  test('an operator, reviewer or viewer keeps the plain 403 with no code, fresh or not', async () => {
+    session.invitationRefusal = true;
+    for (const role of ['operator', 'reviewer', 'viewer'])
+      for (const fresh of [true, false]) {
+        as(role, fresh);
+        for (const read of [invitations, contributors, invite]) {
+          const answer = await json(await read());
+          expect(answer.status, role).toBe(403);
+          expect(answer.body.code, role).toBeUndefined();
+        }
+      }
   });
   test('a fresh owner still reads (allowed path unchanged)', async () => {
     as('owner', true);
@@ -173,6 +206,32 @@ describe('sa-24 and sc-32: network invitations and the contributor picker', () =
     expect(answer.status).toBe(200);
     const list = await json(await contributors());
     expect(list.status).toBe(200);
+  });
+});
+
+describe('B1: recovery and health are read by owner and admin only', () => {
+  const health = () =>
+    workspace.GET(get(`/api/workspace/operations-health?tenant=${tenant}`), {
+      params: Promise.resolve({ action: 'operations-health' }),
+    });
+  test('an operator, reviewer or viewer gets 403 on the route and nothing is queried', async () => {
+    session.healthRows = true;
+    for (const role of ['operator', 'reviewer', 'viewer']) {
+      as(role, true);
+      session.statements = [];
+      const answer = await json(await health());
+      expect(answer.status, role).toBe(403);
+      expect(answer.body.code, role).toBeUndefined();
+      expect(session.statements.join('|'), role).not.toContain('communication_dispatch');
+    }
+  });
+  test('owner and admin still read it', async () => {
+    session.healthRows = true;
+    for (const role of ['owner', 'admin']) {
+      as(role, true);
+      const answer = await json(await health());
+      expect(answer.status, role).toBe(200);
+    }
   });
 });
 
