@@ -4,6 +4,8 @@ import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode'
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ProgrammeContextScope } from './programme-context';
 import { onDeviceClock, privateViewMaxMs } from '../../../lib/server-clock';
+import { Place } from '../../../components/ux/flag';
+import { placeName } from '../request-words';
 type Details = {
   organiser: string;
   marketCode: string;
@@ -279,7 +281,12 @@ export function ProgrammeContextEditor(props: ProgrammeContextScope & { onClose:
           <dt>Organiser</dt>
           <dd>{snapshot.context.organiser}</dd>
           <dt>Target country or trade bloc</dt>
-          <dd>{snapshot.context.marketCode}</dd>
+          <dd>
+            <Place
+              value={snapshot.context.marketCode}
+              name={placeName(snapshot.context.marketCode)}
+            />
+          </dd>
           <dt>Purpose</dt>
           <dd>{snapshot.context.purpose}</dd>
           <dt>Dates</dt>

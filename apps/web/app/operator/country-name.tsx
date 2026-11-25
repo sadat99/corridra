@@ -6,8 +6,12 @@
 import { Flagged, placeMark } from '../../components/ux/flag';
 import { useOperatorFlags } from './operator-flags';
 
-/** The written English name of a stored market or country code ("BD", "EU"); the code itself when it has none. */
+/**
+ * The written English name of a stored market or country code ("BD", "EU"); the code itself when it has none. The
+ * legacy code "OTHER" (a market not yet classified) reads "Other", never the bare code.
+ */
 export function countryName(code: string): string {
+  if (code === 'OTHER') return 'Other';
   try {
     return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code;
   } catch {

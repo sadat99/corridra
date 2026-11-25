@@ -57,7 +57,14 @@ export function WithdrawalNote({
     return (
       <ReverifyLine
         what="whether the customer withdrew"
-        onVerified={() => setRound((n) => n + 1)}
+        onVerified={() => {
+          // The check passed: the line goes, and the re-read decides what shows. A re-read that is refused for the
+          // role or the module (403, 503) shows nothing, a network failure shows the failure line, and only a
+          // check that lapsed again brings the line back.
+          setNeedsCheck(false);
+          setFailed(false);
+          setRound((n) => n + 1);
+        }}
       />
     );
   if (failed) return <p role="status">The withdrawal status could not be read.</p>;

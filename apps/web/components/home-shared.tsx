@@ -15,7 +15,14 @@ import type { HomeRoutesKey } from '../lib/home-routes-keys';
 // the page shows its own actions.
 const key = (name: string) => name as HomeRoutesKey;
 /** Where the page shows its own action, the phone start bar steps aside. */
-const hideStartBarAt = ['main .primary-link:not(.ux-start-bar .primary-link)', '#final', 'footer'];
+// The section actions are quiet text links (one primary on the page, #home-start); each is marked so the bar still
+// steps aside beside it.
+const hideStartBarAt = [
+  'main .primary-link:not(.ux-start-bar .primary-link)',
+  'main [data-start-action]',
+  '#final',
+  'footer',
+];
 
 export function HomeShared({
   shown,
@@ -50,7 +57,13 @@ export function HomeShared({
           ))}
         </div>
         <div className="tr-actions">
-          <Link prefetch={false} className="primary-link" href={href} id="final-start">
+          <Link
+            prefetch={false}
+            data-start-action
+            className="ac1-quiet tr-light-link"
+            href={href}
+            id="final-start"
+          >
             {cta}
           </Link>
           <TalkLink href={whatsapp} className="secondary-link tr-on-navy" />

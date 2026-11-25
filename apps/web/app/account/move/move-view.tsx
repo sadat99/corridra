@@ -46,6 +46,7 @@ import {
 } from '../../../lib/ux/move-seen';
 import { rememberJourneyMode, useJourneyMode } from '../../../components/ux/journey-mode-context';
 import './move-view.css';
+import '../../../components/ux/sub-tabs.css';
 
 const firstShown = 3;
 

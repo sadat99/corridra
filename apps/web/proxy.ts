@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { canonicalPageRedirect, canonicalRedirectStatus } from './lib/canonical-origin';
 import { viewAsMethodRefusal } from './lib/view-as-gate';
+import { missingTeamSessionHint } from './lib/team-session-hint';
 
 export function proxy(request: NextRequest) {
   const refused = viewAsMethodRefusal(request);
@@ -9,7 +10,16 @@ export function proxy(request: NextRequest) {
   // path and query (CQ-17). API routes, assets and files are not matched below, so provider
   // callbacks issued for the old alias keep working (ADR-034).
   const destination = canonicalPageRedirect(request);
-  if (!destination) return NextResponse.next();
+  if (!destination) {
+    const response = NextResponse.next();
+    // A team session from before the marker existed gets its marker on the next page it opens (public-customer-24).
+    const hint = missingTeamSessionHint(
+      request.headers.get('cookie'),
+      request.nextUrl.protocol === 'https:',
+    );
+    if (hint) response.headers.append('Set-Cookie', hint);
+    return response;
+  }
   const response = NextResponse.redirect(destination, canonicalRedirectStatus);
   // Not cached: a rollback of the production origin must not leave browsers looping.
   response.headers.set('Cache-Control', 'no-store');

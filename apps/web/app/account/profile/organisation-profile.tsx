@@ -5,6 +5,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { Fragment, useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { CountrySelect } from '../../../components/ux/pickers';
 import { countryName } from '../../../lib/ux/options';
+import { Place } from '../../../components/ux/flag';
 import { onDeviceClock, privateViewMaxMs } from '../../../lib/server-clock';
 import { ReplyError, loadReason, withReason } from '../../../lib/load-reason';
 import { profileHelper } from '../frame-copy';
@@ -60,14 +61,21 @@ export function ProfileReview({ draft, onEdit }: { draft: Draft; onEdit: (step: 
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  const groups: [string, [string, string][]][] = [
+  const groups: [string, [string, ReactNode][]][] = [
     [
       stepNames[0],
       [
         ['Company name', draft.legalName.trim() || 'Not provided'],
         [
           'Country',
-          draft.countryCode ? countryName(draft.countryCode.toUpperCase()) : 'Not provided',
+          draft.countryCode ? (
+            <Place
+              value={draft.countryCode.toUpperCase()}
+              name={countryName(draft.countryCode.toUpperCase())}
+            />
+          ) : (
+            'Not provided'
+          ),
         ],
         ['Website', draft.website.trim() || 'Not provided'],
       ],
@@ -525,7 +533,9 @@ export function OrganisationProfile(props: {
           <dt>Company</dt>
           <dd>{profile.legalName}</dd>
           <dt>Country</dt>
-          <dd>{countryName(profile.countryCode)}</dd>
+          <dd>
+            <Place value={profile.countryCode} name={countryName(profile.countryCode)} />
+          </dd>
           <dt>Website</dt>
           <dd>{profile.website ?? 'Not provided'}</dd>
           <dt>Roles</dt>

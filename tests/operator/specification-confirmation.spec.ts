@@ -48,6 +48,7 @@ test.beforeAll(async () => {
     nodePaths: [resolve('apps/web/node_modules')],
     loader: { '.css': 'empty' },
     bundle: true,
+    external: ['/flags/*'],
     write: false,
     format: 'esm',
     platform: 'browser',

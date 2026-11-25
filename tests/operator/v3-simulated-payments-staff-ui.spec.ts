@@ -22,6 +22,7 @@ createRoot(document.getElementById('fixture')).render(<CustomerSimulatedPayments
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     // Component styles (the quiet re-verify line) are not part of this check, as in the billing specs.
     loader: { '.css': 'empty' },
     write: false,

@@ -54,6 +54,7 @@ test.beforeAll(async () => {
     stdin: { contents: entry, loader: 'tsx', resolveDir: resolve('apps/web') },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     write: false,
     outdir: 'out',
     format: 'esm',

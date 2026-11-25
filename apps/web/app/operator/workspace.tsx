@@ -333,8 +333,19 @@ function TenantWorkspace({
   const unavailableSection =
     !!fragment && fragment !== 'main' && fragment !== 'workspace-navigation' && !sectionAllowed;
   // Sent to Today by the server from a section this role may not open (Health, Readiness), and still on Today: the same
-  // note says so. It ends as soon as the person goes anywhere else.
-  const turnedAwayHere = turnedAway && (!fragment || fragment === 'main');
+  // note says so. It ends as soon as the person goes anywhere else, and does not come back on a return to Today: with
+  // section addresses off every move is a `#` address on the same page, so the `?unavailable=1` the server added would
+  // otherwise stay in the address and bring the note back (and a reload or a copied link would carry it on).
+  const [turnedAwayLive, setTurnedAwayLive] = useState(turnedAway);
+  useEffect(() => {
+    if (!turnedAway) return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('unavailable')) return;
+    url.searchParams.delete('unavailable');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  }, [turnedAway]);
+  if (turnedAwayLive && fragment && fragment !== 'main') setTurnedAwayLive(false);
+  const turnedAwayHere = turnedAwayLive && (!fragment || fragment === 'main');
   useEffect(() => {
     if (!loaded) return;
     const allowed = fragment === 'main' || fragment === 'workspace-navigation' || sectionAllowed;

@@ -107,6 +107,14 @@ export function Flagged({
   );
 }
 
+/**
+ * A place as it is stored (a code such as "BD" or a written name) shown as its name with its mark before it. The
+ * mark comes from the stored value or the written name, so a place outside the nine shows its name only.
+ */
+export function Place({ value, name }: { value: string; name?: string }) {
+  return <Flagged code={placeMark(value) ?? placeMark(name)}>{name ?? value}</Flagged>;
+}
+
 /** One place of a route: its written name and its mark. */
 export type RoutePlace = { name: string; mark: PlaceMark };
 

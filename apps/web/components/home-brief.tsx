@@ -193,7 +193,13 @@ export function HomeBrief({
           </p>
           <p className="tr-small">{t('home.b3.br.send')}</p>
           <div className="tr-brief-actions">
-            <Link prefetch={false} className="primary-link" href={href} id="brief-start">
+            <Link
+              prefetch={false}
+              data-start-action
+              className="ac1-quiet"
+              href={href}
+              id="brief-start"
+            >
               {t('home.tr.cta.none')}
             </Link>
             {whatsapp ? (

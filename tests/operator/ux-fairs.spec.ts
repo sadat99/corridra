@@ -36,6 +36,7 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
@@ -131,7 +132,7 @@ test('the list shows the next checked date, the days to it and the day it was la
     'href',
     '/fairs/example-fair',
   );
-  await expect(page.getByText('Frankfurt, DE')).toBeVisible();
+  await expect(page.getByText('Frankfurt, Germany')).toBeVisible();
   await expect(page.getByText('Opens')).toBeVisible();
   await expect(page.locator('.countdown')).toHaveText('In 136 days');
   await expect(page.getByText('Dates last checked 2026-10-21')).toBeVisible();

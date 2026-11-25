@@ -8,6 +8,8 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { formatDate, formatDateTime } from '../../../lib/ux/format';
 import { groupAgendaByDay } from '../../../lib/programme-agenda';
 import { DateTimeInput } from '../../../components/ux/date-time-input';
+import { Place } from '../../../components/ux/flag';
+import { placeName } from '../request-words';
 
 type Identity = { subject: string; issuer: string };
 // What a confirmed save reports back to the form that sent it.
@@ -459,7 +461,11 @@ function OwnerPanel(
                   {row.company ? (
                     <>
                       <p>
-                        {row.company.name} · {row.company.countryCode}
+                        {row.company.name} ·{' '}
+                        <Place
+                          value={row.company.countryCode}
+                          name={placeName(row.company.countryCode)}
+                        />
                       </p>
                       <p>
                         {row.company.roles.join(', ')} · {row.company.sectors.join(', ')}
@@ -783,7 +789,8 @@ function OwnSharing(props: Identity & { registrationId: string }) {
             >
               <h5>Review the exact company fields</h5>
               <p>
-                {d.profile.name} · {d.profile.countryCode}
+                {d.profile.name} ·{' '}
+                <Place value={d.profile.countryCode} name={placeName(d.profile.countryCode)} />
               </p>
               <p>
                 {d.profile.roles.join(', ')} · {d.profile.sectors.join(', ')}

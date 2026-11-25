@@ -16,6 +16,7 @@ for (const real of [false, true])
         resolveDir: resolve('.'),
       },
       bundle: true,
+      external: ['/flags/*'],
       write: false,
       platform: 'browser',
       format: 'iife',

@@ -25,6 +25,7 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
@@ -36,6 +37,10 @@ test.beforeAll(async () => {
 });
 
 test('one load asks the team session once; only a restored page asks again', async ({ page }) => {
+  // A browser that has signed in to the team desk carries the plain marker beside the HttpOnly session cookie.
+  await page.addInitScript(() => {
+    document.cookie = 'corridra-team=1; path=/';
+  });
   let asked = 0;
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
@@ -60,5 +65,34 @@ test('one load asks the team session once; only a restored page asks again', asy
   );
   await expect.poll(() => asked).toBe(2);
   await expect(page.locator('#who')).toHaveText('no one');
+  expect(pageErrors).toEqual([]);
+});
+
+test('without the team session marker the team session is never asked', async ({ page }) => {
+  let asked = 0;
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+  await page.route('**/api/operator-auth/get-session', (route) => {
+    asked += 1;
+    return route.fulfill({ json: { user: { id: 'u' }, session: { id: 's' } } });
+  });
+  await page.route('**' + fixturePath + '*', (route) =>
+    route.fulfill({ contentType: 'text/html', body: html }),
+  );
+  await page.goto(fixturePath);
+  await expect(page.locator('#who')).toHaveText('no one');
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await page.evaluate(() =>
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })),
+  );
+  await page.waitForTimeout(300);
+  expect(asked).toBe(0);
+  // With the marker, the same answer signs the page in as the team.
+  await page.evaluate(() => {
+    document.cookie = 'corridra-team=1; path=/';
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+  });
+  await expect(page.locator('#who')).toHaveText('staff');
+  expect(asked).toBe(1);
   expect(pageErrors).toEqual([]);
 });

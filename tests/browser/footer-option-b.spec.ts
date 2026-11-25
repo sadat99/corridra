@@ -73,6 +73,10 @@ const earlierDestinations = [
 
 const footer = (page: Page) => page.locator('footer.guide-footer');
 const signedIn = async (page: Page) => {
+  // The team session marker that sits beside the HttpOnly team session cookie (lib/team-session-hint.ts).
+  await page.addInitScript(() => {
+    document.cookie = 'corridra-team=1; path=/';
+  });
   for (const path of ['**/api/auth/get-session', '**/api/operator-auth/get-session'])
     await page.route(path, (route) =>
       route.fulfill({ json: { user: { id: 'synthetic-user' }, session: { id: 'synthetic' } } }),

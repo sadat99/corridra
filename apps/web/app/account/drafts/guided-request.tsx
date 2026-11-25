@@ -21,6 +21,7 @@ import {
   type SourcingContext,
 } from '@corridra/domain/mission-drafts';
 import { outcomeOptions } from '@corridra/domain/missions';
+import { Place } from '../../../components/ux/flag';
 import { pp } from '../../../lib/i18n/programme-pages';
 import {
   clearObjectiveReturn,
@@ -1282,7 +1283,7 @@ function Guided(scope: Scope) {
             <dt>Aim</dt>
             <dd>{form.objective ?? 'Not chosen yet'}</dd>
             <dt>Market</dt>
-            <dd>{form.market || 'Not entered yet'}</dd>
+            <dd>{form.market ? <Place value={form.market} /> : 'Not entered yet'}</dd>
             <dt>Offer or need</dt>
             <dd>{form.offer || 'Not entered yet'}</dd>
             {form.sourcingContext && (
