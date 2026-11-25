@@ -715,7 +715,11 @@ test('Team and access, switch off: the bodies are the ones the desk has today', 
   await expect(controls.locator('.ux-controls-heading h2')).toHaveText('Workspace controls');
   // The page title says Workspace controls here, so the panel's copy is for screen readers only (audit F10).
   await expect(page.locator('h1')).toHaveText('Workspace controls');
-  await expect(controls.locator('.ux-controls-heading h2')).toHaveClass(/sr-only/);
+  // The server marks the page, so the copy is one pixel from the first paint (operator-overview.css).
+  await expect(page.locator('main#main')).toHaveClass(/ux-titled-workspace-controls/);
+  const kept = await controls.locator('.ux-controls-heading h2').boundingBox();
+  expect(kept!.width).toBeLessThanOrEqual(1);
+  expect(kept!.height).toBeLessThanOrEqual(1);
 });
 
 // A name is printed once (audit of 25 November 2026, F10 and F13) ---------------------------------------
