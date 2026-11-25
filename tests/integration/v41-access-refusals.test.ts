@@ -225,6 +225,19 @@ describe('B1: recovery and health are read by owner and admin only', () => {
       expect(session.statements.join('|'), role).not.toContain('communication_dispatch');
     }
   });
+  test('Readiness reads the same way: its server read (operations-controls) refuses an operator, reviewer and viewer with 403', async () => {
+    const readiness = () =>
+      workspace.GET(get(`/api/workspace/operations-controls?tenant=${tenant}`), {
+        params: Promise.resolve({ action: 'operations-controls' }),
+      });
+    for (const role of ['operator', 'reviewer', 'viewer'])
+      for (const fresh of [true, false]) {
+        as(role, fresh);
+        const answer = await json(await readiness());
+        expect(answer.status, `${role} ${fresh}`).toBe(403);
+        expect(answer.body.code, `${role} ${fresh}`).toBeUndefined();
+      }
+  });
   test('owner and admin still read it', async () => {
     session.healthRows = true;
     for (const role of ['owner', 'admin']) {

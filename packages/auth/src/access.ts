@@ -51,17 +51,6 @@ export class AccessService {
       db.release();
     }
   }
-  /**
-   * The session's role and whether its authenticator check is current, read in the workspace with the person's own
-   * access. Only an owner or admin is answered (audit.read); any other role is refused with the usual 403. Used to
-   * tell a lapsed check from every other reason a team read was refused.
-   */
-  sessionCheck(ctx: RequestContext) {
-    return withTenant(this.pool, ctx, 'audit.read', async ({ role, freshMfa }) => ({
-      role,
-      fresh: freshMfa,
-    }));
-  }
   members(ctx: RequestContext) {
     return withTenant(this.pool, ctx, 'audit.read', async (t) => {
       const members = (
