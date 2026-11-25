@@ -21,6 +21,7 @@ import { ReferencePicker } from '../../components/ux/reference-picker';
 import { DateTimeInput } from '../../components/ux/date-time-input';
 import type { PickerKind } from '../../lib/ux/picker';
 import { ShowMore } from './show-more';
+import { CountryName } from './country-name';
 type Profile = {
   id: string;
   principal_id: string;
@@ -412,14 +413,18 @@ export function ExecutionNetwork({
   }
   const networkState = data
     ? data.enabled
-      ? 'Network enabled'
-      : 'Network paused'
+      ? teamDeskV41
+        ? 'Helpers on'
+        : 'Network enabled'
+      : teamDeskV41
+        ? 'Helpers paused'
+        : 'Network paused'
     : 'Checking access…';
   return (
     <section
       className="detail-card ux-governance-panel ux-network"
       data-operator-workbench
-      aria-label="Corridra Network"
+      aria-label={teamDeskV41 ? 'Helpers' : 'Corridra Network'}
     >
       {teamDeskV41 ? (
         // Team desk v4.1 (D14): the page title and its purpose line say what this page is, once. The
@@ -463,20 +468,32 @@ export function ExecutionNetwork({
       )}
       {data && !data.enabled && (
         <aside className="ux-network-paused" aria-label="Network readiness">
-          <h3>Network is paused{workspaceName ? ` in ${workspaceName}` : ' in this workspace'}.</h3>
+          <h3>
+            {teamDeskV41 ? 'Helpers are paused' : 'Network is paused'}
+            {workspaceName ? ` in ${workspaceName}` : ' in this workspace'}.
+          </h3>
           <details className="ux-network-paused-notes">
             <summary>What This Means and What to Do (2 notes)</summary>
             <p>
               Activation applies to each workspace separately. New invitations, assignments and
               rewards require an enabled workspace. Existing history remains available.
             </p>
-            <p>
-              Choose an enabled workspace using the Workspace selector above. If your workspace is
-              not available, ask its owner to confirm your membership. A customer account does not
-              grant operator access.
-            </p>
+            {teamDeskV41 ? (
+              <p>
+                Choose a workspace where helpers are on with the workspace picker in the menu. If
+                your workspace is not listed, ask its owner to confirm your membership. A customer
+                account does not give team access.
+              </p>
+            ) : (
+              <p>
+                Choose an enabled workspace using the Workspace selector above. If your workspace is
+                not available, ask its owner to confirm your membership. A customer account does not
+                grant operator access.
+              </p>
+            )}
           </details>
-          {onChooseWorkspace && (
+          {/* Team desk v4.1: the workspace picker is in the menu, so this page has no second control for it. */}
+          {onChooseWorkspace && !teamDeskV41 && (
             <button className="text-link" type="button" onClick={onChooseWorkspace}>
               Choose Workspace
             </button>
@@ -632,7 +649,7 @@ export function ExecutionNetwork({
                       <article key={task.id}>
                         <h3>
                           {task.configuration.kind.replaceAll('_', ' ')} ·{' '}
-                          {task.configuration.market}
+                          <CountryName code={task.configuration.market} />
                         </h3>
                         <p>{task.configuration.instructions}</p>
                         {task.late_submission && (
@@ -803,7 +820,7 @@ export function ExecutionNetwork({
                   {data?.performance.map((p) => (
                     <article key={p.principal_id + p.task_kind + p.market}>
                       <h3>
-                        {p.task_kind.replaceAll('_', ' ')} · {p.market}
+                        {p.task_kind.replaceAll('_', ' ')} · <CountryName code={p.market} />
                       </h3>
                       <p>
                         {p.completed_reviewed_tasks} completed reviewed tasks · evidence quality{' '}

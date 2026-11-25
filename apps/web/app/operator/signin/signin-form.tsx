@@ -7,7 +7,12 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
   const heading = useRef<HTMLHeadingElement>(null);
   const inFlight = useRef(false);
   const errorMessage = useRef<HTMLParagraphElement>(null);
+  // Focus moves to the heading only when the step changes. On first load it stays where the browser put it, so a
+  // person who tabs in starts at the top of the page.
+  const shownStage = useRef(stage);
   useEffect(() => {
+    if (shownStage.current === stage) return;
+    shownStage.current = stage;
     heading.current?.focus();
   }, [stage]);
   const [email, setEmail] = useState(''),

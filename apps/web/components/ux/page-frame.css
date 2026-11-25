@@ -67,10 +67,67 @@
   flex-basis: 100%;
   width: 100%;
 }
+.ux-workspace.ux-desk-frame > .ux-page-heading > .ux-frame-lead:has(> .ux-frame-primary) {
+  /* Actions sit on the left edge of the column they belong to: under the purpose line, never at the far right. */
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--space-3);
+}
 .ux-workspace.ux-desk-frame > .ux-desk-segments {
   margin-block: var(--space-3) var(--space-6);
 }
 .ux-desk-frame .ux-desk-segments a:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: -3px;
+}
+
+/* Team desk v4.1: the page is one surface under its title, so the outer panel that wraps a desk page is not a
+   second card around it. Cards inside the page keep their own border (one border level per region). Helpers and
+   Reports are the exception: their page panel is the one card and their body draws none (desk-helpers-status-team.css). */
+.ux-workspace.ux-desk-frame
+  .ux-workspace-body
+  > .workspace-panel.ux-panel:not(:has(> :is(.detail-card.ux-network, .detail-card.delivery-ops))) {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Team desk v4.1: the eyebrows were removed (D4), so the label of a denied or empty state is a quiet line in the
+   text face, not a mono capital label. The words are unchanged. */
+.ux-desk-frame .ux-state-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-2);
+}
+
+/* Team desk v4.1: a form that groups its fields in a fieldset draws no black box round them; the legend and the
+   fields stay as they are. Panel forms only. */
+.ux-desk-frame .ux-operations-panel form.operator-form > fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+/* Team desk v4.1: setting names and repository paths sit in a closed "Technical details" fold. It stays a list
+   item, so the browser draws the disclosure marker, and the block padding makes the 44 px target. */
+.ux-desk-frame details.desk-technical > summary {
+  display: list-item;
+  min-height: 2.75rem;
+  padding-block: var(--space-3);
+  cursor: pointer;
+}
+.ux-desk-frame details.desk-technical > summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-desk-frame details.desk-technical code {
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
 }

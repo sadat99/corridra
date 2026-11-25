@@ -30,6 +30,7 @@ describe('mission quiet label', () => {
   it('is the only quiet wording on the missions queue and mission card', () => {
     const source = readFileSync('apps/web/app/operator/missions.tsx', 'utf8');
     expect(source).not.toContain('No mission update in');
-    expect(source.match(/quietLabel\(m\.updated_at\)/g)).toHaveLength(2);
+    // The queue row, the mission card facts and the same facts in the team desk v4.1 groups.
+    expect(source.match(/quietLabel\(m\.updated_at\)/g)).toHaveLength(3);
   });
 });

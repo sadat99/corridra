@@ -131,15 +131,17 @@ describe('a translated page carries no note', () => {
 
 // The standing proof of the split: each catalogue, hashed whole (sorted key and words pairs). At L0 these are the
 // catalogues of main before the split, less the two removed note keys and plus the two site keys. A language unit
-// replaces only its own line; a change to English moves every line, and the PR says so.
+// replaces only its own line; a change to English moves every line, and the PR says so. Home page v4.2 (owner,
+// 25 Nov 2026) added home.v42.line.buys, home.v42.line.sells and home.v42.not.eyebrow to English and all six
+// languages, so every line moved (native review not done).
 const catalogueHash: Record<(typeof localeCodes)[number], string> = {
-  en: '740e09b81b1df71d',
-  bn: 'c0444f0550859601',
-  zh: 'fd8a2d2080ed34b7',
-  es: 'bc821d76e0de0588',
-  ar: 'e25005985a94ad37',
-  fr: 'af3fc3bcdb2176b3',
-  de: '86bbb7f520f33915',
+  en: '19a124219443a120',
+  bn: 'ab10ff538bb65aff',
+  zh: 'fc7dab55cfb11f45',
+  es: '92994be07f582ce5',
+  ar: '7985576249029996',
+  fr: '56241007e491ee70',
+  de: 'c62d1b5b299a9582',
 };
 
 describe('each catalogue is exactly the recorded one', () => {

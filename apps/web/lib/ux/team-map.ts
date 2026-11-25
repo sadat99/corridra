@@ -221,7 +221,7 @@ export function itemForPlace(
     return 'admin';
   if (id === 'ops-center' || id === 'owner') return 'admin';
   const found = teamMap.find((i) => i.key !== 'admin' && i.places.some((p) => p.id === id));
-  // The Authenticator, and Health and Readiness for a role with no Admin, live in the avatar menu: no sidebar item is current.
+  // The Authenticator lives in the avatar menu: no sidebar item is current.
   return found ? found.key : 'none';
 }
 
@@ -236,9 +236,9 @@ export function placeHref(id: TeamPlaceId, urls: boolean, workspace = ''): strin
 }
 
 /**
- * The places the avatar menu carries: the Authenticator for every role, and Health and Readiness for a role that may
- * open them but is not shown Admin (an operator). Owner and admin find those two in Admin. With the role unknown only
- * what every role may open is offered.
+ * The places the avatar menu carries: the Authenticator for every role. Health and Readiness are for owner and admin
+ * only (the sections' roles, and the server turns anyone else away); they find those two in Admin, so the menu offers
+ * them to no one. With the role unknown only what every role may open is offered.
  */
 const accountPlaces: readonly TeamPlace[] = [
   { id: 'workspace-authenticator', label: 'Authenticator' },
@@ -386,7 +386,7 @@ export const menuV3: readonly MenuGroup[] = [
     items: [
       {
         key: 'team',
-        label: 'Team and Access',
+        label: 'Team and access',
         icon: 'people',
         places: [
           { id: 'workspace-controls', label: 'People and access' },
@@ -504,4 +504,58 @@ export function menuItemForAddress(
     for (const item of group.items)
       if (item.places.some((place) => place.id === address.place)) return item.key;
   return 'none';
+}
+
+/**
+ * Every place the menu reaches for a role, for the search palette (team desk v4.1): the same items, words and
+ * addresses as menu v3, so a search finds a page by the word the menu shows. A place that is the item itself is
+ * described by its group ("Helpers", "People and companies"); a segment is described by its item ("Dashboard",
+ * "Status"). The Inbox and Supply pages are listed where the menu lists them, and the pages of the avatar menu
+ * come last under "Account". Convenience only: a place is listed for a role that may open it.
+ */
+export function menuPaletteLinks(
+  role: string | null,
+  urls: boolean,
+  workspace = '',
+  options: MenuOptions & { ownerPage?: boolean } = {},
+): { id: string; label: string; detail: string; icon: string; href: string }[] {
+  const links: { id: string; label: string; detail: string; icon: string; href: string }[] = [];
+  const seen = new Set<string>();
+  for (const group of menuGroupsFor(role, options))
+    for (const item of group.items) {
+      if (item.special) {
+        links.push({
+          id: item.special,
+          label: item.label,
+          detail: group.label,
+          icon: item.icon,
+          href: menuItemHref(item, role, urls, workspace),
+        });
+        continue;
+      }
+      for (const place of menuPlacesFor(item, role)) {
+        if ((place.id === 'owner' && !options.ownerPage) || seen.has(place.id)) continue;
+        seen.add(place.id);
+        links.push({
+          id: place.id,
+          label: place.label,
+          detail: place.label === item.label ? group.label : item.label,
+          icon: item.icon,
+          href: placeHref(place.id, urls, workspace),
+        });
+      }
+    }
+  // The avatar menu's places. Health and Readiness are Status segments for every role that may open them here.
+  for (const place of accountPlaces) {
+    if (seen.has(place.id) || !placeAllowedStrict(place.id, role)) continue;
+    seen.add(place.id);
+    links.push({
+      id: place.id,
+      label: place.label,
+      detail: 'Account',
+      icon: 'people',
+      href: placeHref(place.id, urls, workspace),
+    });
+  }
+  return links;
 }

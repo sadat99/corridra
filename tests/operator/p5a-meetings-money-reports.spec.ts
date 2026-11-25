@@ -227,6 +227,55 @@ type Options = {
   /** The server holds more meetings than the page it sent: a next page is named and no total is given. */
   more?: boolean;
   posts?: { url: string; body: unknown }[];
+  /** Fixture for the plain-words checks: an approved policy, a reply, a scheduled meeting and one follow-up. */
+  rich?: boolean;
+  /** A reader who may not manage introductions or meetings (staff-core-25). */
+  limited?: boolean;
+};
+const richCommunications = {
+  ...communications,
+  policies: [
+    {
+      id: id(900),
+      jurisdiction: 'DE',
+      channel: 'SYNTHETIC',
+      contact_purpose: 'OFFICIAL_COMPANY_CHANNEL',
+      version: 1,
+      enabled: true,
+      valid_until: '2027-01-01T00:00:00.000Z',
+      basis: 'Approved basis.',
+    },
+  ],
+  messages: [
+    message(1, 'Introduction Only Buyer', { decision: 'INTERESTED' }),
+    message(2, 'Introduction Only Buyer', { decision: 'NOT_RELEVANT' }),
+  ],
+};
+const richMeetings = {
+  ...meetings,
+  meetings: meetings.meetings.map((m) =>
+    // A cancelled meeting keeps the time it had (starts_at is never cleared): its card must not say it "Meets".
+    m.status === 'SCHEDULED' || m.status === 'CANCELLED'
+      ? {
+          ...m,
+          starts_at: '2026-12-10T09:00:00.000Z',
+          ends_at: '2026-12-10T10:00:00.000Z',
+          timezone: 'Europe/Madrid',
+          location: 'Video call',
+        }
+      : m,
+  ),
+  followups: [
+    {
+      id: id(950),
+      meeting_id: id(303),
+      owner_id: owner,
+      next_action: 'Follow the meeting plan',
+      due_at: due,
+      status: 'OPEN',
+      version: 1,
+    },
+  ],
 };
 async function open(page: Page, path: string, options: Options) {
   const {
@@ -237,6 +286,8 @@ async function open(page: Page, path: string, options: Options) {
     empty = false,
     more = false,
     posts,
+    rich = false,
+    limited = false,
   } = options;
   await page.setViewportSize({ width, height });
   // A script error on the page fails the test at once, with its own words.
@@ -266,7 +317,12 @@ async function open(page: Page, path: string, options: Options) {
   await page.route('**/api/workspace/config?*', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/notifications?*', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/workspace/communications?*', (route) =>
-    route.fulfill({ json: communications }),
+    route.fulfill({
+      json: {
+        ...(rich ? richCommunications : communications),
+        ...(limited ? { role: 'viewer' } : {}),
+      },
+    }),
   );
   await page.route('**/api/workspace/meetings?*', (route) =>
     route.fulfill({
@@ -274,7 +330,9 @@ async function open(page: Page, path: string, options: Options) {
         ? { ...meetings, meetings: [], meetingsTotal: 0 }
         : more
           ? { ...meetings, meetingsTotal: null, next: 'page-2' }
-          : meetings,
+          : rich
+            ? richMeetings
+            : meetings,
     }),
   );
   await page.route('**/api/workspace/meeting?*', (route) => {
@@ -379,7 +437,7 @@ test('D11 switch on: the page opens on five columns of real statuses, every card
   const first = columns.nth(0).locator('article.meeting-card').first();
   await expect(first.locator('h5')).toHaveText('Meeting 1 proposed');
   await expect(first).toContainText('Next: Next step of meeting 1 · Amina Rahman · due');
-  await expect(first).toContainText('Version 1.');
+  await expect(first).not.toContainText('Version');
   await expect(first.locator('> button')).toHaveCount(1);
   await expect(first.locator('> details')).toHaveCount(0);
   // A meeting that can change offers Update Meeting; a finished one can only be viewed.
@@ -403,6 +461,65 @@ test('D11 switch on: the page opens on five columns of real statuses, every card
   await expect(page.locator('h1')).toHaveCount(1);
 });
 
+test('F5 switch on: the meeting page speaks plainly, tells cards and replies apart and names each follow-up', async ({
+  page,
+}) => {
+  await open(page, '/operator/meetings', { v41: true, rich: true });
+  const section = panel(page, 'meetings');
+  // One heading per level: the page heading, not a second "Introductions and meetings" or the tab name again.
+  // The heading that repeats the page title is for screen readers only; no second one is drawn.
+  await expect(section.getByRole('heading', { name: 'Introductions and meetings' })).toHaveClass(
+    /sr-only/,
+  );
+  await expect(section.getByRole('heading', { name: 'Meeting itinerary' })).toHaveClass(/sr-only/);
+  await expect(section.getByRole('button', { name: 'Refresh', exact: true })).toBeVisible();
+  await expect(section.getByText('Briefs and outcomes stay private to authorized')).toHaveCount(0);
+  // A card names the buyer and the time of a scheduled meeting; the version number is not on it.
+  const cards = section.locator('article.meeting-card');
+  await expect(cards.first()).toContainText('With Introduction Only Buyer.');
+  await expect(cards.first()).not.toContainText('Version');
+  const scheduled = section.locator('.ux-meeting-column').nth(2).locator('article.meeting-card');
+  await expect(scheduled).toContainText('Meets');
+  await expect(cards.first()).not.toContainText('Meets');
+  // A cancelled meeting still holds its old time but is not meeting then: no "Meets" on its card.
+  const cancelled = section.locator('article.meeting-card', { hasText: 'Meeting 6 cancelled' });
+  await expect(cancelled).toHaveCount(1);
+  await expect(cancelled).not.toContainText('Meets');
+  // The change button stays on one line.
+  const button = cards.first().getByRole('button', { name: /^Update Meeting/ });
+  const box = await button.boundingBox();
+  expect(box!.height).toBeLessThan(60);
+  // The propose list: words, not stored codes, and the same buyer twice is told apart by the reply.
+  await section.getByRole('tab', { name: /^Introductions/ }).click();
+  await section.getByText('Approved communication policy and templates').click();
+  // A06e: the policy list names the country by its mark and name; the policy choice of a new introduction names it
+  // in words (an option holds text only). The stored code is unchanged.
+  const policy = section.locator('li', {
+    hasText: 'Germany / Recorded receipt (no email sent) / Official company channel',
+  });
+  await expect(policy).toBeVisible();
+  // Germany has no mark of its own, so its name is written alone (UI/UX.v4.1 L1: never a code).
+  await expect(policy.locator('.ux-flagged')).toHaveText('Germany');
+  await expect(
+    section.getByRole('option', { name: /^Germany \/ Recorded receipt \(no email sent\) \// }),
+  ).toHaveCount(1);
+  await section.getByRole('tab', { name: /^Follow-up/ }).click();
+  const followup = section.locator('article.detail-card', { hasText: 'Follow the meeting plan' });
+  await expect(followup.getByText('Meeting: Meeting 3 scheduled.')).toBeVisible();
+  const result = followup.getByLabel('Follow-up result');
+  await expect(result.locator('option')).toHaveText(['Completed', 'Cancelled']);
+  await expect(result.locator('option').first()).toHaveAttribute('value', 'COMPLETED');
+  await section.getByRole('tab', { name: /^Meetings/ }).click();
+  await page.locator('.ux-page-heading').getByRole('button', { name: 'Propose Meeting' }).click();
+  const options = page
+    .getByRole('dialog', { name: 'Propose Meeting' })
+    .getByLabel('Meeting introduction')
+    .locator('option');
+  // staff-core-23: a meeting is proposed on an interested reply only, so the not-relevant reply is not offered.
+  await expect(options).toHaveText([/^Introduction Only Buyer, interested, link expires /]);
+  await expect(options.first()).toHaveAttribute('value', id(101));
+});
+
 test('D11 switch on: a column counts what is loaded and says so while more is to come', async ({
   page,
 }) => {
@@ -421,7 +538,8 @@ test('D11 switch on: Propose Meeting is the one primary action in the header and
   page,
 }) => {
   const posts: { url: string; body: unknown }[] = [];
-  await open(page, '/operator/meetings', { v41: true, posts });
+  // The rich fixture holds an interested reply; a meeting is proposed on one (staff-core-23).
+  await open(page, '/operator/meetings', { v41: true, posts, rich: true });
   const section = panel(page, 'meetings');
   const propose = page.locator('.ux-page-heading').getByRole('button', { name: 'Propose Meeting' });
   await expect(propose).toBeVisible();
@@ -435,6 +553,8 @@ test('D11 switch on: Propose Meeting is the one primary action in the header and
   await form.getByLabel('Meeting title').fill('First call');
   await form.getByLabel('Meeting brief').fill('Agree the sample plan');
   await form.getByLabel('Meeting participants, one per line').fill('Buyer Lead\nAmina Rahman');
+  // Two steps of one form (staff-core-23): the meeting, then who owns its next step.
+  await form.getByRole('button', { name: 'Continue' }).click();
   await form.getByLabel('Meeting next action').fill('Send the agenda');
   await form.getByLabel('Meeting command reason').fill('Buyer asked for a call');
   await form.getByRole('button', { name: 'Propose Meeting' }).click();
@@ -454,7 +574,7 @@ test('D11 switch on: Propose Meeting is the one primary action in the header and
     reason: 'Buyer asked for a call',
     commandId: '',
   });
-  expect(typeof body.messageId).toBe('string');
+  expect(body.messageId).toBe(id(101));
 });
 
 test('D11 switch on: an introduction is never in a column, and the outreach note stays in view', async ({
@@ -466,7 +586,14 @@ test('D11 switch on: an introduction is never in a column, and the outreach note
   await expect(board).toBeVisible();
   await expect(board.locator('article.introduction-card')).toHaveCount(0);
   // The buyer that only has an introduction is offered in the Propose form, not shown as a meeting.
-  await expect(board.locator('article', { hasText: 'Introduction Only Buyer' })).toHaveCount(0);
+  // A card may say whom the meeting is with; no card is headed by the buyer, as an introduction would be.
+  await expect(board.locator('article > h5', { hasText: 'Introduction Only Buyer' })).toHaveCount(
+    0,
+  );
+  // Stronger than the heading check: the buyer may appear on a meeting card ("With ...") and nowhere else.
+  await expect(
+    board.locator('article:not(.meeting-card)', { hasText: 'Introduction Only Buyer' }),
+  ).toHaveCount(0);
   await expect(board.locator('article', { hasText: 'Test Mode Buyer' })).toHaveCount(0);
   // The Introductions tab is one tap away and the test-mode note of the sent email is written on its card.
   // The sentence about introduction channels is in the Introductions tab, not above the board.
@@ -614,6 +741,84 @@ test('D11 switch on: with no meeting every column says so', async ({ page }) => 
   const columns = panel(page, 'meetings').locator('.ux-meeting-column');
   await expect(columns).toHaveCount(5);
   await expect(columns.locator('.ux-meeting-none')).toHaveText(Array(5).fill('No meetings.'));
+});
+
+test('F5c switch on: a reader who may not manage meetings is told the columns hold what they can see', async ({
+  page,
+}) => {
+  await open(page, '/operator/meetings', { v41: true, empty: true, limited: true });
+  await openTab(page, 'meetings', /^Meetings \(0\)$/);
+  const columns = panel(page, 'meetings').locator('.ux-meeting-column');
+  await expect(columns.locator('.ux-meeting-none')).toHaveText(
+    Array(5).fill('No meetings you can see.'),
+  );
+  await expect(
+    page.locator('.ux-page-heading').getByRole('button', { name: 'Propose Meeting' }),
+  ).toHaveCount(0);
+});
+
+test('F5c switch on: Propose Meeting goes in two steps, offers interested replies only and says so when there is none', async ({
+  page,
+}) => {
+  const posts: { url: string; body: unknown }[] = [];
+  await open(page, '/operator/meetings', { v41: true, rich: true, posts });
+  await page.locator('.ux-page-heading').getByRole('button', { name: 'Propose Meeting' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Propose Meeting' });
+  const form = dialog.getByRole('form', { name: 'Propose meeting' });
+  await expect(form.getByText('Step 1 of 2: the reply and the meeting.')).toBeVisible();
+  await expect(form.getByLabel('Meeting next action')).toBeHidden();
+  await expect(form.getByRole('button', { name: 'Propose Meeting' })).toBeHidden();
+  // Continue checks the first step and stays on it while a field is missing.
+  await form.getByRole('button', { name: 'Continue' }).click();
+  await expect(form.getByLabel('Meeting title')).toBeVisible();
+  await expect(form.getByLabel('Meeting next action')).toBeHidden();
+  await form.getByLabel('Meeting title').fill('First call');
+  await form.getByLabel('Meeting brief').fill('Agree the sample plan');
+  await form.getByLabel('Meeting participants, one per line').fill('Buyer Lead');
+  await form.getByRole('button', { name: 'Continue' }).click();
+  await expect(form.getByText('Step 2 of 2: who owns the next step.')).toBeVisible();
+  await expect(form.getByLabel('Meeting title')).toBeHidden();
+  await expect(form.getByLabel('Meeting or follow-up owner')).toBeFocused();
+  // Back keeps what was typed.
+  await form.getByRole('button', { name: 'Back' }).click();
+  await expect(form.getByLabel('Meeting title')).toHaveValue('First call');
+  // Enter in a field of step 1 is Continue: step 2 shows and nothing is sent.
+  await form.getByLabel('Meeting title').press('Enter');
+  await expect(form.getByText('Step 2 of 2: who owns the next step.')).toBeVisible();
+  await expect(form.getByLabel('Meeting or follow-up owner')).toBeFocused();
+  expect(posts).toHaveLength(0);
+  await form.getByRole('button', { name: 'Back' }).click();
+  // With step 1 incomplete, Enter stays on step 1 and still sends nothing.
+  await form.getByLabel('Meeting brief').fill('');
+  await form.getByLabel('Meeting title').press('Enter');
+  await expect(form.getByLabel('Meeting brief')).toBeVisible();
+  await expect(form.getByLabel('Meeting next action')).toBeHidden();
+  expect(posts).toHaveLength(0);
+  await page.keyboard.press('Escape');
+  // With no interested reply there is nothing to propose a meeting on, and the dialog says so.
+  await open(page, '/operator/meetings', { v41: true });
+  await page.locator('.ux-page-heading').getByRole('button', { name: 'Propose Meeting' }).click();
+  await expect(page.getByRole('dialog', { name: 'Propose Meeting' }).getByRole('note')).toHaveText(
+    'No interested replies yet. A meeting is proposed once a buyer answers Interested to an introduction.',
+  );
+  await expect(page.getByRole('form', { name: 'Propose meeting' })).toHaveCount(0);
+});
+
+test.describe('F5c switch on: the card time', () => {
+  test.use({ timezoneId: 'Asia/Dhaka' });
+  test("a scheduled card shows the meeting time zone and the reader's, as the line above the board says", async ({
+    page,
+  }) => {
+    await open(page, '/operator/meetings', { v41: true, rich: true });
+    const section = panel(page, 'meetings');
+    await expect(
+      section.getByText("Times show the meeting's time zone and yours.", { exact: false }),
+    ).toHaveCount(1);
+    const scheduled = section.locator('article.meeting-card', { hasText: 'Meeting 3 scheduled' });
+    await expect(scheduled.getByText(/^Meets /)).toHaveText(
+      'Meets 10 Dec 2026, 10:00 (Madrid, UTC+1). Your time: 10 Dec 2026, 15:00 (Dhaka, UTC+6).',
+    );
+  });
 });
 
 // D12 Money ----------------------------------------------------------------------------------------------------

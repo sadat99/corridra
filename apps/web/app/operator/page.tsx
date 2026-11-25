@@ -13,7 +13,8 @@ export function generateMetadata() {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ workspace?: string }>;
+  searchParams: Promise<{ workspace?: string; unavailable?: string }>;
 }) {
-  return <OperatorEntry requested={(await searchParams).workspace} />;
+  const query = await searchParams;
+  return <OperatorEntry requested={query.workspace} turnedAway={query.unavailable === '1'} />;
 }

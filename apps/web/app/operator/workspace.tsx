@@ -51,10 +51,14 @@ import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
 import { useOperatorFlags } from './operator-flags';
-import { deskStatusPlace } from '../../lib/ux/page-pattern';
+import { deskStatusPlace, isDeskPlace } from '../../lib/ux/page-pattern';
 import { EvidencePanel } from './evidence-panel';
 import { publishTeamContext } from '../../lib/ux/team-context';
-import { TeamDeskV41Context, publishTeamSwitcher } from '../../lib/ux/team-desk-v41';
+import {
+  TeamDeskV41Context,
+  publishTeamSwitcher,
+  sortTeamWorkspaces,
+} from '../../lib/ux/team-desk-v41';
 import { forgetDeviceRecents } from '../../lib/ux/palette-recents';
 import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 type RecordRow = OperatorRecordRow;
@@ -93,6 +97,7 @@ export function Workspace({
   desk = false,
   problemReports = false,
   programmeApplications = false,
+  turnedAway = false,
 }: {
   tenants: Tenant[];
   initialTenant: string;
@@ -114,6 +119,8 @@ export function Workspace({
   problemReports?: boolean;
   /** Whether the staff list of programme applications is offered (switch on and module installed). Fail closed. */
   programmeApplications?: boolean;
+  /** The server turned this person away from a section address they may not open: Today says so, in the open. */
+  turnedAway?: boolean;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
@@ -138,6 +145,7 @@ export function Workspace({
       desk={desk}
       problemReports={problemReports}
       programmeApplications={programmeApplications}
+      turnedAway={turnedAway}
     />
   );
 }
@@ -152,6 +160,7 @@ function TenantWorkspace({
   desk,
   problemReports,
   programmeApplications,
+  turnedAway,
 }: {
   tenants: Tenant[];
   tenant: string;
@@ -163,6 +172,7 @@ function TenantWorkspace({
   desk: boolean;
   problemReports: boolean;
   programmeApplications: boolean;
+  turnedAway: boolean;
 }) {
   const { supplySources, teamDeskV41: deskV41 } = useOperatorFlags();
   const edited = useRef(false);
@@ -322,6 +332,9 @@ function TenantWorkspace({
   const shown = (panel: string) => !shellsV2 || view === panel;
   const unavailableSection =
     !!fragment && fragment !== 'main' && fragment !== 'workspace-navigation' && !sectionAllowed;
+  // Sent to Today by the server from a section this role may not open (Health, Readiness), and still on Today: the same
+  // note says so. It ends as soon as the person goes anywhere else.
+  const turnedAwayHere = turnedAway && (!fragment || fragment === 'main');
   useEffect(() => {
     if (!loaded) return;
     const allowed = fragment === 'main' || fragment === 'workspace-navigation' || sectionAllowed;
@@ -351,9 +364,22 @@ function TenantWorkspace({
     }
     if (target) openFoldsAround(target);
     const land = () => {
-      // Team desk v4.1: a section opened by its own address (no # part) opens at the top, under its title.
-      if (deskV41 && destination?.id === sectionId && !window.location.hash) return;
-      destination?.scrollIntoView();
+      if (deskV41) {
+        // Team desk v4.1: a page opens at the top, under its title, and nothing is focused for the person: no
+        // box is drawn round the page body or the menu. That holds for a page opened by its own address, by an
+        // old `#` link that names the page (#workspace-research, #ops-dashboard), for a page whose body is still
+        // loading, and for a page the role may not open, where the note at the top of Today says so. The menu is
+        // focused only by its own address (#workspace-navigation). A block inside a page still gets the focus.
+        if (place === 'directory') return;
+        if (destination && isDeskPlace(fragment) && destination.id === fragment) {
+          if (window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          return;
+        }
+      }
+      // A page opened by its own address (no # part) opens at the top, under its title: it is not scrolled to
+      // its own body, which on a phone hid the title under the top bar. The body still takes the focus, as before.
+      if (!(shellsV2 && !window.location.hash && destination?.id === sectionId))
+        destination?.scrollIntoView();
       destination?.focus({ preventScroll: true });
     };
     // A hidden tab that holds the block is shown first. React does not flush a forced update from inside an
@@ -381,7 +407,7 @@ function TenantWorkspace({
     });
     watch.observe(holder, { childList: true, subtree: true });
     return () => watch.disconnect();
-  }, [loaded, fragment, sectionId, sectionAllowed, deskV41]);
+  }, [loaded, fragment, sectionId, sectionAllowed, deskV41, shellsV2]);
   // Team desk v4.1 (unit D18): the lists that sat inside Settings are on the Inbox page, so an old address of one
   // (its `#` part, or Settings with its tab) leads there. Off, nothing here runs and Settings holds them as before.
   useEffect(() => {
@@ -476,7 +502,7 @@ function TenantWorkspace({
   useEffect(() => {
     if (!menuV3) return;
     publishTeamSwitcher({
-      workspaces: tenants.map((entry) => ({ id: entry.id, name: entry.name })),
+      workspaces: sortTeamWorkspaces(tenants).map((entry) => ({ id: entry.id, name: entry.name })),
       current: tenant,
       busy,
       choose: (next) => chooseRef.current(next),
@@ -501,7 +527,7 @@ function TenantWorkspace({
               value={tenant}
               onChange={(e) => chooseTenant(e.target.value)}
             >
-              {tenants.map((t) => (
+              {sortTeamWorkspaces(tenants).map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
                 </option>
@@ -570,6 +596,16 @@ function TenantWorkspace({
           )}
           {shown('overview') && (
             <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
+              {/* A page this role may not open shows Today, and says so first, in the open: never as the last line
+                  of a card far from the title, or inside a closed row. */}
+              {(unavailableSection || turnedAwayHere) && (
+                <AccessState kind="denied">
+                  <p>
+                    This section is unavailable for your current workspace role, or the link is
+                    outdated. You are on Today. Ask your workspace owner to review your membership.
+                  </p>
+                </AccessState>
+              )}
               <TodayPanel
                 key={`today-${tenant}`}
                 tenant={tenant}
@@ -599,13 +635,6 @@ function TenantWorkspace({
                       <a className="text-link" href="#workspace-missions">
                         Start a Mission
                       </a>
-                      {unavailableSection && (
-                        <p role="alert">
-                          This section is unavailable for your current workspace role or the link is
-                          outdated. Choose a place in the menu, or ask your workspace owner to
-                          review your membership.
-                        </p>
-                      )}
                     </DeskFold>
                   ) : (
                     <section
@@ -627,13 +656,6 @@ function TenantWorkspace({
                         role, a current authenticator check and approved scope.
                       </p>
                       <RoleNavigation role={data.role} shortcuts />
-                      {unavailableSection && (
-                        <p role="alert">
-                          This section is unavailable for your current workspace role or the link is
-                          outdated. Choose an available tool above, or ask your workspace owner to
-                          review your membership.
-                        </p>
-                      )}
                       {['owner', 'admin'].includes(data.role) && (
                         <details className="ux-journey-disclosure operator-management">
                           <summary>
@@ -762,7 +784,8 @@ function TenantWorkspace({
               {['owner', 'admin', 'reviewer'].includes(data.role) && (
                 <CompanyLinkReview key={`links-${tenant}`} tenant={tenant} />
               )}
-              {supplySources && (
+              {/* Team desk v4.1: Supply Sources is a menu place, so the page does not link it again. */}
+              {supplySources && !deskV41 && (
                 <p>
                   <Link
                     prefetch={false}

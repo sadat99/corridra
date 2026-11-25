@@ -7,6 +7,7 @@ import { bodyNotAvailable } from '../../lib/body-access';
 import { formatDateTime } from '../../lib/ux/format';
 import { formatMoney } from '../../lib/ux/money';
 import { useOperatorFlags } from './operator-flags';
+import { CountryName } from './country-name';
 import { ReplyReview } from './reply-review';
 import './reply-review.css';
 
@@ -68,6 +69,7 @@ export function MissionQuotes({
   role,
   brief,
   revision,
+  canRecord,
   onRecord,
   moneyHref,
   reportsHref,
@@ -79,8 +81,10 @@ export function MissionQuotes({
   brief: MissionBrief;
   /** Raised by the mission page when an offer was recorded, so the list is read again. */
   revision: number;
-  /** Opens the existing offer form on the Requirements tab. */
-  onRecord: () => void;
+  /** Owner, admin or operator: the roles that record an offer. The server checks again. */
+  canRecord: boolean;
+  /** Opens the existing offer form in the centred dialog; focus returns to the button that opened it. */
+  onRecord: (from: HTMLButtonElement) => void;
   /** The existing Money section address for this mission. */
   moneyHref: string;
   /** The existing Reports section address, where every reply of the workspace is listed. */
@@ -157,7 +161,9 @@ export function MissionQuotes({
               <dt>Goal</dt>
               <dd>{brief.objective}</dd>
               <dt>Market</dt>
-              <dd>{brief.market}</dd>
+              <dd>
+                <CountryName code={brief.market} />
+              </dd>
               {brief.outcomes.length > 0 && (
                 <>
                   <dt>Wanted outcomes</dt>
@@ -254,9 +260,15 @@ export function MissionQuotes({
           )}
         </details>
         <div className="mission-quotes-links">
-          <button type="button" className="text-link" onClick={onRecord}>
-            Record or Revise a Supplier Offer
-          </button>
+          {canRecord && (
+            <button
+              type="button"
+              className="secondary-link"
+              onClick={(e) => onRecord(e.currentTarget)}
+            >
+              Record or Revise a Supplier Offer
+            </button>
+          )}
           <a className="text-link" href={moneyHref}>
             Open Money
           </a>

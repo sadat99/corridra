@@ -24,7 +24,7 @@ export default function Page() {
         </p>
       )}
       <a className="text-link" href={operatorSignInPage}>
-        Back to operator sign-in
+        Operator Sign-In
       </a>
     </WorkspaceShell>
   );

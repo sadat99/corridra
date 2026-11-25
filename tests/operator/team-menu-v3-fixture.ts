@@ -12,6 +12,8 @@ import { basename, resolve } from 'node:path';
 //   ?role=owner  the person's role in the workspace (default owner); ?role=none leaves it unknown
 //   ?urls=off    section addresses off (`#` links)
 //   ?tall=on     a page body three screens tall
+//   ?list=none   the server read no workspace for this person ("Workspace access is unavailable"); otherwise the
+//                layout's list holds the two fixture workspaces, as it does for a signed-in member
 //   ?mount=on    the real workspace is mounted with two workspaces (its reads are answered by the caller with
 //                page.route), with the second tab bar line the team pages have, so the toolbar and that bar can be seen
 // The pathname is the browser's own, so /operator/settings?tab=settings-erasure is that address.
@@ -55,7 +57,8 @@ export async function startMenuFixture(root = resolve('.')) {
           <div className="site-shell">
             <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
             <TeamFrame urls={query.get('urls') !== 'off'} ownerPage={false} problemReports={on('reports')}
-              desk={on('desk')} deskV41={on('v41')} supply={on('supply')}>
+              desk={on('desk')} deskV41={on('v41')} supply={on('supply')}
+              workspaces={query.get('list') === 'none' ? [] : [{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations'},{id:${JSON.stringify(secondTenant)},name:'Second workspace'}]}>
               <WorkspaceShell eyebrow="TEAM WORKSPACE" title="Today" className="ux-operator-home">
                 {on('mount') ? (
                   <>

@@ -65,3 +65,29 @@
     padding-block-start: var(--space-3);
   }
 }
+/* The tab row sits clear of the purpose line above it. */
+.inbox-page {
+  margin-block-start: var(--space-4);
+}
+/* The erasure filter: the label above its field, the load button under it, 8 px between each. */
+.inbox-lists .inbox-filter {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.inbox-lists .inbox-filter > label {
+  display: grid;
+  gap: var(--space-2);
+}
+.inbox-lists .inbox-filter > label > select {
+  min-block-size: 2.75rem;
+}
+/* The moves of a report share one line and the same height, so "Start Review" and "Mark Closed" line up. */
+.inbox-lists .pr-queue-row > .pr-actions {
+  align-items: center;
+}
+.inbox-lists .pr-queue-row > .pr-actions > button {
+  margin: 0;
+  min-block-size: 2.75rem;
+}

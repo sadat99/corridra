@@ -25,7 +25,8 @@ test.beforeAll(async () => {
         import { ProgrammeRoomStyles } from ${JSON.stringify(resolve('apps/web/app/account/delegations/programme-room-styles.tsx'))};
         import ${JSON.stringify(resolve('apps/web/app/account/delegations/programme-frame.css'))};
         const q = new URLSearchParams(location.search);
-        const slots = pageFrameSlots({ back: { label: 'Back to my workspaces', href: '/account#customer-workspaces' } });
+        // UI/UX.v4.1: the page passes no back link to its frame (the menu is the way back), so neither does this.
+        const slots = pageFrameSlots(undefined);
         createRoot(document.getElementById('app')).render(
           <WorkspaceShell title={<span className="sr-only">Plan delegations</span>} customer above={slots.above} lead={slots.lead}>
             <ProgrammeRoomStyles />

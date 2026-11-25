@@ -483,3 +483,110 @@ article.room.programme-room .programme-checklist > div > dd small {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* UI/UX.v4.1, one tab row per page. The page tabs are the only tab row, so the programme's views are a set of
+   toggle chips with room between them, not a second row of tabs. */
+article.room.programme-room > .room-lenses {
+  gap: var(--space-2);
+  border-bottom: 0;
+}
+article.room.programme-room > .room-lenses > .room-lens {
+  min-height: 44px;
+  margin-bottom: 0;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--ink);
+}
+article.room.programme-room > .room-lenses > .room-lens[aria-pressed='true'] {
+  border-color: var(--selected);
+  background: var(--selected-surface);
+  color: var(--brand-deep);
+}
+/* The chips wrap wherever that costs no page length (above a phone), and at large text, where one row would
+   push the page sideways: a width in em follows the reader's text size, so 20em is a 320 px phone at the usual
+   size and anything narrower is a phone with enlarged text. On a phone at the usual text size they stay one row
+   that scrolls inside itself, which keeps the page inside its length budget. */
+@media (min-width: 40.01rem), (max-width: 19.99em) {
+  article.room.programme-room > .room-lenses {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+  article.room.programme-room > .room-lenses > .room-lens {
+    flex: 0 1 auto;
+    max-width: 100%;
+    text-align: start;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+}
+@media (max-width: 40rem) {
+  /* The one-row phone layout keeps the row's earlier tight spacing, so the five views still fit a 640 px screen. */
+  article.room.programme-room > .room-lenses {
+    gap: var(--space-1);
+  }
+  article.room.programme-room > .room-lenses > .room-lens {
+    padding-inline: var(--space-2);
+  }
+}
+/* The heading above the four settings already names them, so the group's own name is for assistive technology only. */
+.programme-room .terms-tabs .ux-segments > legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* The page's one primary action sits above the tabs, on the left edge; it is not a tab. */
+.programme-page .programme-page-lead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-end: var(--space-1);
+}
+.ux-customer
+  section.delivery-view.programme-page
+  .programme-page-lead
+  > :is(button.primary-link, button.text-link) {
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+  padding-block: 0;
+}
+@media (min-width: 64rem) {
+  /* Desktop: the lead row takes no more height than the back link it replaced (the page budget). */
+  .ux-customer
+    section.delivery-view.programme-page
+    .programme-page-lead
+    > :is(button.primary-link, button.text-link) {
+    min-height: 2.5rem;
+  }
+}
+/* Reload wraps at large text instead of pushing the page sideways. */
+.ux-customer section.delivery-view.programme-page .programme-page-foot > button.text-link {
+  flex: 0 1 auto;
+  max-width: 100%;
+  text-align: start;
+  white-space: normal;
+}
+.programme-page .programme-new[hidden],
+.programme-page .programme-page-body[hidden] {
+  display: none;
+}
+.programme-page .programme-new:focus {
+  outline: 0;
+}
+/* A value still on its way: a quiet bar the height of the text, in the text's own colour. */
+.programme-wait {
+  display: inline-block;
+  inline-size: 5ch;
+  max-inline-size: 100%;
+  block-size: 0.6em;
+  border-radius: var(--radius-sm);
+  background: currentColor;
+  opacity: 0.2;
+}

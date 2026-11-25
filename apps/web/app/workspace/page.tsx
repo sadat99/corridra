@@ -95,7 +95,7 @@ export default function Page() {
         </section>
         <nav className="ux-start-foot" aria-label="More">
           <Link prefetch={false} className="text-link" href="/">
-            Back to Corridra
+            Corridra Home
           </Link>
           <Link prefetch={false} className="text-link" href="/privacy">
             Privacy

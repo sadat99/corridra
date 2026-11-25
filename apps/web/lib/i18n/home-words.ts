@@ -729,6 +729,12 @@ export const homeEn = {
   'home.fact.verified': 'Checked by a defined process.',
   'home.facts.more': 'How We Label Facts',
   'home.other.link': 'Explore Every Route',
+  // Home page v4.2 (owner, 25 Nov 2026), shown only while CORRIDRA_UX_HOME_V42 is on. The two route cards are whole
+  // sentences with the places as slots, so every language can put the verb where it belongs; the places come from
+  // their own keys with their flags. "Plain limits" is the owner's own name for the section.
+  'home.v42.line.buys': '{from} buys from {to}',
+  'home.v42.line.sells': '{from} sells to {to}',
+  'home.v42.not.eyebrow': 'Plain limits',
 };
 
 export type HomeKey = keyof typeof homeEn;

@@ -9,6 +9,17 @@ export class AccessService {
     private pool: Pool,
     private identityPool?: Pool,
   ) {}
+  /**
+   * The session's role in this workspace and whether its authenticator check is fresh right now, as the database sees
+   * them (the same authority every action uses). Any member may ask; a person with no access in the workspace is refused.
+   * Used to tell a lapsed check from any other refusal.
+   */
+  authority(ctx: RequestContext) {
+    return withTenant(this.pool, ctx, 'missions.read', async (t) => ({
+      role: t.role as string,
+      fresh: t.freshMfa,
+    }));
+  }
   /** Today counts for the team (CQ-34, CQ-73), read with the person's own access. */
   today(ctx: RequestContext) {
     return getTeamToday(this.pool, ctx);

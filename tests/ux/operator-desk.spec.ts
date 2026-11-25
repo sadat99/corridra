@@ -31,7 +31,7 @@ const mission = (i, status, due) => ({
 const json = (body, status = 200) =>
   Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } }));
 const many = scenario === 'many';
-const none = scenario === 'empty';
+const none = scenario === 'empty' || scenario === 'stale';
 const freshList = none ? [] : Array.from({ length: many ? 30 : 3 }, (_, i) => mission(i, 'DRAFT', iso(3 + i)));
 const lateList = none ? [] : Array.from({ length: many ? 25 : 2 }, (_, i) => mission(100 + i, 'ACTIVE', iso(-(4 + i))));
 window.fetch = (input) => {
@@ -58,6 +58,12 @@ window.fetch = (input) => {
         });
   if (url.includes('/api/workspace/problem-reports'))
     return json({ counts: { received: none ? 0 : 2, in_review: 1 }, oldestReceivedAt: iso(-3) });
+  // A stale authenticator check: the real answer of the erasure route is a 401 with the step-up code.
+  if (scenario === 'stale' && url.includes('/api/workspace/customer-erasure-queue'))
+    return json(
+      { error: 'Verify your authenticator again to continue', code: 'STEP_UP_REQUIRED' },
+      401,
+    );
   if (url.includes('/api/workspace/customer-erasure-queue'))
     return json({
       items: none || url.includes('in_progress') ? [] : [{ id: 'e1', reference: 'ER-SAMPLE-1', dueAt: iso(-2), daysLeft: -2, status: 'received' }],
@@ -228,6 +234,19 @@ test('empty: nothing needs you now', async ({ page }) => {
   await shot(page, 'today-empty-390');
 });
 
+test('stale: a list that waits for the code is one plain line, never could not be checked or an all-clear', async ({
+  page,
+}) => {
+  await mount(page, 390, 'stale');
+  await expect(page.locator('.ux-desk-sentence')).toHaveText(
+    'Confirm your code to check erasure requests.',
+  );
+  await expect(page.locator('#desk-fixture [data-code-check]')).toHaveCount(1);
+  await expect(page.getByText(/could not be checked|could not be read/)).toHaveCount(0);
+  await expect(page.getByText('Nothing needs you now.')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Try Again' })).toHaveCount(0);
+});
+
 test('the whole list failing says so and offers Try Again', async ({ page }) => {
   await mount(page, 390, 'failure');
   await expect(page.locator('.ux-today-state')).toContainText("Today's list could not be loaded.");
@@ -249,12 +268,10 @@ test('one part failing names the part, keeps the rest and offers Try Again', asy
   await page.getByRole('button', { name: 'Show Also waiting' }).click();
   await page.getByRole('button', { name: 'Show This week' }).click();
   await expect(
-    page.getByText(
-      'Also waiting is not available. It could not be read just now. Your work is safe.',
-    ),
+    page.getByText('Also waiting could not be read just now. Your work is safe.'),
   ).toBeVisible();
   await expect(
-    page.getByText('This week is not available. It could not be read just now. Your work is safe.'),
+    page.getByText('This week could not be read just now. Your work is safe.'),
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try Again' }).first()).toBeVisible();
   await shot(page, 'today-partfail-390');

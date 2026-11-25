@@ -15,7 +15,6 @@ export const metadata = {
   title: "Member's saved report | Corridra",
   robots: { index: false, follow: false },
 };
-const back = { label: "Back to Members' Reports", href: '/account?view=results&tab=members' };
 
 // ADR-087 U5: a workspace owner or admin reads one saved report of another member of that workspace, read only, with its
 // books. The page holds no identity or permission of its own: the member access route and the database decide, and every
@@ -56,7 +55,7 @@ export default async function Page({
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="results" eyebrow="REPORTS" title="Member's saved report" frame={{ back }}>
+    <CustomerShell tab="results" eyebrow="REPORTS" title="Member's saved report">
       <SavedCommercialReport
         resourceId={ids.data.resourceId}
         member={{ workspaceId: ids.data.workspaceId }}

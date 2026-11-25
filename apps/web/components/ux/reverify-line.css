@@ -1,0 +1,9 @@
+/* The quiet re-verify line: tokens only. One sentence and one action, never an error block. */
+.ux-reverify {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--text-2);
+}

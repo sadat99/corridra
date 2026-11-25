@@ -40,13 +40,15 @@ test.beforeAll(async () => {
       import{OperatorFlags}from ${source('apps/web/app/operator/operator-flags.tsx')};
       import{MissionPage}from ${source('apps/web/app/operator/[section]/[missionId]/mission-page.tsx')};
       import{StepUpDialog}from ${source('apps/web/components/ux/step-up-dialog.tsx')};
+      import{MissionTitle}from ${source('apps/web/app/operator/[section]/[missionId]/mission-title.tsx')};
       import ${source('apps/web/app/operator/operator-overview.css')};
       const q=new URLSearchParams(location.search);
       createRoot(document.getElementById('fixture')).render(
-        <main id="main" className="operator-page ux-workspace"><h1>Mission</h1>
+        <main id="main" className="operator-page ux-workspace">
+        <h1>{q.get('desk')==='on'?<MissionTitle/>:'Mission'}</h1>
         <OperatorFlags replyReview={false} teamDeskV41={q.get('desk')==='on'}>
           <MissionPage tenant="${tenant}" workspaceName="Sample team" missionId="${mission}"
-            moveRecords={q.get('moves')==='on'}/>
+            moveRecords={q.get('moves')==='on'} sectionAddresses={q.get('urls')==='on'}/>
         </OperatorFlags><StepUpDialog/></main>);`,
       loader: 'tsx',
       resolveDir: resolve(root, 'apps/web'),
@@ -56,6 +58,8 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css', '.woff2': 'empty' },
+    // The flag pictures are static files of the site, not modules to bundle.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
@@ -265,9 +269,12 @@ async function open(
     return route.fulfill({ json });
   });
   await page.goto(`${origin}/?desk=${desk ? 'on' : 'off'}${moves ? '&moves=on' : ''}`);
+  // Desk: the customer's name is the page title (one h1), not a second heading under the word "Mission".
   await expect(
-    page.getByRole('heading', { level: 2, name: 'Invented Machinery Co' }),
+    page.getByRole('heading', { level: desk ? 1 : 2, name: 'Invented Machinery Co' }),
   ).toBeVisible();
+  if (desk)
+    await expect(page.getByRole('heading', { name: 'Invented Machinery Co' })).toHaveCount(1);
   return { sent, codes, reads, errors };
 }
 
@@ -363,7 +370,7 @@ test('D6 on: the stage bar reads the customer marker, one Next step card holds t
     'Update Mission Details',
     'Cancel Mission',
     'Assign Route',
-    'Reply on the Receipt',
+    'Reply to the Customer',
   ]);
   // The customer panel: their own words for the stage, the replies and the approved reports. No control in it.
   const panel = customer(page);
@@ -392,7 +399,7 @@ test('D6 on: empty, closed, paused and read-only states say what is true', async
   await next(page).getByText('More Actions').click();
   await expect(next(page).getByLabel('More mission actions').getByRole('button')).toHaveText([
     'Assign Route',
-    'Reply on the Receipt',
+    'Reply to the Customer',
   ]);
   await page.unrouteAll({ behavior: 'ignoreErrors' });
 
@@ -518,7 +525,7 @@ test('D7: an action with no fields of its own asks only for the reason and carri
   await expect(dialog.locator('[data-step-customer]')).toContainText(
     'The customer will see: On hold.',
   );
-  await expect(dialog.locator('[data-step-route]')).toHaveText('Route: BD to CN.');
+  await expect(dialog.locator('[data-step-route]')).toHaveText('Route: Bangladesh to China.');
   const form = dialog.locator('form');
   await expect(form.locator('select, textarea, input:not([type="hidden"])')).toHaveCount(1);
   await form.locator('textarea[name="reason"]').fill('Waiting for the invented buyer');
@@ -629,16 +636,17 @@ test('D7: while a change is out the dialog cannot be closed and a second submit 
   expect(sent).toHaveLength(1);
 });
 
-test('D7: Reply on the Receipt and Assign Route open in the same dialog and send what they always sent', async ({
+test('D7: Reply to the Customer and Assign Route open in the same dialog and send what they always sent', async ({
   page,
 }) => {
   const { sent } = await open(page, true);
-  await other(page, 'Reply on the Receipt');
-  const reply = actionDialog(page, 'Reply on the Receipt');
-  await expect(reply).toContainText('The customer will read it on their private receipt');
+  await other(page, 'Reply to the Customer');
+  const reply = actionDialog(page, 'Reply to the Customer');
+  await expect(reply).toContainText('The customer reads it on their own request page');
+  await expect(reply).not.toContainText(/receipt/i);
   await expect(reply.locator('[data-step-route]')).toHaveText('Route: not assigned yet.');
-  await reply.getByLabel('Reply visible on the private receipt').fill('Invented reply words');
-  await reply.getByRole('button', { name: 'Post Receipt Reply' }).click();
+  await reply.getByLabel('Your reply to the customer').fill('Invented reply words');
+  await reply.getByRole('button', { name: 'Send Reply' }).click();
   await expect(reply).toBeHidden();
   await expect(next(page).getByText('Reply posted.')).toBeVisible();
   expect(sent[0]!.path).toBe('/api/workspace/mission-reply');
@@ -754,8 +762,8 @@ test('D7 on a phone: the reply, route and step dialogs all keep their one action
   await next(page).getByRole('button', { name: 'Begin Qualification' }).click();
   await pinned('Begin Qualification', 'Begin Qualification');
   await page.keyboard.press('Escape');
-  await other(page, 'Reply on the Receipt');
-  await pinned('Reply on the Receipt', 'Post Receipt Reply');
+  await other(page, 'Reply to the Customer');
+  await pinned('Reply to the Customer', 'Send Reply');
   await page.keyboard.press('Escape');
   await other(page, 'Assign Route');
   const route = actionDialog(page, 'Assign Route');
@@ -906,3 +914,164 @@ for (const [width, height] of [
     if (width === 390) expect(screens(on)).toBeLessThanOrEqual(2);
   });
 }
+
+// Team desk v4.1 fix run (staff-core-07 to -10, -15, -16 and the work-log follow-ups on the mission page).
+const tabRow = (page: Page) => page.getByRole('tablist', { name: 'Mission sections' });
+
+test('fix run: the tabs are one row that scrolls with an edge cue on a phone, and a tab starts right under it', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, true);
+  const row = tabRow(page);
+  // One row: every tab sits on the same line, and no label wraps.
+  const tops = await row
+    .getByRole('tab')
+    .evaluateAll((tabs) => [
+      ...new Set(tabs.map((tab) => Math.round(tab.getBoundingClientRect().top))),
+    ]);
+  expect(tops).toHaveLength(1);
+  expect((await row.boundingBox())!.height).toBeLessThanOrEqual(56);
+  // More tabs wait past the right edge, and the row says so with a fade there.
+  await expect(row).toHaveAttribute('data-more', 'end');
+  await expect(page.locator('.mission-tabs-cue.is-end')).toBeVisible();
+  await expect(page.locator('.mission-tabs-cue.is-start')).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  // The keyboard reaches the last tab; it is scrolled into view and the cue moves to the other edge.
+  await row.getByRole('tab', { name: 'Overview' }).focus();
+  await page.keyboard.press('End');
+  const history = row.getByRole('tab', { name: 'History' });
+  await expect(history).toHaveAttribute('aria-selected', 'true');
+  await expect(row).toHaveAttribute('data-more', 'start');
+  await expect(page.locator('.mission-tabs-cue.is-start')).toBeVisible();
+  await expect(page.locator('.mission-tabs-cue.is-end')).toBeHidden();
+  const last = (await history.boundingBox())!;
+  expect(last.x + last.width).toBeLessThanOrEqual(391);
+  // On a tab other than Overview the stage, next step and customer panel are not drawn above the tab row, so
+  // the tab's own content starts on the first screen.
+  await expect(page.locator('.mission-desk')).toBeHidden();
+  const heading = page.getByRole('tabpanel').getByRole('heading', { name: 'History' });
+  expect((await heading.boundingBox())!.y).toBeLessThan(844 / 2);
+  await row.getByRole('tab', { name: 'Overview' }).click();
+  await expect(next(page)).toBeVisible();
+});
+
+test('fix run: on a wide screen every tab keeps the desk block, and the row has no cue', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, true);
+  await expect(tabRow(page)).toHaveAttribute('data-more', 'none');
+  await tabRow(page).getByRole('tab', { name: 'History' }).click();
+  await expect(next(page)).toBeVisible();
+  await expect(customer(page)).toBeVisible();
+});
+
+test('fix run: with section addresses on, the mission page links open each section at its own address', async ({
+  page,
+}) => {
+  await open(page, true);
+  await page.goto(`${origin}/?desk=on&urls=on`);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Invented Machinery Co' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Missions' }),
+  ).toHaveAttribute('href', `/operator/missions?workspace=${tenant}`);
+  await page.getByRole('tab', { name: 'Companies', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Find and add companies' })).toHaveAttribute(
+    'href',
+    `/operator/research?workspace=${tenant}&mission=${mission}`,
+  );
+  await page.getByRole('tab', { name: 'Quotes', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Open Money' })).toHaveAttribute(
+    'href',
+    `/operator/commercial?workspace=${tenant}&mission=${mission}`,
+  );
+  // No link of the page names a section by its old "#workspace-" address.
+  const hrefs = await page
+    .locator('#main a[href]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href')!));
+  expect(hrefs.filter((href) => href.includes('#workspace-'))).toEqual([]);
+  // Off (the default), the addresses are the ones the page always had.
+  await page.goto(`${origin}/?desk=on`);
+  await expect(
+    page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Missions' }),
+  ).toHaveAttribute('href', missionsList);
+});
+
+test('fix run: the route is written as place names in the header, the facts and the dialog', async ({
+  page,
+}) => {
+  await open(page, true, { routeLabel: 'BD to CN' });
+  const header = page.locator('.mission-page-summary');
+  await expect(header).toContainText('Route Bangladesh to China');
+  await expect(header).not.toContainText('BD to CN');
+  await expect(header.locator('[data-flag="bd"]')).toHaveCount(1);
+  await expect(header.locator('[data-flag="cn"]')).toHaveCount(1);
+  // The market of the request carries its mark, as it does on Today.
+  await expect(header.locator('[data-flag="es"]')).toHaveCount(1);
+  const work = page.getByRole('region', { name: 'Work' });
+  await expect(work).toContainText('Bangladesh to China');
+  await other(page, 'Assign Route');
+  await expect(actionDialog(page, 'Assign Route').locator('[data-step-route]')).toHaveText(
+    'Route: Bangladesh to China.',
+  );
+});
+
+test('fix run: the Overview facts are named groups with the team words, and the record details are folded', async ({
+  page,
+}) => {
+  await open(page, true);
+  const work = page.getByRole('region', { name: 'Work' });
+  const request = page.getByRole('region', { name: 'Request' });
+  await expect(work.locator('dt')).toHaveText([
+    'Owner',
+    'Next action',
+    'Due',
+    'Last change',
+    'Route',
+  ]);
+  await expect(request.locator('dt').first()).toHaveText('What they sell or need');
+  await expect(request).toContainText('Travelling');
+  await expect(request).toContainText('Contact');
+  const panelWords = page.getByRole('tabpanel');
+  for (const old of [
+    'Offer / requirement',
+    'Visit window',
+    'Response details',
+    'Additional context',
+  ])
+    await expect(panelWords).not.toContainText(old);
+  // A label is quieter than its value: muted colour, smaller size.
+  const sizes = await work.evaluate((node) => {
+    const size = (selector: string) =>
+      parseFloat(getComputedStyle(node.querySelector(selector)!).fontSize);
+    return { label: size('dt'), value: size('dd') };
+  });
+  expect(sizes.label).toBeLessThan(sizes.value);
+  const record = page.locator('.mission-facts-record');
+  await expect(record).not.toHaveAttribute('open', '');
+  await record.locator('summary').click();
+  await expect(record).toContainText('Notice version');
+});
+
+for (const width of [390, 1100, 1440])
+  test(`fix run: with text at 200% nothing runs past the right edge at ${width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, true);
+    await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+    // The desk draws one column once the page holds too few rem for three (1100 px is the width the page has
+    // beside the menu on a 1440 px screen with doubled text, where the cards used to run past the edge).
+    await expect(customer(page).locator('details')).toHaveCount(width / 32 < 40 ? 1 : 0);
+    await next(page).getByText('More Actions').click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+    const edge = await page
+      .locator('.mission-desk :is(button, summary, dd, p)')
+      .evaluateAll((nodes) => Math.max(...nodes.map((node) => node.getBoundingClientRect().right)));
+    expect(edge).toBeLessThanOrEqual(width);
+  });

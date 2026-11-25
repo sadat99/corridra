@@ -319,7 +319,17 @@ async function openDelivery(page: Page, address: string, width: number) {
   await page.goto('about:blank');
   await page.goto(address);
   await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' });
-  await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
+  // The heading may be one pixel where the page title says Reports; the section navigation is drawn.
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('heading', { name: 'Reports', exact: true, level: 2 }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('navigation', { name: 'Publication and reporting sections' }),
+  ).toBeVisible();
   // The billing hub sits in the tab for mission and delegation experience (L-03).
   await openTab(page.locator('#workspace-delivery'), 'Mission and delegation experience');
 }

@@ -115,27 +115,34 @@ test('the programme page tabs scroll inside themselves and the page does not scr
   await page.goto(`${origin}/?room=1`);
   const tabs = page.locator('.programme-page-tabs > .ux-subtabs-list');
   await expect(tabs).toBeVisible();
-  const box = await page.evaluate(() => {
-    const list = document.querySelector('.programme-page-tabs > .ux-subtabs-list') as HTMLElement;
-    return {
-      page: document.documentElement.scrollWidth,
-      view: window.innerWidth,
-      listClient: list.clientWidth,
-      listScroll: list.scrollWidth,
-    };
-  });
+  const measure = () =>
+    page.evaluate(() => {
+      const list = document.querySelector('.programme-page-tabs > .ux-subtabs-list') as HTMLElement;
+      return {
+        page: document.documentElement.scrollWidth,
+        view: window.innerWidth,
+        listClient: list.clientWidth,
+        listScroll: list.scrollWidth,
+      };
+    });
+  const box = await measure();
   expect(box.page, 'the page is no wider than the screen').toBeLessThanOrEqual(box.view);
   expect(box.listClient, 'the tab row fits the screen').toBeLessThanOrEqual(box.view);
+  // UI/UX.v4.1: creating a programme is the page's primary action, not a tab, so the three tabs that remain fit
+  // this fixture at 390. At 320 they are wider than the row and scroll inside it, as before.
+  await page.setViewportSize({ width: 320, height: 844 });
+  const narrow = await measure();
+  expect(narrow.page, 'the page is no wider than the screen').toBeLessThanOrEqual(narrow.view);
   expect(
-    box.listScroll,
+    narrow.listScroll,
     'the tabs are wider than the row, so they scroll inside it',
-  ).toBeGreaterThan(box.listClient);
+  ).toBeGreaterThan(narrow.listClient);
   // The last tab is reachable by scrolling the row, never by scrolling the page.
-  const last = page.getByRole('tab', { name: 'New Sample Programme' });
+  const last = page.getByRole('tab', { name: 'Pricing, Series and Exports' });
   await last.scrollIntoViewIfNeeded();
   await last.click();
   await expect(last).toHaveAttribute('aria-selected', 'true');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
 // Team desk v4.1 brings the chosen tab into view inside a tab row that scrolls, and only inside the team desk frame.
@@ -144,7 +151,8 @@ test('the programme page tabs scroll inside themselves and the page does not scr
 test('the programme page tab row is never scrolled for the reader: opened on the last tab it stays at the start', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  // 320 px: the width at which the three page tabs are wider than their row.
+  await page.setViewportSize({ width: 320, height: 844 });
   await page.route('**/api/customer-programme-*', (route) =>
     route.fulfill({ status: 503, json: { error: 'unavailable' } }),
   );
@@ -153,8 +161,8 @@ test('the programme page tab row is never scrolled for the reader: opened on the
       json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
     }),
   );
-  await page.goto(`${origin}/?room=1&tab=new`);
-  const last = page.getByRole('tab', { name: 'New Sample Programme' });
+  await page.goto(`${origin}/?room=1&tab=pricing`);
+  const last = page.getByRole('tab', { name: 'Pricing, Series and Exports' });
   await expect(last).toHaveAttribute('aria-selected', 'true');
   const row = page.locator('.programme-page-tabs > .ux-subtabs-list');
   expect(await page.locator('.ux-desk-frame').count()).toBe(0);

@@ -1,7 +1,7 @@
 import { SCANNER_LINE } from '@corridra/auth/deferred-controls';
 import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 import { ShowMore } from './show-more';
-import { SubTabs } from '../../components/ux/sub-tabs';
+import { DeskParts } from './desk-sections';
 import { bodyNotAvailable } from '../../lib/body-access';
 
 const mimeLabels: Record<string, string> = {
@@ -73,7 +73,7 @@ export function EvidencePanel({
           : 'Files stay in quarantine until the checks finish. Verification needs a different reviewer and a fresh authenticator check.'}
       </p>
       <p className="ux-scanner-line">{SCANNER_LINE}</p>
-      <SubTabs
+      <DeskParts
         label="Evidence sections"
         tabs={[
           {

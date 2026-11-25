@@ -841,18 +841,17 @@ test('rule 6 flags a planted profile form without steps and passes one with step
   );
 });
 
-// Audit unit A3d, part 2 (Programmes): both programme pages pass the page frame, the planning page tells the room it is
-// framed (so the room draws no second back link), and the rare programme actions sit in a "More actions" menu where
-// archiving asks first. The rename form, its payloads and the Undo are the existing ones.
+// Audit unit A3d, part 2 (Programmes): both programme pages sit in the shared customer shell, the planning page tells the
+// room it is framed (so the room draws no back link of its own), and the rare programme actions sit in a "More actions"
+// menu where archiving asks first. The rename form, its payloads and the Undo are the existing ones.
+// UI/UX.v4.1 ("No repeated links"): the menu is the only way back, so neither page passes a back link to its frame.
 test('the programme pages use the shared page frame and the room keeps its rare actions in a menu', () => {
   const chooser = read(join(web, 'app/account/delegations/organise/page.tsx'));
-  assert.match(
-    chooser,
-    /frame=\{\{ back: programmesChooserBack \}\}/,
-    'the chooser passes a frame',
-  );
+  assert.match(chooser, /<CustomerShell\b/, 'the chooser sits in the customer shell');
+  assert.doesNotMatch(chooser, /\bback:/, 'the chooser passes no back link');
   const planning = read(join(web, 'app/account/delegations/[workspaceId]/page.tsx'));
-  assert.match(planning, /frame=\{\{ back: programmeBack \}\}/, 'the planning page passes a frame');
+  assert.match(planning, /<CustomerShell\b/, 'the planning page sits in the customer shell');
+  assert.doesNotMatch(planning, /\bback:/, 'the planning page passes no back link');
   assert.match(planning, /\n\s+framed\n/, 'the planning page marks the room as framed');
   const lifecycle = read(join(web, 'app/account/delegations/programme-lifecycle.tsx'));
   assert.match(lifecycle, /<OverflowMenu[\s\S]*?'More actions for '[\s\S]*?Archive Programme/);

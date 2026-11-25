@@ -21,7 +21,7 @@ function reachable(role: string | null): Set<TeamPlaceId> {
   for (const item of teamItemsFor(role))
     for (const place of teamPlacesFor(item, role)) found.add(place.id);
   for (const place of settingsLevel(role)) found.add(place.id);
-  // The avatar menu: Authenticator for every role, Health and Readiness for a role with no Admin.
+  // The avatar menu: the Authenticator for every role (Health and Readiness are in Admin, for owner and admin).
   for (const place of teamAccountPlaces(role)) found.add(place.id);
   return found;
 }
@@ -100,9 +100,10 @@ describe('NAV-03 same access: nothing is shown to a role that cannot open it', (
       }
     }
   });
-  test('an operator finds Health and Readiness in the avatar menu, where Admin is not shown; owner and admin find them in Admin', () => {
+  test('Health and Readiness are for owner and admin only: they are in Admin, and no other role is offered them in the avatar menu', () => {
     const ids = (role: string) => teamAccountPlaces(role).map((p) => p.id);
-    expect(ids('operator')).toEqual(['workspace-authenticator', 'ops-health', 'ops-gates']);
+    expect(ids('operator')).toEqual(['workspace-authenticator']);
+    expect(ids('reviewer')).toEqual(['workspace-authenticator']);
     expect(ids('viewer')).toEqual(['workspace-authenticator']);
     expect(ids('owner')).toEqual(['workspace-authenticator']);
     expect(ids('admin')).toEqual(['workspace-authenticator']);

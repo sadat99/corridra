@@ -19,6 +19,8 @@ import {
   type MeetingStatus,
 } from '@corridra/domain/access';
 import { formatDateTime } from '../../lib/ux/format';
+import { countryName } from '../../lib/ux/options';
+import { CountryName } from './country-name';
 import { ShowMore } from './show-more';
 import { Dialog } from '../../components/ux/dialog';
 import { meetingColumns, meetingStatusTone } from './meeting-columns';
@@ -34,6 +36,8 @@ function plain(code: string) {
   const words = code.replaceAll('_', ' ').toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
+/** Team desk v4.1: a stored market code in words ("OTHER" reads "Other"). The stored code never changes. */
+const marketWords = (code: string) => (code === 'OTHER' ? 'Other' : countryName(code));
 type Policy = {
   id: string;
   jurisdiction: string;
@@ -194,7 +198,12 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   // exists only while the Meetings page is the one on show, and opens the propose form in the shared dialog.
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null),
     [proposing, setProposing] = useState(false),
-    [proposed, setProposed] = useState(false);
+    [proposed, setProposed] = useState(false),
+    // Team desk v4.1 (staff-core-23): the propose form is two steps, the meeting and then its owner. Both steps are
+    // one form, so the field names and the single payload are as they were.
+    [proposeStep, setProposeStep] = useState<1 | 2>(1);
+  const firstProposeStep = useRef<HTMLDivElement>(null),
+    secondProposeStep = useRef<HTMLDivElement>(null);
   // The header follows the address, so the slot is looked for again whenever the path or the `#` part changes.
   const pathname = usePathname();
   useEffect(() => {
@@ -379,7 +388,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   if (!comms || !meetings)
     return (
       <section data-operator-workbench className="operator-section">
-        <h2>Introductions and meetings</h2>
+        <h2 className={deskV41 ? 'sr-only' : undefined}>Introductions and meetings</h2>
         <OperatorWorkbench
           label="Introduction and meeting sections"
           sections={[
@@ -416,41 +425,28 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       Corridra and sends no email. Owners turn on introductions and dispatch in Workspace controls.
     </p>
   );
-  const proposeForm = (
-    <form
-      className="operator-form detail-card"
-      aria-label="Propose meeting"
-      onSubmit={(e) => {
-        setProposed(true);
-        void submit(
-          e,
-          (f) => ({
-            action: 'propose',
-            messageId: field(f, 'messageId'),
-            title: field(f, 'title'),
-            brief: field(f, 'brief'),
-            participants: field(f, 'participants')
-              .split('\n')
-              .map((s) => s.trim())
-              .filter(Boolean),
-            ownerId: field(f, 'ownerId'),
-            nextAction: field(f, 'nextAction'),
-            dueAt: timestamp(f, 'dueAt'),
-            reason: field(f, 'reason'),
-          }),
-          'meeting',
-        ).then((saved) => {
-          if (saved) setProposing(false);
-        });
-      }}
-    >
-      {deskV41 ? null : <h3>Propose a meeting</h3>}
+  // Team desk v4.1 (staff-core-23): a meeting is proposed on a reply in which the buyer chose Interested.
+  const interested = comms.messages.filter((m) => m.decision === 'INTERESTED');
+  const proposeChoices = deskV41 ? interested : comms.messages;
+  /** Goes to the second step once every field of the first one is valid; the first invalid field says why. */
+  const continuePropose = () => {
+    const fields = firstProposeStep.current?.querySelectorAll<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >('input, select, textarea');
+    for (const input of fields ?? []) if (!input.reportValidity()) return;
+    setProposeStep(2);
+    window.setTimeout(() => secondProposeStep.current?.querySelector('select')?.focus(), 0);
+  };
+  const meetingFields = (
+    <>
       <label className="field">
         Meeting introduction
         <select name="messageId" required>
-          {comms.messages.map((m) => (
+          {proposeChoices.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.presentation.company} ({m.decision ?? 'no response'})
+              {deskV41
+                ? `${m.presentation.company}, ${m.decision ? plain(m.decision).toLowerCase() : 'no reply yet'}, link expires ${formatDateTime(m.expires_at)}`
+                : `${m.presentation.company} (${m.decision ?? 'no response'})`}
             </option>
           ))}
         </select>
@@ -467,12 +463,92 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         Meeting participants, one per line
         <textarea name="participants" required maxLength={1200} />
       </label>
-      <Ownership owners={meetings.owners} />
-      <button className="primary-link" disabled={busy}>
-        Propose Meeting
-      </button>
-    </form>
+    </>
   );
+  const proposeForm =
+    deskV41 && interested.length === 0 ? (
+      <p className="ux-empty" role="note">
+        No interested replies yet. A meeting is proposed once a buyer answers Interested to an
+        introduction.
+      </p>
+    ) : (
+      <form
+        className="operator-form detail-card"
+        aria-label="Propose meeting"
+        // Team desk v4.1: while step 1 is shown, Enter in a field is Continue. The browser does not check the form
+        // then (the owner fields of step 2 are hidden), and Continue checks the fields of step 1 itself.
+        noValidate={deskV41 && proposeStep === 1}
+        onSubmit={(e) => {
+          if (deskV41 && proposeStep === 1) {
+            e.preventDefault();
+            continuePropose();
+            return;
+          }
+          setProposed(true);
+          void submit(
+            e,
+            (f) => ({
+              action: 'propose',
+              messageId: field(f, 'messageId'),
+              title: field(f, 'title'),
+              brief: field(f, 'brief'),
+              participants: field(f, 'participants')
+                .split('\n')
+                .map((s) => s.trim())
+                .filter(Boolean),
+              ownerId: field(f, 'ownerId'),
+              nextAction: field(f, 'nextAction'),
+              dueAt: timestamp(f, 'dueAt'),
+              reason: field(f, 'reason'),
+            }),
+            'meeting',
+          ).then((saved) => {
+            if (saved) {
+              setProposing(false);
+              setProposeStep(1);
+            }
+          });
+        }}
+      >
+        {deskV41 ? (
+          <>
+            <div ref={firstProposeStep} className="propose-step" hidden={proposeStep !== 1}>
+              <p>Step 1 of 2: the reply and the meeting.</p>
+              {meetingFields}
+              <button type="button" className="primary-link" onClick={continuePropose}>
+                Continue
+              </button>
+            </div>
+            <div ref={secondProposeStep} className="propose-step" hidden={proposeStep !== 2}>
+              <p>Step 2 of 2: who owns the next step.</p>
+              <Ownership owners={meetings.owners} />
+              <div className="propose-step-actions">
+                <button
+                  type="button"
+                  className="secondary-link"
+                  disabled={busy}
+                  onClick={() => setProposeStep(1)}
+                >
+                  Back
+                </button>
+                <button className="primary-link" disabled={busy}>
+                  Propose Meeting
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <h3>Propose a meeting</h3>
+            {meetingFields}
+            <Ownership owners={meetings.owners} />
+            <button className="primary-link" disabled={busy}>
+              Propose Meeting
+            </button>
+          </>
+        )}
+      </form>
+    );
   /** Team desk v4.1: the Meetings page opens on its board; introductions and follow-up stay sibling tabs. */
   const boardFirst = (tabs: SubTab[]) =>
     deskV41
@@ -488,7 +564,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
     <section className="operator-section">
       <div className="section-heading">
         {deskV41 ? null : <p className="label">CONTROLLED ACCESS</p>}
-        <h2>Introductions and meetings</h2>
+        <h2 className={deskV41 ? 'sr-only' : undefined}>Introductions and meetings</h2>
         <p>Give the buyer a reason to respond. Keep the meeting and its next step owned.</p>
       </div>
       <p role="status" aria-live="polite" aria-label="Access status">
@@ -499,7 +575,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         disabled={busy}
         onClick={() => void refresh().catch((e) => setMessage(e.message))}
       >
-        Refresh Access and Meetings
+        {deskV41 ? 'Refresh' : 'Refresh Access and Meetings'}
       </button>
       {deskV41 ? null : channelNote}
       <SubTabs
@@ -516,10 +592,21 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                   <ul>
                     {comms.policies.map((p) => (
                       <li key={p.id}>
-                        {p.jurisdiction} / {channelLabel(p.channel)} /{' '}
-                        {p.contact_purpose.replaceAll('_', ' ')}: version {p.version},{' '}
-                        {p.enabled ? 'on' : 'off'}, valid until {formatDateTime(p.valid_until)}.{' '}
-                        {p.basis}
+                        {deskV41 ? (
+                          p.jurisdiction === 'OTHER' ? (
+                            'Other'
+                          ) : (
+                            <CountryName code={p.jurisdiction} />
+                          )
+                        ) : (
+                          p.jurisdiction
+                        )}{' '}
+                        / {channelLabel(p.channel)} /{' '}
+                        {deskV41
+                          ? plain(p.contact_purpose)
+                          : p.contact_purpose.replaceAll('_', ' ')}
+                        : version {p.version}, {p.enabled ? 'on' : 'off'}, valid until{' '}
+                        {formatDateTime(p.valid_until)}. {p.basis}
                       </li>
                     ))}
                   </ul>
@@ -550,7 +637,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                           Recipient jurisdiction
                           <select name="jurisdiction">
                             {['ES', 'BD', 'DE', 'OTHER'].map((v) => (
-                              <option key={v}>{v}</option>
+                              <option key={v} value={v}>
+                                {deskV41 ? marketWords(v) : v}
+                              </option>
                             ))}
                           </select>
                         </label>
@@ -577,7 +666,10 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                           <input type="checkbox" name="enabled" defaultChecked />
                           Enable this policy version
                         </label>
-                        <button className="primary-link" disabled={busy}>
+                        <button
+                          className={deskV41 ? 'secondary-link' : 'primary-link'}
+                          disabled={busy}
+                        >
                           Approve Policy
                         </button>
                       </form>
@@ -603,7 +695,10 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                           Approved introduction text
                           <textarea name="body" required minLength={3} maxLength={1500} />
                         </label>
-                        <button className="primary-link" disabled={busy}>
+                        <button
+                          className={deskV41 ? 'secondary-link' : 'primary-link'}
+                          disabled={busy}
+                        >
                           Approve Template
                         </button>
                       </form>
@@ -692,8 +787,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                             .filter((p) => p.enabled)
                             .map((p) => (
                               <option key={p.id} value={p.id}>
-                                {p.jurisdiction} / {channelLabel(p.channel)} /{' '}
-                                {p.contact_purpose.replaceAll('_', ' ')} v{p.version}
+                                {deskV41 ? marketWords(p.jurisdiction) : p.jurisdiction} /{' '}
+                                {channelLabel(p.channel)} / {p.contact_purpose.replaceAll('_', ' ')}{' '}
+                                v{p.version}
                               </option>
                             ))}
                         </select>
@@ -724,7 +820,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                         Introduced company country
                         <select name="country">
                           {['BD', 'ES', 'DE', 'OTHER'].map((c) => (
-                            <option key={c}>{c}</option>
+                            <option key={c} value={c}>
+                              {deskV41 ? marketWords(c) : c}
+                            </option>
                           ))}
                         </select>
                       </label>
@@ -754,7 +852,10 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                         <input type="checkbox" required />I reviewed this introduction and approve
                         the displayed context for this recipient.
                       </label>
-                      <button className="primary-link" disabled={busy}>
+                      <button
+                        className={deskV41 ? 'secondary-link' : 'primary-link'}
+                        disabled={busy}
+                      >
                         Create Private Introduction
                       </button>
                     </form>
@@ -772,7 +873,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                     <p>Keep this link private. It permits one response to this introduction.</p>
                   </div>
                 )}
-                <h3>Introductions and replies</h3>
+                <h3 className={deskV41 ? 'sr-only' : undefined}>Introductions and replies</h3>
                 <p>
                   Latest 50 introductions. A receipt shows the introduction went out through its
                   channel. It is not a held meeting or a commercial result.
@@ -950,10 +1051,11 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                     {proposeForm}
                   </PhoneFold>
                 )}
-                <h3>Meeting itinerary</h3>
+                <h3 className={deskV41 ? 'sr-only' : undefined}>Meeting itinerary</h3>
                 <p>
-                  Times below show both the meeting timezone and your browser timezone. Briefs and
-                  outcomes stay private to authorized operators.
+                  {deskV41
+                    ? "Times show the meeting's time zone and yours. Only team members with access see briefs and outcomes."
+                    : 'Times below show both the meeting timezone and your browser timezone. Briefs and outcomes stay private to authorized operators.'}
                 </p>
                 {deskV41 ? (
                   <div className="ux-meeting-board">
@@ -968,7 +1070,11 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                           title={column.title}
                           count={allShown ? `${cards.length}` : `${cards.length} shown`}
                         >
-                          {cards.length === 0 && <p className="ux-meeting-none">No meetings.</p>}
+                          {cards.length === 0 && (
+                            <p className="ux-meeting-none">
+                              {manage ? 'No meetings.' : 'No meetings you can see.'}
+                            </p>
+                          )}
                           {cards.map((m) => (
                             <MeetingCard
                               key={`${m.id}-${m.version}`}
@@ -1015,10 +1121,18 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             label: `Follow-up (${meetings.followups.length})`,
             panel: (
               <>
-                <h3>Owned follow-up</h3>
+                <h3 className={deskV41 ? 'sr-only' : undefined}>Owned follow-up</h3>
                 {meetings.followups.map((f) => (
                   <article key={f.id} className="detail-card">
                     <h4>{f.next_action}</h4>
+                    {deskV41 && (
+                      <p>
+                        Meeting:{' '}
+                        {meetings.meetings.find((m) => m.id === f.meeting_id)?.title ??
+                          'Not on this page'}
+                        .
+                      </p>
+                    )}
                     <p>
                       {plain(f.status)}. Owner:{' '}
                       {meetings.owners.find((o) => o.user_id === f.owner_id)?.name ??
@@ -1048,8 +1162,8 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                         <label className="field">
                           Follow-up result
                           <select name="status">
-                            <option>COMPLETED</option>
-                            <option>CANCELLED</option>
+                            <option value="COMPLETED">{deskV41 ? 'Completed' : 'COMPLETED'}</option>
+                            <option value="CANCELLED">{deskV41 ? 'Cancelled' : 'CANCELLED'}</option>
                           </select>
                         </label>
                         <label className="field">
@@ -1083,6 +1197,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
               className="primary-link"
               onClick={() => {
                 setProposed(false);
+                setProposeStep(1);
                 setProposing(true);
               }}
             >
@@ -1355,9 +1470,17 @@ function MeetingCard({
         <p>
           <span className="ux-status" data-tone={meetingStatusTone(m.status)}>
             {plain(m.status)}
-          </span>{' '}
-          Version {m.version}.
+          </span>
         </p>
+        {response?.presentation.company && <p>With {response.presentation.company}.</p>}
+        {m.status === 'SCHEDULED' && m.starts_at && (
+          // The page says times show the meeting's time zone and yours, so the card shows both.
+          <p>
+            {m.timezone
+              ? `Meets ${formatDateTime(m.starts_at, { timeZone: m.timezone })}. Your time: ${formatDateTime(m.starts_at)}.`
+              : `Meets ${formatDateTime(m.starts_at)}.`}
+          </p>
+        )}
         <p>
           Next: {m.next_action} ·{' '}
           {data.owners.find((o) => o.user_id === m.owner_id)?.name ?? 'Not assigned'} · due{' '}

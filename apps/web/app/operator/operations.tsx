@@ -1,5 +1,6 @@
 'use client';
-import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
+import { type SubTab } from '../../components/ux/sub-tabs';
+import { DeskParts } from './desk-sections';
 import { FounderOverview } from '../../components/founder-overview';
 import { ReferencePicker } from '../../components/ux/reference-picker';
 import { PhoneFold } from '../../components/phone-fold';
@@ -261,8 +262,11 @@ function Table({
         <tbody>
           {rows.map((r, i) => (
             <tr key={String(r.id ?? i)} hidden={i >= shown}>
-              {columns.map(([k]) => (
-                <td key={k}>{cell?.(k, r) ?? value(r[k])}</td>
+              {columns.map(([k, l]) => (
+                // The column word travels with the cell, so a phone can stack a row and still name each value.
+                <td key={k} data-label={l}>
+                  {cell?.(k, r) ?? value(r[k])}
+                </td>
               ))}
             </tr>
           ))}
@@ -299,7 +303,7 @@ function DashboardTabs({
 }) {
   const shown = keep ? tabs.filter((tab) => keep(tab.id)) : tabs;
   if (keep && shown.length === 1) return <div className="ux-desk-lone-tab">{shown[0].panel}</div>;
-  return <SubTabs tabs={shown} {...rest} />;
+  return <DeskParts tabs={shown} {...rest} />;
 }
 
 export function Operations({
@@ -405,7 +409,8 @@ export function Operations({
       try {
         const [d, h, c, a] = await Promise.all([
           request('operations-dashboard', undefined, query),
-          request('operations-health'),
+          // Health is read only for the roles that may open it (owner, admin); the other roles never ask.
+          admin ? request('operations-health') : Promise.resolve(null),
           request('mission-catalogue'),
           admin ? request('operations-controls') : Promise.resolve(null),
         ]);
@@ -605,7 +610,14 @@ export function Operations({
       <div className="ops-heading">
         {/* Team desk v4.1 (D15): the page title is Status and the segment names the page, so this heading
             stays for screen readers only and the page keeps its outline. */}
-        <h2 className={deskV41 ? 'sr-only' : undefined}>Global operations</h2>
+        <h2 className={deskV41 ? 'sr-only' : undefined} data-page-title="workspace-operations">
+          {deskV41
+            ? // Each Status page has its own name in the outline, the one its segment shows.
+              ({ 'ops-health': 'Health', 'ops-gates': 'Readiness', 'ops-center': 'Control Center' }[
+                activeSection
+              ] ?? (section === 'ops-dashboard' ? 'Dashboard' : 'Operations'))
+            : 'Global operations'}
+        </h2>
         <button
           className="button button-secondary"
           disabled={busy}
@@ -658,12 +670,18 @@ export function Operations({
         ].filter((item) => item.panel === activeSection)}
       />
       <p>
-        {purpose === 'commercial_qualification'
-          ? 'Founder visibility, route readiness and accountable recovery for this authorized workspace. Provider activation and independent approvals remain separate.'
-          : 'Founder visibility, route readiness and accountable recovery. Corridra is live at small scale; creating an account does not by itself admit a customer request.'}
+        {deskV41
+          ? // Team desk v4.1: plain words; the page title and its purpose line already say what the page is.
+            purpose === 'commercial_qualification'
+            ? 'This workspace is authorized for real customer work. Provider activation and independent approvals stay separate.'
+            : 'Corridra is live at small scale. Creating an account does not by itself admit a customer request.'
+          : purpose === 'commercial_qualification'
+            ? 'Founder visibility, route readiness and accountable recovery for this authorized workspace. Provider activation and independent approvals remain separate.'
+            : 'Founder visibility, route readiness and accountable recovery. Corridra is live at small scale; creating an account does not by itself admit a customer request.'}
       </p>
       <p role="status" aria-live="polite" aria-label="Operations status">
-        {message}
+        {/* Team desk v4.1: the first load says so in the body, not only on a disabled button. */}
+        {deskV41 && busy && !dashboard && !message ? 'Loading the latest status…' : message}
       </p>
       {unacknowledged && (
         <button
@@ -688,7 +706,11 @@ export function Operations({
         <PhoneFold summary="Filter the records (10 filters)" className="ops-filters" fold="always">
           <form onSubmit={filter} className="operator-form">
             <fieldset disabled={busy}>
-              <legend>Filter canonical records in this workspace</legend>
+              <legend>
+                {deskV41
+                  ? 'Filter the records in this workspace'
+                  : 'Filter canonical records in this workspace'}
+              </legend>
               <label className="field">
                 Directional route
                 <select name="route">
@@ -773,7 +795,12 @@ export function Operations({
         </PhoneFold>
         {dashboard && (
           <>
-            <p>{dashboard.definitions.scope}</p>
+            <p>
+              {deskV41
+                ? // Team desk v4.1: the same fact in plain words (the stored sentence is written for engineers).
+                  'These counts cover every mission in this workspace that matches the filters. Only the mission list is split into pages.'
+                : dashboard.definitions.scope}
+            </p>
             <DashboardTabs
               label="Dashboard sections"
               dormant={activeSection !== 'ops-dashboard'}
@@ -811,7 +838,9 @@ export function Operations({
                         </dl>
                         <details className="ops-more-counts">
                           <summary>
-                            {`${Math.max(0, Object.keys(dashboard.summary).length - 6)} more counts: denominators, unknown values and timing`}
+                            {deskV41
+                              ? `${Math.max(0, Object.keys(dashboard.summary).length - 6)} more counts, with totals, unknown values and timing`
+                              : `${Math.max(0, Object.keys(dashboard.summary).length - 6)} more counts: denominators, unknown values and timing`}
                           </summary>
                           <dl className="operations-metrics">
                             {Object.entries(dashboard.summary)
@@ -823,11 +852,19 @@ export function Operations({
                                 </div>
                               ))}
                           </dl>
-                          <p>
-                            Rejected missions, first useful result acceptance, retention rate and
-                            forecasts: Unknown. Cancellation is shown separately. First recorded
-                            target timing is an observable proxy.
-                          </p>
+                          {deskV41 ? (
+                            <p>
+                              Not measured yet: rejected missions, acceptance of the first useful
+                              result, retention and forecasts. Cancellations are counted separately.
+                              The time to the first recorded target stands in for speed.
+                            </p>
+                          ) : (
+                            <p>
+                              Rejected missions, first useful result acceptance, retention rate and
+                              forecasts: Unknown. Cancellation is shown separately. First recorded
+                              target timing is an observable proxy.
+                            </p>
+                          )}
                         </details>
                       </div>
                     </div>
@@ -930,7 +967,9 @@ export function Operations({
                         <h4>Corridra fee revenue and delivery economics</h4>
                         <p>
                           {dashboard.financeAvailable
-                            ? 'Original currency and integer minor units. Earned fee, invoiced fee and collected fee are distinct observations.'
+                            ? deskV41
+                              ? 'Exact amounts in the currency they were recorded in. Earned, invoiced and collected fees are counted separately.'
+                              : 'Original currency and integer minor units. Earned fee, invoiced fee and collected fee are distinct observations.'
                             : 'Financial records require owner/admin access. Their absence here does not mean zero.'}
                         </p>
                         <Table
@@ -1122,10 +1161,11 @@ export function Operations({
           <h3>Global Corridor Control Center</h3>
           <p className="ops-live-state">
             <strong>Status: {LIVE_STATE}.</strong> Open controls are deferred by the owner and
-            listed under <a href="#ops-gates">Production readiness</a>. None of them is passed or
-            approved.
+            listed under{' '}
+            {deskV41 ? 'Status, Readiness' : <a href="#ops-gates">Production readiness</a>}. None of
+            them is passed or approved.
           </p>
-          <SubTabs
+          <DeskParts
             label="Control Center sections"
             dormant={activeSection !== 'ops-center'}
             tabs={[
@@ -1173,7 +1213,10 @@ export function Operations({
                             <option value="">Choose a configured route</option>
                             {catalogue?.routes.map((r) => (
                               <option key={r.id} value={r.id}>
-                                {r.origin_market} → {r.destination_market}
+                                {/* Team desk v4.1 (UI/UX.v4.1 L1): the place names; an option holds words only. */}
+                                {deskV41
+                                  ? `${placeName(r.origin_market)} → ${placeName(r.destination_market)}`
+                                  : `${r.origin_market} → ${r.destination_market}`}
                               </option>
                             ))}
                           </select>
@@ -1217,13 +1260,22 @@ export function Operations({
                           summary="How to edit the configuration and where related settings are"
                           fold="always"
                         >
-                          <p>
-                            Create routes and install reusable templates in{' '}
-                            <a href="#workspace-settings">Routes and settings</a>. Manage approved
-                            models in <a href="#workspace-ai">AI assistance</a> and contributors in{' '}
-                            <a href="#workspace-network">Execution network</a>. Credentials stay in
-                            secure provider settings.
-                          </p>
+                          {deskV41 ? (
+                            // Team desk v4.1: each place by its menu word; a menu place is not linked again.
+                            <p>
+                              Create routes and install reusable templates in Settings. Manage
+                              approved models in Settings, Assistance and helpers in Helpers.
+                              Credentials stay in secure provider settings.
+                            </p>
+                          ) : (
+                            <p>
+                              Create routes and install reusable templates in{' '}
+                              <a href="#workspace-settings">Routes and settings</a>. Manage approved
+                              models in <a href="#workspace-ai">AI assistance</a> and contributors
+                              in <a href="#workspace-network">Execution network</a>. Credentials
+                              stay in secure provider settings.
+                            </p>
+                          )}
                           <p>
                             Edit enabled missionTypes, languages, currencies, timeZones, localities,
                             clusters, approved sourceCategories, channels, operatorCapabilities,
@@ -1674,19 +1726,40 @@ export function Operations({
         className="ux-operations-panel"
         hidden={activeSection !== 'ops-health'}
       >
-        <h3 className={deskV41 ? 'sr-only' : undefined}>Recovery and health</h3>
-        <p>
-          PostgreSQL events and receipts remain authoritative. Leases expire after 30 seconds;
-          transient attempts back off by 5, 10 and 20 seconds. Three failed attempts need an
-          accountable operator decision. Replaying a received effect does not send it again.
-        </p>
+        <h3 className={deskV41 ? 'sr-only' : undefined} data-page-title="ops-health">
+          Recovery and health
+        </h3>
+        {deskV41 ? (
+          // Team desk v4.1: the rule in plain words first; the engineering note stays, behind one fold.
+          <>
+            <p>
+              A step that fails is tried again three times, a few seconds apart. After three
+              failures a team member decides what happens next. Trying again never sends the same
+              thing twice.
+            </p>
+            <details className="ops-technical">
+              <summary>Technical details</summary>
+              <p>
+                PostgreSQL events and receipts remain authoritative. Leases expire after 30 seconds;
+                transient attempts back off by 5, 10 and 20 seconds. Three failed attempts need an
+                accountable operator decision. Replaying a received effect does not send it again.
+              </p>
+            </details>
+          </>
+        ) : (
+          <p>
+            PostgreSQL events and receipts remain authoritative. Leases expire after 30 seconds;
+            transient attempts back off by 5, 10 and 20 seconds. Three failed attempts need an
+            accountable operator decision. Replaying a received effect does not send it again.
+          </p>
+        )}
         {health && (
           <>
             <p>
               Database reachable: {value(health.health.database_reachable)}. Unscanned evidence:{' '}
               {value(health.health.unscanned)}. {health.costWarning}
             </p>
-            <SubTabs
+            <DeskParts
               label="Recovery and health sections"
               dormant={activeSection !== 'ops-health'}
               tabs={[
@@ -1856,7 +1929,7 @@ export function Operations({
           <strong>Status: {LIVE_STATE}.</strong> Corridra serves a small number of real customers.
           The controls below are open and deferred by the owner. None of them is passed or approved.
         </p>
-        <SubTabs
+        <DeskParts
           label="Production readiness sections"
           dormant={activeSection !== 'ops-gates'}
           tabs={[
@@ -1914,14 +1987,27 @@ export function Operations({
               label: 'Rules and runbook',
               panel: (
                 <>
-                  {admin && (
-                    <p>
-                      Repository settings for these controls (branch rules, secret scanning and code
-                      analysis) are described in the owner technical setup runbook,
-                      docs/runbooks/owner-technical-setup.md. Nothing on this page changes a setting
-                      or clears a control.
-                    </p>
-                  )}
+                  {admin &&
+                    (deskV41 ? (
+                      // Team desk v4.1: the repository path is a technical detail, one click away and closed.
+                      // The words are the same as the switch-off paragraph.
+                      <details className="desk-technical">
+                        <summary>Technical details</summary>
+                        <p>
+                          Repository settings for these controls (branch rules, secret scanning and
+                          code analysis) are described in the owner technical setup runbook,
+                          docs/runbooks/owner-technical-setup.md. Nothing on this page changes a
+                          setting or clears a control.
+                        </p>
+                      </details>
+                    ) : (
+                      <p>
+                        Repository settings for these controls (branch rules, secret scanning and
+                        code analysis) are described in the owner technical setup runbook,
+                        docs/runbooks/owner-technical-setup.md. Nothing on this page changes a
+                        setting or clears a control.
+                      </p>
+                    ))}
                   <p>
                     Bangladesh to China: sourcing and machinery come before delegations. Bangladesh
                     to Spain and the EU: buyer and export market access come before reverse

@@ -153,7 +153,9 @@ test('/corridors: each destination has its flag beside the name, Key Asian Marke
   }
 });
 
-test('/corridors: Another Route block has its three actions and one primary', async ({ page }) => {
+test('/corridors: Another Route block has two quiet actions and links the request form once', async ({
+  page,
+}) => {
   await page.goto('/corridors');
   await expect(page.getByRole('heading', { name: 'Another route?' })).toBeVisible();
   await expect(
@@ -166,9 +168,9 @@ test('/corridors: Another Route block has its three actions and one primary', as
   await expect(
     page.locator('main').getByRole('link', { name: 'See a Sample Mission' }),
   ).toHaveAttribute('href', '#mission-example');
-  await expect(page.locator('.guide-other-route a.primary-link')).toHaveCount(1);
-  await expect(page.locator('.guide-other-route a.primary-link')).toHaveText('Start a Request');
-  await expect(page.locator('.guide-other-route a.primary-link')).toHaveAttribute('href', '/plan');
+  // The page's one primary sits in the route picker; this block repeats neither it nor the request form link.
+  await expect(page.locator('.guide-other-route a.primary-link')).toHaveCount(0);
+  await expect(page.locator('.guide-other-route a[href="/plan"]')).toHaveCount(1);
 });
 
 test('/corridors: the older lead, Spain link, picker and sample mission are open below the rows, in order', async ({

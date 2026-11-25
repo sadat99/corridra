@@ -14,9 +14,17 @@ test.afterAll(async () => {
   await fixture.close();
 });
 
-type Options = { v41: boolean; role?: string; real?: boolean; width?: number; height?: number };
+type Options = {
+  v41: boolean;
+  role?: string;
+  real?: boolean;
+  width?: number;
+  height?: number;
+  /** The server turned this person away from a section address (operator-entry.tsx adds `unavailable=1`). */
+  turned?: boolean;
+};
 async function open(page: Page, path: string, options: Options) {
-  const { v41, role = 'owner', real = false, width = 1440, height = 900 } = options;
+  const { v41, role = 'owner', real = false, width = 1440, height = 900, turned = false } = options;
   await page.setViewportSize({ width, height });
   await page.route('**/api/**', (route) =>
     route.fulfill({ status: 404, json: { error: 'Not part of this fixture' } }),
@@ -40,7 +48,9 @@ async function open(page: Page, path: string, options: Options) {
   );
   await page.route('**/api/workspace/config?*', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/notifications?*', (route) => route.fulfill({ json: [] }));
-  await page.goto(`${fixture.origin}${path}?v41=${v41 ? 'on' : 'off'}&role=${role}`);
+  await page.goto(
+    `${fixture.origin}${path}?v41=${v41 ? 'on' : 'off'}&role=${role}${turned ? '&unavailable=1' : ''}`,
+  );
   await expect(page.getByLabel('Workspace status')).toBeAttached();
   await expect(page.getByText('Loading workspace…')).toHaveCount(0);
 }
@@ -147,9 +157,15 @@ test('switch on: a segment opens the existing address and the page opens at the 
 test('switch on: an old # link still lands on its section', async ({ page }) => {
   await open(page, '/operator', { v41: true, height: 500 });
   await page.evaluate(() => {
+    window.scrollTo({ top: 200, behavior: 'instant' });
     window.location.hash = 'workspace-evidence';
   });
-  await expect(page.locator('#workspace-evidence')).toBeFocused();
+  // The page it names opens at the top with nothing focused for the person, so no box is drawn round the page
+  // body (audit staff-core-07). The same as opening the page by its own address.
+  await expect(page.locator('#workspace-evidence')).toBeVisible();
+  await expect(page.locator('#workspace-evidence')).not.toBeFocused();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('BODY');
   await expect(segments(page).locator('a[aria-current="page"]')).toHaveText('Evidence review');
   // The title and the purpose line follow the same address as the segments.
   await expect(heading(page).locator('h1')).toHaveText('Companies');
@@ -190,15 +206,28 @@ test('switch on: no label above a panel heading and no jump links', async ({ pag
 });
 
 test('switch on: the segments follow the role', async ({ page }) => {
-  await open(page, '/operator/health', { v41: true, role: 'operator' });
+  // Health and Readiness are for owner and admin only (owner ruling, 25 Nov 2026): an operator's Status has two pages.
+  await open(page, '/operator/health', { v41: true, role: 'admin' });
   await expect(heading(page).locator('h1')).toHaveText('Status');
   await expect(page.getByRole('navigation', { name: 'Status pages' }).getByRole('link')).toHaveText(
     ['Operations', 'Dashboard', 'Health', 'Readiness'],
   );
+  await open(page, '/operator/operations', { v41: true, role: 'operator' });
+  await expect(heading(page).locator('h1')).toHaveText('Status');
+  await expect(page.getByRole('navigation', { name: 'Status pages' }).getByRole('link')).toHaveText(
+    ['Operations', 'Dashboard'],
+  );
   await open(page, '/operator/settings', { v41: true, role: 'admin' });
   await expect(
     page.getByRole('navigation', { name: 'Settings pages' }).getByRole('link'),
-  ).toHaveText(['Settings', 'Assistance', 'Control Center', 'Owner page']);
+  ).toHaveText(['Routes and settings', 'Assistance', 'Control Center', 'Owner page']);
+  // The Settings page has no tab called "Settings" (audit staff-admin-08): the title already says it.
+  await expect(
+    page.getByRole('navigation', { name: 'Settings pages' }).getByRole('link', {
+      name: 'Settings',
+      exact: true,
+    }),
+  ).toHaveCount(0);
   await expect(
     page.getByRole('navigation', { name: 'Settings pages' }).getByRole('link', {
       name: 'Owner page',
@@ -270,4 +299,219 @@ test('switch on: the segments work from the keyboard and show their focus', asyn
   expect(outline).not.toBe('none');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/operator\/evidence\?workspace=/);
+});
+
+// Audit of 25 Nov 2026, staff-admin-01 and -02: a page the role may not open showed that page's title and purpose
+// line over the Today content, said so only inside a closed row, and put the focus on the whole left menu.
+test('switch on: a page the role may not open shows Today, says so in the open and focuses nothing', async ({
+  page,
+}) => {
+  for (const [role, path] of [
+    ['viewer', '/operator/controls'],
+    ['viewer', '/operator/settings'],
+    ['operator', '/operator/audit'],
+    ['viewer', '/operator/health'],
+    ['operator', '/operator/health'],
+    ['operator', '/operator/readiness'],
+  ] as const) {
+    await open(page, path, { v41: true, role });
+    await expect(heading(page).locator('h1'), path).toHaveText('Today');
+    await expect(heading(page).locator('.ux-frame-helper')).toHaveText(
+      'What needs your decision now and what is waiting on others.',
+    );
+    await expect(segments(page)).toHaveCount(0);
+    const note = page.locator('main#main').getByRole('alert');
+    await expect(note).toHaveCount(1);
+    await expect(note).toBeVisible();
+    await expect(note).toContainText('This section is unavailable for your current workspace role');
+    // In the open: the desk's own access notice, not inside a closed row and not the preview banner.
+    expect(await note.evaluate((el) => !!el.closest('details'))).toBe(false);
+    expect(await note.evaluate((el) => !!el.closest('.ux-state[data-state="denied"]'))).toBe(true);
+    await expect(page.locator('#workspace-navigation')).not.toBeFocused();
+    expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('BODY');
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  }
+  // Health and Readiness are turned away by the server, which sends the person to Today with a flag: Today says so in the
+  // same words, in the open, and the flag only lasts while the person is on Today.
+  for (const role of ['viewer', 'operator'])
+    for (const v41 of [true, false]) {
+      await open(page, '/operator', { v41, role, turned: true });
+      const note = page.locator('main#main').getByRole('alert');
+      await expect(note, `${role} ${v41}`).toHaveCount(1);
+      await expect(note).toContainText(
+        'This section is unavailable for your current workspace role',
+      );
+      expect(await note.evaluate((el) => !!el.closest('details'))).toBe(false);
+    }
+  // A role that may open the page sees no such note.
+  await open(page, '/operator/controls', { v41: true, role: 'owner' });
+  await expect(heading(page).locator('h1')).toHaveText('Team and access');
+  await expect(page.locator('main#main').getByRole('alert')).toHaveCount(0);
+});
+
+test('switch on: a page whose body is still loading does not put the focus on the left menu', async ({
+  page,
+}) => {
+  // Status loads its own records after the workspace; until then there is no block to land on.
+  for (const path of ['/operator/operations', '/operator/dashboard', '/operator/health']) {
+    await open(page, path, { v41: true });
+    await expect(heading(page).locator('h1')).toHaveText('Status');
+    await expect(page.locator('#workspace-navigation')).not.toBeFocused();
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  }
+  // The menu's own address still opens and focuses it.
+  await open(page, '/operator', { v41: true });
+  await page.evaluate(() => {
+    window.location.hash = 'workspace-navigation';
+  });
+  await expect(page.locator('#workspace-navigation')).toBeFocused();
+});
+
+// Switch OFF audit of 25 Nov 2026, F7: off, the only explanation was the last line of the lower card, far from
+// the title. The same note now leads the page in both states.
+test('switch off: a page the role may not open says so at the top of the page, once', async ({
+  page,
+}) => {
+  await open(page, '/operator/controls', { v41: false, role: 'viewer' });
+  const note = page.locator('main#main').getByRole('alert');
+  await expect(note).toHaveCount(1);
+  await expect(note).toBeVisible();
+  await expect(note).toContainText('This section is unavailable for your current workspace role');
+  // The desk's own access notice, first in the page body and outside every card.
+  expect(
+    await note.evaluate((el) => {
+      const state = el.closest('.ux-state[data-state="denied"]');
+      return (
+        !!state && state.parentElement?.firstElementChild === state && !state.closest('section')
+      );
+    }),
+  ).toBe(true);
+  await expect(page.locator('main#main .ux-testmode[role="alert"]')).toHaveCount(0);
+});
+
+// Switch OFF audit of 25 Nov 2026, F9: on a phone a page opened by its own address scrolled itself to its body
+// (258 px on Missions, 286 px on Companies), so the title sat under the top bar.
+test('a page opened by its own address opens at the top on a phone, switch off and on', async ({
+  page,
+}) => {
+  for (const v41 of [false, true])
+    for (const path of ['/operator/missions', '/operator/research', '/operator/sources']) {
+      await open(page, path, { v41, width: 390, height: 800 });
+      await expect(heading(page).locator('h1')).toBeVisible();
+      // Give a late scroll the time to happen before reading the position.
+      await page.waitForTimeout(300);
+      expect(await page.evaluate(() => window.scrollY), `${path} v41 ${v41}`).toBe(0);
+    }
+  // Off, the body still takes the focus on arrival, as before; an old # link still scrolls to its page.
+  await open(page, '/operator/research', { v41: false, width: 390, height: 800 });
+  await expect(page.locator('#workspace-research')).toBeFocused();
+  await open(page, '/operator', { v41: false, width: 390, height: 800 });
+  await page.evaluate(() => {
+    window.location.hash = 'workspace-research';
+  });
+  await expect(page.locator('#workspace-research')).toBeFocused();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+});
+
+// Audit of 25 Nov 2026, staff-admin-10, staff-core-20, public-customer-01: a row of tabs or segments that scrolls
+// sideways on a phone was cut with nothing to say more was there.
+test('switch on: a segments row that scrolls sideways marks the edge that hides more, and only that edge', async ({
+  page,
+}) => {
+  const cue = (row: ReturnType<Page['locator']>) =>
+    row.evaluate((el) => ({
+      scrolls: el.scrollWidth > el.clientWidth + 1,
+      start: getComputedStyle(el, '::before').display !== 'none',
+      end: getComputedStyle(el, '::after').display !== 'none',
+    }));
+  const to = (row: ReturnType<Page['locator']>, where: 'start' | 'middle' | 'end') =>
+    row.evaluate((el, place) => {
+      const far = el.scrollWidth - el.clientWidth;
+      el.scrollTo({
+        left: place === 'start' ? 0 : place === 'end' ? far : far / 2,
+        behavior: 'instant',
+      });
+    }, where);
+  for (const width of [320, 390]) {
+    await open(page, '/operator/settings', { v41: true, width, height: 800 });
+    const row = segments(page).locator('ul');
+    await to(row, 'start');
+    await expect
+      .poll(() => cue(row), `rest at ${width}`)
+      .toEqual({ scrolls: true, start: false, end: true });
+    // The mark takes no room and no tap: the row is exactly as wide as its links.
+    const before = await row.evaluate((el) => el.scrollWidth);
+    await to(row, 'middle');
+    await expect
+      .poll(() => cue(row), `middle at ${width}`)
+      .toEqual({ scrolls: true, start: true, end: true });
+    expect(await row.evaluate((el) => el.scrollWidth)).toBe(before);
+    expect(await row.evaluate((el) => getComputedStyle(el, '::after').pointerEvents)).toBe('none');
+    await to(row, 'end');
+    await expect
+      .poll(() => cue(row), `end at ${width}`)
+      .toEqual({ scrolls: true, start: true, end: false });
+    expect(await row.evaluate((el) => el.scrollWidth)).toBe(before);
+    // One row, and the page itself never scrolls sideways.
+    expect(await row.evaluate((el) => getComputedStyle(el).flexWrap)).toBe('nowrap');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+    const results = await new AxeBuilder({ page }).include('nav.ux-desk-segments').analyze();
+    expect(results.violations.map((violation) => violation.id)).toEqual([]);
+  }
+  // A row that fits shows no mark at either edge.
+  await open(page, '/operator/settings', { v41: true, width: 1440 });
+  expect(await cue(segments(page).locator('ul'))).toEqual({
+    scrolls: false,
+    start: false,
+    end: false,
+  });
+});
+
+// Audit of 25 Nov 2026, staff-admin-23 and public-customer-16: the two links of the quiet footer were 39 px tall.
+test('the quiet footer links are full 44 px targets at every width', async ({ page }) => {
+  for (const width of [320, 390, 768, 1440]) {
+    await open(page, '/operator', { v41: true, width });
+    const links = page.locator('footer.site-footer a');
+    await expect(links).toHaveCount(2);
+    for (const box of await links.evaluateAll((all) =>
+      all.map((link) => link.getBoundingClientRect().height),
+    ))
+      expect(box, `footer link at ${width}`).toBeGreaterThanOrEqual(44);
+  }
+});
+
+// Audit of 25 Nov 2026, staff-core-02: the customer name on the Missions list is a row header, and the label style
+// of a column head (mono capitals, wide tracking, 12 px) was drawn on it.
+test('a name in a row header of the Missions list is drawn as a name, not as a column label', async ({
+  page,
+}) => {
+  await open(page, '/operator/missions', { v41: true });
+  const read = await page.evaluate(() => {
+    const holder = document.createElement('div');
+    holder.className = 'mission-queue';
+    holder.innerHTML =
+      '<table><thead><tr><th scope="col">Customer</th></tr></thead><tbody><tr><th scope="row"><a href="#x">Synthetic Beverage Co</a></th><td>Bangladesh to China</td></tr></tbody></table>';
+    document.querySelector('main#main')!.append(holder);
+    const style = (selector: string) => {
+      const computed = getComputedStyle(holder.querySelector(selector)!);
+      return {
+        transform: computed.textTransform,
+        tracking: computed.letterSpacing,
+        family: computed.fontFamily,
+        size: computed.fontSize,
+      };
+    };
+    const result = { name: style('tbody th'), cell: style('tbody td'), head: style('thead th') };
+    holder.remove();
+    return result;
+  });
+  expect(read.name.transform).toBe('none');
+  expect(read.name.tracking).toBe('normal');
+  // The same face and size as the cells beside it; the column head keeps its label style.
+  expect(read.name.family).toBe(read.cell.family);
+  expect(read.name.size).toBe(read.cell.size);
+  expect(read.head.transform).toBe('uppercase');
+  expect(read.head.family).not.toBe(read.cell.family);
 });

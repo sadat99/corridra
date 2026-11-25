@@ -2,6 +2,8 @@
 
 Document status: CURRENT.
 
+Amended 25 Nov 2026: while `CORRIDRA_UX_HOME_V42` is exactly `true`, the home and footer follow [UI/UX.v4.2](ui-ux-v4-2.md) (owner: "lock this v4.2"), which replaces the LP3 sections it names; with the switch off (the default) this file describes the live home.
+
 Track S3, Wave 3. The public home is owner-settled (concept A "Ledger", 22 Oct 2026, [design-system index](../../design-system/README.md) section 9): headline "Make market entry deliberate.", the three jobs on the first screen, and a Selling/Sourcing example mission beside them. This wave keeps that composition. It fixes what tests prove is wrong and makes the first intake step shorter. It is not a redesign. Superseded for the home page by the owner's decision of 6 November 2026 below (concept G), and for the home page again by the owner's decision of 17 November 2026 at the end of this file (Two Routes); everything else in this spec still applies.
 
 ## First: pin what exists (tests before any change)

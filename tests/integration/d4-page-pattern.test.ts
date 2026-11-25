@@ -96,7 +96,12 @@ describe('where the seventeen places go', () => {
     expect(ids('team')).toEqual(['workspace-controls', 'workspace-audit']);
     expect(labels('team')).toEqual(['People and access', 'Audit']);
     expect(ids('settings')).toEqual(['workspace-settings', 'workspace-ai', 'ops-center', 'owner']);
-    expect(labels('settings')).toEqual(['Settings', 'Assistance', 'Control Center', 'Owner page']);
+    expect(labels('settings')).toEqual([
+      'Routes and settings',
+      'Assistance',
+      'Control Center',
+      'Owner page',
+    ]);
   });
   test('no place sits in two groups and the stand-alone places show no segments', () => {
     const grouped = Object.values(deskGroups).flatMap((group) => group.segments.map((s) => s.id));
@@ -195,7 +200,8 @@ describe('a segment never shows a place the role may not open', () => {
   test('examples: an operator sees Status but not Team and access; the owner page needs its switch', () => {
     const ids = (place: DeskPlaceId, role: string, ownerPage = true) =>
       deskSegmentsFor(place, role, { urls: true, ownerPage }).segments.map((s) => s.id);
-    expect(ids('ops-health', 'operator')).toEqual([
+    expect(ids('ops-dashboard', 'operator')).toEqual(['workspace-operations', 'ops-dashboard']);
+    expect(ids('ops-health', 'admin')).toEqual([
       'workspace-operations',
       'ops-dashboard',
       'ops-health',
@@ -228,7 +234,7 @@ describe('the browser tab title with the pattern on', () => {
     expect(deskTabTitle('workspace-sources')).toBe('Sources and claims \u00b7 Companies');
     expect(deskTabTitle('ops-gates')).toBe('Readiness \u00b7 Status');
     expect(deskTabTitle('workspace-controls')).toBe('People and access \u00b7 Team and access');
-    expect(deskTabTitle('workspace-settings')).toBe('Settings');
+    expect(deskTabTitle('workspace-settings')).toBe('Routes and settings \u00b7 Settings');
     expect(deskTabTitle('owner')).toBe('Owner page \u00b7 Settings');
     for (const place of everyPlace) expect(deskTabTitle(place).length).toBeGreaterThan(0);
   });
@@ -241,8 +247,8 @@ describe('the browser tab title with the pattern on', () => {
   });
 });
 
-describe('switch off, every header is the one it was', () => {
-  test('the workspace header words are exactly the ones before the pattern', () => {
+describe('switch off, the header is the one it was, plus the ux-titled class', () => {
+  test('the workspace header words are the ones before the pattern; with section addresses on a ux-titled-<section> class marks the page', () => {
     const sections = [undefined, ...workspaceSections.map((section) => section.id)];
     for (const section of sections) {
       // Team shell off: the operator label and the one title, whatever else is set.
@@ -268,9 +274,31 @@ describe('switch off, every header is the one it was', () => {
       ).toEqual({
         eyebrow: 'TEAM WORKSPACE',
         title: teamSectionTitle(section),
-        className: section ? 'ux-operator-home' : 'ux-operator-home ux-titled-today',
+        // A section whose heading says the page title is marked by the server (ux-titled-<section id>), so the
+        // panel's own copy of the name is hidden from the first paint.
+        className: section
+          ? `ux-operator-home ux-titled-${section}`
+          : 'ux-operator-home ux-titled-today',
         place: null,
       });
+    }
+    // Every panel heading that is hidden for the page title has a marked page to match, and no other has.
+    const marked = [
+      'workspace-delivery',
+      'workspace-operations',
+      'ops-health',
+      'workspace-controls',
+      'workspace-audit',
+      'workspace-sources',
+    ];
+    for (const section of marked) {
+      expect(
+        operatorHeaderWords({ shellsV2: true, urls: true, teamDeskV41: false, section }).className,
+      ).toBe(`ux-operator-home ux-titled-${section}`);
+      // Pattern on: the page has its own title and the panels hide their headings by the switch.
+      expect(
+        operatorHeaderWords({ shellsV2: true, urls: true, teamDeskV41: true, section }).className,
+      ).not.toContain('ux-titled-' + section);
     }
     expect(teamSectionTitle(undefined)).toBe('Today');
     expect(teamSectionTitle('workspace-network')).toBe('Network');

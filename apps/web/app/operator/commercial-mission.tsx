@@ -1,5 +1,6 @@
 'use client';
 import { DateTimeField } from '../../components/ux/date-time-input';
+import { useOperatorFlags } from './operator-flags';
 import {
   OperatorWorkbench,
   useFormChangeGuard,
@@ -30,6 +31,8 @@ import {
   type EligiblePrefill,
 } from '../../lib/reply-review-view';
 import { bodyNotAvailable } from '../../lib/body-access';
+import { RouteWords } from './[section]/[missionId]/route-words';
+import { placeName } from '../account/request-words';
 import '../../components/ux/row-list.css';
 import './reply-handoff.css';
 
@@ -346,14 +349,34 @@ function ReplyTerms({ prefill }: { prefill: EligiblePrefill }) {
   );
 }
 
+/** Team desk v4.1: the save button of each task in Title Case. Off, the words are the ones they always were. */
+const deskSaveLabels: Record<string, string> = {
+  requirements: 'Save Requirements',
+  assessment: 'Save Assessment',
+  rfq: 'Save RFQ',
+  quotation: 'Save Offer',
+  decision: 'Save Decision',
+  activity: 'Save Meeting or Visit',
+  schedule: 'Save Schedule Item',
+  origin: 'Save Opportunity Origin',
+  route: 'Assign Route',
+};
+
 export function CommercialMission({
   tenant,
   missionId,
   replyId,
   onChanged,
+  offerOnly = false,
 }: {
   tenant: string;
   missionId: string;
+  /**
+   * Team desk v4.1 (decision 4): only the "Record a supplier offer" form, for the centred dialog the Quotes tab
+   * opens. It reads the mission itself on opening and sends the same command as the full panel; the review
+   * blocks and the task chooser are not drawn. Off, the panel is the one it always was.
+   */
+  offerOnly?: boolean;
   /** A reviewed supplier reply to prepare the offer from (ADR-081). Ignored unless it is an id and the role can record offers. */
   replyId?: string;
   onChanged?: () => void;
@@ -364,12 +387,15 @@ export function CommercialMission({
     onResetCapture,
     confirmChange,
   } = useFormChangeGuard<HTMLDivElement>();
+  const { teamDeskV41: desk } = useOperatorFlags();
   const [data, setData] = useState<Snapshot | null>(null),
     [catalogue, setCatalogue] = useState<Catalogue | null>(null),
     [proof, setProof] = useState<Proof | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
-    [job, setJob] = useState(() => (replyId && isUuid(replyId) ? 'quotation' : 'requirements')),
+    [job, setJob] = useState(() =>
+      offerOnly || (replyId && isUuid(replyId)) ? 'quotation' : 'requirements',
+    ),
     [source, setSource] = useState(''),
     [target, setTarget] = useState(''),
     [selectedPack, setSelectedPack] = useState(''),
@@ -448,7 +474,7 @@ export function CommercialMission({
   const boundHeading = useRef<HTMLHeadingElement>(null),
     staleHeading = useRef<HTMLHeadingElement>(null);
   // A link from the reply card opens the offer task and loads the mission once; nothing is requested without a reply id.
-  const wanted = Boolean(replyId && isUuid(replyId));
+  const wanted = offerOnly || Boolean(replyId && isUuid(replyId));
   useEffect(() => {
     if (wanted) void Promise.resolve().then(load);
     // Once, when the link opens the page: load is recreated every render and must not restart the request.
@@ -785,26 +811,46 @@ export function CommercialMission({
       onChangeCapture={onChangeCapture}
       onResetCapture={onResetCapture}
     >
-      <OperatorWorkbench
-        label={`Requirements and offer sections for mission ${missionId}`}
-        sections={[
-          { label: 'Requirements', heading: 'Requirements' },
-          { label: 'Original offers', heading: 'Original offers' },
-          { label: 'Comparison', heading: 'Supplier comparison' },
-          { label: 'History', heading: 'assessments' },
-        ]}
-      />
-      <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
-        Review Requirements, Offers and Visits
-      </button>
-      <p role="status">{message}</p>
-      {data && (
+      {!offerOnly && (
+        <>
+          <OperatorWorkbench
+            label={`Requirements and offer sections for mission ${missionId}`}
+            sections={[
+              { label: 'Requirements', heading: 'Requirements' },
+              { label: 'Original offers', heading: 'Original offers' },
+              { label: 'Comparison', heading: 'Supplier comparison' },
+              { label: 'History', heading: 'assessments' },
+            ]}
+          />
+          <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
+            Review Requirements, Offers and Visits
+          </button>
+        </>
+      )}
+      <p role="status">{message || (offerOnly && !data ? 'Loading the offer form…' : '')}</p>
+      {offerOnly && data && !manage && (
+        <p>Only an owner, admin or operator can record a supplier offer.</p>
+      )}
+      {data && !offerOnly && (
         <>
           <h4>Commercial mission execution</h4>
           <p>
-            {assignment?.status === 'ASSIGNED'
-              ? `${assignment.origin_market} → ${assignment.destination_market} · ${template?.label ?? typeKey}`
-              : 'Route not classified. An owner must supply an available reviewed route pack.'}
+            {assignment?.status === 'ASSIGNED' ? (
+              desk ? (
+                // Team desk v4.1 (UI/UX.v4.1 L1): each place by name, with its mark where it has one.
+                <>
+                  <RouteWords
+                    label={`${assignment.origin_market} to ${assignment.destination_market}`}
+                    none=""
+                  />{' '}
+                  · {template?.label ?? typeKey}
+                </>
+              ) : (
+                `${assignment.origin_market} → ${assignment.destination_market} · ${template?.label ?? typeKey}`
+              )
+            ) : (
+              'Route not classified. An owner must supply an available reviewed route pack.'
+            )}
           </p>
           <p>
             These records are operator observations. Assessments do not certify engineering,
@@ -1043,6 +1089,10 @@ export function CommercialMission({
               ))}
             </details>
           ))}
+        </>
+      )}
+      {data && (
+        <>
           {manage && wantedReply && (
             <div className="reply-handoff-status" role="status">
               {prefill.kind === 'loading' && <p>Loading the prepared offer.</p>}
@@ -1141,34 +1191,36 @@ export function CommercialMission({
           )}
           {manage && prefill.kind !== 'loading' && !bound && !outcome && (
             <CommercialTextDraft value={typedText}>
-              <label className="field">
-                Next task
-                <select
-                  disabled={busy}
-                  value={job}
-                  onChange={(e) => {
-                    if (busy || !confirmChange()) return;
-                    setJob(e.target.value);
-                    setMessage('');
-                  }}
-                >
-                  {[
-                    ['requirements', 'Review requirements'],
-                    ['assessment', 'Assess a counterparty'],
-                    ['rfq', 'Prepare an RFQ'],
-                    ['quotation', 'Record a supplier offer'],
-                    ['decision', 'Record selection or decline'],
-                    ['activity', 'Propose a meeting or visit'],
-                    ['schedule', 'Add a trip schedule item'],
-                    ['origin', 'Record commercial opportunity origin'],
-                    ...(data.role === 'owner' ? [['route', 'Assign a reviewed route']] : []),
-                  ].map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {!offerOnly && (
+                <label className="field">
+                  Next task
+                  <select
+                    disabled={busy}
+                    value={job}
+                    onChange={(e) => {
+                      if (busy || !confirmChange()) return;
+                      setJob(e.target.value);
+                      setMessage('');
+                    }}
+                  >
+                    {[
+                      ['requirements', 'Review requirements'],
+                      ['assessment', 'Assess a counterparty'],
+                      ['rfq', 'Prepare an RFQ'],
+                      ['quotation', 'Record a supplier offer'],
+                      ['decision', 'Record selection or decline'],
+                      ['activity', 'Propose a meeting or visit'],
+                      ['schedule', 'Add a trip schedule item'],
+                      ['origin', 'Record commercial opportunity origin'],
+                      ...(data.role === 'owner' ? [['route', 'Assign a reviewed route']] : []),
+                    ].map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <form
                 className="operator-form"
                 key={`${job}:${formDraft.restored}`}
@@ -1199,8 +1251,10 @@ export function CommercialMission({
                           )
                           .map((p) => (
                             <option value={p.id} key={p.id}>
-                              {String(p.origin_market)} → {String(p.destination_market)} · version{' '}
-                              {p.version}
+                              {desk
+                                ? `${placeName(String(p.origin_market))} → ${placeName(String(p.destination_market))}`
+                                : `${String(p.origin_market)} → ${String(p.destination_market)}`}{' '}
+                              · version {p.version}
                             </option>
                           ))}
                       </select>
@@ -1630,7 +1684,11 @@ export function CommercialMission({
                     (job === 'assessment' && !assessmentDefinition)
                   }
                 >
-                  Save {job.replaceAll('_', ' ')}
+                  {offerOnly
+                    ? 'Record Offer'
+                    : desk
+                      ? (deskSaveLabels[job] ?? 'Save')
+                      : `Save ${job.replaceAll('_', ' ')}`}
                 </button>
               </form>
             </CommercialTextDraft>

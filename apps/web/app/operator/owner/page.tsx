@@ -14,9 +14,10 @@ import { AccessState, StatusBadge } from '../../../components/access-state';
 import { FrontDoor } from '../../../components/front-door';
 import { ShowMoreList } from '../../../components/ux/show-more';
 import { SubTabs } from '../../../components/ux/sub-tabs';
+import { DeskSections } from '../desk-sections';
 import { TeamContextPublisher } from '../../../components/ux/team-context-publisher';
 import { TeamSecondLevel } from '../../../components/ux/team-second-level';
-import { deskFrame } from '../../../components/ux/desk-frame';
+import { deskFrame, deskFrameClass } from '../../../components/ux/desk-frame';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
 import { founderDoor, withWorkspace } from '../../../lib/front-doors';
@@ -39,7 +40,34 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-function Denied({ children }: { children: string }) {
+function Denied({
+  children,
+  signedIn = false,
+  notConfigured = false,
+}: {
+  children: string;
+  signedIn?: boolean;
+  /** The protected workspace is not set up here: no one is refused a role, and there is nothing to open. */
+  notConfigured?: boolean;
+}) {
+  // Team desk v4.1: no label above the title and, for a signed-in person, no link back (the menu is the way
+  // around). The words say why and what to do. Off, the page is as it was.
+  if (deskOn())
+    return (
+      <WorkspaceShell
+        title={notConfigured ? 'Owner page unavailable' : 'Not available for your role'}
+        className={'ux-owner ' + deskFrameClass}
+      >
+        <p role="alert" className="owner-denied">
+          {children}
+        </p>
+        {signedIn || notConfigured ? null : (
+          <Link prefetch={false} className="text-link" href="/operator">
+            Open Today
+          </Link>
+        )}
+      </WorkspaceShell>
+    );
   return (
     <WorkspaceShell eyebrow="OWNER PAGE" title="Workspace access is unavailable.">
       <AccessState kind="denied">
@@ -51,6 +79,8 @@ function Denied({ children }: { children: string }) {
     </WorkspaceShell>
   );
 }
+
+const deskOn = () => uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41');
 
 const groupId = (group: string) => 'owner-group-' + group.replace(/\W+/g, '-').toLowerCase();
 
@@ -66,7 +96,10 @@ export default async function Page({
 }) {
   if (!ownerPageEnabled()) notFound();
   const s = foundations();
-  if (!s) return <Denied>The protected workspace is not configured in this environment.</Denied>;
+  if (!s)
+    return (
+      <Denied notConfigured>The protected workspace is not configured in this environment.</Denied>
+    );
   await s.ready;
   const identity = await s.provider.getSession(await headers());
   const tenants = identity ? await s.access.tenants(identity.token) : [];
@@ -79,7 +112,7 @@ export default async function Page({
   if (access === 'sign-in') redirect('/operator/signin?next=' + encodeURIComponent('/operator'));
   if (access !== 'allowed' || !identity)
     return (
-      <Denied>
+      <Denied signedIn>
         This page is for workspace owners and admins. Ask your workspace owner to review your role.
       </Denied>
     );
@@ -97,14 +130,16 @@ export default async function Page({
   // Owner only, and only while the Invoice issuer screen is switched on.
   const issuerLink = ownerIssuerLink(tenant);
   // Team desk v4.1: the owner page is a Settings page, with the one page pattern. Off, the header is as it was.
-  const frame =
-    uxSwitchOn('CORRIDRA_UX_SHELLS_V2') && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')
-      ? deskFrame({
-          place: 'owner',
-          urls: uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS'),
-          ownerPage: true,
-        })
-      : null;
+  const frame = deskOn()
+    ? deskFrame({
+        place: 'owner',
+        urls: uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS'),
+        ownerPage: true,
+      })
+    : null;
+  // Team desk v4.1: the page already has the Settings segments, so its parts are sections of one page, not a
+  // second tab row. Off, they are the shared tabs as before.
+  const Parts = frame ? DeskSections : SubTabs;
   return (
     <WorkspaceShell
       eyebrow={frame ? undefined : 'OWNER PAGE'}
@@ -121,10 +156,11 @@ export default async function Page({
         />
       ) : null}
       {frame?.segments}
-      {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && (
+      {/* Team desk v4.1: these places are in the menu, so the page does not list them again. */}
+      {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && !frame && (
         <FrontDoor label="Founder areas" items={withWorkspace(founderDoor, tenant.id)} />
       )}
-      <SubTabs
+      <Parts
         label="Owner page sections"
         tabs={[
           {
@@ -346,19 +382,32 @@ export default async function Page({
                       </p>
                     </article>
                   ))}
-                  <p>
-                    Install steps for these records are in the owner technical setup runbook,
-                    docs/runbooks/owner-technical-setup.md in the repository.
-                  </p>
+                  {frame ? (
+                    // Team desk v4.1: the repository path is a technical detail, one click away and closed.
+                    <details className="desk-technical">
+                      <summary>Technical details</summary>
+                      <p>
+                        Install steps for these records are in the owner technical setup runbook,
+                        docs/runbooks/owner-technical-setup.md in the repository.
+                      </p>
+                    </details>
+                  ) : (
+                    <p>
+                      Install steps for these records are in the owner technical setup runbook,
+                      docs/runbooks/owner-technical-setup.md in the repository.
+                    </p>
+                  )}
                 </section>
               </div>
             ),
           },
         ]}
       />
-      <Link prefetch={false} className="text-link" href="/operator">
-        Back to your workspace
-      </Link>
+      {frame ? null : (
+        <Link prefetch={false} className="text-link" href="/operator">
+          Back to your workspace
+        </Link>
+      )}
     </WorkspaceShell>
   );
 }

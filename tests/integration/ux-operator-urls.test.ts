@@ -281,7 +281,11 @@ describe('every switch-off path', () => {
   });
   it('the operator page is the same workspace through the same entry, with no section', () => {
     const page = read('apps/web/app/operator/page.tsx');
-    expect(page).toContain('<OperatorEntry requested={(await searchParams).workspace} />');
+    // Same entry, no section: the only addition is the flag the server adds when it turns a role away from Health or
+    // Readiness (it shows the "unavailable for your role" note on Today).
+    expect(page).toContain('<OperatorEntry requested={query.workspace}');
+    expect(page).toContain("turnedAway={query.unavailable === '1'}");
+    expect(page).not.toContain('section=');
     const entry = read('apps/web/app/operator/operator-entry.tsx');
     // Without a section the sign-in redirect is the address it always was.
     expect(entry).toContain("+ (section ? '#' + section : '')");
@@ -419,7 +423,7 @@ describe('signing in again from the workspace comes back to the same workspace a
       ],
       [
         'apps/web/app/operator/reset-password/page.tsx',
-        '<a className="text-link" href={operatorSignInPage}>\n        Back to operator sign-in\n      </a>',
+        '<a className="text-link" href={operatorSignInPage}>\n        Operator Sign-In\n      </a>',
       ],
       [
         'apps/web/app/operator/recovery-form.tsx',

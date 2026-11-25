@@ -165,7 +165,7 @@ export function ProblemReportList({
           </button>
         </div>
       ) : null}
-      <details>
+      <details className="pr-fold">
         <summary>{listWords.meaningTitle}</summary>
         <dl className="pr-meanings">
           {problemReportStatuses.map((status) => (

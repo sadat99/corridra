@@ -189,7 +189,7 @@ test.describe('Settings (D17)', () => {
     await openWorkspace(page, '/operator/settings', { v41: true });
     const nav = page.getByRole('navigation', { name: 'Settings pages' });
     await expect(nav.getByRole('link')).toHaveText([
-      'Settings',
+      'Routes and settings',
       'Assistance',
       'Control Center',
       'Owner page',
@@ -524,6 +524,31 @@ test.describe('Inbox (D18)', () => {
     await page.getByRole('tab', { name: 'Problem reports' }).click();
     await page.getByRole('tab', { name: 'Helper interest' }).click();
     await expect(page.locator('#helper-interest-list')).not.toHaveAttribute('open', '');
+  });
+
+  test('switch on: after one list is read, the tab that opens loads its list without Load (staff-core-29)', async ({
+    page,
+  }) => {
+    const world = await open(page, '/operator/inbox', { v41: true });
+    // Before any read, opening a tab reads nothing.
+    await page.getByRole('tab', { name: 'Erasure requests' }).click();
+    await page.getByRole('tab', { name: 'Problem reports' }).click();
+    await page.waitForLoadState('networkidle');
+    expect(listReads(world)).toEqual([]);
+    await page.getByRole('button', { name: 'Load Problem Reports' }).click();
+    await expect(page.getByText('RP-000001')).toBeVisible();
+    // The check has been passed once: each tab opened from now on reads its own list, once.
+    await page.getByRole('tab', { name: 'Erasure requests' }).click();
+    await expect(page.getByText('ER-000001')).toBeVisible();
+    await page.getByRole('tab', { name: 'Programme applications' }).click();
+    await expect(page.getByText('Synthetic applicant 1')).toBeVisible();
+    await page.getByRole('tab', { name: 'Helper interest' }).click();
+    await expect(page.getByText('Synthetic Helper')).toBeVisible();
+    await page.getByRole('tab', { name: 'Erasure requests' }).click();
+    await page.waitForLoadState('networkidle');
+    const reads = listReads(world);
+    expect(reads).toHaveLength(4);
+    expect(reads.filter((line) => line.includes('customer-erasure-queue'))).toHaveLength(1);
   });
 
   test('switch on: the tabs work from the keyboard and an old tab word still lands', async ({

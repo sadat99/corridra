@@ -56,7 +56,25 @@ type Scenario = {
   erasure?: unknown[];
   /** The problem report queue answer; missing, the read is refused (503). */
   problemReports?: unknown;
+  /** The erasure queue read fails with this status. */
+  erasureStatus?: number;
+  /** Both queues answer as they do when the authenticator check is no longer fresh: 401 with the step-up code. */
+  staleCode?: boolean;
+  /** The erasure queue answers as a signed-out person: 401 with no code. */
+  erasureSignedOut?: boolean;
+  /** The signed-in person's role, as the workspace read gives it. Default owner. */
+  role?: string;
+  /** Counts the team read lists as not readable. */
+  unavailable?: string[];
 };
+const stale = { status: 401, json: { error: 'Confirm your code', code: 'STEP_UP_REQUIRED' } };
+/** The erasure queue's real answer to a stale check: 401 with the step-up code (deliveryError keeps it for this queue). */
+const staleErasure = {
+  status: 401,
+  json: { error: 'Verify your authenticator again to continue', code: 'STEP_UP_REQUIRED' },
+};
+/** A signed-out person: 401 with no code. It is not the check, so it never draws the Confirm Code line. */
+const signedOutErasure = { status: 401, json: { error: 'Sign in to continue' } };
 const fresh: Row = { id: id(1), status: 'DRAFT', company: 'Sample Towels Ltd', dueAt: inDays(4) };
 const late36: Row = {
   id: id(2),
@@ -125,7 +143,7 @@ async function open(page: Page, scenario: Scenario, query = '/?v41=on') {
         purpose: 'synthetic_validation',
         uploadsConfigured: false,
         scanMode: 'bypass',
-        role: 'owner',
+        role: scenario.role ?? 'owner',
         sources: [],
         claims: [],
         evidence: [],
@@ -154,19 +172,28 @@ async function open(page: Page, scenario: Scenario, query = '/?v41=on') {
     scenario.teamStatus
       ? route.fulfill({ status: scenario.teamStatus, json: { error: 'Sample' } })
       : route.fulfill({
-          json: scenario.team ?? {
-            acceptedQuotesNotStarted: 0,
-            serviceRequestsToQuote: 0,
-            repliesToReview: 0,
+          json: {
+            ...(scenario.team ?? {
+              acceptedQuotesNotStarted: 0,
+              serviceRequestsToQuote: 0,
+              repliesToReview: 0,
+            }),
+            ...(scenario.unavailable ? { unavailable: scenario.unavailable } : {}),
           },
         }),
   );
   await page.route('**/api/workspace/problem-reports?*', (route) =>
-    scenario.problemReports
-      ? route.fulfill({ json: scenario.problemReports })
-      : route.fulfill({ status: 503, json: { error: 'Sample' } }),
+    scenario.staleCode
+      ? route.fulfill(stale)
+      : scenario.problemReports
+        ? route.fulfill({ json: scenario.problemReports })
+        : route.fulfill({ status: 503, json: { error: 'Sample' } }),
   );
   await page.route('**/api/workspace/customer-erasure-queue?*', (route) => {
+    if (scenario.erasureSignedOut) return route.fulfill(signedOutErasure);
+    if (scenario.staleCode) return route.fulfill(staleErasure);
+    if (scenario.erasureStatus)
+      return route.fulfill({ status: scenario.erasureStatus, json: { error: 'Sample' } });
     const status = new URL(route.request().url()).searchParams.get('status');
     const items = (scenario.erasure ?? []).filter(
       (item) => (item as { status: string }).status === status,
@@ -358,6 +385,133 @@ test('switch on: a problem report queue that could not be read is never an all-c
   await expect(decide(page).getByText('problem reports open')).toHaveCount(0);
 });
 
+// Team desk v4.1 fix run (staff-core-17, -18, -19 and the two preview findings on Today).
+test('fix run: a stale authenticator check is one quiet line with Confirm Code, never a failed read', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, { ...quiet, staleCode: true }, '/?v41=on&reports=on');
+  const line = decide(page).locator('[data-code-check]');
+  await expect(line).toHaveCount(1);
+  await expect(line).toContainText(
+    'Confirm your code to see erasure requests and problem reports.',
+  );
+  await expect(line.getByRole('button', { name: 'Confirm Code' })).toBeVisible();
+  // Nothing failed, so nothing says it could not be read and nothing offers Try Again.
+  await expect(decide(page).getByText(/could not be read|is not available/)).toHaveCount(0);
+  await expect(decide(page).getByRole('button', { name: 'Try Again' })).toHaveCount(0);
+  // Decision 5: no count before the fresh check, and the headline does not claim an all-clear.
+  await expect(decide(page).getByText(/problem reports? open|erasure requests? open/)).toHaveCount(
+    0,
+  );
+  await expect(headline(page)).toHaveText('Confirm your code to check erasure requests.');
+  await expect(page.locator('.ux-today41')).not.toContainText('could not be checked');
+  // Confirm Code opens the check in place.
+  await line.getByRole('button', { name: 'Confirm Code' }).click();
+  await expect(page.getByRole('dialog', { name: 'Confirm it is you' })).toBeVisible();
+});
+
+test('fix run: a signed-out 401 on the erasure queue is not the code, so no Confirm Code line', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, { ...quiet, erasureSignedOut: true }, '/?v41=on&reports=on');
+  await expect(decide(page).locator('[data-code-check]')).toHaveCount(0);
+  await expect(decide(page).getByRole('button', { name: 'Confirm Code' })).toHaveCount(0);
+});
+
+test('fix run: an admin never reads the erasure queue and sees no erasure tile or failure line', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const erasureReads: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/api/workspace/customer-erasure-queue'))
+      erasureReads.push(request.url());
+  });
+  // Even a queue that would answer 403 (members.manage is owner only) is never asked.
+  await open(
+    page,
+    {
+      ...quiet,
+      role: 'admin',
+      erasureStatus: 403,
+      problemReports: { counts: { received: 0, in_review: 0 }, oldestReceivedAt: null },
+    },
+    '/?v41=on&role=admin&reports=on',
+  );
+  await expect(page.locator('.ux-today41')).toBeVisible();
+  await expect(page.locator('[data-code-check]')).toHaveCount(0);
+  await expect(page.locator('.ux-today41')).not.toContainText(/erasure/i);
+  await expect(decide(page).getByRole('button', { name: 'Try Again' })).toHaveCount(0);
+  expect(erasureReads).toEqual([]);
+});
+
+test('fix run: two lists that failed for one reason are named in one message with one Try Again', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, { ...quiet, erasureStatus: 503 }, '/?v41=on&reports=on');
+  await expect(
+    decide(page).getByText(
+      'Erasure requests and problem reports could not be read just now. Your work is safe.',
+      { exact: true },
+    ),
+  ).toHaveCount(1);
+  await expect(decide(page).getByRole('button', { name: 'Try Again' })).toHaveCount(1);
+  // The grammar fault of the preview ("Erasure requests is not available") is gone.
+  await expect(page.locator('.ux-today41')).not.toContainText(/requests is |reports is /);
+});
+
+test('fix run: a count this role can never read is left out; an owner still sees that it failed', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const unavailable = ['acceptedQuotesNotStarted', 'serviceRequestsToQuote'];
+  await open(page, { ...quiet, unavailable, role: 'operator' }, '/?v41=on&role=operator');
+  await expect(page.locator('.ux-today41')).toBeVisible();
+  await expect(page.locator('.ux-today41')).not.toContainText('Not available');
+  await expect(decide(page).getByText(/paid-service|accepted quotes?/)).toHaveCount(0);
+  await page.unrouteAll();
+  await open(page, { ...quiet, unavailable }, '/?v41=on&role=owner');
+  await expect(decide(page).getByText('paid-service requests to quote')).toBeVisible();
+  await expect(decide(page).getByText('Not available').first()).toBeVisible();
+});
+
+test('fix run: the Today heading of the panel stays in the outline and only one Today is shown', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, quiet);
+  await expect(page.locator('.ux-today41')).toBeVisible();
+  // The panel keeps its own heading for the outline and for the region's name, as it does with the switch off.
+  const panelHeading = page.locator('.ux-today41 h2#today-title');
+  await expect(panelHeading).toBeAttached();
+  await expect(panelHeading).toHaveText('Today');
+  await expect(page.locator('.ux-today41')).toHaveAttribute('aria-labelledby', 'today-title');
+  await expect(page.getByRole('region', { name: 'Today', exact: true })).toBeVisible();
+  // Shown once: the page title. The panel heading is a 1 px box, so the word is not on screen twice.
+  const boxes = await page
+    .getByRole('heading', { name: 'Today', exact: true })
+    .evaluateAll((headings) =>
+      headings.map((heading) => {
+        const { width, height } = heading.getBoundingClientRect();
+        return { id: heading.id, width: Math.round(width), height: Math.round(height) };
+      }),
+    );
+  expect(boxes).toHaveLength(2);
+  expect(boxes.filter((box) => box.width > 1 || box.height > 1)).toHaveLength(1);
+  expect(boxes.find((box) => box.id === 'today-title')).toEqual({
+    id: 'today-title',
+    width: 1,
+    height: 1,
+  });
+  // Show and Hide are 44 px targets in both directions.
+  const show = waiting(page).getByRole('button', { name: 'Show Waiting on others' });
+  const box = (await show.boundingBox())!;
+  expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
+});
+
 test('switch on: a capped read is a lower bound: only its own tile carries the plus sign, and it is never an all-clear', async ({
   page,
 }) => {
@@ -514,6 +668,32 @@ test('switch on: no address is linked twice in the page body, and no menu place 
   ).toHaveAttribute('href', '#workspace-missions');
   // The shortcuts and administration links that repeat menu places are gone from the body.
   await expect(page.locator('main nav.workspace-navigation')).toHaveCount(0);
+});
+
+test('switch on with section addresses: the queue tiles open each section at its own address, with the workspace kept', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, busy, '/?v41=on&sections=on');
+  const queues = decide(page).getByRole('list', { name: 'Also needs your decision' });
+  await expect(queues.getByRole('link', { name: '2 replies to review' })).toHaveAttribute(
+    'href',
+    `/operator/delivery?workspace=${tenant}`,
+  );
+  await expect(
+    queues.getByRole('link', { name: '1 paid-service request to quote' }),
+  ).toHaveAttribute('href', `/operator/delivery?workspace=${tenant}#billing-services`);
+  await expect(
+    queues.getByRole('link', {
+      name: /1\s*follow-up past its due date\s*1\s*meeting needs a new time/,
+    }),
+  ).toHaveAttribute('href', `/operator/meetings?workspace=${tenant}`);
+  // Section addresses off (the default): the page keeps the addresses it has always used.
+  await open(page, busy, '/?v41=on&sections=off');
+  await expect(queues.getByRole('link', { name: '2 replies to review' })).toHaveAttribute(
+    'href',
+    '#workspace-delivery',
+  );
 });
 
 test('switch off and on at 320, 390, 768, 1024, 1440 and 1920: off is unchanged, on has no sideways scroll, 44 px targets and is axe clean', async ({

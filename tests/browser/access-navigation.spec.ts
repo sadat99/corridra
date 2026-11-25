@@ -73,8 +73,11 @@ test('protected access entries explain unavailable configuration and offer a way
     const response = await page.goto(route);
     expect(response?.status()).toBe(200);
     await expect(page.getByRole('main')).toContainText(/not configured/);
+    // The helper pages name the destination (no Back-to link); the team pages keep their own words.
     await expect(
-      page.getByRole('main').getByRole('link', { name: 'Back to Corridra' }),
+      page.getByRole('main').getByRole('link', {
+        name: route.startsWith('/contributor') ? 'Corridra Home' : 'Back to Corridra',
+      }),
     ).toHaveAttribute('href', '/');
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(

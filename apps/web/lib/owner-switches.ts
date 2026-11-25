@@ -756,6 +756,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_HOME_V42',
+    label: 'Home page v4.2',
+    line: 'The public home page shows the v4.2 layout (route map in the hero, the two route cards as sentences, How it works, Trust and Who it is for side by side, Plain limits) and the footer drops its repeated headline, second Start a Request, trust labels and routes line. Every address, form and payload stays the same. Off by default. Turn it off by removing the setting in Vercel and redeploying.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_NOTIFICATIONS_V2',
     label: 'Inbox and hand-off emails',
     line: 'Every hand-off writes an inbox item and sends an email when the person has chosen email. Needs the commercial readiness database module.',

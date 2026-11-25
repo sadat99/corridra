@@ -4,7 +4,7 @@ import { fixtureTenant, startTodayFixture } from './team-today-fixture';
 
 // Navigation v1, team shell (docs/revamp/specs/navigation-v1.md): the real sidebar and second-level row,
 // bundled with the real stylesheets (the Today fixture), at 320, 390, 768, 1024, 1280 and 1440, for an owner
-// and for an operator (no Admin, the Authenticator and Health in the avatar menu). Guards: icon and text contrast on the navy bar in every state and in the
+// and for an operator (no Admin, the Authenticator in the avatar menu). Guards: icon and text contrast on the navy bar in every state and in the
 // collapsed rail, the row wrapping at 320 with 44 px targets and no sideways scroll, and the Account stopgap
 // for a role that is not shown Admin.
 let fixture: Awaited<ReturnType<typeof startTodayFixture>>;
@@ -164,30 +164,26 @@ test('an owner has Admin with its five and the Settings row holds the Owner page
   expect(axeRow.violations.map((v) => v.id)).toEqual([]);
 });
 
-test('an operator has no Admin, finds Health, Readiness and the Authenticator in the avatar menu, and keeps the daily items', async ({
+test('an operator has no Admin, finds only the Authenticator in the avatar menu, and keeps the daily items', async ({
   page,
 }) => {
-  const sidebar = await open(page, 'operator', '#ops-health');
+  // Health and Readiness are for owner and admin only (owner ruling, 25 Nov 2026; KI-40 superseded).
+  const sidebar = await open(page, 'operator', '#workspace-authenticator');
   await expect(sidebar.locator('summary', { hasText: 'Admin' })).toHaveCount(0);
   for (const name of ['Today', 'Missions', 'Companies', 'Meetings', 'Money'])
     await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
-  // No sidebar item claims the Health page; the avatar menu carries it.
+  // No sidebar item claims the Authenticator page; the avatar menu carries it.
   await expect(sidebar.locator('[aria-current]')).toHaveCount(0);
   const menu = page.locator('header.ux-app-header').getByRole('button', { name: 'Account menu' });
   await menu.click();
-  for (const name of ['Authenticator', 'Health', 'Readiness', 'Sign Out'])
+  for (const name of ['Authenticator', 'Sign Out'])
     await expect(page.getByRole('menuitem', { name, exact: true })).toBeVisible();
-  // The place in view is the menu's current page; the others are not.
-  await expect(page.getByRole('menuitem', { name: 'Health', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('menuitem', { name: 'Authenticator', exact: true })).toHaveAttribute(
     'aria-current',
     'page',
   );
-  await expect(page.getByRole('menuitem', { name: 'Readiness', exact: true })).not.toHaveAttribute(
-    'aria-current',
-    'page',
-  );
-  // Nothing an operator may not open is offered.
-  for (const name of ['Audit', 'People and access', 'Settings'])
+  // Nothing an operator may not open is offered, Health and Readiness included.
+  for (const name of ['Health', 'Readiness', 'Audit', 'People and access', 'Settings'])
     await expect(page.getByRole('menuitem', { name, exact: true })).toHaveCount(0);
   await page.keyboard.press('Escape');
   const axe = await new AxeBuilder({ page })
@@ -268,7 +264,7 @@ test('an owner finds only the Authenticator in the avatar menu, with Health and 
   await expect(page.getByRole('menuitem', { name: 'Sign Out', exact: true })).toBeVisible();
 });
 
-test('choosing Health or the Authenticator from the Account menu switches the section, with section addresses off', async ({
+test('choosing the Authenticator from the Account menu switches the section, with section addresses off', async ({
   page,
 }) => {
   // With the address switch off the menu links are `#` addresses: a plain anchor changes the hash and the workspace
@@ -278,17 +274,16 @@ test('choosing Health or the Authenticator from the Account menu switches the se
   const menu = page.locator('header.ux-app-header').getByRole('button', { name: 'Account menu' });
   await expect(page.locator('#workspace-missions')).toBeVisible();
   await menu.click();
-  await page.getByRole('menuitem', { name: 'Health', exact: true }).click();
-  await expect(page.locator('#ops-health')).toBeVisible();
+  // Health and Readiness are for owner and admin only: an operator's menu does not offer them.
+  await expect(page.getByRole('menuitem', { name: 'Health', exact: true })).toHaveCount(0);
+  await page.getByRole('menuitem', { name: 'Authenticator', exact: true }).click();
+  await expect(page.locator('#workspace-authenticator')).toBeVisible();
   await expect(page.locator('#workspace-missions')).toHaveCount(0);
   await menu.click();
-  await expect(page.getByRole('menuitem', { name: 'Health', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('menuitem', { name: 'Authenticator', exact: true })).toHaveAttribute(
     'aria-current',
     'page',
   );
-  await page.getByRole('menuitem', { name: 'Authenticator', exact: true }).click();
-  await expect(page.locator('#workspace-authenticator')).toBeVisible();
-  await expect(page.locator('#ops-health')).toHaveCount(0);
 });
 
 test('the team inbox panel offers no Mark All Read and asks for no server count, because the staff inbox cannot answer either', async ({

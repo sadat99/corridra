@@ -239,9 +239,11 @@ test('/sell shows the EU route, the reverse direction and what is recorded', asy
     'href',
     '/plan?marketCode=BD&job=buyers',
   );
+  // UI/UX.v4.1 (no repeated links): the hero's route card already links this route's page, so this section does not.
   await expect(
     reverse.getByRole('link', { name: 'Read the EU to Bangladesh route details' }),
-  ).toHaveAttribute('href', '/corridors/bangladesh-eu');
+  ).toHaveCount(0);
+  await expect(page.locator('main a[href="/corridors/bangladesh-eu"]')).toHaveCount(1);
   await expect(
     page.getByRole('region', { name: 'What we record for every introduction' }),
   ).toContainText('Who the buyer is and why they fit your offer.');

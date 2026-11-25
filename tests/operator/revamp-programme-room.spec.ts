@@ -838,8 +838,9 @@ test('Q-06 Save sample programme is busy while in flight, sends once for a doubl
   });
   await page.goto(`${origin}/?room=1&proj=1`);
   await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
-  // With the room on, the page's sections are tabs (approved work rooms, 5 Nov 2026): the form is one tab away.
-  await page.getByRole('tab', { name: 'New Sample Programme' }).click();
+  // With the room on, the page's sections are tabs (approved work rooms, 5 Nov 2026). UI/UX.v4.1: creating a
+  // programme is the page's one primary action above the tabs, not a tab.
+  await page.getByRole('button', { name: 'New Sample Programme' }).click();
   await page.getByLabel('Programme name').fill('Fictional Dhaka garment delegation');
   await page
     .getByLabel('Purpose and intended outcomes')

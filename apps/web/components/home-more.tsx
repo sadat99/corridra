@@ -41,7 +41,8 @@ export function HomeMissionMore() {
         </p>
       </section>
 
-      <People />
+      {/* This page already has one tab row (the phases of the approach), so the people are a group of choices. */}
+      <People choices />
     </div>
   );
 }
@@ -79,7 +80,16 @@ export function HomeRoutesMore() {
 export function People({
   current: held,
   onChange,
-}: { current?: number; onChange?: (index: number) => void } = {}) {
+  choices = false,
+}: {
+  current?: number;
+  onChange?: (index: number) => void;
+  /**
+   * True on a page that already has a tab row: the same eight names, words and looks, as a group of buttons where
+   * the chosen one is pressed and the words below are announced when they change. A page has one tab row.
+   */
+  choices?: boolean;
+} = {}) {
   const t = useT();
   const [own, setOwn] = useState(0);
   const current = held ?? own;
@@ -108,7 +118,11 @@ export function People({
     <section className="tr-section" id="who" aria-labelledby="who-title">
       <p className="label ac1-rule">{t('home.tr.pe.eyebrow')}</p>
       <h2 id="who-title">{t('home.tr.pe.title')}</h2>
-      <div className="tr-tabs" role="tablist" aria-label={t('home.tr.pe.aria')}>
+      <div
+        className="tr-tabs"
+        role={choices ? 'group' : 'tablist'}
+        aria-label={t('home.tr.pe.aria')}
+      >
         {Array.from({ length: 8 }, (_, i) => (
           <button
             key={i}
@@ -116,13 +130,17 @@ export function People({
               tabs.current[i] = node;
             }}
             type="button"
-            role="tab"
             id={`who-tab-${i}`}
             aria-controls="who-panel"
-            aria-selected={current === i}
-            tabIndex={current === i ? 0 : -1}
+            {...(choices
+              ? { 'aria-pressed': current === i }
+              : {
+                  role: 'tab',
+                  'aria-selected': current === i,
+                  tabIndex: current === i ? 0 : -1,
+                  onKeyDown: (event: KeyboardEvent) => move(event, i),
+                })}
             onClick={() => setCurrent(i)}
-            onKeyDown={(event) => move(event, i)}
           >
             {t(key(`home.tr.pe.${i}`))}
           </button>
@@ -131,9 +149,10 @@ export function People({
       <div
         className="tr-people"
         id="who-panel"
-        role="tabpanel"
+        {...(choices
+          ? { role: 'region', 'aria-live': 'polite' as const }
+          : { role: 'tabpanel', tabIndex: 0 })}
         aria-labelledby={`who-tab-${current}`}
-        tabIndex={0}
       >
         <div>
           <p className="label">{t('home.tr.pe.give')}</p>
@@ -185,7 +204,7 @@ export function MissionSection() {
 }
 
 /** The eight questions people ask before they start (board 3c). */
-export function FaqSection() {
+export function FaqSection({ openKeys = [] }: { openKeys?: number[] }) {
   const t = useT();
   return (
     <section className="tr-section tr-alt" id="faq" aria-labelledby="faq-title">
@@ -193,7 +212,7 @@ export function FaqSection() {
       <h2 id="faq-title">{t('home.tr.fq.title')}</h2>
       <div className="tr-faq">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-          <details key={n}>
+          <details key={n} open={openKeys.includes(n) || undefined}>
             <summary>{t(key(`home.tr.fq.${n}.q`))}</summary>
             <div>
               <p>{t(key(`home.tr.fq.${n}.a1`))}</p>
@@ -285,6 +304,8 @@ export function RoutesSection({
   flags = false,
   links = true,
   readyLead,
+  v42 = false,
+  limits = true,
 }: {
   mine?: RouteKey | null;
   flags?: boolean;
@@ -292,6 +313,10 @@ export function RoutesSection({
   links?: boolean;
   /** The home's own lead for the readiness statuses (the board's words); /how-it-works keeps its line. */
   readyLead?: string;
+  /** Home page v4.2 (owner, 25 Nov 2026): the Sell card's route line leaves out Key Asian Markets. */
+  v42?: boolean;
+  /** What Corridra is not, under the statuses; v4.2 shows it as its own navy section instead. */
+  limits?: boolean;
 }) {
   const t = useT();
   const matches = (route: RouteKey) =>
@@ -314,7 +339,13 @@ export function RoutesSection({
         </div>
         <div className={mine === 'sell' ? 'is-mine' : undefined}>
           {matches('sell')}
-          <strong>{flags ? <RouteLine route="sell" /> : t('home.tr.door.sell.route')}</strong>
+          <strong>
+            {flags ? (
+              <RouteLine route="sell" markets={v42 ? 'noKeyAsian' : 'all'} />
+            ) : (
+              t('home.tr.door.sell.route')
+            )}
+          </strong>
           <span className="tr-status is-open">{t('home.tr.rs.open')}</span>
           <p>{t('home.tr.rs.sell.text')}</p>
           {links ? (
@@ -356,15 +387,19 @@ export function RoutesSection({
           </>
         ) : null}
       </Link>
-      <h3 className="tr-h3">{t('home.tr.not.title')}</h3>
-      <div className="tr-nots">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-          <div key={n}>
-            <strong>{t(key(`home.tr.not.${n}`))}</strong>
-            <span>{t(key(`home.tr.not.${n}.text`))}</span>
+      {limits ? (
+        <>
+          <h3 className="tr-h3">{t('home.tr.not.title')}</h3>
+          <div className="tr-nots">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div key={n}>
+                <strong>{t(key(`home.tr.not.${n}`))}</strong>
+                <span>{t(key(`home.tr.not.${n}.text`))}</span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      ) : null}
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import { mountHomeV42 } from '../ux/home-v42-fixture';
 
 // The home page, Two Routes (owner decision of 17 November 2026, design board "Corridra Two Routes", revision 3c;
 // docs/revamp/specs/public-home.md). It replaces concept G of 6 November 2026 and its Mission Player. The visitor
@@ -285,31 +286,34 @@ test('the delegation example shows private rows, a programme total and what the 
   await expect(del.locator('.ac1-example-tag')).toHaveText('Example');
 });
 
-test('the eight people (now on /how-it-works) work by keyboard as one tab group', async ({
+test('the eight people (now on /how-it-works) are one group of named choices, not a second tab row', async ({
   page,
 }) => {
   await page.goto('/how-it-works');
+  // The page keeps one tab row: the phases of the approach.
+  await expect(page.locator('main [role="tablist"]')).toHaveCount(1);
   await page.locator('details.guide-more > summary').click();
-  const tabs = page.getByRole('tablist', { name: 'Who are you?' });
-  await expect(tabs.getByRole('tab')).toHaveCount(8);
-  await tabs.getByRole('tab', { name: 'Exporter' }).focus();
-  await page.keyboard.press('ArrowRight');
-  await expect(tabs.getByRole('tab', { name: 'Importer' })).toBeFocused();
-  await expect(tabs.getByRole('tab', { name: 'Importer' })).toHaveAttribute(
-    'aria-selected',
+  await expect(page.locator('main [role="tablist"]')).toHaveCount(1);
+  const people = page.getByRole('group', { name: 'Who are you?' });
+  await expect(people.getByRole('button')).toHaveCount(8);
+  for (const button of await people.getByRole('button').all())
+    expect((await button.innerText()).trim()).not.toBe('');
+  await expect(people.getByRole('button', { name: 'Exporter' })).toHaveAttribute(
+    'aria-pressed',
     'true',
   );
-  await page.keyboard.press('End');
-  await expect(tabs.getByRole('tab', { name: 'Local helper' })).toHaveAttribute(
-    'aria-selected',
+  // Every choice is reached by Tab and chosen by the keyboard.
+  await people.getByRole('button', { name: 'Exporter' }).focus();
+  await page.keyboard.press('Tab');
+  await expect(people.getByRole('button', { name: 'Importer' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(people.getByRole('button', { name: 'Importer' })).toHaveAttribute(
+    'aria-pressed',
     'true',
   );
+  await people.getByRole('button', { name: 'Local helper' }).click();
   await expect(page.locator('#who-panel')).toContainText('Your skills. Your time. Your location.');
-  await page.keyboard.press('Home');
-  await expect(tabs.getByRole('tab', { name: 'Exporter' })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
+  await expect(people.locator('[aria-pressed="true"]')).toHaveCount(1);
 });
 
 const openAll = (page: Page) =>
@@ -472,3 +476,21 @@ for (const size of [
       '/plan',
     );
   });
+
+// Home page v4.2, CORRIDRA_UX_HOME_V42 exactly "true" (owner, 25 Nov 2026: "lock this v4.2", "Add a switch, off by
+// default", and on Key Asian Markets: "Lines, cards and chips only"; KEEP it in the hero sentence). The cases above
+// stay the switch-off truth and are unchanged; this case mounts the real v4.2 components on the live home's styles
+// (tests/ux/home-v42-fixture.ts), so the suite keeps one build with the switch off.
+test('switch on (v4.2): the page still names every open market, key Asian markets in the hero sentence', async ({
+  page,
+}) => {
+  await mountHomeV42(page, { width: 1440 });
+  const text = (await page.locator('main').innerText()).toLowerCase();
+  for (const word of ['the eu', 'uk', 'us', 'australia', 'key asian markets'])
+    expect(text).toContain(word);
+  expect(await page.locator('#hero .tr-lead').innerText()).toContain('key Asian markets');
+  for (const name of [/^Supply side/, /^Demand side/, /^Leading a delegation/, /^Something else/]) {
+    await door(page, name).click();
+    expect(await page.locator('main').innerText()).not.toMatch(/—/);
+  }
+});

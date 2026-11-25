@@ -645,9 +645,8 @@ describe('the member report page', () => {
     };
     expect(shell.props.tab).toBe('results');
     expect(shell.props.title).toBe("Member's saved report");
-    expect(shell.props.frame).toEqual({
-      back: { label: "Back to Members' Reports", href: '/account?view=results&tab=members' },
-    });
+    // UI/UX.v4.1: no back link in the frame; the Reports item of the menu is the one path to the tab.
+    expect(shell.props.frame).toBeUndefined();
     expect(shell.props.children.props).toMatchObject({
       resourceId: R,
       member: { workspaceId: W },
@@ -661,14 +660,12 @@ describe('the member report page', () => {
       Page({ params: Promise.resolve({ workspaceId: 'x', resourceId: R }) }),
     ).rejects.toThrow(notFoundError);
   });
-  it('draws the shared report read only, in the customer shell, with the back link to the tab', () => {
+  it('draws the shared report read only, in the customer shell, with no back link in the frame', () => {
     const source = read(path);
     expect(source).toContain('member={{ workspaceId: ids.data.workspaceId }}');
-    expect(source).toContain(
-      `const back = { label: "Back to Members' Reports", href: '/account?view=results&tab=members' };`,
-    );
+    expect(source).not.toContain('Back to');
     expect(source).toMatch(
-      /<CustomerShell tab="results" eyebrow="REPORTS" title="Member's saved report"/,
+      /<CustomerShell tab="results" eyebrow="REPORTS" title="Member's saved report">/,
     );
     expect(source).not.toMatch(
       /decisionsEnabled|specificationConfirmationsEnabled|decisionCards|<form|<button/,

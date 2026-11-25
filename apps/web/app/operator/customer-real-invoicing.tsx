@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { displayMoney } from '@corridra/domain/locale';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { Dialog } from '../../components/ux/dialog';
+import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
+import { CountryName } from './country-name';
 
 // ADR-064: the staff side of real invoices. Staff prepare an invoice or a credit note; a second named person approves
 // it, and only then does it get its legal number. Payments are records of money the team received. Nothing is collected
@@ -185,6 +187,7 @@ function Scoped({ tenant }: { tenant: string }) {
   const task = useRef<AbortController | null>(null);
   const endpoint =
     '/api/workspace/customer-billing?invoicing=real&tenant=' + encodeURIComponent(tenant);
+  const { allowed, epoch, settle } = useStepUpRead();
   const call = useCallback(
     async (query: string, body?: Record<string, unknown>) => {
       task.current?.abort();
@@ -200,7 +203,8 @@ function Scoped({ tenant }: { tenant: string }) {
           signal: controller.signal,
         });
         if (controller.signal.aborted) return null;
-        if (!r.ok) return { status: r.status, body: null as unknown };
+        if (!r.ok)
+          return { status: r.status, body: null as unknown, check: await refusedForCheck(r) };
         return { status: 200, body: (await r.json()) as unknown };
       } catch {
         return controller.signal.aborted ? null : { status: 0, body: null as unknown };
@@ -211,6 +215,12 @@ function Scoped({ tenant }: { tenant: string }) {
   const loadAll = useCallback(async () => {
     const p = await call('&scope=pending');
     if (!p) return;
+    if (p.check) {
+      settle(true);
+      setFault('');
+      return;
+    }
+    settle(false);
     if (p.status === 503) {
       setOff(true);
       return;
@@ -232,7 +242,7 @@ function Scoped({ tenant }: { tenant: string }) {
     setFault('');
     setData(pb);
     setRows(lb.invoices);
-  }, [call]);
+  }, [call, settle]);
   const open = useCallback(
     async (id: string) => {
       const r = await call('&scope=invoice&invoiceId=' + encodeURIComponent(id));
@@ -249,7 +259,7 @@ function Scoped({ tenant }: { tenant: string }) {
     [call],
   );
   useEffect(() => {
-    void Promise.resolve().then(() => loadAll());
+    if (allowed) void Promise.resolve().then(() => loadAll());
     const hide = () => {
       if (document.visibilityState === 'hidden') {
         task.current?.abort();
@@ -267,7 +277,7 @@ function Scoped({ tenant }: { tenant: string }) {
       task.current?.abort();
       document.removeEventListener('visibilitychange', hide);
     };
-  }, [loadAll]);
+  }, [loadAll, allowed, epoch]);
   async function send(body: Record<string, unknown>, done: string) {
     if (busy) return;
     setPending(body);
@@ -444,12 +454,13 @@ function Scoped({ tenant }: { tenant: string }) {
       )}
       {fault && <p role="alert">{fault}</p>}
       {message && <p role={ok ? 'status' : 'alert'}>{message}</p>}
-      {data === null && !fault && <p role="status">Loading invoices…</p>}
+      {data === null && !fault && allowed && <p role="status">Loading invoices…</p>}
       {data && s && (
         <section aria-label="Supplier details">
           <h4>Supplier on every document</h4>
           <p>
-            {s.legalName}, {s.address}, {s.country}.{s.uen ? ' UEN ' + s.uen + '.' : ''}{' '}
+            {s.legalName}, {s.address}, <CountryName code={s.country} />.
+            {s.uen ? ' UEN ' + s.uen + '.' : ''}{' '}
             {s.gstRegistered
               ? s.taxLabel +
                 ' registered' +

@@ -376,6 +376,8 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
+  /* A touch target of at least 44 px on every page that shows the quiet footer. */
+  min-height: 44px;
   padding: 10px 0;
 }
 /* L14 (owner, 13 Nov 2026): inside a signed-in workspace the quiet footer sits at the bottom of the window on a
@@ -7711,6 +7713,16 @@ th {
 
 /* Service requests in the customer frame: the quote cost table scrolls inside its labelled region instead of
    squeezing four columns into a phone, and label and value lists read as pairs. Presentation only. */
+/* Containment of the quote, in or out of the customer frame and whether or not the component stylesheet is loaded
+   (a screen that mounts the quote without it must still not widen the page): the part is a grid item of the page
+   card, so it may shrink below its content, and the cost region scrolls inside itself. */
+.sr-part {
+  min-width: 0;
+}
+[role='region'][aria-label^='Quote costs'] {
+  max-width: 100%;
+  overflow-x: auto;
+}
 .ux-customer [role='region'][aria-label^='Quote costs'] table {
   min-width: 34rem;
 }
@@ -7944,6 +7956,16 @@ th {
   font-family: var(--font-mono);
   font-weight: 500;
   letter-spacing: 0.08em;
+}
+/* A row header that holds a name (the customer on the Missions list) is read as the name it is: the label
+   style of a column head (mono, capitals, wide tracking, 12 px) is for column heads only. */
+.mission-queue tbody th {
+  font-family: var(--font-ui);
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink);
 }
 code,
 kbd,

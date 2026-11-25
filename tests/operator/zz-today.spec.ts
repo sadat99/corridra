@@ -42,7 +42,24 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   // commercial readiness Today adds accepted quotes not started and replies to review (CQ-34, CQ-73),
   // and W3 adds service requests to quote.
   const today = page.getByRole('region', { name: 'Today' });
-  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(8);
+  const counts = today.getByRole('list', { name: 'Counts' });
+  await expect(counts.getByRole('listitem').first()).toBeVisible();
+  // The tiles depend on the role the page reports, which a shared database can leave as an owner, an admin or a
+  // viewer by the time this spec runs. Every role sees the same six; only an owner or an admin also sees the two
+  // paid-service counts, because only they can ever read them (a role that cannot read them has no tile for them).
+  const role = (await page.getByText('Your access:').first().locator('strong').innerText()).trim();
+  const everyRole = [
+    /^new requests? to review$/,
+    /^missions? past their due date$/,
+    /^open missions?$/,
+    /^repl(y|ies) to review$/,
+    /^follow-ups? past (their|its) due date$/,
+    /^meetings? in the next 7 days$/,
+  ];
+  const paidServices = [/^accepted quotes? not started$/, /^paid-service requests? to quote$/];
+  await expect(counts.getByRole('listitem').locator('span')).toHaveText(
+    ['owner', 'admin'].includes(role) ? [...everyRole, ...paidServices] : everyRole,
+  );
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   // Synthetic answers prove the new-request and overdue lists.
   await page.route('**/api/workspace/missions?*view=today*', async (route) => {
@@ -170,8 +187,12 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
     }),
   );
   await page.reload();
-  // Without the meetings read two counts drop (six of eight remain; CQ-34 and CQ-73 add two, W3 adds one).
-  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(6);
+  // Without the meetings read the two meeting counts drop (CQ-34 and CQ-73 add two, W3 adds one). What remains
+  // depends on the role read above: the six an owner or an admin sees, or the four every other role sees.
+  const withoutMeetings = [...everyRole.slice(0, 4), ...paidServices];
+  await expect(counts.getByRole('listitem').locator('span')).toHaveText(
+    ['owner', 'admin'].includes(role) ? withoutMeetings : everyRole.slice(0, 4),
+  );
   // The chosen filter is kept in the address (?needs=overdue), so the reload keeps "Past due"; All shows the new request again.
   await expect(needs.getByRole('radio', { name: 'Past due 2' })).toBeChecked();
   await expect(needs.getByText('Invented Towels Ltd')).toHaveCount(0);
@@ -251,7 +272,18 @@ test('W3-6 as an owner, the paid-service requests tile opens the Delivery sectio
   await tile.getByRole('link').click();
   const delivery = page.locator('#workspace-delivery');
   await expect(delivery).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
+  // The panel is named Reports (its heading may be one pixel where the page title says it), and its own
+  // section navigation is drawn: that is what shows the Delivery section opened.
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('heading', { name: 'Reports', exact: true, level: 2 }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('navigation', { name: 'Publication and reporting sections' }),
+  ).toBeVisible();
   await expect(unavailableAlert(page)).toHaveCount(0);
   await expect(page).toHaveURL(/#billing-services$/);
   await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toHaveCount(0);
@@ -282,7 +314,18 @@ test('W3-7 when the count is Not available, the tile still opens the Delivery se
   await tile.getByRole('link').click();
   await expect(page).toHaveURL(/#billing-services$/);
   await expect(page.locator('#workspace-delivery')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
+  // The panel is named Reports (its heading may be one pixel where the page title says it), and its own
+  // section navigation is drawn: that is what shows the Delivery section opened.
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('heading', { name: 'Reports', exact: true, level: 2 }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('navigation', { name: 'Publication and reporting sections' }),
+  ).toBeVisible();
   await expect(unavailableAlert(page)).toHaveCount(0);
   await expect(
     page

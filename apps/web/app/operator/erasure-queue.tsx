@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useInboxOpenLoad } from './inbox/inbox-check';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
 import { Dialog } from '../../components/ux/dialog';
+import { ActionError, STEP_UP_REQUIRED, withStepUp } from '../../lib/ux/step-up';
 import '../../components/problem-reports/problem-reports.css';
 import {
   queueFailure,
@@ -106,12 +108,35 @@ export function movedMessage(reference: string, reloadFailure: string | null) {
     ? 'Request ' + reference + ' moved.'
     : 'Request ' + reference + ' moved, but the list could not be reloaded. ' + reloadFailure;
 }
-function failureText(status: number) {
-  if (status === 401 || status === 403)
-    return 'Your sign-in or authenticator check is not current, or this role cannot manage requests. Check it and try again.';
+// Throws the refusal with its status and the server's code, so withStepUp can open the check for STEP_UP_REQUIRED.
+export async function answered(r: Response) {
+  if (r.ok) return r;
+  let code: string | undefined;
+  try {
+    const body = (await r.clone().json()) as { code?: unknown };
+    if (typeof body.code === 'string') code = body.code;
+  } catch {
+    code = undefined;
+  }
+  throw new ActionError(failureText(r.status, code), r.status, code);
+}
+const needsCodeText = 'Confirm your code to see and move erasure requests.';
+const signedOutText = 'Sign in again to see and move erasure requests.';
+function failureText(status: number, code?: string) {
+  // A lapsed authenticator check normally never reaches this: the in-place check opens first (withStepUp), and only a
+  // declined check, a signed-out person or a role that may not manage requests is told here.
+  if (status === 401) return code === STEP_UP_REQUIRED ? needsCodeText : signedOutText;
+  if (status === 403) return 'Only the workspace owner can manage erasure requests.';
   if (status === 409) return 'That request changed or is not in this queue. Reload the list.';
   if (status === 503) return 'The erasure queue is not available yet.';
   return 'The request could not be completed. Please try again.';
+}
+// What the list read says when it ends in a refusal. A declined in-place check is the queue's own needs-code line, not
+// the generic "Your changes are kept." (a list read has no changes); a 401 with no code is a signed-out person.
+export function readFailureText(error: unknown) {
+  if (error instanceof ActionError && error.status === 401)
+    return error.code === STEP_UP_REQUIRED ? needsCodeText : signedOutText;
+  return error instanceof Error ? error.message : 'The list could not be loaded.';
 }
 
 type Props = {
@@ -119,11 +144,13 @@ type Props = {
   role?: string;
   /** Whether Report a Problem is offered: only then is the owner's word removal drawn. Missing means not offered. */
   problemReports?: boolean;
+  /** Team desk v4.1: the list sits under its own tab on the Inbox page, so the tab names it and the filter is a stack. */
+  tabbed?: boolean;
 };
 export function ErasureQueue(props: Props) {
   return <Queue key={props.tenant} {...props} />;
 }
-function Queue({ tenant, role, problemReports = false }: Props) {
+function Queue({ tenant, role, problemReports = false, tabbed = false }: Props) {
   const [queue, setQueue] = useState<Queue | null>(null),
     [filter, setFilter] = useState<Status | ''>(''),
     [busy, setBusy] = useState(false),
@@ -140,6 +167,8 @@ function Queue({ tenant, role, problemReports = false }: Props) {
   const controller = useRef<AbortController | null>(null);
   const endpoint = '/api/workspace/customer-erasure-queue?tenant=' + encodeURIComponent(tenant);
   useEffect(() => () => controller.current?.abort(), []);
+  // Team desk v4.1 (staff-core-29): in the Inbox, this list loads itself when its tab opens after one passed check.
+  const readPassed = useInboxOpenLoad('erasure-queue-title', () => void load(), queue !== null);
 
   // `moved` is the reference of a request that was just moved. If this reload fails, the message says both things and
   // the list is cleared, because the list on screen would still show the old state of that request.
@@ -152,22 +181,26 @@ function Queue({ tenant, role, problemReports = false }: Props) {
     setMessage('');
     setPending(null);
     try {
-      const r = await fetch(
-        endpoint +
-          (filter ? '&status=' + filter : '') +
-          (after === undefined ? '' : '&after=' + after),
-        { cache: 'no-store', signal: task.signal },
+      const r = await withStepUp(async () =>
+        answered(
+          await fetch(
+            endpoint +
+              (filter ? '&status=' + filter : '') +
+              (after === undefined ? '' : '&after=' + after),
+            { cache: 'no-store', signal: task.signal },
+          ),
+        ),
       );
-      if (!r.ok) throw Error(failureText(r.status));
       const v = queueSchema.parse(await r.json());
       if (task.signal.aborted) return;
+      readPassed();
       setQueue(after === undefined || !queue ? v : { ...v, items: [...queue.items, ...v.items] });
       if (moved) setMessage(movedMessage(moved, null));
       else if (v.items.length === 0 && after === undefined)
         setMessage('No erasure requests to show.');
     } catch (e) {
       if (!task.signal.aborted) {
-        const reason = e instanceof Error ? e.message : 'The list could not be loaded.';
+        const reason = readFailureText(e);
         if (moved) {
           setQueue(null);
           setMessage(movedMessage(moved, reason));
@@ -199,18 +232,22 @@ function Queue({ tenant, role, problemReports = false }: Props) {
     setBusy(true);
     setMessage('');
     try {
-      const r = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          commandId: pending.commandId,
-          requestId: pending.item.id,
-          expectedState: pending.item.status,
-          toState: pending.toState,
-          ...(needsNote ? { note: text } : {}),
-        }),
-      });
-      if (!r.ok) throw Error(failureText(r.status));
+      // The same command id is sent again after the in-place check, so a repeat never moves the request twice.
+      await withStepUp(async () =>
+        answered(
+          await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              commandId: pending.commandId,
+              requestId: pending.item.id,
+              expectedState: pending.item.status,
+              toState: pending.toState,
+              ...(needsNote ? { note: text } : {}),
+            }),
+          }),
+        ),
+      );
       const reference = pending.item.reference;
       setPending(null);
       setNote('');
@@ -242,14 +279,8 @@ function Queue({ tenant, role, problemReports = false }: Props) {
     }
   }
 
-  return (
-    <section aria-labelledby="erasure-queue-title" className="ux-panel">
-      <h2 id="erasure-queue-title">Erasure Requests</h2>
-      <p>
-        People who closed their account can ask for their data to be erased. Each request needs an
-        answer within the date shown. Invoices, signed decisions and audit rows are kept as the
-        record requires, and the note you write is what the person reads.
-      </p>
+  const filterControls = (
+    <>
       <label>
         Show
         <select
@@ -275,6 +306,21 @@ function Queue({ tenant, role, problemReports = false }: Props) {
       <button className="text-link" type="button" disabled={busy} onClick={() => void load()}>
         Load Erasure Requests
       </button>
+    </>
+  );
+
+  return (
+    <section aria-labelledby="erasure-queue-title" className="ux-panel">
+      <h2 id="erasure-queue-title" className={tabbed ? 'sr-only' : undefined}>
+        {tabbed ? 'Erasure requests' : 'Erasure Requests'}
+      </h2>
+      <p>
+        People who closed their account can ask for their data to be erased. Each request needs an
+        answer within the date shown. Invoices, signed decisions and{' '}
+        {tabbed ? 'the history of changes' : 'audit rows'} are kept as the record requires, and the
+        note you write is what the person reads.
+      </p>
+      {tabbed ? <div className="inbox-filter">{filterControls}</div> : filterControls}
       {message && <p role="status">{message}</p>}
       {queue && queue.items.length > 0 && (
         <ul>

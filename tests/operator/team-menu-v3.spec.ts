@@ -72,7 +72,7 @@ test('switch on: four groups, every item one plain link, no expander and no numb
   expect(await names(page, 'Work')).toEqual(['Today', 'Missions', 'Meetings', 'Inbox']);
   expect(await names(page, 'People and companies')).toEqual(['Companies', 'Helpers', 'Supply']);
   expect(await names(page, 'Results')).toEqual(['Money', 'Reports']);
-  expect(await names(page, 'Admin')).toEqual(['Team and Access', 'Settings', 'Status']);
+  expect(await names(page, 'Admin')).toEqual(['Team and access', 'Settings', 'Status']);
   await expect(sidebar.locator('details, summary, .ux-team-pins, .ux-team-pin-count')).toHaveCount(
     0,
   );
@@ -92,7 +92,7 @@ test('switch on: four groups, every item one plain link, no expander and no numb
   expect(await href('Supply')).toBe(`/operator/supply${w}`);
   expect(await href('Money')).toBe(`/operator/commercial${w}`);
   expect(await href('Reports')).toBe(`/operator/delivery${w}`);
-  expect(await href('Team and Access')).toBe(`/operator/controls${w}`);
+  expect(await href('Team and access')).toBe(`/operator/controls${w}`);
   expect(await href('Settings')).toBe(`/operator/settings${w}`);
   expect(await href('Status')).toBe(`/operator/operations${w}`);
   await expect(sidebar.getByRole('link', { name: 'Today', exact: true })).toHaveAttribute(
@@ -168,7 +168,7 @@ test('the lit item follows the address: a segment lights its item, a queue tab l
   expect(await lit('/operator/sources')).toEqual(['Companies', 'true']);
   expect(await lit('/operator/evidence')).toEqual(['Companies', 'true']);
   expect(await lit('/operator/network')).toEqual(['Helpers', 'page']);
-  expect(await lit('/operator/audit')).toEqual(['Team and Access', 'true']);
+  expect(await lit('/operator/audit')).toEqual(['Team and access', 'true']);
   expect(await lit('/operator/assistance')).toEqual(['Settings', 'true']);
   expect(await lit('/operator/control-center')).toEqual(['Settings', 'true']);
   expect(await lit('/operator/owner')).toEqual(['Settings', 'true']);
@@ -300,8 +300,10 @@ test('phone drawer: opens as a dialog, Escape closes it and returns focus, keybo
   await expect(page.getByRole('dialog', { name: 'Team sections' })).toBeVisible();
   const count = await sidebar.getByRole('link').count();
   expect(count).toBe(13);
-  // Close menu, then the thirteen links, in order.
+  // Close menu, the workspace switch, then the thirteen links, in order.
   await expect(page.getByRole('button', { name: 'Close menu' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(sidebar.getByLabel('Workspace', { exact: true })).toBeFocused();
   for (let index = 0; index < count; index += 1) {
     await page.keyboard.press('Tab');
     await expect(sidebar.getByRole('link').nth(index)).toBeFocused();
@@ -373,9 +375,10 @@ test('switch on, workspace mounted: no second tab bar, no toolbar; the switch is
   const select = page.locator('select#operator-workspace-select');
   await expect(select).toHaveCount(1);
   await expect(sidebar.getByLabel('Workspace', { exact: true })).toHaveValue(fixtureTenant);
+  // One order always, by name: the list does not follow the order the server happened to read it in.
   expect(await select.locator('option').allInnerTexts()).toEqual([
-    'Synthetic request operations',
     'Second workspace',
+    'Synthetic request operations',
   ]);
   expect(
     await sidebar.evaluate(
@@ -425,8 +428,8 @@ test('no menu jump on load: a workspace page keeps the room of the switch before
       .locator('#workspace-navigation .ux-team-menu-heading')
       .first()
       .evaluate((el) => Math.round(el.getBoundingClientRect().top));
-  // The workspace never mounts here, so this is the menu as the server render and the first paint draw it.
-  const pending = await open(page, 'v41=on', { width: 1440 }, '/operator/missions');
+  // Nothing has said which workspace is open yet: the menu as the server render and the first paint draw it.
+  const pending = await open(page, 'v41=on&role=none', { width: 1440 }, '/operator/missions');
   await expect(pending.locator('.ux-team-menu-switch[data-pending]')).toHaveCount(1);
   await expect(pending.locator('select')).toHaveCount(0);
   const before = await headingTop();
@@ -442,18 +445,50 @@ test('no menu jump on load: a workspace page keeps the room of the switch before
     await loaded.evaluate((el) => getComputedStyle(el).fontFamily),
   );
   await expect(select).toHaveAttribute('title', 'Synthetic request operations');
-  // A team page that never mounts the workspace keeps no empty room.
+  // A page with no workspace to offer ("Workspace access is unavailable") keeps no empty room, before or after.
   await page.unrouteAll();
-  const other = await open(page, 'v41=on&supply=on', { width: 1440 }, '/operator/supply');
-  await expect(other.locator('.ux-team-menu-switch')).toHaveCount(0);
-  // Nor does a mission page, which sits below a section address and never publishes the switch.
-  const mission = await open(
-    page,
-    'v41=on',
-    { width: 1440 },
-    '/operator/missions/123e4567-e89b-42d3-a456-426614174000',
-  );
-  await expect(mission.locator('.ux-team-menu-switch')).toHaveCount(0);
+  for (const query of ['v41=on&list=none&role=none', 'v41=on&list=none']) {
+    const none = await open(page, query, { width: 1440 }, '/operator/missions');
+    await expect(none.locator('.ux-team-menu-switch')).toHaveCount(0);
+    await expect(none.getByRole('link', { name: 'All Workspaces' })).toHaveCount(1);
+  }
+});
+
+// The audit of 25 Nov 2026 (staff-core-06, staff-admin-17): the switch was missing on the Inbox, the Supply pages
+// and the mission page, which do not mount the workspace. It is on every team page now, in the same place, and a
+// choice opens the same page for that workspace (the list a record came from, for a page about one record).
+test('the workspace switch is on the team pages that do not mount the workspace, and a choice opens that page for the chosen workspace', async ({
+  page,
+}) => {
+  const pages: [string, string][] = [
+    ['/operator/inbox', '/operator/inbox'],
+    ['/operator/supply', '/operator/supply'],
+    ['/operator/supply/do-not-contact', '/operator/supply/do-not-contact'],
+    ['/operator/supply/missions/123e4567-e89b-42d3-a456-426614174000', '/operator/supply'],
+    ['/operator/missions/123e4567-e89b-42d3-a456-426614174000', '/operator/missions'],
+    ['/operator/owner', '/operator/owner'],
+  ];
+  for (const [address, target] of pages) {
+    const sidebar = await open(page, 'v41=on&supply=on', { width: 1440 }, address);
+    const select = sidebar.getByLabel('Workspace', { exact: true });
+    await expect(select, address).toHaveValue(fixtureTenant);
+    await expect(select).toBeEnabled();
+    expect(await select.locator('option').allInnerTexts()).toEqual([
+      'Second workspace',
+      'Synthetic request operations',
+    ]);
+    await expect(sidebar.locator('.ux-team-menu-switch[data-pending]')).toHaveCount(0);
+    await select.selectOption(secondTenant);
+    await page.waitForURL((url) => url.searchParams.get('workspace') === secondTenant);
+    const landed = new URL(page.url());
+    expect(landed.pathname, address).toBe(target);
+    expect(landed.search).toBe(`?workspace=${secondTenant}`);
+  }
+  // On a phone the switch is in the drawer, the first control of the menu, at a full 44 px.
+  const drawer = await open(page, 'v41=on', { width: 390 }, '/operator/inbox');
+  const box = (await drawer.getByLabel('Workspace', { exact: true }).boundingBox())!;
+  expect(box.height).toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
 // Owner rule, 24 Nov 2026: "Avoid unnecessary repetition of navigation links on a single screen". The menu is the
@@ -492,4 +527,74 @@ test('one link per destination: no address twice in the menu, and the page does 
     page.locator('.ux-leftnav-page').getByRole('button', { name: 'Sign Out' }),
   ).toHaveCount(0);
   await expect(page.locator('nav.ux-team-second')).toHaveCount(0);
+});
+
+// Audit of 25 Nov 2026, staff-admin-16: at 1440 x 900 the menu ended below the window, so Status was cut and
+// "Collapse menu" was off screen.
+test('at 1440 x 900 the whole menu, down to Status and Collapse menu, is on the first screen with 44 px rows', async ({
+  page,
+}) => {
+  for (const query of ['v41=on&supply=on&reports=on&role=owner', 'v41=on&supply=on&role=admin']) {
+    const sidebar = await open(page, query, { width: 1440, height: 900 });
+    await expect(sidebar.getByLabel('Workspace', { exact: true })).toBeVisible();
+    const status = (await sidebar.getByRole('link', { name: 'Status' }).boundingBox())!;
+    expect(status.y + status.height).toBeLessThanOrEqual(900);
+    const collapse = (await page.getByRole('button', { name: 'Collapse menu' }).boundingBox())!;
+    expect(collapse.y + collapse.height).toBeLessThanOrEqual(900);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    for (const height of await sidebar
+      .getByRole('link')
+      .evaluateAll((links) => links.map((link) => link.getBoundingClientRect().height)))
+      expect(height).toBeGreaterThanOrEqual(44);
+    // No row overlaps the next one.
+    const tops = await sidebar
+      .locator('a, select')
+      .evaluateAll((rows) =>
+        rows.map((row) => [row.getBoundingClientRect().top, row.getBoundingClientRect().bottom]),
+      );
+    for (let index = 1; index < tops.length; index += 1)
+      expect(tops[index]![0]!).toBeGreaterThanOrEqual(tops[index - 1]![1]! - 0.5);
+  }
+  // A tall window keeps the roomier spacing.
+  const tall = await open(page, 'v41=on&supply=on&role=owner', { width: 1440, height: 1200 });
+  expect(await tall.evaluate((nav) => getComputedStyle(nav).rowGap)).toBe('16px');
+});
+
+// Audit of 25 Nov 2026, staff-admin-03: the search listed the old maps, so "helpers" found nothing and "network"
+// found the page the menu calls Helpers.
+test('search: with the switch on a page is found by the word the menu shows; off, the old words stay', async ({
+  page,
+}) => {
+  const search = async (query: string, words: string) => {
+    await open(page, query, { width: 1440 });
+    await page.keyboard.press('Control+K');
+    const dialog = page.locator('dialog.ux-palette[open]');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('combobox').fill(words);
+    return dialog.getByRole('option');
+  };
+  const on = 'v41=on&supply=on&reports=on&role=owner';
+  await expect(await search(on, 'helpers')).toHaveText([/Open Helpers.*People and companies/s]);
+  await expect((await search(on, 'helpers')).first()).toHaveAttribute(
+    'href',
+    `/operator/network?workspace=${fixtureTenant}`,
+  );
+  await expect(await search(on, 'network')).toHaveCount(0);
+  await expect((await search(on, 'status')).filter({ hasText: 'Open ' })).toHaveText([
+    /Open Operations.*Status/s,
+    /Open Dashboard.*Status/s,
+    /Open Health.*Status/s,
+    /Open Readiness.*Status/s,
+  ]);
+  await expect((await search(on, 'team and access')).filter({ hasText: 'Open ' })).toHaveText([
+    /Open People and access.*Team and access/s,
+    /Open Audit.*Team and access/s,
+  ]);
+  await expect((await search(on, 'inbox')).filter({ hasText: 'Open Inbox' })).toHaveCount(1);
+  await expect((await search(on, 'supply')).filter({ hasText: 'Open Supply' })).toHaveCount(1);
+  // Switch off: the palette is the one it was.
+  await expect((await search('role=owner', 'network')).filter({ hasText: 'Open ' })).toHaveText([
+    /Open Network.*Missions/s,
+  ]);
+  await expect((await search('role=owner', 'helpers')).filter({ hasText: 'Open ' })).toHaveCount(0);
 });

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayMoney } from '@corridra/domain/locale';
 import { Dialog } from '../../components/ux/dialog';
+import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
 
 type Period = {
   subscriptionId: string;
@@ -124,6 +125,7 @@ function Scoped({ tenant }: { tenant: string }) {
     [confirming, setConfirming] = useState<Record<string, unknown> | null>(null);
   const task = useRef<AbortController | null>(null);
   const endpoint = '/api/workspace/customer-billing?tenant=' + encodeURIComponent(tenant);
+  const { allowed, epoch, settle } = useStepUpRead();
   const call = useCallback(
     async (query: string, body?: Record<string, unknown>) => {
       task.current?.abort();
@@ -139,7 +141,8 @@ function Scoped({ tenant }: { tenant: string }) {
           signal: controller.signal,
         });
         if (controller.signal.aborted) return null;
-        if (!r.ok) return { status: r.status, body: null as unknown };
+        if (!r.ok)
+          return { status: r.status, body: null as unknown, check: await refusedForCheck(r) };
         return { status: 200, body: (await r.json()) as unknown };
       } catch {
         return controller.signal.aborted ? null : { status: 0, body: null as unknown };
@@ -150,6 +153,12 @@ function Scoped({ tenant }: { tenant: string }) {
   const loadAll = useCallback(async () => {
     const p = await call('&scope=pending');
     if (!p) return;
+    if (p.check) {
+      settle(true);
+      setFault('');
+      return;
+    }
+    settle(false);
     if (p.status === 503) {
       setOff(true);
       return;
@@ -171,7 +180,7 @@ function Scoped({ tenant }: { tenant: string }) {
     setFault('');
     setPeriods(pb.periods);
     setRows(lb.invoices);
-  }, [call]);
+  }, [call, settle]);
   const open = useCallback(
     async (id: string) => {
       const r = await call('&scope=invoice&invoiceId=' + encodeURIComponent(id));
@@ -188,7 +197,7 @@ function Scoped({ tenant }: { tenant: string }) {
     [call],
   );
   useEffect(() => {
-    void Promise.resolve().then(() => loadAll());
+    if (allowed) void Promise.resolve().then(() => loadAll());
     const hide = () => {
       if (document.visibilityState === 'hidden') {
         task.current?.abort();
@@ -204,7 +213,7 @@ function Scoped({ tenant }: { tenant: string }) {
       task.current?.abort();
       document.removeEventListener('visibilitychange', hide);
     };
-  }, [loadAll]);
+  }, [loadAll, allowed, epoch]);
   async function send(body: Record<string, unknown>) {
     if (busy) return;
     setPending(body);
@@ -326,7 +335,7 @@ function Scoped({ tenant }: { tenant: string }) {
       </p>
       {fault && <p role="alert">{fault}</p>}
       {message && <p role={message === 'Saved.' ? 'status' : 'alert'}>{message}</p>}
-      {periods === null && !fault && <p role="status">Loading invoices…</p>}
+      {periods === null && !fault && allowed && <p role="status">Loading invoices…</p>}
       {periods && (
         <section aria-label="Periods to invoice">
           <h4>Periods to invoice</h4>

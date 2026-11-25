@@ -31,6 +31,9 @@ import {
   stepStatement,
   type CustomerView,
 } from './[section]/[missionId]/mission-labels';
+import { RouteState, RouteWords } from './[section]/[missionId]/route-words';
+import { Flagged, placeMark } from '../../components/ux/flag';
+import { placeName } from '../account/request-words';
 import type { ReactNode } from 'react';
 export type Mission = {
   id: string;
@@ -76,19 +79,26 @@ export type Queue = {
   replies: { id: string; mission_id: string; body: string; created_at?: string }[];
 };
 type RouteOption = { id: string; label: string };
-const routeOptions = (catalogue: {
-  routes?: { id: string; origin_market: string; destination_market: string }[];
-  packs: { route_id: string; origin_market: string; destination_market: string }[];
-}): RouteOption[] =>
+const routeOptions = (
+  catalogue: {
+    routes?: { id: string; origin_market: string; destination_market: string }[];
+    packs: { route_id: string; origin_market: string; destination_market: string }[];
+  },
+  names = false,
+): RouteOption[] =>
   // CQ-09: the filter lists every route in the workspace, not only routes with a published pack.
   catalogue.routes?.length
     ? catalogue.routes.map((r) => ({
         id: r.id,
-        label: `${r.origin_market} → ${r.destination_market}`,
+        label: names
+          ? `${placeName(r.origin_market)} → ${placeName(r.destination_market)}`
+          : `${r.origin_market} → ${r.destination_market}`,
       }))
     : catalogue.packs.map((p) => ({
         id: p.route_id,
-        label: `${p.origin_market} → ${p.destination_market}`,
+        label: names
+          ? `${placeName(p.origin_market)} → ${placeName(p.destination_market)}`
+          : `${p.origin_market} → ${p.destination_market}`,
       }));
 export const canManage = (role: string | undefined) =>
   !!role && ['owner', 'admin', 'operator'].includes(role);
@@ -214,6 +224,97 @@ export function MissionFacts({
   history?: HistoryEntry[];
 }) {
   const handover = latestHandover(history);
+  const { teamDeskV41: desk } = useOperatorFlags();
+  // Team desk v4.1: the same facts in three named groups, label beside value, in the words the team uses.
+  if (desk)
+    return (
+      <div className="mission-facts">
+        <section aria-labelledby="mission-facts-work">
+          <h4 id="mission-facts-work">Work</h4>
+          <dl>
+            <dt>Owner</dt>
+            <dd>{ownerName(owners, m.owner_id)}</dd>
+            {handover && (
+              <>
+                <dt>Hand-over note</dt>
+                <dd data-handover>
+                  From {ownerName(owners, handover.fromOwnerId)} on{' '}
+                  {formatDateTime(handover.entry.created_at)}: {handover.entry.reason}
+                </dd>
+              </>
+            )}
+            <dt>Next action</dt>
+            <dd>{m.next_action || 'Not recorded'}</dd>
+            <dt>Due</dt>
+            <dd>
+              <time dateTime={m.due_at}>{formatDate(m.due_at)}</time>
+              {isOverdue(m.due_at, m.status) ? ' · Overdue' : ''}
+            </dd>
+            {m.updated_at && (
+              <>
+                <dt>Last change</dt>
+                <dd>
+                  <time dateTime={m.updated_at}>{formatDate(m.updated_at)}</time>
+                  {isStale(m.updated_at, m.status) ? ` · ${quietLabel(m.updated_at)}` : ''}
+                </dd>
+              </>
+            )}
+            <dt>Route</dt>
+            <dd>
+              <RouteWords label={m.route_label} none="No route assigned yet" />
+            </dd>
+          </dl>
+        </section>
+        <section aria-labelledby="mission-facts-request">
+          <h4 id="mission-facts-request">Request</h4>
+          <dl>
+            <dt>What they sell or need</dt>
+            <dd>{m.brief.offer}</dd>
+            <dt>Wanted outcomes</dt>
+            <dd>{m.brief.outcomes?.length ? m.brief.outcomes.join(', ') : 'Not given'}</dd>
+            <dt>Market</dt>
+            <dd>
+              <Flagged code={placeMark(m.brief.market)}>{m.brief.market}</Flagged>
+            </dd>
+            <dt>Travelling</dt>
+            <dd>
+              {m.brief.attendance === 'Yes'
+                ? `Yes, ${m.brief.startDate} to ${m.brief.endDate} (${m.brief.timezone})`
+                : m.brief.attendance}
+            </dd>
+            <dt>Contact</dt>
+            <dd>{[m.brief.name, m.brief.email].filter(Boolean).join(' · ') || 'Not given'}</dd>
+            {m.brief.website && (
+              <>
+                <dt>Website they gave</dt>
+                <dd>
+                  <a href={m.brief.website} target="_blank" rel="noopener noreferrer">
+                    {m.brief.website}
+                  </a>
+                </dd>
+              </>
+            )}
+            {m.brief.notes && (
+              <>
+                <dt>Their notes</dt>
+                <dd>{m.brief.notes}</dd>
+              </>
+            )}
+          </dl>
+        </section>
+        <details className="mission-facts-record">
+          <summary>Record Details</summary>
+          <dl>
+            <dt>Source</dt>
+            <dd>{sourceLabel(m.source_kind, m.claim_status)}</dd>
+            <dt>Privacy notice accepted</dt>
+            <dd>{formatDateTime(m.acknowledged_at)}</dd>
+            <dt>Notice version</dt>
+            <dd>{m.notice_version}</dd>
+          </dl>
+        </details>
+      </div>
+    );
   return (
     <>
       <dl>
@@ -402,6 +503,7 @@ export function MissionStepForm({
   feedback?: ReactNode;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }) {
+  const { teamDeskV41: desk } = useOperatorFlags();
   const asked = stepFields(action, m);
   const shows = (field: (typeof asked)[number]) => asked.includes(field);
   const statement = stepStatement(action, m.status, customer);
@@ -414,7 +516,18 @@ export function MissionStepForm({
       <div className="mission-step-facts" tabIndex={-1} data-autofocus>
         <p data-step-changes>{statement.changes}</p>
         <p data-step-customer>{statement.customer}</p>
-        <p data-step-route>{routeLine(m.route_label, action)}</p>
+        {desk ? (
+          <RouteState
+            label={m.route_label}
+            note={
+              action === 'qualify' && !m.route_label
+                ? 'You can begin qualification without a route.'
+                : undefined
+            }
+          />
+        ) : (
+          <p data-step-route>{routeLine(m.route_label, action)}</p>
+        )}
       </div>
       <input type="hidden" name="action" value={action} />
       {shows('owner') ? (
@@ -519,9 +632,15 @@ export function MissionHistory({ history, owners }: { history: HistoryEntry[]; o
 export function ReplyForm({
   busy,
   onSend,
+  desk = false,
+  quiet = false,
 }: {
   busy: boolean;
   onSend: (body: string, replyId: string) => Promise<boolean>;
+  /** Team desk v4.1: the plain words. Off, the form reads as it always did. */
+  desk?: boolean;
+  /** The button is the quiet one, where the page already has its one primary action. */
+  quiet?: boolean;
 }) {
   return (
     <form
@@ -540,11 +659,11 @@ export function ReplyForm({
       }}
     >
       <label className="field">
-        Reply visible on the private receipt
+        {desk ? 'Your reply to the customer' : 'Reply visible on the private receipt'}
         <textarea name="body" required minLength={3} maxLength={2000} />
       </label>
-      <button className="primary-link" disabled={busy}>
-        Post Receipt Reply
+      <button className={quiet ? 'secondary-link' : 'primary-link'} disabled={busy}>
+        {desk ? 'Send Reply' : 'Post Receipt Reply'}
       </button>
     </form>
   );
@@ -628,13 +747,13 @@ export function Missions({
       .then(async (r) => {
         if (!r.ok) return;
         const v = await r.json();
-        if (active) setRoutes(routeOptions(v));
+        if (active) setRoutes(routeOptions(v, deskV41));
       })
       .catch(() => {});
     return () => {
       active = false;
     };
-  }, [tenant]);
+  }, [tenant, deskV41]);
   async function act(action: string, body: unknown) {
     // One change at a time: a second submit while the first is still out (slow network, or the code
     // check is open) is ignored, so nothing is sent twice.
@@ -661,6 +780,8 @@ export function Missions({
     if (body) void act('mission', body);
   }
   const manage = queue && canManage(queue.role);
+  // Anything narrower than every open mission: a filter is on, so an empty list is "no match", not "none yet".
+  const filtered = filter !== 'open' || Object.values(selected).some(Boolean) || offset > 0;
   return (
     <section
       className="missions-home"
@@ -679,7 +800,10 @@ export function Missions({
         sections={[{ label: 'Queue and filters', heading: 'Mission review queue' }]}
       />
       <p aria-live="polite">{message}</p>
-      <PhoneFold summary="Filter the queue (5 filters)" className="missions-filters">
+      <PhoneFold
+        summary={deskV41 ? 'Filters' : 'Filter the queue (5 filters)'}
+        className="missions-filters"
+      >
         <div className="hero-actions">
           {(['route', 'job', 'owner', 'stage'] as const).map((key) => (
             <label className="field" key={key}>
@@ -737,17 +861,18 @@ export function Missions({
               void Promise.all([request('missions'), request('mission-catalogue')])
                 .then(([missions, catalogue]) => {
                   setQueue(missions);
-                  setRoutes(routeOptions(catalogue));
+                  setRoutes(routeOptions(catalogue, deskV41));
                 })
                 .catch((e) => setMessage(e.message))
                 .finally(() => setBusy(false));
             }}
           >
-            Refresh missions
+            {/* Switch off keeps the words the desk has always shown. */}
+            {deskV41 ? 'Refresh Missions' : <>Refresh missions</>}
           </button>
         </div>
       </PhoneFold>
-      <div className="hero-actions" aria-label="Mission focus views">
+      <div className="hero-actions mission-lenses" role="group" aria-label="Mission focus views">
         {[
           { label: 'Awaiting qualification', stage: 'QUALIFICATION', job: '', direction: '' },
           { label: 'China sourcing', stage: '', job: 'sourcing', direction: 'BD → CN' },
@@ -786,41 +911,63 @@ export function Missions({
             {queue.total} matching missions · showing {queue.missions.length ? offset + 1 : 0} to{' '}
             {offset + queue.missions.length}
           </p>
-          <button
-            type="button"
-            className="text-link"
-            disabled={busy || offset === 0}
-            onClick={() => {
-              if (confirmChange()) setOffset((v) => Math.max(0, v - 100));
-            }}
-          >
-            Previous Missions
-          </button>
-          <button
-            type="button"
-            className="text-link"
-            disabled={busy || offset + 100 >= queue.total}
-            onClick={() => {
-              if (confirmChange()) setOffset((v) => v + 100);
-            }}
-          >
-            Next Missions
-          </button>
+          {/* One page: no pager. Two buttons that can never be pressed are not controls. */}
+          {(offset > 0 || queue.total > 100) && (
+            <>
+              <button
+                type="button"
+                className="text-link"
+                disabled={busy || offset === 0}
+                onClick={() => {
+                  if (confirmChange()) setOffset((v) => Math.max(0, v - 100));
+                }}
+              >
+                Previous Missions
+              </button>
+              <button
+                type="button"
+                className="text-link"
+                disabled={busy || offset + 100 >= queue.total}
+                onClick={() => {
+                  if (confirmChange()) setOffset((v) => v + 100);
+                }}
+              >
+                Next Missions
+              </button>
+            </>
+          )}
         </div>
       )}
       {!queue ? (
         <p>
           {message
-            ? 'Missions could not be loaded. Use Refresh missions to try again.'
+            ? `Missions could not be loaded. Use ${deskV41 ? 'Refresh Missions' : 'Refresh missions'} to try again.`
             : 'Loading missions…'}
         </p>
       ) : queue.missions.length === 0 ? (
         <AccessState kind="empty">
-          <p>No mission requests yet.</p>
-          <p>
-            No matching accessible records are shown. Change the filters or refresh; this does not
-            establish an outcome of zero.
-          </p>
+          {!deskV41 ? (
+            <>
+              <p>No mission requests yet.</p>
+              <p>
+                No matching accessible records are shown. Change the filters or refresh; this does
+                not establish an outcome of zero.
+              </p>
+            </>
+          ) : filtered ? (
+            <>
+              <p>
+                No missions you can see match these filters. Records you cannot open are not
+                counted.
+              </p>
+              <p>Change a filter or refresh.</p>
+            </>
+          ) : (
+            <>
+              <p>No mission requests you can see yet. Records you cannot open are not counted.</p>
+              <p>A new request shows here when a customer sends one. Refresh to check again.</p>
+            </>
+          )}
         </AccessState>
       ) : compact ? (
         <CompactQueue queue={queue} tenant={tenant} />
@@ -875,44 +1022,71 @@ export function Missions({
   );
 }
 
-/** D15 queue: one row per mission. Every action lives on the mission's own page. */
+/**
+ * D15 queue: one row per mission. Every action lives on the mission's own page. Where the list is too narrow for
+ * six columns each mission is drawn as a stacked row (mission-page.css), so the table carries its roles in the
+ * markup and each cell names its column for that layout.
+ */
 function CompactQueue({ queue, tenant }: { queue: Queue; tenant: string }) {
+  const { teamDeskV41: desk } = useOperatorFlags();
   return (
-    <div className="mission-queue" role="region" aria-label="Missions" tabIndex={0}>
-      <table>
+    <div className="mission-queue">
+      <table role="table" aria-label="Missions">
         <caption className="sr-only">
           Missions, one row each. Open a mission to see its tabs and actions.
         </caption>
-        <thead>
-          <tr>
-            <th scope="col">Customer</th>
-            <th scope="col">Route</th>
-            <th scope="col">Stage</th>
-            <th scope="col">Owner</th>
-            <th scope="col">Due</th>
-            <th scope="col">Next action</th>
+        <thead role="rowgroup">
+          <tr role="row">
+            <th scope="col" role="columnheader">
+              Customer
+            </th>
+            <th scope="col" role="columnheader">
+              Route
+            </th>
+            <th scope="col" role="columnheader">
+              Stage
+            </th>
+            <th scope="col" role="columnheader">
+              Owner
+            </th>
+            <th scope="col" role="columnheader">
+              Due
+            </th>
+            <th scope="col" role="columnheader">
+              Next action
+            </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           {queue.missions.map((m) => {
             const overdue = isOverdue(m.due_at, m.status);
             return (
-              <tr key={m.id} data-mission-row>
-                <th scope="row">
+              <tr key={m.id} role="row" data-mission-row>
+                <th scope="row" role="rowheader">
                   <a href={missionHref(m.id, tenant)}>{m.brief.company}</a>
                 </th>
-                <td>{m.route_label ?? 'No route yet'}</td>
-                <td>
+                <td role="cell" data-label="Route">
+                  {desk ? (
+                    <RouteWords label={m.route_label} none="No route yet" />
+                  ) : (
+                    (m.route_label ?? 'No route yet')
+                  )}
+                </td>
+                <td role="cell" data-label="Stage">
                   <StatusChip status={stageChip(m.status, overdue)} />
                 </td>
-                <td>{ownerName(queue.owners, m.owner_id)}</td>
-                <td>
+                <td role="cell" data-label="Owner">
+                  {ownerName(queue.owners, m.owner_id)}
+                </td>
+                <td role="cell" data-label="Due">
                   <time dateTime={m.due_at}>{formatDate(m.due_at)}</time>
                   {isStale(m.updated_at, m.status) && m.updated_at && (
                     <span data-stale> · {quietLabel(m.updated_at)}</span>
                   )}
                 </td>
-                <td>{m.next_action || 'Not recorded'}</td>
+                <td role="cell" data-label="Next action">
+                  {m.next_action || 'Not recorded'}
+                </td>
               </tr>
             );
           })}

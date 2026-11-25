@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useInboxOpenLoad } from './inbox/inbox-check';
 import type { HelperInterestRow } from '@corridra/auth/helper-interest';
 import '../../components/problem-reports/problem-reports.css';
 import { whenWords } from '../account/workspace-lifecycle-client';
@@ -22,18 +23,21 @@ export function HelperInterestList({
   tenant,
   role,
   installed = false,
+  tabbed = false,
 }: {
   tenant: string;
   role: string;
+  /** Team desk v4.1: the list sits under its own tab on the Inbox page, so the tab names it. */
+  tabbed?: boolean;
   /** The caller already asked the register and it is installed (the Inbox page), so it is not asked twice. */
   installed?: boolean;
 }) {
   return canReadHelperInterest(role) ? (
-    <Panel key={tenant} tenant={tenant} known={installed} />
+    <Panel key={tenant} tenant={tenant} known={installed} tabbed={tabbed} />
   ) : null;
 }
 
-function Panel({ tenant, known }: { tenant: string; known: boolean }) {
+function Panel({ tenant, known, tabbed }: { tenant: string; known: boolean; tabbed: boolean }) {
   const [installed, setInstalled] = useState(known);
   const [rows, setRows] = useState<HelperInterestRow[]>([]);
   const [page, setPage] = useState<{ total: number; nextOffset: number | null } | null>(null);
@@ -54,6 +58,9 @@ function Panel({ tenant, known }: { tenant: string; known: boolean }) {
     };
   }, [tenant, known]);
 
+  // Team desk v4.1 (staff-core-29): in the Inbox, this list loads itself when its tab opens after one passed check.
+  const readPassed = useInboxOpenLoad(fragment, () => void load(0), page !== null);
+
   async function load(offset: number) {
     if (busy) return;
     const token = ++run.current;
@@ -66,6 +73,7 @@ function Panel({ tenant, known }: { tenant: string; known: boolean }) {
         setInstalled(false);
         return;
       }
+      readPassed();
       setRows((current) => (offset === 0 ? fresh.rows : [...current, ...fresh.rows]));
       setPage({ total: fresh.total, nextOffset: fresh.nextOffset });
     } catch (error) {
@@ -97,7 +105,7 @@ function Panel({ tenant, known }: { tenant: string; known: boolean }) {
   return (
     <details id={fragment} tabIndex={-1} className="receipt-disclosure ux-panel">
       <summary>
-        <h2>{words.title}</h2>
+        <h2 className={tabbed ? 'sr-only' : undefined}>{words.title}</h2>
         {page ? <span className="pr-meta">{words.waiting(page.total)}</span> : null}
       </summary>
       <div className="pr-queue">
