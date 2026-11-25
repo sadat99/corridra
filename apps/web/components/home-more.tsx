@@ -204,7 +204,7 @@ export function MissionSection() {
 }
 
 /** The eight questions people ask before they start (board 3c). */
-export function FaqSection() {
+export function FaqSection({ openKeys = [] }: { openKeys?: number[] }) {
   const t = useT();
   return (
     <section className="tr-section tr-alt" id="faq" aria-labelledby="faq-title">
@@ -212,7 +212,7 @@ export function FaqSection() {
       <h2 id="faq-title">{t('home.tr.fq.title')}</h2>
       <div className="tr-faq">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-          <details key={n}>
+          <details key={n} open={openKeys.includes(n) || undefined}>
             <summary>{t(key(`home.tr.fq.${n}.q`))}</summary>
             <div>
               <p>{t(key(`home.tr.fq.${n}.a1`))}</p>
@@ -304,6 +304,8 @@ export function RoutesSection({
   flags = false,
   links = true,
   readyLead,
+  v42 = false,
+  limits = true,
 }: {
   mine?: RouteKey | null;
   flags?: boolean;
@@ -311,6 +313,10 @@ export function RoutesSection({
   links?: boolean;
   /** The home's own lead for the readiness statuses (the board's words); /how-it-works keeps its line. */
   readyLead?: string;
+  /** Home page v4.2 (owner, 25 Nov 2026): the Sell card's route line leaves out Key Asian Markets. */
+  v42?: boolean;
+  /** What Corridra is not, under the statuses; v4.2 shows it as its own navy section instead. */
+  limits?: boolean;
 }) {
   const t = useT();
   const matches = (route: RouteKey) =>
@@ -333,7 +339,13 @@ export function RoutesSection({
         </div>
         <div className={mine === 'sell' ? 'is-mine' : undefined}>
           {matches('sell')}
-          <strong>{flags ? <RouteLine route="sell" /> : t('home.tr.door.sell.route')}</strong>
+          <strong>
+            {flags ? (
+              <RouteLine route="sell" markets={v42 ? 'noKeyAsian' : 'all'} />
+            ) : (
+              t('home.tr.door.sell.route')
+            )}
+          </strong>
           <span className="tr-status is-open">{t('home.tr.rs.open')}</span>
           <p>{t('home.tr.rs.sell.text')}</p>
           {links ? (
@@ -375,15 +387,19 @@ export function RoutesSection({
           </>
         ) : null}
       </Link>
-      <h3 className="tr-h3">{t('home.tr.not.title')}</h3>
-      <div className="tr-nots">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-          <div key={n}>
-            <strong>{t(key(`home.tr.not.${n}`))}</strong>
-            <span>{t(key(`home.tr.not.${n}.text`))}</span>
+      {limits ? (
+        <>
+          <h3 className="tr-h3">{t('home.tr.not.title')}</h3>
+          <div className="tr-nots">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div key={n}>
+                <strong>{t(key(`home.tr.not.${n}`))}</strong>
+                <span>{t(key(`home.tr.not.${n}.text`))}</span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      ) : null}
     </section>
   );
 }

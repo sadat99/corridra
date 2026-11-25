@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
+import { mountHomeV42 } from '../ux/home-v42-fixture';
 
 // LP3: the home page as the owner's design board "Corridra Two Routes", revision 3c, in full. Owner, 18 November
 // 2026, first hand to Guardian 29: "why didnt we implement https://claude.ai/artifact/END7KDT2Y3KhZZoYb8pExX with all
@@ -975,4 +976,33 @@ test('the sections /how-it-works borrows keep the same sizes: titles 24, sub-hea
   expect(await px('.tr-home .tr-section h2')).toBe(24);
   expect(await px('.tr-home .tr-h3')).toBe(18);
   expect(await px('.tr-home .tr-section .tr-sub')).toBe(18);
+});
+
+// Home page v4.2, CORRIDRA_UX_HOME_V42 exactly "true" (owner, 25 Nov 2026: "lock this v4.2", "Add a switch, off by
+// default", and on Key Asian Markets: "Lines, cards and chips only"). The cases above stay the switch-off truth and are
+// unchanged; this case mounts the real v4.2 components on the live home's styles (tests/ux/home-v42-fixture.ts), so the
+// suite keeps one build with the switch off.
+test('switch on (v4.2): the Sell Abroad door says "Bangladesh sells to EU, UK, US, Australia" with flags, no Key Asian Markets', async ({
+  page,
+}) => {
+  await mountHomeV42(page, { width: 1440 });
+  const flags = page.locator('main img[data-flag]');
+  expect(await flags.count()).toBeGreaterThan(5);
+  for (const flag of await flags.all()) {
+    await expect(flag).toHaveAttribute('alt', '');
+    await expect(flag).toHaveAttribute('aria-hidden', 'true');
+  }
+  const sell = door(page, /^Demand side/);
+  await expect(sell.locator('.hv42-line .ux-flagged')).toHaveText([
+    'Bangladesh',
+    'EU',
+    'UK',
+    'US',
+    'Australia',
+  ]);
+  await expect(sell).not.toContainText(/Key Asian|Asia/);
+  expect((await sell.innerText()).match(/Australia/g) ?? []).toHaveLength(1);
+  // The Sell route status card drops it too; the hero sentence keeps it.
+  await expect(page.locator('#routes .tr-routes > div').nth(1)).not.toContainText(/Key Asian|Asia/);
+  await expect(page.locator('#hero .tr-lead')).toContainText('key Asian markets');
 });

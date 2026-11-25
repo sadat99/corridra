@@ -47,13 +47,13 @@ const terms = {
 const personFor: Partial<Record<RouteKey, number>> = { china: 1, sell: 0, delegation: 6 };
 /** The brief goal each door preselects. */
 /** UI/UX.v4.1 L2: the one owned icon of each door. */
-const doorIcon: Record<RouteKey, string> = {
+export const doorIcon: Record<RouteKey, string> = {
   china: 'buy',
   sell: 'sell',
   delegation: 'people',
   other: 'draft',
 };
-const goalFor: Record<RouteKey, GoalKey> = {
+export const goalFor: Record<RouteKey, GoalKey> = {
   china: 'china',
   sell: 'sell',
   delegation: 'delegation',
@@ -330,7 +330,7 @@ function Tests({ name, count = 4 }: { name: 'cn' | 'sl'; count?: number }) {
   );
 }
 
-function China() {
+export function China() {
   const t = useLanguage().t;
   const [pick, setPick] = useState<QuoteKey | 'x' | null>(null);
   const [stop, setStop] = useState(1);
@@ -617,7 +617,7 @@ function Clock({
   );
 }
 
-function Delegation({ whatsapp }: { whatsapp: string | null }) {
+export function Delegation({ whatsapp }: { whatsapp: string | null }) {
   const t = useLanguage().t;
   const stages = ['defined', 'matched', 'met', 'offers', 'followed'] as const;
   return (
@@ -696,7 +696,7 @@ function Delegation({ whatsapp }: { whatsapp: string | null }) {
   );
 }
 
-function Other({ whatsapp }: { whatsapp: string | null }) {
+export function Other({ whatsapp }: { whatsapp: string | null }) {
   const t = useLanguage().t;
   return (
     <section className="tr-section tr-alt" id="route-other" aria-labelledby="oth-title">

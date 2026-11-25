@@ -18,17 +18,20 @@ export function SiteFooterPlace({
   realUse,
   shells,
   accessDoors = false,
+  homeV42 = false,
 }: {
   realUse: boolean;
   shells: boolean;
   /** CORRIDRA_UX_ACCESS_DOORS, read on the server: a signed-out visitor sees the three access doors in the footer. */
   accessDoors?: boolean;
+  /** CORRIDRA_UX_HOME_V42, read on the server: the full footer is the trimmed one (owner, 25 Nov 2026). */
+  homeV42?: boolean;
 }) {
   const t = useT();
   const pathname = usePathname();
   if (isBarePublicPage(pathname)) return null;
   if (!shells || !signedInShellFor(pathname))
-    return <SiteFooterView realUse={realUse} accessDoors={accessDoors} />;
+    return <SiteFooterView realUse={realUse} accessDoors={accessDoors} trim={homeV42} />;
   return (
     <footer className="site-footer">
       {/* Owner decision, 12 Nov 2026 (locked mockups revision 2): the quiet footer gains How We Label Facts. */}
