@@ -9,7 +9,7 @@ import { ownerCapable, ownerPageEnabled } from '../../lib/owner-access';
 import { problemReportsOffered } from '../../lib/problem-reports-offered';
 import { programmeApplicationsOffered } from '../../lib/programme-applications-offered';
 import { uxSwitchOn } from '../../lib/ux-switches';
-import { operatorSignInPath } from '../../lib/workspace-navigation';
+import { operatorSignInPath, sectionRefusedForRole } from '../../lib/workspace-navigation';
 import { OperatorFlags } from './operator-flags';
 import { Workspace } from './workspace';
 import { operatorHeader } from '../../components/ux/desk-frame';
@@ -75,6 +75,12 @@ export async function OperatorEntry({
         </a>
       </WorkspaceShell>
     );
+  // Health and Readiness are for the owner and admin only. The role of the workspace in view decides here, on the server,
+  // so an ordinary member who types the address lands on Today, whatever the switches say. Every other section keeps
+  // the screen's own "unavailable for your role" note.
+  const role = tenants.find((t) => t.id === selected)?.role;
+  if (section && sectionRefusedForRole(section, role))
+    redirect(selected ? '/operator?workspace=' + selected : '/operator');
   const shellsV2 = uxSwitchOn('CORRIDRA_UX_SHELLS_V2');
   const ownerPage = ownerPageEnabled() && ownerCapable(tenants).length > 0;
   // The header for these switches and this address: as it always was, or the team desk v4.1 page pattern.

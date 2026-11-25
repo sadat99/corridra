@@ -200,7 +200,8 @@ describe('a segment never shows a place the role may not open', () => {
   test('examples: an operator sees Status but not Team and access; the owner page needs its switch', () => {
     const ids = (place: DeskPlaceId, role: string, ownerPage = true) =>
       deskSegmentsFor(place, role, { urls: true, ownerPage }).segments.map((s) => s.id);
-    expect(ids('ops-health', 'operator')).toEqual([
+    expect(ids('ops-dashboard', 'operator')).toEqual(['workspace-operations', 'ops-dashboard']);
+    expect(ids('ops-health', 'admin')).toEqual([
       'workspace-operations',
       'ops-dashboard',
       'ops-health',

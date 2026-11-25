@@ -37,6 +37,7 @@ export async function GET(request: Request) {
         : error instanceof z.ZodError
           ? (error.issues[0]?.message ?? 'Check the request')
           : (refusal?.message ?? 'Request failed');
-    return Response.json({ error: message }, { status, headers });
+    const code = error instanceof DomainError ? error.code : undefined;
+    return Response.json(code ? { error: message, code } : { error: message }, { status, headers });
   }
 }
