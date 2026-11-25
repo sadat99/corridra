@@ -1,6 +1,7 @@
 import '../components/home-landing.css';
 import '../components/home-routes.css';
 import { HomeRoutes } from '../components/home-routes';
+import { HomeV42Page } from '../components/home-v42-page';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
@@ -12,23 +13,17 @@ import { uxSwitchOn } from '../lib/ux-switches';
 // action everywhere is Start a Request, to /plan or to a /plan?job=... link; the examples are labelled and send
 // nothing. "Talk to a Person" and WhatsApp appear only when the owner's support number is set, as in the Help menus.
 // Home page v4.2 (owner, 25 Nov 2026: "lock this v4.2", "Add a switch, off by default"): only while
-// CORRIDRA_UX_HOME_V42 is exactly "true" the page is the v4.2 composition (docs/revamp/specs/ui-ux-v4-2.md). It is
-// loaded only then, so with the switch off this page and its styles are exactly what they were. The switch is read when
-// the page is built, so a change needs a redeploy.
-export default async function Home() {
-  if (uxSwitchOn('CORRIDRA_UX_HOME_V42')) {
-    const { HomeV42 } = await import('../components/home-v42');
-    return (
-      <PublicShell className="ux-guide-home ac1-home tr-home" translated>
-        <LegacyHashRedirect />
-        <HomeV42 whatsapp={supportWhatsappHref()} />
-      </PublicShell>
-    );
-  }
+// CORRIDRA_UX_HOME_V42 is exactly "true" the page is the v4.2 composition (docs/revamp/specs/ui-ux-v4-2.md), loaded
+// by HomeV42Page only then. The switch is read when the page is built, so a change needs a redeploy.
+export default function Home() {
   return (
     <PublicShell className="ux-guide-home ac1-home tr-home" translated>
       <LegacyHashRedirect />
-      <HomeRoutes whatsapp={supportWhatsappHref()} />
+      {uxSwitchOn('CORRIDRA_UX_HOME_V42') ? (
+        <HomeV42Page whatsapp={supportWhatsappHref()} />
+      ) : (
+        <HomeRoutes whatsapp={supportWhatsappHref()} />
+      )}
     </PublicShell>
   );
 }

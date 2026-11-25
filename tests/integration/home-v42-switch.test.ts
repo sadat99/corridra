@@ -61,12 +61,29 @@ describe('the switch', () => {
       expect(uxSwitchOn('CORRIDRA_UX_HOME_V42', { CORRIDRA_UX_HOME_V42: value })).toBe(false);
   });
 
-  it('chooses the v4.2 home only while it is on, and loads it only then', () => {
+  it('chooses the v4.2 home only while it is on, and loads it only then', async () => {
+    // The page stays a plain function (fixtures render it outside Next.js); only the v4.2 branch loads anything new.
+    const { default: Home } = await load('app/page.tsx');
+    const { HomeRoutes } = await load('components/home-routes.tsx');
+    const { HomeV42Page } = await load('components/home-v42-page.tsx');
+    const branch = () => {
+      const page = Home() as { props: { children: { type: unknown }[] } };
+      expect(page).not.toBeInstanceOf(Promise);
+      return page.props.children[1]!.type;
+    };
+    for (const value of [undefined, 'TRUE', '1', 'false']) {
+      vi.stubEnv('CORRIDRA_UX_HOME_V42', value as string);
+      expect(branch(), String(value)).toBe(HomeRoutes);
+    }
+    vi.stubEnv('CORRIDRA_UX_HOME_V42', 'true');
+    expect(branch()).toBe(HomeV42Page);
+    vi.unstubAllEnvs();
     const page = readFileSync(resolve('apps/web/app/page.tsx'), 'utf8');
-    expect(page).toContain("if (uxSwitchOn('CORRIDRA_UX_HOME_V42')) {");
-    expect(page).toContain("await import('../components/home-v42')");
-    expect(page).not.toMatch(/^import .*home-v42/m);
+    expect(page).not.toMatch(/^import .*home-v42'/m);
     expect(page).toContain('<HomeRoutes whatsapp={supportWhatsappHref()} />');
+    const server = readFileSync(resolve('apps/web/components/home-v42-page.tsx'), 'utf8');
+    expect(server).toContain("await import('./home-v42')");
+    expect(server).not.toContain("'use client'");
     expect(readFileSync(resolve('apps/web/components/site-footer.tsx'), 'utf8')).toContain(
       "homeV42={uxSwitchOn('CORRIDRA_UX_HOME_V42')}",
     );
