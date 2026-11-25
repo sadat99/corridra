@@ -212,8 +212,9 @@ function WeekGroup({
   title: string;
   count: number;
   empty: string;
-  href: string;
-  link: string;
+  /** Left out where an earlier group already links to the same place: one address, one link. */
+  href?: string;
+  link?: string;
   children?: ReactNode;
 }) {
   return (
@@ -232,9 +233,11 @@ function WeekGroup({
           {children ? <ul>{children}</ul> : null}
         </>
       )}
-      <a className="text-link ux-week-link" href={href}>
-        {link}
-      </a>
+      {href && link ? (
+        <a className="text-link ux-week-link" href={href}>
+          {link}
+        </a>
+      ) : null}
     </section>
   );
 }
@@ -559,8 +562,6 @@ function ThisWeek({
             title="Meetings that need a new time"
             count={work.reschedule.length}
             empty="No meetings need a new time"
-            href="#workspace-meetings"
-            link="Open Meetings"
           >
             {work.reschedule.slice(0, weekRows).map((m) => (
               <Item
@@ -1438,12 +1439,12 @@ export function TodayPanel({
     setToday(null);
     setAttempt((n) => n + 1);
   };
-  // Team desk v4.1: whether the page's own title (the shell's h1) already reads "Today".
+  // Whether the page's own title (the shell's h1) already reads "Today": then this panel adds no second heading.
   const panel = useRef<HTMLElement>(null);
   const [titled, setTitled] = useState(false);
   useEffect(() => {
-    setTitled(deskV41 && panel.current?.closest('.ux-titled-today') != null);
-  }, [deskV41]);
+    setTitled(panel.current?.closest('.ux-titled-today') != null);
+  }, []);
   const work = today?.work ?? null;
   const rows = today ? needsYouNow(today.fresh, today.overdue) : [];
   const summary = today ? needsSummary(today.fresh, today.overdue, rows) : null;
@@ -1522,9 +1523,14 @@ export function TodayPanel({
       ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
       : null;
     return (
-      <section className="ux-today ux-desk" aria-labelledby="today-title">
+      <section
+        ref={panel}
+        className="ux-today ux-desk"
+        aria-labelledby={titled ? undefined : 'today-title'}
+        aria-label={titled ? 'Today' : undefined}
+      >
         <header className="operator-today-heading">
-          <h2 id="today-title">Today</h2>
+          {titled ? null : <h2 id="today-title">Today</h2>}
           {today && !failure && totals && (
             <p className="ux-desk-sentence">{deskSentence(totals)}</p>
           )}
@@ -1560,9 +1566,14 @@ export function TodayPanel({
     );
   }
   return (
-    <section className="ux-today" aria-labelledby="today-title">
+    <section
+      ref={panel}
+      className="ux-today"
+      aria-labelledby={titled ? undefined : 'today-title'}
+      aria-label={titled ? 'Today' : undefined}
+    >
       <header className="operator-today-heading">
-        <h2 id="today-title">Today</h2>
+        {titled ? null : <h2 id="today-title">Today</h2>}
         {today && (
           <time dateTime={today.observedAt}>
             {new Intl.DateTimeFormat('en-GB', {
@@ -1681,57 +1692,61 @@ export function TodayPanel({
               </li>
             </>
           )}
-          {today.team && (
-            <li
-              data-tone={
-                today.team.unavailable?.includes('acceptedQuotesNotStarted')
-                  ? 'unavailable'
-                  : today.team.acceptedQuotesNotStarted === 0
-                    ? 'zero'
-                    : undefined
-              }
-            >
-              <a href="#workspace-commercial">
-                <strong>
-                  {today.team.unavailable?.includes('acceptedQuotesNotStarted')
-                    ? 'Not available'
-                    : today.team.acceptedQuotesNotStarted}
-                </strong>
-                <span>
-                  {today.team.acceptedQuotesNotStarted === 1 &&
-                  !today.team.unavailable?.includes('acceptedQuotesNotStarted')
-                    ? 'accepted quote not started'
-                    : 'accepted quotes not started'}
-                </span>
-              </a>
-            </li>
-          )}
-          {today.team && (
-            <li
-              data-tone={
-                today.team.unavailable?.includes('serviceRequestsToQuote')
-                  ? 'unavailable'
-                  : today.team.serviceRequestsToQuote === 0
-                    ? 'zero'
-                    : undefined
-              }
-            >
-              {/* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */}
-              <a href="#billing-services">
-                <strong>
-                  {today.team.unavailable?.includes('serviceRequestsToQuote')
-                    ? 'Not available'
-                    : today.team.serviceRequestsToQuote}
-                </strong>
-                <span>
-                  {today.team.serviceRequestsToQuote === 1 &&
-                  !today.team.unavailable?.includes('serviceRequestsToQuote')
-                    ? 'paid-service request to quote'
-                    : 'paid-service requests to quote'}
-                </span>
-              </a>
-            </li>
-          )}
+          {today.team &&
+            (countsForRole(role) ||
+              !today.team.unavailable?.includes('acceptedQuotesNotStarted')) && (
+              <li
+                data-tone={
+                  today.team.unavailable?.includes('acceptedQuotesNotStarted')
+                    ? 'unavailable'
+                    : today.team.acceptedQuotesNotStarted === 0
+                      ? 'zero'
+                      : undefined
+                }
+              >
+                <a href="#workspace-commercial">
+                  <strong>
+                    {today.team.unavailable?.includes('acceptedQuotesNotStarted')
+                      ? 'Not available'
+                      : today.team.acceptedQuotesNotStarted}
+                  </strong>
+                  <span>
+                    {today.team.acceptedQuotesNotStarted === 1 &&
+                    !today.team.unavailable?.includes('acceptedQuotesNotStarted')
+                      ? 'accepted quote not started'
+                      : 'accepted quotes not started'}
+                  </span>
+                </a>
+              </li>
+            )}
+          {today.team &&
+            (countsForRole(role) ||
+              !today.team.unavailable?.includes('serviceRequestsToQuote')) && (
+              <li
+                data-tone={
+                  today.team.unavailable?.includes('serviceRequestsToQuote')
+                    ? 'unavailable'
+                    : today.team.serviceRequestsToQuote === 0
+                      ? 'zero'
+                      : undefined
+                }
+              >
+                {/* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */}
+                <a href="#billing-services">
+                  <strong>
+                    {today.team.unavailable?.includes('serviceRequestsToQuote')
+                      ? 'Not available'
+                      : today.team.serviceRequestsToQuote}
+                  </strong>
+                  <span>
+                    {today.team.serviceRequestsToQuote === 1 &&
+                    !today.team.unavailable?.includes('serviceRequestsToQuote')
+                      ? 'paid-service request to quote'
+                      : 'paid-service requests to quote'}
+                  </span>
+                </a>
+              </li>
+            )}
         </ul>
       )}
       {today && !failure && (today.problemReports || today.erasure) && (

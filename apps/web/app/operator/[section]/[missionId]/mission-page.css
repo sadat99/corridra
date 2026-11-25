@@ -331,7 +331,8 @@ details[open] > summary .mission-more-chevron {
 }
 /* Phone bottom action area: the one action of a dialog stays in reach while its fields scroll. */
 @media (max-width: 40rem) {
-  .ux-dialog .operator-form > button.primary-link {
+  /* Only the dialogs of the mission page (they are drawn inside it), never another page's dialog. */
+  .mission-page .ux-dialog .operator-form > button.primary-link {
     position: sticky;
     bottom: 0;
     width: 100%;
@@ -540,4 +541,10 @@ details[open] > summary .mission-more-chevron {
 .ux-operator-home .ux-desk .ux-desk-fold-head .ux-desk-toggle {
   min-width: 44px;
   min-height: 44px;
+}
+
+/* Mission facts with the desk switch off: the label is quieter than its value, so the list can be scanned. */
+.mission-layout [role='tabpanel'] > dl > dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }

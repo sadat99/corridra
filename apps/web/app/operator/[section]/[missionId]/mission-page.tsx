@@ -263,7 +263,7 @@ export function MissionPage({
             )}
           </p>
           {!desk && <p>Next action: {m.next_action || 'Not recorded'}</p>}
-          <WithdrawalNote tenant={tenant} missionId={m.id} />
+          <WithdrawalNote tenant={tenant} missionId={m.id} role={data.role} />
         </header>
         {desk && (
           <div className="mission-desk">
