@@ -19,7 +19,7 @@ import {
   type MeetingStatus,
 } from '@corridra/domain/access';
 import { formatDateTime } from '../../lib/ux/format';
-import { countryName } from './country-name';
+import { countryName } from '../../lib/ux/options';
 import { ShowMore } from './show-more';
 import { Dialog } from '../../components/ux/dialog';
 import { meetingColumns, meetingStatusTone } from './meeting-columns';
