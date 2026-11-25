@@ -75,6 +75,7 @@
 .ux-meeting-board .ux-meeting-column .meeting-card.meeting-card > .secondary-link {
   justify-self: start;
   min-block-size: 2.75rem;
+  white-space: nowrap;
 }
 /* The header slot that holds "Propose Meeting": no room is taken while it is empty. */
 .ux-desk-primary-slot {

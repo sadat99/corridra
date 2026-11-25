@@ -69,13 +69,15 @@ export async function TeamProblemReportsPage({
       ) : (
         <>
           <ProblemReportsUnavailable filing={filing} />
-          <Link
-            prefetch={false}
-            className="text-link"
-            href={`/operator${workspaceQuery(tenant.id)}`}
-          >
-            Return to Today
-          </Link>
+          {deskV41 ? null : (
+            <Link
+              prefetch={false}
+              className="text-link"
+              href={`/operator${workspaceQuery(tenant.id)}`}
+            >
+              Return to Today
+            </Link>
+          )}
         </>
       )}
     </WorkspaceShell>

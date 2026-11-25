@@ -53,7 +53,12 @@ function displayNames(locale: string, type: 'region') {
 }
 
 export function countryName(code: string, locale = 'en'): string {
-  return displayNames(locale, 'region')?.of(code) ?? code;
+  try {
+    return displayNames(locale, 'region')?.of(code) ?? code;
+  } catch {
+    // A value that is not a region code ("OTHER") makes `of` throw a RangeError: show it as it is stored.
+    return code;
+  }
 }
 
 /** Pinned countries, then the other EU countries, then every other country by name. */
