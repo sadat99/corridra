@@ -335,15 +335,25 @@
 .ux-desk-frame .supply-disclosure[open] > summary::after {
   content: '−';
 }
-/* The breadcrumb of a page under Supply Sources takes the first line of the head on its own. */
-.supply-head > .ux-kit-crumbs {
+/* Team desk v4.1 only: the breadcrumb of a page under Supply Sources takes the first line of the head on its own. */
+.ux-desk-frame .supply-head > .ux-kit-crumbs {
   flex-basis: 100%;
 }
-.supply-head > .ux-kit-crumbs a {
+.ux-desk-frame .supply-head > .ux-kit-crumbs a {
   display: inline-flex;
   align-items: center;
   min-block-size: 44px;
 }
 .supply-hub-desk > .supply-hub-link > a {
   margin: 0;
+}
+/* Team desk v4.1: the preview line under the title is the quiet one-line note every other team page has. */
+.ux-desk-frame .ux-testmode.supply-preview {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  line-height: 1.5;
 }

@@ -62,3 +62,91 @@
     flex: none;
   }
 }
+
+/* Team desk v4.1 (decision 1: no second tab bar). A page with segments under its title draws its former inner
+   tabs as the parts of one page: the first in the open, each later one a closed fold. */
+.ux-desk-frame .ux-desk-sections {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+.ux-desk-frame .ux-desk-sections > .ux-desk-section {
+  min-inline-size: 0;
+  margin: 0;
+}
+.ux-desk-frame .ux-desk-sections > details.ux-desk-section > summary {
+  min-block-size: 44px;
+}
+
+/* Status and Control Center on a phone: a wide table stacks, one row a block and each value under its column
+   word, so nothing runs past the edge and nothing scrolls sideways inside the page. */
+@media (max-width: 47.99rem) {
+  .ux-desk-frame
+    :is(#ops-dashboard, #ops-center, #ops-health, #ops-gates)
+    .operations-table
+    :is(table, caption, tbody, tr, td) {
+    display: block;
+    inline-size: auto;
+    min-inline-size: 0;
+    max-inline-size: none;
+  }
+  .ux-desk-frame :is(#ops-dashboard, #ops-center, #ops-health, #ops-gates) .operations-table {
+    overflow-x: visible;
+  }
+  .ux-desk-frame :is(#ops-dashboard, #ops-center, #ops-health, #ops-gates) .operations-table thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ux-desk-frame
+    :is(#ops-dashboard, #ops-center, #ops-health, #ops-gates)
+    .operations-table
+    tr:not([hidden]) {
+    padding: var(--space-2) 0;
+    border-block-end: 1px solid var(--line);
+  }
+  .ux-desk-frame
+    :is(#ops-dashboard, #ops-center, #ops-health, #ops-gates)
+    .operations-table
+    tr[hidden] {
+    display: none;
+  }
+  .ux-desk-frame :is(#ops-dashboard, #ops-center, #ops-health, #ops-gates) .operations-table td {
+    padding: var(--space-1) 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .ux-desk-frame
+    :is(#ops-dashboard, #ops-center, #ops-health, #ops-gates)
+    .operations-table
+    td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--text-2);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+}
+
+/* One card per page. The page panel is the card; Status draws no second box inside it, and the body of Helpers
+   and Reports is not a card inside the page card. */
+.ux-desk-frame.ux-operator-home
+  .ux-workspace-body
+  .ux-governance-panel
+  > .ux-operations-panel:not([hidden]) {
+  padding-inline: 0;
+  border: 0;
+}
+.ux-desk-frame.ux-operator-home
+  .ux-workspace-body
+  .workspace-panel
+  > :is(.detail-card.ux-network, .detail-card.delivery-ops) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}

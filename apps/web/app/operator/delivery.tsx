@@ -105,6 +105,8 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     [signInNeeded, setSignInNeeded] = useState(false);
   // Team desk v4.1 (unit D13): the one list of reports, and the mission a mission page asked for.
   const { teamDeskV41: deskV41 } = useOperatorFlags();
+  // The panel is named Reports, as the menu and the page title name it. Where the page title already says it
+  // (the server marks the page, operator-overview.css) the heading stays for screen readers only.
   const [missionsLoaded, setMissionsLoaded] = useState(false);
   const [missions, setMissions] = useState<MissionChoice[]>([]),
     [missionId, setMissionId] = useState(''),
@@ -369,7 +371,9 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   if (unavailable)
     return (
       <section data-operator-workbench className="detail-card">
-        <h2>Client and programme delivery</h2>
+        <h2 className={deskV41 ? 'sr-only' : undefined} data-page-title="workspace-delivery">
+          Reports
+        </h2>
         <OperatorWorkbench
           label="Publication and reporting sections"
           sections={[
@@ -401,7 +405,9 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   if (!data || dataScope !== scope)
     return (
       <section data-operator-workbench className="detail-card">
-        <h2>Client and programme delivery</h2>
+        <h2 className={deskV41 ? 'sr-only' : undefined} data-page-title="workspace-delivery">
+          Reports
+        </h2>
         <OperatorWorkbench
           label="Publication and reporting sections"
           sections={[
@@ -444,7 +450,11 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     label: `Reports (${data.publications.length})`,
     panel: (
       <>
-        <h3>Reports</h3>
+        {/* The list heading is shown as it always was. It is for screen readers only with the team desk v4.1
+            switch on, and where the page title already says Reports (the server marks the page). */}
+        <h3 className={deskV41 ? 'sr-only' : undefined} data-page-title="workspace-delivery">
+          Reports
+        </h3>
         {missionId && (
           <p className="ux-report-scope">
             Showing reports for {missionName ?? 'the chosen mission'}.{' '}
@@ -528,7 +538,9 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       onChangeCapture={onChangeCapture}
       onResetCapture={onResetCapture}
     >
-      <h2>Client and programme delivery</h2>
+      <h2 className={deskV41 ? 'sr-only' : undefined} data-page-title="workspace-delivery">
+        Reports
+      </h2>
       <OperatorWorkbench
         label="Publication and reporting sections"
         sections={[

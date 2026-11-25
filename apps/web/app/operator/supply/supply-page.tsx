@@ -12,6 +12,7 @@ import { uxSwitchOn } from '../../../lib/ux-switches';
 import { operatorSignInPath } from '../../../lib/workspace-navigation';
 import { OperatorFlags } from '../operator-flags';
 import { SupplyModeLine } from './supply-ui';
+import { SupplySwitcher } from './supply-switcher';
 import '../operator-overview.css';
 import './supply.css';
 
@@ -78,7 +79,20 @@ export async function SupplyPage({
       className={frame ? 'ux-operator-home ' + frame.className : ''}
     >
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
-      <SupplyModeLine real={realUseEnabled()} />
+      {/* Team desk v4.1: the workspace picker of the menu, and the same preview line as the other team pages. */}
+      {deskV41 ? (
+        <SupplySwitcher
+          workspaces={tenants.map((entry) => ({ id: entry.id, name: entry.name }))}
+          current={tenant.id}
+        />
+      ) : null}
+      {deskV41 && !realUseEnabled() ? (
+        <p className="ux-testmode supply-preview" role="note">
+          Preview workspace: use made-up records here, never real customer details.
+        </p>
+      ) : (
+        <SupplyModeLine real={realUseEnabled()} />
+      )}
       {/* The client screens read the switch from here (a country shows its mark and name with it on). */}
       <OperatorFlags replyReview={false} supplySources teamDeskV41={deskV41}>
         {signedIn(tenant.id, tenant.role, deskV41)}

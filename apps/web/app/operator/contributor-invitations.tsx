@@ -184,9 +184,9 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
       {!data && !readError && <p>Loading helper invitations…</p>}
       {data?.installed && !data.enabled && (
         <p>
-          Invitations are paused in this workspace. You can prepare the fields below, but cannot
-          submit until Network is enabled here. Choose an enabled workspace using the Workspace
-          selector above. Existing history and pending cancellation remain available.
+          {teamDeskV41
+            ? 'Invitations are paused in this workspace. You can prepare the fields below, but cannot submit until helpers are switched on here. Choose another workspace with the workspace picker in the menu. Existing history and pending cancellation remain available.'
+            : 'Invitations are paused in this workspace. You can prepare the fields below, but cannot submit until Network is enabled here. Choose an enabled workspace using the Workspace selector above. Existing history and pending cancellation remain available.'}
         </p>
       )}
       <PhoneFold
@@ -194,12 +194,18 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
         summary={
           data && !data.installed
             ? 'Prepare an invitation draft (setup is not installed here)'
-            : 'Prepare an invitation draft (the network is off in this workspace)'
+            : teamDeskV41
+              ? 'Prepare an invitation draft (helpers are paused in this workspace)'
+              : 'Prepare an invitation draft (the network is off in this workspace)'
         }
         className="ux-invitation-body"
       >
         {data && !data.installed && (
-          <p>Helper invitation setup awaits the protected Network installation.</p>
+          <p>
+            {teamDeskV41
+              ? 'Helper invitations are not set up in this workspace yet.'
+              : 'Helper invitation setup awaits the protected Network installation.'}
+          </p>
         )}
         <p>
           We send the invitation to their Corridra inbox and by email when email is switched on.
@@ -321,7 +327,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
             Copy Assigned-task Link
           </button>
           <Link prefetch={false} className="text-link" href="/network">
-            {teamDeskV41 ? 'Network Access and Work Overview' : 'Network access and work overview'}
+            {teamDeskV41 ? 'Helper Access and Work Overview' : 'Network access and work overview'}
           </Link>
           <button
             className="text-link"
