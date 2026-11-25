@@ -30,7 +30,10 @@ import {
   SourceLabelLine,
   useLoad,
   useScreenState,
+  SupplyCrumbs,
 } from './supply-ui';
+import { useOperatorFlags } from '../operator-flags';
+import { CountryName } from '../country-name';
 
 type Detail = Candidate & {
   websiteHost: string | null;
@@ -303,6 +306,7 @@ export function CandidateRecord({
   missionId: string;
   candidateId: string;
 }) {
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const state = useLoad<{ candidate: Detail }>(
     () => supplyGet(tenant, 'candidate', { id: candidateId }),
     `${tenant}:${candidateId}`,
@@ -315,7 +319,9 @@ export function CandidateRecord({
     <dl className="supply-facts">
       <div>
         <dt>Country</dt>
-        <dd>{detail.country}</dd>
+        <dd>
+          <CountryName code={detail.country} />
+        </dd>
       </div>
       <div>
         <dt>Website host</dt>
@@ -367,28 +373,43 @@ export function CandidateRecord({
   return (
     <section>
       <div className="supply-head">
-        <nav aria-label="Breadcrumb">
-          <Link prefetch={false} className="text-link" href={withWorkspace(supplyBase, tenant)}>
-            Supply Sources
-          </Link>
-          {' / '}
-          <Link
-            prefetch={false}
-            className="text-link"
-            href={withWorkspace(`${supplyBase}/missions/${missionId}`, tenant)}
-          >
-            Mission
-          </Link>
-        </nav>
-        <p className="supply-head-end">
-          <Link
-            prefetch={false}
-            className="text-link"
-            href={withWorkspace(`${supplyBase}/do-not-contact`, tenant)}
-          >
-            Do Not Contact
-          </Link>
-        </p>
+        {deskV41 ? (
+          <SupplyCrumbs
+            trail={[
+              { label: 'Supply Sources', href: withWorkspace(supplyBase, tenant) },
+              {
+                label: 'Supply Candidates',
+                href: withWorkspace(`${supplyBase}/missions/${missionId}`, tenant),
+              },
+              { label: 'Candidate' },
+            ]}
+          />
+        ) : (
+          <>
+            <nav aria-label="Breadcrumb">
+              <Link prefetch={false} className="text-link" href={withWorkspace(supplyBase, tenant)}>
+                Supply Sources
+              </Link>
+              {' / '}
+              <Link
+                prefetch={false}
+                className="text-link"
+                href={withWorkspace(`${supplyBase}/missions/${missionId}`, tenant)}
+              >
+                Mission
+              </Link>
+            </nav>
+            <p className="supply-head-end">
+              <Link
+                prefetch={false}
+                className="text-link"
+                href={withWorkspace(`${supplyBase}/do-not-contact`, tenant)}
+              >
+                Do Not Contact
+              </Link>
+            </p>
+          </>
+        )}
       </div>
       <PausedNotice paused={paused} />
       {state.loading && !detail ? <Loading words="Loading candidate." /> : null}

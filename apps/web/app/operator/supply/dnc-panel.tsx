@@ -15,6 +15,7 @@ import {
   supplyPost,
 } from '../../../lib/supply-screens';
 import { CountryOptions } from '../country-options';
+import { useOperatorFlags } from '../operator-flags';
 import { OrganisationPicker } from './organisation-picker';
 import {
   DeniedNote,
@@ -270,6 +271,7 @@ export function DncPanel({ tenant, role }: { tenant: string; role: string }) {
   const [acting, setActing] = useState<{ id: string; action: 'lift' | 'block' } | null>(null);
   const [shown, setShown] = useState<number>(firstRows.blocks);
   const feedback = useActionFeedback();
+  const { teamDeskV41: deskV41 } = useOperatorFlags();
   const rows = blocks.data?.blocks ?? [];
   const current = rows.filter((row) => row.current);
   return (
@@ -278,8 +280,9 @@ export function DncPanel({ tenant, role }: { tenant: string; role: string }) {
         Blocked companies
       </h2>
       <p className="supply-quiet">
-        Companies Corridra must not contact. A block stops new candidates, matches and introductions
-        for that company.
+        {/* Team desk v4.1: the first sentence is the purpose line under the page title, so it is said once. */}
+        {deskV41 ? null : 'Companies Corridra must not contact. '}A block stops new candidates,
+        matches and introductions for that company.
       </p>
       <p className="supply-quiet">Blocks already recorded still apply while supply is paused.</p>
       {paused ? (

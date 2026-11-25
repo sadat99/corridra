@@ -1,0 +1,107 @@
+/* Team desk v4.1, unit D17: the routes of the workspace, first on the Settings page, each with the state of its
+   newest pack. Tokens only. Drawn only while CORRIDRA_UX_TEAM_DESK_V41 is on. */
+.settings-routes {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.settings-routes > h2,
+.settings-routes > p {
+  margin: 0;
+}
+.settings-routes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.settings-routes-list > li:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-block-size: 44px;
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--border);
+}
+.settings-route-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-inline-size: 0;
+  font-weight: 600;
+}
+.settings-route-to {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.settings-route-pack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  margin-inline-start: auto;
+}
+.settings-route-version {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+@media (max-width: 39.99rem) {
+  .settings-route-pack {
+    margin-inline-start: 0;
+    flex-basis: 100%;
+  }
+}
+/* With the pattern on the standing note and its links close the panel: the note first, then the links, each on
+   the full width (the two-column head squeezed the note into a narrow column at 1024 px). */
+.ux-operator-home .ux-workspace-body .ux-settings-head.settings-head-desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+.ux-operator-home .ux-workspace-body .ux-settings-head.settings-head-desk > p {
+  max-inline-size: 70ch;
+}
+/* "to" and the destination wrap together, so a narrow row never ends on the word "to". */
+.settings-route-end {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+/* Below 40 rem the three counts are one quiet line of text, not three tiles (the list above already shows the
+   routes), which keeps the page inside two phone screens. */
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .settings-desk .ux-settings-refresh .ux-settings-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    margin: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .settings-desk
+    .ux-settings-refresh
+    .ux-settings-counts
+    > div {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--space-1);
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .settings-desk
+    .ux-settings-refresh
+    .ux-settings-counts
+    :is(dt, dd) {
+    margin: 0;
+    font-family: inherit;
+    font-size: var(--text-sm);
+  }
+}

@@ -290,3 +290,60 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* Team desk v4.1 (unit D19), drawn only with the page pattern on. The hub's one link out sits at the end of
+   the tab row's own line, so there is no second row under the title. The link follows the tabs in the page's
+   order; a two-column grid puts the tab row and the link on one line and gives each panel the full width. */
+.supply-hub-desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-3);
+}
+.supply-hub-desk > .ux-subtabs {
+  display: contents;
+}
+.supply-hub-desk > .ux-subtabs > .ux-subtabs-list {
+  grid-area: 1 / 1;
+  min-inline-size: 0;
+}
+.supply-hub-desk > .ux-subtabs > .ux-subtabs-panel {
+  grid-column: 1 / -1;
+  min-inline-size: 0;
+}
+.supply-hub-desk > .supply-hub-link {
+  grid-area: 1 / 2;
+  align-self: start;
+  display: flex;
+  align-items: center;
+  min-block-size: 44px;
+  margin: 0;
+}
+/* A disclosure on a Supply page shows that it opens: the plus and minus the Settings sections use. */
+.ux-desk-frame .supply-disclosure > summary {
+  gap: var(--space-3);
+  cursor: pointer;
+  list-style: none;
+}
+.ux-desk-frame .supply-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.ux-desk-frame .supply-disclosure > summary::after {
+  content: '+';
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  font-size: var(--text-lg);
+}
+.ux-desk-frame .supply-disclosure[open] > summary::after {
+  content: '−';
+}
+/* The breadcrumb of a page under Supply Sources takes the first line of the head on its own. */
+.supply-head > .ux-kit-crumbs {
+  flex-basis: 100%;
+}
+.supply-head > .ux-kit-crumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+}
+.supply-hub-desk > .supply-hub-link > a {
+  margin: 0;
+}

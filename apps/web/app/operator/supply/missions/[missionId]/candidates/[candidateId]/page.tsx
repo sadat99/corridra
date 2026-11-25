@@ -18,6 +18,7 @@ export default async function Page({
     <SupplyPage
       requested={(await searchParams).workspace}
       title="Candidate"
+      place="supply-candidate"
       signedIn={(tenant, role) => (
         <CandidateRecord
           tenant={tenant}

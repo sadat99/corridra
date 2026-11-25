@@ -17,7 +17,6 @@ import {
   teamAccountPlaces,
   teamItemsFor,
   teamMap,
-  teamPins,
   teamPlacesFor,
   type MenuItem,
   type MenuItemKey,
@@ -204,34 +203,26 @@ describe('four visible groups, one click to every item, no second level', () => 
 });
 
 describe('Inbox (decision 5)', () => {
-  test('only the roles that triage, at the address of the queues, the same one the pinned queue used', () => {
+  test('only the roles that triage, at the address of the Inbox page (unit D18)', () => {
     for (const role of roles)
       expect(menuGroupsFor(role).some((group) => group.items.some((e) => e.key === 'inbox'))).toBe(
         canTriage(role),
       );
-    for (const urls of [true, false])
+    // One address, whatever the section addresses: the page opens on its first list.
+    for (const urls of [true, false]) {
       expect(menuItemHref(item('inbox'), 'owner', urls, workspace)).toBe(
-        teamPins('owner', false, urls, workspace)[0]!.href,
+        `/operator/inbox?workspace=${workspace}`,
       );
-    expect(menuItemHref(item('inbox'), 'admin', true)).toBe(
-      '/operator/settings?tab=settings-erasure',
-    );
-    // Where Report a Problem is offered Settings has its Problem reports tab, and Inbox opens there.
-    expect(menuItemHref(item('inbox'), 'admin', true, '', { problemReports: true })).toBe(
-      '/operator/settings?tab=settings-reports',
-    );
-    expect(menuItemHref(item('inbox'), 'owner', false, workspace, { problemReports: true })).toBe(
-      `/operator?workspace=${workspace}&tab=settings-reports#workspace-settings`,
-    );
-    expect(menuItemHref(item('inbox'), 'owner', true, '', { problemReports: false })).toBe(
-      '/operator/settings?tab=settings-erasure',
-    );
+      expect(menuItemHref(item('inbox'), 'admin', urls)).toBe('/operator/inbox');
+    }
+    // The tab that led the queues inside Settings is still named, so an old link to it lights Inbox.
     expect(inboxLeadTab({ problemReports: true })).toBe('settings-reports');
     expect(inboxLeadTab()).toBe('settings-erasure');
     // The frame hands the menu what the server decided.
     expect(read('components/ux/team-sidebar.tsx')).toContain(
       'problemReports={!!legacy.problemReports}',
     );
+    // With the switch off the queues stay inside Settings, under the same tab words.
     const tabs = read('app/operator/workspace.tsx');
     for (const tab of inboxTabs) expect(tabs).toContain(`id: '${tab}'`);
   });
@@ -299,6 +290,15 @@ describe('which item is lit for each address', () => {
       lit('workspace-missions', 'operator', { pathname: '/operator/supply/missions/abc' }),
     ).toBe('supply');
     expect(lit('home', 'operator', { pathname: '/operator/supply', supply: false })).toBe('none');
+  });
+  test('the Inbox page lights Inbox for the roles that have it, and nothing for the others', () => {
+    for (const role of ['owner', 'admin'])
+      expect(lit('home', role, { pathname: '/operator/inbox' })).toBe('inbox');
+    for (const role of ['operator', 'reviewer', 'viewer'])
+      expect(lit('home', role, { pathname: '/operator/inbox' })).toBe('none');
+    expect(lit('home', 'owner', { pathname: '/operator/inbox', search: '?tab=erasure' })).toBe(
+      'inbox',
+    );
   });
   test('Settings on a queue tab lights Inbox for the roles that have it; otherwise Settings', () => {
     for (const tab of inboxTabs)

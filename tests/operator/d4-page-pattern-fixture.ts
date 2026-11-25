@@ -109,7 +109,10 @@ export async function startPagePatternFixture(root = resolve('.')) {
   const componentCss = result.outputFiles.find((file) => file.path.endsWith('.css'))?.text ?? '';
   const server = createServer((req, res) => {
     const path = new URL(req.url!, 'http://fixture.invalid').pathname;
-    if (path.startsWith('/fonts/')) {
+    if (/^\/flags\/[a-z]+\.svg$/.test(path)) {
+      res.setHeader('content-type', 'image/svg+xml');
+      res.end(readFileSync(resolve('apps/web/public/flags', basename(path))));
+    } else if (path.startsWith('/fonts/')) {
       res.setHeader('content-type', 'font/woff2');
       res.end(readFileSync(resolve('apps/web/app/fonts', basename(path))));
     } else if (path === '/fixture.js') {

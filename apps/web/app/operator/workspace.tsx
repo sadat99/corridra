@@ -25,6 +25,7 @@ import { ProblemReportQueue } from './problem-report-queue';
 import { ProgrammeApplicationQueue } from './programme-application-queue';
 import { problemReportQueueFragment } from '../../lib/problem-report-queue';
 import { applicationQueueFragment } from '../../lib/programme-application-queue';
+import { canOpenInbox, inboxHrefForOldAddress } from '../../lib/ux/team-inbox';
 import { Missions } from './missions';
 import { TodayPanel } from './today';
 import { DeskFold } from './today-desk-parts';
@@ -381,6 +382,17 @@ function TenantWorkspace({
     watch.observe(holder, { childList: true, subtree: true });
     return () => watch.disconnect();
   }, [loaded, fragment, sectionId, sectionAllowed, deskV41]);
+  // Team desk v4.1 (unit D18): the lists that sat inside Settings are on the Inbox page, so an old address of one
+  // (its `#` part, or Settings with its tab) leads there. Off, nothing here runs and Settings holds them as before.
+  useEffect(() => {
+    if (!deskV41 || !loaded || !canOpenInbox(currentRole)) return;
+    const settingsTab =
+      sectionId === 'workspace-settings'
+        ? new URLSearchParams(window.location.search).get('tab')
+        : null;
+    const inbox = inboxHrefForOldAddress({ fragment, settingsTab, workspace: tenant });
+    if (inbox) window.location.replace(inbox);
+  }, [deskV41, loaded, currentRole, fragment, sectionId, tenant]);
   async function retryRead() {
     setBusy(true);
     setMessage('');
@@ -894,61 +906,70 @@ function TenantWorkspace({
           )}
           {shown('workspace-settings') && ['owner', 'admin'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-settings'}>
-              <SubTabs
-                label="Settings sections"
-                tabs={[
-                  {
-                    id: 'settings-policies',
-                    label: 'Routes and settings',
-                    panel: (
-                      <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
-                    ),
-                  },
-                  {
-                    id: 'settings-erasure',
-                    label: 'Erasure requests',
-                    aliases: ['erasure-queue-title'],
-                    panel: (
-                      <ErasureQueue
-                        key={`erasure-${tenant}`}
-                        tenant={tenant}
-                        role={data.role}
-                        problemReports={problemReports}
-                      />
-                    ),
-                  },
-                  ...(problemReports
-                    ? [
-                        {
-                          id: 'settings-reports',
-                          label: 'Problem reports',
-                          panel: (
-                            <ProblemReportQueue
-                              key={`problem-reports-${tenant}`}
-                              tenant={tenant}
-                              role={data.role}
-                            />
-                          ),
-                        },
-                      ]
-                    : []),
-                  ...(programmeApplications
-                    ? [
-                        {
-                          id: 'settings-applications',
-                          label: 'Programme applications',
-                          panel: (
-                            <ProgrammeApplicationQueue
-                              key={`programme-applications-${tenant}`}
-                              tenant={tenant}
-                              role={data.role}
-                            />
-                          ),
-                        },
-                      ]
-                    : []),
-                ]}
-              />
+              {/* Team desk v4.1 (units D17 and D18): one row only under the title. The lists are on the Inbox page. */}
+              {deskV41 ? (
+                <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
+              ) : (
+                <SubTabs
+                  label="Settings sections"
+                  tabs={[
+                    {
+                      id: 'settings-policies',
+                      label: 'Routes and settings',
+                      panel: (
+                        <ReviewSettings
+                          key={`settings-${tenant}`}
+                          tenant={tenant}
+                          role={data.role}
+                        />
+                      ),
+                    },
+                    {
+                      id: 'settings-erasure',
+                      label: 'Erasure requests',
+                      aliases: ['erasure-queue-title'],
+                      panel: (
+                        <ErasureQueue
+                          key={`erasure-${tenant}`}
+                          tenant={tenant}
+                          role={data.role}
+                          problemReports={problemReports}
+                        />
+                      ),
+                    },
+                    ...(problemReports
+                      ? [
+                          {
+                            id: 'settings-reports',
+                            label: 'Problem reports',
+                            panel: (
+                              <ProblemReportQueue
+                                key={`problem-reports-${tenant}`}
+                                tenant={tenant}
+                                role={data.role}
+                              />
+                            ),
+                          },
+                        ]
+                      : []),
+                    ...(programmeApplications
+                      ? [
+                          {
+                            id: 'settings-applications',
+                            label: 'Programme applications',
+                            panel: (
+                              <ProgrammeApplicationQueue
+                                key={`programme-applications-${tenant}`}
+                                tenant={tenant}
+                                role={data.role}
+                              />
+                            ),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              )}
             </div>
           )}
           {shown('workspace-audit') && ['owner', 'admin'].includes(data.role) && (

@@ -1,0 +1,26 @@
+'use client';
+// A stored country code as a person reads it (UI/UX.v4.1 L1, team desk v4.1): its mark, then its name. A flag
+// for one of the nine places that have one, the name only for every other place (a contested place never gets a
+// mark), and never a mark alone. With CORRIDRA_UX_TEAM_DESK_V41 off the code is shown exactly as it was. The
+// names come from the browser's own data, so this is for values drawn after the page has loaded its records.
+import { Flagged, placeMark } from '../../components/ux/flag';
+import { useOperatorFlags } from './operator-flags';
+
+/** The written English name of a stored market or country code ("BD", "EU"); the code itself when it has none. */
+export function countryName(code: string): string {
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+export function CountryName({ code, size }: { code: string; size?: 'row' }) {
+  const { teamDeskV41 } = useOperatorFlags();
+  if (!teamDeskV41) return code;
+  return (
+    <Flagged code={placeMark(code)} size={size}>
+      {countryName(code)}
+    </Flagged>
+  );
+}

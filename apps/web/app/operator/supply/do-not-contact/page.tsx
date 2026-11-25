@@ -15,6 +15,7 @@ export default async function Page({
     <SupplyPage
       requested={(await searchParams).workspace}
       title="Do Not Contact"
+      place="supply-dnc"
       signedIn={(tenant, role) => <DncPanel tenant={tenant} role={role} />}
     />
   );

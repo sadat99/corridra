@@ -957,6 +957,9 @@ for (const width of [390, 1440])
       await expect(page.locator('.programme-stage .mr-stage-name').first()).toBeHidden();
       return;
     }
+    // The six stages also stand, grey and without the Invite button, while the first read is still out. The
+    // measures below are of the answered stage, so wait for its button (it was read as missing once in CI).
+    await expect(page.locator('.programme-stage button.mr-stage-name')).toBeVisible();
     const boxes = await page.evaluate(() =>
       Array.from(document.querySelectorAll<HTMLElement>('.programme-stage .mr-stage > li')).map(
         (li) => {

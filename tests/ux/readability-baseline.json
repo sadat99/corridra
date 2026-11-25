@@ -278,6 +278,9 @@
     "sentences": 6,
     "words": 43
   },
+  "/operator/inbox": {
+    "unavailable": true
+  },
   "/operator/invoice-issuer": {
     "unavailable": true
   },

@@ -5,6 +5,7 @@
 // grants access: a place is listed only for a role that may open it, and the server still decides.
 // Owner: S4.
 import { sectionAllowedFor, teamSectionHref, workspaceQuery } from './shells';
+import { inboxElementAddresses, inboxHref } from './team-inbox';
 import { workspaceSections } from '../workspace-navigation';
 import { teamProblemReportsPath } from './team-help';
 
@@ -310,7 +311,7 @@ export type MenuItem = {
   /** The places reached through this item, in order. The first one the role may open is where the item leads. */
   places: readonly TeamPlace[];
   /**
-   * An item that is not one of the seventeen places. `inbox` opens the queues inside Settings (decision 5) and is
+   * An item that is not one of the seventeen places. `inbox` opens the Inbox page (decision 5, unit D18) and is
    * shown to the roles that triage; `supply` is the Supply Sources page, listed only while its own switch is on.
    */
   special?: 'inbox' | 'supply';
@@ -426,10 +427,14 @@ export type MenuOptions = { supply?: boolean; problemReports?: boolean };
 
 /** The Settings sub-tabs that hold the queues (SubTabs ids in app/operator/workspace.tsx) and the old `#` addresses inside them. */
 export const inboxTabs = ['settings-erasure', 'settings-reports', 'settings-applications'] as const;
-const inboxFragments = ['problem-report-queue', 'erasure-queue-title', ...inboxTabs] as const;
+/** The old `#` addresses of the queues: the elements (one list with the Inbox page, team-inbox.ts) and the tabs. */
+const inboxFragments = [...inboxElementAddresses, ...inboxTabs] as const;
 export const supplyPath = '/operator/supply';
 
-/** The queue tab Inbox opens: problem reports where that tab exists, otherwise erasure requests (always there). */
+/**
+ * The Settings tab that led the queues before the Inbox had its own page (unit D18): problem reports where that tab
+ * exists, otherwise erasure requests. An old link to it still lights Inbox while the workspace sends it on.
+ */
 export function inboxLeadTab(options: MenuOptions = {}): (typeof inboxTabs)[number] {
   return options.problemReports ? 'settings-reports' : 'settings-erasure';
 }
@@ -463,10 +468,9 @@ export function menuItemHref(
   role: string | null,
   urls: boolean,
   workspace = '',
-  options: MenuOptions = {},
 ): string {
-  if (item.special === 'inbox')
-    return withSettingsTab(placeHref('workspace-settings', urls, workspace), inboxLeadTab(options));
+  // Unit D18: the Inbox is a page of its own. It opens on its first list; the chosen workspace is kept.
+  if (item.special === 'inbox') return inboxHref(workspace);
   if (item.special === 'supply') return supplyPath + workspaceQuery(workspace);
   const lead = menuPlacesFor(item, role)[0] ?? item.places[0]!;
   return placeHref(lead.id, urls, workspace);
@@ -474,8 +478,8 @@ export function menuItemHref(
 
 /**
  * The menu item that is lit for an address. `place` is the section in view (`currentTeamSection`), with the workspace
- * home as `home`. Supply pages light Supply; Settings on one of its queue tabs (or an old queue `#` address) lights
- * Inbox for the roles that have it; the Authenticator and the other pages reached from the avatar menu light nothing.
+ * home as `home`. Supply pages light Supply; the Inbox page lights Inbox, and so does an old address of a queue
+ * (Settings on one of its queue tabs, or an old queue `#` address) for the roles that have it; the Authenticator and the other pages reached from the avatar menu light nothing.
  */
 export function menuItemForAddress(
   address: { place: TeamPlaceId; pathname: string; search?: string; hash?: string },
@@ -487,6 +491,7 @@ export function menuItemForAddress(
     groups.some((group) => group.items.some((item) => item.key === key));
   const first = /^\/operator\/([^/?#]+)/.exec(address.pathname)?.[1] ?? '';
   if (first === 'supply') return has('supply') ? 'supply' : 'none';
+  if (first === 'inbox') return has('inbox') ? 'inbox' : 'none';
   if (first === 'problem-reports' || first === 'invoice-issuer') return 'none';
   const fragment = (address.hash ?? '').replace(/^#/, '');
   if (has('inbox')) {
