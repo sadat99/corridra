@@ -31,3 +31,19 @@ test('with the switch off the home page main and footer are exactly those of mai
   if (process.env.HOME_OFF_FIXTURE_WRITE === '1') writeFileSync(fixture, now + '\n');
   expect(now + '\n').toBe(readFileSync(fixture, 'utf8'));
 });
+
+// G63 audit of 8c11a01: the off build still linked the v4.2 stylesheet in <head>. HomeV42 is now a lazy client chunk
+// (components/home-v42-page.tsx), so with the switch off the home page names no v4.2 code and links no stylesheet
+// that holds a v4.2 rule; with it on, Next.js hoists that one stylesheet into <head> from the server HTML.
+test('with the switch off the home page links no v4.2 stylesheet and names no v4.2 code', async ({
+  request,
+}) => {
+  const html = await (await request.get('/')).text();
+  expect(html).not.toMatch(/hv42|home-v42|HomeV42/);
+  const sheets = [...html.matchAll(/<link[^>]+href="([^"]+\.css[^"]*)"/g)].map((m) => m[1]!);
+  expect(sheets.length).toBeGreaterThan(0);
+  for (const sheet of sheets) {
+    const css = await (await request.get(sheet)).text();
+    expect(css, sheet).not.toContain('.hv42');
+  }
+});

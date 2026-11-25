@@ -82,8 +82,9 @@ describe('the switch', () => {
     expect(page).not.toMatch(/^import .*home-v42'/m);
     expect(page).toContain('<HomeRoutes whatsapp={supportWhatsappHref()} />');
     const server = readFileSync(resolve('apps/web/components/home-v42-page.tsx'), 'utf8');
-    expect(server).toContain("await import('./home-v42')");
-    expect(server).not.toContain("'use client'");
+    // A lazy client chunk: a dynamic import from a server component would not be split (Next.js lazy-loading guide).
+    expect(server).toContain("dynamic(() => import('./home-v42')");
+    expect(server).not.toMatch(/^import .*'\.\/home-v42'/m);
     expect(readFileSync(resolve('apps/web/components/site-footer.tsx'), 'utf8')).toContain(
       "homeV42={uxSwitchOn('CORRIDRA_UX_HOME_V42')}",
     );
