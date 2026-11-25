@@ -171,8 +171,9 @@ async function readErasure(tenant: string, signal: AbortSignal) {
         `/api/workspace/customer-erasure-queue?${new URLSearchParams({ tenant, status, pageSize: '100' })}`,
         { signal, cache: 'no-store' },
       );
-      // The erasure queue answers a stale authenticator check with a plain 401 and no code; any 401 is that check.
-      if (r.status === 401) return needsCode;
+      // A stale authenticator check is 401 with the step-up code (the server keeps it for this queue now). A 401 without
+      // it is a signed-out person: not the code, so no false "confirm your code" line; the tile is simply not drawn.
+      if (await refusedForCode(r.clone())) return needsCode;
       if (!r.ok) return null;
       const body = (await r.json()) as { items?: unknown; nextAfter?: unknown };
       if (!Array.isArray(body.items)) return null;
