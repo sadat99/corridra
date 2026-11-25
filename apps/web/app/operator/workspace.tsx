@@ -367,7 +367,10 @@ function TenantWorkspace({
           return;
         }
       }
-      destination?.scrollIntoView();
+      // A page opened by its own address (no # part) opens at the top, under its title: it is not scrolled to
+      // its own body, which on a phone hid the title under the top bar. The body still takes the focus, as before.
+      if (!(shellsV2 && !window.location.hash && destination?.id === sectionId))
+        destination?.scrollIntoView();
       destination?.focus({ preventScroll: true });
     };
     // A hidden tab that holds the block is shown first. React does not flush a forced update from inside an
@@ -395,7 +398,7 @@ function TenantWorkspace({
     });
     watch.observe(holder, { childList: true, subtree: true });
     return () => watch.disconnect();
-  }, [loaded, fragment, sectionId, sectionAllowed, deskV41]);
+  }, [loaded, fragment, sectionId, sectionAllowed, deskV41, shellsV2]);
   // Team desk v4.1 (unit D18): the lists that sat inside Settings are on the Inbox page, so an old address of one
   // (its `#` part, or Settings with its tab) leads there. Off, nothing here runs and Settings holds them as before.
   useEffect(() => {
@@ -584,8 +587,9 @@ function TenantWorkspace({
           )}
           {shown('overview') && (
             <div className="ux-panel ux-overview" hidden={view !== 'overview'}>
-              {/* Team desk v4.1: a page this role may not open shows Today, and says so first, in the open. */}
-              {deskV41 && unavailableSection && (
+              {/* A page this role may not open shows Today, and says so first, in the open: never as the last line
+                  of a card far from the title, or inside a closed row. */}
+              {unavailableSection && (
                 <p role="alert" className="ux-testmode">
                   That page is not available for your role in this workspace, or the link is out of
                   date. You are on Today. Ask your workspace owner if you need access.
@@ -641,13 +645,6 @@ function TenantWorkspace({
                         role, a current authenticator check and approved scope.
                       </p>
                       <RoleNavigation role={data.role} shortcuts />
-                      {unavailableSection && (
-                        <p role="alert">
-                          This section is unavailable for your current workspace role or the link is
-                          outdated. Choose an available tool above, or ask your workspace owner to
-                          review your membership.
-                        </p>
-                      )}
                       {['owner', 'admin'].includes(data.role) && (
                         <details className="ux-journey-disclosure operator-management">
                           <summary>

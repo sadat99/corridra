@@ -336,13 +336,45 @@ test('switch on: a page whose body is still loading does not put the focus on th
   await expect(page.locator('#workspace-navigation')).toBeFocused();
 });
 
-test('switch off: a page the role may not open keeps the note in the open Start panel', async ({
+// Switch OFF audit of 25 Nov 2026, F7: off, the only explanation was the last line of the lower card, far from
+// the title. The same note now leads the page in both states.
+test('switch off: a page the role may not open says so at the top of the page, once', async ({
   page,
 }) => {
   await open(page, '/operator/controls', { v41: false, role: 'viewer' });
   const note = page.locator('main#main').getByRole('alert');
+  await expect(note).toHaveCount(1);
   await expect(note).toBeVisible();
-  await expect(note).toContainText('This section is unavailable for your current workspace role');
+  await expect(note).toContainText('not available for your role');
+  expect(
+    await note.evaluate(
+      (el) => el.parentElement?.firstElementChild === el && !el.closest('section'),
+    ),
+  ).toBe(true);
+});
+
+// Switch OFF audit of 25 Nov 2026, F9: on a phone a page opened by its own address scrolled itself to its body
+// (258 px on Missions, 286 px on Companies), so the title sat under the top bar.
+test('a page opened by its own address opens at the top on a phone, switch off and on', async ({
+  page,
+}) => {
+  for (const v41 of [false, true])
+    for (const path of ['/operator/missions', '/operator/research', '/operator/sources']) {
+      await open(page, path, { v41, width: 390, height: 800 });
+      await expect(heading(page).locator('h1')).toBeVisible();
+      // Give a late scroll the time to happen before reading the position.
+      await page.waitForTimeout(300);
+      expect(await page.evaluate(() => window.scrollY), `${path} v41 ${v41}`).toBe(0);
+    }
+  // Off, the body still takes the focus on arrival, as before; an old # link still scrolls to its page.
+  await open(page, '/operator/research', { v41: false, width: 390, height: 800 });
+  await expect(page.locator('#workspace-research')).toBeFocused();
+  await open(page, '/operator', { v41: false, width: 390, height: 800 });
+  await page.evaluate(() => {
+    window.location.hash = 'workspace-research';
+  });
+  await expect(page.locator('#workspace-research')).toBeFocused();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 });
 
 // Audit of 25 Nov 2026, staff-admin-10, staff-core-20, public-customer-01: a row of tabs or segments that scrolls
