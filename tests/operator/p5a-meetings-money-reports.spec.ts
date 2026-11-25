@@ -227,6 +227,52 @@ type Options = {
   /** The server holds more meetings than the page it sent: a next page is named and no total is given. */
   more?: boolean;
   posts?: { url: string; body: unknown }[];
+  /** Fixture for the plain-words checks: an approved policy, a reply, a scheduled meeting and one follow-up. */
+  rich?: boolean;
+};
+const richCommunications = {
+  ...communications,
+  policies: [
+    {
+      id: id(900),
+      jurisdiction: 'DE',
+      channel: 'SYNTHETIC',
+      contact_purpose: 'OFFICIAL_COMPANY_CHANNEL',
+      version: 1,
+      enabled: true,
+      valid_until: '2027-01-01T00:00:00.000Z',
+      basis: 'Approved basis.',
+    },
+  ],
+  messages: [
+    message(1, 'Introduction Only Buyer', { decision: 'INTERESTED' }),
+    message(2, 'Introduction Only Buyer', { decision: 'NOT_RELEVANT' }),
+  ],
+};
+const richMeetings = {
+  ...meetings,
+  meetings: meetings.meetings.map((m) =>
+    m.status === 'SCHEDULED'
+      ? {
+          ...m,
+          starts_at: '2026-12-10T09:00:00.000Z',
+          ends_at: '2026-12-10T10:00:00.000Z',
+          timezone: 'Europe/Madrid',
+          location: 'Video call',
+        }
+      : m,
+  ),
+  followups: [
+    {
+      id: id(950),
+      meeting_id: id(303),
+      owner_id: owner,
+      next_action: 'Follow the meeting plan',
+      due_at: due,
+      status: 'OPEN',
+      version: 1,
+    },
+  ],
 };
 async function open(page: Page, path: string, options: Options) {
   const {
@@ -237,6 +283,7 @@ async function open(page: Page, path: string, options: Options) {
     empty = false,
     more = false,
     posts,
+    rich = false,
   } = options;
   await page.setViewportSize({ width, height });
   // A script error on the page fails the test at once, with its own words.
@@ -266,7 +313,7 @@ async function open(page: Page, path: string, options: Options) {
   await page.route('**/api/workspace/config?*', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/notifications?*', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/workspace/communications?*', (route) =>
-    route.fulfill({ json: communications }),
+    route.fulfill({ json: rich ? richCommunications : communications }),
   );
   await page.route('**/api/workspace/meetings?*', (route) =>
     route.fulfill({
@@ -274,7 +321,9 @@ async function open(page: Page, path: string, options: Options) {
         ? { ...meetings, meetings: [], meetingsTotal: 0 }
         : more
           ? { ...meetings, meetingsTotal: null, next: 'page-2' }
-          : meetings,
+          : rich
+            ? richMeetings
+            : meetings,
     }),
   );
   await page.route('**/api/workspace/meeting?*', (route) => {
@@ -379,7 +428,7 @@ test('D11 switch on: the page opens on five columns of real statuses, every card
   const first = columns.nth(0).locator('article.meeting-card').first();
   await expect(first.locator('h5')).toHaveText('Meeting 1 proposed');
   await expect(first).toContainText('Next: Next step of meeting 1 · Amina Rahman · due');
-  await expect(first).toContainText('Version 1.');
+  await expect(first).not.toContainText('Version');
   await expect(first.locator('> button')).toHaveCount(1);
   await expect(first.locator('> details')).toHaveCount(0);
   // A meeting that can change offers Update Meeting; a finished one can only be viewed.
@@ -401,6 +450,51 @@ test('D11 switch on: the page opens on five columns of real statuses, every card
   await expect(view.getByRole('form')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('h1')).toHaveCount(1);
+});
+
+test('F5 switch on: the meeting page speaks plainly, tells cards and replies apart and names each follow-up', async ({
+  page,
+}) => {
+  await open(page, '/operator/meetings', { v41: true, rich: true });
+  const section = panel(page, 'meetings');
+  // One heading per level: the page heading, not a second "Introductions and meetings" or the tab name again.
+  await expect(section.getByRole('heading', { name: 'Introductions and meetings' })).toHaveCount(0);
+  await expect(section.getByRole('heading', { name: 'Meeting itinerary' })).toHaveCount(0);
+  await expect(section.getByRole('button', { name: 'Refresh', exact: true })).toBeVisible();
+  await expect(section.getByText('Briefs and outcomes stay private to authorized')).toHaveCount(0);
+  // A card names the buyer and the time of a scheduled meeting; the version number is not on it.
+  const cards = section.locator('article.meeting-card');
+  await expect(cards.first()).toContainText('With Introduction Only Buyer.');
+  await expect(cards.first()).not.toContainText('Version');
+  const scheduled = section.locator('.ux-meeting-column').nth(2).locator('article.meeting-card');
+  await expect(scheduled).toContainText('Meets');
+  await expect(cards.first()).not.toContainText('Meets');
+  // The change button stays on one line.
+  const button = cards.first().getByRole('button', { name: /^Update Meeting/ });
+  const box = await button.boundingBox();
+  expect(box!.height).toBeLessThan(60);
+  // The propose list: words, not stored codes, and the same buyer twice is told apart by the reply.
+  await section.getByRole('tab', { name: /^Introductions/ }).click();
+  await expect(
+    section.getByText('Germany / Recorded receipt (no email sent) / Official company channel'),
+  ).toBeVisible();
+  await section.getByRole('tab', { name: /^Follow-up/ }).click();
+  const followup = section.locator('article.detail-card').first();
+  await expect(followup.getByText('Meeting: Meeting 3 scheduled.')).toBeVisible();
+  const result = followup.getByLabel('Follow-up result');
+  await expect(result.locator('option')).toHaveText(['Completed', 'Cancelled']);
+  await expect(result.locator('option').first()).toHaveAttribute('value', 'COMPLETED');
+  await section.getByRole('tab', { name: /^Meetings/ }).click();
+  await page.locator('.ux-page-heading').getByRole('button', { name: 'Propose Meeting' }).click();
+  const options = page
+    .getByRole('dialog', { name: 'Propose Meeting' })
+    .getByLabel('Meeting introduction')
+    .locator('option');
+  await expect(options).toHaveText([
+    /^Introduction Only Buyer, interested, link expires /,
+    /^Introduction Only Buyer, not relevant, link expires /,
+  ]);
+  await expect(options.first()).toHaveAttribute('value', id(101));
 });
 
 test('D11 switch on: a column counts what is loaded and says so while more is to come', async ({

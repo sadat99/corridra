@@ -19,6 +19,7 @@ import {
   type MeetingStatus,
 } from '@corridra/domain/access';
 import { formatDateTime } from '../../lib/ux/format';
+import { countryName } from '../../lib/ux/options';
 import { ShowMore } from './show-more';
 import { Dialog } from '../../components/ux/dialog';
 import { meetingColumns, meetingStatusTone } from './meeting-columns';
@@ -34,6 +35,8 @@ function plain(code: string) {
   const words = code.replaceAll('_', ' ').toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
+/** Team desk v4.1: a stored market code in words ("OTHER" reads "Other"). The stored code never changes. */
+const marketWords = (code: string) => (code === 'OTHER' ? 'Other' : countryName(code));
 type Policy = {
   id: string;
   jurisdiction: string;
@@ -379,7 +382,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
   if (!comms || !meetings)
     return (
       <section data-operator-workbench className="operator-section">
-        <h2>Introductions and meetings</h2>
+        {deskV41 ? null : <h2>Introductions and meetings</h2>}
         <OperatorWorkbench
           label="Introduction and meeting sections"
           sections={[
@@ -450,7 +453,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         <select name="messageId" required>
           {comms.messages.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.presentation.company} ({m.decision ?? 'no response'})
+              {deskV41
+                ? `${m.presentation.company}, ${m.decision ? plain(m.decision).toLowerCase() : 'no reply yet'}, link expires ${formatDateTime(m.expires_at)}`
+                : `${m.presentation.company} (${m.decision ?? 'no response'})`}
             </option>
           ))}
         </select>
@@ -488,7 +493,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
     <section className="operator-section">
       <div className="section-heading">
         {deskV41 ? null : <p className="label">CONTROLLED ACCESS</p>}
-        <h2>Introductions and meetings</h2>
+        {deskV41 ? null : <h2>Introductions and meetings</h2>}
         <p>Give the buyer a reason to respond. Keep the meeting and its next step owned.</p>
       </div>
       <p role="status" aria-live="polite" aria-label="Access status">
@@ -499,7 +504,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
         disabled={busy}
         onClick={() => void refresh().catch((e) => setMessage(e.message))}
       >
-        Refresh Access and Meetings
+        {deskV41 ? 'Refresh' : 'Refresh Access and Meetings'}
       </button>
       {deskV41 ? null : channelNote}
       <SubTabs
@@ -516,10 +521,13 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                   <ul>
                     {comms.policies.map((p) => (
                       <li key={p.id}>
-                        {p.jurisdiction} / {channelLabel(p.channel)} /{' '}
-                        {p.contact_purpose.replaceAll('_', ' ')}: version {p.version},{' '}
-                        {p.enabled ? 'on' : 'off'}, valid until {formatDateTime(p.valid_until)}.{' '}
-                        {p.basis}
+                        {deskV41 ? marketWords(p.jurisdiction) : p.jurisdiction} /{' '}
+                        {channelLabel(p.channel)} /{' '}
+                        {deskV41
+                          ? plain(p.contact_purpose)
+                          : p.contact_purpose.replaceAll('_', ' ')}
+                        : version {p.version}, {p.enabled ? 'on' : 'off'}, valid until{' '}
+                        {formatDateTime(p.valid_until)}. {p.basis}
                       </li>
                     ))}
                   </ul>
@@ -550,7 +558,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                           Recipient jurisdiction
                           <select name="jurisdiction">
                             {['ES', 'BD', 'DE', 'OTHER'].map((v) => (
-                              <option key={v}>{v}</option>
+                              <option key={v} value={v}>
+                                {deskV41 ? marketWords(v) : v}
+                              </option>
                             ))}
                           </select>
                         </label>
@@ -724,7 +734,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                         Introduced company country
                         <select name="country">
                           {['BD', 'ES', 'DE', 'OTHER'].map((c) => (
-                            <option key={c}>{c}</option>
+                            <option key={c} value={c}>
+                              {deskV41 ? marketWords(c) : c}
+                            </option>
                           ))}
                         </select>
                       </label>
@@ -772,7 +784,7 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                     <p>Keep this link private. It permits one response to this introduction.</p>
                   </div>
                 )}
-                <h3>Introductions and replies</h3>
+                {deskV41 ? null : <h3>Introductions and replies</h3>}
                 <p>
                   Latest 50 introductions. A receipt shows the introduction went out through its
                   channel. It is not a held meeting or a commercial result.
@@ -950,10 +962,11 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                     {proposeForm}
                   </PhoneFold>
                 )}
-                <h3>Meeting itinerary</h3>
+                {deskV41 ? null : <h3>Meeting itinerary</h3>}
                 <p>
-                  Times below show both the meeting timezone and your browser timezone. Briefs and
-                  outcomes stay private to authorized operators.
+                  {deskV41
+                    ? 'Times are shown in your time zone. Only team members with access see briefs and outcomes.'
+                    : 'Times below show both the meeting timezone and your browser timezone. Briefs and outcomes stay private to authorized operators.'}
                 </p>
                 {deskV41 ? (
                   <div className="ux-meeting-board">
@@ -1015,10 +1028,18 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             label: `Follow-up (${meetings.followups.length})`,
             panel: (
               <>
-                <h3>Owned follow-up</h3>
+                {deskV41 ? null : <h3>Owned follow-up</h3>}
                 {meetings.followups.map((f) => (
                   <article key={f.id} className="detail-card">
                     <h4>{f.next_action}</h4>
+                    {deskV41 && (
+                      <p>
+                        Meeting:{' '}
+                        {meetings.meetings.find((m) => m.id === f.meeting_id)?.title ??
+                          'Not on this page'}
+                        .
+                      </p>
+                    )}
                     <p>
                       {plain(f.status)}. Owner:{' '}
                       {meetings.owners.find((o) => o.user_id === f.owner_id)?.name ??
@@ -1048,8 +1069,8 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                         <label className="field">
                           Follow-up result
                           <select name="status">
-                            <option>COMPLETED</option>
-                            <option>CANCELLED</option>
+                            <option value="COMPLETED">{deskV41 ? 'Completed' : 'COMPLETED'}</option>
+                            <option value="CANCELLED">{deskV41 ? 'Cancelled' : 'CANCELLED'}</option>
                           </select>
                         </label>
                         <label className="field">
@@ -1355,9 +1376,10 @@ function MeetingCard({
         <p>
           <span className="ux-status" data-tone={meetingStatusTone(m.status)}>
             {plain(m.status)}
-          </span>{' '}
-          Version {m.version}.
+          </span>
         </p>
+        {response?.presentation.company && <p>With {response.presentation.company}.</p>}
+        {m.starts_at && <p>Meets {formatDateTime(m.starts_at)}.</p>}
         <p>
           Next: {m.next_action} ·{' '}
           {data.owners.find((o) => o.user_id === m.owner_id)?.name ?? 'Not assigned'} · due{' '}
