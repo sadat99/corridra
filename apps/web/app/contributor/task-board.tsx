@@ -263,7 +263,7 @@ function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boole
             </label>
             <p className="helper-task-hint" id={hintId + task.id}>
               Write in your own words that you accept this task and that you have no personal or
-              business tie to the companies in it.
+              business relationship with the people or companies it involves.
             </p>
             <button className={primary ? 'primary-link' : 'button-secondary'} disabled={blocked}>
               Accept This Task

@@ -200,10 +200,10 @@ async function visit(page: Page, path: string) {
   await read;
 }
 async function openMenu(page: Page) {
-  const avatar = page.getByRole('button', { name: /^(\S+ )?Account menu$/ });
+  const avatar = page.getByRole('button', { name: 'Account menu', exact: true });
   await avatar.focus();
   await page.keyboard.press('ArrowDown');
-  const menu = page.getByRole('menu', { name: /^(\S+ )?Account menu$/ });
+  const menu = page.getByRole('menu', { name: 'Account menu', exact: true });
   await expect(menu).toBeVisible();
   await expect(menu.getByText('synthetic-alice@example.invalid')).toBeVisible();
   return menu;

@@ -62,7 +62,7 @@ async function numbers(page: Page) {
       header: rect(head),
       search: rect(visible('header.ux-app-header .ux-csearch-trigger')),
       newRequest: rect(visible('header.ux-app-header .ux-bar-new-narrow')),
-      avatar: rect(visible('header.ux-app-header [aria-label$="Account menu"]')),
+      avatar: rect(visible('header.ux-app-header [aria-label="Account menu"]')),
     };
   });
 }

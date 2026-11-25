@@ -30,7 +30,3 @@ export function profileHelper(): string {
     ? 'Company details, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'
     : 'Sample details only, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.';
 }
-
-// Programmes (UI/UX.v3 audit, unit A3d part 2): the words of the chooser's old back link. No account page draws a
-// back link in its frame any more (UI/UX.v4.1: the menu is the one global path); a fixture still reads this.
-export const programmesChooserBack = registrationsBack;

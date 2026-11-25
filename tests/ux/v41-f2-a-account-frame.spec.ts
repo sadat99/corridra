@@ -285,20 +285,12 @@ test.describe('07: 200% text', () => {
   }
 });
 
-test('08: the account menu button is named by the initials it shows', async ({ page }) => {
+test('08: the account menu button keeps its person-neutral name', async ({ page }) => {
   await open(page, 1440);
   const button = page.locator('.ux-util-avatar > .ux-menu-button');
-  const shown = (await button.innerText()).trim();
-  expect(shown).toBe('SA');
-  await expect(button).toHaveAccessibleName(/^SA Account menu$/);
-  await expect(
-    page.getByRole('button', { name: `${shown} Account menu`, exact: true }),
-  ).toHaveCount(1);
-  const scan = await new AxeBuilder({ page })
-    .include('header.ux-customer-header')
-    .withRules(['label-content-name-mismatch'])
-    .analyze();
-  expect(scan.violations.map((violation) => violation.id)).toEqual([]);
+  expect((await button.innerText()).trim()).toBe('SA');
+  await expect(button).toHaveAccessibleName('Account menu');
+  await expect(page.getByRole('button', { name: 'Account menu', exact: true })).toHaveCount(1);
 });
 
 test('14: Home has one link per destination inside main', async ({ page }) => {

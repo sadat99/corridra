@@ -367,12 +367,11 @@ export function AvatarMenu({
     workspaces: offered,
     currentWorkspaceId: shown?.id,
   });
-  // The initials are the words a person sees on the button, so its name starts with them ("SA Account menu") and voice
-  // control can call it by what is shown. With a picture or the plain person icon there are no words to add.
+  // The button's name stays person-neutral ("Account menu"); the initials are only what is drawn on it.
   const shownInitials = who && picture === null ? initials(who.name || who.email) : null;
   return (
     <OverflowMenu
-      label={shownInitials ? `${shownInitials} ${accountMenuName}` : accountMenuName}
+      label={accountMenuName}
       className="ux-util-avatar"
       trigger={
         who && picture !== null ? (
