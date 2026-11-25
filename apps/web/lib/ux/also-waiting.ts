@@ -1,19 +1,29 @@
 // "Also waiting" on the team Today page (owner mandate F, 11 Nov 2026): problem reports and erasure requests that
 // today live only in Settings. Pure functions over the two existing queue reads. Nothing here reads, writes or decides
 // access; the server still repeats the role check. A tile whose source is not available is absent, never zero.
+import { permits, role as roles } from '@corridra/domain';
 import { canTriage } from '../problem-report-queue';
 
 const day = 86_400_000;
 /** Overdue erasure rows shown in "Needs you now" before "and N more". */
 export const overdueRowCap = 5;
 
-/** Which reads Today may start. Only the roles that already see the queues; module off means no problem report read. */
+/** The erasure queue is read with members.manage, the domain's own rule (owner only); the server decides again. */
+export function canReadErasureQueue(role: string | null | undefined) {
+  const parsed = roles.safeParse(role);
+  return parsed.success && permits(parsed.data, 'members.manage');
+}
+
+/**
+ * Which reads Today may start. Problem reports: owner and admin, only where the module is installed. The erasure
+ * queue needs members.manage, which only an owner holds: an admin is always refused, so no read and no tile.
+ */
 export function alsoWaitingReads(
   role: string | null | undefined,
   problemReportsInstalled: boolean,
 ) {
   const allowed = canTriage(role);
-  return { problemReports: allowed && problemReportsInstalled, erasure: allowed };
+  return { problemReports: allowed && problemReportsInstalled, erasure: canReadErasureQueue(role) };
 }
 
 export type ProblemReportsTile = {

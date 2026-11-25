@@ -13,6 +13,7 @@ import { isUuid } from '../../../../lib/reply-review-view';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { OperatorFlags } from '../../operator-flags';
 import { MissionPage } from './mission-page';
+import { MissionTitle } from './mission-title';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Mission | Corridra',
@@ -73,7 +74,7 @@ export default async function Page({
   return (
     <WorkspaceShell
       eyebrow={deskV41 ? undefined : 'MISSION'}
-      title="Mission"
+      title={deskV41 ? <MissionTitle /> : 'Mission'}
       className={deskV41 ? 'ux-operator-home ' + deskFrameClass : 'ux-operator-home'}
     >
       <TeamContextPublisher tenant={tenant} role={chosen.role} />
@@ -86,7 +87,8 @@ export default async function Page({
       ) : null}
       <OperatorFlags
         replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
-        teamDeskV41={uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}
+        // The desk needs the team shell: with CORRIDRA_UX_SHELLS_V2 off the page is the one it was.
+        teamDeskV41={deskV41}
       >
         <MissionPage
           tenant={tenant}
@@ -94,6 +96,7 @@ export default async function Page({
           missionId={missionId}
           replyId={isUuid(reply) ? reply : undefined}
           moveRecords={customerMovesEnabled()}
+          sectionAddresses={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
         />
       </OperatorFlags>
     </WorkspaceShell>
