@@ -442,3 +442,44 @@
     margin: 0;
   }
 }
+/* Team desk v4.1: the owner page is a Settings page, so its title is the size of every other team page title. */
+.ux-owner.ux-desk-frame .ux-page-heading h1 {
+  font-size: max(calc(2 * var(--text-base)), var(--text-h1));
+}
+/* Team desk v4.1: the former tabs are parts of one page. A later part is a fold: one row that opens. */
+.ux-owner.ux-desk-frame .ux-desk-sections > details.ux-desk-section {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ux-owner.ux-desk-frame .ux-desk-sections > details.ux-desk-section > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: 44px;
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.ux-owner.ux-desk-frame
+  .ux-desk-sections
+  > details.ux-desk-section
+  > summary::-webkit-details-marker {
+  display: none;
+}
+.ux-owner.ux-desk-frame .ux-desk-sections > details.ux-desk-section > summary::after {
+  content: '+';
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  font-size: var(--text-lg);
+}
+.ux-owner.ux-desk-frame .ux-desk-sections > details.ux-desk-section[open] > summary::after {
+  content: '−';
+}
+.ux-owner.ux-desk-frame .ux-desk-sections > details.ux-desk-section > :not(summary) {
+  padding: 0 var(--space-4) var(--space-4);
+}
+.owner-denied {
+  margin: 0;
+}
