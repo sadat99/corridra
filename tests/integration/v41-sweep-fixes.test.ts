@@ -16,7 +16,7 @@ describe('team desk v4.1 sweep', () => {
   it('keeps the page frame rules under the desk shell class, so the switch off is unchanged', () => {
     const css = read('apps/web/components/ux/page-frame.css');
     for (const selector of [
-      '.ux-workspace.ux-desk-frame .ux-workspace-body > .workspace-panel.ux-panel',
+      '> .workspace-panel.ux-panel:not(:has(> :is(.detail-card.ux-network, .detail-card.delivery-ops)))',
       '.ux-workspace.ux-desk-frame > .ux-page-heading > .ux-frame-lead:has(> .ux-frame-primary)',
       '.ux-desk-frame .ux-state-label',
     ])

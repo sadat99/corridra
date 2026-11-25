@@ -83,8 +83,11 @@
 }
 
 /* Team desk v4.1: the page is one surface under its title, so the outer panel that wraps a desk page is not a
-   second card around it. Cards inside the page keep their own border (one border level per region). */
-.ux-workspace.ux-desk-frame .ux-workspace-body > .workspace-panel.ux-panel {
+   second card around it. Cards inside the page keep their own border (one border level per region). Helpers and
+   Reports are the exception: their page panel is the one card and their body draws none (desk-helpers-status-team.css). */
+.ux-workspace.ux-desk-frame
+  .ux-workspace-body
+  > .workspace-panel.ux-panel:not(:has(> :is(.detail-card.ux-network, .detail-card.delivery-ops))) {
   padding: 0;
   background: none;
   border: 0;
