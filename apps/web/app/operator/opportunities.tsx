@@ -4,7 +4,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { operatorSignInPath } from '../../lib/workspace-navigation';
 import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 import { OperatorWorkbench } from '../../components/operator-workbench';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { missionHintNote, takeMissionHint } from './mission-hint';
 import { useOperatorFlags } from './operator-flags';
 import './money-figures.css';
@@ -106,6 +106,32 @@ const moneyFigures = [
 ] as const;
 /** Team desk v4.1 (unit D12): the list comes first, then follow-up, then the yield detail. Ids are unchanged. */
 /** Team desk v4.1: a stored stage code in plain words. "QUALIFIED_OPPORTUNITY" reads "Qualified opportunity". */
+// Team desk v4.1: the page has one primary action (Create Commercial Opportunity). The action of a row, or of a
+// fold inside a row, is quiet. With the switch off every button keeps the look it has today.
+const rowAction = (desk: boolean) => (desk ? 'button button-secondary' : 'primary-link');
+/** Team desk v4.1: how many opportunities are drawn before "Show All"; the rest stay in the page, hidden. */
+const firstOpportunities = 5;
+/**
+ * Team desk v4.1: the records of one opportunity sit behind one closed row, so the list reads as a list and the
+ * page keeps its length. Every record and every form stays in the page. Off, the records are in the open as before.
+ */
+function RecordsFold({
+  desk,
+  count,
+  children,
+}: {
+  desk: boolean;
+  count: number;
+  children: ReactNode;
+}) {
+  if (!desk) return <>{children}</>;
+  return (
+    <details className="opportunity-records">
+      <summary>{`Evidence and accounting history (${count})`}</summary>
+      {children}
+    </details>
+  );
+}
 function plainStage(code: string) {
   const words = code.replaceAll('_', ' ').toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
@@ -199,6 +225,7 @@ function RecordForm({
   defaultDate: string;
   submit: (e: FormEvent<HTMLFormElement>, body: (f: FormData) => Record<string, unknown>) => void;
 }) {
+  const { teamDeskV41 } = useOperatorFlags();
   const [kind, setKind] = useState('RFQ'),
     [code, setCode] = useState<keyof typeof currencies>('EUR'),
     [source, setSource] = useState('');
@@ -370,7 +397,7 @@ function RecordForm({
         confirm payment.
       </p>
       <Reason />
-      <button className="primary-link" disabled={busy}>
+      <button className={rowAction(teamDeskV41)} disabled={busy}>
         Record Commercial Evidence
       </button>
     </form>
@@ -378,6 +405,7 @@ function RecordForm({
 }
 export function CommercialProgress({ tenant, revision }: { tenant: string; revision: number }) {
   const { teamDeskV41: deskV41 } = useOperatorFlags();
+  const [allOpportunities, setAllOpportunities] = useState(false);
   const [data, setData] = useState<Data | null>(null),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -536,7 +564,8 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
     data.owners.find((o) => o.user_id === id)?.name ?? 'Owner no longer active';
   return (
     <section data-operator-workbench className="operator-section" aria-label="Commercial progress">
-      <h2>Commercial progress</h2>
+      {/* Team desk v4.1: the page title is Money; this heading stays for screen readers only. */}
+      <h2 className={deskV41 ? 'sr-only' : undefined}>Commercial progress</h2>
       <OperatorWorkbench
         label="Commercial record sections"
         sections={[
@@ -790,7 +819,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                       </label>
                       <Ownership owners={data.owners} defaultDue={defaults.due} />
                       <Reason />
-                      <button className="primary-link" disabled={busy}>
+                      <button className={rowAction(deskV41)} disabled={busy}>
                         Create Sourcing Opportunity
                       </button>
                     </form>
@@ -863,13 +892,15 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                     Next Opportunities
                   </button>
                 </div>
-                {data.opportunities.map((o) => {
+                {data.opportunities.map((o, index) => {
                   const records = data.records.filter((r) => r.opportunity_id === o.id);
                   return (
                     <article
                       className="detail-card opportunity-card"
                       key={o.id}
                       aria-label={o.title}
+                      // Team desk v4.1: the list opens with its first rows; the rest stay in the page.
+                      hidden={deskV41 && !allOpportunities && index >= firstOpportunities}
                     >
                       <h3>{o.title}</h3>
                       <p>
@@ -927,7 +958,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                                 defaultDue={defaults.due}
                               />
                               <Reason />
-                              <button className="primary-link" disabled={busy}>
+                              <button className={rowAction(deskV41)} disabled={busy}>
                                 Save Opportunity Change
                               </button>
                             </form>
@@ -944,148 +975,152 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                           </details>
                         </>
                       )}
-                      <h4>Evidence and accounting history</h4>
-                      <p>
-                        {records.length} of{' '}
-                        {data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0}{' '}
-                        commercial records shown.
-                      </p>
-                      {records.length <
-                        (data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0) && (
-                        <button disabled={busy} onClick={() => void moreRecords(o.id)}>
-                          Load More Evidence for {o.title}
-                        </button>
-                      )}
-                      {records.length === 0 ? (
-                        <p>No commercial evidence recorded.</p>
-                      ) : (
-                        records.map((r) => {
-                          const a = data.confirmations.find((a) => a.record_id === r.id),
-                            reversed = records.some((rv) => rv.reverse_of === r.id);
-                          return (
-                            <div
-                              className="evidence-row commercial-record"
-                              key={r.id}
-                              aria-label={r.external_reference}
-                            >
-                              <div>
-                                <strong>
-                                  {r.kind} · {r.external_reference}
-                                </strong>
-                                <p>{r.summary}</p>
-                                <p>
-                                  {r.amount_minor && r.currency
-                                    ? formatMoney(r.amount_minor, r.currency)
-                                    : 'No monetary amount'}{' '}
-                                  · observed{' '}
-                                  {new Date(r.occurred_at).toLocaleString('en-GB', {
-                                    timeZone: 'UTC',
-                                  })}{' '}
-                                  UTC
-                                </p>
-                                <p>
-                                  {r.reverse_of
-                                    ? 'Compensating record'
-                                    : reversed
-                                      ? 'Compensation recorded'
-                                      : 'Original record'}{' '}
-                                  · Source{' '}
-                                  {data.sources.find((s) => s.id === r.source_id)?.locator ??
-                                    r.source_id}{' '}
-                                  ·{' '}
-                                  {r.evidence_id
-                                    ? 'Supporting file recorded'
-                                    : 'Source observation; no supporting file'}
-                                </p>
-                                {r.kind === 'CASH_RECEIPT' && (
+                      <RecordsFold desk={deskV41} count={records.length}>
+                        <h4 className={deskV41 ? 'sr-only' : undefined}>
+                          Evidence and accounting history
+                        </h4>
+                        <p>
+                          {records.length} of{' '}
+                          {data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0}{' '}
+                          commercial records shown.
+                        </p>
+                        {records.length <
+                          (data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0) && (
+                          <button disabled={busy} onClick={() => void moreRecords(o.id)}>
+                            Load More Evidence for {o.title}
+                          </button>
+                        )}
+                        {records.length === 0 ? (
+                          <p>No commercial evidence recorded.</p>
+                        ) : (
+                          records.map((r) => {
+                            const a = data.confirmations.find((a) => a.record_id === r.id),
+                              reversed = records.some((rv) => rv.reverse_of === r.id);
+                            return (
+                              <div
+                                className="evidence-row commercial-record"
+                                key={r.id}
+                                aria-label={r.external_reference}
+                              >
+                                <div>
+                                  <strong>
+                                    {r.kind} · {r.external_reference}
+                                  </strong>
+                                  <p>{r.summary}</p>
                                   <p>
-                                    {a
-                                      ? 'Accounting confirmed: ' + a.basis
-                                      : 'Reported receipt; accounting confirmation pending'}
+                                    {r.amount_minor && r.currency
+                                      ? formatMoney(r.amount_minor, r.currency)
+                                      : 'No monetary amount'}{' '}
+                                    · observed{' '}
+                                    {new Date(r.occurred_at).toLocaleString('en-GB', {
+                                      timeZone: 'UTC',
+                                    })}{' '}
+                                    UTC
                                   </p>
-                                )}
-                                {accounting &&
-                                  r.kind === 'CASH_RECEIPT' &&
-                                  !a &&
-                                  (!reversed || r.reverse_of) && (
+                                  <p>
+                                    {r.reverse_of
+                                      ? 'Compensating record'
+                                      : reversed
+                                        ? 'Compensation recorded'
+                                        : 'Original record'}{' '}
+                                    · Source{' '}
+                                    {data.sources.find((s) => s.id === r.source_id)?.locator ??
+                                      r.source_id}{' '}
+                                    ·{' '}
+                                    {r.evidence_id
+                                      ? 'Supporting file recorded'
+                                      : 'Source observation; no supporting file'}
+                                  </p>
+                                  {r.kind === 'CASH_RECEIPT' && (
+                                    <p>
+                                      {a
+                                        ? 'Accounting confirmed: ' + a.basis
+                                        : 'Reported receipt; accounting confirmation pending'}
+                                    </p>
+                                  )}
+                                  {accounting &&
+                                    r.kind === 'CASH_RECEIPT' &&
+                                    !a &&
+                                    (!reversed || r.reverse_of) && (
+                                      <details>
+                                        <summary>Confirm this cash observation</summary>
+                                        <form
+                                          className="operator-form"
+                                          aria-label={`Confirm cash ${r.external_reference}`}
+                                          onSubmit={(e) =>
+                                            submit(e, (f) => ({
+                                              action: 'confirm',
+                                              recordId: r.id,
+                                              sourceId: f.get('sourceId'),
+                                              occurredAt: fromField(f.get('occurredAt')),
+                                              basis: f.get('basis'),
+                                            }))
+                                          }
+                                        >
+                                          <Observation
+                                            sources={data.sources.filter(
+                                              (s) => s.kind !== 'self_declaration',
+                                            )}
+                                            defaultDate={defaults.observed}
+                                          />
+                                          <label className="field">
+                                            Accounting confirmation basis
+                                            <textarea
+                                              name="basis"
+                                              required
+                                              minLength={3}
+                                              maxLength={1000}
+                                            />
+                                          </label>
+                                          <Reason />
+                                          <button className={rowAction(deskV41)} disabled={busy}>
+                                            Confirm Observed Cash
+                                          </button>
+                                        </form>
+                                      </details>
+                                    )}
+                                  {accounting && r.amount_minor && !r.reverse_of && !reversed && (
                                     <details>
-                                      <summary>Confirm this cash observation</summary>
+                                      <summary>Correct this amount with full compensation</summary>
                                       <form
                                         className="operator-form"
-                                        aria-label={`Confirm cash ${r.external_reference}`}
+                                        aria-label={`Compensate ${r.external_reference}`}
                                         onSubmit={(e) =>
                                           submit(e, (f) => ({
-                                            action: 'confirm',
+                                            action: 'reverse',
                                             recordId: r.id,
                                             sourceId: f.get('sourceId'),
                                             occurredAt: fromField(f.get('occurredAt')),
-                                            basis: f.get('basis'),
                                           }))
                                         }
                                       >
+                                        <p>
+                                          This records{' '}
+                                          {formatMoney(
+                                            (-BigInt(r.amount_minor)).toString(),
+                                            r.currency!,
+                                          )}{' '}
+                                          and preserves the original. Cash compensation requires
+                                          separate accounting confirmation before changing confirmed
+                                          totals.
+                                        </p>
                                         <Observation
-                                          sources={data.sources.filter(
-                                            (s) => s.kind !== 'self_declaration',
-                                          )}
+                                          sources={data.sources}
                                           defaultDate={defaults.observed}
                                         />
-                                        <label className="field">
-                                          Accounting confirmation basis
-                                          <textarea
-                                            name="basis"
-                                            required
-                                            minLength={3}
-                                            maxLength={1000}
-                                          />
-                                        </label>
                                         <Reason />
-                                        <button className="primary-link" disabled={busy}>
-                                          Confirm Observed Cash
+                                        <button className={rowAction(deskV41)} disabled={busy}>
+                                          Record Full Compensation
                                         </button>
                                       </form>
                                     </details>
                                   )}
-                                {accounting && r.amount_minor && !r.reverse_of && !reversed && (
-                                  <details>
-                                    <summary>Correct this amount with full compensation</summary>
-                                    <form
-                                      className="operator-form"
-                                      aria-label={`Compensate ${r.external_reference}`}
-                                      onSubmit={(e) =>
-                                        submit(e, (f) => ({
-                                          action: 'reverse',
-                                          recordId: r.id,
-                                          sourceId: f.get('sourceId'),
-                                          occurredAt: fromField(f.get('occurredAt')),
-                                        }))
-                                      }
-                                    >
-                                      <p>
-                                        This records{' '}
-                                        {formatMoney(
-                                          (-BigInt(r.amount_minor)).toString(),
-                                          r.currency!,
-                                        )}{' '}
-                                        and preserves the original. Cash compensation requires
-                                        separate accounting confirmation before changing confirmed
-                                        totals.
-                                      </p>
-                                      <Observation
-                                        sources={data.sources}
-                                        defaultDate={defaults.observed}
-                                      />
-                                      <Reason />
-                                      <button className="primary-link" disabled={busy}>
-                                        Record Full Compensation
-                                      </button>
-                                    </form>
-                                  </details>
-                                )}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })
-                      )}
+                            );
+                          })
+                        )}
+                      </RecordsFold>
                       <details>
                         <summary>Commercial command history</summary>
                         <ul>
@@ -1105,6 +1140,18 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                     </article>
                   );
                 })}
+                {deskV41 && data.opportunities.length > firstOpportunities ? (
+                  <button
+                    type="button"
+                    className="text-link"
+                    aria-expanded={allOpportunities}
+                    onClick={() => setAllOpportunities((value) => !value)}
+                  >
+                    {allOpportunities
+                      ? `Show the First ${firstOpportunities} Opportunities`
+                      : `Show All ${data.opportunities.length} Opportunities on This Page`}
+                  </button>
+                ) : null}
                 {accounting && (
                   <details>
                     <summary>Rebuild commercial reports from retained events</summary>
@@ -1118,7 +1165,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                         financial history stay intact.
                       </p>
                       <Reason />
-                      <button className="primary-link" disabled={busy}>
+                      <button className={rowAction(deskV41)} disabled={busy}>
                         Rebuild Commercial Reports
                       </button>
                     </form>

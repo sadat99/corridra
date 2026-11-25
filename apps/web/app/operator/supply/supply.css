@@ -347,3 +347,13 @@
 .supply-hub-desk > .supply-hub-link > a {
   margin: 0;
 }
+/* Team desk v4.1: the preview line under the title is the quiet one-line note every other team page has. */
+.ux-desk-frame .ux-testmode.supply-preview {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}

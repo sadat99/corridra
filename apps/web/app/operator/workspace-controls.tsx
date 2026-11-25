@@ -1,6 +1,6 @@
 'use client';
 
-import { SubTabs } from '../../components/ux/sub-tabs';
+import { DeskParts } from './desk-sections';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorIcon } from '../../components/operator-icon';
@@ -67,6 +67,7 @@ type Invitation = {
 
 /** Team invitations (CQ-74, D8). Shown only when CORRIDRA_TEAM_INVITES is on for this deployment. */
 function TeamInvites({ tenant, workspaceName }: { tenant: string; workspaceName: string }) {
+  const { teamDeskV41 } = useOperatorFlags();
   const [invitations, setInvitations] = useState<Invitation[] | null>(null);
   const [available, setAvailable] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
@@ -171,7 +172,11 @@ function TeamInvites({ tenant, workspaceName }: { tenant: string; workspaceName:
     <section className="ux-controls-invites" aria-labelledby="team-invites-heading">
       <div className="ux-controls-section-heading">
         <div>
-          <h3 id="team-invites-heading">Invite a team member</h3>
+          {/* Team desk v4.1: the fold that holds this form carries the same words, so the heading stays for
+              screen readers only. */}
+          <h3 id="team-invites-heading" className={teamDeskV41 ? 'sr-only' : undefined}>
+            Invite a team member
+          </h3>
           <p>
             Add someone to <strong>{workspaceName}</strong>. They set a password and an
             authenticator when they accept. The invitation works for 7 days.
@@ -406,6 +411,16 @@ const groups = [
   },
 ] as const;
 
+// Team desk v4.1: the menu calls this place Helpers, so the tool list uses the same word. The setting key,
+// its payload and the words with the switch off are unchanged.
+const deskWords: Record<string, string> = {
+  'Assistance and network': 'Assistance and helpers',
+  'Execution network': 'Helpers',
+  'Allow reviewed contributor work. Invitations, assignments and rewards keep their separate checks.':
+    'Allow reviewed helper work. Invitations, assignments and rewards keep their separate checks.',
+};
+const deskWord = (word: string, desk: boolean) => (desk ? (deskWords[word] ?? word) : word);
+
 export function WorkspaceControls({
   tenant: tenantProp,
   workspaceName,
@@ -458,7 +473,7 @@ export function WorkspaceControls({
           check. <a href="#workspace-authenticator">Verify your authenticator</a>
         </p>
       </div>
-      <SubTabs
+      <DeskParts
         label="Workspace controls sections"
         tabs={[
           {
@@ -563,7 +578,9 @@ export function WorkspaceControls({
                         <input type="checkbox" name="revoked" disabled={!members.length || busy} />
                         <span>
                           Revoke membership
-                          <small>Remove this member’s access to this workspace.</small>
+                          <small className="ux-controls-revoke-note">
+                            Remove this member’s access to this workspace.
+                          </small>
                         </span>
                       </label>
                       <button className="primary-link" disabled={busy || !members.length}>
@@ -600,7 +617,12 @@ export function WorkspaceControls({
                 <section className="ux-controls-features" aria-labelledby="workspace-tools-heading">
                   <div className="ux-controls-section-heading">
                     <div>
-                      <h3 id="workspace-tools-heading">Available tools</h3>
+                      <h3
+                        id="workspace-tools-heading"
+                        className={teamDeskV41 ? 'sr-only' : undefined}
+                      >
+                        Available tools
+                      </h3>
                       <p>
                         Each change saves a new version. Disabling a tool preserves its records.
                       </p>
@@ -625,13 +647,15 @@ export function WorkspaceControls({
                         <section
                           className="ux-controls-group"
                           key={group.title}
-                          aria-label={group.title}
+                          aria-label={deskWord(group.title, teamDeskV41)}
                         >
                           <h4>
                             <OperatorIcon name={group.icon} />
-                            {group.title}
+                            {deskWord(group.title, teamDeskV41)}
                           </h4>
-                          {group.items.map(([key, title, description]) => {
+                          {group.items.map(([key, storedTitle, storedDescription]) => {
+                            const title = deskWord(storedTitle, teamDeskV41);
+                            const description = deskWord(storedDescription, teamDeskV41);
                             const active = enabled(key);
                             return (
                               <article

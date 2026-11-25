@@ -369,7 +369,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   if (unavailable)
     return (
       <section data-operator-workbench className="detail-card">
-        <h2>Client and programme delivery</h2>
+        <h2 className={deskV41 ? 'sr-only' : undefined}>Client and programme delivery</h2>
         <OperatorWorkbench
           label="Publication and reporting sections"
           sections={[
@@ -401,7 +401,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
   if (!data || dataScope !== scope)
     return (
       <section data-operator-workbench className="detail-card">
-        <h2>Client and programme delivery</h2>
+        <h2 className={deskV41 ? 'sr-only' : undefined}>Client and programme delivery</h2>
         <OperatorWorkbench
           label="Publication and reporting sections"
           sections={[
@@ -444,7 +444,8 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     label: `Reports (${data.publications.length})`,
     panel: (
       <>
-        <h3>Reports</h3>
+        {/* Team desk v4.1: the page title and the tab both say Reports; the heading stays for screen readers. */}
+        <h3 className="sr-only">Reports</h3>
         {missionId && (
           <p className="ux-report-scope">
             Showing reports for {missionName ?? 'the chosen mission'}.{' '}
@@ -528,7 +529,7 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
       onChangeCapture={onChangeCapture}
       onResetCapture={onResetCapture}
     >
-      <h2>Client and programme delivery</h2>
+      <h2 className={deskV41 ? 'sr-only' : undefined}>Client and programme delivery</h2>
       <OperatorWorkbench
         label="Publication and reporting sections"
         sections={[

@@ -2352,6 +2352,9 @@
   }
   .ux-operator-home .ux-workspace-body .ux-governance-panel > .ux-operations-panel {
     border-width: 1px;
+    /* The panel's rule sets a colour for its top edge only; without this the other three sides took the text
+       colour and read as a heavy black box around the Status filters. */
+    border-color: var(--border-subtle);
     padding-inline: var(--space-3);
     padding-bottom: var(--space-2);
   }
@@ -3761,4 +3764,12 @@
 /* Today's counts: a number in the serif, the caption quiet, a late count on the critical surface with its own text. */
 .ux-operator-home .ux-today-tiles strong {
   font-family: var(--serif);
+}
+/* The note under "Revoke membership" is body-small text from the scale, never the browser's smaller default. */
+.ux-workspace-body .ux-controls-revoke .ux-controls-revoke-note {
+  font-size: var(--text-sm);
+}
+/* Money, team desk v4.1: an opportunity kept behind "Show All" stays in the page and is not drawn. */
+.ux-workspace-body .opportunity-card[hidden] {
+  display: none;
 }
