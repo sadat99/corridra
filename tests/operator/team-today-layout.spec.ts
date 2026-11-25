@@ -249,6 +249,69 @@ test('with the operator fixtures Today fits one screen at 1440 x 900 and two at 
   }
 });
 
+test('with text at 200% Needs you now keeps each name on whole words, This week lines do not run under their links and nothing scrolls sideways', async ({
+  page,
+}) => {
+  mkdirSync(shots, { recursive: true });
+  // Larger text as a person sets it in the browser: the root font size doubles and the window stays as wide.
+  for (const width of [1440, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, operatorRows);
+    await loaded(page);
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '200%';
+    });
+    await expect(needs(page).getByText('Invented Machinery Co')).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    await page.screenshot({ path: `${shots}/text200-${width}.png`, fullPage: true });
+    const seen = await page.evaluate(() => {
+      const box = (element: Element) => element.getBoundingClientRect();
+      const lineHeight = (element: Element) => parseFloat(getComputedStyle(element).lineHeight);
+      // A name broken letter by letter is many lines tall; "Invented Machinery Co" is three words.
+      const names = Array.from(
+        document.querySelectorAll('.ux-needs-list .ux-needs-text strong'),
+      ).map((name) => ({
+        text: name.textContent,
+        lines: Math.round(box(name).height / lineHeight(name)),
+      }));
+      const overlaps: string[] = [];
+      for (const group of Array.from(document.querySelectorAll('.ux-week-group'))) {
+        const link = group.querySelector('.ux-week-link');
+        if (!link) continue;
+        for (const line of Array.from(group.querySelectorAll('.ux-week-line, li'))) {
+          const a = box(line);
+          const b = box(link);
+          if (
+            a.left < b.right - 1 &&
+            b.left < a.right - 1 &&
+            a.top < b.bottom - 1 &&
+            b.top < a.bottom - 1
+          )
+            overlaps.push(`${(line.textContent ?? '').trim().slice(0, 30)} | ${link.textContent}`);
+        }
+      }
+      return {
+        names,
+        overlaps,
+        // An item of This week that is clipped to one line with an ellipsis.
+        cut: Array.from(document.querySelectorAll('.ux-week-group li'))
+          .filter((item) => item.scrollWidth > item.clientWidth)
+          .map((item) => (item.textContent ?? '').slice(0, 30)),
+        sideways: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+    expect(seen.names.length, `rows at ${width}`).toBe(3);
+    expect(
+      seen.names.filter((name) => name.lines > 3),
+      `names broken inside words at ${width}`,
+    ).toEqual([]);
+    expect(seen.overlaps, `This week lines under their links at ${width}`).toEqual([]);
+    // Where the list is narrow in text sizes (a wide window with its two columns, or a phone) an item wraps.
+    if (width !== 768) expect(seen.cut, `This week items cut at ${width}`).toEqual([]);
+    expect(seen.sideways, `sideways scroll at ${width} with text at 200%`).toBeLessThanOrEqual(0);
+  }
+});
+
 test('Needs you now lists each new or late mission once, most overdue first, with its chips, filters and link', async ({
   page,
 }) => {
