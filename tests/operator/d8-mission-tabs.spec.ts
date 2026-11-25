@@ -58,6 +58,8 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    // The flag pictures are static files, not modules to bundle (the page asks for them by address).
+    external: ['/flags/*'],
     write: false,
     outdir: 'out',
     external: ['/flags/*'],

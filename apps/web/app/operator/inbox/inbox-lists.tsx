@@ -61,7 +61,7 @@ export function InboxLists({
             id: 'reports',
             label: 'Problem reports',
             aliases: ['settings-reports'],
-            panel: <ProblemReportQueue tenant={tenant} role={role} />,
+            panel: <ProblemReportQueue tenant={tenant} role={role} tabbed />,
           },
         ]
       : []),
@@ -69,7 +69,7 @@ export function InboxLists({
       id: 'erasure',
       label: 'Erasure requests',
       aliases: ['settings-erasure', 'erasure-queue-title'],
-      panel: <ErasureQueue tenant={tenant} role={role} problemReports={problemReports} />,
+      panel: <ErasureQueue tenant={tenant} role={role} problemReports={problemReports} tabbed />,
     },
     ...(programmeApplications
       ? [
@@ -77,7 +77,7 @@ export function InboxLists({
             id: 'applications',
             label: 'Programme applications',
             aliases: ['settings-applications'],
-            panel: <ProgrammeApplicationQueue tenant={tenant} role={role} />,
+            panel: <ProgrammeApplicationQueue tenant={tenant} role={role} tabbed />,
           },
         ]
       : []),
@@ -87,7 +87,7 @@ export function InboxLists({
             id: 'helpers',
             label: 'Helper interest',
             // The register already answered that it is installed, so the list does not ask again.
-            panel: <HelperInterestList tenant={tenant} role={role} installed />,
+            panel: <HelperInterestList tenant={tenant} role={role} installed tabbed />,
           },
         ]
       : []),

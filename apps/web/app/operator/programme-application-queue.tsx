@@ -15,11 +15,20 @@ import {
 // Corridra staff read what people wrote when they applied to public programme pages (ADR-080, owner decision of
 // 12 November 2026). A read only list: there is no button that decides, edits, invites or exports. Owners and admins see it;
 // the server and the database decide again, with a fresh authenticator check.
-export function ProgrammeApplicationQueue({ tenant, role }: { tenant: string; role: string }) {
-  return canReadApplications(role) ? <Panel key={tenant} tenant={tenant} /> : null;
+export function ProgrammeApplicationQueue({
+  tenant,
+  role,
+  tabbed = false,
+}: {
+  tenant: string;
+  role: string;
+  /** Team desk v4.1: the list sits under its own tab on the Inbox page, so the tab names it. */
+  tabbed?: boolean;
+}) {
+  return canReadApplications(role) ? <Panel key={tenant} tenant={tenant} tabbed={tabbed} /> : null;
 }
 
-function Panel({ tenant }: { tenant: string }) {
+function Panel({ tenant, tabbed }: { tenant: string; tabbed: boolean }) {
   const [rows, setRows] = useState<StaffApplicationRow[]>([]);
   const [page, setPage] = useState<{ total: number; nextAfter: string | null } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -60,7 +69,7 @@ function Panel({ tenant }: { tenant: string }) {
   return (
     <details ref={details} id={fragment} tabIndex={-1} className="receipt-disclosure ux-panel">
       <summary>
-        <h2>{words.title}</h2>
+        <h2 className={tabbed ? 'sr-only' : undefined}>{words.title}</h2>
         {page ? <span className="pr-meta">{words.waiting(page.total)}</span> : null}
       </summary>
       <div className="pr-queue">
