@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useInboxOpenLoad } from './inbox/inbox-check';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
 import { Dialog } from '../../components/ux/dialog';
@@ -166,6 +167,8 @@ function Queue({ tenant, role, problemReports = false, tabbed = false }: Props) 
   const controller = useRef<AbortController | null>(null);
   const endpoint = '/api/workspace/customer-erasure-queue?tenant=' + encodeURIComponent(tenant);
   useEffect(() => () => controller.current?.abort(), []);
+  // Team desk v4.1 (staff-core-29): in the Inbox, this list loads itself when its tab opens after one passed check.
+  const readPassed = useInboxOpenLoad('erasure-queue-title', () => void load(), queue !== null);
 
   // `moved` is the reference of a request that was just moved. If this reload fails, the message says both things and
   // the list is cleared, because the list on screen would still show the old state of that request.
@@ -190,6 +193,7 @@ function Queue({ tenant, role, problemReports = false, tabbed = false }: Props) 
       );
       const v = queueSchema.parse(await r.json());
       if (task.signal.aborted) return;
+      readPassed();
       setQueue(after === undefined || !queue ? v : { ...v, items: [...queue.items, ...v.items] });
       if (moved) setMessage(movedMessage(moved, null));
       else if (v.items.length === 0 && after === undefined)

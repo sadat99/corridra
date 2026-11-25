@@ -10,6 +10,7 @@ import { ErasureQueue } from '../erasure-queue';
 import { HelperInterestList } from '../helper-interest-list';
 import { ProblemReportQueue } from '../problem-report-queue';
 import { ProgrammeApplicationQueue } from '../programme-application-queue';
+import { InboxCheckProvider } from './inbox-check';
 import './inbox.css';
 
 export function InboxLists({
@@ -94,7 +95,9 @@ export function InboxLists({
   ];
   return (
     <div ref={root} className="inbox-page">
-      <SubTabs className="inbox-lists" label="Inbox lists" tabs={tabs} />
+      <InboxCheckProvider>
+        <SubTabs className="inbox-lists" label="Inbox lists" tabs={tabs} />
+      </InboxCheckProvider>
     </div>
   );
 }

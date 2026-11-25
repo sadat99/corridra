@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useInboxOpenLoad } from './inbox/inbox-check';
 import { problemReportLimits, problemReportStatuses } from '@corridra/domain/problem-report';
 import type {
   ProblemReportQueue as Queue,
@@ -126,6 +127,9 @@ function QueuePanel({ tenant, tabbed }: { tenant: string; tabbed: boolean }) {
     };
   }
 
+  // Team desk v4.1 (staff-core-29): in the Inbox, this list loads itself when its tab opens after one passed check.
+  const readPassed = useInboxOpenLoad(fragment, () => void load(null), page !== null);
+
   /** Reads a page. `moved` is a move that was just saved: if this read fails, both things are said. */
   async function load(after: number | null, moved?: { reference: string; status: Item['status'] }) {
     if (busy && !moved) return;
@@ -137,6 +141,7 @@ function QueuePanel({ tenant, tabbed }: { tenant: string; tabbed: boolean }) {
     try {
       const fresh = await readQueue(tenant, filterRef.current, after);
       if (token !== run.current) return;
+      readPassed();
       setFigures({ counts: fresh.counts, oldestReceivedAt: fresh.oldestReceivedAt });
       setPage({ total: fresh.total, nextAfter: fresh.nextAfter });
       const next = after === null ? fresh.items : [...items, ...fresh.items];

@@ -86,3 +86,17 @@
 .ux-frame-primary:has(> .ux-desk-primary-slot:empty) {
   display: none;
 }
+/* Team desk v4.1 (staff-core-23): the two steps of Propose Meeting. Each step is laid out like the form it sits
+   in; a step that is not shown keeps its fields in the form, so the one payload still carries them. */
+.operator-form .propose-step:not([hidden]) {
+  display: grid;
+  gap: var(--space-4);
+}
+.operator-form .propose-step > p {
+  margin: 0;
+}
+.operator-form .propose-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
