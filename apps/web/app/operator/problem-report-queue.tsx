@@ -11,6 +11,8 @@ import { ModeLabel } from '../../components/mr/mode-label';
 import { ReportFailure } from '../../components/problem-reports/failure-line';
 import type { FailureLine } from '../../lib/problem-report-client';
 import { SegmentedFilter, type SegmentOption } from '../../components/ux/segmented-filter';
+import { Dialog } from '../../components/ux/dialog';
+import { reportedPlaceWords } from './inbox/page-words';
 import { teamReportLinks } from '../../lib/problem-report-links';
 import {
   canTriage,
@@ -47,12 +49,21 @@ function failureLine(failure: QueueFailure | null): FailureLine | null {
   return failure ? { message: failure.message, link: failure.signIn ? 'sign_in' : null } : null;
 }
 
-export function ProblemReportQueue({ tenant, role }: { tenant: string; role: string }) {
+export function ProblemReportQueue({
+  tenant,
+  role,
+  tabbed = false,
+}: {
+  tenant: string;
+  role: string;
+  /** Team desk v4.1: the list sits under its own tab on the Inbox page, so the tab names it and its facts are labelled. */
+  tabbed?: boolean;
+}) {
   // The workspace mounts this for owners and admins only; the role is checked here as well, so it can never draw for another.
-  return canTriage(role) ? <QueuePanel key={tenant} tenant={tenant} /> : null;
+  return canTriage(role) ? <QueuePanel key={tenant} tenant={tenant} tabbed={tabbed} /> : null;
 }
 
-function QueuePanel({ tenant }: { tenant: string }) {
+function QueuePanel({ tenant, tabbed }: { tenant: string; tabbed: boolean }) {
   const [filter, setFilter] = useState<QueueFilter>('all');
   // What the last read said about the whole workspace: it does not depend on the filter, so it stays when the filter changes.
   const [figures, setFigures] = useState<Figures | null>(null);
@@ -220,7 +231,7 @@ function QueuePanel({ tenant }: { tenant: string }) {
   return (
     <details ref={details} id={fragment} tabIndex={-1} className="receipt-disclosure ux-panel">
       <summary>
-        <h2>{queueWords.title}</h2>
+        <h2 className={tabbed ? 'sr-only' : undefined}>{queueWords.title}</h2>
         {counts ? (
           <span className="pr-meta">{queueWords.waiting(counts.received, queueTotal(counts))}</span>
         ) : null}
@@ -278,10 +289,25 @@ function QueuePanel({ tenant }: { tenant: string }) {
                     <code>{item.reference}</code>
                     <span className="ux-badge">{statusLabels[item.status]}</span>
                     <ModeLabel real={item.side === 'real'} />
-                    <span>{reporterKindLabels[item.reporterKind]}</span>
-                    <span>{whenWords(item.filedAt)}</span>
-                    <span>{categoryWords[item.category].label}</span>
-                    {item.pageKind === 'this_page' && item.page ? <code>{item.page}</code> : null}
+                    {tabbed ? (
+                      <>
+                        <span>From: {reporterKindLabels[item.reporterKind]}</span>
+                        <span>Filed: {whenWords(item.filedAt)}</span>
+                        <span>About: {categoryWords[item.category].label}</span>
+                        {item.pageKind === 'this_page' && reportedPlaceWords(item.page) ? (
+                          <span>Page: {reportedPlaceWords(item.page)}</span>
+                        ) : null}
+                      </>
+                    ) : (
+                      <>
+                        <span>{reporterKindLabels[item.reporterKind]}</span>
+                        <span>{whenWords(item.filedAt)}</span>
+                        <span>{categoryWords[item.category].label}</span>
+                        {item.pageKind === 'this_page' && item.page ? (
+                          <code>{item.page}</code>
+                        ) : null}
+                      </>
+                    )}
                   </p>
                   <details>
                     <summary>{queueWords.showDetails}</summary>
@@ -295,7 +321,15 @@ function QueuePanel({ tenant }: { tenant: string }) {
                         <>
                           <div>
                             <dt>{queueWords.where}</dt>
-                            <dd>{item.page}</dd>
+                            <dd>
+                              {tabbed && reportedPlaceWords(item.page) ? (
+                                <>
+                                  {reportedPlaceWords(item.page)} <code>{item.page}</code>
+                                </>
+                              ) : (
+                                item.page
+                              )}
+                            </dd>
                           </div>
                           <div>
                             <dt>{queueWords.details}</dt>
@@ -336,62 +370,16 @@ function QueuePanel({ tenant }: { tenant: string }) {
                       ))}
                     </div>
                   )}
-                  {pending?.item.id === item.id ? (
-                    <form
-                      className="pr-queue-move"
-                      onSubmit={(event) => void save(event)}
-                      aria-label={`${pending.move.label} ${item.reference}`}
-                      noValidate
+                  {tabbed ? null : moveForm(item)}
+                  {tabbed && pending?.item.id === item.id ? (
+                    <Dialog
+                      open
+                      onClose={cancel}
+                      title={`${pending.move.label} ${item.reference}`}
+                      locked={saving}
                     >
-                      <label htmlFor={`note-${item.id}`}>
-                        {queueWords.noteLabel}
-                        <span className="pr-tag">
-                          {pending.move.noteRequired
-                            ? queueWords.noteRequired
-                            : queueWords.noteOptional}
-                        </span>
-                      </label>
-                      <textarea
-                        id={`note-${item.id}`}
-                        rows={3}
-                        value={note}
-                        maxLength={problemReportLimits.note.max}
-                        disabled={saving}
-                        aria-required={pending.move.noteRequired}
-                        aria-invalid={noteError ? true : undefined}
-                        aria-describedby={`note-${item.id}-hint note-${item.id}-caution`}
-                        onChange={(event) => setNote(event.target.value)}
-                      />
-                      <span id={`note-${item.id}-hint`} className="guide-hint">
-                        {queueWords.noteHint}
-                      </span>
-                      <strong id={`note-${item.id}-caution`}>{queueWords.caution}</strong>
-                      {noteError ? <p role="alert">{noteError}</p> : null}
-                      {moveLine ? <ReportFailure failure={moveLine} links={links} /> : null}
-                      <div className="pr-actions">
-                        <button className="primary-link" type="submit" disabled={saving}>
-                          {saving ? queueWords.saving : queueWords.save}
-                        </button>
-                        <button
-                          className="text-link"
-                          type="button"
-                          disabled={saving}
-                          onClick={cancel}
-                        >
-                          {queueWords.cancel}
-                        </button>
-                        {moveFailure?.reload ? (
-                          <button
-                            className="text-link"
-                            type="button"
-                            disabled={busy || saving}
-                            onClick={() => void load(null)}
-                          >
-                            {busy ? queueWords.reloading : queueWords.reload}
-                          </button>
-                        ) : null}
-                      </div>
-                    </form>
+                      {moveForm(item)}
+                    </Dialog>
                   ) : null}
                 </li>
               ))}
@@ -413,4 +401,59 @@ function QueuePanel({ tenant }: { tenant: string }) {
       </div>
     </details>
   );
+
+  // Declared here so the filter and the list read first; hoisted, so the return above uses it.
+  /** The form that answers a move, for the report it is open on. */
+  function moveForm(item: Item) {
+    return pending?.item.id === item.id ? (
+      <form
+        className="pr-queue-move"
+        onSubmit={(event) => void save(event)}
+        aria-label={`${pending.move.label} ${item.reference}`}
+        noValidate
+      >
+        <label htmlFor={`note-${item.id}`}>
+          {queueWords.noteLabel}
+          <span className="pr-tag">
+            {pending.move.noteRequired ? queueWords.noteRequired : queueWords.noteOptional}
+          </span>
+        </label>
+        <textarea
+          id={`note-${item.id}`}
+          rows={3}
+          value={note}
+          maxLength={problemReportLimits.note.max}
+          disabled={saving}
+          aria-required={pending.move.noteRequired}
+          aria-invalid={noteError ? true : undefined}
+          aria-describedby={`note-${item.id}-hint note-${item.id}-caution`}
+          onChange={(event) => setNote(event.target.value)}
+        />
+        <span id={`note-${item.id}-hint`} className="guide-hint">
+          {queueWords.noteHint}
+        </span>
+        <strong id={`note-${item.id}-caution`}>{queueWords.caution}</strong>
+        {noteError ? <p role="alert">{noteError}</p> : null}
+        {moveLine ? <ReportFailure failure={moveLine} links={links} /> : null}
+        <div className="pr-actions">
+          <button className="primary-link" type="submit" disabled={saving}>
+            {saving ? queueWords.saving : queueWords.save}
+          </button>
+          <button className="text-link" type="button" disabled={saving} onClick={cancel}>
+            {queueWords.cancel}
+          </button>
+          {moveFailure?.reload ? (
+            <button
+              className="text-link"
+              type="button"
+              disabled={busy || saving}
+              onClick={() => void load(null)}
+            >
+              {busy ? queueWords.reloading : queueWords.reload}
+            </button>
+          ) : null}
+        </div>
+      </form>
+    ) : null;
+  }
 }

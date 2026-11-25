@@ -95,7 +95,9 @@ describe('the panel before anything is loaded', () => {
   test('the erasure queue takes the offered flag as a prop and, when it is missing, adds no button', () => {
     const text = source('app/operator/erasure-queue.tsx');
     expect(text).toMatch(/problemReports\?: boolean/);
-    expect(text).toContain('function Queue({ tenant, role, problemReports = false }: Props)');
+    expect(text).toContain(
+      'function Queue({ tenant, role, problemReports = false, tabbed = false }: Props)',
+    );
   });
   test('the erasure queue draws no removal before a read, for any role', async () => {
     const { ErasureQueue } = await load('app/operator/erasure-queue.tsx');
