@@ -1498,7 +1498,7 @@ test.describe('header geometry (M4)', () => {
       const [search, heading, avatar] = await Promise.all([
         trigger(page).boundingBox(),
         page.locator('main h1').boundingBox(),
-        page.getByRole('button', { name: 'Account menu', exact: true }).boundingBox(),
+        page.getByRole('button', { name: /^(?:[A-Z?]{1,2}, )?Account menu$/ }).boundingBox(),
       ]);
       expect(Math.abs(search!.x - heading!.x), `${width}`).toBeLessThanOrEqual(1);
       expect(avatar!.x + avatar!.width).toBeGreaterThan(width - 40);

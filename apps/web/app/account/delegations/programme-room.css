@@ -338,13 +338,14 @@ article.room.programme-room .programme-attention > li > .button.button-secondary
     margin-inline-start: calc(36px + var(--space-3));
   }
 }
-/* A list narrower than 21rem (never at the normal text size from 641 px: the narrowest is 342 px at 1024 px, but at
-   200% text 382 px at 1440 px) wraps its rows as on a phone: the button goes under the words and may wrap its own
-   words, so it never runs past the card (final walk, public-customer-07, 25 Nov 2026). */
+/* A list narrower than 20rem wraps its rows as on a phone: the button goes under the words and may wrap its own words,
+   so it never runs past the card (final walk, public-customer-07, 25 Nov 2026). At the normal text size from 641 px
+   the narrowest list is 342 px at 1024 px (about 334 px with a classic scrollbar), above 320 px, so nothing moves;
+   at 200% text it is 382 px at 1440 px, under 640 px, so the row wraps. */
 .programme-attention {
   container-type: inline-size;
 }
-@container (max-width: 21rem) {
+@container (max-width: 20rem) {
   .programme-attention > li {
     flex-wrap: wrap;
   }

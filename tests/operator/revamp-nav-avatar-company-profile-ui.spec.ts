@@ -116,7 +116,7 @@ async function openMenu(page: Page, profiles: 'on' | 'off', answer: Answer) {
   await page.goto(`${origin}/?profiles=${profiles}`);
   if (answer !== 'pending') await expect.poll(() => answered).toBe(true);
   // Keyboard: focus the avatar and open the menu with the arrow key, as the overflow menu offers.
-  const avatar = page.getByRole('button', { name: 'Account menu', exact: true });
+  const avatar = page.getByRole('button', { name: /^(?:[A-Z?]{1,2}, )?Account menu$/ });
   await avatar.focus();
   await page.keyboard.press('ArrowDown');
   const menu = page.getByRole('menu', { name: 'Account menu', exact: true });

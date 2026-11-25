@@ -80,12 +80,16 @@ for (const [width, height] of [
     const header = page.locator('header.ux-app-header');
     await shot('shell');
     for (const [name, label] of [
-      ['avatar-menu', 'Account menu'],
+      // The account button's name starts with the initials it shows, when it shows them (final walk W-1).
+      ['avatar-menu', /^(?:[A-Z?]{1,2}, )?Account menu$/],
       ['help-menu', 'Help and accessibility'],
       ['language-menu', 'Language'],
       ['notifications', 'Inbox'],
     ] as const) {
-      const trigger = header.getByRole('button', { name: label, exact: true });
+      const trigger = header.getByRole('button', {
+        name: label,
+        exact: typeof label === 'string',
+      });
       if (!(await trigger.isVisible())) continue;
       await trigger.click();
       if (name === 'notifications') await page.locator('.ux-notice-panel h3').first().waitFor();
