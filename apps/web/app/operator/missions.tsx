@@ -859,7 +859,8 @@ export function Missions({
                 .finally(() => setBusy(false));
             }}
           >
-            {deskV41 ? 'Refresh Missions' : 'Refresh missions'}
+            {/* Switch off keeps the words the desk has always shown. */}
+            {deskV41 ? 'Refresh Missions' : <>Refresh missions</>}
           </button>
         </div>
       </PhoneFold>
