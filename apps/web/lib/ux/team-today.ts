@@ -233,7 +233,14 @@ export function deskRows(
   });
 }
 
-export type DeskTotals = { count: number; late: number; fresh: number; exact: boolean };
+export type DeskTotals = {
+  count: number;
+  late: number;
+  fresh: number;
+  exact: boolean;
+  /** The erasure list is waiting for a fresh authenticator check: nothing failed, the page asks for the code. */
+  codeFirst?: boolean;
+};
 /**
  * How many things need a person, how many of them are late and how many are new. Exact only when both mission reads
  * and the erasure read were whole; otherwise the smallest number the totals prove. `erasure` is null when the role
@@ -249,6 +256,11 @@ export function deskTotals(
    * then a lower bound, never exact, so the page cannot give a false all-clear.
    */
   erasureUnread = false,
+  /**
+   * True when the erasure list was refused only because the authenticator check is no longer fresh. Like a failed
+   * read it is never an all-clear, but it is not a failure: the words ask for the code instead.
+   */
+  erasureNeedsCode = false,
 ): DeskTotals {
   const missions = needsCount(fresh, overdue, rows);
   const extra = erasure?.rows.length ?? 0;
@@ -256,14 +268,22 @@ export function deskTotals(
     count: missions.count + extra,
     late: overdue.total + extra,
     fresh: fresh.total,
-    exact: missions.exact && !erasure?.atLeast && !erasureUnread,
+    exact: missions.exact && !erasure?.atLeast && !erasureUnread && !erasureNeedsCode,
+    codeFirst: erasureNeedsCode,
   };
 }
 
+/** What the headline says when only the code stands between the page and the erasure list: one plain line. */
+const codeFirstLine = 'Confirm your code to check erasure requests.';
+
 /** The one sentence under the heading. */
-export function deskSentence({ count, late, exact }: DeskTotals): string {
+export function deskSentence({ count, late, exact, codeFirst }: DeskTotals): string {
   if (count === 0)
-    return exact ? 'Nothing needs you now.' : 'Erasure requests could not be checked just now.';
+    return exact
+      ? 'Nothing needs you now.'
+      : codeFirst
+        ? codeFirstLine
+        : 'Erasure requests could not be checked just now.';
   const lead = `${exact ? '' : 'At least '}${count} ${count === 1 ? 'thing needs' : 'things need'} you now.`;
   const tail =
     late === 0
@@ -298,10 +318,15 @@ export function shortReference(value: unknown): string | null {
  * place that holds the full list instead. `others` is the sum of the other queues that need a decision (replies,
  * quotes, follow-ups and so on), or null when one of them could not be read.
  */
-export function deskHeadline({ count, late, exact }: DeskTotals, others: number | null): string {
+export function deskHeadline(
+  { count, late, exact, codeFirst }: DeskTotals,
+  others: number | null,
+): string {
   if (count === 0) {
     if (!exact)
-      return 'Erasure requests could not be checked just now. Try again before you rely on this page.';
+      return codeFirst
+        ? codeFirstLine
+        : 'Erasure requests could not be checked just now. Try again before you rely on this page.';
     if (others === null)
       return 'No new requests and nothing late. Some lists could not be checked.';
     return others > 0

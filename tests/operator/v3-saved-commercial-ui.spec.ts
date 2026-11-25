@@ -36,6 +36,8 @@ test.beforeAll(async () => {
     jsx: 'automatic',
     // Components import their own stylesheets; this spec does not mount them for styling.
     loader: { '.css': 'empty' },
+    // The flag pictures are static files of the site, not modules to bundle.
+    external: ['/flags/*'],
     define: { 'process.env.NODE_ENV': '"production"', 'process.env': '{}' },
     metafile: true,
   });

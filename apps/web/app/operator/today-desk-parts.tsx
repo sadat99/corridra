@@ -5,7 +5,12 @@ import { useId, useState, type ReactNode } from 'react';
 import { OperatorIcon } from '../../components/operator-icon';
 import { formatDate } from '../../lib/ux/format';
 import { deskChip, type DeskRow } from '../../lib/ux/team-today';
-import { readFailureCanRetry, partFailureWords, type ReadFailureKind } from './read-failure';
+import {
+  joinParts,
+  readFailureCanRetry,
+  partFailureWords,
+  type ReadFailureKind,
+} from './read-failure';
 
 export type DeskRowView = {
   row: DeskRow;
@@ -250,6 +255,45 @@ export function PartFailure({
           Try Again
         </button>
       )}
+    </div>
+  );
+}
+
+/**
+ * The parts that could not be read, as one message for each cause. Two lists that failed for the same reason are
+ * named together in one sentence with one Try Again, never as the same words twice.
+ */
+export function PartFailures({
+  parts,
+  onRetry,
+}: {
+  parts: ({ part: string; kind: ReadFailureKind } | null)[];
+  onRetry: () => void;
+}) {
+  const kinds: ReadFailureKind[] = ['unavailable', 'later', 'denied'];
+  return (
+    <>
+      {kinds.map((kind) => {
+        const names = parts.flatMap((entry) => (entry && entry.kind === kind ? [entry.part] : []));
+        return names.length ? (
+          <PartFailure key={kind} part={joinParts(names)} kind={kind} onRetry={onRetry} />
+        ) : null;
+      })}
+    </>
+  );
+}
+
+/**
+ * Lists that wait for a fresh authenticator check (team desk decision 5). Not a failure: one quiet line and the
+ * button that opens the check in place.
+ */
+export function CodeCheckLine({ parts, onConfirm }: { parts: string; onConfirm: () => void }) {
+  return (
+    <div role="status" className="ux-desk-part-failure" data-code-check>
+      <p>Confirm your code to see {parts}.</p>
+      <button type="button" className="text-link" onClick={onConfirm}>
+        Confirm Code
+      </button>
     </div>
   );
 }

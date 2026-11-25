@@ -93,6 +93,13 @@ describe('the headline', () => {
     expect(deskHeadline(totals(0, 0, false), 0)).toContain('could not be checked');
   });
 
+  test('a list that waits for the code asks for it in one plain line, never "could not be checked"', () => {
+    const waiting = { ...totals(0, 0, false), codeFirst: true };
+    expect(deskHeadline(waiting, 0)).toBe('Confirm your code to check erasure requests.');
+    expect(deskHeadline(waiting, 5)).toBe('Confirm your code to check erasure requests.');
+    expect(deskSentence(waiting)).toBe('Confirm your code to check erasure requests.');
+  });
+
   test('never says "at least" and never gives a lower bound as a number', () => {
     // The desk sentence it replaces does say it; the new headline must not, in any state.
     expect(deskSentence(totals(60, 50, false))).toContain('At least');

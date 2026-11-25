@@ -545,6 +545,35 @@ test('W3-4 service requests that cannot be read say Not available and are never 
   expect(await axe(page)).toEqual([]);
 });
 
+test('W3-4b a role that can never read the paid-service counts has no tile for them; the other six stay', async ({
+  page,
+}) => {
+  await open(
+    page,
+    {
+      ...operatorRows,
+      team: {
+        acceptedQuotesNotStarted: 0,
+        serviceRequestsToQuote: 0,
+        repliesToReview: 0,
+        unavailable: ['acceptedQuotesNotStarted', 'serviceRequestsToQuote'],
+      },
+    },
+    '?role=operator',
+  );
+  await loaded(page);
+  await expect(counts(page).locator('span')).toHaveText([
+    /^new requests? to review$/,
+    /^missions? past their due date$/,
+    /^open missions?$/,
+    /^repl(y|ies) to review$/,
+    /^follow-ups? past (their|its) due date$/,
+    /^meetings? in the next 7 days$/,
+  ]);
+  await expect(toQuote(page)).toHaveCount(0);
+  await expect(counts(page).filter({ hasText: 'accepted quotes not started' })).toHaveCount(0);
+});
+
 test('W3-5 Today never says nothing is waiting while a service request waits for a quote', async ({
   page,
 }) => {
