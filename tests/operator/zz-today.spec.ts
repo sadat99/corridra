@@ -187,8 +187,12 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
     }),
   );
   await page.reload();
-  // Without the meetings read two counts drop (six of eight remain; CQ-34 and CQ-73 add two, W3 adds one).
-  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(6);
+  // Without the meetings read the two meeting counts drop (CQ-34 and CQ-73 add two, W3 adds one). What remains
+  // depends on the role read above: the six an owner or an admin sees, or the four every other role sees.
+  const withoutMeetings = [...everyRole.slice(0, 4), ...paidServices];
+  await expect(counts.getByRole('listitem').locator('span')).toHaveText(
+    ['owner', 'admin'].includes(role) ? withoutMeetings : everyRole.slice(0, 4),
+  );
   // The chosen filter is kept in the address (?needs=overdue), so the reload keeps "Past due"; All shows the new request again.
   await expect(needs.getByRole('radio', { name: 'Past due 2' })).toBeChecked();
   await expect(needs.getByText('Invented Towels Ltd')).toHaveCount(0);
