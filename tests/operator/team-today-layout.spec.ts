@@ -165,12 +165,6 @@ async function open(page: Page, scenario: Scenario, query = '') {
     scenario.queueReads?.push(route.request().url());
     const status = new URL(route.request().url()).searchParams.get('status');
     const answer = scenario.erasure;
-    // A stale authenticator check is the real answer of this route: 401 with a message and no code.
-    if (answer?.status === 401)
-      return route.fulfill({
-        status: 401,
-        json: { error: 'Verify your authenticator again to continue' },
-      });
     if (!answer || answer.status)
       return route.fulfill({ status: answer?.status ?? 503, json: { error: 'Synthetic' } });
     const items = (answer.items ?? []).filter((i) => (i as { status: string }).status === status);
@@ -790,19 +784,6 @@ test('with Report a Problem not installed or a queue unavailable, that tile is a
   await expect(page.getByRole('region', { name: 'Also waiting' })).toHaveCount(0);
   expect(queueReads.some((url) => url.includes('/problem-reports'))).toBe(false);
   expect(queueReads.some((url) => url.includes('/customer-erasure-queue'))).toBe(true);
-});
-
-test('switch off: a stale authenticator check on the erasure list is one plain line, never "could not be checked" or an all-clear', async ({
-  page,
-}) => {
-  await open(page, { ...empty, erasure: { status: 401 } });
-  await loaded(page);
-  const sentence = today(page).locator('.ux-desk-sentence');
-  await expect(sentence).toHaveText('Confirm your code to check erasure requests.');
-  await expect(today(page).locator('[data-code-check]')).toHaveCount(1);
-  await expect(today(page).getByText(/could not be checked|could not be read/)).toHaveCount(0);
-  await expect(today(page).getByText('Nothing needs you now.')).toHaveCount(0);
-  await expect(today(page).getByRole('button', { name: 'Try Again' })).toHaveCount(0);
 });
 
 test('with only the erasure queue readable, Also waiting shows that one tile and no problem report tile', async ({

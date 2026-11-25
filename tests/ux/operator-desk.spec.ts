@@ -31,7 +31,7 @@ const mission = (i, status, due) => ({
 const json = (body, status = 200) =>
   Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } }));
 const many = scenario === 'many';
-const none = scenario === 'empty';
+const none = scenario === 'empty' || scenario === 'stale';
 const freshList = none ? [] : Array.from({ length: many ? 30 : 3 }, (_, i) => mission(i, 'DRAFT', iso(3 + i)));
 const lateList = none ? [] : Array.from({ length: many ? 25 : 2 }, (_, i) => mission(100 + i, 'ACTIVE', iso(-(4 + i))));
 window.fetch = (input) => {
@@ -58,6 +58,9 @@ window.fetch = (input) => {
         });
   if (url.includes('/api/workspace/problem-reports'))
     return json({ counts: { received: none ? 0 : 2, in_review: 1 }, oldestReceivedAt: iso(-3) });
+  // A stale authenticator check: the real answer of the erasure route is a 401 with a message and no code.
+  if (scenario === 'stale' && url.includes('/api/workspace/customer-erasure-queue'))
+    return json({ error: 'Verify your authenticator again to continue' }, 401);
   if (url.includes('/api/workspace/customer-erasure-queue'))
     return json({
       items: none || url.includes('in_progress') ? [] : [{ id: 'e1', reference: 'ER-SAMPLE-1', dueAt: iso(-2), daysLeft: -2, status: 'received' }],
@@ -226,6 +229,19 @@ test('empty: nothing needs you now', async ({ page }) => {
   const axe = await new AxeBuilder({ page }).include('#desk-fixture').analyze();
   expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
   await shot(page, 'today-empty-390');
+});
+
+test('stale: a list that waits for the code is one plain line, never could not be checked or an all-clear', async ({
+  page,
+}) => {
+  await mount(page, 390, 'stale');
+  await expect(page.locator('.ux-desk-sentence')).toHaveText(
+    'Confirm your code to check erasure requests.',
+  );
+  await expect(page.locator('#desk-fixture [data-code-check]')).toHaveCount(1);
+  await expect(page.getByText(/could not be checked|could not be read/)).toHaveCount(0);
+  await expect(page.getByText('Nothing needs you now.')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Try Again' })).toHaveCount(0);
 });
 
 test('the whole list failing says so and offers Try Again', async ({ page }) => {
