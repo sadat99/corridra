@@ -1133,19 +1133,12 @@ test.describe('accessibility', () => {
     const result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
-    // The account menu button shows its initials to sight and names itself "Account menu" (person-neutral, never the
-    // initials); axe's experimental label-in-name rule flags that on main too, so it is the one finding left out.
-    // Pocket's own controls (the plus and the list rows) are all scanned by it.
-    return result.violations
-      .map((v) => ({
-        ...v,
-        nodes: v.nodes.filter((n) => !n.html.includes('aria-label="Account menu"')),
-      }))
-      .filter((v) => v.nodes.length > 0)
-      .map(
-        (v) =>
-          `${v.id}: ${v.nodes.map((n) => n.target.join(' ') + ' ' + n.html.slice(0, 200)).join(' | ')}`,
-      );
+    // Nothing is left out: the account menu button's name now starts with the initials it shows (final walk W-1), so
+    // axe's label-in-name rule (wcag21a) has nothing to flag on it. Pocket's own controls are scanned the same way.
+    return result.violations.map(
+      (v) =>
+        `${v.id}: ${v.nodes.map((n) => n.target.join(' ') + ' ' + n.html.slice(0, 200)).join(' | ')}`,
+    );
   };
   test('axe is clean with the list closed, open and on the help panel', async ({ page }) => {
     await page.setViewportSize(phone);

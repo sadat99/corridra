@@ -114,10 +114,19 @@
 .ux-tools-status-row .text-link {
   min-height: 44px;
 }
+/* From 64rem the chips sit beside the search box, while the finder is at least 40rem wide. A rem here follows the
+   text size: at 200% text the search box alone took 704 of a 784 px finder at 1440 px and left the chips a 48 px
+   column, so they ran 103 px past the screen (final walk W-3c, 25 Nov 2026). There the chips stay under the box,
+   as below 64rem. At the normal text size the finder is 696 px or wider from 1024 px, so nothing moves. */
+.ux-tools-finder {
+  container-type: inline-size;
+}
 @media (min-width: 64rem) {
-  .ux-tools-find {
-    grid-template-columns: minmax(16rem, 22rem) 1fr;
-    gap: var(--space-4);
-    align-items: end;
+  @container (min-width: 40rem) {
+    .ux-tools-find {
+      grid-template-columns: minmax(16rem, 22rem) 1fr;
+      gap: var(--space-4);
+      align-items: end;
+    }
   }
 }

@@ -169,8 +169,10 @@ for (const kind of kinds)
           kind === 'customer'
             ? page.locator('header .ux-bar-topbar button[aria-haspopup="dialog"]')
             : page.locator('header .ux-util-language > .ux-menu-button');
+        // The team language menu's button is named after the code it shows ("EN, Language", final walk W-2).
+        const languageMenuNames = names.filter((name) => /(^|, )Language$/.test(name ?? ''));
         if (kind === 'customer') {
-          expect(names).not.toContain('Language');
+          expect(languageMenuNames).toEqual([]);
           if (folded(width)) expect(names).not.toContain('Help and accessibility');
           else expect(names).toContain('Help and accessibility');
           // Under 360 px Listen and the language code are in the drawer, so the bar draws neither.
@@ -210,10 +212,10 @@ for (const kind of kinds)
           }
         } else if (folded(width)) {
           await expect(language).toBeHidden();
-          expect(names).not.toContain('Language');
+          expect(languageMenuNames).toEqual([]);
           expect(names).not.toContain('Help and accessibility');
         } else {
-          expect(names).toContain('Language');
+          expect(names).toContain('EN, Language');
           expect(names).toContain('Help and accessibility');
         }
 
@@ -294,7 +296,7 @@ for (const kind of kinds)
           );
           return;
         }
-        const language = page.getByRole('button', { name: 'Language', exact: true });
+        const language = page.getByRole('button', { name: 'EN, Language', exact: true });
         const opener = folded(width)
           ? page.getByRole('button', { name: 'Account menu', exact: true })
           : language;
@@ -391,11 +393,32 @@ for (const kind of kinds)
       await page.locator('header .ux-bar-topbar button[aria-haspopup="dialog"]').click();
       await expect(page.getByRole('dialog', { name: 'Language' })).toBeVisible();
     } else {
-      await page.getByRole('button', { name: 'Language', exact: true }).click();
+      await page.getByRole('button', { name: 'EN, Language', exact: true }).click();
       await expect(page.getByRole('menu', { name: 'Language' })).toBeVisible();
     }
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(axe.violations.map((v) => v.id)).toEqual([]);
+  });
+
+// Final walk W-2 (25 Nov 2026): the team header's language button shows "EN", so its name starts with it ("EN,
+// Language") and a voice user can say what they see (WCAG 2.5.3). The menu keeps the name "Language". Fails on the code
+// before: the name was "Language" and axe (wcag21a) reported label-content-name-mismatch on it at 768 to 1920 px.
+for (const width of [768, 1024, 1440, 1920])
+  test(`the team header language button's name starts with the code it shows at ${width} px`, async ({
+    page,
+  }) => {
+    await open(page, 'team', width, false);
+    const language = page.locator('header .ux-util-language > .ux-menu-button');
+    await expect(language).toBeVisible();
+    expect((await language.innerText()).trim()).toBe('EN');
+    await expect(language).toHaveAccessibleName('EN, Language');
+    const axe = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .include('header')
+      .analyze();
+    expect(axe.violations.map((v) => v.id)).toEqual([]);
+    await language.click();
+    await expect(page.getByRole('menu', { name: 'Language', exact: true })).toBeVisible();
   });
 
 // UI/UX.v3 consistency pass, unit A2: the customer account menu keeps Sign Out pinned and Language as one row.

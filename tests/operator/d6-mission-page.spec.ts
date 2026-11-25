@@ -117,6 +117,8 @@ type Shape = {
   replies?: { id: string; mission_id: string; body: string; created_at?: string }[];
   /** One reviewed route pack with one mission job, so the Assign Route form is drawn. */
   pack?: boolean;
+  /** The contact the customer gave (name and email), shown in the Overview facts. */
+  contact?: { name: string; email: string };
 };
 const queue = (shape: Shape) => ({
   role: shape.role ?? 'owner',
@@ -148,6 +150,7 @@ const queue = (shape: Shape) => ({
         offer: 'Invented machine parts',
         outcomes: [],
         attendance: 'No',
+        ...(shape.contact ?? {}),
       },
     },
   ],
@@ -1075,3 +1078,46 @@ for (const width of [390, 1100, 1440])
       .evaluateAll((nodes) => Math.max(...nodes.map((node) => node.getBoundingClientRect().right)));
     expect(edge).toBeLessThanOrEqual(width);
   });
+
+// Final walk W-3b (25 Nov 2026): at 390 px with 200% text the real mission page (inside the shell's 24 px gutter) was
+// 491 px wide. The Overview facts column took the width of an unbroken email address, and the six stage shapes and
+// their gaps needed 368 px of a 342 px row. The tab row already scrolls inside itself. Fails on the code before.
+test('final walk: at 390 px with 200% text and the shell gutter no tab of the page runs past the right edge', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, true, {
+    contact: { name: 'Invented Contact', email: 'invented-long-contact-address@example.invalid' },
+  });
+  // The page as the team frame draws it on a phone: 24 px of gutter on each side of the main column.
+  await page.addStyleTag({
+    content: 'html { font-size: 200%; } #fixture { padding-inline: 24px; }',
+  });
+  await expect(page.locator('.mission-facts')).toContainText('invented-long-contact-address');
+  await expect(page.locator('.mr-stage-wrap[data-variant="room"]')).toBeVisible();
+  const tabs = page.getByRole('tab');
+  const count = await tabs.count();
+  expect(count).toBeGreaterThan(1);
+  for (let index = 0; index < count; index++) {
+    const tab = tabs.nth(index);
+    await tab.click();
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    const name = (await tab.innerText()).trim();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+      `sideways scroll on ${name}`,
+    ).toBeLessThanOrEqual(0);
+  }
+  // The tab row keeps its own sideways scroll, inside the window.
+  const row = (await page.locator('.mission-tabs-row').boundingBox())!;
+  expect(row.x + row.width).toBeLessThanOrEqual(390);
+  // Each stage shape is still a circle.
+  for (const shape of await page
+    .locator('.mr-stage-wrap[data-variant="room"] .mr-stage-shape:visible')
+    .all()) {
+    const box = (await shape.boundingBox())!;
+    expect(Math.abs(box.width - box.height)).toBeLessThan(1);
+  }
+});

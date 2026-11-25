@@ -19,6 +19,7 @@ const rows = '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox
 
 export function OverflowMenu({
   label,
+  buttonLabel,
   trigger,
   children,
   className = '',
@@ -26,6 +27,11 @@ export function OverflowMenu({
 }: {
   /** The accessible name of the button and of the menu. */
   label: string;
+  /**
+   * The button's own accessible name when the trigger shows text (initials, a language code): it starts with that
+   * text, so a voice user can say what they see (WCAG 2.5.3, label in name). The menu keeps `label`.
+   */
+  buttonLabel?: string;
   /** What the button shows: an icon, or an icon with a short word. Never the only name. */
   trigger: ReactNode;
   children: ReactNode;
@@ -99,7 +105,7 @@ export function OverflowMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={label}
+        aria-label={buttonLabel ?? label}
         onClick={() => {
           focusFirst.current = !open;
           setOpen((value) => !value);

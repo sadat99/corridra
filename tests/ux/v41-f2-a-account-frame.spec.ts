@@ -9,10 +9,11 @@ import { resolve } from 'node:path';
 //   02  the "Waiting for you" head link stays inside its card at 320 and 390;
 //   03  one bar on every account page: a form step (no Quick button) has the same one-row bar as Home at 390;
 //   07  at 200% text neither the bar nor Home scrolls sideways;
-//   08  the account menu button's accessible name contains the initials it shows;
+//   08  the account menu button's accessible name contains the initials it shows (final walk W-1: it starts with them);
 //   14  Home has one link per destination inside <main>;
 //   21  the journey cards stack on a phone and show their titles and dates whole;
-//   26  the sidebar's New Request and All Tools sit inside a landmark.
+//   26  the sidebar's New Request and All Tools sit inside a landmark;
+//   W-3c at 200% text the All Tools chips stay inside the window at 1440 beside the rail (final walk, 25 Nov 2026).
 // The data is synthetic. Fonts are the system's, so widths are checked as relations (inside, not past), not pixels.
 
 const workspace = '00000000-0000-4000-8000-0000000000a1';
@@ -32,6 +33,9 @@ test.beforeAll(async () => {
         import { PocketButton } from ${source('components/ux/pocket-button.tsx')};
         import { WorkspaceShell } from ${source('components/workspace-shell.tsx')};
         import { MoveView } from ${source('app/account/move/move-view.tsx')};
+        import { AllToolsFinder } from ${source('app/account/all-tools/all-tools-finder.tsx')};
+        import { tools } from ${source('lib/all-tools.ts')};
+        import ${source('app/account/all-tools/all-tools.css')};
         const query = new URLSearchParams(location.search);
         const words = { navLabel: 'Customer navigation', menuLabel: 'Menu', closeLabel: 'Close menu', collapseLabel: 'Collapse menu', expandLabel: 'Expand menu' };
         const items = [
@@ -53,7 +57,8 @@ test.beforeAll(async () => {
           { journey: 'source', id: 'd1', workspaceId: ${JSON.stringify(workspace)}, count: '1', title: 'Synthetic open request draft', kind: 'draft', status: '', statusWords: 'Saved, not sent', dateWords: 'Updated', at: '2026-11-24T08:00:00Z', href: ${JSON.stringify(draftHref)}, listHref: '/account?view=work&work=source' },
           { journey: 'sell', id: 'r3', workspaceId: ${JSON.stringify(workspace)}, count: '2', title: 'Sell in Spain', kind: 'request', status: '', statusWords: 'With the Corridra team', dateWords: 'Sent', at: '2026-11-20T08:00:00Z', href: '/account/requests/r3', listHref: '/account?view=work&work=sell' },
         ];
-        const home = !location.pathname.startsWith('/account/drafts');
+        const allTools = location.pathname === '/account/all-tools';
+        const home = !allTools && !location.pathname.startsWith('/account/drafts');
         createRoot(document.getElementById('app')).render(
           <LanguageProvider offered={[{ code: 'en', draft: false }, { code: 'bn', draft: false }]}>
             <div className="site-shell">
@@ -62,7 +67,11 @@ test.beforeAll(async () => {
                 top={<CustomerRailTop />}
                 foot={<CustomerRailFoot allTools />}
                 nav={<CustomerSideNav id="customer-navigation" label="Customer navigation" items={items} current="home" journeys={[]} groups={[]} />}>
-                {home ? (
+                {allTools ? (
+                  <WorkspaceShell title="Every tool you can open." customer>
+                    <AllToolsFinder tools={tools.map(({ href, label, line, group }) => ({ href, label, line, group }))} initialQuery="" initialGroup="all" />
+                  </WorkspaceShell>
+                ) : home ? (
                   <WorkspaceShell title="Good morning, Synthetic" quietTitle customer>
                     <MoveView model={model} startHref="/account?view=work#customer-workspaces" journeys={journeys} taskJourneys={{ 'draft:d1': 'source', 'quote:q1': 'organise' }} viewer="synthetic" />
                   </WorkspaceShell>
@@ -286,12 +295,56 @@ test.describe('07: 200% text', () => {
   }
 });
 
-test('08: the account menu button keeps its person-neutral name', async ({ page }) => {
-  await open(page, 1440);
-  const button = page.locator('.ux-util-avatar > .ux-menu-button');
-  expect((await button.innerText()).trim()).toBe('SA');
-  await expect(button).toHaveAccessibleName('Account menu');
-  await expect(page.getByRole('button', { name: 'Account menu', exact: true })).toHaveCount(1);
+// Final walk W-1 (re-opens 08): the button draws the initials, so its name starts with them and a voice user can say
+// what they see (WCAG 2.5.3). The menu it opens keeps the name "Account menu". Fails on the code before: the name was
+// "Account menu" alone and axe reported label-content-name-mismatch on it.
+for (const width of [390, 1440])
+  test(`08: the account menu button's name starts with the initials it shows at ${width}`, async ({
+    page,
+  }) => {
+    await open(page, width);
+    const button = page.locator('.ux-util-avatar > .ux-menu-button');
+    expect((await button.innerText()).trim()).toBe('SA');
+    await expect(button).toHaveAccessibleName('SA, Account menu');
+    await expect(page.getByRole('button', { name: 'SA, Account menu', exact: true })).toHaveCount(
+      1,
+    );
+    const axe = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .include('header.ux-customer-header')
+      .analyze();
+    expect(axe.violations.map((v) => v.id)).not.toContain('label-content-name-mismatch');
+    await button.click();
+    await expect(page.getByRole('menu', { name: 'Account menu', exact: true })).toBeVisible();
+  });
+
+// Final walk W-3c: at 1440 with 200% text the search box took 704 of the 784 px the rail leaves the page and the
+// group chips ran 103 px past the window (page 1543 px wide). Fails on the code before; passes when the chips go under
+// the box. At the normal size they stay beside it.
+test.describe('W-3c: All Tools at 1440', () => {
+  const chipsOutside = (page: Page) =>
+    page
+      .locator('.ux-tools-find .ux-segment')
+      .evaluateAll((chips) =>
+        chips
+          .filter((chip) => chip.getBoundingClientRect().right > window.innerWidth + 0.5)
+          .map((chip) => chip.textContent?.trim()),
+      );
+  test('with 200% text the page does not scroll sideways and every group chip is whole', async ({
+    page,
+  }) => {
+    await open(page, 1440, '/account/all-tools', '', 200);
+    await expect(page.locator('.ux-tools-find .ux-segment').first()).toBeVisible();
+    expect(await sidewaysScroll(page)).toBeLessThanOrEqual(0);
+    expect(await chipsOutside(page)).toEqual([]);
+  });
+  test('at the normal text size the chips stay beside the search box', async ({ page }) => {
+    await open(page, 1440, '/account/all-tools');
+    const search = (await page.locator('.ux-tools-search').boundingBox())!;
+    const chips = (await page.locator('.ux-tools-find .ux-segments').boundingBox())!;
+    expect(chips.x).toBeGreaterThan(search.x + search.width);
+    expect(await sidewaysScroll(page)).toBeLessThanOrEqual(0);
+  });
 });
 
 test('14: Home has one link per destination inside main', async ({ page }) => {

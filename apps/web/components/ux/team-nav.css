@@ -1029,17 +1029,21 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
   }
 }
 @media (max-width: 479.98px) {
+  /* The row's own spacing is in px (the size of --space-1 and --space-2 at the normal text size, so nothing moves
+     there). The shell's gutter here is 24 px (globals.css, .site-shell below 760 px), so it is given back in px too.
+     A rem step doubles with the text size: at 200% text it took back 48 px of gutter and the gaps and padding grew
+     by 40 px, and the row ran past the edge of a 390 px screen (final walk W-3a, 25 Nov 2026). */
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header {
-    gap: var(--space-1);
+    gap: 4px;
     width: auto;
-    margin-inline: calc(-1 * var(--space-6));
-    padding-inline: var(--space-1);
+    margin-inline: -24px;
+    padding-inline: 4px;
   }
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-app-status {
     flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
-    padding-inline: var(--space-2);
+    padding-inline: 8px;
     font-size: var(--text-xs);
     white-space: nowrap;
     text-overflow: ellipsis;
