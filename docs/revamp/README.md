@@ -68,6 +68,19 @@ Team desk v4.1 Phase 1 ([plan](specs/team-desk-v4-1.md)), main `d7d55c0`. Guardi
 | D2            | `session_0187kU9uhyGuhJ4TdcrMQ9BR` | `claude/d2-refusal-reference` |
 | D2b           | `session_0187kU9tueUXFHMbYbAEbJWM` | `claude/d2b-desk-words`       |
 
+Team desk v4.1 Phases 2 to 5, merged 24 Nov 2026 behind `CORRIDRA_UX_TEAM_DESK_V41` (Guardians 50 to 55; records in PR "Records: team desk v4.1 phases 1-5 and run rules"). No lane is open; the owner's switch preview is next.
+
+| Unit                                 | PR  | Main       |
+| ------------------------------------ | --- | ---------- |
+| D4 one page pattern                  | 639 | `c05b30c`  |
+| D3 menu v3                           | 640 | `df5836f`  |
+| D6, D7 mission page and dialogs      | 641 | `c90ecad8` |
+| D5 Today                             | 642 | `a1e5ef71` |
+| D8, D9, D10 inside a mission         | 643 | `c2b2f555` |
+| D11 Meetings, D12 Money, D13 Reports | 644 | `f4adf828` |
+| D14 Helpers, D15 Status, D16 Team    | 645 | `448ef072` |
+| D17 Settings, D18 Inbox, D19 Supply  | 646 | `7e5dd73b` |
+
 ## Current lanes, 13 November 2026
 
 Snapshot at main `8c4500b` (PR 477, ADR-083 locked), 13 November 2026 about 10:40 UTC. The earlier snapshot (main `625747f2`, 11 and 12 Nov, sessions S40, S44, S45 and Orchestrators 3 and 4) is history and is kept in the ledger archives. Live state, open PRs, installs and owner items are in the [ledger](../V3_LEDGER.md) under Resume immediately; the CRUD order is in the [CRUD gap plan](crud/summary.md#order). Operating rules: the owner's "Parallel work operating rules" of 13 Nov 2026 in [AGENTS.md](../../AGENTS.md) (one orchestrator, one Guardian who reviews, merges and keeps the records, at most 4 builders, one session per PR, merge in announced windows). Merge rules still in force: exact-head green CI plus the Guardian's PASS; the owner merges any migration or installer change unless they say otherwise for that PR; one fix round at most. Sessions rotate by the [session rotation rule](../agents/session-rotation.md).
