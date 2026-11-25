@@ -399,7 +399,8 @@ test('fix run: a stale authenticator check is one quiet line with Confirm Code, 
   await expect(decide(page).getByText(/problem reports? open|erasure requests? open/)).toHaveCount(
     0,
   );
-  await expect(headline(page)).not.toHaveText('Nothing needs your decision now.');
+  await expect(headline(page)).toHaveText('Confirm your code to check erasure requests.');
+  await expect(page.locator('.ux-today41')).not.toContainText('could not be checked');
   // Confirm Code opens the check in place.
   await line.getByRole('button', { name: 'Confirm Code' }).click();
   await expect(page.getByRole('dialog', { name: 'Confirm it is you' })).toBeVisible();

@@ -1463,9 +1463,12 @@ export function TodayPanel({
     const list = today
       ? deskRows(today.fresh, today.overdue, today.erasure?.rows ?? [], today.observedAt)
       : [];
-    const erasureUnread = !!today && today.erasureRead && today.erasure === null;
+    // A list waiting for the code is not a failed read: the page asks for the code and never claims an all-clear.
+    const erasureUnread =
+      !!today && today.erasureRead && today.erasure === null && !today.needsCode.erasure;
+    const erasureNeedsCode = !!today && today.needsCode.erasure;
     const totals = today
-      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
+      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread, erasureNeedsCode)
       : null;
     return (
       <section className="ux-today ux-desk ux-today41" aria-labelledby="today-title">
@@ -1510,9 +1513,12 @@ export function TodayPanel({
       ? deskRows(today.fresh, today.overdue, today.erasure?.rows ?? [], today.observedAt)
       : [];
     // A role that reads the erasure queue and got nothing back could not check it: not the same as none waiting.
-    const erasureUnread = !!today && today.erasureRead && today.erasure === null;
+    // A list waiting for the code is not a failed read: the page asks for the code and never claims an all-clear.
+    const erasureUnread =
+      !!today && today.erasureRead && today.erasure === null && !today.needsCode.erasure;
+    const erasureNeedsCode = !!today && today.needsCode.erasure;
     const totals = today
-      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)
+      ? deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread, erasureNeedsCode)
       : null;
     return (
       <section className="ux-today ux-desk" aria-labelledby="today-title">

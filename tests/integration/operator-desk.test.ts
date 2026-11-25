@@ -19,6 +19,7 @@ import {
 } from '../../apps/web/lib/ux/team-map';
 import {
   deskChip,
+  deskHeadline,
   deskRows,
   deskSentence,
   deskTotals,
@@ -339,6 +340,15 @@ describe('a failed read is never a false all-clear', () => {
     );
     expect(deskSentence(some)).toBe('At least 1 thing needs you now. Nothing is late.');
   });
+  test('an erasure list that waits for the code is never an all-clear and never a failure', () => {
+    const totals = deskTotals(empty, empty, null, [], false, true);
+    expect(totals.exact).toBe(false);
+    expect(totals.codeFirst).toBe(true);
+    expect(deskSentence(totals)).toBe('Confirm your code to check erasure requests.');
+    expect(deskHeadline(totals, 0)).toBe('Confirm your code to check erasure requests.');
+    expect(deskHeadline(totals, null)).toBe('Confirm your code to check erasure requests.');
+    expect(deskSentence(totals)).not.toContain('could not be checked');
+  });
   test('a role that does not read the queue, or a read that worked, is still exact', () => {
     expect(deskSentence(deskTotals(empty, empty, null, [], false))).toBe('Nothing needs you now.');
     expect(deskSentence(deskTotals(empty, empty, { rows: [], atLeast: false }, [], false))).toBe(
@@ -350,7 +360,7 @@ describe('a failed read is never a false all-clear', () => {
     expect(today).toContain('erasureRead: reads.erasure');
     expect(today).toMatch(/today\.erasureRead && today\.erasure === null/);
     expect(today).toContain(
-      'deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread)',
+      'deskTotals(today.fresh, today.overdue, today.erasure, rows, erasureUnread, erasureNeedsCode)',
     );
   });
   test('Also waiting: a failed counts read hides only the counts, not the queues that were read', () => {
