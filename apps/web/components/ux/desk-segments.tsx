@@ -36,7 +36,11 @@ export function useDeskPlace(place: DeskPlaceId): DeskPlaceId {
     () => '',
   );
   const section = currentTeamSection(pathname, hash, sectionForSlug);
-  const { role } = useSyncExternalStore(subscribeTeamContext, readTeamContext, readServerTeamContext);
+  const { role } = useSyncExternalStore(
+    subscribeTeamContext,
+    readTeamContext,
+    readServerTeamContext,
+  );
   // A page of its own (the Inbox, a Supply page) is the place its server named: its address names no section.
   if (Object.hasOwn(deskOwnPages, place)) return place;
   // A section the loaded role may not open shows Today (the workspace says so there), so the header is Today's
