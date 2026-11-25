@@ -22,18 +22,21 @@ export function HelperInterestList({
   tenant,
   role,
   installed = false,
+  tabbed = false,
 }: {
   tenant: string;
   role: string;
+  /** Team desk v4.1: the list sits under its own tab on the Inbox page, so the tab names it. */
+  tabbed?: boolean;
   /** The caller already asked the register and it is installed (the Inbox page), so it is not asked twice. */
   installed?: boolean;
 }) {
   return canReadHelperInterest(role) ? (
-    <Panel key={tenant} tenant={tenant} known={installed} />
+    <Panel key={tenant} tenant={tenant} known={installed} tabbed={tabbed} />
   ) : null;
 }
 
-function Panel({ tenant, known }: { tenant: string; known: boolean }) {
+function Panel({ tenant, known, tabbed }: { tenant: string; known: boolean; tabbed: boolean }) {
   const [installed, setInstalled] = useState(known);
   const [rows, setRows] = useState<HelperInterestRow[]>([]);
   const [page, setPage] = useState<{ total: number; nextOffset: number | null } | null>(null);
@@ -97,7 +100,7 @@ function Panel({ tenant, known }: { tenant: string; known: boolean }) {
   return (
     <details id={fragment} tabIndex={-1} className="receipt-disclosure ux-panel">
       <summary>
-        <h2>{words.title}</h2>
+        <h2 className={tabbed ? 'sr-only' : undefined}>{words.title}</h2>
         {page ? <span className="pr-meta">{words.waiting(page.total)}</span> : null}
       </summary>
       <div className="pr-queue">

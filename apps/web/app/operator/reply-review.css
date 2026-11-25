@@ -38,8 +38,12 @@
 }
 .reply-review-columns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: var(--space-4);
+}
+/* Team desk v4.1 only: a column may be narrower than 14rem on a phone. With the switch off the minimum is 14rem. */
+.reply-review[data-desk='true'] .reply-review-columns {
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
 }
 .reply-review-columns section {
   display: grid;
@@ -193,7 +197,7 @@
   display: grid;
   gap: var(--space-3);
 }
-.reply-review-card h6 {
+.reply-review[data-desk='true'] .reply-review-card h6 {
   margin: 0;
   font-size: var(--text-base);
   font-weight: 600;

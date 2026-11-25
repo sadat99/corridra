@@ -119,11 +119,13 @@ type Props = {
   role?: string;
   /** Whether Report a Problem is offered: only then is the owner's word removal drawn. Missing means not offered. */
   problemReports?: boolean;
+  /** Team desk v4.1: the list sits under its own tab on the Inbox page, so the tab names it and the filter is a stack. */
+  tabbed?: boolean;
 };
 export function ErasureQueue(props: Props) {
   return <Queue key={props.tenant} {...props} />;
 }
-function Queue({ tenant, role, problemReports = false }: Props) {
+function Queue({ tenant, role, problemReports = false, tabbed = false }: Props) {
   const [queue, setQueue] = useState<Queue | null>(null),
     [filter, setFilter] = useState<Status | ''>(''),
     [busy, setBusy] = useState(false),
@@ -244,37 +246,42 @@ function Queue({ tenant, role, problemReports = false }: Props) {
 
   return (
     <section aria-labelledby="erasure-queue-title" className="ux-panel">
-      <h2 id="erasure-queue-title">Erasure Requests</h2>
+      <h2 id="erasure-queue-title" className={tabbed ? 'sr-only' : undefined}>
+        {tabbed ? 'Erasure requests' : 'Erasure Requests'}
+      </h2>
       <p>
         People who closed their account can ask for their data to be erased. Each request needs an
-        answer within the date shown. Invoices, signed decisions and audit rows are kept as the
-        record requires, and the note you write is what the person reads.
+        answer within the date shown. Invoices, signed decisions and{' '}
+        {tabbed ? 'the history of changes' : 'audit rows'} are kept as the record requires, and the
+        note you write is what the person reads.
       </p>
-      <label>
-        Show
-        <select
-          value={filter}
-          disabled={busy}
-          onChange={(e) => {
-            controller.current?.abort();
-            setFilter(e.target.value as Status | '');
-            setQueue(null);
-            setPending(null);
-            setBusy(false);
-            setMessage('Choose Load Erasure Requests to show this selection.');
-          }}
-        >
-          <option value="">All requests</option>
-          {statusValues.map((s) => (
-            <option key={s} value={s}>
-              {statusLabel[s]}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button className="text-link" type="button" disabled={busy} onClick={() => void load()}>
-        Load Erasure Requests
-      </button>
+      <div className={tabbed ? 'inbox-filter' : undefined}>
+        <label>
+          Show
+          <select
+            value={filter}
+            disabled={busy}
+            onChange={(e) => {
+              controller.current?.abort();
+              setFilter(e.target.value as Status | '');
+              setQueue(null);
+              setPending(null);
+              setBusy(false);
+              setMessage('Choose Load Erasure Requests to show this selection.');
+            }}
+          >
+            <option value="">All requests</option>
+            {statusValues.map((s) => (
+              <option key={s} value={s}>
+                {statusLabel[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className="text-link" type="button" disabled={busy} onClick={() => void load()}>
+          Load Erasure Requests
+        </button>
+      </div>
       {message && <p role="status">{message}</p>}
       {queue && queue.items.length > 0 && (
         <ul>

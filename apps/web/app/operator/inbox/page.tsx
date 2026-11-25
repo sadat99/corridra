@@ -1,5 +1,4 @@
 import '../operator-overview.css';
-import Link from 'next/link';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { AccessState } from '../../../components/access-state';
@@ -39,9 +38,6 @@ export default async function Page({
     return (
       <WorkspaceShell title="Workspace access is unavailable.">
         <p>The protected workspace is not configured in this environment.</p>
-        <Link prefetch={false} className="text-link" href="/operator">
-          Return to Today
-        </Link>
       </WorkspaceShell>
     );
   await s.ready;
