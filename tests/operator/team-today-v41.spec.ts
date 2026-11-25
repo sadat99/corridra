@@ -417,7 +417,12 @@ test('fix run: an admin never reads the erasure queue and sees no erasure tile o
   // Even a queue that would answer 403 (members.manage is owner only) is never asked.
   await open(
     page,
-    { ...quiet, role: 'admin', erasureStatus: 403 },
+    {
+      ...quiet,
+      role: 'admin',
+      erasureStatus: 403,
+      problemReports: { counts: { received: 0, in_review: 0 }, oldestReceivedAt: null },
+    },
     '/?v41=on&role=admin&reports=on',
   );
   await expect(page.locator('.ux-today41')).toBeVisible();
