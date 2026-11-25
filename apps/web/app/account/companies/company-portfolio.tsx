@@ -270,11 +270,6 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
       className="delivery-view ux-saved-commercial-report"
       aria-label="Your approved company portfolio"
     >
-      {!empty && (
-        <a className="text-link ux-back" href="/account#saved-commercial-missions">
-          Back to my commercial missions
-        </a>
-      )}
       <p>
         {realCustomerInput()
           ? 'Your submitted information. These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.'

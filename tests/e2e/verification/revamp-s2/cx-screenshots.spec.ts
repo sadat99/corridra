@@ -80,7 +80,8 @@ for (const [width, height] of [
     const header = page.locator('header.ux-app-header');
     await shot('shell');
     for (const [name, label] of [
-      ['avatar-menu', 'Account menu'],
+      // Named by the initials it shows, then "Account menu" (label in name).
+      ['avatar-menu', /^(\S+ )?Account menu$/],
       ['help-menu', 'Help and accessibility'],
       ['language-menu', 'Language'],
       ['notifications', 'Inbox'],

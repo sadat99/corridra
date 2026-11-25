@@ -10,7 +10,7 @@ import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { OrganisationProfile } from '../organisation-profile';
 import { CompanyLink } from '../company-link';
-import { profileBack, profileHelper } from '../../frame-copy';
+import { profileHelper } from '../../frame-copy';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -54,7 +54,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
       eyebrow="REQUESTS"
       title="Company profile"
       // With company links on, the page keeps its two tabs and their own words; the frame is for the plain page.
-      frame={linksOn ? undefined : { back: profileBack, helper: profileHelper() }}
+      frame={linksOn ? undefined : { helper: profileHelper() }}
     >
       {linksOn ? (
         <SubTabs

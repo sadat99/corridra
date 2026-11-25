@@ -914,18 +914,24 @@ test.describe('where it is not drawn', () => {
     '/plan',
   ];
   for (const path of hidden)
-    test(`not on ${path.replace(workspace, '[workspace]')}, and the old header is back`, async ({
+    test(`not on ${path.replace(workspace, '[workspace]')}, and the header is the same short one`, async ({
       page,
     }) => {
       await page.setViewportSize(phone);
       await mount(page, path, '?signals=draft');
       await expect(page.locator('.ux-pocket')).toHaveCount(0);
       const shown = await visibleHeader(page);
-      // Without the plus the header keeps what it has today: New Request, Search and the brand.
-      expect(shown.brand).toBe(true);
-      expect(shown.newRequest).toBe(true);
-      expect(shown.search).toBe(true);
+      // UI/UX.v4.1 (audit finding public-customer-03): one bar on every account page. Without the plus the header is
+      // still the short one, on one row; New Request is in the drawer and Search is in the account menu.
+      expect(shown.brand).toBe(false);
+      expect(shown.newRequest).toBe(false);
+      expect(shown.search).toBe(false);
       expect(shown.title).toBe(false);
+      expect(shown.topBar).toBe(true);
+      expect(shown.inbox).toBe(true);
+      expect(shown.account).toBe(true);
+      await page.locator('.ux-util-avatar > .ux-menu-button').click();
+      await expect(page.getByRole('menuitem', { name: 'Search', exact: true })).toBeVisible();
     });
 
   for (const path of [
@@ -1126,14 +1132,9 @@ test.describe('accessibility', () => {
     const result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
-    // The account menu button (unchanged by Pocket) shows its initials to sight and names itself "Account menu"; axe's
-    // experimental label-in-name rule flags that on main too, so it is the one finding left out. Pocket's own controls
-    // (the plus and the list rows) are all scanned by it.
+    // Nothing is left out: the account menu button is named by the initials it shows ("SA Account menu"), so axe's
+    // label-in-name rule passes on it too (UI/UX.v4.1, audit finding public-customer-08).
     return result.violations
-      .map((v) => ({
-        ...v,
-        nodes: v.nodes.filter((n) => !n.html.includes('aria-label="Account menu"')),
-      }))
       .filter((v) => v.nodes.length > 0)
       .map(
         (v) =>

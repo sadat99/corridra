@@ -351,7 +351,7 @@
 /* Your work by journey: one card per journey the person has. */
 .move-journeys {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
   gap: var(--space-5);
 }
 .move-journey {
@@ -603,20 +603,35 @@
   flex: none;
   white-space: nowrap;
 }
-/* On a phone the journey cards sit side by side and scroll, so three journeys cost one card of height. */
+/* On a phone the journey cards stack, one under the other, at the full width of the page: nothing scrolls sideways, and
+   a card's title, its date and its link are shown whole (the title wraps, the link drops under the date when the two
+   do not fit on one line). */
 @media (max-width: 40rem) {
   .move-journeys {
-    grid-auto-columns: 86%;
-    grid-auto-flow: column;
-    grid-template-columns: none;
-    gap: var(--space-3);
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory;
-    padding-bottom: var(--space-1);
+    grid-template-columns: minmax(0, 1fr);
   }
-  .move-journey {
-    scroll-snap-align: start;
+  .move-journey-head {
+    flex-wrap: wrap;
+  }
+  .move-journey-head h3 {
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
+  .move-journey-foot {
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
+    padding-block-start: var(--space-2);
+  }
+  .move-journey-foot > span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+  /* Under the date the link starts at the card's left edge; on one line the foot still spreads the two apart. */
+  .move-journey-foot > .move-card-link {
+    margin-inline-start: 0;
   }
 }
 
@@ -964,8 +979,8 @@
 .move-view .move-journey .move-stat {
   padding-inline: 6px;
 }
-/* The journey row scrolls sideways on a phone; it holds its own visually hidden labels, so a card out of view never
-   widens the page. */
+/* Four journeys scroll sideways on a wide screen; the row holds its own visually hidden labels, so a card out of view
+   never widens the page. */
 .move-journeys {
   position: relative;
 }
@@ -1098,6 +1113,9 @@
   }
 }
 .move-view .move-seg {
+  /* The chips hold visually hidden words (the count said in full). Positioned here, they scroll and are clipped with
+     the row; without it a chip out of view widened the page by its hidden words once the text was large. */
+  position: relative;
   flex-wrap: nowrap;
   overflow-x: auto;
   scroll-snap-type: x proximity;
@@ -1158,17 +1176,60 @@
 .move-card-link {
   white-space: nowrap;
 }
-@media (max-width: 23.99rem) {
-  /* At 320 the header link drops under the heading rather than wrapping, and a stacked holder count lines up with
-     its word (the shape and the gaps in front of the word). */
-  .move-card > .move-card-link,
+/* A card too narrow for its head on one line (the measure is in rem, and in a container query that follows the text
+   size, so a wide card at 200% text is covered too): the head link drops under the heading, on the content's left edge,
+   instead of running past the card's edge. It may wrap there, so a long word in another language breaks instead of
+   widening the page. A head with the holder key needs the room sooner (every phone) than a head with the heading and
+   the link alone (320 px). */
+.move-card {
+  container: move-card / inline-size;
+}
+@container move-card (max-width: 18rem) {
+  .move-card > .move-card-link {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-height: 44px;
+    max-inline-size: 100%;
+    margin-inline: 0;
+    padding-inline: var(--space-4);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .move-card > .move-card-link > span {
+    min-inline-size: 0;
+  }
+}
+@container move-card (max-width: 32rem) {
   .move-card:has(> .move-head-key) > .move-card-link {
     grid-column: 1 / -1;
     justify-self: start;
     min-height: 44px;
+    max-inline-size: 100%;
     margin-inline: 0;
     padding-inline: var(--space-5);
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
+  .move-card:has(> .move-head-key) > .move-card-link > span {
+    min-inline-size: 0;
+  }
+  @media (max-width: 40rem) {
+    /* The card's phone padding, so the link starts under the heading. */
+    .move-card:has(> .move-head-key) > .move-card-link {
+      padding-inline: var(--space-4);
+    }
+  }
+}
+/* Narrower still (a phone at 200% text): the holder key drops under the heading too, so its words are not cut. */
+@container move-card (max-width: 16rem) {
+  .move-card > .move-head-key {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-inline: var(--space-4);
+  }
+}
+@media (max-width: 23.99rem) {
+  /* At 320 a stacked holder count lines up with its word (the shape and the gaps in front of the word). */
   .move-lane-count {
     padding-inline-start: calc(var(--holder-lane-shape) + var(--space-3));
   }
@@ -1198,16 +1259,5 @@
   }
   .move-lede-block {
     gap: 0;
-  }
-}
-@media (max-width: 23.99rem) {
-  /* Under the heading at 320 the link may wrap: a long word in another language breaks instead of widening the page. */
-  .move-card > .move-card-link {
-    max-inline-size: 100%;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  .move-card > .move-card-link > span {
-    min-inline-size: 0;
   }
 }

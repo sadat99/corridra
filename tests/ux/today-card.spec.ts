@@ -15,8 +15,9 @@ let html = '';
 
 // Document height of the fixture on main (px), measured with TC1_BASELINE=1 on origin/main 0fb1223 (viewport height 400).
 // 1440 re-measured 17 November 2026 on VG4 (Move lanes, +50 px: one lane head with a 44 px Explain target);
-// 320 and 390 from main 0fb1223.
-const mainHeight: Record<number, number> = { 320: 1188, 390: 1062, 1440: 599 };
+// 320 from main 0fb1223. 390 re-measured 25 November 2026 (+22 px: the card-head link was cut past the card edge
+// at 390 and now drops to its own 44 px row, audit finding public-customer-02).
+const mainHeight: Record<number, number> = { 320: 1188, 390: 1084, 1440: 599 };
 
 test.beforeAll(async () => {
   const bundle = await build({
