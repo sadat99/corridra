@@ -15,6 +15,7 @@ import { onDeviceClock } from '../../../lib/server-clock';
 import { ReplyError, loadReason, withReason } from '../../../lib/load-reason';
 import { formatDate } from '../../../lib/ux/format';
 import { Place } from '../../../components/ux/flag';
+import { placeName } from '../request-words';
 
 const evidenceKinds = [
   ['REGISTRATION_STATEMENT', 'Registration statement'],
@@ -315,7 +316,12 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
               {view.link.organisation && (
                 <p>
                   <strong>
-                    {view.link.organisation.name} (<Place value={view.link.organisation.country} />)
+                    {view.link.organisation.name} (
+                    <Place
+                      value={view.link.organisation.country}
+                      name={placeName(view.link.organisation.country)}
+                    />
+                    )
                   </strong>
                 </p>
               )}
@@ -562,7 +568,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                               checked={chosen === o.id}
                               onChange={() => setChosen(o.id)}
                             />{' '}
-                            {o.name} (<Place value={o.country} />)
+                            {o.name} (<Place value={o.country} name={placeName(o.country)} />)
                           </label>
                         ))}
                       </fieldset>

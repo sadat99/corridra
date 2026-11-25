@@ -11,11 +11,18 @@ const maxAge = 86400;
 
 type HintState = 'on' | 'off' | null;
 
+// Better Auth's team session token (`better-auth.session_token`, with the `__Secure-` prefix on https). The customer
+// session (`__Secure-neon-auth.session_token`), Better Auth's `session_data` and `two_factor` cookies never match.
+const teamTokenCookie = /^(?:__Secure-)?better-auth\.session_token=/;
+
+/** The Set-Cookie line for the marker: on for the session's lifetime, or cleared. */
+function hintCookie(on: boolean, secure: boolean) {
+  return `${teamSessionHintName}=${on ? '1' : ''}; Path=/; Max-Age=${on ? maxAge : 0}; SameSite=Lax${secure ? '; Secure' : ''}`;
+}
+
 /** Whether this answer starts, keeps or ends a team session, read from its own headers and, for a session read, body. */
 async function hintState(request: Request, response: Response): Promise<HintState> {
-  const session = response.headers
-    .getSetCookie()
-    .find((cookie) => /^(?:__Secure-)?[\w.-]*session_token=/.test(cookie));
+  const session = response.headers.getSetCookie().find((cookie) => teamTokenCookie.test(cookie));
   if (session) return /^[^=]+=(?:;|$)/.test(session) || /max-age=0\b/i.test(session) ? 'off' : 'on';
   if (!new URL(request.url).pathname.endsWith('/get-session') || !response.ok) return null;
   const body: unknown = await response
@@ -29,12 +36,21 @@ async function hintState(request: Request, response: Response): Promise<HintStat
 /** Adds the marker to (or clears it from) a team sign-in answer. The answer itself is not changed. */
 export async function withTeamSessionHint(request: Request, response: Response, secure: boolean) {
   const state = await hintState(request, response);
-  if (state)
-    response.headers.append(
-      'Set-Cookie',
-      `${teamSessionHintName}=${state === 'on' ? '1' : ''}; Path=/; Max-Age=${state === 'on' ? maxAge : 0}; SameSite=Lax${secure ? '; Secure' : ''}`,
-    );
+  if (state) response.headers.append('Set-Cookie', hintCookie(state === 'on', secure));
   return response;
+}
+
+/**
+ * For a page request: the marker to add when the browser holds a team session token but no marker. A person signed in
+ * before the marker existed would otherwise look signed out on the public pages until the session ends. Null when
+ * nothing is needed. The token is only looked for, never read or checked: a stale one costs one session read, which
+ * then clears the marker.
+ */
+export function missingTeamSessionHint(cookieHeader: string | null, secure: boolean) {
+  const cookies = (cookieHeader ?? '').split(';').map((part) => part.trim());
+  if (!cookies.some((cookie) => teamTokenCookie.test(cookie) && !cookie.endsWith('='))) return null;
+  if (teamSessionHinted(cookieHeader ?? '')) return null;
+  return hintCookie(true, secure);
 }
 
 /** In the browser: true when the marker is present, so a team session may exist and is worth asking about. */

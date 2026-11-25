@@ -5,6 +5,7 @@ import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { EmptyState } from '../../../components/ux/empty-state';
 import { Place } from '../../../components/ux/flag';
+import { placeName } from '../request-words';
 import './company-table.css';
 type Context = {
   resourceId: string;
@@ -359,7 +360,10 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
                   <tr key={company.id}>
                     <th scope="row">{company.contexts[0].company}</th>
                     <td>
-                      <Place value={company.contexts[0].country} />
+                      <Place
+                        value={company.contexts[0].country}
+                        name={placeName(company.contexts[0].country)}
+                      />
                     </td>
                     <td>
                       <p>
@@ -370,7 +374,8 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
                         <details key={context.resourceId + ':' + context.targetId}>
                           <summary>{context.missionTitle}</summary>
                           <p>
-                            Approved name: {context.company} (<Place value={context.country} />)
+                            Approved name: {context.company} (
+                            <Place value={context.country} name={placeName(context.country)} />)
                           </p>
                           <p>{context.objective}</p>
                           <p>

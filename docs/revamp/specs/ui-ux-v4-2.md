@@ -1,6 +1,6 @@
 # UI/UX.v4.2: public home amendment (owner decision, 25 November 2026)
 
-Document status: CURRENT. A design amendment inside UI/UX.v4, named by the owner as v4.2. It covers the public home `/` and the public footer only. Every UI/UX.v4 and UI/UX.v4.1 rule that this file does not change stays in force; it is not UI/UX.v5. Built behind the switch `CORRIDRA_UX_HOME_V42`, on only when exactly `true`, off by default; with the switch off the home and the footer are byte for byte those of main at `a054c51c` (tests/ux/home-v42-off.spec.ts). Native language review of the new words is NOT done; that gate stays OPEN.
+Document status: CURRENT. A design amendment inside UI/UX.v4, named by the owner as v4.2. It covers the public home `/` and the public footer only. Every UI/UX.v4 and UI/UX.v4.1 rule that this file does not change stays in force; it is not UI/UX.v5. Built behind the switch `CORRIDRA_UX_HOME_V42`, on only when exactly `true`, off by default; with the switch off the home and the footer are byte for byte those of main at `a054c51c`, plus one later change: the switch-off home's section actions are quiet text links with `#home-start` the one primary (team desk v4.1 later fixes, audit row public-customer-10; Guardian decision "home keeps one Start a Request per section, style only"), and nothing else (tests/ux/home-v42-off.spec.ts). Native language review of the new words is NOT done; that gate stays OPEN.
 
 ## Owner words (verbatim, first hand, 25 November 2026)
 
@@ -37,4 +37,4 @@ The owner's spelling is kept. Design evidence: the owner's chosen canvas "Chosen
 
 - Switch and footer: `tests/integration/home-v42-switch.test.ts`; words: `tests/integration/home-v42-words.test.ts`.
 - Switch on, six widths, axe, keyboard, 200 per cent text, footer: `tests/ux/home-v42.spec.ts` on the component fixture `tests/ux/home-v42-fixture.ts`; switch-on cases in `tests/browser/home-board-3c.spec.ts`, `home-two-routes.spec.ts`, `v41-a-public.spec.ts`, `footer-option-b.spec.ts` and `no-repeated-links.spec.ts`.
-- Switch off: `tests/ux/home-v42-off.spec.ts` (home `<main>` and footer equal the copy captured from `a054c51c`).
+- Switch off: `tests/ux/home-v42-off.spec.ts` (home `<main>` and footer equal the copy captured from `a054c51c` with exactly the public-customer-10 section-action edits applied, each asserted once).

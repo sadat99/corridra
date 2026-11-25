@@ -1,5 +1,11 @@
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { teamSessionHinted, withTeamSessionHint } from '../../apps/web/lib/team-session-hint';
+import {
+  missingTeamSessionHint,
+  teamSessionHinted,
+  withTeamSessionHint,
+} from '../../apps/web/lib/team-session-hint';
 
 // Audit row public-customer-24: the plain marker beside the HttpOnly team session cookie. Set when Better Auth sets the
 // session token or a session read finds a session; cleared when the token is cleared or a read finds none.
@@ -69,5 +75,54 @@ describe('teamSessionHinted', () => {
     expect(teamSessionHinted('corridra-team=')).toBe(false);
     expect(teamSessionHinted('corridra-team=0; x-corridra-team=1')).toBe(false);
     expect(teamSessionHinted('')).toBe(false);
+  });
+});
+
+describe('missingTeamSessionHint (the page proxy)', () => {
+  it('adds the marker for a team session token without one, Secure on https', () => {
+    expect(missingTeamSessionHint('__Secure-better-auth.session_token=abc.def', true)).toBe(
+      'corridra-team=1; Path=/; Max-Age=86400; SameSite=Lax; Secure',
+    );
+    expect(missingTeamSessionHint('x=1; better-auth.session_token=abc', false)).toBe(
+      'corridra-team=1; Path=/; Max-Age=86400; SameSite=Lax',
+    );
+  });
+  it('adds nothing when the marker is there, or for any other cookie', () => {
+    expect(
+      missingTeamSessionHint('better-auth.session_token=abc; corridra-team=1', false),
+    ).toBeNull();
+    for (const cookies of [
+      null,
+      '',
+      '__Secure-neon-auth.session_token=customer',
+      'better-auth.session_data=abc',
+      'better-auth.two_factor=abc',
+      'better-auth.session_token=',
+    ])
+      expect(missingTeamSessionHint(cookies, true), String(cookies)).toBeNull();
+  });
+});
+
+describe('the page proxy', () => {
+  it('appends the marker on a page for a team session from before the marker, and nothing otherwise', async () => {
+    // `next` is installed for the app, not at the root: load it the way the app does.
+    const { NextRequest } = createRequire(resolve('apps/web/package.json'))('next/server') as {
+      NextRequest: new (url: string, init?: { headers?: Record<string, string> }) => Request;
+    };
+    const { proxy } = (await import('../../apps/web/proxy')) as unknown as {
+      proxy: (request: Request) => Response;
+    };
+    const page = (cookie?: string) =>
+      new NextRequest('http://127.0.0.1:3100/about', {
+        headers: cookie ? { cookie } : {},
+      });
+    const hinted = proxy(page('better-auth.session_token=abc'));
+    expect(hinted.headers.getSetCookie()).toEqual([
+      'corridra-team=1; Path=/; Max-Age=86400; SameSite=Lax',
+    ]);
+    expect(proxy(page()).headers.getSetCookie()).toEqual([]);
+    expect(
+      proxy(page('better-auth.session_token=abc; corridra-team=1')).headers.getSetCookie(),
+    ).toEqual([]);
   });
 });

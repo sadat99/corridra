@@ -169,7 +169,7 @@ test('an owner finds the company, sends one exact request and sees the waiting s
   });
   await panel.getByLabel('Search the list (at least 3 letters)').fill('dha');
   await panel.getByRole('button', { name: 'Search', exact: true }).click();
-  await panel.getByLabel('Synthetic Dhaka Textiles (BD)').check();
+  await panel.getByLabel('Synthetic Dhaka Textiles (Bangladesh)').check();
   await panel
     .getByLabel('Why this is your company (start with Synthetic)')
     .fill('Synthetic note that this is our invented company');
@@ -533,7 +533,7 @@ for (const width of [320, 390, 768, 1440])
       await page.keyboard.type('dha');
       await page.keyboard.press('Tab');
       await page.keyboard.press('Enter');
-      await expect(panel.getByLabel('Synthetic Dhaka Textiles (BD)')).toBeVisible();
+      await expect(panel.getByLabel('Synthetic Dhaka Textiles (Bangladesh)')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
