@@ -360,7 +360,7 @@ test('26: the sidebar keeps one landmark for its links, and none around the sing
   await expect(page.getByRole('navigation', { name: 'Tools and help' })).toHaveCount(1);
   const scan = await new AxeBuilder({ page })
     .include('.ux-leftnav-panel')
-    .withRules(['landmark-unique'])
+    .withRules(['region', 'landmark-unique'])
     .analyze();
   expect(scan.violations.map((violation) => violation.id)).toEqual([]);
 });

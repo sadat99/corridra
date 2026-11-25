@@ -344,9 +344,12 @@ test('the first run goes from an empty workspace to a published page, and nothin
   await expect(firstRunRegion(page)).toBeVisible();
   await expect(run).toBeVisible();
   // A workspace with no programme opens on the first run. UI/UX.v4.1: it is the page's create view, not a tab,
-  // and the tabs wait behind Show Programmes.
+  // With Templates on, only its tab sits beside the create view: no empty Programmes tab and no redundant Show
+  // Programmes button, since the tab row is the way on.
   await expect(page.getByRole('tab', { name: /New .*Programme/ })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Show Programmes' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Templates' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Programmes', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Show Programmes' })).toHaveCount(0);
   await expect(run.getByRole('heading', { name: 'Step 1 of 4: Name and place' })).toBeVisible();
   const form = run.locator('form');
   // Step 1: name, destination and the template choice. One to three fields.
@@ -551,6 +554,9 @@ test('a failed publish keeps the draft, and a second press never creates the pro
   const state = await standIn(page, { publishAnswers: [429] });
   await page.goto(`${origin}/?room=1&first=1&pages=1`);
   const run = firstRun(page);
+  // With Templates off there is no tab row beside the create view, so Show Programmes is the way on.
+  await expect(page.getByRole('button', { name: 'Show Programmes' })).toBeVisible();
+  await expect(page.getByRole('tab')).toHaveCount(0);
   await fillToLastStep(page);
   await run.getByLabel('I am using made-up information for sample planning only.').check();
   await run.getByLabel(/^I checked this page\./).check();

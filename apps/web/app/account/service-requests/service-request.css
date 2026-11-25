@@ -12,7 +12,6 @@
 .sr-part {
   display: grid;
   gap: var(--space-2);
-  min-width: 0;
   padding-block-start: var(--space-3);
   border-block-start: 1px solid var(--line);
 }
@@ -75,11 +74,8 @@
   cursor: pointer;
 }
 
-/* The quote's costs. From 48rem a table; the amounts are right-aligned figures. */
-.sr-costs {
-  max-width: 100%;
-  overflow-x: auto;
-}
+/* The quote's costs. From 48rem a table; the amounts are right-aligned figures. The part's min-width and the
+   region's own scrolling are in globals.css, with the other rules for this region. */
 .sr-costs table {
   width: 100%;
 }

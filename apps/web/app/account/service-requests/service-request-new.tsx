@@ -222,6 +222,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
               type="button"
               className="button button-secondary"
               onClick={() => {
+                setMessage('');
                 setState('loading');
                 setAttempt((n) => n + 1);
               }}
@@ -403,11 +404,13 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
           </button>
         </form>
       )}
-      <p>
-        <a className="text-link" href="/account">
-          Cancel and return to your account
-        </a>
-      </p>
+      {state !== 'error' && state !== 'off' && (
+        <p>
+          <a className="text-link" href="/account">
+            Cancel and return to your account
+          </a>
+        </p>
+      )}
     </section>
   );
 }

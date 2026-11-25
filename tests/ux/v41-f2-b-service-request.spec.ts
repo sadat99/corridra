@@ -115,22 +115,12 @@ const detail = {
   synthetic: true,
 };
 
-test.beforeAll(async () => {
-  const view = resolve('apps/web/app/account/service-requests/service-request-detail.tsx');
+let htmlNew = '';
+const css = () => readFileSync(resolve('apps/web/app/globals.css'), 'utf8');
+
+async function page_html(contents: string) {
   const bundle = await build({
-    stdin: {
-      contents: `import { createRoot } from 'react-dom/client';
-        import { ServiceRequestDetailView, ServiceRequestHeading } from ${JSON.stringify(view)};
-        createRoot(document.getElementById('app')).render(
-          <main id="main" className="operator-page ux-workspace ux-customer">
-            <header className="ux-page-heading"><h1><ServiceRequestHeading /></h1></header>
-            <ServiceRequestDetailView subject="synthetic-alice" issuer="https://fixture.invalid/auth"
-              workspaceId=${JSON.stringify(workspaceId)} requestId=${JSON.stringify(requestId)} />
-          </main>,
-        );`,
-      loader: 'tsx',
-      resolveDir: resolve('apps/web'),
-    },
+    stdin: { contents, loader: 'tsx', resolveDir: resolve('apps/web') },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
     write: false,
@@ -143,8 +133,31 @@ test.beforeAll(async () => {
   });
   const script = bundle.outputFiles.find((file) => file.path.endsWith('.js'))!.text;
   const componentCss = bundle.outputFiles.find((file) => file.path.endsWith('.css'))?.text ?? '';
-  const css = readFileSync(resolve('apps/web/app/globals.css'), 'utf8');
-  html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Help request fixture</title><style>${css}\n${componentCss}</style></head><body><div id="app"></div><script type="module">${script.replace(/<\/script>/g, '<\\/script>')}</script></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Help request fixture</title><style>${css()}\n${componentCss}</style></head><body><div id="app"></div><script type="module">${script.replace(/<\/script>/g, '<\\/script>')}</script></body></html>`;
+}
+
+test.beforeAll(async () => {
+  const view = resolve('apps/web/app/account/service-requests/service-request-detail.tsx');
+  const create = resolve('apps/web/app/account/service-requests/service-request-new.tsx');
+  html = await page_html(`import { createRoot } from 'react-dom/client';
+        import { ServiceRequestDetailView, ServiceRequestHeading } from ${JSON.stringify(view)};
+        createRoot(document.getElementById('app')).render(
+          <main id="main" className="operator-page ux-workspace ux-customer">
+            <header className="ux-page-heading"><h1><ServiceRequestHeading /></h1></header>
+            <ServiceRequestDetailView subject="synthetic-alice" issuer="https://fixture.invalid/auth"
+              workspaceId=${JSON.stringify(workspaceId)} requestId=${JSON.stringify(requestId)} />
+          </main>,
+        );`);
+  htmlNew = await page_html(`import { createRoot } from 'react-dom/client';
+        import { ServiceRequestNew } from ${JSON.stringify(create)};
+        createRoot(document.getElementById('app')).render(
+          <main id="main" className="operator-page ux-workspace ux-customer">
+            <header className="ux-page-heading"><h1>Request help</h1></header>
+            <ServiceRequestNew subject="synthetic-alice" issuer="https://fixture.invalid/auth"
+              kind="programme" contextRef="00000000-0000-4000-8000-0000000000c3"
+              workspaceId=${JSON.stringify(workspaceId)} />
+          </main>,
+        );`);
 });
 
 async function open(page: Page, width: number, status = 200) {
@@ -279,6 +292,59 @@ test('19: no address is linked twice inside main', async ({ page }) => {
     .locator('main a[href]')
     .evaluateAll((list) => list.map((node) => node.getAttribute('href')));
   expect(hrefs.filter((href, index) => hrefs.indexOf(href) !== index)).toEqual([]);
+});
+
+test('19: the new-request page, when the services cannot load, links the account once and a retry clears the old alert', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  let failing = true;
+  await page.route('**/api/customer-service-requests**', (route) =>
+    failing
+      ? route.fulfill({ status: 500, json: { error: 'broken' } })
+      : route.fulfill({
+          json: {
+            services: [
+              {
+                key: 'interpreter-day',
+                version: 1,
+                title: 'Interpreter day',
+                summary: 'An interpreter works with you for one day of meetings in one city.',
+                included: ['One interpreter for up to eight hours'],
+                excluded: ['Written translation'],
+                regions: ['Dhaka'],
+                quoteBasis: 'per_day',
+                synthetic: true,
+              },
+            ],
+            expiresAt: new Date(Date.now() + 600000).toISOString(),
+          },
+        }),
+  );
+  await page.route('**' + fixturePath + '*', (route) =>
+    route.fulfill({ contentType: 'text/html', body: htmlNew }),
+  );
+  await page.goto(fixturePath);
+  await expect(page.getByText('Temporarily unavailable')).toBeVisible();
+  const alert = page.getByRole('alert');
+  await expect(alert).toHaveCount(1);
+  await expect(alert).not.toBeEmpty();
+  // One destination, one link: the recovery link is the only way back to the account while this state shows.
+  const links = await page
+    .locator('main a[href]')
+    .evaluateAll((list) => list.map((node) => node.getAttribute('href')));
+  expect(links).toEqual(['/account']);
+  await expect(page.getByRole('link', { name: 'Cancel and return to your account' })).toHaveCount(
+    0,
+  );
+  // A successful retry removes the old alert, so it is not announced again over the form.
+  failing = false;
+  await page.getByRole('button', { name: 'Try Again' }).click();
+  await expect(page.getByRole('button', { name: 'Send Help Request' })).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Cancel and return to your account' })).toHaveCount(
+    1,
+  );
 });
 
 test('18: the sample-mode rule is a hint tied to the field, not part of its label', async ({
