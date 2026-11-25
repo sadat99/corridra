@@ -450,8 +450,11 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
     label: `Reports (${data.publications.length})`,
     panel: (
       <>
-        {/* Team desk v4.1: the page title and the tab both say Reports; the list keeps a heading for screen readers. */}
-        <h3 className="sr-only">Report list</h3>
+        {/* The list heading is shown as it always was. It is for screen readers only with the team desk v4.1
+            switch on, and where the page title already says Reports (the server marks the page). */}
+        <h3 className={deskV41 ? 'sr-only' : undefined} data-page-title="workspace-delivery">
+          Reports
+        </h3>
         {missionId && (
           <p className="ux-report-scope">
             Showing reports for {missionName ?? 'the chosen mission'}.{' '}

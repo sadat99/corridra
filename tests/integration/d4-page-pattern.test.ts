@@ -246,8 +246,8 @@ describe('the browser tab title with the pattern on', () => {
   });
 });
 
-describe('switch off, every header is the one it was', () => {
-  test('the workspace header words are exactly the ones before the pattern', () => {
+describe('switch off, the header is the one it was, plus the ux-titled class', () => {
+  test('the workspace header words are the ones before the pattern; with section addresses on a ux-titled-<section> class marks the page', () => {
     const sections = [undefined, ...workspaceSections.map((section) => section.id)];
     for (const section of sections) {
       // Team shell off: the operator label and the one title, whatever else is set.

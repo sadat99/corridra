@@ -97,6 +97,11 @@ describe('words and structure behind the switch', () => {
         /<h2 className=\{deskV41 \? 'sr-only' : undefined\} data-page-title="workspace-delivery">\s*Reports\s*<\/h2>/g,
       ),
     ).toHaveLength(3);
+    // The list heading is as it always was (visible); it goes to screen readers only with the switch on or
+    // where the page title says Reports.
+    expect(source('delivery.tsx')).toMatch(
+      /<h3 className=\{deskV41 \? 'sr-only' : undefined\} data-page-title="workspace-delivery">\s*Reports\s*<\/h3>/,
+    );
     const money = source('opportunities.tsx');
     expect(money).toContain("desk ? 'button button-secondary' : 'primary-link'");
     expect((money.match(/className="primary-link"/g) ?? []).length).toBe(1);
@@ -148,6 +153,17 @@ describe('names that were printed more than once', () => {
       css.indexOf("[data-page-title='workspace-sources'] > .ux-panel-heading h2"),
     );
     expect(rule.slice(0, rule.indexOf('}'))).toContain('clip-path: inset(50%)');
+  });
+  it('an address that names something inside a card kept behind Show All shows the full list', () => {
+    const money = source('opportunities.tsx');
+    expect(money).toContain("target?.closest('.opportunity-card[hidden]')");
+    expect(money).toContain('setAllOpportunities(true);');
+    expect(money).toMatch(/addEventListener\('hashchange', reveal\)/);
+  });
+  it('the Evidence and accounting history fold counts every record, not only those loaded', () => {
+    expect(source('opportunities.tsx')).toMatch(
+      /count=\{Math\.max\(\s*records\.length,\s*data\.recordCounts\.find\(\(c\) => c\.opportunity_id === o\.id\)\?\.n \?\? 0,\s*\)\}/,
+    );
   });
   it('each Money opportunity names its own Evidence and accounting history heading', () => {
     expect(source('opportunities.tsx')).toMatch(

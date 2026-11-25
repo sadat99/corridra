@@ -5,8 +5,11 @@ import { teamSectionTitle } from '../../lib/ux/shells';
 
 /**
  * The words of the workspace header for an address, in one place for the page and for the test fixture. With
- * the pattern off (or the team shell off) they are exactly what the header always had: the label above the
- * title, the section's own title with the shell and section addresses on, and "Your workspace." otherwise.
+ * the pattern off (or the team shell off) they are what the header always had: the label above the title, the
+ * section's own title with the shell and section addresses on, and "Your workspace." otherwise. One thing is
+ * added with the pattern off (owner-approved, audit F10): where the section's title is the name of the panel
+ * under it, the page gets a `ux-titled-<section id>` class so the panel's own copy of the name is kept for
+ * screen readers only. The team shell off adds nothing.
  * With the pattern on there is no label; `place` is set when the page gets the full pattern (title, purpose
  * line and segments), which needs section addresses so that the server knows the page.
  */

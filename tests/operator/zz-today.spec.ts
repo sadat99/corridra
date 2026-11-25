@@ -251,10 +251,17 @@ test('W3-6 as an owner, the paid-service requests tile opens the Delivery sectio
   await tile.getByRole('link').click();
   const delivery = page.locator('#workspace-delivery');
   await expect(delivery).toBeVisible();
+  // The panel is named Reports (its heading may be one pixel where the page title says it), and its own
+  // section navigation is drawn: that is what shows the Delivery section opened.
   await expect(
     page
       .locator('#workspace-delivery')
       .getByRole('heading', { name: 'Reports', exact: true, level: 2 }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('navigation', { name: 'Publication and reporting sections' }),
   ).toBeVisible();
   await expect(unavailableAlert(page)).toHaveCount(0);
   await expect(page).toHaveURL(/#billing-services$/);
@@ -286,10 +293,17 @@ test('W3-7 when the count is Not available, the tile still opens the Delivery se
   await tile.getByRole('link').click();
   await expect(page).toHaveURL(/#billing-services$/);
   await expect(page.locator('#workspace-delivery')).toBeVisible();
+  // The panel is named Reports (its heading may be one pixel where the page title says it), and its own
+  // section navigation is drawn: that is what shows the Delivery section opened.
   await expect(
     page
       .locator('#workspace-delivery')
       .getByRole('heading', { name: 'Reports', exact: true, level: 2 }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('navigation', { name: 'Publication and reporting sections' }),
   ).toBeVisible();
   await expect(unavailableAlert(page)).toHaveCount(0);
   await expect(

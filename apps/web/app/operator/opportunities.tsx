@@ -9,6 +9,7 @@ import { missionHintNote, takeMissionHint } from './mission-hint';
 import { useOperatorFlags } from './operator-flags';
 import './money-figures.css';
 import { formatDateTime } from '../../lib/ux/format';
+import { safeDecode } from '../../lib/ux/sub-tabs';
 import {
   currencies,
   formatMoney,
@@ -413,6 +414,26 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
     [missionNote, setMissionNote] = useState(false),
     [offset, setOffset] = useState(0);
   const keys = useRef(new Map<string, string>());
+  // Team desk v4.1: an address that names something inside an opportunity kept behind "Show All" shows
+  // the list in full and goes to it, so the address never lands on a card that is not drawn.
+  const loaded = data?.opportunities.length ?? 0;
+  useEffect(() => {
+    if (!deskV41 || loaded <= firstOpportunities) return;
+    const reveal = () => {
+      const word = safeDecode(window.location.hash);
+      const target = word ? document.getElementById(word) : null;
+      if (!target?.closest('.opportunity-card[hidden]')) return;
+      setAllOpportunities(true);
+      requestAnimationFrame(() => target.scrollIntoView());
+    };
+    reveal();
+    window.addEventListener('hashchange', reveal);
+    window.addEventListener('popstate', reveal);
+    return () => {
+      window.removeEventListener('hashchange', reveal);
+      window.removeEventListener('popstate', reveal);
+    };
+  }, [deskV41, loaded]);
   // W5: a link from a mission page names a mission and a section; only the named section applies it, once per
   // page load, and an explicit choice here always wins.
   const choseMission = useRef(false);
@@ -975,7 +996,13 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
                           </details>
                         </>
                       )}
-                      <RecordsFold desk={deskV41} count={records.length}>
+                      <RecordsFold
+                        desk={deskV41}
+                        count={Math.max(
+                          records.length,
+                          data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0,
+                        )}
+                      >
                         {/* One per opportunity: the name after it tells the headings apart in a list of headings. */}
                         <h4 className={deskV41 ? 'sr-only' : undefined}>
                           Evidence and accounting history

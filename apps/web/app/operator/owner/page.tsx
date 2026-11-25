@@ -40,16 +40,28 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-function Denied({ children, signedIn = false }: { children: string; signedIn?: boolean }) {
+function Denied({
+  children,
+  signedIn = false,
+  notConfigured = false,
+}: {
+  children: string;
+  signedIn?: boolean;
+  /** The protected workspace is not set up here: no one is refused a role, and there is nothing to open. */
+  notConfigured?: boolean;
+}) {
   // Team desk v4.1: no label above the title and, for a signed-in person, no link back (the menu is the way
   // around). The words say why and what to do. Off, the page is as it was.
   if (deskOn())
     return (
-      <WorkspaceShell title="Not available for your role" className={'ux-owner ' + deskFrameClass}>
+      <WorkspaceShell
+        title={notConfigured ? 'Owner page unavailable' : 'Not available for your role'}
+        className={'ux-owner ' + deskFrameClass}
+      >
         <p role="alert" className="owner-denied">
           {children}
         </p>
-        {signedIn ? null : (
+        {signedIn || notConfigured ? null : (
           <Link prefetch={false} className="text-link" href="/operator">
             Open Today
           </Link>
@@ -84,7 +96,10 @@ export default async function Page({
 }) {
   if (!ownerPageEnabled()) notFound();
   const s = foundations();
-  if (!s) return <Denied>The protected workspace is not configured in this environment.</Denied>;
+  if (!s)
+    return (
+      <Denied notConfigured>The protected workspace is not configured in this environment.</Denied>
+    );
   await s.ready;
   const identity = await s.provider.getSession(await headers());
   const tenants = identity ? await s.access.tenants(identity.token) : [];
