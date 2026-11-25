@@ -475,7 +475,15 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       <form
         className="operator-form detail-card"
         aria-label="Propose meeting"
+        // Team desk v4.1: while step 1 is shown, Enter in a field is Continue. The browser does not check the form
+        // then (the owner fields of step 2 are hidden), and Continue checks the fields of step 1 itself.
+        noValidate={deskV41 && proposeStep === 1}
         onSubmit={(e) => {
+          if (deskV41 && proposeStep === 1) {
+            e.preventDefault();
+            continuePropose();
+            return;
+          }
           setProposed(true);
           void submit(
             e,

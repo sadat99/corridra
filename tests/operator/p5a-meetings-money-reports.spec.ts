@@ -760,7 +760,8 @@ test('F5c switch on: a reader who may not manage meetings is told the columns ho
 test('F5c switch on: Propose Meeting goes in two steps, offers interested replies only and says so when there is none', async ({
   page,
 }) => {
-  await open(page, '/operator/meetings', { v41: true, rich: true });
+  const posts: { url: string; body: unknown }[] = [];
+  await open(page, '/operator/meetings', { v41: true, rich: true, posts });
   await page.locator('.ux-page-heading').getByRole('button', { name: 'Propose Meeting' }).click();
   const dialog = page.getByRole('dialog', { name: 'Propose Meeting' });
   const form = dialog.getByRole('form', { name: 'Propose meeting' });
@@ -781,6 +782,18 @@ test('F5c switch on: Propose Meeting goes in two steps, offers interested replie
   // Back keeps what was typed.
   await form.getByRole('button', { name: 'Back' }).click();
   await expect(form.getByLabel('Meeting title')).toHaveValue('First call');
+  // Enter in a field of step 1 is Continue: step 2 shows and nothing is sent.
+  await form.getByLabel('Meeting title').press('Enter');
+  await expect(form.getByText('Step 2 of 2: who owns the next step.')).toBeVisible();
+  await expect(form.getByLabel('Meeting or follow-up owner')).toBeFocused();
+  expect(posts).toHaveLength(0);
+  await form.getByRole('button', { name: 'Back' }).click();
+  // With step 1 incomplete, Enter stays on step 1 and still sends nothing.
+  await form.getByLabel('Meeting brief').fill('');
+  await form.getByLabel('Meeting title').press('Enter');
+  await expect(form.getByLabel('Meeting brief')).toBeVisible();
+  await expect(form.getByLabel('Meeting next action')).toBeHidden();
+  expect(posts).toHaveLength(0);
   await page.keyboard.press('Escape');
   // With no interested reply there is nothing to propose a meeting on, and the dialog says so.
   await open(page, '/operator/meetings', { v41: true });

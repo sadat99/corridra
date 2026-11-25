@@ -427,7 +427,7 @@ export function Counterparties({
       </p>
       {desk && deskMission && (
         <p data-desk-mission className="research-mission-banner">
-          <strong>For mission {missionName(deskMission, true)}</strong> ·{' '}
+          Adding companies to <strong>{missionName(deskMission, true)}</strong> ·{' '}
           {stageLabel(txt(deskMission, 'status'))}.{' '}
           {shortlistStages.includes(txt(deskMission, 'status'))
             ? 'Open a company below, then give the reason it belongs on this mission.'

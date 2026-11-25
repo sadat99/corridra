@@ -641,8 +641,7 @@ test('D10 on: the mission from the address is named at the top and preselected, 
 }) => {
   const { posted } = await open(page, 'research', { desk: true });
   const banner = page.locator('[data-desk-mission]');
-  // staff-core-33: the banner names the mission the page was opened for.
-  await expect(banner).toContainText('For mission Invented Machinery Co');
+  await expect(banner).toContainText('Adding companies to Invented Machinery Co');
   await expect(banner).toContainText('Finding companies');
   // staff-core-33: every button on the page is a 44 px target.
   const heights = await page
