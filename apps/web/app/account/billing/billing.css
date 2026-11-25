@@ -1,0 +1,39 @@
+/* Plan and billing (UI/UX.v4.1): one border level per region. The page section is the only card; inside it the
+   parts are headed sections and the lists are divided rows. Tokens only. */
+.billing-part {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.billing-part > * {
+  min-width: 0;
+  margin-block: 0;
+}
+.billing-rows {
+  display: grid;
+  gap: 0 var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.billing-rows > li {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding-block: var(--space-3);
+  border-block-start: 1px solid var(--line);
+}
+.billing-rows > li > * {
+  min-width: 0;
+  margin-block: 0;
+}
+@media (min-width: 64rem) {
+  /* The page budget: plans side by side at desktop read in the smaller sizes the plan cards had. */
+  .ux-customer .account-compact .account-cards.billing-rows > li :is(p, summary) {
+    font-size: var(--text-sm);
+  }
+  .ux-customer .account-compact .account-cards.billing-rows > li h3 {
+    font-size: var(--text-lg);
+  }
+}

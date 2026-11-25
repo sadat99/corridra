@@ -292,7 +292,12 @@ function Guided(scope: Scope) {
     return () => window.removeEventListener('beforeunload', leave);
   }, [dirty]);
   const noForm = form === null;
+  // Focus goes to the heading when the step or the view changes, so the new step is announced. It is not moved on
+  // first load: the page then starts at its top, like every other page.
+  const focusedFor = useRef({ step, noForm });
   useEffect(() => {
+    if (focusedFor.current.step === step && focusedFor.current.noForm === noForm) return;
+    focusedFor.current = { step, noForm };
     heading.current?.focus();
   }, [step, noForm]);
 

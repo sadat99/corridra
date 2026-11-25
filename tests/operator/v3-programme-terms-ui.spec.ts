@@ -423,7 +423,7 @@ test('an organiser publishes a new terms version with one exact request and sees
   });
   await organiser(page);
   const p = panel(page);
-  await expect(p.getByRole('tab', { name: 'Terms' })).toHaveAttribute('aria-selected', 'true');
+  await expect(p.getByRole('radio', { name: 'Terms', exact: true })).toBeChecked();
   await expect(
     p.getByText('Synthetic ground transport and two hotel nights').first(),
   ).toBeVisible();
@@ -473,12 +473,12 @@ test('terms that are not synthetic are stopped before any request, and an empty 
   await p.getByRole('button', { name: 'Publish Terms' }).click();
   await expect(p.getByRole('alert')).toContainText('Start each text with the word Synthetic');
   expect(posts).toHaveLength(0);
-  await p.getByRole('tab', { name: 'Eligibility' }).click();
+  await p.getByRole('radio', { name: 'Eligibility', exact: true }).click();
   await expect(p.getByText('No criteria yet. Anyone registered can apply.')).toBeVisible();
-  await p.getByRole('tab', { name: 'Capacity' }).click();
+  await p.getByRole('radio', { name: 'Capacity', exact: true }).click();
   await expect(p.getByText('No one is registered yet.')).toBeVisible();
   await expect(p.getByText('No maximum set')).toBeVisible();
-  await p.getByRole('tab', { name: 'Reminders' }).click();
+  await p.getByRole('radio', { name: 'Reminders', exact: true }).click();
   await expect(p.getByText(/No tasks yet/)).toBeVisible();
 });
 
@@ -490,18 +490,17 @@ test('tabs work from the keyboard, and eligibility criteria are sent as one exac
   });
   await organiser(page);
   const p = panel(page);
-  await p.getByRole('tab', { name: 'Terms' }).focus();
+  await p.getByRole('radio', { name: 'Terms', exact: true }).focus();
   await page.keyboard.press('ArrowRight');
-  await expect(p.getByRole('tab', { name: 'Eligibility' })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
-  await expect(p.getByRole('tab', { name: 'Eligibility' })).toBeFocused();
+  await expect(p.getByRole('radio', { name: 'Eligibility', exact: true })).toBeChecked();
+  await expect(p.getByRole('radio', { name: 'Eligibility', exact: true })).toBeFocused();
   await expect(p.getByText(/never what is in their profile/)).toBeVisible();
   await expect(p.getByText('Commercial role does not match: 1')).toBeVisible();
-  await page.keyboard.press('End');
-  await expect(p.getByRole('tab', { name: 'Reminders' })).toHaveAttribute('aria-selected', 'true');
-  await page.keyboard.press('Home');
+  // The four are one radio group (UI/UX.v4.1, one tab row per page): the arrows move and wrap, as in any radio group.
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await expect(p.getByRole('radio', { name: 'Reminders', exact: true })).toBeChecked();
+  await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
   await p.getByLabel('Buyer').check();
   await p.getByLabel('Countries (two-letter codes, separated by commas)').fill('bd, de');
@@ -533,7 +532,7 @@ test('capacity shows exact figures, validates places before sending and moves wa
   });
   await organiser(page);
   const p = panel(page);
-  await p.getByRole('tab', { name: 'Capacity' }).click();
+  await p.getByRole('radio', { name: 'Capacity', exact: true }).click();
   const table = p.getByRole('table', { name: 'Capacity, acceptance and satisfaction' });
   await expect(table.getByText('8 of 10 (80.0% full)')).toBeVisible();
   await expect(table.getByText('4 · reached')).toBeVisible();
@@ -576,7 +575,7 @@ test('task owners are chosen from workspace members and sent with the version th
   });
   await organiser(page);
   const p = panel(page);
-  await p.getByRole('tab', { name: 'Reminders' }).click();
+  await p.getByRole('radio', { name: 'Reminders', exact: true }).click();
   const save = p.getByRole('button', { name: 'Save owner for Synthetic confirm the hotel list' });
   await expect(save).toBeDisabled();
   await p
@@ -973,8 +972,8 @@ for (const width of [320, 390, 768, 1440])
     await organiser(page);
     const p = panel(page);
     for (const tab of ['Terms', 'Eligibility', 'Capacity', 'Reminders']) {
-      await p.getByRole('tab', { name: tab }).click();
-      await expect(p.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true');
+      await p.getByRole('radio', { name: tab, exact: true }).click();
+      await expect(p.getByRole('radio', { name: tab, exact: true })).toBeChecked();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );

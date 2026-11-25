@@ -1,0 +1,139 @@
+/* Help requests (UI/UX.v4.1): one surface per page. The page section is the only card; what sits inside it is
+   headed sections and divided rows, never a second border. Tokens only. */
+.sr-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+}
+.sr-summary > p {
+  margin: 0;
+}
+.sr-part {
+  display: grid;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--line);
+}
+.sr-part > * {
+  min-width: 0;
+  margin-block: 0;
+}
+.sr-part :is(h2, h3, p, li) {
+  overflow-wrap: break-word;
+}
+.sr-typed {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.sr-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 44px;
+}
+/* Requests as divided rows inside the page card. */
+.sr-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sr-rows > li {
+  display: grid;
+  gap: var(--space-1);
+  padding-block: var(--space-3);
+  border-block-start: 1px solid var(--line);
+}
+.sr-rows > li > * {
+  margin: 0;
+}
+
+/* The services to choose from: divided rows, each with a 44 px line to tap. */
+.sr-choice {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding-block: var(--space-2);
+  border-block-start: 1px solid var(--line);
+}
+.sr-choice > * {
+  margin: 0;
+}
+.sr-choice > label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-height: 44px;
+  cursor: pointer;
+}
+.sr-choice > details > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+/* The quote's costs. From 48rem a table; the amounts are right-aligned figures. The part's min-width and the
+   region's own scrolling are in globals.css, with the other rules for this region. */
+.sr-costs table {
+  width: 100%;
+}
+.sr-costs caption {
+  text-align: start;
+}
+.sr-costs tbody th {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.sr-costs .sr-amount {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 47.99rem) {
+  /* A phone: each cost is a block of its own, so nothing is cut and nothing scrolls sideways. The column
+     headings are said before each value instead of standing above a column. The long selector outweighs the
+     customer frame's rule for this region in globals.css (a 34rem table that scrolled inside the region),
+     whichever stylesheet loads last. */
+  .ux-customer .sr-costs[role='region'][aria-label^='Quote costs'] {
+    overflow-x: visible;
+  }
+  .ux-customer .sr-costs[role='region'][aria-label^='Quote costs'] table {
+    min-width: 0;
+  }
+  .ux-customer
+    .sr-costs[role='region'][aria-label^='Quote costs']
+    :is(table, caption, tbody, tfoot, tr, th, td) {
+    display: block;
+  }
+  .ux-customer .sr-costs[role='region'][aria-label^='Quote costs'] thead {
+    display: none;
+  }
+  .ux-customer .sr-costs[role='region'][aria-label^='Quote costs'] tr {
+    padding-block: var(--space-2);
+    border-block-start: 1px solid var(--line);
+  }
+  .ux-customer .sr-costs[role='region'][aria-label^='Quote costs'] :is(th, td) {
+    padding: 0;
+    border: 0;
+    text-align: start;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+  .ux-customer .sr-costs[role='region'][aria-label^='Quote costs'] :is(tbody, tfoot) th {
+    font-family: inherit;
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .ux-customer .sr-costs[role='region'][aria-label^='Quote costs'] td[data-label]::before {
+    content: attr(data-label) ': ';
+    color: var(--text-2);
+  }
+  .ux-customer .sr-costs[role='region'][aria-label^='Quote costs'] .sr-amount {
+    text-align: start;
+    font-weight: 600;
+  }
+}

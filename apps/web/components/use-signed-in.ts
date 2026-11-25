@@ -84,15 +84,20 @@ export function useSignedIn(accounts: boolean): SignedIn {
     function refocus() {
       if (document.visibilityState === 'visible') check();
     }
+    // A first load also fires `pageshow`, usually just after this effect: asking again there doubled the requests of
+    // every public page. Only a page restored from the back button's cache needs a fresh answer.
+    function restored(event: PageTransitionEvent) {
+      if (event.persisted) check();
+    }
     check();
     window.addEventListener(sessionChanged, check);
     window.addEventListener('focus', refocus);
-    window.addEventListener('pageshow', check);
+    window.addEventListener('pageshow', restored);
     return () => {
       controller.abort();
       window.removeEventListener(sessionChanged, check);
       window.removeEventListener('focus', refocus);
-      window.removeEventListener('pageshow', check);
+      window.removeEventListener('pageshow', restored);
     };
   }, [accounts]);
   return useSignedInSeen();

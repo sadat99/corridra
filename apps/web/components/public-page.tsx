@@ -226,9 +226,12 @@ export function PublicPage({
               <Link prefetch={false} className="button-secondary" href={content.reverse.href}>
                 {content.reverse.cta} <Arrow />
               </Link>
-              <Link prefetch={false} className="text-link" href={content.reverse.scopeHref}>
-                {content.reverse.scopeLabel}
-              </Link>
+              {/* The hero's route card may already link this page: it is then not linked again. */}
+              {content.reverse.scopeHref !== content.route?.href && (
+                <Link prefetch={false} className="text-link" href={content.reverse.scopeHref}>
+                  {content.reverse.scopeLabel}
+                </Link>
+              )}
             </div>
           </section>
         )}

@@ -21,7 +21,6 @@ import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { CustomerProgrammes } from '../customer-programmes';
 import { JourneyMismatchNote } from '../../../../components/ux/journey-mismatch-note';
 import { ProgrammeRoomStyles } from '../programme-room-styles';
-import { programmeBack } from '../../frame-copy';
 import '../programme-frame.css';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -65,7 +64,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
     <CustomerShell
       tab="work"
       eyebrow="REQUESTS"
-      frame={{ back: programmeBack }}
+      // UI/UX.v4.1: the menu is the way back, so the page frame carries no back link.
       title={
         // With the Organise room on, the programme's own title is the visible heading (approved work rooms).
         uxSwitchOn('CORRIDRA_UX_PROGRAMME') ? (

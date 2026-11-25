@@ -1,5 +1,6 @@
 'use client';
 import '../page-budget.css';
+import './billing.css';
 import { SubTabs } from '../../../components/ux/sub-tabs';
 import {
   useCallback,
@@ -292,7 +293,7 @@ function ScopedOverview({
                   label: 'Your plan',
                   panel: (
                     <>
-                      <section aria-labelledby={id + 'plan'} className="detail-card">
+                      <section aria-labelledby={id + 'plan'} className="billing-part">
                         <h2 id={id + 'plan'}>Your plan</h2>
                         {current ? (
                           <>
@@ -414,9 +415,9 @@ function ScopedOverview({
                           <summary id={id + 'hist'}>
                             History ({overview.subscriptions.length})
                           </summary>
-                          <ul className="guide-list">
+                          <ul className="billing-rows">
                             {overview.subscriptions.map((s) => (
-                              <li key={s.id} className="detail-card">
+                              <li key={s.id}>
                                 <h3>{s.planTitle}</h3>
                                 <p>
                                   <StatusBadge s={s} /> · {money(s.priceMinor, s.currency)}{' '}
@@ -466,7 +467,7 @@ function ScopedOverview({
                   label: 'Included',
                   panel: (
                     <>
-                      <section aria-labelledby={id + 'inc'} className="detail-card">
+                      <section aria-labelledby={id + 'inc'} className="billing-part">
                         <h2 id={id + 'inc'}>What your plan includes</h2>
                         {overview.entitlements.length ? (
                           <div
@@ -527,19 +528,19 @@ function ScopedOverview({
                             <div role="status">No plan is on offer right now.</div>
                           </div>
                         ) : (
-                          <ul className="guide-list account-cards">
+                          <ul className="account-cards billing-rows">
                             {plans.plans.map((p) => {
                               const held =
                                 current?.planKey === p.key && current.planVersion === p.version;
                               const choosing = panel?.kind === 'request' && panel.plan.id === p.id;
                               return (
-                                <li key={p.id} className="detail-card">
+                                <li key={p.id}>
                                   <h3>{p.title}</h3>
                                   <p>
                                     <strong>{priceText(p)}</strong> · {taxText[p.taxTreatment]}
                                   </p>
                                   <p>{p.summary}</p>
-                                  <details className="ux-journey-disclosure">
+                                  <details className="account-fold">
                                     <summary>Everything in this plan</summary>
                                     <p>Included</p>
                                     <ul>
@@ -633,11 +634,6 @@ function ScopedOverview({
             />
           </>
         )}
-        <p>
-          <a className="text-link" href="/account">
-            Return to your account
-          </a>
-        </p>
       </section>
     </>
   );

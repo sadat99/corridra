@@ -10,7 +10,7 @@ import { EmailNudge } from '../../../../components/email-nudge';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { CustomerRequestDetail } from '../request-detail';
 import { requestReference } from '../../../../lib/work-items/request-reference';
-import { savedRequestBack, savedRequestHelper } from '../../frame-copy';
+import { savedRequestHelper } from '../../frame-copy';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -50,7 +50,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
       tab="work"
       eyebrow="REQUESTS"
       title="Your saved request"
-      frame={{ back: savedRequestBack, helper: savedRequestHelper }}
+      frame={{ helper: savedRequestHelper }}
     >
       {/* The Room link and the email card belong to a request the person may read; the detail draws them only
           then, so a refusal stands alone (D-034). */}

@@ -352,15 +352,16 @@ test('the section is absent without the flag and present with it, with three key
   await expect(page.getByText('Your planning programmes')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Pricing, series and exports' })).toHaveCount(0);
   const area = await open(page);
-  await expect(area.getByRole('tab', { name: 'Pricing' })).toHaveAttribute('aria-selected', 'true');
-  await area.getByRole('tab', { name: 'Pricing' }).focus();
+  await expect(area.getByRole('radio', { name: 'Pricing', exact: true })).toBeChecked();
+  await area.getByRole('radio', { name: 'Pricing', exact: true }).focus();
   await page.keyboard.press('ArrowRight');
-  await expect(area.getByRole('tab', { name: 'Series' })).toHaveAttribute('aria-selected', 'true');
-  await expect(area.getByRole('tab', { name: 'Series' })).toBeFocused();
+  await expect(area.getByRole('radio', { name: 'Series', exact: true })).toBeChecked();
+  await expect(area.getByRole('radio', { name: 'Series', exact: true })).toBeFocused();
   await expect(area.getByRole('heading', { name: 'Series', exact: true })).toBeVisible();
   await page.keyboard.press('ArrowRight');
   await expect(area.getByRole('heading', { name: 'Exports', exact: true })).toBeVisible();
-  await page.keyboard.press('Home');
+  // One radio group (UI/UX.v4.1, one tab row per page): the arrow wraps from the last choice to the first.
+  await page.keyboard.press('ArrowRight');
   await expect(area.getByRole('heading', { name: 'Fee schedules' })).toBeVisible();
   await expect(area.getByText('Corridra collects, holds and moves no money.')).toBeVisible();
 });
@@ -572,7 +573,7 @@ test('the next edition is created after naming it, with one exact request and a 
     }),
   });
   const area = await open(page);
-  await area.getByRole('tab', { name: 'Series' }).click();
+  await area.getByRole('radio', { name: 'Series', exact: true }).click();
   await expect(area.getByText('0 of 2 editions created; next starts 2027-01-15')).toBeVisible();
   await area
     .getByRole('button', {
@@ -627,7 +628,7 @@ test('a series is saved with an explicit increasing list of dates, filled from a
     }),
   });
   const area = await open(page);
-  await area.getByRole('tab', { name: 'Series' }).click();
+  await area.getByRole('radio', { name: 'Series', exact: true }).click();
   await area.getByRole('button', { name: 'New Series' }).click();
   await area
     .getByLabel('Series name (start with Synthetic)')
@@ -683,7 +684,7 @@ test('repeat revenue is shown per currency, as recorded, with no forecast and no
     }),
   });
   const area = await open(page);
-  await area.getByRole('tab', { name: 'Series' }).click();
+  await area.getByRole('radio', { name: 'Series', exact: true }).click();
   await area
     .getByRole('button', {
       name: 'Show repeat revenue for Synthetic quarterly buyer mission series',
@@ -730,7 +731,7 @@ test('an export downloads a csv with one request, shows the file name, and expla
     });
   });
   const area = await open(page);
-  await area.getByRole('tab', { name: 'Exports' }).click();
+  await area.getByRole('radio', { name: 'Exports', exact: true }).click();
   await area.getByLabel('What to export').selectOption('ledger');
   await area.getByLabel('Programme (optional)').selectOption(programmeId);
   const download = page.waitForEvent('download');
@@ -779,7 +780,7 @@ for (const width of [320, 390, 768, 1440])
           .analyze()
       ).violations,
     ).toEqual([]);
-    await area.getByRole('tab', { name: 'Series' }).click();
+    await area.getByRole('radio', { name: 'Series', exact: true }).click();
     await area.getByRole('button', { name: 'New Series' }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -791,7 +792,7 @@ for (const width of [320, 390, 768, 1440])
           .analyze()
       ).violations,
     ).toEqual([]);
-    await area.getByRole('tab', { name: 'Exports' }).click();
+    await area.getByRole('radio', { name: 'Exports', exact: true }).click();
     expect(
       (
         await new AxeBuilder({ page })

@@ -215,6 +215,8 @@ function ScopedAccount(
         realCustomerInput() ? 'My delegation participation' : 'My sample delegation participation'
       }
     >
+      {/* Only a section drawn on its own (fixtures) has this link. On the page, `framed` is always set and the
+          menu is the way back (UI/UX.v4.1: no back links). */}
       {!props.framed && (
         <>
           <a className="text-link ux-back" href={registrationsBack.href}>

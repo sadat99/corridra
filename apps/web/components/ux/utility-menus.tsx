@@ -202,6 +202,10 @@ export function HelpMenu({ groups = customerHelpGroups() }: { groups?: HelpGroup
   );
 }
 
+const accountMenuName = 'Account menu';
+/** The header's Search listens for this (customer-search.tsx); the Quick list opens it the same way. */
+const openSearchEvent = 'corridra:open-customer-search';
+
 const initials = (text: string) =>
   text
     .split(/\s+/)
@@ -363,9 +367,11 @@ export function AvatarMenu({
     workspaces: offered,
     currentWorkspaceId: shown?.id,
   });
+  // The button's name stays person-neutral ("Account menu"); the initials are only what is drawn on it.
+  const shownInitials = who && picture === null ? initials(who.name || who.email) : null;
   return (
     <OverflowMenu
-      label="Account menu"
+      label={accountMenuName}
       className="ux-util-avatar"
       trigger={
         who && picture !== null ? (
@@ -378,7 +384,7 @@ export function AvatarMenu({
           />
         ) : (
           <span className="ux-avatar-face" aria-hidden="true">
-            {who ? initials(who.name || who.email) : <CorridraIcon name="people" />}
+            {shownInitials ?? <CorridraIcon name="people" />}
           </span>
         )
       }
@@ -423,6 +429,15 @@ export function AvatarMenu({
         .map((entry) => (
           <Entry key={entry.label} entry={entry} />
         ))}
+      {/* The short phone header has no Search button, on a form step too, where the Quick list is not drawn. */}
+      <div className="ux-menu-group ux-short-header-only">
+        <MenuButton
+          data-menu-close=""
+          onClick={() => window.dispatchEvent(new Event(openSearchEvent))}
+        >
+          Search
+        </MenuButton>
+      </div>
       {/* Below 640 px the language and help menus are not in the header row; they are here, so nothing is lost. */}
       <div className="ux-phone-only">
         <LanguageRow />

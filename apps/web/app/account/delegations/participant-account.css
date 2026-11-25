@@ -44,7 +44,8 @@
 .ux-reg .ux-reg-more {
   margin-inline-start: calc(var(--space-2) * -1);
 }
-@media (min-width: 48rem) {
+/* 44 px targets up to and including 768 px; the smaller menu button starts above it. */
+@media (min-width: 48.01rem) {
   .ux-reg .ux-reg-more .ux-menu-button {
     min-height: 2.25rem;
   }
@@ -55,6 +56,11 @@
     margin-block-start: var(--space-3);
   }
   .ux-reg :is(button.text-link, button.primary-link, summary) {
+    min-height: 44px;
+  }
+}
+@media (max-width: 48rem) {
+  .ux-reg .ux-reg-more .ux-menu-button {
     min-height: 44px;
   }
 }

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
 import { CustomerShell } from '../../../../../components/customer-shell';
-import { ServiceRequestDetailView } from '../../service-request-detail';
+import { ServiceRequestDetailView, ServiceRequestHeading } from '../../service-request-detail';
 import { serviceRequestSession } from '../../session';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -19,7 +19,7 @@ export default async function Page({
   const session = await serviceRequestSession();
   if ('notice' in session) return session.notice;
   return (
-    <CustomerShell tab="work" eyebrow="YOUR WORKSPACE" title="Help request">
+    <CustomerShell tab="work" eyebrow="YOUR WORKSPACE" title={<ServiceRequestHeading />}>
       <ServiceRequestDetailView
         subject={session.subject}
         issuer={session.issuer}

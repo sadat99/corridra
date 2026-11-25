@@ -143,7 +143,7 @@ describe('the switch and every switch-off path', () => {
       'Accept a Reviewed Helper Invitation',
       'How assigned work works',
       'Choose your sign-in route',
-      'Back to Corridra',
+      'Corridra Home',
     ])
       expect(page).toContain(line);
     // The door only replaces the no-workspace links; the signed-in page is untouched and the sign-in redirect

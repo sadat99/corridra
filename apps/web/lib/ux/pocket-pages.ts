@@ -1,7 +1,7 @@
 // Where the Pocket button is not drawn: a form step, or a page that already has its own action at the bottom. The
-// button would sit on top of that action, so these pages keep exactly the phone layout they have today (the header
-// keeps New Request and Help there too, because the header only changes where the button is). Pure, so the list is
-// tested without a browser.
+// button would sit on top of that action, so these pages keep exactly the phone layout they have today. The short phone
+// header is not tied to the button: customer-bar.css draws it on these pages too. Pure, so the list is tested without
+// a browser.
 const hidden: readonly RegExp[] = [
   // The guided request steps and the private request intake.
   /^\/account\/request(\/|$)/,
