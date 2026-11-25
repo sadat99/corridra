@@ -42,7 +42,24 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   // commercial readiness Today adds accepted quotes not started and replies to review (CQ-34, CQ-73),
   // and W3 adds service requests to quote.
   const today = page.getByRole('region', { name: 'Today' });
-  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(8);
+  const counts = today.getByRole('list', { name: 'Counts' });
+  await expect(counts.getByRole('listitem').first()).toBeVisible();
+  // The tiles depend on the role the page reports, which a shared database can leave as an owner, an admin or a
+  // viewer by the time this spec runs. Every role sees the same six; only an owner or an admin also sees the two
+  // paid-service counts, because only they can ever read them (a role that cannot read them has no tile for them).
+  const role = (await page.getByText('Your access:').first().locator('strong').innerText()).trim();
+  const everyRole = [
+    'new requests to review',
+    'missions past their due date',
+    'open missions',
+    'replies to review',
+    'follow-ups past their due date',
+    'meetings in the next 7 days',
+  ];
+  const paidServices = ['accepted quotes not started', 'paid-service requests to quote'];
+  await expect
+    .poll(() => counts.getByRole('listitem').locator('span').allInnerTexts())
+    .toEqual(['owner', 'admin'].includes(role) ? [...everyRole, ...paidServices] : everyRole);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   // Synthetic answers prove the new-request and overdue lists.
   await page.route('**/api/workspace/missions?*view=today*', async (route) => {
