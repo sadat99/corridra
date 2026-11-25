@@ -60,6 +60,7 @@ test.beforeAll(async () => {
     bundle: true,
     write: false,
     outdir: 'out',
+    external: ['/flags/*'],
     loader: { '.css': 'css', '.woff2': 'empty' },
     format: 'esm',
     platform: 'browser',

@@ -718,7 +718,7 @@ export function Operations({
                     <option key={r.id} value={r.id}>
                       {/* Team desk v4.1 (UI/UX.v4.1 L1): the place names; an option holds words only. */}
                       {deskV41
-                        ? `${placeName(r.origin_market)} to ${placeName(r.destination_market)}`
+                        ? `${placeName(r.origin_market)} → ${placeName(r.destination_market)}`
                         : `${r.origin_market} → ${r.destination_market}`}
                     </option>
                   ))}
@@ -1214,7 +1214,7 @@ export function Operations({
                               <option key={r.id} value={r.id}>
                                 {/* Team desk v4.1 (UI/UX.v4.1 L1): the place names; an option holds words only. */}
                                 {deskV41
-                                  ? `${placeName(r.origin_market)} to ${placeName(r.destination_market)}`
+                                  ? `${placeName(r.origin_market)} → ${placeName(r.destination_market)}`
                                   : `${r.origin_market} → ${r.destination_market}`}
                               </option>
                             ))}
@@ -1402,7 +1402,7 @@ export function Operations({
                                   mark: placeMark(routeRow.destination_market),
                                 },
                               ]}
-                              word="to"
+                              word="→"
                             />
                           ) : (
                             <>

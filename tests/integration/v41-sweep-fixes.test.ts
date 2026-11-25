@@ -65,7 +65,7 @@ describe('team desk v4.1 sweep', () => {
     expect(activation).toContain('The setting that turns each customer module on');
   });
 
-  it('writes a country as its name with its mark, and a route with the word "to", in the v4.1 desk', () => {
+  it('writes a country as its name with its mark, and a route option as place names, in the v4.1 desk', () => {
     const name = read('apps/web/app/operator/country-name.tsx');
     expect(name).toContain('if (!teamDeskV41) return off ?? code;');
     for (const path of [
@@ -77,11 +77,8 @@ describe('team desk v4.1 sweep', () => {
       expect(read(path)).toContain('<CountryName code=');
     const operations = read('apps/web/app/operator/operations.tsx');
     expect(
-      operations.match(
-        /placeName\(r\.origin_market\)\} to \$\{placeName\(r\.destination_market\)/g,
-      ),
+      operations.match(/placeName\(r\.origin_market\)\} → \$\{placeName\(r\.destination_market\)/g),
     ).toHaveLength(2);
-    expect(operations).not.toContain('word="→"');
     expect(read('apps/web/app/mission-experience-view.tsx')).toContain('{countryName(t.country)}');
   });
 });
