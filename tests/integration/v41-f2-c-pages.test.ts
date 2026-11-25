@@ -59,3 +59,51 @@ describe('the helper task words', () => {
       expect(board).not.toContain(old);
   });
 });
+
+describe('round 2: the remaining repeats and Back-to links', () => {
+  const flat = (file: string) => read(file).replace(/\s+/g, ' ');
+  it('no access page asks for a saved request where real intake is closed (row 23)', () => {
+    expect(read('apps/web/app/signup/signup-access.tsx')).toContain(
+      '<PendingRequestNotice where="signup" enabled={realUseEnabled()} />',
+    );
+    expect(read('apps/web/components/account-access.tsx')).toContain(
+      '<PendingRequestNotice where={mode} enabled={realUseEnabled()} />',
+    );
+  });
+  it('the team reset page and the helper unavailable page name the destination (row 13)', () => {
+    const reset = flat('apps/web/app/operator/reset-password/page.tsx');
+    expect(reset).not.toMatch(/Back to/);
+    expect(reset).toContain('href={operatorSignInPage}> Operator Sign-In </a>');
+    const helper = flat('apps/web/components/contributor-unavailable.tsx');
+    expect(helper).not.toMatch(/Back to/);
+    expect(helper).toContain('href="/"> Corridra Home </Link>');
+  });
+  it('the route picker links nothing the page around it already links (row 14)', () => {
+    const picker = flat('apps/web/components/discovery-experience.tsx');
+    expect(picker).toContain(
+      'route.slug && !linkedOnPage.includes(`/corridors/${route.slug}`) && (',
+    );
+    // The request link of the chosen route is written once: the primary action.
+    expect(picker.match(/href=\{briefUrl\}/g)).toHaveLength(1);
+    expect(picker).not.toContain('Start a request on this route');
+    expect(flat('apps/web/app/corridors/page.tsx')).toContain(
+      "linkedOnPage={[...destinationRows.map((row) => row.href), '/corridors/bangladesh-spain']}",
+    );
+  });
+  it('a public page links a route page once (row 14)', () => {
+    const page = flat('apps/web/components/public-page.tsx');
+    expect(page).toContain('{content.reverse.scopeHref !== content.route?.href && (');
+  });
+  it('the people on /how-it-works are choices, so the page has one tab row; the home keeps its tabs (row 25)', () => {
+    const more = flat('apps/web/components/home-more.tsx');
+    expect(more).toContain('<People choices />');
+    expect(more).toContain("role={choices ? 'group' : 'tablist'}");
+    expect(more).toContain('{t(key(`home.tr.pe.${i}`))}');
+    expect(flat('apps/web/components/home-routes.tsx')).not.toContain('<People choices');
+  });
+  it('a fair keeps its one link to the list, which no menu gives (row 27)', () => {
+    const view = read('apps/web/components/fairs-view.tsx');
+    expect(view.match(/href="\/fairs"/g)).toHaveLength(1);
+    expect(view).not.toMatch(/Back to/);
+  });
+});

@@ -19,7 +19,7 @@ export function ContributorUnavailable() {
         Other sign-in options
       </Link>
       <Link prefetch={false} className="text-link" href="/">
-        Back to Corridra
+        Corridra Home
       </Link>
     </WorkspaceShell>
   );

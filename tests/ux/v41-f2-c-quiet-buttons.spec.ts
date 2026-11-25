@@ -77,9 +77,11 @@ const measure = (page: Page) =>
         if (tops.size > 1) splitWord = true;
       }
       const box = button.getBoundingClientRect();
+      const wrap = getComputedStyle(button).overflowWrap;
       return {
         label,
         splitWord,
+        wrap,
         top: box.top,
         bottom: box.bottom,
         left: box.left,
@@ -102,6 +104,7 @@ for (const width of [320, 359, 390, 768, 1440]) {
     ]);
     for (const button of buttons) {
       expect(button.splitWord, button.label + ' breaks inside a word').toBe(false);
+      expect(button.wrap, button.label + ' may not wrap inside a word').not.toBe('anywhere');
       expect(button.bottom - button.top).toBeGreaterThanOrEqual(44);
     }
     for (let i = 0; i < buttons.length; i++)

@@ -31,6 +31,7 @@ export default function Page() {
         </div>
       </section>
       <DiscoveryExperience
+        linkedOnPage={[...destinationRows.map((row) => row.href), '/corridors/bangladesh-spain']}
         about={
           <>
             <h2>The job comes first. The route gives it context.</h2>

@@ -59,10 +59,9 @@ test('a spotlight pair chosen freely snaps to its corridor and clearing returns 
   await page.getByLabel('My company is in', { exact: true }).selectOption('BD');
   await page.getByLabel('I want to reach', { exact: true }).selectOption('CN');
   await expect(atlas.getByRole('heading', { name: 'Bangladesh → China' })).toBeVisible();
-  await expect(atlas.getByRole('link', { name: 'Read About This Route' })).toHaveAttribute(
-    'href',
-    '/corridors/bangladesh-china',
-  );
+  // The list above already links this route's page, so the picker does not link it a second time.
+  await expect(atlas.getByRole('link', { name: 'Read About This Route' })).toHaveCount(0);
+  await expect(page.locator('main a[href="/corridors/bangladesh-china"]')).toHaveCount(1);
   await page.getByLabel('My company is in', { exact: true }).selectOption('JP');
   await page.getByLabel('I want to reach', { exact: true }).selectOption('KE');
   await page.getByRole('button', { name: 'Clear', exact: true }).click();
