@@ -5415,7 +5415,7 @@ SLOT: G64 sends the PR number, merge SHA and body; this entry is filled in the s
 
 ## 25 Nov 2026: Team desk v4.1 audit fixes and home v4.2 records (Guardian 64)
 
-Records only (docs only), written by records builder R1 for Guardian 64 (session_0187kU9vEECr6R7YjH1YQFmA) on branch `audit/v41-env`. Authority stamp named in the brief: auth-011a44290375; `node scripts/authority.mjs stamp` on origin/main 53da18f printed auth-c0a636cc7e69 (reported to the Guardian). No application code, test or ADR changed.
+Records only (docs only), written by records builder R1 for Guardian 64 (session_0187kU9vEECr6R7YjH1YQFmA) on branch `audit/v41-env`. Authority stamp auth-c0a636cc7e69 (`node scripts/authority.mjs stamp` on origin/main 53da18f); the brief's auth-011a44290375 predates #656, and the Guardian confirmed the new stamp. No application code, test or ADR changed.
 
 Merges recorded, each read with `gh api repos/sadat99/corridra/pulls/N`: 648 060a8b41, 649 49c478d1, 650 1c40465b, 652 2f94afa0, 651 a054c51c, 654 83635486, 653 7f48e112, 656 7a93d7f0, 655 53da18fc (merge order by time). Production READY after each merge is the Guardian's report; the records builder did not read the deployments. No signed-in live pass is claimed.
 
@@ -5434,6 +5434,7 @@ Follow-ups (not done in this run):
 - Helper board Reviewer row "Independent reviewer" (contributor wording): for owner review, not owner-approved.
 - A06p: the OFF path of the shared report's country words (the mark and its name show in both switch states).
 - staff-core-33: the Companies banner keeps the live words "Adding companies to <mission>".
+- Handover named A07/A08 conformance cells; no source found in repo, audits or PRs 648-656; owner or next Guardian to confirm or drop.
 - Native language review gate OPEN for the `home.v42.*` words (`home.v42.line.buys`, `home.v42.line.sells`, `home.v42.not.eyebrow`).
 
 Next action: the owner's word on `CORRIDRA_UX_HOME_V42`; the LATER fix unit's record (slot above).
