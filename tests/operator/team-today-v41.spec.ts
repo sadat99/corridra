@@ -420,6 +420,26 @@ test('fix run: a signed-out 401 on the erasure queue is not the code, so no Conf
   await expect(decide(page).getByRole('button', { name: 'Confirm Code' })).toHaveCount(0);
 });
 
+test('fix run: a signed-out 401 on the erasure queue is not a failed check either, so no failure line', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // The problem report queue answers, so the only read in question is the signed-out erasure queue.
+  await open(
+    page,
+    {
+      ...quiet,
+      erasureSignedOut: true,
+      problemReports: { counts: { received: 0, in_review: 0 }, oldestReceivedAt: null },
+    },
+    '/?v41=on&reports=on',
+  );
+  await expect(decide(page)).toBeVisible();
+  await expect(page.getByText('Erasure requests could not be checked just now')).toHaveCount(0);
+  await expect(page.locator('.ux-today41')).not.toContainText('could not be checked');
+  await expect(decide(page).getByText(/erasure requests? open/)).toHaveCount(0);
+});
+
 test('fix run: an admin never reads the erasure queue and sees no erasure tile or failure line', async ({
   page,
 }) => {

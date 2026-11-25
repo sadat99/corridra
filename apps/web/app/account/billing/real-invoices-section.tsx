@@ -1,4 +1,5 @@
 'use client';
+import { Place } from '../../../components/ux/flag';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   callBillingApi,
@@ -86,7 +87,7 @@ function InvoiceDocument({ i }: { i: RealInvoice }) {
             <br />
             {i.supplier.address}
             <br />
-            {i.supplier.country}
+            <Place value={i.supplier.country} />
           </p>
           {i.supplier.uen && <p>Company registration (UEN): {i.supplier.uen}</p>}
           {i.supplier.gstRegistrationNo && <p>GST registration: {i.supplier.gstRegistrationNo}</p>}

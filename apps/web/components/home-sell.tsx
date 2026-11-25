@@ -402,7 +402,12 @@ function Calculator({ market }: { market: MarketKey }) {
                 <p className="tr-small">{t('home.tr.fc.one')}</p>
               ) : null}
               <p className="tr-small">{t('home.tr.fc.after')}</p>
-              <Link prefetch={false} className="primary-link" href={routeHref.sell}>
+              <Link
+                prefetch={false}
+                data-start-action
+                className="ac1-quiet tr-light-link"
+                href={routeHref.sell}
+              >
                 {t('home.tr.fc.cta')}
               </Link>
             </div>

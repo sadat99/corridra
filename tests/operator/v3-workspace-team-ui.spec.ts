@@ -95,6 +95,7 @@ createRoot(document.getElementById('fixture')).render(<Component key={issuer+':'
     ],
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     loader: { '.css': 'empty' },
     write: false,
     format: 'esm',

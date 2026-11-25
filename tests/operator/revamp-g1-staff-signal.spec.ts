@@ -27,6 +27,7 @@ test.beforeAll(async () => {
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
@@ -141,3 +142,45 @@ test('a lapsed authenticator check shows ONE plain line with the in-place check,
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 });
+
+// Review minor (team desk v4.1): after Confirm Code the line must go, whatever the re-read answers. A re-read refused
+// for the role or the module shows nothing, and a network failure shows the failure line; neither keeps the line.
+for (const [name, second] of [
+  ['a 403', { status: 403 }],
+  ['a 503', { status: 503 }],
+  ['a network failure', 'abort'],
+] as const)
+  test(`after Confirm Code the line goes when the re-read is ${name}`, async ({ page }) => {
+    // The step-up dialog is not mounted here: this listener stands in for it and accepts the code.
+    await page.addInitScript(() => {
+      window.addEventListener('corridra:step-up', (event) => {
+        event.preventDefault();
+        (event as CustomEvent<{ resolve: (verified: boolean) => void }>).detail.resolve(true);
+      });
+    });
+    let reads = 0;
+    await page.route('**/api/mission-withdrawal**', async (route) => {
+      reads += 1;
+      if (reads === 1)
+        return route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Verify again', code: 'STEP_UP_REQUIRED' }),
+        });
+      if (second === 'abort') return route.abort('failed');
+      return route.fulfill({
+        status: second.status,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Not available' }),
+      });
+    });
+    await page.goto(`${origin}/`);
+    const line = page.getByTestId('reverify-line');
+    await line.getByRole('button', { name: 'Confirm Code' }).click();
+    await expect.poll(() => reads).toBe(2);
+    await expect(line).toHaveCount(0);
+    if (second === 'abort')
+      await expect(page.getByText('The withdrawal status could not be read.')).toBeVisible();
+    else await expect(page.getByText('could not be read')).toHaveCount(0);
+    await expect(page.getByTestId('withdrawn-by-customer')).toHaveCount(0);
+  });

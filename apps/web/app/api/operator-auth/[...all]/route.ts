@@ -1,6 +1,7 @@
 import { foundations } from '../../../../lib/foundations';
 import { boundedBody } from '../../../../lib/delivery-http';
 import { DomainError } from '@corridra/domain';
+import { withTeamSessionHint } from '../../../../lib/team-session-hint';
 export const runtime = 'nodejs';
 async function handle(request: Request) {
   try {
@@ -22,7 +23,11 @@ async function handle(request: Request) {
           body: (await boundedBody(request, 8192)).toString('utf8'),
         })
       : request;
-    const response = await services.handler(input);
+    const response = await withTeamSessionHint(
+      input,
+      await services.handler(input),
+      new URL(services.config.APP_ORIGIN).protocol === 'https:',
+    );
     response.headers.set('Cache-Control', 'no-store');
     response.headers.set('Referrer-Policy', 'no-referrer');
     return response;

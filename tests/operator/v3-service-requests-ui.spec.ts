@@ -81,6 +81,7 @@ createRoot(document.getElementById('fixture')).render(el);`,
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     // Shared UX components import their kit stylesheet; the fixture page does not need it.
     loader: { '.css': 'empty' },
     write: false,

@@ -24,6 +24,7 @@ import { JourneyMismatchNote } from '../../../../components/ux/journey-mismatch-
 import { isCurrentOffer } from '../../../../lib/experience-offers';
 import { SavedCommercialReport, type ReportSection } from '../../missions/saved-commercial-report';
 import { useRoomDetail } from './room-data';
+import { Place } from '../../../../components/ux/flag';
 import { RoomSave } from './room-save';
 import { TripList } from './trip-list';
 import './room-view.css';
@@ -173,7 +174,12 @@ export function RoomView({
   // fallback for older briefs.
   const from = (original?.experience?.companyCountry ?? original?.companyCountry)?.trim();
   const to = (original?.market ?? original?.marketCode ?? original?.experience?.marketCode)?.trim();
-  const route = from && to ? `${placeName(from)} → ${placeName(to)}` : null;
+  const route =
+    from && to ? (
+      <>
+        <Place value={from} name={placeName(from)} /> → <Place value={to} name={placeName(to)} />
+      </>
+    ) : null;
   const replies = detail?.progress
     ? [...detail.progress.replies].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     : [];
@@ -383,7 +389,14 @@ export function RoomView({
             </div>
             <h2 dir="auto">{title}</h2>
             <p className="room-meta">
-              {original?.market ? `${placeName(original.market)} · ` : ''}
+              {original?.market ? (
+                <>
+                  <Place value={original.market} name={placeName(original.market)} />
+                  {' · '}
+                </>
+              ) : (
+                ''
+              )}
               {fill(say('room.received'), {
                 date: day(detail.progress.receivedAt),
               })}

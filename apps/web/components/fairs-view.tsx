@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Fair } from '../content/fairs';
 import { Countdown } from './countdown';
+import { Place } from './ux/flag';
+import { countryName } from '../lib/ux/options';
 import { datesLastChecked, fairDateKinds, fairDateWords, nextFairDate } from '../lib/fairs';
 
 /** The list of fairs the Corridra team has checked. Data in, markup out: the pages decide what is shown. */
@@ -34,7 +36,8 @@ export function FairsIndexView({ list, today }: { list: readonly Fair[]; today: 
                   </Link>
                 </h2>
                 <p>
-                  {fair.city}, {fair.countryCode}
+                  {fair.city},{' '}
+                  <Place value={fair.countryCode} name={countryName(fair.countryCode)} />
                 </p>
                 {next ? (
                   <p>
@@ -63,7 +66,7 @@ export function FairDetailView({ fair, today }: { fair: Fair; today: string }) {
   return (
     <>
       <p>
-        {fair.city}, {fair.countryCode} ·{' '}
+        {fair.city}, <Place value={fair.countryCode} name={countryName(fair.countryCode)} /> ·{' '}
         <a className="text-link" href={fair.website} rel="noopener noreferrer">
           The fair&apos;s own site
         </a>

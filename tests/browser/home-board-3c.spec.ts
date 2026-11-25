@@ -551,7 +551,13 @@ test('one action per view, and no repeated block, control text or wrong promise'
   await showRoute(page, 'China Route');
   await expect(page.locator('#route-china .primary-link')).toHaveCount(0);
   await showRoute(page, 'Sell Abroad');
-  await expect(page.locator('#route-sell .primary-link')).toHaveCount(1);
+  // public-customer-10: one primary on the home (#home-start); every section keeps its one action as a text link.
+  await expect(page.locator('#route-sell .primary-link')).toHaveCount(0);
+  await expect(page.locator('#route-sell [data-start-action]')).toHaveCount(1);
+  await expect(page.locator('main .primary-link:not(.ux-start-bar .primary-link)')).toHaveCount(1);
+  await expect(page.locator('main .primary-link:not(.ux-start-bar .primary-link)')).toHaveId(
+    'home-start',
+  );
   expect(await main.innerText()).not.toMatch(/↗/);
 });
 

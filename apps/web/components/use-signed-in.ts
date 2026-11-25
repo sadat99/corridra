@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useSyncExternalStore } from 'react';
 import { sessionChanged } from './session-events';
+import { teamSessionHinted } from '../lib/team-session-hint';
 
 /** Who is signed in in this browser: a customer account, a Corridra team member, or no one. */
 type SignedIn = 'customer' | 'staff' | null;
@@ -57,7 +58,7 @@ async function readSignedIn(path: string, signal: AbortSignal) {
 
 /**
  * Who is signed in here, asked by the public header. The customer service is only asked where customer
- * accounts exist. Both are asked again when a sign-in or sign-out happens, when the tab regains focus or
+ * accounts exist, and the team service only when the team session marker is present. Both are asked again when a sign-in or sign-out happens, when the tab regains focus or
  * when it returns from the back button.
  */
 export function useSignedIn(accounts: boolean): SignedIn {
@@ -70,9 +71,12 @@ export function useSignedIn(accounts: boolean): SignedIn {
       const asked = controller;
       void (async () => {
         const customer = accounts && (await readSignedIn('/api/auth/get-session', asked.signal));
+        // The team session cookie is HttpOnly; its plain marker says whether one can exist here. Without it the team
+        // service is not asked, so a visitor who never signed in to the team desk makes no team request at all.
         const next = customer
           ? 'customer'
-          : (await readSignedIn('/api/operator-auth/get-session', asked.signal))
+          : teamSessionHinted(document.cookie) &&
+              (await readSignedIn('/api/operator-auth/get-session', asked.signal))
             ? 'staff'
             : null;
         if (!asked.signal.aborted) {

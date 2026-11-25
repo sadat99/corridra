@@ -4,6 +4,7 @@ import { CountrySelect } from '../../components/ux/pickers';
 import { Dialog } from '../../components/ux/dialog';
 import { ErrorSummary, type FieldError } from '../../components/ux/feedback';
 import { countryName } from '../../lib/ux/options';
+import { Place } from '../../components/ux/flag';
 import { fieldAnchor } from '../../lib/ux/focus';
 import { LifecycleErrorLine } from './lifecycle-error-line';
 import { lifecycleWords, sessionHeaders } from './workspace-lifecycle-client';
@@ -523,10 +524,16 @@ export function PersonalProfile({
   }
   function summary(section: Section, details: Details | null) {
     if (section === 'about')
-      return [
-        valueOr(details?.title),
-        details?.baseCountry ? countryName(details.baseCountry) : words.notAdded,
-      ].join(', ');
+      return (
+        <>
+          {valueOr(details?.title)},{' '}
+          {details?.baseCountry ? (
+            <Place value={details.baseCountry} name={countryName(details.baseCountry)} />
+          ) : (
+            words.notAdded
+          )}
+        </>
+      );
     if (section === 'interests')
       return details?.interests?.length ? details.interests.join(', ') : words.notAdded;
     if (section === 'contact') return contactWords[details?.contactMethod ?? 'NO_PREFERENCE'];
@@ -628,7 +635,11 @@ export function PersonalProfile({
             <p>
               {valueOr(stored?.title)}
               <br />
-              {stored?.baseCountry ? countryName(stored.baseCountry) : words.notAdded}
+              {stored?.baseCountry ? (
+                <Place value={stored.baseCountry} name={countryName(stored.baseCountry)} />
+              ) : (
+                words.notAdded
+              )}
             </p>,
             <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
               <label className="field" htmlFor={fieldAnchor('profile-title')}>

@@ -483,6 +483,7 @@ describe('the bundle', () => {
     const result = await build({
       entryPoints: [resolve(component)],
       bundle: true,
+      external: ['/flags/*'],
       write: false,
       metafile: true,
       nodePaths: [resolve('apps/web/node_modules')],

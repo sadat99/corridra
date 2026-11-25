@@ -349,6 +349,27 @@ test('switch on: a page the role may not open shows Today, says so in the open a
   await expect(page.locator('main#main').getByRole('alert')).toHaveCount(0);
 });
 
+test('the turned-away note leaves the address and does not come back on a return to Today by a # address', async ({
+  page,
+}) => {
+  // With section addresses off every move is a `#` address on the same page; `?unavailable=1` must not stay in the
+  // address to bring the note back on Today, on a reload, or in a copied link.
+  for (const v41 of [true, false]) {
+    await open(page, '/operator', { v41, role: 'operator', turned: true });
+    const note = page
+      .locator('main#main')
+      .getByText('This section is unavailable for your current workspace role');
+    await expect(note, `${v41}`).toHaveCount(1);
+    await expect.poll(() => new URL(page.url()).searchParams.has('unavailable')).toBe(false);
+    expect(new URL(page.url()).searchParams.get('v41')).toBe(v41 ? 'on' : 'off');
+    await page.evaluate(() => (window.location.hash = '#workspace-missions'));
+    await expect(page.locator('#workspace-missions')).toBeVisible();
+    await page.evaluate(() => (window.location.hash = '#main'));
+    await expect(page.locator('#workspace-missions')).toBeHidden();
+    await expect(note, `${v41} back on Today`).toHaveCount(0);
+  }
+});
+
 test('switch on: a page whose body is still loading does not put the focus on the left menu', async ({
   page,
 }) => {

@@ -120,6 +120,7 @@ export async function serveRealMeetingsPage(): Promise<RealPage> {
     stdin: { contents: entry, loader: 'tsx', resolveDir: web },
     nodePaths: [resolve(web, 'node_modules')],
     bundle: true,
+    external: ['/flags/*'],
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },

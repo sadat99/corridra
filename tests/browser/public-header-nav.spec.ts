@@ -168,6 +168,10 @@ test('N1 every old header route is reachable from the phone menu, with Sign in, 
 test('N1 signed in, the header opens the workspace instead of Sign in, on a wide screen and in the phone menu', async ({
   page,
 }) => {
+  // A team member's browser carries the plain marker beside the HttpOnly session cookie (lib/team-session-hint.ts).
+  await page.addInitScript(() => {
+    document.cookie = 'corridra-team=1; path=/';
+  });
   await page.route('**/api/operator-auth/get-session', (route) =>
     route.fulfill({ json: { user: { id: 'synthetic-user' }, session: { id: 'synthetic' } } }),
   );
