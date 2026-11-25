@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { DomainError } from '@corridra/domain';
+import { DomainError, STEP_UP_REQUIRED } from '@corridra/domain';
 import { foundations } from '../../../lib/foundations';
 import { staffRefusal } from '../../../lib/staff-db-error';
 export const runtime = 'nodejs';
@@ -37,6 +37,10 @@ export async function GET(request: Request) {
         : error instanceof z.ZodError
           ? (error.issues[0]?.message ?? 'Check the request')
           : (refusal?.message ?? 'Request failed');
-    return Response.json({ error: message }, { status, headers });
+    const code =
+      error instanceof DomainError && error.code === STEP_UP_REQUIRED
+        ? STEP_UP_REQUIRED
+        : undefined;
+    return Response.json(code ? { error: message, code } : { error: message }, { status, headers });
   }
 }

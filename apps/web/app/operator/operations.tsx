@@ -409,7 +409,8 @@ export function Operations({
       try {
         const [d, h, c, a] = await Promise.all([
           request('operations-dashboard', undefined, query),
-          request('operations-health'),
+          // Health is read only for the roles that may open it (owner, admin); the other roles never ask.
+          admin ? request('operations-health') : Promise.resolve(null),
           request('mission-catalogue'),
           admin ? request('operations-controls') : Promise.resolve(null),
         ]);

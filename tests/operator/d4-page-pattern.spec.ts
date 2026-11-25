@@ -14,9 +14,17 @@ test.afterAll(async () => {
   await fixture.close();
 });
 
-type Options = { v41: boolean; role?: string; real?: boolean; width?: number; height?: number };
+type Options = {
+  v41: boolean;
+  role?: string;
+  real?: boolean;
+  width?: number;
+  height?: number;
+  /** The server turned this person away from a section address (operator-entry.tsx adds `unavailable=1`). */
+  turned?: boolean;
+};
 async function open(page: Page, path: string, options: Options) {
-  const { v41, role = 'owner', real = false, width = 1440, height = 900 } = options;
+  const { v41, role = 'owner', real = false, width = 1440, height = 900, turned = false } = options;
   await page.setViewportSize({ width, height });
   await page.route('**/api/**', (route) =>
     route.fulfill({ status: 404, json: { error: 'Not part of this fixture' } }),
@@ -40,7 +48,9 @@ async function open(page: Page, path: string, options: Options) {
   );
   await page.route('**/api/workspace/config?*', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/notifications?*', (route) => route.fulfill({ json: [] }));
-  await page.goto(`${fixture.origin}${path}?v41=${v41 ? 'on' : 'off'}&role=${role}`);
+  await page.goto(
+    `${fixture.origin}${path}?v41=${v41 ? 'on' : 'off'}&role=${role}${turned ? '&unavailable=1' : ''}`,
+  );
   await expect(page.getByLabel('Workspace status')).toBeAttached();
   await expect(page.getByText('Loading workspace…')).toHaveCount(0);
 }
@@ -196,10 +206,16 @@ test('switch on: no label above a panel heading and no jump links', async ({ pag
 });
 
 test('switch on: the segments follow the role', async ({ page }) => {
-  await open(page, '/operator/health', { v41: true, role: 'operator' });
+  // Health and Readiness are for owner and admin only (owner ruling, 25 Nov 2026): an operator's Status has two pages.
+  await open(page, '/operator/health', { v41: true, role: 'admin' });
   await expect(heading(page).locator('h1')).toHaveText('Status');
   await expect(page.getByRole('navigation', { name: 'Status pages' }).getByRole('link')).toHaveText(
     ['Operations', 'Dashboard', 'Health', 'Readiness'],
+  );
+  await open(page, '/operator/operations', { v41: true, role: 'operator' });
+  await expect(heading(page).locator('h1')).toHaveText('Status');
+  await expect(page.getByRole('navigation', { name: 'Status pages' }).getByRole('link')).toHaveText(
+    ['Operations', 'Dashboard'],
   );
   await open(page, '/operator/settings', { v41: true, role: 'admin' });
   await expect(
@@ -295,6 +311,8 @@ test('switch on: a page the role may not open shows Today, says so in the open a
     ['viewer', '/operator/settings'],
     ['operator', '/operator/audit'],
     ['viewer', '/operator/health'],
+    ['operator', '/operator/health'],
+    ['operator', '/operator/readiness'],
   ] as const) {
     await open(page, path, { v41: true, role });
     await expect(heading(page).locator('h1'), path).toHaveText('Today');
@@ -313,6 +331,18 @@ test('switch on: a page the role may not open shows Today, says so in the open a
     expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('BODY');
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   }
+  // Health and Readiness are turned away by the server, which sends the person to Today with a flag: Today says so in the
+  // same words, in the open, and the flag only lasts while the person is on Today.
+  for (const role of ['viewer', 'operator'])
+    for (const v41 of [true, false]) {
+      await open(page, '/operator', { v41, role, turned: true });
+      const note = page.locator('main#main').getByRole('alert');
+      await expect(note, `${role} ${v41}`).toHaveCount(1);
+      await expect(note).toContainText(
+        'This section is unavailable for your current workspace role',
+      );
+      expect(await note.evaluate((el) => !!el.closest('details'))).toBe(false);
+    }
   // A role that may open the page sees no such note.
   await open(page, '/operator/controls', { v41: true, role: 'owner' });
   await expect(heading(page).locator('h1')).toHaveText('Team and access');

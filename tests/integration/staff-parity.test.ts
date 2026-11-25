@@ -40,8 +40,10 @@ const frozen: [string, string, string, string[]][] = [
   ['workspace-operations', 'operations', 'Global operations', staff],
   ['ops-dashboard', 'dashboard', 'Mission dashboard and economics', staff],
   ['ops-center', 'control-center', 'Corridor Control Center', ['owner', 'admin']],
-  ['ops-health', 'health', 'Recovery and health', staff],
-  ['ops-gates', 'readiness', 'Production readiness', staff],
+  // Owner decision (25 Nov 2026, team desk v4.1 audit F8): an ordinary operator may not open Health or Readiness, by
+  // menu or by address. The server turns the address away (tests/integration/team-health-readiness-gate.test.ts).
+  ['ops-health', 'health', 'Recovery and health', ['owner', 'admin']],
+  ['ops-gates', 'readiness', 'Production readiness', ['owner', 'admin']],
   ['workspace-settings', 'settings', 'Routes and settings', ['owner', 'admin']],
   ['workspace-audit', 'audit', 'Access and audit', ['owner', 'admin']],
   ['workspace-authenticator', 'authenticator', 'Authenticator', all],
