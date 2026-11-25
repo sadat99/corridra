@@ -4,7 +4,7 @@
 // saves signed-in storage states and writes env.json. Everything is invented: "Synthetic ..." and @example.invalid only.
 import { execFileSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { baseUrl, client, cookieClient, here, ownerPool, pw, readJson, repo } from './lib.mjs';
 import { totp } from './totp.mjs';
@@ -384,7 +384,7 @@ writeFileSync(
 );
 function readJson2(p) {
   try {
-    return (execFileSync('cat', [p], { encoding: 'utf8' }).trim() || 'on') === 'on';
+    return (readFileSync(p, { encoding: 'utf8' }).trim() || 'on') === 'on';
   } catch {
     return null;
   }
