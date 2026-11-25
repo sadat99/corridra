@@ -1,9 +1,18 @@
 'use client';
 import '../page-budget.css';
+import './service-request.css';
 import { CommercialArrangementSummary } from '../../../components/commercial-arrangement';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
-import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+} from 'react';
 import { displayMoney } from '@corridra/domain/locale';
 import {
   basisText,
@@ -24,6 +33,35 @@ import {
 type Props = { subject: string; issuer: string; workspaceId: string; requestId: string };
 type Panel = 'accept' | 'decline' | 'question' | 'withdraw' | 'revise' | null;
 const starter = realCustomerInput() ? '' : 'Synthetic ';
+// The sample-mode rule for typed text is unchanged; it is said as a hint under the field, not in the label.
+const sampleHint = realCustomerInput()
+  ? null
+  : 'Sample mode: start your text with the word Synthetic.';
+
+// The page's h1 is drawn by the shell, outside this view. It names the service once the request is read, and
+// says "Help request" before that and whenever the request cannot be shown.
+const pageTitle = 'Help request';
+let heading = '';
+const headingListeners = new Set<() => void>();
+function setHeading(next: string) {
+  if (next === heading) return;
+  heading = next;
+  headingListeners.forEach((listener) => listener());
+}
+function subscribeHeading(listener: () => void) {
+  headingListeners.add(listener);
+  return () => {
+    headingListeners.delete(listener);
+  };
+}
+export function ServiceRequestHeading() {
+  const title = useSyncExternalStore(
+    subscribeHeading,
+    () => heading,
+    () => '',
+  );
+  return <>{title || pageTitle}</>;
+}
 
 function money(minor: string | null, currency: string) {
   if (minor === null) return 'Amount not stated';
@@ -129,6 +167,17 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
     );
     return () => clearTimeout(timer);
   }, [detail, load]);
+  const serviceTitle = state === 'ready' && detail ? detail.service.title : '';
+  useEffect(() => {
+    setHeading(serviceTitle);
+    // The tab title follows the h1 (D-021: a help request page title matches its heading).
+    document.title = (serviceTitle || pageTitle) + ' | Corridra';
+    return () => setHeading('');
+  }, [serviceTitle]);
+  // A step that opens takes the focus to its first field, so the keyboard and a screen reader land in it.
+  useEffect(() => {
+    if (panel) document.getElementById(id + (panel === 'revise' ? 'need' : panel))?.focus();
+  }, [panel, id]);
   useEffect(() => {
     if (!pending) return;
     const leave = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -248,11 +297,6 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
   const quote = detail?.quote ?? null;
   return (
     <section aria-label="Help request" className="account-compact">
-      <p>
-        <a className="text-link" href={'/account/service-requests/' + workspaceId}>
-          All help requests
-        </a>
-      </p>
       {state === 'loading' && <p role="status">Loading your request…</p>}
       {state !== 'loading' && state !== 'ready' && (
         <div className="ux-state" data-state={state === 'denied' ? 'denied' : 'unavailable'}>
@@ -274,8 +318,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
       )}
       {state === 'ready' && detail && label && (
         <>
-          <div className="detail-card account-inline">
-            <h2>{detail.service.title}</h2>
+          <div className="sr-summary">
             <p>
               <span className="ux-status" data-tone={label.tone}>
                 {label.text}
@@ -302,10 +345,10 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
           )}
           {message && <p role={message === 'Saved.' ? 'status' : 'alert'}>{message}</p>}
 
-          <h3>What you asked for</h3>
+          <h2>What you asked for</h2>
           <dl className="account-facts account-wide">
             <dt>Need</dt>
-            <dd style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{detail.need.text}</dd>
+            <dd className="sr-typed">{detail.need.text}</dd>
             <dt>Place</dt>
             <dd>{detail.need.region}</dd>
             <dt>Preferred dates</dt>
@@ -327,14 +370,10 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                 <form onSubmit={submitRevise} aria-label="Edit the request">
                   <fieldset disabled={busy}>
                     <div className="field">
-                      <label htmlFor={id + 'need'}>
-                        {' '}
-                        {realCustomerInput()
-                          ? 'What do you need?'
-                          : 'What do you need? (start with Synthetic)'}{' '}
-                      </label>
+                      <label htmlFor={id + 'need'}>What do you need?</label>
                       <textarea
                         id={id + 'need'}
+                        aria-describedby={sampleHint ? id + 'need-hint' : undefined}
                         required
                         minLength={realCustomerInput() ? 2 : 11}
                         maxLength={1000}
@@ -345,6 +384,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                           setPending(null);
                         }}
                       />
+                      {sampleHint && <p id={id + 'need-hint'}>{sampleHint}</p>}
                     </div>
                     <div className="field">
                       <label htmlFor={id + 'region'}>Where do you need it?</label>
@@ -394,7 +434,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
             </>
           )}
 
-          <details className="ux-journey-disclosure">
+          <details className="account-fold">
             <summary>What this service includes and leaves out</summary>
             <p>Included</p>
             <ul>
@@ -411,11 +451,11 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
           </details>
 
           {quote && (
-            <section aria-label="Quote" className="detail-card" id={id + 'quote'}>
-              <h3>
+            <section aria-label="Quote" className="sr-part" id={id + 'quote'}>
+              <h2>
                 Quote, version {quote.version}
                 {quote.expired && ' (expired)'}
-              </h3>
+              </h2>
               <p>
                 This is a quote, not an order. Nothing is charged, and billing is not switched on.
                 Valid until{' '}
@@ -425,22 +465,22 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
               {quote.commercialArrangement && (
                 <CommercialArrangementSummary terms={quote.commercialArrangement} />
               )}
+              {/* Below 48rem every cost is its own stacked block (item, kind, how it is counted, amount), so no
+                  amount is ever off screen; from 48rem it is a table. The words and amounts are the same. */}
               <div
+                className="sr-costs"
                 role="region"
                 aria-label="Quote costs, one row for every cost"
                 tabIndex={0}
-                style={{ overflowX: 'auto' }}
               >
-                <table style={{ width: '100%' }}>
-                  <caption style={{ textAlign: 'left' }}>
-                    Every cost in this quote, in {quote.currency}
-                  </caption>
+                <table>
+                  <caption>Every cost in this quote, in {quote.currency}</caption>
                   <thead>
                     <tr>
                       <th scope="col">Item</th>
                       <th scope="col">Kind</th>
                       <th scope="col">How it is counted</th>
-                      <th scope="col" style={{ textAlign: 'right' }}>
+                      <th scope="col" className="sr-amount">
                         Amount
                       </th>
                     </tr>
@@ -448,12 +488,10 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                   <tbody>
                     {quote.components.map((c) => (
                       <tr key={c.position}>
-                        <th scope="row" style={{ textTransform: 'none', letterSpacing: 0 }}>
-                          {c.label}
-                        </th>
-                        <td>{componentKindText[c.kind]}</td>
-                        <td>{treatmentText[c.treatment]}</td>
-                        <td style={{ textAlign: 'right' }}>
+                        <th scope="row">{c.label}</th>
+                        <td data-label="Kind">{componentKindText[c.kind]}</td>
+                        <td data-label="How it is counted">{treatmentText[c.treatment]}</td>
+                        <td data-label="Amount" className="sr-amount">
                           {c.treatment === 'not_included' && c.amountMinor === null
                             ? 'Not included'
                             : money(c.amountMinor, quote.currency)}
@@ -466,7 +504,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       <th scope="row" colSpan={3}>
                         Fixed price for the included items
                       </th>
-                      <td style={{ textAlign: 'right' }}>
+                      <td className="sr-amount">
                         <strong>{money(quote.fixedTotalMinor, quote.currency)}</strong>
                       </td>
                     </tr>
@@ -474,34 +512,34 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       <th scope="row" colSpan={3}>
                         Estimates added on top
                       </th>
-                      <td style={{ textAlign: 'right' }}>
+                      <td className="sr-amount">
                         {money(quote.estimatedTotalMinor, quote.currency)}
                       </td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
-              <h4>Left out of this quote</h4>
+              <h3>Left out of this quote</h3>
               <ul>
                 {quote.exclusions.map((x) => (
                   <li key={x}>{x}</li>
                 ))}
               </ul>
-              <h4>What this quote assumes</h4>
+              <h3>What this quote assumes</h3>
               <ul>
                 {quote.assumptions.map((x) => (
                   <li key={x}>{x}</li>
                 ))}
               </ul>
-              <h4>Terms</h4>
+              <h3>Terms</h3>
               <p>Delivery: {quote.deliveryTerms}</p>
               <p>Payment: {quote.paymentTerms}</p>
             </section>
           )}
 
           {detail.orderIntent && (
-            <section aria-label="Order intent" className="detail-card">
-              <h3>Order intent recorded</h3>
+            <section aria-label="Order intent" className="sr-part">
+              <h2>Order intent recorded</h2>
               <p>{detail.orderIntent.statement}</p>
               <p>
                 Quote version {detail.orderIntent.quoteVersion}, fixed price{' '}
@@ -518,11 +556,18 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
 
           {detail.canAct ? (
             detail.actions.length > 0 && (
-              <section aria-label="What you can do">
-                <h3>What you can do</h3>
+              <section aria-label="What you can do" className="sr-part">
+                <h2>What you can do</h2>
                 <div className="guide-actions-row">
                   {can('accept') && (
-                    <button type="button" className="button" onClick={() => open('accept')}>
+                    <button
+                      type="button"
+                      // One primary per decision region: while a step is open its confirm button is the
+                      // primary, so this one is outlined.
+                      className={panel && panel !== 'revise' ? 'button button-secondary' : 'button'}
+                      aria-expanded={panel === 'accept'}
+                      onClick={() => open('accept')}
+                    >
                       Accept This Quote
                     </button>
                   )}
@@ -530,6 +575,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                     <button
                       type="button"
                       className="button button-secondary"
+                      aria-expanded={panel === 'decline'}
                       onClick={() => open('decline')}
                     >
                       Decline This Quote
@@ -539,6 +585,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                     <button
                       type="button"
                       className="button button-secondary"
+                      aria-expanded={panel === 'question'}
                       onClick={() => open('question')}
                     >
                       Ask a Question
@@ -549,6 +596,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       data-intent="destructive"
                       type="button"
                       className="button button-secondary"
+                      aria-expanded={panel === 'withdraw'}
                       onClick={() => open('withdraw')}
                     >
                       Withdraw This Request
@@ -584,8 +632,9 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       estimates of {money(quote.estimatedTotalMinor, quote.currency)}. Items marked
                       not included are not in these amounts.
                     </p>
-                    <label style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                    <label className="sr-check">
                       <input
+                        id={id + 'accept'}
                         type="checkbox"
                         checked={ack}
                         disabled={busy}
@@ -608,14 +657,10 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                     aria-label="Decline the quote"
                   >
                     <div className="field">
-                      <label htmlFor={id + 'decline'}>
-                        {' '}
-                        {realCustomerInput()
-                          ? 'Why? (optional)'
-                          : 'Why? (optional, start with Synthetic)'}{' '}
-                      </label>
+                      <label htmlFor={id + 'decline'}>Why? (optional)</label>
                       <textarea
                         id={id + 'decline'}
+                        aria-describedby={sampleHint ? id + 'decline-hint' : undefined}
                         maxLength={1000}
                         rows={3}
                         value={note}
@@ -624,6 +669,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                           setPending(null);
                         }}
                       />
+                      {sampleHint && <p id={id + 'decline-hint'}>{sampleHint}</p>}
                     </div>
                     <button type="submit" className="button" disabled={busy}>
                       Confirm and Decline
@@ -639,14 +685,10 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                     aria-label="Withdraw the request"
                   >
                     <div className="field">
-                      <label htmlFor={id + 'withdraw'}>
-                        {' '}
-                        {realCustomerInput()
-                          ? 'Why? (optional)'
-                          : 'Why? (optional, start with Synthetic)'}{' '}
-                      </label>
+                      <label htmlFor={id + 'withdraw'}>Why? (optional)</label>
                       <textarea
                         id={id + 'withdraw'}
+                        aria-describedby={sampleHint ? id + 'withdraw-hint' : undefined}
                         maxLength={1000}
                         rows={3}
                         value={note}
@@ -655,6 +697,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                           setPending(null);
                         }}
                       />
+                      {sampleHint && <p id={id + 'withdraw-hint'}>{sampleHint}</p>}
                     </div>
                     <button type="submit" className="button" disabled={busy}>
                       Confirm and Withdraw
@@ -664,14 +707,10 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                 {panel === 'question' && (
                   <form onSubmit={submitQuestion} aria-label="Ask a question">
                     <div className="field">
-                      <label htmlFor={id + 'question'}>
-                        {' '}
-                        {realCustomerInput()
-                          ? 'Your question'
-                          : 'Your question (start with Synthetic)'}{' '}
-                      </label>
+                      <label htmlFor={id + 'question'}>Your question</label>
                       <textarea
                         id={id + 'question'}
+                        aria-describedby={sampleHint ? id + 'question-hint' : undefined}
                         required
                         minLength={realCustomerInput() ? 2 : 11}
                         maxLength={1000}
@@ -682,6 +721,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                           setPending(null);
                         }}
                       />
+                      {sampleHint && <p id={id + 'question-hint'}>{sampleHint}</p>}
                     </div>
                     <button
                       type="submit"
@@ -717,9 +757,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       {e.note && (
                         <>
                           <br />
-                          <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                            {e.note}
-                          </span>
+                          <span className="sr-typed">{e.note}</span>
                         </>
                       )}
                     </li>

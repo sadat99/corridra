@@ -317,16 +317,21 @@ test('?programme= and an old section link open that programme, and a foreign id 
   await expect(linked.locator(`[id="${programmeIdAt(3)}-people"]`)).toBeVisible();
 });
 
-test('the page tabs keep ?tab=, and the form is one tab away', async ({ page }) => {
+// UI/UX.v4.1: creating a programme is the page's one primary action, not a tab. The old address still opens it.
+test('the page tabs keep ?tab=, and the form is one press away', async ({ page }) => {
   await open(page, { room: true, address: '&tab=new' });
-  await expect(page.getByRole('tab', { name: 'New Sample Programme' })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
+  await expect(page.getByRole('tab', { name: /New .*Programme/ })).toHaveCount(0);
   await expect(page.getByLabel('Programme name')).toBeVisible();
-  await page.getByRole('tab', { name: 'Programmes' }).click();
-  expect(new URL(page.url()).searchParams.get('tab')).toBe('programmes');
+  await expect(page.getByRole('tablist')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Show Programmes' }).click();
+  expect(new URL(page.url()).searchParams.get('tab')).toBeNull();
   await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+  await expect(page.getByLabel('Programme name')).toBeHidden();
+  const create = page.getByRole('button', { name: 'New Sample Programme' });
+  await expect(create).toBeFocused();
+  await create.click();
+  expect(new URL(page.url()).searchParams.get('tab')).toBe('new');
+  await expect(page.getByLabel('Programme name')).toBeVisible();
 });
 
 test('on a phone the Invite stage is still named and Participants is one tap away', async ({

@@ -1,5 +1,6 @@
 'use client';
 import '../page-budget.css';
+import './service-request.css';
 import { realCustomerInput, customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import {
@@ -61,8 +62,19 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
     [pending, setPending] = useState<Record<string, unknown> | null>(null),
-    [done, setDone] = useState<ServiceRequestSummary | null>(null);
+    [done, setDone] = useState<ServiceRequestSummary | null>(null),
+    [attempt, setAttempt] = useState(0);
   const alive = useRef(false);
+  // After Try Again the button is gone, so focus follows the answer: the form when the services load, the alert
+  // when they do not.
+  const retried = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const alertRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!retried.current || state === 'loading') return;
+    retried.current = false;
+    (state === 'ready' ? formRef.current : alertRef.current)?.focus();
+  }, [state]);
   const sentHeading = useRef<HTMLHeadingElement>(null);
   // CQ-71: the confirmation is brought into view and focused, so it is never left off-screen.
   useEffect(() => {
@@ -123,7 +135,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
       alive.current = false;
       controller.abort();
     };
-  }, [subject, issuer, workspaceId]);
+  }, [subject, issuer, workspaceId, attempt]);
   useEffect(() => {
     if (!pending) return;
     const leave = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -214,8 +226,24 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
       {(state === 'error' || state === 'off') && (
         <div className="ux-state" data-state="unavailable">
           <p className="ux-state-label">Temporarily unavailable</p>
-          <div role="alert">{message}</div>
+          <div role="alert" ref={alertRef} tabIndex={-1}>
+            {message}
+          </div>
           <div className="ux-state-actions">
+            {state === 'error' && (
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => {
+                  retried.current = true;
+                  setMessage('');
+                  setState('loading');
+                  setAttempt((n) => n + 1);
+                }}
+              >
+                Try Again
+              </button>
+            )}
             <a className="text-link" href="/account">
               Return to your account
             </a>
@@ -254,7 +282,12 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
           </div>
         )}
       {state === 'ready' && catalogue && (workspaceId || (workspaces && workspaces.length > 0)) && (
-        <form onSubmit={(e) => void submit(e)} aria-label="Help request details">
+        <form
+          ref={formRef}
+          tabIndex={-1}
+          onSubmit={(e) => void submit(e)}
+          aria-label="Help request details"
+        >
           <fieldset disabled={busy}>
             {!workspaceId && workspaces && workspaces.length > 1 && (
               <div className="field">
@@ -278,7 +311,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
               <legend>Which help do you need?</legend>
               {catalogue.services.length === 0 && <p>No services are offered right now.</p>}
               {catalogue.services.map((s) => (
-                <div key={s.key} className="detail-card">
+                <div key={s.key} className="sr-choice">
                   <label>
                     <input
                       type="radio"
@@ -331,13 +364,10 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor={id + 'need'}>
-                    {realCustomerInput()
-                      ? 'What do you need?'
-                      : 'What do you need? (start with Synthetic)'}
-                  </label>
+                  <label htmlFor={id + 'need'}>What do you need?</label>
                   <textarea
                     id={id + 'need'}
+                    aria-describedby={realCustomerInput() ? undefined : id + 'need-hint'}
                     required
                     minLength={realCustomerInput() ? 2 : 11}
                     maxLength={1000}
@@ -345,6 +375,11 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
                     value={need}
                     onChange={(e) => edit(setNeed)(e.target.value)}
                   />
+                  {!realCustomerInput() && (
+                    <p id={id + 'need-hint'}>
+                      Sample mode: start your text with the word Synthetic.
+                    </p>
+                  )}
                 </div>
                 <div className="field">
                   <label htmlFor={id + 'from'}>Earliest date (optional)</label>
@@ -389,11 +424,13 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
           </button>
         </form>
       )}
-      <p>
-        <a className="text-link" href="/account">
-          Cancel and return to your account
-        </a>
-      </p>
+      {state !== 'error' && state !== 'off' && (
+        <p>
+          <a className="text-link" href="/account">
+            Cancel and return to your account
+          </a>
+        </p>
+      )}
     </section>
   );
 }

@@ -25,9 +25,8 @@ test.beforeAll(async () => {
         import { ProgrammeRoomStyles } from ${JSON.stringify(resolve('apps/web/app/account/delegations/programme-room-styles.tsx'))};
         import ${JSON.stringify(resolve('apps/web/app/account/delegations/programme-frame.css'))};
         const framed = new URLSearchParams(location.search).get('framed') !== '0';
-        const slots = pageFrameSlots(framed ? {
-          back: { label: 'Back to my workspaces', href: '/account#customer-workspaces' },
-        } : undefined);
+        // UI/UX.v4.1: the page passes no back link to its frame (the menu is the way back), so neither does this.
+        const slots = pageFrameSlots(undefined);
         createRoot(document.getElementById('app')).render(
           <WorkspaceShell title={<span className="sr-only">Plan delegations</span>} customer above={slots.above} lead={slots.lead}>
             <ProgrammeRoomStyles />
@@ -107,14 +106,12 @@ const menuButton = (page: Page) =>
 
 for (const width of [390, 768, 1440]) {
   test.describe(`${width} px`, () => {
-    test('the page frame carries the back link once; the room draws no second one', async ({
+    test('UI/UX.v4.1: the framed page has no back link, in the frame or in the room', async ({
       page,
     }) => {
       await open(page, width);
-      const back = page.getByRole('link', { name: /Back to my workspaces/ });
-      await expect(back).toHaveCount(1);
-      await expect(back).toHaveAttribute('href', '/account#customer-workspaces');
-      await expect(page.locator('.ux-frame-above a')).toHaveCount(1);
+      await expect(page.getByRole('link', { name: /Back to my workspaces/ })).toHaveCount(0);
+      await expect(page.locator('.ux-frame-above a')).toHaveCount(0);
     });
 
     test('Rename, Archive and Request Help are one tap deeper in a menu named for the programme', async ({
@@ -296,7 +293,7 @@ for (const width of [390, 768, 1440])
   for (const state of ['list-1', 'list-2', 'new'])
     test(`${width} px, ${state}: the page is no longer than before`, async ({ page }) => {
       await open(page, width, { rows: state === 'list-2' ? 2 : 1 });
-      if (state === 'new') await page.getByRole('tab', { name: 'New Sample Programme' }).click();
+      if (state === 'new') await page.getByRole('button', { name: 'New Sample Programme' }).click();
       await page.evaluate(() =>
         document.querySelectorAll('details').forEach((d) => (d.open = false)),
       );

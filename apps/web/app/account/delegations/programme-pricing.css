@@ -13,45 +13,51 @@
   margin: 0 0 var(--space-3);
   padding-bottom: var(--space-1);
 }
+/* The heading above already names the three sections, so the group's own name is for assistive technology only. */
+.detail-card.pricing-area .pricing-tabs .ux-segments > legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 /* The helper and intro lines are secondary text: 14 px from the type scale. */
 .detail-card.pricing-area > p,
-.detail-card.pricing-area [role='tabpanel'] p {
+.detail-card.pricing-area .pricing-panel p {
   font-size: var(--text-sm);
 }
-.detail-card.pricing-area .pricing-tabs [role='tab'] {
-  min-height: 44px;
-  font-size: var(--text-base);
-  line-height: var(--leading-title);
-}
-.detail-card.pricing-area [role='tabpanel'] > div {
+.detail-card.pricing-area .pricing-panel > div {
   display: grid;
   justify-items: start;
   gap: var(--space-3);
 }
-.detail-card.pricing-area [role='tabpanel'] > div > * {
+.detail-card.pricing-area .pricing-panel > div > * {
   margin: 0;
   max-width: 100%;
 }
-.detail-card.pricing-area [role='tabpanel'] h4 {
+.detail-card.pricing-area .pricing-panel h4 {
   font-size: var(--text-lg);
   font-weight: 600;
   line-height: var(--leading-title);
 }
-.detail-card.pricing-area [role='tabpanel'] h5 {
+.detail-card.pricing-area .pricing-panel h5 {
   font-size: var(--text-base);
   font-weight: 600;
 }
-.detail-card.pricing-area [role='tabpanel'] > div > ul,
-.detail-card.pricing-area [role='tabpanel'] > div > form,
-.detail-card.pricing-area [role='tabpanel'] > div > .delivery-table {
+.detail-card.pricing-area .pricing-panel > div > ul,
+.detail-card.pricing-area .pricing-panel > div > form,
+.detail-card.pricing-area .pricing-panel > div > .delivery-table {
   justify-self: stretch;
 }
-.detail-card.pricing-area [role='tabpanel'] > div > ul {
+.detail-card.pricing-area .pricing-panel > div > ul {
   display: grid;
   gap: var(--space-6);
   padding-inline-start: var(--space-4);
 }
-.detail-card.pricing-area [role='tabpanel'] > div > ul > li {
+.detail-card.pricing-area .pricing-panel > div > ul > li {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -66,12 +72,12 @@
 .ux-series-info > ul {
   margin: 0;
 }
-.detail-card.pricing-area [role='tabpanel'] .operator-form {
+.detail-card.pricing-area .pricing-panel .operator-form {
   gap: var(--space-3);
   padding: 0;
 }
-.detail-card.pricing-area [role='tabpanel'] .operator-page .text-link,
-.detail-card.pricing-area [role='tabpanel'] .text-link {
+.detail-card.pricing-area .pricing-panel .operator-page .text-link,
+.detail-card.pricing-area .pricing-panel .text-link {
   margin-inline-end: 0;
 }
 /* One row of actions per series: Edit and the revenue switch stay in view, the rare one sits in the menu. */
@@ -94,9 +100,6 @@
   background: var(--surface-1);
 }
 @media (max-width: 768px) {
-  .detail-card.pricing-area .pricing-tabs [role='tab'] {
-    flex: 1 1 auto;
-  }
   .detail-card.pricing-area .primary-link,
   .detail-card.pricing-area .secondary-link {
     min-height: 44px;

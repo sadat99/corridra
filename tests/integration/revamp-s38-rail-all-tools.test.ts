@@ -38,7 +38,11 @@ describe('the customer rail foot with All Tools', () => {
         `<a class="ux-rail-tools" href="/account/all-tools">${gridIcon}<span>All Tools</span></a>`,
       );
       expect(html.indexOf('ux-rail-tools')).toBeLessThan(html.indexOf('Help on WhatsApp'));
-      expect(html.startsWith('<div class="ux-rail-foot"><a class="ux-rail-tools"')).toBe(true);
+      expect(
+        html.startsWith(
+          '<div class="ux-rail-foot" role="navigation" aria-label="Tools and help"><a class="ux-rail-tools"',
+        ),
+      ).toBe(true);
     }
   });
   test('is not a Help row: the Help row class is untouched, so nothing that reads it changes', async () => {

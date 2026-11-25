@@ -124,6 +124,7 @@ export function JourneyCardView({
   labels,
   locale,
   lead = false,
+  linked = true,
 }: {
   card: JourneyCard;
   facts: SourceFacts | SellFacts | OrganiseFacts | null;
@@ -131,6 +132,8 @@ export function JourneyCardView({
   locale: string;
   /** The journey with the most recent activity, drawn widest. */
   lead?: boolean;
+  /** False when a task above already links to this card's page, so the page has one link per destination. */
+  linked?: boolean;
 }) {
   const body = !facts
     ? null
@@ -180,10 +183,12 @@ export function JourneyCardView({
         <span>
           {card.dateWords} {card.at ? formatDate(card.at, { timeZone: 'UTC', locale }) : ''}
         </span>
-        <Link prefetch={false} className="move-card-link" href={card.href}>
-          <span>{card.kind === 'programme' ? 'Open Organiser Room' : 'Open Request'}</span>
-          <CorridraIcon name="arrow" />
-        </Link>
+        {linked ? (
+          <Link prefetch={false} className="move-card-link" href={card.href}>
+            <span>{card.kind === 'programme' ? 'Open Organiser Room' : 'Open Request'}</span>
+            <CorridraIcon name="arrow" />
+          </Link>
+        ) : null}
       </footer>
     </article>
   );

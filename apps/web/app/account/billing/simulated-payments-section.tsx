@@ -1,4 +1,5 @@
 'use client';
+import './billing.css';
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import {
   callBillingApi,
@@ -186,7 +187,7 @@ function ScopedPayments({ subject, issuer, workspaceId }: Props) {
             </div>
           )}
           {data.canPay && live && (
-            <section aria-label="Simulated checkout" className="detail-card">
+            <section aria-label="Simulated checkout" className="billing-part">
               <h3>Checkout at {data.provider.name}</h3>
               <p>
                 {live.invoiceNumber} · {money(live.amountMinor, live.currency)} · reference{' '}
@@ -274,11 +275,11 @@ function ScopedPayments({ subject, issuer, workspaceId }: Props) {
           {data.canPay && data.attempts.length > 0 && (
             <section aria-label="Simulated payments so far">
               <h3>Simulated payments so far</h3>
-              <ul className="guide-list">
+              <ul className="billing-rows">
                 {data.attempts.map((a) => {
                   const label = simulatedStateLabel[a.state];
                   return (
-                    <li key={a.id} className="detail-card">
+                    <li key={a.id}>
                       <p>
                         <strong>{a.invoiceNumber}</strong> · {money(a.amountMinor, a.currency)} ·{' '}
                         <span className="ux-status" data-tone={label.tone}>

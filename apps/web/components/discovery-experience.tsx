@@ -5,7 +5,6 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } fro
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
 import { corridorPages, openNote } from '../content/corridors';
-import { Arrow } from './arrow';
 import { CorridorMap } from './corridor-map';
 import { Flag, Flagged, RegionMark, placeMark, type RoutePlace } from './ux/flag';
 import { WorldRouteMap } from './world-route-map';
@@ -176,9 +175,12 @@ const exampleSteps = [
 export function DiscoveryExperience({
   children,
   about,
+  linkedOnPage = [],
 }: {
   children?: ReactNode;
   about?: ReactNode;
+  /** Addresses the page around the picker already links. The picker does not link them a second time. */
+  linkedOnPage?: readonly string[];
 }) {
   const [direction, setDirection] = useState(directions[0].key);
   // Any other route: a company country and a target market chosen freely. Empty means none.
@@ -329,7 +331,7 @@ export function DiscoveryExperience({
             <Link prefetch={false} className="primary-link" href={briefUrl}>
               Plan a Mission on This Route
             </Link>
-            {route.slug && (
+            {route.slug && !linkedOnPage.includes(`/corridors/${route.slug}`) && (
               <Link prefetch={false} className="button-secondary" href={`/corridors/${route.slug}`}>
                 Read About This Route
               </Link>
@@ -504,9 +506,6 @@ export function DiscoveryExperience({
               ? 'This route runs the other way and is taken case by case. No operating offer announced. We tell you plainly if we can help.'
               : 'This route is open now.'}
           </p>
-          <Link prefetch={false} className="text-link" href={briefUrl}>
-            Start a request on this route <Arrow />
-          </Link>
           <button
             className="text-link"
             onClick={() => {

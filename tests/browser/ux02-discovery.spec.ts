@@ -41,7 +41,9 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
   await expect(example).toContainText('No operating offer announced');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
-  await example.getByRole('link', { name: 'Start a Request on This Route' }).click();
+  // UI/UX.v4.1 (no repeated links): the sample mission does not repeat the request link; the route card holds it.
+  await expect(example.getByRole('link', { name: /Start a request/i })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Plan a Mission on This Route', exact: true }).click();
   await expect(page).toHaveURL('/plan?marketCode=BD&job=delegations');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'delegations',

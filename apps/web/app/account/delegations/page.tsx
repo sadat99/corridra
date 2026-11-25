@@ -19,7 +19,7 @@ import {
 } from '@corridra/auth/customer-programme-publication';
 import { foundations } from '../../../lib/foundations';
 import { ParticipantAccount } from './participant-account';
-import { registrationsBack, registrationsHelper } from '../frame-copy';
+import { registrationsHelper } from '../frame-copy';
 import { ProgrammeApplications, type ApplyTarget } from './programme-applications';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -79,7 +79,7 @@ export default async function Page({
       tab="work"
       eyebrow="REQUESTS"
       title="Delegation registrations"
-      frame={{ back: registrationsBack, helper: registrationsHelper() }}
+      frame={{ helper: registrationsHelper() }}
     >
       <div className="account-compact">
         {pagesOn && (

@@ -22,7 +22,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
               : 'Sign in to see your account and the missions shared with you.'}
         </p>
         {(mode === 'signin' || mode === 'signup' || mode === 'verify') && (
-          <PendingRequestNotice where={mode} />
+          <PendingRequestNotice where={mode} enabled={realUseEnabled()} />
         )}
         {config ? (
           <Suspense fallback={<p>Loading account access…</p>}>

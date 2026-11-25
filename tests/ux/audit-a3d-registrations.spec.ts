@@ -247,6 +247,13 @@ test('the section drawn on its own keeps the direct Withdraw button; only the fr
   ).toHaveCount(0);
 });
 
+// UI/UX.v4.1 audit finding public-customer-16: 44 px targets hold up to and including 768 px.
+test('at exactly 768 px the row menu is still a 44 px target', async ({ page }) => {
+  await open(page, 768);
+  const box = await page.getByRole('button', { name: /More actions for/ }).boundingBox();
+  expect(box!.height).toBeGreaterThanOrEqual(44);
+});
+
 // The owner's rule for the audit: no page longer than before at any width. The heights are the content (main) of the same
 // fixture on origin/main (76066ca), details closed, measured in the same Chromium; one pixel of room for rounding.
 const before: Record<number, [number, number]> = {

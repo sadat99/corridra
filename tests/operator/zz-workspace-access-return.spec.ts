@@ -345,7 +345,7 @@ test('every way into operator sign-in from the access pages is a full page load'
   for (const [path, name] of [
     ['/operator/forgot-password', 'Back to operator sign-in'],
     ['/operator/setup', 'Operator sign-in and authenticator'],
-    ['/operator/reset-password', 'Back to operator sign-in'],
+    ['/operator/reset-password', 'Operator Sign-In'],
   ]) {
     await page.goto('about:blank');
     await page.goto(path);

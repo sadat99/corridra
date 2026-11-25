@@ -257,15 +257,17 @@ describe('the first run is a switch, off by default, and adds no server surface'
   });
 
   it('with the switch off the create form and the tabs are the ones on main', () => {
-    // The first run replaces nothing in the off branch: the same form, in the same place, under the same tab.
+    // The first run replaces nothing in the off branch: the same form, in the same place. UI/UX.v4.1: with the
+    // room on, the form opens from the page's one primary action instead of a tab; `?tab=new` still opens it.
     expect(list).toContain('{newProgramme ?? createForm}');
     expect(list).toContain('const newProgramme = firstRun ? (');
     expect(list).toMatch(
       /\) : null;\n\s+\/\/ A workspace with no programme opens on the first run/,
     );
-    expect(list).toContain("id: 'new',");
+    expect(list).not.toContain("id: 'new',");
+    expect(list).toContain("asked === 'new'");
     expect(list).toContain(
-      "label: realCustomerInput() ? 'New Programme' : 'New Sample Programme',",
+      "const newLabel = realCustomerInput() ? 'New Programme' : 'New Sample Programme';",
     );
     // The plain create form stays reachable with the switch on.
     expect(list).toContain("<summary>{pp('pp.first.plain')}</summary>");

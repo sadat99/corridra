@@ -158,7 +158,54 @@ body:has(.ux-customer-header) .corner-dock:not(.header-help) {
   display: none;
 }
 
-/* Pocket (phone): the page title mirror exists only with the Pocket switch on; it is drawn by pocket-button.css. */
-.ux-pocket-title {
+/* The short phone header (640 px and under) that goes with the Pocket switch: the menu, the page title from 480 px,
+   Listen, the language code, the inbox and the account. It is keyed on the page title mirror, which the header carries
+   on every customer page while the switch is on, and not on the Quick button, which is not drawn on a form step: every
+   account page then has the same bar on one row (it used to be the full bar on form steps, wrapped onto three rows at
+   390 px). Brand and New Request are in the drawer; Search, the language and Help are in the account menu. */
+.ux-pocket-title,
+.ux-short-header-only {
   display: none;
+}
+@media (max-width: 640px) {
+  header.ux-customer-header:has(> .ux-pocket-title) .brand,
+  header.ux-customer-header:has(> .ux-pocket-title) .ux-csearch-trigger,
+  header.ux-customer-header:has(> .ux-pocket-title) .ux-bar-new-narrow,
+  header.ux-customer-header:has(> .ux-pocket-title) .ux-menu.ux-util-language,
+  header.ux-customer-header:has(> .ux-pocket-title) .ux-menu.ux-util-help {
+    display: none;
+  }
+  /* The account menu carries language and Help below 640 px already; at 640 itself it must too. Search joins them. */
+  header.ux-customer-header:has(> .ux-pocket-title) .ux-phone-only {
+    display: block;
+  }
+  header.ux-customer-header:has(> .ux-pocket-title) .ux-short-header-only {
+    display: flex;
+  }
+  header.ux-customer-header:has(> .ux-pocket-title) .ux-pocket-title {
+    display: block;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink);
+    font: 600 var(--text-lg) var(--font-ui);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* The tools keep the width their words need and stay on one row. When the text is large enough that they cannot (200%
+     at 390 px), they break onto a second line inside the header instead of running past the window. */
+  header.ux-customer-header:has(> .ux-pocket-title) .ux-bar-tools {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  /* Listen and the language code are in the top bar now (UI/UX.v4, owner option 1a), so below 480 px the bar has no
+     room left for the page title; the page's own heading is the first thing under the header. From 480 px it stays. */
+  @media (max-width: 479.98px) {
+    header.ux-customer-header:has(> .ux-pocket-title) .ux-pocket-title {
+      display: none;
+    }
+    header.ux-customer-header:has(> .ux-pocket-title) .ux-bar-tools {
+      margin-inline-start: auto;
+    }
+  }
 }

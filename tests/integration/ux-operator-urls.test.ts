@@ -419,7 +419,7 @@ describe('signing in again from the workspace comes back to the same workspace a
       ],
       [
         'apps/web/app/operator/reset-password/page.tsx',
-        '<a className="text-link" href={operatorSignInPage}>\n        Back to operator sign-in\n      </a>',
+        '<a className="text-link" href={operatorSignInPage}>\n        Operator Sign-In\n      </a>',
       ],
       [
         'apps/web/app/operator/recovery-form.tsx',
