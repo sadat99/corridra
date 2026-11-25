@@ -104,6 +104,7 @@ export async function OperatorEntry({
         replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
         supplySources={uxSwitchOn('CORRIDRA_SUPPLY_SOURCES')}
         teamDeskV41={shellsV2 && uxSwitchOn('CORRIDRA_UX_TEAM_DESK_V41')}
+        sectionAddresses={shellsV2 && uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')}
       >
         <Workspace
           tenants={tenants}

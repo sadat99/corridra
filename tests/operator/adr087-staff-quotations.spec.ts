@@ -136,7 +136,6 @@ test.beforeAll(async () => {
     bundle: true,
     write: false,
     outdir: 'out',
-    external: ['/flags/*'],
     loader: { '.css': 'css' },
     // The flag pictures are static files of the site, not modules to bundle.
     external: ['/flags/*'],

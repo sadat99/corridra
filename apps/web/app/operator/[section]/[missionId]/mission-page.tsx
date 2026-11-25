@@ -54,6 +54,7 @@ import { bodyNotAvailable } from '../../../../lib/body-access';
 import { useOperatorFlags } from '../../operator-flags';
 import { useMissionTitle } from './mission-title';
 import { RouteState, RouteWords } from './route-words';
+import { placeName } from '../../../account/request-words';
 
 // D15: one mission, seven tabs plus replies (CQ-40), and one side panel where actions open one at a time.
 // Every action here posts to the same reviewed workspace endpoints as the queue cards, so nothing gains
@@ -978,6 +979,7 @@ function AssignRoute({
   );
   const current = useRead<{ assignments: Row[] }>(`/api/workspace/commercial-mission?${q}`);
   const [pack, setPack] = useState('');
+  const { teamDeskV41: deskNames } = useOperatorFlags();
   if (!catalogue.value || !current.value)
     return <Loading error={catalogue.error || current.error} />;
   const packs = catalogue.value.packs.filter((p) =>
@@ -1020,8 +1022,10 @@ function AssignRoute({
           <option value="">Choose a route</option>
           {packs.map((p) => (
             <option value={p.id} key={p.id}>
-              {String(p.origin_market)} to {String(p.destination_market)}, version{' '}
-              {String(p.version)}
+              {deskNames
+                ? `${placeName(String(p.origin_market))} to ${placeName(String(p.destination_market))}`
+                : `${String(p.origin_market)} to ${String(p.destination_market)}`}
+              , version {String(p.version)}
             </option>
           ))}
         </select>

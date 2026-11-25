@@ -49,6 +49,7 @@ import {
   type RegionRowView,
 } from './today-desk-parts';
 import { useOperatorFlags } from './operator-flags';
+import { operatorSectionPath } from '../../lib/operator-urls';
 import { Flagged, placeMark } from '../../components/ux/flag';
 import { missionHref, stageLabel } from './[section]/[missionId]/mission-labels';
 
@@ -329,6 +330,21 @@ function useMissionPages() {
   return missionPages;
 }
 
+/**
+ * Where a link to a workspace section goes. With the desk on and section addresses on, it is the section's own
+ * address (the workspace kept, as the mission page does); otherwise it is the `#` address the page has always used.
+ * `hash` is the old address; a block inside a section (`#billing-services`) rides along after the section address.
+ */
+function useSectionLink(tenant: string, desk: boolean) {
+  const { teamDeskV41, sectionAddresses } = useOperatorFlags();
+  const real = desk && teamDeskV41 && sectionAddresses;
+  return (sectionId: string, hash = `#${sectionId}`) => {
+    const page = real ? operatorSectionPath(sectionId) : null;
+    if (!page) return hash;
+    return `${page}?workspace=${encodeURIComponent(tenant)}${hash === `#${sectionId}` ? '' : hash}`;
+  };
+}
+
 /** "Needs you now": new requests and late missions as one list, with a filter and "Show N More". */
 function NeedsYouNow({
   today,
@@ -505,15 +521,18 @@ function AlsoWaiting({ today }: { today: Today }) {
 
 function ThisWeek({
   today,
+  tenant,
   desk = false,
   onRetry,
 }: {
   today: Today;
+  tenant: string;
   /** Operator desk: the parts that could not be read name "This week" and offer Try Again where it can help. */
   desk?: boolean;
   onRetry?: () => void;
 }) {
   const { work, team } = today;
+  const sectionLink = useSectionLink(tenant, desk);
   const repliesUnavailable = team?.unavailable?.includes('repliesToReview') ?? false;
   const body = (
     <>
@@ -523,7 +542,7 @@ function ThisWeek({
             title="Meetings in the next 7 days"
             count={work.upcoming.length}
             empty="No meetings in the next 7 days"
-            href="#workspace-meetings"
+            href={sectionLink('workspace-meetings')}
             link="Open Meetings"
           >
             {work.upcoming
@@ -543,7 +562,7 @@ function ThisWeek({
             title="Follow-ups past their due date"
             count={work.lateFollowUps.length}
             empty="No follow-ups past their due date"
-            href="#workspace-meetings"
+            href={sectionLink('workspace-meetings')}
             link="Open Follow-ups"
           >
             {work.lateFollowUps.slice(0, weekRows).map((f) => (
@@ -594,7 +613,7 @@ function ThisWeek({
           title="Replies to review"
           count={team.repliesToReview}
           empty="No replies to review"
-          href="#workspace-delivery"
+          href={sectionLink('workspace-delivery')}
           link="Open Replies"
         />
       ) : desk && !repliesUnavailable && today.teamFailure && !today.workFailure && onRetry ? (
@@ -778,14 +797,17 @@ function WaitingItem({
 /** "Also waiting" collapsed row (operator desk). Accepted quotes and paid-service requests join the two queues. */
 function DeskAlsoWaiting({
   today,
+  tenant,
   role,
   onRetry,
 }: {
   today: Today;
+  tenant: string;
   role?: string;
   onRetry: () => void;
 }) {
   const { team, teamFailure, problemReports: reports, erasure } = today;
+  const sectionLink = useSectionLink(tenant, true);
   const unread = (name: 'acceptedQuotesNotStarted' | 'serviceRequestsToQuote') =>
     team?.unavailable?.includes(name) ?? false;
   const quotes = team && !unread('acceptedQuotesNotStarted') ? team.acceptedQuotesNotStarted : null;
@@ -824,7 +846,7 @@ function DeskAlsoWaiting({
         <ul className="ux-today-tiles" aria-label="Also waiting">
           {team && (mayCount || quotes !== null) && (
             <WaitingItem
-              href="#workspace-commercial"
+              href={sectionLink('workspace-commercial')}
               value={quotes ?? 'Not available'}
               tone={quotes === 0 ? 'zero' : quotes === null ? 'unavailable' : undefined}
               words={plural(quotes, 'accepted quote not started', 'accepted quotes not started')}
@@ -833,7 +855,7 @@ function DeskAlsoWaiting({
           {team && (mayCount || services !== null) && (
             <WaitingItem
               /* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */
-              href="#billing-services"
+              href={sectionLink('workspace-delivery', '#billing-services')}
               value={services ?? 'Not available'}
               tone={services === 0 ? 'zero' : services === null ? 'unavailable' : undefined}
               words={plural(
@@ -974,6 +996,7 @@ function DecisionRegion({
 }) {
   const { filter, all, setAll, choose } = useNeedsFilter();
   const missionPages = useMissionPages();
+  const sectionLink = useSectionLink(tenant, true);
   const tableId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-decide`;
   const views: RegionRowView[] = deskFilter(list, filter).map((row) => {
     const shared = {
@@ -1048,7 +1071,7 @@ function DecisionRegion({
       'replies',
       queues.replies,
       today.team !== null,
-      '#workspace-delivery',
+      sectionLink('workspace-delivery'),
       plural(queues.replies, 'reply to review', 'replies to review'),
     ),
     queue(
@@ -1056,20 +1079,20 @@ function DecisionRegion({
       queues.services,
       today.team !== null && (mayCount || queues.services !== null),
       /* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */
-      '#billing-services',
+      sectionLink('workspace-delivery', '#billing-services'),
       plural(queues.services, 'paid-service request to quote', 'paid-service requests to quote'),
     ),
     queue(
       'quotes',
       queues.quotes,
       today.team !== null && (mayCount || queues.quotes !== null),
-      '#workspace-commercial',
+      sectionLink('workspace-commercial'),
       plural(queues.quotes, 'accepted quote not started', 'accepted quotes not started'),
     ),
     // Follow-ups and meetings to rebook are handled in one place, so they share one tile and one link.
     today.work !== null && (queues.followUps !== 0 || queues.reschedule !== 0) ? (
       <li key="meetings" data-tone={queues.followUps ? 'late' : undefined}>
-        <a className="ux-today41-pairs" href="#workspace-meetings">
+        <a className="ux-today41-pairs" href={sectionLink('workspace-meetings')}>
           {queues.followUps ? (
             <span className="ux-today41-pair">
               <strong>{followUpsCapped ? `${queues.followUps}+` : queues.followUps}</strong>
@@ -1550,8 +1573,8 @@ export function TodayPanel({
               tenant={tenant}
               openCount={today.open.total}
             />
-            <DeskAlsoWaiting today={today} role={role} onRetry={retry} />
-            <ThisWeek today={today} desk onRetry={retry} />
+            <DeskAlsoWaiting today={today} tenant={tenant} role={role} onRetry={retry} />
+            <ThisWeek today={today} tenant={tenant} desk onRetry={retry} />
           </>
         )}
         {start}
@@ -1747,7 +1770,7 @@ export function TodayPanel({
           )}
         </div>
         <div className="ux-today-side">
-          {today && !failure && <ThisWeek today={today} />}
+          {today && !failure && <ThisWeek today={today} tenant={tenant} />}
           {start}
         </div>
       </div>

@@ -81,4 +81,27 @@ describe('team desk v4.1 sweep', () => {
     ).toHaveLength(2);
     expect(read('apps/web/app/mission-experience-view.tsx')).toContain('{countryName(t.country)}');
   });
+  it('opens a Today link at its section address when the desk and section addresses are on', () => {
+    const today = read('apps/web/app/operator/today.tsx');
+    expect(today).toContain('const real = desk && teamDeskV41 && sectionAddresses;');
+    expect(today).toContain("sectionLink('workspace-delivery', '#billing-services')");
+    // Only the Today list that has the other desk addresses switched: no raw `#workspace-meetings` or delivery address is
+    // left in the v4.1 regions (the switch-off list keeps its `#` addresses).
+    expect(today).not.toContain('href="#workspace-meetings"\n            link="Open Meetings"');
+    expect(read('apps/web/app/operator/operator-entry.tsx')).toContain(
+      'sectionAddresses={shellsV2',
+    );
+    expect(read('apps/web/app/operator/operator-flags.tsx')).toContain('sectionAddresses = false');
+  });
+
+  it('writes a route in the commercial mission, the mission page and the filters as place names in v4.1', () => {
+    expect(read('apps/web/app/operator/commercial-mission.tsx')).toContain('<RouteWords');
+    expect(read('apps/web/app/operator/[section]/[missionId]/mission-page.tsx')).toContain(
+      'placeName(String(p.origin_market))',
+    );
+    expect(read('apps/web/app/operator/missions.tsx')).toContain('routeOptions(v, deskV41)');
+    expect(read('apps/web/app/operator/mission-quotes.tsx')).toContain(
+      '<CountryName code={brief.market} />',
+    );
+  });
 });
