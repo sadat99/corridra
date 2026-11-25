@@ -1328,9 +1328,9 @@ function ScopedProgrammes({
   // address, takes the tabs away.
   const tabsHidden = creating && (newChoice === true || !templatesEnabled);
   // With the tabs beside the create view, the way back to the programmes is the tab row itself, so the Show
-  // Programmes button is not drawn; and with no programme there is nothing for a Programmes tab to hold.
+  // Programmes button is not drawn. The Programmes tab stays first: without it the Templates panel would be the one
+  // open under the create form, and on a phone that page runs past the two-screen budget (del-s0 phone test).
   const tabsBeside = creating && !tabsHidden;
-  const programmesTab = !(tabsBeside && rows.length === 0);
   const newLabel = realCustomerInput() ? 'New Programme' : 'New Sample Programme';
   const showNew = (open: boolean) => {
     const url = new URL(window.location.href);
@@ -1446,36 +1446,32 @@ function ScopedProgrammes({
               label="Delegation planning"
               className="programme-page-tabs account-compact"
               tabs={[
-                ...(programmesTab
-                  ? [
-                      {
-                        id: 'programmes',
-                        label: 'Programmes',
-                        panel: (
-                          <>
-                            {visibleRows.length > 1 && (
-                              <label className="field programme-picker">
-                                Programme
-                                <select
-                                  aria-label="Programme"
-                                  value={chosenProgramme}
-                                  onChange={(event) => choose(event.target.value)}
-                                >
-                                  {visibleRows.map((p) => (
-                                    <option key={p.id} value={p.id}>
-                                      {p.name}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
-                            )}
-                            {programmeList}
-                            {morePrograms}
-                          </>
-                        ),
-                      },
-                    ]
-                  : []),
+                {
+                  id: 'programmes',
+                  label: 'Programmes',
+                  panel: (
+                    <>
+                      {visibleRows.length > 1 && (
+                        <label className="field programme-picker">
+                          Programme
+                          <select
+                            aria-label="Programme"
+                            value={chosenProgramme}
+                            onChange={(event) => choose(event.target.value)}
+                          >
+                            {visibleRows.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      {programmeList}
+                      {morePrograms}
+                    </>
+                  ),
+                },
                 ...(templatesEnabled
                   ? [{ id: 'templates', label: 'Templates', panel: programmeTemplates }]
                   : []),

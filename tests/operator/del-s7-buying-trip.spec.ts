@@ -291,9 +291,8 @@ test('with the switch off the template choice and the templates list are the one
   await standIn(page);
   await page.goto(`${origin}/?room=1&first=1&pages=1&tpl=1`);
   await expect(firstRun(page).locator('form label.field')).toHaveCount(2);
-  // Beside the create view only the Templates tab shows: no empty Programmes tab, no Show Programmes button.
+  // Beside the create view the tab row shows and the redundant Show Programmes button is not drawn.
   await expect(page.getByRole('tab', { name: 'Templates' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Programmes', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Show Programmes' })).toHaveCount(0);
   await expect(choice(page)).toHaveCount(0);
   await openPicker(page);

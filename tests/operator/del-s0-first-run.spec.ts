@@ -344,11 +344,10 @@ test('the first run goes from an empty workspace to a published page, and nothin
   await expect(firstRunRegion(page)).toBeVisible();
   await expect(run).toBeVisible();
   // A workspace with no programme opens on the first run. UI/UX.v4.1: it is the page's create view, not a tab,
-  // With Templates on, only its tab sits beside the create view: no empty Programmes tab and no redundant Show
-  // Programmes button, since the tab row is the way on.
+  // With Templates on, its tab sits beside the create view and the redundant Show Programmes button is not drawn,
+  // since the tab row is the way on.
   await expect(page.getByRole('tab', { name: /New .*Programme/ })).toHaveCount(0);
   await expect(page.getByRole('tab', { name: 'Templates' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Programmes', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Show Programmes' })).toHaveCount(0);
   await expect(run.getByRole('heading', { name: 'Step 1 of 4: Name and place' })).toBeVisible();
   const form = run.locator('form');
