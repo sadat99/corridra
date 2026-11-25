@@ -22,14 +22,31 @@ function normalise(html: string): string {
     .replace(/\?dpl=[^"'&\s]+/g, '');
 }
 
-test('with the switch off the home page main and footer are exactly those of main a054c51c', async ({
+test('with the switch off the home page main and footer are exactly those of main a054c51c, with the pc-10 actions', async ({
   request,
 }) => {
   const response = await request.get('/');
   expect(response.ok()).toBe(true);
   const now = normalise(await response.text());
   if (process.env.HOME_OFF_FIXTURE_WRITE === '1') writeFileSync(fixture, now + '\n');
-  expect(now + '\n').toBe(readFileSync(fixture, 'utf8'));
+  // The one change made on purpose since that capture (audit row public-customer-10, team desk v4.1 later fixes): the
+  // section actions are quiet text links, so #home-start is the one primary in main. Each edit must apply exactly once,
+  // so any other difference still fails.
+  let expected = readFileSync(fixture, 'utf8');
+  for (const [before, after] of [
+    [
+      '<a class="primary-link" id="brief-start" href="/plan">',
+      '<a data-start-action="true" class="ac1-quiet" id="brief-start" href="/plan">',
+    ],
+    [
+      '<a class="primary-link" id="final-start" href="/plan">',
+      '<a data-start-action="true" class="ac1-quiet tr-light-link" id="final-start" href="/plan">',
+    ],
+  ] as const) {
+    expect(expected.split(before)).toHaveLength(2);
+    expected = expected.replace(before, after);
+  }
+  expect(now + '\n').toBe(expected);
 });
 
 // G63 audit of 8c11a01: the off build still linked the v4.2 stylesheet in <head>. HomeV42 is now a lazy client chunk

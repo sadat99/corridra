@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 import { withWorkflow } from 'workflow/next';
 
 const nextConfig: NextConfig = {
+  // Only a test sets this: tests/ux/home-v42-server.spec.ts builds the switch-on home beside the shared build, which it
+  // must not overwrite. Unset (every real build), the output is `.next` as always.
+  ...(process.env.CORRIDRA_NEXT_DIST_DIR ? { distDir: process.env.CORRIDRA_NEXT_DIST_DIR } : {}),
   poweredByHeader: false,
   serverExternalPackages: ['pdfkit', 'fontkit'],
   transpilePackages: [
