@@ -116,10 +116,17 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       // CQ-66: guided route pack form. The reviewed command is built on the server.
       if (!uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM')) throw new DomainError('Not found', 404);
       if (request.method === 'GET') return Response.json({ enabled: true }, { headers });
-      return Response.json(await createRoutePack(s.corridors, ctx, await body()), {
-        status: 201,
-        headers,
-      });
+      return Response.json(
+        await createRoutePack(
+          { corridors: s.corridors, operations: s.operations, content: s.routePackContent },
+          ctx,
+          await body(),
+        ),
+        {
+          status: 201,
+          headers,
+        },
+      );
     }
     throw new DomainError('Not found', 404);
   } catch (error) {
