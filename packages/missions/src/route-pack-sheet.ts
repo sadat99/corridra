@@ -158,6 +158,9 @@ export const sheetWords = {
   notAllowed: (value: string) => `${value} is not one of the allowed values for this field.`,
   saveErrors: 'Fix the errors in the dry run first',
   savePartly: 'The save stopped part way. Fix the error, then save the same file again to finish.',
+  saveStopped: 'Saving this route stopped. Save the same file again to finish.',
+  saveReused:
+    'This save was started with a different file. Run the dry run again and save the file as a new save.',
 } as const;
 
 const states: Record<string, SheetState> = {
@@ -410,8 +413,10 @@ function planRoute(
     const notApplicable = (definition: Partial<ContentFact> = {}) =>
       facts.set(key, { key, state: 'NOT_APPLICABLE', note: optional(row.note), ...definition });
     if (field?.part === 'Locked') {
-      // Locked rows ignore source and date cells: the pack's reason records why.
-      if (row.state === 'PENDING') facts.delete(key);
+      // Locked rows ignore source and date cells: the pack's reason records why. sourcing.profile is a state row only, in
+      // every state; the block itself enters through the pack (ADR-083).
+      if (!field.configurationKey && row.value) fail(sheetWords.sourcingValue);
+      else if (row.state === 'PENDING') facts.delete(key);
       else if (row.state === 'NOT_APPLICABLE') notApplicable();
       else if (field.configurationKey) {
         const items = listItems(row.value);
@@ -421,10 +426,7 @@ function planRoute(
         else if (outside) fail(sheetWords.notAllowed(outside));
         else if (!parsed.success) fail(sheetWords.lockedValue);
         else Object.assign(set, { [field.configurationKey]: parsed.data });
-      }
-      // sourcing.profile is a state row only; the block itself enters through the pack (ADR-083).
-      else if (row.value) fail(sheetWords.sourcingValue);
-      else if (!pack?.configuration.sourcing) fail(sheetWords.sourcingAbsent);
+      } else if (!pack?.configuration.sourcing) fail(sheetWords.sourcingAbsent);
       continue;
     }
     if (custom && row.state === 'PENDING' && !facts.has(key)) {
@@ -719,13 +721,22 @@ export class RoutePackSheetService {
         progress(plan, ids.get(plan.route)!, { packVersion: published.version });
       }
     } catch (error) {
-      // Nothing written yet: the refusal stands as it is (a changed route, a stale authenticator check). Once a step is written,
-      // the report says how far the save got so the same file and saveId can finish it.
-      if (!(error instanceof DomainError) || saved.size === 0) throw error;
+      // Nothing written by this call: the refusal stands as it is (a changed route, a stale authenticator check), except a
+      // saveId already used for another file, which is worded for the sheet. Once a step is written, any failure returns the
+      // report of how far the save got, so the same file and saveId can finish it.
+      const reused = error instanceof DomainError && error.code === 'ROUTE_PACK_COMMAND_REUSED';
+      if (saved.size === 0 && !reused) throw error;
+      if (!(error instanceof DomainError))
+        console.error(JSON.stringify({ event: 'route_pack_sheet_save_stopped' }));
+      const message = reused
+        ? sheetWords.saveReused
+        : error instanceof DomainError
+          ? error.message
+          : sheetWords.saveStopped;
       return {
         ...result,
         ok: false,
-        errors: [{ row: null, route: step?.route ?? null, key: null, message: error.message }],
+        errors: [{ row: null, route: step?.route ?? null, key: null, message }],
         saved: [...saved.values()],
       };
     }

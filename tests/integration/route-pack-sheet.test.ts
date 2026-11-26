@@ -125,6 +125,28 @@ const fact = (document: { facts: { key: string }[] }, key: string) =>
 const plan = (report: SheetReport, route: string) => report.routes.find((r) => r.route === route)!;
 const save = (lines: string[][], ctx = owner(), saveId: string = randomUUID()) =>
   sheet.save(ctx, { rows: rowsOf(lines), saveId, reason });
+// A sheet service whose operations command fails once, on the first command with this action.
+function interruptedOnce(action: string, failure: Error) {
+  let interrupt = true;
+  const flaky = new Proxy(operations, {
+    get(target, property) {
+      if (property === 'command')
+        return async (
+          ctx: Parameters<OperationsService['command']>[0],
+          input: { action?: string },
+        ) => {
+          if (interrupt && input.action === action) {
+            interrupt = false;
+            throw failure;
+          }
+          return target.command(ctx, input);
+        };
+      const value = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  return new RoutePackSheetService(f.runtime, corridors, flaky, content);
+}
 async function newRoute(key: string) {
   const [origin, destination] = key.split('-');
   const id = randomUUID();
@@ -546,25 +568,7 @@ test('export then import gives no change, including a formula-like cell and ever
 });
 
 test('a save that stopped between content and pack finishes on retry with the same saveId and adds no duplicates', async () => {
-  let interrupt = true;
-  const flaky = new Proxy(operations, {
-    get(target, property) {
-      if (property === 'command')
-        return async (
-          ctx: Parameters<OperationsService['command']>[0],
-          input: { action?: string },
-        ) => {
-          if (interrupt && input.action === 'propose') {
-            interrupt = false;
-            throw new DomainError('Synthetic interruption', 503);
-          }
-          return target.command(ctx, input);
-        };
-      const value = Reflect.get(target, property, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    },
-  });
-  const interrupted = new RoutePackSheetService(f.runtime, corridors, flaky, content);
+  const interrupted = interruptedOnce('propose', new DomainError('Synthetic interruption', 503));
   const saveId = randomUUID();
   const file = rowsOf([
     filled('PY-BO', 'identity.display_name', 'Paraguay to Bolivia'),
@@ -795,4 +799,64 @@ test('formula safety: every risky first character is escaped on export and expor
     updated: [],
     removed: [],
   });
+});
+
+test('a save that stops after writing for any reason answers 409 with the partial report, and the same file finishes it', async () => {
+  const file = [
+    filled('BO-EC', 'identity.display_name', 'Bolivia to Ecuador'),
+    line({ route: 'BO-EC', field_key: 'pack.missionTypes', state: 'Filled', value: 'buyers' }),
+  ];
+  const saveId = randomUUID();
+  const real = sheet;
+  sheet = interruptedOnce('propose', new Error('connection reset by the database'));
+  try {
+    const response = await sheetRequest({ mode: 'save', csv: csvOf(file), saveId, reason });
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toBe(sheetWords.savePartly);
+    expect(body.report.saved).toEqual([
+      { route: 'BO-EC', routeId: await routeId('BO-EC'), contentVersion: 1, packVersion: null },
+    ]);
+    expect(body.report.errors).toEqual([
+      { row: null, route: 'BO-EC', key: null, message: sheetWords.saveStopped },
+    ]);
+    expect(JSON.stringify(body)).not.toContain('connection reset');
+  } finally {
+    sheet = real;
+  }
+  const finished = await sheetRequest({ mode: 'save', csv: csvOf(file), saveId, reason });
+  expect(finished.status).toBe(201);
+  expect((await latestPack('BO-EC')).version).toBe(1);
+});
+
+test('a pack row marked Pending clears its Not applicable mark, and sourcing.profile refuses a value and a Filled state without a profile', async () => {
+  const na = line({
+    route: 'EC-BO',
+    field_key: 'pack.localities',
+    state: 'Not applicable',
+    note: 'No place keys on this route',
+  });
+  expect((await save([na])).ok).toBe(true);
+  expect(fact(await latestDocument('EC-BO'), 'pack.localities')).toEqual({
+    key: 'pack.localities',
+    state: 'NOT_APPLICABLE',
+    note: 'No place keys on this route',
+  });
+  const cleared = await save([
+    line({ route: 'EC-BO', field_key: 'pack.localities', state: 'Pending' }),
+  ]);
+  expect(plan(cleared, 'EC-BO').content.removed).toEqual([
+    { key: 'pack.localities', label: 'Place keys' },
+  ]);
+  expect(fact(await latestDocument('EC-BO'), 'pack.localities')).toBeUndefined();
+  const refused = await sheet.dryRun(owner(), {
+    rows: rowsOf([
+      line({ route: 'EC-BO', field_key: 'sourcing.profile', state: 'Filled' }),
+      line({ route: 'BO-PE', field_key: 'sourcing.profile', state: 'Pending', value: 'profile' }),
+    ]),
+  });
+  expect(refused.errors).toEqual([
+    { row: 2, route: 'EC-BO', key: 'sourcing.profile', message: sheetWords.sourcingAbsent },
+    { row: 3, route: 'BO-PE', key: 'sourcing.profile', message: sheetWords.sourcingValue },
+  ]);
 });

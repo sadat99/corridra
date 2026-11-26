@@ -34,7 +34,13 @@ const utf8 = new TextDecoder('utf-8', { fatal: true });
 // takes it off again.
 const sheetCsv = (rows: string[][]) =>
   '\uFEFF' + rows.map((row) => row.map((cell) => csvCell(cell)).join(',')).join('\r\n') + '\r\n';
-const savedNothing = (report: SheetReport) => !report.saved?.length;
+// A plan with errors saved nothing; a save that stopped after writing says so; otherwise the step's own words.
+const sheetRefusal = (report: SheetReport) =>
+  !report.saved
+    ? sheetWords.saveErrors
+    : report.saved.length
+      ? sheetWords.savePartly
+      : (report.errors[0]?.message ?? sheetWords.saveErrors);
 // Reads at most `limit` octets, stopping as soon as the body passes it; a client-supplied Content-Length is not trusted.
 async function boundedBody(request: Request, limit: number) {
   const reader = request.body?.getReader();
@@ -184,7 +190,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         if (report.ok) return Response.json(report, { status: 201, headers });
         return Response.json(
           {
-            error: savedNothing(report) ? sheetWords.saveErrors : sheetWords.savePartly,
+            error: sheetRefusal(report),
             report,
           },
           { status: 409, headers },
