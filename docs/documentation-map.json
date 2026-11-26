@@ -1619,6 +1619,11 @@
       "use": "Exact hashed ledger at 9944c7d (main after PR 665), before the 26 Nov 2026 records for PR 665 shortened the Merged list; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-adr093-records-2026-11-26.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 8f8aadb (main after PR 666), before the 26 Nov 2026 ADR-093 records shortened the Merged list and several superseded clauses; use the current ledger for live state."
+    },
+    {
       "path": "docs/v3/history/ledger-before-w1-records-2026-11-19.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger at 626d2f8 (the PR 571 merge), before the 19 Nov W1 records recorded merges 560 to 571, the 19 Nov verification and the PR 573 diagnosis; preserves the Guardian 28 Main bullet and the 547 to 559 merge list; use the current ledger for live state."
@@ -1712,6 +1717,11 @@
       "path": "docs/adr/0092-owner-entered-invoice-issuer-details.md",
       "classification": "Architecture decision",
       "use": "Proposed 23 Nov 2026 for the owner decision that the owner types the invoice issuer details on an Owner-only staff screen with an authenticator check; one new append-only supplier version per save, made-up marks cleared for the typed fields, the real-invoice refusal (D3) lifts only when nothing made up is left; screen switch off by default; real invoices, payments and payouts are not opened by it; amends ADR-064 forward"
+    },
+    {
+      "path": "docs/adr/0093-route-pack-standard.md",
+      "classification": "Architecture decision",
+      "use": "Accepted by the owner 26 Nov 2026; Route Pack Standard v1: a guarded locked pack plus a separately versioned append-only content record per route (17 sections, 71 fields, 20 Core, source and date per fact, custom fields, one-sheet CSV round trip with dry run); one person may propose, publish, record readiness and release a route pack; amends ADR-029 and ADR-083 decision 1 forward for route packs only; field dictionary and template under docs/adr/0093/; design only"
     },
     {
       "path": "docs/revamp/README.md",
