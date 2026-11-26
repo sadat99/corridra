@@ -12,6 +12,7 @@ import { migrateRoutePack } from '../../packages/db/src/route-pack-migrate';
 let f: Awaited<ReturnType<typeof commercialFixture>>;
 const registry = 'route_pack_migrations.applied';
 const file = '0001_one_person_route_publication.sql';
+const contentFile = '0002_route_pack_content.sql';
 const dir = 'packages/db/route-pack-migrations';
 const realUseHash = 'df18b4d178c4fc824869c924da7110ea802e7594681659dbabebe24950edbd97';
 const sha = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
@@ -76,7 +77,7 @@ test('a drifted guard definition stops the install and changes nothing', async (
   expect((await guard()).h).toBe(original.h);
 });
 
-test('install replaces exactly the operations guard, adds only the marker, is repeatable and refuses a changed file', async () => {
+test('install replaces exactly the operations guard, adds only the markers and the content guard, is repeatable and refuses a changed file', async () => {
   const before = await functionHashes();
   await migrateRoutePack(f.owner);
   await migrateRoutePack(f.owner);
@@ -86,17 +87,23 @@ test('install replaces exactly the operations guard, adds only the marker, is re
     .map(([name]) => name);
   expect(changed.sort()).toEqual([
     'app.guard_operations_control()',
+    'app.guard_route_pack_content()',
+    'app.route_pack_content_installed()',
     'app.route_pack_one_person_publication()',
   ]);
   expect([...before].filter(([name]) => !after.has(name))).toEqual([]);
   expect((await f.owner.query('SELECT app.route_pack_one_person_publication() n')).rows[0].n).toBe(
     true,
   );
-  const applied = (await f.owner.query(`SELECT name,sha256 FROM ${registry}`)).rows;
-  expect(applied).toEqual([{ name: file, sha256: sha(`${dir}/${file}`) }]);
+  const applied = (await f.owner.query(`SELECT name,sha256 FROM ${registry} ORDER BY name`)).rows;
+  expect(applied).toEqual([
+    { name: file, sha256: sha(`${dir}/${file}`) },
+    { name: contentFile, sha256: sha(`${dir}/${contentFile}`) },
+  ]);
   await f.owner.query(`UPDATE ${registry} SET sha256=repeat('0',64)`);
   await expect(migrateRoutePack(f.owner)).rejects.toThrow('Route pack migration history mismatch');
-  await f.owner.query(`UPDATE ${registry} SET sha256=$1`, [applied[0].sha256]);
+  for (const row of applied)
+    await f.owner.query(`UPDATE ${registry} SET sha256=$1 WHERE name=$2`, [row.sha256, row.name]);
   await migrateRoutePack(f.owner);
 });
 
@@ -205,7 +212,7 @@ test('the rollback refuses and changes nothing when the guard is the ADR-093 one
 test('the rollback is one statement with no commit of its own, so a caller can still undo it', async () => {
   const before = await state();
   expect(before.marker).not.toBeNull();
-  expect(before.rows).toHaveLength(1);
+  expect(before.rows).toHaveLength(2);
   const db = await f.owner.connect();
   try {
     await db.query('BEGIN');
@@ -217,7 +224,7 @@ test('the rollback is one statement with no commit of its own, so a caller can s
         )
       ).rows[0],
     ).toEqual({ h: realUseHash, m: null });
-    expect((await db.query(`SELECT name FROM ${registry}`)).rows).toEqual([]);
+    expect((await db.query(`SELECT name FROM ${registry}`)).rows).toEqual([{ name: contentFile }]);
     await db.query('ROLLBACK');
   } finally {
     await settle(db);
@@ -248,14 +255,18 @@ test('the rollback as shipped restores the real-use definition, drops the marker
   await f.owner.query(rollbackFile());
   expect((await guard()).h).toBe(realUseHash);
   expect(await marker()).toBeNull();
-  expect((await f.owner.query(`SELECT name FROM ${registry}`)).rows).toEqual([]);
+  // Only the 2b content module stays recorded.
+  expect((await f.owner.query(`SELECT name FROM ${registry}`)).rows).toEqual([
+    { name: contentFile },
+  ]);
   // A second rollback finds the real-use definition and refuses.
   await expect(f.owner.query(rollbackFile())).rejects.toThrow('Route pack rollback refused');
   // Installing again after a rollback applies the module again, with nothing removed by hand.
   await migrateRoutePack(f.owner);
   expect((await guard()).h).toBe(installed.h);
   expect(await marker()).not.toBeNull();
-  expect((await f.owner.query(`SELECT name,sha256 FROM ${registry}`)).rows).toEqual([
+  expect((await f.owner.query(`SELECT name,sha256 FROM ${registry} ORDER BY name`)).rows).toEqual([
     { name: file, sha256: sha(`${dir}/${file}`) },
+    { name: contentFile, sha256: sha(`${dir}/${contentFile}`) },
   ]);
 });
