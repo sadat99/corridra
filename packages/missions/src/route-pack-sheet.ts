@@ -115,10 +115,7 @@ const saveInput = z
   .strict();
 const exportInput = z
   .object({
-    routes: z
-      .array(z.string())
-      .min(1)
-      .max(sheetLimits.routes, `Export at most ${sheetLimits.routes} routes at once`),
+    routes: z.array(z.string().max(40)).min(1).max(1000),
   })
   .strict();
 
@@ -132,6 +129,7 @@ export const sheetWords = {
   rows: `Use at most ${sheetLimits.rows} route pack rows`,
   octets: `The file is larger than ${sheetLimits.octets} octets. Split it into smaller files.`,
   routes: `A file may name at most ${sheetLimits.routes} routes. Split it into smaller files.`,
+  exportRoutes: `Export at most ${sheetLimits.routes} routes at a time.`,
   route: 'Write the route as ORIGIN-DESTINATION with market keys, for example BD-CN.',
   market: (route: string) =>
     `${route} is not a route between two different markets. Use market keys such as BD, CN, EU or GB.`,
@@ -153,6 +151,8 @@ export const sheetWords = {
   example: 'Remove EXAMPLE ROW from the label first. Example rows are never saved as they are.',
   customType: 'A custom field needs a type: text, number, money, date, choice, list or link.',
   customChoice: 'A choice field needs its allowed values in the format column, separated by |.',
+  // A number is stored without leading zeros, so a code such as 0042 would come back as 42.
+  customNumberHelp: 'Use text for codes with leading zeros.',
   money: 'Write money as a currency code and an amount, for example USD 45.00.',
   moneyRange: 'Write an amount above zero with at most 18 digits, for example USD 45.00.',
   notAllowed: (value: string) => `${value} is not one of the allowed values for this field.`,
@@ -748,6 +748,7 @@ export class RoutePackSheetService {
     const wanted = [
       ...new Set(exportInput.parse(input).routes.map((route) => route.trim().toUpperCase())),
     ];
+    if (wanted.length > sheetLimits.routes) throw new DomainError(sheetWords.exportRoutes, 400);
     return withTenant(this.pool, ctx, 'missions.read', async ({ db }) => {
       await requireContent(db);
       const state = await loadRoutePackState(db, ctx.tenantId);
@@ -839,7 +840,7 @@ function exportRoute(
       fact.type ?? '',
       (fact.allowedValues ?? []).join(' | '),
       ...factCells(fact),
-      '',
+      fact.type === 'number' ? sheetWords.customNumberHelp : '',
     ]);
   const marks = (document?.sectionMarks ?? []).map((mark) => [
     route,

@@ -860,3 +860,14 @@ test('a pack row marked Pending clears its Not applicable mark, and sourcing.pro
     { row: 3, route: 'BO-PE', key: 'sourcing.profile', message: sheetWords.sourcingValue },
   ]);
 });
+
+test('an export of more than 20 routes says so plainly, and a custom number row carries help about codes', async () => {
+  const many = Array.from({ length: 21 }, (_, i) => `R${i}-X${i}`).join('|');
+  const refused = await exportRequest(many);
+  expect(refused.status).toBe(400);
+  expect((await refused.json()).error).toBe('Export at most 20 routes at a time.');
+  const rows = csvRows(await (await exportRequest('EC-PE')).text(), sheetLimits.rows, 'route pack');
+  const number = rows.find((r) => r.cells[2] === 'custom.balance_ec_pe')!;
+  expect(number.cells[14]).toBe('Use text for codes with leading zeros.');
+  expect(rows.find((r) => r.cells[2] === 'custom.trend_ec_pe')!.cells[14]).toBe('');
+});
