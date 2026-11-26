@@ -5563,3 +5563,19 @@ Next action: the owner's native review and branch clean-up; then the owner live 
 ## 26 Nov 2026 - gitleaks finding on main (builder S1)
 
 The finding (rule `generic-api-key`, `docs/ux10x/evidence-sha256.json:3`) is a SHA-256 of `docs/ux10x/evidence/evidence-secret-scan.json`, not a credential, and it appeared only in shallow clones: the shallow boundary commit looks like it adds the whole tree, so the existing `.gitleaksignore` entry (commit `21410efb`, which exists in full history) no longer matched. With full history `node scripts/security-scan.mjs` reports 0 findings, as CI (`fetch-depth: 0`) does. Fix: the scan now unshallows first (`scripts/ensure-full-history.mjs`), with `tests/security-scan-history.test.mjs` (3 tests) in `test:docs`. No allowlist or ignore entry added. Next action: unchanged.
+
+## 26 Nov 2026 - PR 665 merged, flake on its CI, dedupe decision (scribe, from G66's report)
+
+Request: record PR 665, one CI flake and the owner's dedupe decision. Changed files: this entry, `docs/V3_LEDGER.md` (Resume line: main 9944c7da, 664 and 665 listed; dedupe decision line) `docs/v3/KNOWN_ISSUES.md` (KI-68), and the exact prior ledger archived as `docs/v3/history/ledger-before-g66-records-2026-11-26.md` (10290 bytes, sha256 c1856b7f8486baa3aa0a6b5c03959328d8fc4e9e6c7f93dcd0258f0a4d6baaaa) with a `manifest.json` row and a `docs/documentation-map.json` row, because the always-read budget (36 KiB) needed the Merged list in the Resume line shortened (the 662 detail and the V43 rollback and deploy pointers are in the 26 Nov entries above). No application code, test, ADR or plan status changed.
+
+PR 665 merged as 9944c7da (squash), the secret-scan fix from the entry above: `scripts/ensure-full-history.mjs` completes shallow clones before scanning, so the reviewed false positive does not resurface. Production READY dpl_3GwpKQidjgTKjwLLNKkx7qwmRwDa for 9944c7da (G66's report, not read by the scribe). Reviewer (Sonnet) found no blocking findings.
+
+Open minor follow-ups from the review, recorded and not fixed: (a) `scripts/preflight.mjs` lines about 120 to 124 send security-scan stderr to /dev/null, so if `git fetch --unshallow` fails offline the preflight prints "scanner unavailable, skipped" and hides the clear error (CI is unaffected, `fetch-depth: 0`); (b) the third test in `tests/security-scan-history.test.mjs` asserts `/shallow/`, which could pass vacuously; a tighter pattern such as `/could not be completed/` would remove that.
+
+Flake: on PR 665 head 7fb497c1, CI run 45807410068, job `ux (2)` failed once in `tests/ux/home-v43.spec.ts:734`; recorded as KI-68. The PR touched no UI, main's `ux (2)` passed, and one re-run of the failed job passed.
+
+Owner decision 26 Nov, relayed by G65 (not first hand): "dedupe" for how-it-works, trust and home. Home keeps 3-line summaries; /how-it-works is the full process; /trust is the proof. Mockups on branch claude/mockups-how-trust (head a81b085d) were sent to the owner, who has not yet answered 3 choices. Nothing is built and nothing is accepted.
+
+Verification (scribe, this branch): `node scripts/authority.mjs stamp` run first (auth-2f03f9ec7fa8); focused checks listed in the PR body. Full suites not run.
+
+Next action: unchanged (native review, owner live steps). PR: the records PR for branch claude/records-g66-665.
