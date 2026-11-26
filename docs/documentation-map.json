@@ -1714,6 +1714,11 @@
       "use": "Proposed 23 Nov 2026 for the owner decision that the owner types the invoice issuer details on an Owner-only staff screen with an authenticator check; one new append-only supplier version per save, made-up marks cleared for the typed fields, the real-invoice refusal (D3) lifts only when nothing made up is left; screen switch off by default; real invoices, payments and payouts are not opened by it; amends ADR-064 forward"
     },
     {
+      "path": "docs/adr/0093-route-pack-standard.md",
+      "classification": "Architecture decision",
+      "use": "Accepted by the owner 26 Nov 2026; Route Pack Standard v1: a guarded locked pack plus a separately versioned append-only content record per route (17 sections, 71 fields, 20 Core, source and date per fact, custom fields, one-sheet CSV round trip with dry run); one person may propose, publish, record readiness and release a route pack; amends ADR-029 and ADR-083 decision 1 forward for route packs only; field dictionary and template under docs/adr/0093/; design only"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v4 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"
