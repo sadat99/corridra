@@ -617,39 +617,55 @@ export class RoutePackContentService {
   async proposalExists(ctx: RequestContext, id: string): Promise<boolean> {
     return (await this.proposalOf(ctx, id)) !== null;
   }
-  // A carried communication policy or AI policy reference that is no longer current would make the pack guard refuse every
-  // new version, PAUSED included. The reviewed path drops such references, with the same tests as the guard, and names them,
-  // so the person sees what changed and the route can always be paused. The guard itself is unchanged.
+  // A carried communication policy or AI policy reference that is no longer current makes the pack guard refuse every new
+  // version. These references are obligations, and a key left out is never removed (ADR-093 B), so only a move to PAUSED
+  // drops them, named in removedRefs, which keeps a route pausable. Any other target status is refused with the expired
+  // policies named, and nothing is written. The tests are the guard's own; the guard itself is unchanged.
   withoutExpiredRefs(
     ctx: RequestContext,
     configuration: RouteConfiguration,
+    status: PackStatus,
   ): Promise<{ configuration: RouteConfiguration; removedRefs: string[] }> {
     return withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
       const expiredPolicies = (
-        await db.query<{ id: string }>(
-          'SELECT x AS id FROM unnest($2::text[]) x WHERE NOT EXISTS(SELECT FROM app.communication_policy WHERE tenant_id=$1 AND id::text=x AND effective_from<=now() AND valid_until>now())',
+        await db.query<{ id: string; name: string | null }>(
+          `SELECT x AS id,(SELECT 'communication policy '||p.jurisdiction||' '||p.channel||' '||p.contact_purpose||' version '||p.version
+             FROM app.communication_policy p WHERE p.tenant_id=$1 AND p.id::text=x) AS name
+           FROM unnest($2::text[]) x WHERE NOT EXISTS(SELECT FROM app.communication_policy WHERE tenant_id=$1 AND id::text=x AND effective_from<=now() AND valid_until>now())`,
           [ctx.tenantId, configuration.jurisdictionPolicyRefs],
         )
-      ).rows.map((row) => row.id);
-      const aiPolicyExpired =
-        configuration.aiPolicyRef !== null &&
-        !(
-          await db.query(
-            "SELECT FROM app.ai_model_policy p WHERE p.tenant_id=$1 AND p.id::text=$2 AND p.effective_from<=now() AND (p.configuration->>'effectiveUntil')::timestamptz>now() AND p.version=(SELECT max(version) FROM app.ai_model_policy n WHERE n.tenant_id=p.tenant_id AND n.key=p.key AND n.effective_from<=now())",
-            [ctx.tenantId, configuration.aiPolicyRef],
-          )
-        ).rowCount;
-      const removedRefs = [
+      ).rows;
+      const aiPolicy = configuration.aiPolicyRef
+        ? ((
+            await db.query<{ name: string; current: boolean }>(
+              "SELECT 'AI policy '||p.key||' version '||p.version AS name,(p.effective_from<=now() AND (p.configuration->>'effectiveUntil')::timestamptz>now() AND p.version=(SELECT max(version) FROM app.ai_model_policy n WHERE n.tenant_id=p.tenant_id AND n.key=p.key AND n.effective_from<=now())) AS current FROM app.ai_model_policy p WHERE p.tenant_id=$1 AND p.id::text=$2",
+              [ctx.tenantId, configuration.aiPolicyRef],
+            )
+          ).rows[0] ?? { name: null, current: false })
+        : null;
+      const expired = [
         ...expiredPolicies,
-        ...(aiPolicyExpired && configuration.aiPolicyRef ? [configuration.aiPolicyRef] : []),
+        ...(configuration.aiPolicyRef && aiPolicy && !aiPolicy.current
+          ? [{ id: configuration.aiPolicyRef, name: aiPolicy.name }]
+          : []),
       ];
+      if (expired.length && status !== 'PAUSED')
+        throw new DomainError(
+          routePackWords.policyExpired(expired.map((ref) => ref.name ?? ref.id).join(', ')),
+          409,
+          'ROUTE_PACK_POLICY_EXPIRED',
+        );
+      const removedRefs = expired.map((ref) => ref.id);
       return {
         configuration: {
           ...configuration,
           jurisdictionPolicyRefs: configuration.jurisdictionPolicyRefs.filter(
-            (ref) => !expiredPolicies.includes(ref),
+            (ref) => !removedRefs.includes(ref),
           ),
-          aiPolicyRef: aiPolicyExpired ? null : configuration.aiPolicyRef,
+          aiPolicyRef:
+            configuration.aiPolicyRef && removedRefs.includes(configuration.aiPolicyRef)
+              ? null
+              : configuration.aiPolicyRef,
         },
         removedRefs,
       };

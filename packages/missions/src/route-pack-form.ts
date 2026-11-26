@@ -206,6 +206,7 @@ export async function createRoutePack(
   const { configuration, removedRefs } = await deps.content.withoutExpiredRefs(
     ctx,
     routePackConfiguration(v, route.pack?.configuration ?? null),
+    v.status,
   );
   const commandId = v.commandId ?? formCommandId(v, configuration);
   // A form opened on an older pack is refused, as before; a retry of a publish already proposed is not.
