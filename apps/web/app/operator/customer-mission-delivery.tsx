@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
+import { isStepUpResponse, sendWithStepUp, stepUpKeptMessage } from '../../lib/ux/step-up';
 const schema = z
   .object({
     missionId: z.uuid(),
@@ -77,10 +78,17 @@ function PrivateDelivery({ tenant, mission }: Props) {
     setPending(null);
     setMessage('');
     try {
-      const r = await fetch(endpoint + '&mission=' + encodeURIComponent(mission), {
-        cache: 'no-store',
-        signal: task.signal,
-      });
+      // A lapsed authenticator check opens the in-place check and reads again once the code is accepted.
+      const r = await sendWithStepUp(() =>
+        fetch(endpoint + '&mission=' + encodeURIComponent(mission), {
+          cache: 'no-store',
+          signal: task.signal,
+        }),
+      );
+      if (await isStepUpResponse(r))
+        throw Error(
+          'Confirm your authenticator code to see the account delivery. Nothing was changed.',
+        );
       if (!r.ok)
         throw Error(
           r.status === 503
@@ -117,13 +125,17 @@ function PrivateDelivery({ tenant, mission }: Props) {
     const task = new AbortController();
     controller.current = task;
     try {
-      const r = await fetch(endpoint, {
-        method: 'POST',
-        cache: 'no-store',
-        signal: task.signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(value),
-      });
+      const r = await sendWithStepUp(() =>
+        fetch(endpoint, {
+          method: 'POST',
+          cache: 'no-store',
+          signal: task.signal,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(value),
+        }),
+      );
+      // Closed check: the chosen account link and the reason stay, with the same command, for the next try.
+      if (await isStepUpResponse(r)) throw Error(stepUpKeptMessage);
       if (!r.ok)
         throw Error(
           r.status === 401 || r.status === 403

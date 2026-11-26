@@ -48,7 +48,8 @@ describe('the helper task words', () => {
   const board = read('apps/web/app/contributor/task-board.tsx');
   it('never prints the reviewer id and keeps the form field names', () => {
     expect(board).not.toContain('{task.reviewer}');
-    expect(board).toContain('<dd>Independent reviewer</dd>');
+    expect(board).toContain('<dd>Someone other than you checks your work</dd>');
+    expect(board).not.toContain('Independent reviewer');
     expect(board.match(/name="reason"/g)).toHaveLength(3);
     expect(board.match(/name="body"/g)).toHaveLength(1);
     // The live words stay (no owner approval for new wording); only the layout changed.

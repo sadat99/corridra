@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { AccessOptions } from '../../../components/access-options';
 import { accessHelp } from '../../../lib/access-doors';
 import { WorkspaceShell } from '../../../components/workspace-shell';
@@ -6,6 +7,7 @@ import { foundations } from '../../../lib/foundations';
 import { OperatorSignin } from './signin-form';
 import { operatorReturnTo } from '../../../lib/workspace-navigation';
 import { OperatorInvitationHint } from '../../../components/operator-invitation-hint';
+import { customerSessionHinted } from '../../../lib/customer-session-hint';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Operator sign-in | Corridra',
@@ -28,7 +30,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
     );
   return (
     <WorkspaceShell eyebrow="OPERATOR ACCESS" title="Sign in to your workspace." compact>
-      <OperatorInvitationHint />
+      {/* Signed out of the customer account, there is no invitation to find and nothing is asked. */}
+      {customerSessionHinted((await cookies()).getAll()) ? <OperatorInvitationHint /> : null}
       <OperatorSignin returnTo={returnTo} />
       <Link prefetch={false} className="text-link" href="/operator/forgot-password">
         Forgot operator password?

@@ -1051,6 +1051,20 @@ nav.ux-team-sidebar[data-menu='v3'] .ux-team-menu-switch select:focus-visible {
   .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-app-tools {
     gap: 0;
   }
+  /* The Search and account buttons cap their side padding, the account button its minimum width and the search icon
+     its size at the same normal-size values, so at 320 px with 200% text the row fits the screen (it was 44 px too
+     wide, final walk follow-up, 26 Nov 2026). Every target keeps its 44 px floor and the initials keep their size. */
+  .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-palette-trigger {
+    padding-inline: min(var(--space-3), 12px);
+  }
+  .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-palette-trigger .operator-icon {
+    width: min(1.25rem, 28px);
+    height: min(1.25rem, 28px);
+  }
+  .site-shell:has(nav[data-menu='v3']) > .ux-app-header .ux-util-avatar > .ux-menu-button {
+    min-width: min(2.75rem, 44px);
+    padding-inline: min(var(--space-2), 8px);
+  }
 }
 
 /* Menu v3 on a short desktop window (a 1440 x 900 laptop): the gaps between groups and rows close up so the whole

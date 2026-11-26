@@ -12,6 +12,7 @@ import {
   SubmissionFailure,
   submissionMessage,
   useRetainedSubmission,
+  withStepUpSubmission,
 } from '../../components/retained-submission';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
@@ -33,6 +34,12 @@ type Profile = {
     markets: string[];
     workCountries: string[];
   };
+};
+// A work profile's stored status as a person reads it (team desk v4.1, A06 country words): plain words, never the code.
+const profileStatusWords: Record<string, string> = {
+  ACTIVE: 'Active',
+  SUSPENDED: 'Task access paused',
+  RETIRED: 'Retired',
 };
 type Task = {
   id: string;
@@ -230,6 +237,7 @@ export function ExecutionNetwork({
           body.error ?? 'The submission could not be confirmed.',
           r.status,
           r.headers.get('X-Corridra-Request-ID'),
+          typeof body.code === 'string' ? body.code : undefined,
         );
       return body;
     },
@@ -290,7 +298,8 @@ export function ExecutionNetwork({
     const show = (kind: 'success' | 'error', text: string) =>
       setFeedback({ form, value: { kind, text } });
     try {
-      const result = await submit(form, action, input, request);
+      // Rates, profiles, rewards and reversals need a fresh authenticator check: a lapsed one opens it in place.
+      const result = await withStepUpSubmission(() => submit(form, action, input, request));
       const receipt = result.id ? `Saved. Reference ${result.id}.` : 'Saved.';
       show('success', receipt);
       try {
@@ -865,10 +874,24 @@ export function ExecutionNetwork({
                             );
                           }}
                         >
-                          <p>
-                            {p.configuration.alias} · {p.configuration.status} · reviewed countries{' '}
-                            {p.configuration.workCountries.join(', ')}
-                          </p>
+                          {teamDeskV41 ? (
+                            <p>
+                              {p.configuration.alias} ·{' '}
+                              {profileStatusWords[p.configuration.status] ?? p.configuration.status}{' '}
+                              · reviewed countries{' '}
+                              {p.configuration.workCountries.map((code, i) => (
+                                <span key={code}>
+                                  {i ? ', ' : null}
+                                  <CountryName code={code} />
+                                </span>
+                              ))}
+                            </p>
+                          ) : (
+                            <p>
+                              {p.configuration.alias} · {p.configuration.status} · reviewed
+                              countries {p.configuration.workCountries.join(', ')}
+                            </p>
+                          )}
                           <label className="field">
                             Reviewed profile status
                             <select name="status">

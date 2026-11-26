@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { displayMoney } from '@corridra/domain/locale';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
+import { requestStepUp, stepUpKeptMessage } from '../../lib/ux/step-up';
 
 // ADR-065: the staff side of the simulated payment provider "Corridra Pay (madeup)". Staff can see every simulated
 // attempt and record a made-up refund inside the made-up window. Nothing here is real money and no invoice changes.
@@ -149,9 +150,16 @@ function Scoped({ tenant }: { tenant: string }) {
     setBusy(true);
     setMessage('');
     setOk(false);
-    const r = await call(body);
+    let r = await call(body);
+    // A lapsed authenticator check opens the in-place check and sends the same command once more after the code is
+    // accepted. Closed, the command and the form are kept for the next try.
+    if (r?.check && (await requestStepUp())) r = await call(body);
     setBusy(false);
     if (!r) return;
+    if (r.check) {
+      setMessage(stepUpKeptMessage);
+      return;
+    }
     if (r.status !== 200) {
       const unsure = r.status === 0 || (r.status >= 500 && r.status !== 503);
       if (!unsure) setPending(null);

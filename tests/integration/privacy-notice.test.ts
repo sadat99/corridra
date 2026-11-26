@@ -484,4 +484,21 @@ describe('public programme pages and applications (ADR-080)', () => {
       expect(page).not.toContain('12 November 2026');
     }
   });
+  // Owner decision (26 Nov 2026, relayed by the Guardian): the readable team marker cookie is named where cookies are
+  // listed, with what it does and how long it lasts. The words must match the code: the marker's Max-Age is 24 hours,
+  // it is cleared at sign-out, and it is set only by the team sign-in service and the page proxy for a team session.
+  it('names the corridra-team cookie, in every setting, with the lifetime the code sets', async () => {
+    const line =
+      'In the browsers of Corridra team members only, a plain cookie named corridra-team is set after team sign-in. It tells our pages that a team session exists, so they show the team header. It holds no secret and no personal data, and it ends after 24 hours or when the team member signs out.';
+    for (const env of [{}, real]) {
+      const page = await text(env);
+      expect(page).toContain(line);
+      expect(page.indexOf(line)).toBeGreaterThan(page.indexOf('Cookies and browser storage'));
+    }
+    const { readFileSync } = await import('node:fs');
+    const code = readFileSync(resolve('apps/web/lib/team-session-hint.ts'), 'utf8');
+    expect(code).toContain("teamSessionHintName = 'corridra-team'");
+    expect(code).toMatch(/const maxAge = 86400;/);
+    expect(code).toContain('Max-Age=${on ? maxAge : 0}');
+  });
 });

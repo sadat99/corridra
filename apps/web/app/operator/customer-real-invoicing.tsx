@@ -4,6 +4,7 @@ import { displayMoney } from '@corridra/domain/locale';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { Dialog } from '../../components/ux/dialog';
 import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
+import { requestStepUp, stepUpKeptMessage, stepUpReadMessage } from '../../lib/ux/step-up';
 import { CountryName } from './country-name';
 
 // ADR-064: the staff side of real invoices. Staff prepare an invoice or a credit note; a second named person approves
@@ -245,8 +246,15 @@ function Scoped({ tenant }: { tenant: string }) {
   }, [call, settle]);
   const open = useCallback(
     async (id: string) => {
-      const r = await call('&scope=invoice&invoiceId=' + encodeURIComponent(id));
+      // Opened by the person: a lapsed authenticator check opens the in-place check and reads again once.
+      let r = await call('&scope=invoice&invoiceId=' + encodeURIComponent(id));
+      if (r?.check && (await requestStepUp()))
+        r = await call('&scope=invoice&invoiceId=' + encodeURIComponent(id));
       if (!r) return;
+      if (r.check) {
+        setFault(stepUpReadMessage);
+        return;
+      }
       const body = r.body as Detail | null;
       if (r.status !== 200 || !body?.invoice || body.invoice.id !== id) {
         setDetail(null);
@@ -284,9 +292,16 @@ function Scoped({ tenant }: { tenant: string }) {
     setBusy(true);
     setMessage('');
     setOk(false);
-    const r = await call('', body);
+    let r = await call('', body);
+    // A lapsed authenticator check opens the in-place check and sends the same command once more after the code is
+    // accepted. Closed, the command and the form are kept for the next try.
+    if (r?.check && (await requestStepUp())) r = await call('', body);
     setBusy(false);
     if (!r) return;
+    if (r.check) {
+      setMessage(stepUpKeptMessage);
+      return;
+    }
     if (r.status !== 200) {
       const unsure = r.status === 0 || (r.status >= 500 && r.status !== 503);
       if (!unsure) setPending(null);

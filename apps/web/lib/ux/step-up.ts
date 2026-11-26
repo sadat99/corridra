@@ -54,6 +54,39 @@ export function requestStepUp(): Promise<boolean> {
   });
 }
 
+/** What an action shows when the person closes the check: nothing was done and their entries are still there. */
+export const stepUpKeptMessage =
+  'Confirm your authenticator code to finish this. Your changes are kept.';
+
+/** What a read opened by the person shows when they close the check: nothing was changed. */
+export const stepUpReadMessage =
+  'Confirm your authenticator code to see this. Nothing was changed.';
+
+/** True when a Response was refused only for the authenticator check (401 STEP_UP_REQUIRED). Its body stays readable. */
+export async function isStepUpResponse(response: Response): Promise<boolean> {
+  if (response.status !== 401) return false;
+  try {
+    return (
+      ((await response.clone().json()) as { code?: unknown } | null)?.code === STEP_UP_REQUIRED
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The same recovery as withStepUp for a screen that reads its own Response: sends once and, when refused only for the
+ * authenticator check, opens the in-place check and sends once more after the code is accepted. The refused send did
+ * nothing (the check is made before any change), so sending the same body again cannot apply it twice. Returns the last
+ * Response: when the check is closed that is the refusal, which the screen shows as stepUpKeptMessage.
+ */
+export async function sendWithStepUp(send: () => Promise<Response>): Promise<Response> {
+  const first = await send();
+  if (!(await isStepUpResponse(first))) return first;
+  if (!(await requestStepUp())) return first;
+  return send();
+}
+
 /**
  * Runs an action. When it is refused with STEP_UP_REQUIRED, opens the dialog and retries once after a
  * successful re-verify. The action should throw ActionError (readJson does) for a refused response.
@@ -64,12 +97,7 @@ export async function withStepUp<T>(action: () => Promise<T>): Promise<T> {
   } catch (error) {
     if (!isStepUpRequired(error)) throw error;
     const verified = await requestStepUp();
-    if (!verified)
-      throw new ActionError(
-        'Confirm your authenticator code to finish this. Your changes are kept.',
-        401,
-        STEP_UP_REQUIRED,
-      );
+    if (!verified) throw new ActionError(stepUpKeptMessage, 401, STEP_UP_REQUIRED);
     return action();
   }
 }

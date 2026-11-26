@@ -1,5 +1,11 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  isStepUpResponse,
+  sendWithStepUp,
+  stepUpKeptMessage,
+  stepUpReadMessage,
+} from '../../lib/ux/step-up';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
 import {
@@ -96,6 +102,8 @@ function Reviewer({ tenant }: Props) {
     }, 60000);
     return () => clearTimeout(timer);
   }, [review, queue]);
+  // Each read and the decision run under the in-place authenticator check (sendWithStepUp): a lapsed check opens it and
+  // the same request goes again once the code is accepted. Closed, nothing changed and the screen says so.
   function failureText(status: number) {
     return status === 503
       ? 'Company link review is unavailable.'
@@ -118,10 +126,13 @@ function Reviewer({ tenant }: Props) {
     setPending(null);
     setMessage('');
     try {
-      const r = await fetch(endpoint + '&scope=' + next, {
-        cache: 'no-store',
-        signal: task.signal,
-      });
+      const r = await sendWithStepUp(() =>
+        fetch(endpoint + '&scope=' + next, {
+          cache: 'no-store',
+          signal: task.signal,
+        }),
+      );
+      if (await isStepUpResponse(r)) throw Error(stepUpReadMessage);
       if (!r.ok) throw Error(failureText(r.status));
       const v = staffQueueSchema.parse(await r.json());
       if (v.scope !== next) throw Error('The list changed. Reload.');
@@ -144,10 +155,14 @@ function Reviewer({ tenant }: Props) {
     setBusy(true);
     setMessage('');
     try {
-      const r = await fetch(
-        endpoint + '&scope=' + queue.scope + '&after=' + encodeURIComponent(queue.nextAfter),
-        { cache: 'no-store', signal: task.signal },
+      const after = queue.nextAfter;
+      const r = await sendWithStepUp(() =>
+        fetch(endpoint + '&scope=' + queue.scope + '&after=' + encodeURIComponent(after), {
+          cache: 'no-store',
+          signal: task.signal,
+        }),
       );
+      if (await isStepUpResponse(r)) throw Error(stepUpReadMessage);
       if (!r.ok) throw Error(failureText(r.status));
       const v = staffQueueSchema.parse(await r.json());
       if (v.scope !== queue.scope) throw Error('The list changed. Reload.');
@@ -170,10 +185,13 @@ function Reviewer({ tenant }: Props) {
     setOrganisationId('');
     setMessage('');
     try {
-      const r = await fetch(endpoint + '&claim=' + encodeURIComponent(claimId), {
-        cache: 'no-store',
-        signal: task.signal,
-      });
+      const r = await sendWithStepUp(() =>
+        fetch(endpoint + '&claim=' + encodeURIComponent(claimId), {
+          cache: 'no-store',
+          signal: task.signal,
+        }),
+      );
+      if (await isStepUpResponse(r)) throw Error(stepUpReadMessage);
       if (!r.ok) throw Error(failureText(r.status));
       const v = staffReviewSchema.parse(await r.json());
       if (v.claimId !== claimId) throw Error('The request changed. Reload.');
@@ -215,13 +233,17 @@ function Reviewer({ tenant }: Props) {
     const task = new AbortController();
     controller.current = task;
     try {
-      const r = await fetch(endpoint, {
-        method: 'POST',
-        cache: 'no-store',
-        signal: task.signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(value),
-      });
+      const r = await sendWithStepUp(() =>
+        fetch(endpoint, {
+          method: 'POST',
+          cache: 'no-store',
+          signal: task.signal,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(value),
+        }),
+      );
+      // Closed check: the decision and its reason stay as written, with the same command, for the next try.
+      if (await isStepUpResponse(r)) throw Error(stepUpKeptMessage);
       if (!r.ok) {
         if (r.status === 409) setPending(null);
         throw Error(failureText(r.status));
