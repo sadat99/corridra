@@ -1,6 +1,7 @@
 // ADR-083 slice S1. Reference contents for the Bangladesh to China sourcing route profile. A reviewed test fixture, not a seed:
 // nothing here is written to any tenant. When the owner opens the module, a person proposes it through the reviewed pack flow
-// as a new pack version of the BD to CN route and an independent reviewer approves it. Opening it is configuration, not launch
+// as a new pack version of the BD to CN route and the owner publishes it through the reviewed flow (ADR-093: the same person
+// may propose and publish). Opening it is configuration, not launch
 // approval, and the route stays at TESTING. Context prompts are plain English. Chinese wording is never written here: it needs
 // native review, which stays a closed gate.
 import type { SourcingProfile } from '../../../packages/domain/src/corridors';

@@ -59,6 +59,8 @@ type Controls = {
   readiness: Row[];
   releases: Row[];
   proposals: Row[];
+  // ADR-093 Phase 2a: true once one person may propose and publish a route pack.
+  onePersonPublication?: boolean;
   cases: Row[];
   documents: Row[];
   ledger: Row[];
@@ -500,6 +502,10 @@ export function Operations({
     routeRow = catalogue?.routes.find((r) => r.id === route);
   const readings =
     controls?.readiness.filter((r) => r.route_id === route && r.mission_type === type) ?? [];
+  // The selected route's latest publication (proposals arrive newest first).
+  const latestPublication = controls?.proposals.find(
+    (p) => p.route_id === route && p.decision === 'PUBLISH',
+  );
   function readiness(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!pack) return;
@@ -544,7 +550,7 @@ export function Operations({
       reason:
         state === 'PAUSED'
           ? 'Explicitly pause new assignments for this route service'
-          : 'Independent route readiness review for limited use',
+          : 'Route readiness review for limited use',
     });
   }
   function preparePack(event: MouseEvent<HTMLButtonElement>) {
@@ -1234,6 +1240,10 @@ export function Operations({
                               Changing configuration invalidates readiness for the new version;
                               historical assignments remain pinned.
                             </p>
+                            {latestPublication?.published_by_you === true &&
+                              latestPublication.published_pack_id === pack.id && (
+                                <p>Proposed and published by you.</p>
+                              )}
                             <label className="field">
                               Route service
                               <select
@@ -1320,8 +1330,7 @@ export function Operations({
                                   action: 'propose',
                                   basePackId: preview.basePackId,
                                   pack: preview.pack,
-                                  reason:
-                                    'Submit the previewed exact configuration for independent review',
+                                  reason: 'Submit the previewed exact configuration for review',
                                 })
                               }
                             >
@@ -1358,7 +1367,7 @@ export function Operations({
                                 action: 'decide',
                                 proposalId: p.id,
                                 decision: 'PUBLISH',
-                                reason: 'Independent exact configuration review and publication',
+                                reason: 'Exact configuration review and publication',
                               })
                             }
                           >
@@ -1372,7 +1381,7 @@ export function Operations({
                                 action: 'decide',
                                 proposalId: p.id,
                                 decision: 'REJECT',
-                                reason: 'Independent proposal rejection; retained for audit',
+                                reason: 'Proposal rejection; retained for audit',
                               })
                             }
                           >
@@ -1541,9 +1550,12 @@ export function Operations({
                   <>
                     <h4>Financial, effort and case records</h4>
                     <p>
-                      Configuration publication and template changes retain owner-only authority. A
-                      different authorized owner must review a proposal. Financial and operational
-                      observations require fresh owner/admin authentication.
+                      Configuration publication and template changes retain owner-only authority.{' '}
+                      {controls?.onePersonPublication
+                        ? 'The same owner may propose and publish a proposal.'
+                        : 'A different authorized owner must review a proposal.'}{' '}
+                      Financial and operational observations require fresh owner/admin
+                      authentication.
                     </p>
                     <div className="ops-command">
                       <label className="field">
