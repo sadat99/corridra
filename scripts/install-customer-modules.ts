@@ -940,13 +940,13 @@ try {
         );
       }
     }
-    // ADR-093 Phase 2a is never part of the base run. It replaces app.guard_operations_control() after a hash check so one person
-    // may propose and publish a route pack, record its readiness and release it, and adds a marker the service reads. No switch
-    // and no gate. Needs the real-use modules installed and the owner's word. Reached only through
-    // field_modules_action=route_pack_install.
+    // ADR-093 Phase 2 is never part of the base run. 0001 (2a) replaces app.guard_operations_control() after a hash check so one
+    // person may propose and publish a route pack, record its readiness and release it; 0002 (2b) adds the route pack content
+    // table. Each adds a marker the service reads. No switch and no gate. Needs the real-use modules installed and the owner's
+    // word. Reached only through field_modules_action=route_pack_install.
     if (v.ROUTE_PACK_ACTION === 'install') {
       await migrateRoutePack(pool);
-      console.log('Route pack one-person publication installed or already current');
+      console.log('Route pack module installed or already current');
     }
     // ADR-089 is never part of the base run. It replaces app.guard_ai() after a hash check so real workspaces may hold a reviewed
     // model policy only; runs stay sample-only and AI stays off. Needs the real-use modules installed and the owner's word.

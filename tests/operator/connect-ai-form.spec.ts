@@ -64,17 +64,21 @@ async function open(
     hold,
     holdRead,
     routePack = false,
+    catalogue = { routes: [], packs: [], types: [], requirements: [], assessments: [] },
   }: {
     read?: (url: URL, count: number) => Answer;
     answer?: (body: Sent, count: number) => Answer;
     hold?: Promise<void>;
     /** Holds a read until the returned promise settles, so a person can act while it is under way. */
     holdRead?: (url: URL) => Promise<void> | undefined;
-    /** Whether Add route pack is offered (its own switch on), so both switch-gated sections are drawn. */
-    routePack?: boolean;
+    /** Whether Add route pack is offered (its own switch on), so both switch-gated sections are drawn. With an object, the
+     * read also says whether the route pack module is active and each save is answered in turn. */
+    routePack?: boolean | { reviewed: boolean; answer: (count: number) => unknown };
+    catalogue?: Record<string, unknown[]>;
   } = {},
 ) {
   const sent: Sent[] = [];
+  const routePackSent: Sent[] = [];
   const other: string[] = [];
   let reads = 0;
   await page.route('**/api/**', (route) => {
@@ -102,12 +106,17 @@ async function open(
     route.fulfill({ json: { missionsV2: false } }),
   );
   await page.route('**/api/workspace/mission-catalogue?*', (route) =>
-    route.fulfill({
-      json: { routes: [], packs: [], types: [], requirements: [], assessments: [] },
-    }),
+    route.fulfill({ json: catalogue }),
   );
-  if (routePack)
+  if (routePack === true)
     await page.route('**/api/team-control/route-pack?*', (route) => route.fulfill({ json: {} }));
+  if (typeof routePack === 'object')
+    await page.route('**/api/team-control/route-pack?*', (route) => {
+      if (route.request().method() === 'GET')
+        return route.fulfill({ json: { enabled: true, reviewed: routePack.reviewed } });
+      routePackSent.push(route.request().postDataJSON() as Sent);
+      return route.fulfill({ status: 201, json: routePack.answer(routePackSent.length) });
+    });
   await page.route('**/api/workspace/ai-connect?*', async (route: Route) => {
     const request = route.request();
     if (request.method() === 'GET') {
@@ -140,7 +149,7 @@ async function open(
         new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))),
     );
   };
-  return { sent, other, reads: () => reads, settled };
+  return { sent, other, routePackSent, reads: () => reads, settled };
 }
 
 const flow = (page: Page) => page.getByRole('form', { name: 'Connect AI' });
@@ -1046,4 +1055,113 @@ test('a late post-save read from the finished flow does not change the lists of 
   await expect(fallback.locator(`option[value="${id(96)}"]`)).toHaveCount(1);
   await expect(flow(page)).toContainText('Step 7 of 9: Tasks');
   await expect(page.getByText('Corridra could not refresh')).toHaveCount(0);
+});
+
+// ADR-093 2b, Add route pack. The server says whether the route pack module is active (`reviewed`). Active, the form sends
+// only what the person set, so the server carries every other key from the current pack, and the result says what the
+// reviewed publish did. Inactive, it sends and says exactly what it always did.
+const packCatalogue = {
+  routes: [{ id: id(70), origin_market: 'BD', destination_market: 'CN' }],
+  packs: [],
+  types: [{ id: id(71), key: 'sourcing' }],
+  requirements: [],
+  assessments: [],
+};
+async function fillRoutePack(page: Page) {
+  const form = page.locator('form').filter({ hasText: 'New route pack' });
+  await form.getByLabel('Route').selectOption(id(70));
+  await form.locator('input[name="missionTypes"][value="sourcing"]').check();
+  await form.getByLabel('Status').selectOption('TESTING');
+  await form.getByLabel('Reason for this pack').fill('Sample route pack for the form test');
+  return form;
+}
+const routePackFeedback = (page: Page) => page.locator('[data-feedback-scope="route-pack"]');
+
+test('Add route pack with the module active sends only what was set and says what was published', async ({
+  page,
+}) => {
+  const removed = 'communication policy DE SYNTHETIC institutional_introduction version 1';
+  const { routePackSent } = await open(page, {
+    read: () => ({ status: 404, json: { error: 'Not found' } }),
+    catalogue: packCatalogue,
+    routePack: {
+      reviewed: true,
+      answer: (count) =>
+        count === 1
+          ? {
+              id: id(80),
+              version: 1,
+              proposalId: id(81),
+              duplicate: false,
+              removedRefs: [id(82)],
+              removedPolicies: [removed],
+            }
+          : {
+              id: id(80),
+              version: 1,
+              proposalId: id(81),
+              duplicate: true,
+              removedRefs: [id(82)],
+              removedPolicies: [removed],
+            },
+    },
+  });
+  await page.getByText('Add route pack', { exact: true }).click();
+  let form = await fillRoutePack(page);
+  await form.getByRole('button', { name: 'Save Route Pack' }).click();
+  await expect(routePackFeedback(page)).toHaveText(
+    `Route pack version 1 published. Expired policies removed: ${removed}.`,
+  );
+  expect(routePackSent[0]).toEqual({
+    routeId: id(70),
+    version: 1,
+    status: 'TESTING',
+    reason: 'Sample route pack for the form test',
+    missionTypes: ['sourcing'],
+  });
+  form = await fillRoutePack(page);
+  await form.locator('input[name="languages"][value="en"]').check();
+  await form.locator('input[name="manualChannel"]').check();
+  await form.getByRole('button', { name: 'Save Route Pack' }).click();
+  await expect(routePackFeedback(page)).toHaveText('Already saved. Nothing changed.');
+  expect(routePackSent[1]).toMatchObject({ languages: ['en'], manualChannel: true });
+  expect(Object.keys(routePackSent[1]!)).not.toContain('currencies');
+  expect(Object.keys(routePackSent[1]!)).not.toContain('effectiveFrom');
+});
+
+test('Add route pack with the module inactive sends and says what it always did', async ({
+  page,
+}) => {
+  const { routePackSent } = await open(page, {
+    read: () => ({ status: 404, json: { error: 'Not found' } }),
+    catalogue: packCatalogue,
+    routePack: { reviewed: false, answer: () => ({ id: id(80), version: 1 }) },
+  });
+  await page.getByText('Add route pack', { exact: true }).click();
+  const form = await fillRoutePack(page);
+  await form.getByRole('button', { name: 'Save Route Pack' }).click();
+  await expect(routePackFeedback(page)).toHaveText(
+    'Route pack version 1 saved. Review is still required.',
+  );
+  const sent = routePackSent[0]!;
+  expect(Object.keys(sent).sort()).toEqual(
+    [
+      'currencies',
+      'effectiveFrom',
+      'languages',
+      'manualChannel',
+      'missionTypes',
+      'reason',
+      'routeId',
+      'status',
+      'timeZones',
+      'version',
+    ].sort(),
+  );
+  expect(sent).toMatchObject({
+    languages: [],
+    currencies: [],
+    timeZones: [],
+    manualChannel: false,
+  });
 });

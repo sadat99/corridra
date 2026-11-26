@@ -199,6 +199,7 @@ import { MeetingService } from '@corridra/missions/meetings';
 import { CommercialMissionService } from '@corridra/missions/commercial';
 import { CorridorService } from '@corridra/missions/corridors';
 import { OperationsService } from '@corridra/missions/operations';
+import { RoutePackContentService } from '@corridra/missions/route-pack-content';
 import { CommunicationService } from '@corridra/communications';
 import { OutreachChannel } from '@corridra/communications/adapters';
 import { OutboxDispatcher } from '@corridra/workflows';
@@ -990,6 +991,7 @@ function createServices() {
     commercialMissions: new CommercialMissionService(runtimePool),
     corridors: new CorridorService(runtimePool),
     operations: new OperationsService(runtimePool),
+    routePackContent: new RoutePackContentService(runtimePool),
     opportunities: new OpportunityService(runtimePool),
     communications: new CommunicationService(runtimePool, config.AUTH_SECRET),
     // ADR-090: sample channels go down the sample lane; EMAIL goes down the real lane, which is off unless its
