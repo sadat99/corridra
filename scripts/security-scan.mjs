@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
+import { ensureFullHistory } from './ensure-full-history.mjs';
+ensureFullHistory();
 const dir = '.cache/security';
 await mkdir(dir, { recursive: true, mode: 0o700 });
 const root = 'https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/';
