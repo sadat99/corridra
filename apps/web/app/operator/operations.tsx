@@ -502,6 +502,9 @@ export function Operations({
     routeRow = catalogue?.routes.find((r) => r.id === route);
   const readings =
     controls?.readiness.filter((r) => r.route_id === route && r.mission_type === type) ?? [];
+  // ADR-093 Phase 2a: once installed, one person may publish and release; until then the copy and the recorded reasons
+  // stay exactly as before.
+  const onePerson = controls?.onePersonPublication === true;
   // The selected route's latest publication (proposals arrive newest first).
   const latestPublication = controls?.proposals.find(
     (p) => p.route_id === route && p.decision === 'PUBLISH',
@@ -550,7 +553,9 @@ export function Operations({
       reason:
         state === 'PAUSED'
           ? 'Explicitly pause new assignments for this route service'
-          : 'Route readiness review for limited use',
+          : onePerson
+            ? 'Route readiness review for limited use'
+            : 'Independent route readiness review for limited use',
     });
   }
   function preparePack(event: MouseEvent<HTMLButtonElement>) {
@@ -1330,7 +1335,9 @@ export function Operations({
                                   action: 'propose',
                                   basePackId: preview.basePackId,
                                   pack: preview.pack,
-                                  reason: 'Submit the previewed exact configuration for review',
+                                  reason: onePerson
+                                    ? 'Submit the previewed exact configuration for review'
+                                    : 'Submit the previewed exact configuration for independent review',
                                 })
                               }
                             >
@@ -1367,7 +1374,9 @@ export function Operations({
                                 action: 'decide',
                                 proposalId: p.id,
                                 decision: 'PUBLISH',
-                                reason: 'Exact configuration review and publication',
+                                reason: onePerson
+                                  ? 'Exact configuration review and publication'
+                                  : 'Independent exact configuration review and publication',
                               })
                             }
                           >
@@ -1381,7 +1390,9 @@ export function Operations({
                                 action: 'decide',
                                 proposalId: p.id,
                                 decision: 'REJECT',
-                                reason: 'Proposal rejection; retained for audit',
+                                reason: onePerson
+                                  ? 'Proposal rejection; retained for audit'
+                                  : 'Independent proposal rejection; retained for audit',
                               })
                             }
                           >
@@ -1513,9 +1524,11 @@ export function Operations({
                               )?.state ?? 'UNPUBLISHED',
                             ),
                           )}
-                          . Approval needs all thirteen current dimensions and an independent
-                          reviewer. It does not open the route to the public or make any public
-                          claim.
+                          .{' '}
+                          {onePerson
+                            ? 'Approval needs all thirteen current dimensions.'
+                            : 'Approval needs all thirteen current dimensions and an independent reviewer.'}{' '}
+                          It does not open the route to the public or make any public claim.
                         </p>
                         <button
                           className="button"
@@ -1551,8 +1564,8 @@ export function Operations({
                     <h4>Financial, effort and case records</h4>
                     <p>
                       Configuration publication and template changes retain owner-only authority.{' '}
-                      {controls?.onePersonPublication
-                        ? 'The same owner may propose and publish a proposal.'
+                      {onePerson
+                        ? 'One owner may propose and publish the same change.'
                         : 'A different authorized owner must review a proposal.'}{' '}
                       Financial and operational observations require fresh owner/admin
                       authentication.
