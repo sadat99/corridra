@@ -57,6 +57,10 @@ Shared and frozen for every track: `globals.css`, tokens, `app/layout.tsx`, `pac
 
 The ledger, work log and gap register are shared. Each session appends its own entry and rebases before merge; nobody rewrites another session's entry.
 
+## Current lanes, 26 November 2026
+
+Home v4.3 (`CORRIDRA_UX_HOME_V43`), built on branch `claude/home-v43` in steps behind a switch that is off by default (owner, 26 Nov 2026, via the Guardian: "update as per attachment 100% correctly"). Record: [ui-ux-v4-3.md](specs/ui-ux-v4-3.md). The owner's pack is kept as reference in [landing-handoff](landing-handoff/README.md) and is not edited. Not merged, not switched on; the PR and the live state are recorded in the ledger.
+
 ## Current lanes, 25 November 2026
 
 Team desk v4.1 audit fixes and home v4.2, Guardian 64 `session_0187kU9vEECr6R7YjH1YQFmA`. Team desk v4.1 is live (Guardian's report, not read by the scribe). Home v4.2 is merged behind `CORRIDRA_UX_HOME_V42`, switched ON in production on the owner's word "on" (25 Nov 2026, Guardian 65's report). Records: branch `audit/v41-env`.
