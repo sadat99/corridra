@@ -40,5 +40,5 @@ test('a shallow checkout that cannot be completed fails loudly instead of scanni
   const clone = mkdtempSync(join(tmpdir(), 'scan-clone-'));
   git(clone, 'clone', '-q', '--depth', '1', 'file://' + src, '.');
   git(clone, 'remote', 'set-url', 'origin', 'file:///nonexistent');
-  assert.throws(() => ensureFullHistory(clone), /shallow/);
+  assert.throws(() => ensureFullHistory(clone), /could not be completed/);
 });
