@@ -1184,6 +1184,40 @@
 .move-card {
   container: move-card / inline-size;
 }
+/* The head's heading track and the task list's track may shrink below their words' one-line width (final walk m4, 25 Nov
+   2026). With content-sized tracks a long heading or a task title kept on one line set the card's minimum width, so at
+   200% text a card link ran 9 px past the edge of its card at 1440 and a task's action was cut off by the card, and at
+   1024 a long task title hid the action even at the normal size. At the normal size and width nothing moves: the
+   heading track is still as wide as its heading when there is room, and a long title still ends in an ellipsis. */
+.move-card {
+  grid-template-columns: minmax(0, auto) auto minmax(0, 1fr);
+}
+.move-card:has(> .move-head-key) {
+  grid-template-columns: minmax(0, auto) auto auto minmax(0, 1fr);
+}
+.move-card > h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.move-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+/* A card narrower than 20rem (only with large text on a wide screen, or on a phone): each task's words wrap and its
+   action goes under them, as on a phone, instead of the title ending in an ellipsis after a word or two. */
+@container move-card (max-width: 20rem) {
+  .move-items .mr-move {
+    flex-wrap: wrap;
+  }
+  .move-items .mr-move-body {
+    flex: 1 1 100%;
+  }
+  .move-items .mr-move h3,
+  .move-items .mr-move-context {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+}
 @container move-card (max-width: 18rem) {
   .move-card > .move-card-link {
     grid-column: 1 / -1;

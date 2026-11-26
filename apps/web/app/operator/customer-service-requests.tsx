@@ -13,6 +13,7 @@ import {
 } from '../../components/commercial-arrangement-fields';
 import { CommercialArrangementSummary } from '../../components/commercial-arrangement';
 import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
+import { requestStepUp, stepUpKeptMessage, stepUpReadMessage } from '../../lib/ux/step-up';
 import type {
   CommercialArrangement,
   InternalSupplyEconomics,
@@ -225,8 +226,15 @@ function Scoped({ tenant }: { tenant: string }) {
   }, [call, settle]);
   const open = useCallback(
     async (id: string) => {
-      const r = await call('&scope=detail&request=' + encodeURIComponent(id));
+      // Opened by the person: a lapsed authenticator check opens the in-place check and reads again once.
+      let r = await call('&scope=detail&request=' + encodeURIComponent(id));
+      if (r?.check && (await requestStepUp()))
+        r = await call('&scope=detail&request=' + encodeURIComponent(id));
       if (!r) return;
+      if (r.check) {
+        setFault(stepUpReadMessage);
+        return;
+      }
       if (r.status !== 200) {
         setDetail(null);
         setFault(plainError(r.status));
@@ -274,9 +282,16 @@ function Scoped({ tenant }: { tenant: string }) {
     setPending(body);
     setBusy(true);
     setMessage('');
-    const r = await call('', body);
+    let r = await call('', body);
+    // A lapsed authenticator check opens the in-place check and sends the same command once more after the code is
+    // accepted. Closed, the command and the form are kept for the next try.
+    if (r?.check && (await requestStepUp())) r = await call('', body);
     setBusy(false);
     if (!r) return;
+    if (r.check) {
+      setMessage(stepUpKeptMessage);
+      return;
+    }
     if (r.status !== 200) {
       const unsure = r.status === 0 || (r.status >= 500 && r.status !== 503);
       if (!unsure) setPending(null);

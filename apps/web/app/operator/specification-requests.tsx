@@ -7,6 +7,7 @@ import {
 } from '@corridra/domain/specification-confirmation';
 import type { z } from 'zod';
 import { SpecificationFields } from '../../components/specification-fields';
+import { isStepUpResponse, sendWithStepUp, stepUpKeptMessage } from '../../lib/ux/step-up';
 type Props = {
   tenant: string;
   publications: { id: string; copy: { title: string }; revoked: boolean }[];
@@ -62,10 +63,14 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
     setBusy(true);
     setMessage('');
     try {
-      const response = await fetch(endpoint + '&publicationId=' + encodeURIComponent(publication), {
-        cache: 'no-store',
-        signal: task.signal,
-      });
+      // A lapsed authenticator check opens the in-place check and reads again once the code is accepted.
+      const response = await sendWithStepUp(() =>
+        fetch(endpoint + '&publicationId=' + encodeURIComponent(publication), {
+          cache: 'no-store',
+          signal: task.signal,
+        }),
+      );
+      if (await isStepUpResponse(response)) throw new Error('check');
       if (!response.ok) throw new Error(response.status === 503 ? 'unavailable' : 'denied');
       const value = specificationOptions.parse(await response.json());
       if (value.publicationId !== publication) throw Error('denied');
@@ -73,9 +78,11 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
     } catch (error) {
       if (!task.signal.aborted)
         setMessage(
-          error instanceof Error && error.message === 'unavailable'
-            ? 'Specification confirmation is not available right now. Reload the page. If it is still not available, it is switched off or not installed. The platform owner can check this on the owner page.'
-            : 'Current publication access could not be checked. Reload and verify your authenticator.',
+          error instanceof Error && error.message === 'check'
+            ? 'Confirm your authenticator code to load the current requirements. Nothing was changed.'
+            : error instanceof Error && error.message === 'unavailable'
+              ? 'Specification confirmation is not available right now. Reload the page. If it is still not available, it is switched off or not installed. The platform owner can check this on the owner page.'
+              : 'Current publication access could not be checked. Reload and verify your authenticator.',
         );
     } finally {
       if (!task.signal.aborted) setBusy(false);
@@ -99,11 +106,14 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
     setBusy(true);
     setMessage('');
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(command),
-      });
+      const response = await sendWithStepUp(() =>
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(command),
+        }),
+      );
+      if (await isStepUpResponse(response)) throw new Error('check');
       if (!response.ok)
         throw new Error([401, 403, 409, 422].includes(response.status) ? 'denied' : 'failed');
       const receipt = await response.json();
@@ -115,7 +125,9 @@ function PrivateRequests({ tenant, publications, owners }: Props) {
         'Confirmation requested on the existing reviewed report. Nothing was sent by email.',
       );
     } catch (error) {
-      if (error instanceof Error && error.message === 'denied') {
+      // Closed check: the request and its owner and date stay, with the same command, for the next try.
+      if (error instanceof Error && error.message === 'check') setMessage(stepUpKeptMessage);
+      else if (error instanceof Error && error.message === 'denied') {
         setData(null);
         setPending(null);
         setMessage('Authority or specification changed. Reload before requesting confirmation.');
