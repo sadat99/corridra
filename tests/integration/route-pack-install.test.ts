@@ -5,6 +5,7 @@ import { afterAll, beforeAll, expect, test } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateRoutePack } from '../../packages/db/src/route-pack-migrate';
+import { rawContext } from './support';
 
 // ADR-093 Phase 2a, the database side of the install. app.guard_operations_control() is replaced once, hash-guarded, by an
 // optional module. The only differences from the real-use 0003 definition are two dropped comparisons and two reworded
@@ -107,7 +108,17 @@ test('install replaces exactly the operations guard, adds only the markers and t
   await migrateRoutePack(f.owner);
 });
 
-test('the marker needs no grant to be found, and the registry is reachable by nobody but the owner', async () => {
+test('the runtime role finds the marker without a grant to run it, and the registry is reachable by nobody but the owner', async () => {
+  // The service looks the marker up as the runtime role under a request context, exactly like this.
+  expect(
+    (
+      await rawContext(
+        f.runtime,
+        f.users.owner.ctx,
+        "SELECT to_regprocedure('app.route_pack_one_person_publication()') IS NOT NULL AS present",
+      )
+    ).rows[0].present,
+  ).toBe(true);
   for (const role of ['corridra_runtime', 'corridra_auth']) {
     expect(
       (

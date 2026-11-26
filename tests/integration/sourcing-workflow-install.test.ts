@@ -311,7 +311,47 @@ test('the block is bounded and versioned by the database itself', async () => {
   );
 });
 
-test('a sourcing pack goes through the reviewed flow: self-publication fails until one-person publication is installed, then the same owner publishes the exact block', async () => {
+// A published version becomes the base of the next proposal only once its effective time has passed.
+const settle = () => new Promise((resolve) => setTimeout(resolve, 200));
+type ProposedPack = {
+  id: string;
+  routeId: string;
+  version: number;
+  status: 'TESTING';
+  effectiveFrom: string;
+  reason: string;
+  configuration: Record<string, unknown>;
+};
+async function propose(previous: ProposedPack, version: number) {
+  const pack: ProposedPack = {
+    ...previous,
+    id: randomUUID(),
+    version,
+    effectiveFrom: new Date(Date.now() + 100).toISOString(),
+    configuration: {
+      ...previous.configuration,
+      sourcing: { ...bdCnSourcingProfile, profileVersion: version },
+    },
+  };
+  const proposal = randomUUID();
+  await ops.command(f.users.owner.ctx, {
+    id: proposal,
+    action: 'propose',
+    basePackId: previous.id,
+    pack,
+    reason,
+  });
+  return { proposal, pack };
+}
+async function expectPublished(pack: ProposedPack) {
+  const published = (
+    await f.owner.query('SELECT configuration FROM app.corridor_pack_version WHERE id=$1', [
+      pack.id,
+    ])
+  ).rows[0];
+  expect(published.configuration).toEqual(pack.configuration);
+}
+test('a sourcing pack goes through the reviewed flow: a second owner publishes the exact block, and the same owner may too once one-person publication is installed', async () => {
   await f.owner.query('UPDATE identity.assurance SET verified_at=now()');
   await routes.installTemplates(f.users.owner.ctx);
   await changeMemberNow(new AccessService(f.runtime), f.users.owner.ctx, {
@@ -365,7 +405,17 @@ test('a sourcing pack goes through the reviewed flow: self-publication fails unt
       reason,
     }),
   ).rejects.toThrow('independent');
-  // ADR-093 Phase 2a: once installed, the same owner publishes; a pack outside the reviewed flow is still refused.
+  // Under the real-use guard a second owner publishes the exact block.
+  await ops.command(f.users.reviewer.ctx, {
+    id: randomUUID(),
+    action: 'decide',
+    proposalId: proposal,
+    decision: 'PUBLISH',
+    reason,
+  });
+  await expectPublished(pack);
+  // ADR-093 Phase 2a: once installed, the same owner publishes; a pack outside the reviewed flow is still refused, and a
+  // second owner can still publish.
   await migrateRoutePack(f.owner);
   const rawDecision = (proposalId: string, packId: string) =>
     rawContext(
@@ -374,7 +424,9 @@ test('a sourcing pack goes through the reviewed flow: self-publication fails unt
       "INSERT INTO app.configuration_decision(id,tenant_id,proposal_id,decision,published_pack_id,created_by,reason) VALUES($1,$2,$3,'PUBLISH',$4,app.actor_id(),$5)",
       [randomUUID(), f.tenantA, proposalId, packId, reason],
     );
-  await expect(rawDecision(proposal, first.id)).rejects.toThrow(
+  await settle();
+  const third = await propose(pack, 3);
+  await expect(rawDecision(third.proposal, first.id)).rejects.toThrow(
     'Exact reviewed configuration publication required',
   );
   await expect(rawDecision(randomUUID(), first.id)).rejects.toThrow(
@@ -383,17 +435,21 @@ test('a sourcing pack goes through the reviewed flow: self-publication fails unt
   await ops.command(f.users.owner.ctx, {
     id: randomUUID(),
     action: 'decide',
-    proposalId: proposal,
+    proposalId: third.proposal,
     decision: 'PUBLISH',
     reason,
   });
-  const published = (
-    await f.owner.query('SELECT configuration FROM app.corridor_pack_version WHERE id=$1', [
-      pack.id,
-    ])
-  ).rows[0];
-  expect(published.configuration.sourcing.profileVersion).toBe(2);
-  expect(published.configuration).toEqual(pack.configuration);
+  await expectPublished(third.pack);
+  await settle();
+  const fourth = await propose(third.pack, 4);
+  await ops.command(f.users.reviewer.ctx, {
+    id: randomUUID(),
+    action: 'decide',
+    proposalId: fourth.proposal,
+    decision: 'PUBLISH',
+    reason,
+  });
+  await expectPublished(fourth.pack);
 });
 
 test('pausing refuses new sourcing blocks, keeps every stored block readable and leaves other packs alone', async () => {
