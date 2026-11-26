@@ -7,6 +7,7 @@ import { foundations } from '../../../lib/foundations';
 import { OperatorSignin } from './signin-form';
 import { operatorReturnTo } from '../../../lib/workspace-navigation';
 import { OperatorInvitationHint } from '../../../components/operator-invitation-hint';
+import { InvitationHintRefresh } from '../../../components/invitation-hint-refresh';
 import { customerSessionHinted } from '../../../lib/customer-session-hint';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -30,8 +31,13 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
     );
   return (
     <WorkspaceShell eyebrow="OPERATOR ACCESS" title="Sign in to your workspace." compact>
-      {/* Signed out of the customer account, there is no invitation to find and nothing is asked. */}
-      {customerSessionHinted((await cookies()).getAll()) ? <OperatorInvitationHint /> : null}
+      {/* Signed out of the customer account, there is no invitation to find and nothing is asked; coming back to the
+          tab draws the page again, so a customer sign-in in another tab still brings the hint. */}
+      {customerSessionHinted((await cookies()).getAll()) ? (
+        <OperatorInvitationHint />
+      ) : (
+        <InvitationHintRefresh />
+      )}
       <OperatorSignin returnTo={returnTo} />
       <Link prefetch={false} className="text-link" href="/operator/forgot-password">
         Forgot operator password?

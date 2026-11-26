@@ -52,7 +52,7 @@ describe('the helper task words', () => {
     expect(board).not.toContain('Independent reviewer');
     expect(board.match(/name="reason"/g)).toHaveLength(3);
     expect(board.match(/name="body"/g)).toHaveLength(1);
-    // The live words stay (no owner approval for new wording); only the layout changed.
+    // The live words stay; only the layout changed. The Reviewer row's new words are the owner's decision (26 Nov 2026).
     for (const kept of [
       'EXACT ASSIGNMENT',
       'Accept the Disclosed Task',

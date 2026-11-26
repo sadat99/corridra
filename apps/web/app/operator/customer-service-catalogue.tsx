@@ -169,7 +169,9 @@ export function CustomerServiceCatalogue({ tenant }: { tenant: string }) {
         <ReverifyLine what="the services customers can ask for" onVerified={() => void load()} />
       ) : null}
       {message && <p role={message === 'Saved.' ? 'status' : 'alert'}>{message}</p>}
-      {entries === null && !message && !needsCheck && <p role="status">Loading the services…</p>}
+      {entries === null && !message && !needsCheck && allowed && (
+        <p role="status">Loading the services…</p>
+      )}
       {entries && (
         <ul>
           {entries.map((s) => (

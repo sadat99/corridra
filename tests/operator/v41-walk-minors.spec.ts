@@ -64,3 +64,33 @@ test('with a customer session cookie the invitation hint still asks', async ({ p
   await asked;
   await expect(page.getByLabel('Email')).toBeVisible();
 });
+
+// Signed out on load, then signed in to the customer account in another tab: coming back to this tab draws the page
+// again, and the hint, now mounted, checks the invitation, as it did before on focus. What was typed is kept.
+test('coming back after a customer sign-in elsewhere, the invitation is checked without a reload', async ({
+  page,
+  context,
+}) => {
+  const problems = watch(page);
+  await page.goto('/operator/signin');
+  await page.getByLabel('Email').fill('invented.person@example.invalid');
+  await page.waitForTimeout(500);
+  expect(problems).toEqual([]);
+  await context.addCookies([
+    {
+      name: '__Secure-neon-auth.session_token',
+      value: 'invented-token',
+      domain: '127.0.0.1',
+      path: '/',
+      secure: true,
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+  ]);
+  const asked = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === '/api/operator-setup',
+  );
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await asked;
+  await expect(page.getByLabel('Email')).toHaveValue('invented.person@example.invalid');
+});

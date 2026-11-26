@@ -88,7 +88,10 @@ function ScopedDeliveryView({
     if (untickedTick) untickedBox.current?.focus();
   }, [untickedTick]);
   useEffect(() => {
-    if (!error) return;
+    if (!error) {
+      quietError.current = false;
+      return;
+    }
     if (quietError.current) {
       quietError.current = false;
       return;

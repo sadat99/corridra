@@ -30,11 +30,17 @@ describe('customerSessionHinted', () => {
     ])
       expect(customerSessionHinted([{ name, value: '1' }]), name).toBe(false);
   });
-  it('the sign-in page draws the invitation hint only behind that check', () => {
+  it('the sign-in page draws the invitation hint only behind that check, and looks again on return', () => {
     const page = readFileSync(resolve('apps/web/app/operator/signin/page.tsx'), 'utf8');
-    expect(page).toContain(
-      'customerSessionHinted((await cookies()).getAll()) ? <OperatorInvitationHint /> : null',
+    expect(page).toMatch(
+      /customerSessionHinted\(\(await cookies\(\)\)\.getAll\(\)\) \? \(\s*<OperatorInvitationHint \/>\s*\) : \(\s*<InvitationHintRefresh \/>\s*\)/,
     );
     expect(page.match(/<OperatorInvitationHint/g)).toHaveLength(1);
+    const refresh = readFileSync(
+      resolve('apps/web/components/invitation-hint-refresh.tsx'),
+      'utf8',
+    );
+    expect(refresh).toContain('router.refresh()');
+    expect(refresh).not.toContain('fetch(');
   });
 });

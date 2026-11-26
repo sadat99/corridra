@@ -35,10 +35,13 @@ test.beforeAll(async () => {
       import{DecisionDisclosures}from ${source('app/operator/decision-disclosures.tsx')};
       import{CustomerMissionDelivery}from ${source('app/operator/customer-mission-delivery.tsx')};
       import{StepUpDialog}from ${source('components/ux/step-up-dialog.tsx')};
+      import{StepUpReads}from ${source('components/ux/step-up-reads.tsx')};
+      import{CustomerServiceRequests}from ${source('app/operator/customer-service-requests.tsx')};
       const screen=new URLSearchParams(location.search).get('screen');
       const publications=[{id:${JSON.stringify(publication)},copy:{title:'Invented client report'},revoked:false}];
       const owners=[${JSON.stringify(owner)}];
       const el=screen==='catalogue'?<CustomerServiceCatalogue tenant="${tenant}"/>
+        :screen==='group'?<StepUpReads what="plans, invoices and payments"><CustomerServiceRequests tenant="${tenant}"/></StepUpReads>
         :screen==='links'?<CompanyLinkReview tenant="${tenant}"/>
         :screen==='specification'?<SpecificationRequests tenant="${tenant}" publications={publications} owners={owners}/>
         :screen==='decisions'?<DecisionDisclosures tenant="${tenant}" publications={publications}/>
@@ -310,3 +313,40 @@ for (const [screen, path, button, unavailable, closed] of [
     });
   });
 }
+
+// On Reports the catalogue sits inside the billing group, under the service requests (the group's first read). When
+// that first read is refused for the check, the group shows its one line and the catalogue neither reads nor claims to
+// be loading; after the code both read.
+test('inside the billing group the catalogue waits quietly under the one line, then reads', async ({
+  page,
+}) => {
+  const sent: string[] = [];
+  let listed = 0;
+  await page.route('**/api/**', (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (url.pathname.endsWith('/verify-totp'))
+      return route.fulfill({ json: { token: 'invented', user: { id: owner.user_id } } });
+    if (url.pathname === catalogue && request.method() === 'GET') {
+      const scope = url.searchParams.get('scope') ?? '';
+      sent.push(scope);
+      if (scope === 'list' && listed++ === 0) return route.fulfill(stepUp);
+      if (scope === 'catalogue') return route.fulfill({ json: { services: [service] } });
+      return route.fulfill({ json: { requests: [], nextAfter: null, synthetic: true } });
+    }
+    return route.fulfill({ status: 404, json: {} });
+  });
+  await page.goto(`${origin}/?screen=group`);
+  await expect(page.getByTestId('reverify-line')).toHaveCount(1);
+  await expect(page.getByTestId('reverify-line')).toContainText(
+    'Confirm your code to see plans, invoices and payments.',
+  );
+  await expect(page.getByText('Loading the services…')).toHaveCount(0);
+  expect(sent).toEqual(['list']);
+  expect(await axe(page)).toEqual([]);
+  await page.getByRole('button', { name: 'Confirm Code' }).click();
+  await confirmCode(page);
+  await expect(page.getByTestId('reverify-line')).toHaveCount(0);
+  await expect(page.getByRole('listitem').filter({ hasText: 'Invented site visit' })).toBeVisible();
+  expect(sent.filter((s) => s === 'catalogue')).toHaveLength(1);
+});

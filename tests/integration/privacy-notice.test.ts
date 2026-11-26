@@ -489,7 +489,7 @@ describe('public programme pages and applications (ADR-080)', () => {
   // it is cleared at sign-out, and it is set only by the team sign-in service and the page proxy for a team session.
   it('names the corridra-team cookie, in every setting, with the lifetime the code sets', async () => {
     const line =
-      'In the browsers of Corridra team members only, a plain cookie named corridra-team is set after team sign-in. It tells our pages that a team session exists, so they show the team header. It holds no secret and no personal data, and it ends after 24 hours or when the team member signs out.';
+      'In the browsers of Corridra team members only, a plain cookie named corridra-team is set when a team member signs in, and renewed while they use the site. It tells our pages that a team session may exist, so they check it before showing the team member as signed in. It holds no secret and no personal data, and it ends 24 hours after it was last renewed, or when the team member signs out.';
     for (const env of [{}, real]) {
       const page = await text(env);
       expect(page).toContain(line);
