@@ -136,7 +136,7 @@ The existing empty line stays: "No route yet. Open Create a directional corridor
 1. Status chip, "Pack version 2", "Route facts version 5" (the content version). With no pack: chip "No pack yet" and "Route facts version 5". With no facts yet: "No facts saved yet".
 2. The completeness line: "Core fields: 14 of 20 done. 6 still Pending." with a native `progress` (value 14, max 20, `aria-label` "Core fields done") for screen readers; it is words first, a thin bar second.
 3. If any stale: clock mark, "2 facts are stale. Check them before relying on them." Staleness never blocks; this is a nudge.
-4. The readiness line (section 10), from `overview().routes[].readiness` (`packId`, `completeMissionTypes`; null unless the reader is owner or admin, so other roles do not see the line). When `packId` is not the current pack, or no mission type is complete: "Readiness: not recorded for pack version 3." Otherwise "Readiness: complete for {mission types} on pack version 3." (question 11, answered; the exact shape of `completeMissionTypes` is open item B.)
+4. The readiness line (section 10), from `overview().routes[].readiness`, typed `{ packId: string; completeMissionTypes: string[] } | null`. `packId` is always the current pack; the value is null when the route has no pack or the reader is not owner or admin, and then the line is not drawn. With an empty `completeMissionTypes`: "Readiness: not recorded for pack version 3." Otherwise: "Readiness: complete for {mission type names} on pack version 3." (question 11, answered.)
 5. The last pack change: "Pack version 3, proposed and published by you, 26 Nov 2026" when proposer and publisher are the same person; otherwise "proposed by X, published by Y". Names are staff names as the audit shows them today.
 
 Actions: one primary at most. With unsaved changes the primary is "Review and Save" (count in the label: "Review and Save (3)"). Otherwise no primary. Quiet actions: "Change Pack Status" (owner), and an `OverflowMenu` named "More" with "Export This Route", "Add Custom Field" and "Mark Section Not Applicable" (the last two only on a section view).
@@ -424,7 +424,7 @@ Error codes the page turns into the words of sections 8.8, 9.2, 11.4, 11.6 and 1
 G68 decisions on the open items (26 November 2026):
 
 - **A. Custom key conflict words.** Decided: `ROUTE_PACK_CUSTOM_KEY_CONFLICT` names the key and the other route, within the same workspace only. The page shows: "custom.x is already a list on EU to Bangladesh. Use the same type or a new name."
-- **B. Readiness shape.** Not decided here: asked of the route pack session (see the line below once answered).
+- **B. Readiness shape.** Answered by the route pack session on 26 November 2026: `readiness` is `{ packId: string; completeMissionTypes: string[] } | null`; `completeMissionTypes` is a list of mission type keys and is `[]` when none is complete; `packId` is always the current pack; null when there is no pack or the reader is not owner or admin. Section 8.1 uses it as written.
 - **C. Dry run for an admin.** Decided: the check is drawn for owner and admin; Save is drawn as the service permission allows, disabled with its reason for the roles that cannot save. Export stays owner and admin only as this spec's design choice.
 
 ## 18. Definition of done for the build PR (UI/UX.v4)
