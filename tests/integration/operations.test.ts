@@ -838,3 +838,51 @@ test('after the install the remaining refusals carry the reworded texts', async 
     s.command(f.users.owner.ctx, releaseCommand(p.routeId, p.id, [...ids, randomUUID()])),
   ).rejects.toThrow('Current evidenced readiness required for every dimension');
 });
+test('after the install a proposal by another owner is never shown as published by you, and a pack written by someone else cannot be published', async () => {
+  const p = await route('BO', 'EC');
+  const pack = {
+    ...p,
+    id: randomUUID(),
+    version: 2,
+    effectiveFrom: new Date(Date.now() + 100).toISOString(),
+    configuration: { ...p.configuration, languages: ['en'] },
+  };
+  const id = randomUUID();
+  await s.command(f.users.reviewer.ctx, { id, action: 'propose', basePackId: p.id, pack, reason });
+  await s.command(f.users.owner.ctx, {
+    id: randomUUID(),
+    action: 'decide',
+    proposalId: id,
+    decision: 'PUBLISH',
+    reason,
+  });
+  expect(
+    (await s.controlCenter(f.users.owner.ctx)).proposals.find((x) => x.id === id),
+  ).toMatchObject({
+    created_by: f.users.reviewer.id,
+    decided_by: f.users.owner.id,
+    decision: 'PUBLISH',
+    published_by_you: false,
+  });
+  // The kept check: the person who decides must have written the published pack, even when it equals the proposal.
+  await publishedEffective();
+  const exact = {
+    ...pack,
+    id: randomUUID(),
+    version: 3,
+    effectiveFrom: new Date(Date.now() + 100).toISOString(),
+    configuration: { ...pack.configuration, languages: ['fr'] },
+  };
+  const proposal = randomUUID();
+  await s.command(f.users.owner.ctx, {
+    id: proposal,
+    action: 'propose',
+    basePackId: pack.id,
+    pack: exact,
+    reason,
+  });
+  await r.appendPack(f.users.reviewer.ctx, exact);
+  await expect(rawDecision(f.users.owner.ctx, proposal, 'PUBLISH', exact.id)).rejects.toThrow(
+    'Exact reviewed configuration publication required',
+  );
+});
