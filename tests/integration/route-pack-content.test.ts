@@ -1249,7 +1249,72 @@ describe('route pack content on the database', () => {
     ).toBe(0);
   });
 
-  test('a carried policy reference that expired is dropped and named, so the route can still be paused', async () => {
+  test('a live route stays live while a later DRAFT waits: the pack in force is judged too', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    await saveContent(routeId, coreDocument());
+    await appendPack(routeId, 1, 'ACTIVE', liveConfiguration());
+    await corridors.appendPack(owner(), {
+      id: randomUUID(),
+      routeId,
+      version: 2,
+      status: 'DRAFT',
+      effectiveFrom: new Date(Date.now() + 30 * 86400000).toISOString(),
+      reason,
+      configuration: liveConfiguration(),
+    });
+    const missing = coreDocument(['identity.summary']);
+    await expect(saveContent(routeId, missing)).rejects.toMatchObject({
+      status: 409,
+      code: 'ROUTE_PACK_CORE_TURNS_PENDING',
+    });
+    expect(await content.goLive(owner(), { routeId, document: missing })).toMatchObject({
+      ok: false,
+      code: 'ROUTE_PACK_CORE_TURNS_PENDING',
+      keys: ['identity.summary'],
+    });
+    expect(await contentRows(routeId)).toBe(1);
+  });
+
+  test('an expired policy reference refuses a live publish in plain words and writes nothing', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    await saveContent(routeId, coreDocument());
+    const policy = await f.communications.command(
+      owner(),
+      command('policy', {
+        jurisdiction: 'DE',
+        channel: 'SYNTHETIC',
+        contactPurpose: 'institutional_introduction',
+        basis: 'Invented policy that expires before the live publish',
+        validUntil: new Date(Date.now() + 1500).toISOString(),
+        enabled: true,
+      }),
+    );
+    await appendPack(
+      routeId,
+      1,
+      'DRAFT',
+      liveConfiguration({ jurisdictionPolicyRefs: [policy.id] }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const refused = createRoutePack(deps(), owner(), formInput(routeId, 2, 'ACTIVE'));
+    await expect(refused).rejects.toMatchObject({ status: 409, code: 'ROUTE_PACK_POLICY_EXPIRED' });
+    await expect(refused).rejects.toThrow(
+      /^These policies have expired: communication policy DE SYNTHETIC institutional_introduction version \d+\. Pause the route, or publish with a current policy\.$/,
+    );
+    expect(await packVersions(routeId)).toHaveLength(1);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM app.configuration_proposal WHERE route_id=$1',
+          [routeId],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+  });
+
+  test('a carried policy reference that expired is dropped and named when the route is paused', async () => {
     formSwitch(true);
     const routeId = await newRoute();
     const policy = await f.communications.command(

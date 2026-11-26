@@ -991,6 +991,8 @@ export const routePackWords = {
     `${key} already means something else on another route: use the same section, type and allowed values, or a new key.`,
   contentChanged: "This route's content changed since you opened it. Reload and try again.",
   commandReused: 'Command key reused with different values',
+  policyExpired: (names: string) =>
+    `These policies have expired: ${names}. Pause the route, or publish with a current policy.`,
   packChanged: "This route's pack changed since you opened it. Reload and try again.",
   proposalTooLarge: `This route pack is larger than the ${proposalOctetBudget} octet review limit. Shorten long lists.`,
   goLivePendingCore: (labels: string) =>

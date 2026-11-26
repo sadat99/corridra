@@ -19,6 +19,7 @@ import {
   type Completeness,
   type ContentDocument,
   type GoLiveResult,
+  type PackView,
   type PackStatus,
 } from '@corridra/domain/route-pack-standard';
 
@@ -49,15 +50,47 @@ type CurrentPack = {
   status: PackStatus;
   configuration: RouteConfiguration;
 };
-// The go-live check judges the latest pack by version, in force or scheduled: a pack published live with a later effective
-// date already makes the route live for the rules that stop a Core field turning Pending.
-async function latestPack(db: DatabaseClient, tenantId: string, routeId: string) {
-  return (
-    await db.query<CurrentPack>(
-      'SELECT id,version,status,configuration FROM app.corridor_pack_version WHERE tenant_id=$1 AND route_id=$2 ORDER BY version DESC LIMIT 1',
+// The go-live check judges both the pack in force and the latest pack by version: a route is live while either one is
+// LIMITED or ACTIVE, so neither a pack published live for a later date nor a later DRAFT scheduled after a live pack lets a
+// Core field turn Pending. The latest pack, which a new version follows, is judged first; the same pack is judged once.
+async function packsOf(db: DatabaseClient, tenantId: string, routeId: string) {
+  const rows = (
+    await db.query<CurrentPack & { in_force: boolean }>(
+      `(SELECT id,version,status,configuration,true AS in_force FROM app.corridor_pack_version WHERE tenant_id=$1 AND route_id=$2 AND effective_from<=now() ORDER BY version DESC LIMIT 1)
+       UNION ALL
+       (SELECT id,version,status,configuration,false AS in_force FROM app.corridor_pack_version WHERE tenant_id=$1 AND route_id=$2 ORDER BY version DESC LIMIT 1)`,
       [tenantId, routeId],
     )
-  ).rows[0];
+  ).rows;
+  return judgedPacks(
+    rows.find((row) => row.in_force),
+    rows.find((row) => !row.in_force),
+  );
+}
+function judgedPacks(
+  inForce: CurrentPack | undefined,
+  latest: CurrentPack | undefined,
+): PackView[] {
+  const packs = [latest, inForce].flatMap((pack) => (pack ? [pack] : []));
+  if (!packs.length) return [null];
+  return packs
+    .filter((pack, index) => packs.findIndex((other) => other.id === pack.id) === index)
+    .map((pack) => ({ status: pack.status, configuration: pack.configuration }));
+}
+// The go-live check against every judged pack; the first refusal wins. With no new pack, each judged pack stays as it is.
+function judge(
+  packs: PackView[],
+  before: ContentDocument | null,
+  after: { pack?: PackView; document: ContentDocument | null },
+): GoLiveResult {
+  for (const pack of packs) {
+    const result = goLiveCheck({
+      before: { pack, document: before },
+      after: { pack: after.pack === undefined ? pack : after.pack, document: after.document },
+    });
+    if (!result.ok) return result;
+  }
+  return { ok: true };
 }
 async function latestDocument(db: DatabaseClient, tenantId: string, routeId: string) {
   const row = (
@@ -80,12 +113,12 @@ export async function assertPackGoLive(
 ): Promise<void> {
   if (!(await routePackContentActive(db))) return;
   await lockCorridor(db, tenantId);
-  const current = await latestPack(db, tenantId, pack.routeId);
+  const packs = await packsOf(db, tenantId, pack.routeId);
   const document = await latestDocument(db, tenantId, pack.routeId);
   refuse(
-    goLiveCheck({
-      before: { pack: current ?? null, document },
-      after: { pack: { status: pack.status, configuration: pack.configuration }, document },
+    judge(packs, document, {
+      pack: { status: pack.status, configuration: pack.configuration },
+      document,
     }),
   );
 }
@@ -515,20 +548,14 @@ export class RoutePackContentService {
         );
       const results: ContentAppendResult[] = [];
       for (const item of items) {
-        // Content names the pack in force (the database checks the same); the go-live check judges the latest pack.
+        // Content names the pack in force (the database checks the same); the go-live check judges it and the latest pack.
         const pack = state.packs.get(item.routeId);
-        const latest = state.latestPacks.get(item.routeId);
-        const packView = latest
-          ? { status: latest.status, configuration: latest.configuration }
-          : null;
         refuse(
-          goLiveCheck({
-            before: {
-              pack: packView,
-              document: state.contents.get(item.routeId)?.document ?? null,
-            },
-            after: { pack: packView, document: item.document },
-          }),
+          judge(
+            judgedPacks(pack, state.latestPacks.get(item.routeId)),
+            state.contents.get(item.routeId)?.document ?? null,
+            { document: item.document },
+          ),
         );
         await db.query(
           'INSERT INTO app.route_pack_content(id,tenant_id,route_id,pack_id,version,standard_version,document,reason,created_by) VALUES($1,$2,$3,$4,$5,1,$6,$7,$8)',
@@ -560,14 +587,11 @@ export class RoutePackContentService {
     const v = goLiveInput.parse(input);
     return withTenant(this.pool, ctx, 'audit.read', async ({ db }) => {
       if (!(await routePackContentActive(db))) throw notFound();
-      const current = await latestPack(db, ctx.tenantId, v.routeId);
+      const packs = await packsOf(db, ctx.tenantId, v.routeId);
       const document = await latestDocument(db, ctx.tenantId, v.routeId);
-      return goLiveCheck({
-        before: { pack: current ?? null, document },
-        after: {
-          pack: v.pack ?? current ?? null,
-          document: v.document === undefined ? document : parseContentDocument(v.document),
-        },
+      return judge(packs, document, {
+        pack: v.pack,
+        document: v.document === undefined ? document : parseContentDocument(v.document),
       });
     });
   }
@@ -593,39 +617,55 @@ export class RoutePackContentService {
   async proposalExists(ctx: RequestContext, id: string): Promise<boolean> {
     return (await this.proposalOf(ctx, id)) !== null;
   }
-  // A carried communication policy or AI policy reference that is no longer current would make the pack guard refuse every
-  // new version, PAUSED included. The reviewed path drops such references, with the same tests as the guard, and names them,
-  // so the person sees what changed and the route can always be paused. The guard itself is unchanged.
+  // A carried communication policy or AI policy reference that is no longer current makes the pack guard refuse every new
+  // version. These references are obligations, and a key left out is never removed (ADR-093 B), so only a move to PAUSED
+  // drops them, named in removedRefs, which keeps a route pausable. Any other target status is refused with the expired
+  // policies named, and nothing is written. The tests are the guard's own; the guard itself is unchanged.
   withoutExpiredRefs(
     ctx: RequestContext,
     configuration: RouteConfiguration,
+    status: PackStatus,
   ): Promise<{ configuration: RouteConfiguration; removedRefs: string[] }> {
     return withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
       const expiredPolicies = (
-        await db.query<{ id: string }>(
-          'SELECT x AS id FROM unnest($2::text[]) x WHERE NOT EXISTS(SELECT FROM app.communication_policy WHERE tenant_id=$1 AND id::text=x AND effective_from<=now() AND valid_until>now())',
+        await db.query<{ id: string; name: string | null }>(
+          `SELECT x AS id,(SELECT 'communication policy '||p.jurisdiction||' '||p.channel||' '||p.contact_purpose||' version '||p.version
+             FROM app.communication_policy p WHERE p.tenant_id=$1 AND p.id::text=x) AS name
+           FROM unnest($2::text[]) x WHERE NOT EXISTS(SELECT FROM app.communication_policy WHERE tenant_id=$1 AND id::text=x AND effective_from<=now() AND valid_until>now())`,
           [ctx.tenantId, configuration.jurisdictionPolicyRefs],
         )
-      ).rows.map((row) => row.id);
-      const aiPolicyExpired =
-        configuration.aiPolicyRef !== null &&
-        !(
-          await db.query(
-            "SELECT FROM app.ai_model_policy p WHERE p.tenant_id=$1 AND p.id::text=$2 AND p.effective_from<=now() AND (p.configuration->>'effectiveUntil')::timestamptz>now() AND p.version=(SELECT max(version) FROM app.ai_model_policy n WHERE n.tenant_id=p.tenant_id AND n.key=p.key AND n.effective_from<=now())",
-            [ctx.tenantId, configuration.aiPolicyRef],
-          )
-        ).rowCount;
-      const removedRefs = [
+      ).rows;
+      const aiPolicy = configuration.aiPolicyRef
+        ? ((
+            await db.query<{ name: string; current: boolean }>(
+              "SELECT 'AI policy '||p.key||' version '||p.version AS name,(p.effective_from<=now() AND (p.configuration->>'effectiveUntil')::timestamptz>now() AND p.version=(SELECT max(version) FROM app.ai_model_policy n WHERE n.tenant_id=p.tenant_id AND n.key=p.key AND n.effective_from<=now())) AS current FROM app.ai_model_policy p WHERE p.tenant_id=$1 AND p.id::text=$2",
+              [ctx.tenantId, configuration.aiPolicyRef],
+            )
+          ).rows[0] ?? { name: null, current: false })
+        : null;
+      const expired = [
         ...expiredPolicies,
-        ...(aiPolicyExpired && configuration.aiPolicyRef ? [configuration.aiPolicyRef] : []),
+        ...(configuration.aiPolicyRef && aiPolicy && !aiPolicy.current
+          ? [{ id: configuration.aiPolicyRef, name: aiPolicy.name }]
+          : []),
       ];
+      if (expired.length && status !== 'PAUSED')
+        throw new DomainError(
+          routePackWords.policyExpired(expired.map((ref) => ref.name ?? ref.id).join(', ')),
+          409,
+          'ROUTE_PACK_POLICY_EXPIRED',
+        );
+      const removedRefs = expired.map((ref) => ref.id);
       return {
         configuration: {
           ...configuration,
           jurisdictionPolicyRefs: configuration.jurisdictionPolicyRefs.filter(
-            (ref) => !expiredPolicies.includes(ref),
+            (ref) => !removedRefs.includes(ref),
           ),
-          aiPolicyRef: aiPolicyExpired ? null : configuration.aiPolicyRef,
+          aiPolicyRef:
+            configuration.aiPolicyRef && removedRefs.includes(configuration.aiPolicyRef)
+              ? null
+              : configuration.aiPolicyRef,
         },
         removedRefs,
       };
