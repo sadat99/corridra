@@ -5499,3 +5499,31 @@ Ledger trim: to keep the always-read guides within 36 KiB, this 23 Nov ledger bu
 Records checks (scribe, this branch): `node scripts/v3-context.mjs verify` 0 (ledger 10241 bytes); `pnpm format:check` 0; `pnpm test:docs` 0 (135 passed); `node scripts/authority.mjs check` 0 (77 documents, no drift).
 
 Next action: the owner's privacy wording for the corridra-team cookie; native review of the home.v42 words; then the follow-ups above.
+
+## 26 Nov 2026: Guardian G65 decisions on the owner's delegation (records)
+
+Records only (docs only), written by records builder R3 for Guardian G65 (session_0187kU9sTSrcqo6MBpCWr2rh) on branch `claude/records-decisions-1126` from main 762d7511, authority stamp auth-20c4a6f9db41. No application code, test, switch or migration changed.
+
+Owner, 26 Nov 2026, first hand to the Guardian, about the eight open owner questions: "Make the best decisions for the questions above." Each item below was decided by G65 on the owner's delegation, 26 Nov 2026 (relayed to the scribe by G65):
+
+1. `corridra-team` cookie privacy line: approved; unit M1 adds it to the privacy notice (PR to follow).
+2. The seven STEP_UP_REQUIRED dead ends and staff-admin-24: fixed with the existing step-up "Verify again" recovery; unit M1.
+3. "Independent reviewer" wording: replaced with plain words; unit M1.
+4. A07, A08, A11, A12: closed as untraceable (not in the repo, the audits or the work log); no conformance cell changed; reopen only if the owner supplies a source. A06n is mapped to the A06 country-words item (app/operator/network.tsx:869), fixed by M1.
+5. ADR Status lines: ADR-078, 080, 085, 090, 091 and 092 (the follow-up list in the 25 Nov run entry) each get a dated forward note with merged PRs, SHAs and install runs; original text kept; no decision changed. 078 and 080 acceptance stays UNRESOLVED, owner judgement (`docs/PLAN_STATUS.md`). `docs/adr/README.md`: index lines added for 090, 091, 092; 078, 080, 085 lines carry the same note.
+6. Native language review: the gate stays OPEN. An AI review is not a native review; home.v42 and any new home words keep English fallback until a named native reviewer signs off.
+7. Merge rule (owner-delegated change): a PR may merge without the extra "merge main into the PR and full CI" step only when (a) it changes no file main changed since the PR's base, (b) it touches none of package.json, pnpm-lock.yaml, .github/**, next.config.ts, tsconfig\*.json, packages/db/migrations/**, and (c) GitHub reports mergeable_state clean with all checks green on the head. Otherwise the old rule applies. Recorded in `docs/agents/operating-rules.md` rule 6 (the file the authority brief names as owning the merge-main step). `docs/agents/conductor/SKILL.md` section 6 rule 5 and `references/coordination.md` section 4 still describe the TURN merge-main step; they are verbatim copies of the external skill and were not edited. Conflict recorded: the later dated exception applies for this one step.
+8. Deleting merged branches: approved by the owner, but the agent GitHub proxy refuses ref deletion (HTTP 403). Owner action: enable "Automatically delete head branches" in the repository settings, or delete ccr-6f12d452-jiebrb, claude/v41-fix-sweep, claude/v41-fix-inbox-2, claude/v41-fix-later, audit/v41-env, claude/v41-fix-walk, claude/v41-records-walk.
+
+Landing handoff: the owner sent it; stored at `docs/revamp/landing-handoff/` on branch `claude/wonderful-brown-upq7u3`, lands with unit H1's PR. H1 builds it behind the new switch `CORRIDRA_UX_HOME_V43` (off by default; not built yet). The v4.3 spec and its PLAN_STATUS row belong to H1 and are not added here.
+
+Unresolved (authority brief): `docs/agents/conductor/SKILL.md` has no row in `docs/PLAN_STATUS.md`.
+
+Ledger trim: to keep the always-read guides within 36 KiB, these ledger bullets moved here word for word (the first is replaced in the ledger by a shorter line):
+
+- Main 762d7511 (26 Nov 2026, records PR 660) plus this records PR. Team desk v4.1 ([plan](revamp/specs/team-desk-v4-1.md)) phases 1 to 5 (PRs 634 to 646) and the 25 Nov audit fixes are merged; v4.1 live (Guardian's report). Fixes: 648 060a8b41 (F1 shell), 649 49c478d1 (F4 status, admin), 650 1c40465b (F5b inbox, meetings, companies), 652 2f94afa0 (F3 missions, today), 651 a054c51c (F2 public, customer), 654 83635486 (F7 access, Class A), 653 7f48e112 (final sweep), 655 53da18fc (F5c inbox). Home v4.2 ([spec](revamp/specs/ui-ux-v4-2.md)) merged as 656 7a93d7f0 behind `CORRIDRA_UX_HOME_V42`, ON in production (owner's word "on", 25 Nov), unchanged. Later fixes: 658 da5c8f8e; 659 187a2391 (final walk fixes W-1 to W-3c). Production deploy of 187a2391 dpl_4UsBGpV9fVcK73EZ8mCxPVDrmHm6 READY and live home re-checked (Guardian 65's report, not read by the scribe). Batch v4.1 plus home v4.2 complete, pending owner follow-ups. Owner ruling 25 Nov 2026 (relayed): Health and Readiness are blocked for the operator role on the server too (PR 654; KI-40 superseded). Details: work log, 25 Nov. Dependabot 527 and 601 open.
+- Built and merged, switches: Wave 3 (11 Operator desk `CORRIDRA_UX_OPERATOR_DESK` off by default, 09 Before Send, 08 Buyer reply); Connect AI PR 2 (PR 593, configuration only, no provider call, key, run or money; owner said 23 Nov `CORRIDRA_AI_CONNECT_FORM` is true in production, not read). NOT built: With column, Compare 200% text follow-up. Deviations: ui-direction.md.
+- PR 595 (aae53aa): invited members get the workspace processing purpose. Follow-ups: its test uses a synthetic tenant; `packages/auth/src/operator-invitation.ts:93` has the same defect, not fixed. A peer session's manual production membership repair is not verified here.
+- Installs (VERIFIED from job logs, 20 Nov): run 44599063142 ai\*model_policy_real 1; run 44642528307 member_access 2, core 30, member_notice 1. AI in real workspaces is NOT active (app.part4_enabled false for real workspaces); it needs unit B10's migration and an install. Older install counts: [snapshot](v3/history/ledger-before-pr573-merge-records-2026-11-19.md).
+
+Next action: G65 merges units M1 and H1; then the final records push of this branch with their merge SHAs.

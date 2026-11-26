@@ -1,6 +1,6 @@
 # ADR-078: Problem reports (Help > Report a Problem)
 
-Status: Proposed, 10 November 2026, for the owner's decisions of that day in session S17 ("Build a form later: a real in-app problem report with staff review" and "3, now"; the one-off exception to navigation-v1 binding 7 for this item only; the existing privacy notice line "Messages you send us (support and privacy requests)" covers it; customers with no workspace may file). An optional, additive database module that the owner merges and installs. No application switch, no email, no upload, no AI.
+Status: Proposed, 10 November 2026, for the owner's decisions of that day in session S17 ("Build a form later: a real in-app problem report with staff review" and "3, now"; the one-off exception to navigation-v1 binding 7 for this item only; the existing privacy notice line "Messages you send us (support and privacy requests)" covers it; customers with no workspace may file). An optional, additive database module that the owner merges and installs. No application switch, no email, no upload, no AI. Superseded in part, replaced by 26 November 2026 (records, decided by Guardian G65 on the owner's delegation): built and merged in PRs 390 (`74216bd3`, module 0001), 396 (`ef357fd2`, 0002), 400 (`d7f67e6f`, backend), 403 (`27c62a2f`, 0003) and 412 (`61213338`, screens); installed by runs 42822133376 (1 applied), 42835562806 (2 applied) and 42950597177 (3 applied). Acceptance of this ADR stays UNRESOLVED, owner judgement (see `docs/PLAN_STATUS.md`); this note changes no decision.
 
 ## Context
 
