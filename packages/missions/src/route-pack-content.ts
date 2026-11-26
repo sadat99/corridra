@@ -1,0 +1,584 @@
+import { createHash } from 'node:crypto';
+import { z } from 'zod';
+import {
+  withTenant,
+  type DatabaseClient,
+  type DatabasePool,
+  type RequestContext,
+} from '@corridra/db';
+import { DomainError, stepUpRequired } from '@corridra/domain';
+import { routeConfiguration, type RouteConfiguration } from '@corridra/domain/corridors';
+import {
+  customKeyConflicts,
+  deriveCompleteness,
+  goLiveCheck,
+  goLiveMessage,
+  parseContentDocument,
+  routePackWords,
+  type Completeness,
+  type ContentDocument,
+  type GoLiveResult,
+  type PackStatus,
+} from '@corridra/domain/route-pack-standard';
+
+// ADR-093 Phase 2b: the database side of route pack content and the one go-live check every pack write calls. The module
+// acts only while CORRIDRA_ROUTE_PACK_FORM is on and the 2b marker app.route_pack_content_installed() exists. Off, or before
+// the install, every pack path behaves exactly as before: the check returns before any lock or read, the content service
+// answers Not found and no path reads the content table. Rules live in @corridra/domain/route-pack-standard.
+export function routePackFormOn(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.CORRIDRA_ROUTE_PACK_FORM === 'true';
+}
+async function markerPresent(db: DatabaseClient, signature: string) {
+  const row = (
+    await db.query<{ present: boolean }>('SELECT to_regprocedure($1) IS NOT NULL AS present', [
+      signature,
+    ])
+  ).rows[0];
+  return row?.present === true;
+}
+export async function routePackContentActive(db: DatabaseClient): Promise<boolean> {
+  return routePackFormOn() && markerPresent(db, 'app.route_pack_content_installed()');
+}
+async function lockCorridor(db: DatabaseClient, tenantId: string) {
+  await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [tenantId + ':corridor']);
+}
+type CurrentPack = {
+  id: string;
+  version: number;
+  status: PackStatus;
+  configuration: RouteConfiguration;
+};
+async function currentPack(db: DatabaseClient, tenantId: string, routeId: string) {
+  return (
+    await db.query<CurrentPack>(
+      'SELECT id,version,status,configuration FROM app.corridor_pack_version WHERE tenant_id=$1 AND route_id=$2 AND effective_from<=now() ORDER BY version DESC LIMIT 1',
+      [tenantId, routeId],
+    )
+  ).rows[0];
+}
+async function latestDocument(db: DatabaseClient, tenantId: string, routeId: string) {
+  const row = (
+    await db.query<{ document: unknown }>(
+      'SELECT document FROM app.route_pack_content WHERE tenant_id=$1 AND route_id=$2 ORDER BY version DESC LIMIT 1',
+      [tenantId, routeId],
+    )
+  ).rows[0];
+  return row ? parseContentDocument(row.document) : null;
+}
+function refuse(result: GoLiveResult) {
+  if (!result.ok) throw new DomainError(goLiveMessage(result), 409, result.code);
+}
+// Called by every path that writes a pack version, inside its transaction and before the insert: appendPack (so the raw
+// corridor-pack command too), the reviewed publish and so the guided form and the status change.
+export async function assertPackGoLive(
+  db: DatabaseClient,
+  tenantId: string,
+  pack: { routeId: string; status: PackStatus; configuration: RouteConfiguration },
+): Promise<void> {
+  if (!(await routePackContentActive(db))) return;
+  await lockCorridor(db, tenantId);
+  const current = await currentPack(db, tenantId, pack.routeId);
+  const document = await latestDocument(db, tenantId, pack.routeId);
+  refuse(
+    goLiveCheck({
+      before: { pack: current ?? null, document },
+      after: { pack: { status: pack.status, configuration: pack.configuration }, document },
+    }),
+  );
+}
+// A stable id for one step of a retried command: the same command and step always give the same id, shaped as a UUID with
+// version nibble 5, so every step of a save or a publish can be repeated without a duplicate.
+export function commandStepId(commandId: string, ...parts: string[]): string {
+  const hex = createHash('sha256')
+    .update([commandId, ...parts].join(':'))
+    .digest('hex');
+  const variant = ((parseInt(hex.charAt(16), 16) & 0x3) | 0x8).toString(16);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+export const contentAppendItem = z
+  .object({
+    id: z.uuid(),
+    routeId: z.uuid(),
+    version: z.int().positive(),
+    document: z.unknown(),
+    reason: z.string().trim().min(3).max(500),
+  })
+  .strict();
+const appendBatchInput = z
+  .object({
+    items: z
+      .array(contentAppendItem)
+      .min(1)
+      .max(20)
+      .refine(
+        (items) => new Set(items.map((item) => item.routeId)).size === items.length,
+        'Give each route once',
+      )
+      .refine(
+        (items) => new Set(items.map((item) => item.id)).size === items.length,
+        'Give each item its own id',
+      ),
+  })
+  .strict();
+const routeIdInput = z.object({ routeId: z.uuid() }).strict();
+const overviewInput = z
+  .object({ routeIds: z.array(z.uuid()).min(1).max(100).optional() })
+  .strict()
+  .default({});
+const goLiveInput = z
+  .object({
+    routeId: z.uuid(),
+    pack: z
+      .object({
+        status: z.enum(['DRAFT', 'TESTING', 'LIMITED', 'ACTIVE', 'PAUSED']),
+        configuration: routeConfiguration,
+      })
+      .strict()
+      .optional(),
+    document: z.unknown().optional(),
+  })
+  .strict();
+
+export type ContentAppendResult = {
+  id: string;
+  routeId: string;
+  version: number;
+  packId: string | null;
+  duplicate: boolean;
+};
+export type Capabilities = {
+  routePackForm: boolean;
+  contentInstalled: boolean;
+  onePersonPublication: boolean;
+};
+export type RouteView = {
+  routeId: string;
+  key: string;
+  origin: string;
+  destination: string;
+  pack: {
+    id: string;
+    version: number;
+    status: PackStatus;
+    configuration: RouteConfiguration;
+    effectiveFrom: string;
+    createdBy: string;
+    reason: string;
+  } | null;
+  content: {
+    id: string;
+    version: number;
+    packId: string | null;
+    document: ContentDocument;
+    createdAt: string;
+    createdBy: string;
+    reason: string;
+  } | null;
+  completeness: Completeness;
+  readiness: { packId: string; completeMissionTypes: string[] } | null;
+};
+type RouteRow = { id: string; origin: string; destination: string };
+type PackRow = CurrentPack & {
+  route_id: string;
+  effective_from: Date;
+  created_by: string;
+  reason: string;
+};
+type ContentRow = {
+  id: string;
+  route_id: string;
+  version: number;
+  pack_id: string | null;
+  document: unknown;
+  created_at: Date;
+  created_by: string;
+  reason: string;
+};
+async function readState(db: DatabaseClient, tenantId: string) {
+  const routes = await db.query<RouteRow>(
+    'SELECT id,origin_market AS origin,destination_market AS destination FROM app.corridor_route WHERE tenant_id=$1 ORDER BY origin_market,destination_market',
+    [tenantId],
+  );
+  const markets = await db.query<{ key: string }>('SELECT key FROM app.market_scope ORDER BY key');
+  const packs = await db.query<PackRow>(
+    'SELECT DISTINCT ON(route_id) id,route_id,version,status,configuration,effective_from,created_by,reason FROM app.corridor_pack_version WHERE tenant_id=$1 AND effective_from<=now() ORDER BY route_id,version DESC',
+    [tenantId],
+  );
+  const contents = await db.query<ContentRow>(
+    'SELECT DISTINCT ON(route_id) id,route_id,version,pack_id,document,created_at,created_by,reason FROM app.route_pack_content WHERE tenant_id=$1 ORDER BY route_id,version DESC',
+    [tenantId],
+  );
+  return {
+    routes: routes.rows,
+    markets: new Set(markets.rows.map((row) => row.key)),
+    packs: new Map(packs.rows.map((row) => [row.route_id, row])),
+    contents: new Map(
+      contents.rows.map((row) => [
+        row.route_id,
+        { ...row, document: parseContentDocument(row.document) },
+      ]),
+    ),
+  };
+}
+// One snapshot of every route of the workspace with its current pack and latest content, for the sheet and the service.
+// routes is keyed by route key (ORIGIN-DESTINATION); packs and contents by route id. Callers hold the corridor lock when they
+// write from it. Reads the content table, so call it only while the module is active.
+export async function loadRoutePackState(db: DatabaseClient, tenantId: string) {
+  const state = await readState(db, tenantId);
+  return {
+    routes: new Map(state.routes.map((route) => [`${route.origin}-${route.destination}`, route])),
+    markets: state.markets,
+    packs: new Map(
+      [...state.packs].map(([routeId, pack]) => [
+        routeId,
+        {
+          id: pack.id,
+          version: pack.version,
+          status: pack.status,
+          configuration: pack.configuration,
+        },
+      ]),
+    ),
+    contents: new Map(
+      [...state.contents].map(([routeId, content]) => [
+        routeId,
+        {
+          id: content.id,
+          version: content.version,
+          document: content.document,
+          createdAt: content.created_at.toISOString(),
+        },
+      ]),
+    ),
+  };
+}
+const today = () => new Date().toISOString().slice(0, 10);
+const notFound = () => new DomainError(routePackWords.notFound, 404);
+
+export class RoutePackContentService {
+  constructor(private pool: DatabasePool) {}
+  // Works before the install too, so a page can decide what to show.
+  capabilities(ctx: RequestContext): Promise<Capabilities> {
+    return withTenant(this.pool, ctx, 'missions.read', ({ db }) => capabilitiesOf(db));
+  }
+  overview(
+    ctx: RequestContext,
+    input: unknown = {},
+  ): Promise<{
+    capabilities: Capabilities;
+    customLabels: Record<string, string>;
+    routes: RouteView[];
+  }> {
+    const v = overviewInput.parse(input);
+    return withTenant(this.pool, ctx, 'missions.read', async ({ db, role }) => {
+      const capabilities = await capabilitiesOf(db);
+      if (!active(capabilities)) throw notFound();
+      const state = await readState(db, ctx.tenantId);
+      // The label of the latest save of a custom key is shown for that key on every route.
+      const customLabels: Record<string, string> = {};
+      for (const content of [...state.contents.values()].sort(
+        (a, b) => a.created_at.getTime() - b.created_at.getTime(),
+      ))
+        for (const fact of content.document.facts)
+          if (fact.key.startsWith('custom.') && fact.label) customLabels[fact.key] = fact.label;
+      const routes = v.routeIds
+        ? state.routes.filter((route) => v.routeIds?.includes(route.id))
+        : state.routes;
+      const readiness =
+        role === 'owner' || role === 'admin'
+          ? await completeReadiness(
+              db,
+              ctx.tenantId,
+              routes.flatMap((route) => state.packs.get(route.id)?.id ?? []),
+            )
+          : null;
+      return {
+        capabilities,
+        customLabels,
+        routes: routes.map((route): RouteView => {
+          const pack = state.packs.get(route.id);
+          const content = state.contents.get(route.id);
+          return {
+            routeId: route.id,
+            key: `${route.origin}-${route.destination}`,
+            origin: route.origin,
+            destination: route.destination,
+            pack: pack
+              ? {
+                  id: pack.id,
+                  version: pack.version,
+                  status: pack.status,
+                  configuration: pack.configuration,
+                  effectiveFrom: pack.effective_from.toISOString(),
+                  createdBy: pack.created_by,
+                  reason: pack.reason,
+                }
+              : null,
+            content: content
+              ? {
+                  id: content.id,
+                  version: content.version,
+                  packId: content.pack_id,
+                  document: content.document,
+                  createdAt: content.created_at.toISOString(),
+                  createdBy: content.created_by,
+                  reason: content.reason,
+                }
+              : null,
+            completeness: deriveCompleteness(
+              pack ? { status: pack.status, configuration: pack.configuration } : null,
+              content?.document ?? null,
+              today(),
+            ),
+            readiness:
+              readiness && pack
+                ? { packId: pack.id, completeMissionTypes: readiness.get(pack.id) ?? [] }
+                : null,
+          };
+        }),
+      };
+    });
+  }
+  // Content versions of one route, newest first, without their documents.
+  history(ctx: RequestContext, input: unknown) {
+    const v = routeIdInput.parse(input);
+    return withTenant(this.pool, ctx, 'missions.read', async ({ db, actorId }) => {
+      if (!(await routePackContentActive(db))) throw notFound();
+      const rows = (
+        await db.query<Omit<ContentRow, 'route_id' | 'document'>>(
+          'SELECT id,version,pack_id,created_at,created_by,reason FROM app.route_pack_content WHERE tenant_id=$1 AND route_id=$2 ORDER BY version DESC LIMIT 100',
+          [ctx.tenantId, v.routeId],
+        )
+      ).rows;
+      return rows.map((row) => ({
+        id: row.id,
+        version: row.version,
+        packId: row.pack_id,
+        createdAt: row.created_at.toISOString(),
+        createdBy: row.created_by,
+        createdByYou: row.created_by === actorId,
+        reason: row.reason,
+      }));
+    });
+  }
+  // Pack versions of one route with the proposal and decision behind each. Proposals and decisions are readable by owners and
+  // admins only, so this read needs the same authority as the Control Center.
+  packHistory(ctx: RequestContext, input: unknown) {
+    const v = routeIdInput.parse(input);
+    return withTenant(this.pool, ctx, 'audit.read', async ({ db, actorId }) => {
+      if (!(await routePackContentActive(db))) throw notFound();
+      const rows = (
+        await db.query<{
+          pack_id: string;
+          version: number;
+          status: PackStatus;
+          effective_from: Date;
+          reason: string;
+          published_by: string;
+          proposed_by: string | null;
+          proposal_reason: string | null;
+          decision_reason: string | null;
+        }>(
+          `SELECT p.id AS pack_id,p.version,p.status,p.effective_from,p.reason,p.created_by AS published_by,q.created_by AS proposed_by,
+            q.reason AS proposal_reason,d.reason AS decision_reason
+           FROM app.corridor_pack_version p
+           LEFT JOIN app.configuration_decision d ON d.tenant_id=p.tenant_id AND d.published_pack_id=p.id AND d.decision='PUBLISH'
+           LEFT JOIN app.configuration_proposal q ON q.tenant_id=d.tenant_id AND q.id=d.proposal_id
+           WHERE p.tenant_id=$1 AND p.route_id=$2 ORDER BY p.version DESC LIMIT 100`,
+          [ctx.tenantId, v.routeId],
+        )
+      ).rows;
+      return rows.map((row) => ({
+        packId: row.pack_id,
+        version: row.version,
+        status: row.status,
+        effectiveFrom: row.effective_from.toISOString(),
+        reason: row.reason,
+        publishedBy: row.published_by,
+        proposedBy: row.proposed_by,
+        proposalReason: row.proposal_reason,
+        decisionReason: row.decision_reason,
+        reviewed: row.proposed_by !== null,
+        proposedAndPublishedByYou: row.proposed_by === actorId && row.published_by === actorId,
+      }));
+    });
+  }
+  async append(ctx: RequestContext, input: unknown): Promise<ContentAppendResult> {
+    const [result] = (await this.appendBatch(ctx, { items: [input] })).items;
+    if (!result) throw notFound();
+    return result;
+  }
+  // All content of one save, in one transaction: either every route's new version is stored or none is.
+  appendBatch(ctx: RequestContext, input: unknown): Promise<{ items: ContentAppendResult[] }> {
+    const v = appendBatchInput.parse(input);
+    return withTenant(this.pool, ctx, 'config.manage', async ({ db, actorId, freshMfa }) => {
+      if (!(await routePackContentActive(db))) throw notFound();
+      if (!freshMfa) throw stepUpRequired();
+      await lockCorridor(db, ctx.tenantId);
+      const items = v.items.map((item) => ({
+        ...item,
+        document: parseContentDocument(item.document),
+      }));
+      const existing = (
+        await db.query<{
+          id: string;
+          route_id: string;
+          version: number;
+          pack_id: string | null;
+          reason: string;
+          same: boolean;
+        }>(
+          `SELECT c.id,c.route_id,c.version,c.pack_id,c.reason,c.document=i.document AS same
+           FROM app.route_pack_content c JOIN jsonb_to_recordset($2::jsonb) AS i(id uuid,document jsonb) ON i.id=c.id
+           WHERE c.tenant_id=$1`,
+          [ctx.tenantId, JSON.stringify(items.map(({ id, document }) => ({ id, document })))],
+        )
+      ).rows;
+      if (existing.length) {
+        const replay = items.map((item) =>
+          existing.find(
+            (row) =>
+              row.id === item.id &&
+              row.route_id === item.routeId &&
+              row.reason === item.reason &&
+              row.same,
+          ),
+        );
+        if (replay.some((row) => !row))
+          throw new DomainError(routePackWords.commandReused, 409, 'ROUTE_PACK_COMMAND_REUSED');
+        return {
+          items: replay.flatMap((row) =>
+            row
+              ? [
+                  {
+                    id: row.id,
+                    routeId: row.route_id,
+                    version: row.version,
+                    packId: row.pack_id,
+                    duplicate: true,
+                  },
+                ]
+              : [],
+          ),
+        };
+      }
+      const state = await readState(db, ctx.tenantId);
+      for (const item of items) {
+        if (!state.routes.some((route) => route.id === item.routeId))
+          throw new DomainError('Route unavailable', 404);
+        if (item.version !== (state.contents.get(item.routeId)?.version ?? 0) + 1)
+          throw new DomainError(routePackWords.contentChanged, 409, 'ROUTE_PACK_CONTENT_CHANGED');
+      }
+      const after = new Map(
+        [...state.contents].map(([routeId, content]) => [routeId, content.document]),
+      );
+      for (const item of items) after.set(item.routeId, item.document);
+      const batchRoutes = new Set(items.map((item) => item.routeId));
+      const conflict = customKeyConflicts(after).find((c) =>
+        c.routeIds.some((routeId) => batchRoutes.has(routeId)),
+      );
+      if (conflict)
+        throw new DomainError(
+          routePackWords.customKeyConflict(conflict.key),
+          409,
+          'ROUTE_PACK_CUSTOM_KEY_CONFLICT',
+        );
+      const results: ContentAppendResult[] = [];
+      for (const item of items) {
+        const pack = state.packs.get(item.routeId);
+        const packView = pack ? { status: pack.status, configuration: pack.configuration } : null;
+        refuse(
+          goLiveCheck({
+            before: {
+              pack: packView,
+              document: state.contents.get(item.routeId)?.document ?? null,
+            },
+            after: { pack: packView, document: item.document },
+          }),
+        );
+        await db.query(
+          'INSERT INTO app.route_pack_content(id,tenant_id,route_id,pack_id,version,standard_version,document,reason,created_by) VALUES($1,$2,$3,$4,$5,1,$6,$7,$8)',
+          [
+            item.id,
+            ctx.tenantId,
+            item.routeId,
+            pack?.id ?? null,
+            item.version,
+            item.document,
+            item.reason,
+            actorId,
+          ],
+        );
+        results.push({
+          id: item.id,
+          routeId: item.routeId,
+          version: item.version,
+          packId: pack?.id ?? null,
+          duplicate: false,
+        });
+      }
+      return { items: results };
+    });
+  }
+  // A what-if of the go-live check for a pack and content that are not saved yet. Owner and admin, no step-up, as the pack
+  // preview.
+  goLive(ctx: RequestContext, input: unknown): Promise<GoLiveResult> {
+    const v = goLiveInput.parse(input);
+    return withTenant(this.pool, ctx, 'audit.read', async ({ db }) => {
+      if (!(await routePackContentActive(db))) throw notFound();
+      const current = await currentPack(db, ctx.tenantId, v.routeId);
+      const document = await latestDocument(db, ctx.tenantId, v.routeId);
+      return goLiveCheck({
+        before: { pack: current ?? null, document },
+        after: {
+          pack: v.pack ?? current ?? null,
+          document: v.document === undefined ? document : parseContentDocument(v.document),
+        },
+      });
+    });
+  }
+  proposalExists(ctx: RequestContext, id: string): Promise<boolean> {
+    const proposalId = z.uuid().parse(id);
+    return withTenant(
+      this.pool,
+      ctx,
+      'config.manage',
+      async ({ db }) =>
+        (
+          await db.query('SELECT FROM app.configuration_proposal WHERE tenant_id=$1 AND id=$2', [
+            ctx.tenantId,
+            proposalId,
+          ])
+        ).rowCount === 1,
+    );
+  }
+}
+async function capabilitiesOf(db: DatabaseClient): Promise<Capabilities> {
+  return {
+    routePackForm: routePackFormOn(),
+    contentInstalled: await markerPresent(db, 'app.route_pack_content_installed()'),
+    onePersonPublication: await markerPresent(db, 'app.route_pack_one_person_publication()'),
+  };
+}
+const active = (capabilities: Capabilities) =>
+  capabilities.routePackForm && capabilities.contentInstalled;
+// The mission types of each pack whose 13 readiness dimensions (the database allows only those 13) all have an unexpired,
+// not BLOCKED latest observation on that exact pack.
+async function completeReadiness(db: DatabaseClient, tenantId: string, packIds: string[]) {
+  const result = new Map<string, string[]>();
+  if (!packIds.length) return result;
+  const rows = (
+    await db.query<{ pack_id: string; mission_type: string }>(
+      `SELECT r.pack_id,r.mission_type FROM (
+         SELECT DISTINCT ON(route_id,mission_type,dimension) pack_id,mission_type,dimension,status,valid_until
+         FROM app.route_readiness WHERE tenant_id=$1 ORDER BY route_id,mission_type,dimension,version DESC) r
+       WHERE r.pack_id=ANY($2::uuid[]) AND r.valid_until>now() AND r.status<>'BLOCKED'
+       GROUP BY r.pack_id,r.mission_type HAVING count(DISTINCT r.dimension)=13 ORDER BY r.mission_type`,
+      [tenantId, packIds],
+    )
+  ).rows;
+  for (const row of rows)
+    result.set(row.pack_id, [...(result.get(row.pack_id) ?? []), row.mission_type]);
+  return result;
+}
