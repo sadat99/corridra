@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'vitest';
+import { ZodError } from 'zod';
 import { commercialFixture } from './commercial-fixture';
 import { command, future } from './access-fixture';
 import { changeMemberNow } from './change-member';
@@ -44,6 +45,7 @@ import {
   RoutePackContentService,
 } from '../../packages/missions/src/route-pack-content';
 import {
+  changeRouteStatus,
   createRoutePack,
   guidedRoutePack,
   publishReviewed,
@@ -716,6 +718,29 @@ describe('route pack content on the database', () => {
     legacyLive = routeId;
   });
 
+  test('S1, before the install: the form accepts exactly the input it always did and writes nothing else', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'DRAFT', draftConfiguration());
+    const input = formInput(routeId, 2, 'TESTING');
+    for (const extra of [
+      { localities: ['dhaka'] },
+      { requiredCapabilities: ['cap'] },
+      { operatorCapabilities: ['cap'] },
+      { coverage: ['zone'] },
+      { clusters: ['cluster'] },
+      { evidenceTypes: ['evidence'] },
+      { sourceCategories: ['category'] },
+      { removeSourcingProfile: false },
+      { commandId: randomUUID() },
+      { effectiveFrom: undefined },
+    ])
+      await expect(createRoutePack(deps(), owner(), { ...input, ...extra })).rejects.toBeInstanceOf(
+        ZodError,
+      );
+    expect(await packVersions(routeId)).toHaveLength(1);
+  });
+
   test('install: the real-use, sourcing and route pack modules; with the switch off every pack path is still as on main', async () => {
     await migrateCustomerRealUse(f.owner);
     await migrateSourcingWorkflow(f.owner);
@@ -936,8 +961,16 @@ describe('route pack content on the database', () => {
       liveConfiguration({ localities: ['dhaka'] }),
     );
     await expect(decidePublish()).rejects.toMatchObject(refused);
-    const decideStatus = await proposeAndDecide(statusChange, 'ACTIVE', liveConfiguration());
-    await expect(decideStatus()).rejects.toMatchObject(refused);
+    const change = { commandId: randomUUID(), routeId: statusChange, status: 'ACTIVE', reason };
+    await expect(changeRouteStatus(deps(), owner(), change)).rejects.toMatchObject(refused);
+    // The status change takes no configuration, so nothing edited can ride along.
+    await expect(
+      changeRouteStatus(deps(), owner(), {
+        ...change,
+        commandId: randomUUID(),
+        configuration: liveConfiguration({ localities: ['dhaka'] }),
+      }),
+    ).rejects.toBeInstanceOf(ZodError);
     for (const routeId of routes) expect((await latestPack(routeId)).status).toBe('DRAFT');
     // Filled on two routes, Not applicable on the other two: every path now passes.
     for (const [i, routeId] of routes.entries())
@@ -956,7 +989,10 @@ describe('route pack content on the database', () => {
     const published = await createRoutePack(deps(), owner(), formInput(form, 2, 'ACTIVE'));
     expect(published).toMatchObject({ version: 2, duplicate: false });
     await decidePublish();
-    await decideStatus();
+    expect(await changeRouteStatus(deps(), owner(), change)).toMatchObject({
+      version: 2,
+      duplicate: false,
+    });
     for (const routeId of routes) expect((await latestPack(routeId)).status).toBe('ACTIVE');
     // The status change published the configuration unchanged, as a reviewed proposal and decision.
     expect((await packVersions(statusChange)).map((p) => p.configuration)).toEqual([
@@ -1152,6 +1188,41 @@ describe('route pack content on the database', () => {
     expect(saved.packId).toBe(inForce.id);
   });
 
+  test('a scheduled DRAFT alone never holds back a write; a route not live with a Core field Pending still cannot go live', async () => {
+    formSwitch(false);
+    const legacy = await newRoute();
+    await appendPack(legacy, 1, 'LIMITED', liveConfiguration());
+    formSwitch(true);
+    const later = (routeId: string, version: number, status: PackStatus, days: number) =>
+      corridors.appendPack(owner(), {
+        id: randomUUID(),
+        routeId,
+        version,
+        status,
+        effectiveFrom: new Date(Date.now() + days * 86400000).toISOString(),
+        reason,
+        configuration: liveConfiguration(),
+      });
+    // Live in force with Core fields Pending from before the install, and a DRAFT scheduled after it.
+    await later(legacy, 2, 'DRAFT', 30);
+    expect((await later(legacy, 3, 'LIMITED', 31)).version).toBe(3);
+    // Core filled: a LIMITED version over a scheduled DRAFT passes.
+    const filledRoute = await newRoute();
+    await saveContent(filledRoute, coreDocument());
+    await appendPack(filledRoute, 1, 'DRAFT', liveConfiguration());
+    await later(filledRoute, 2, 'DRAFT', 30);
+    expect((await later(filledRoute, 3, 'LIMITED', 31)).version).toBe(3);
+    // Not live and a Core field Pending: still refused.
+    const pending = await newRoute();
+    await saveContent(pending, coreDocument(['risks.key_risks']));
+    await appendPack(pending, 1, 'DRAFT', liveConfiguration());
+    await later(pending, 2, 'DRAFT', 30);
+    await expect(later(pending, 3, 'LIMITED', 31)).rejects.toMatchObject({
+      status: 409,
+      code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE',
+    });
+  });
+
   test('a retried reviewed publish with other values is refused; with the same values it publishes', async () => {
     formSwitch(true);
     const routeId = await newRoute();
@@ -1179,7 +1250,11 @@ describe('route pack content on the database', () => {
       configuration: liveConfiguration({ localities: ['dhaka'] }),
       reason,
     };
-    await expect(publishReviewed(flaky, owner(), first)).rejects.toThrow('Forced failure');
+    await expect(publishReviewed(flaky, owner(), first)).rejects.toMatchObject({
+      status: 409,
+      code: 'ROUTE_PACK_NOT_PUBLISHED',
+      message: routePackWords.notPublished,
+    });
     expect(await packVersions(routeId)).toHaveLength(1);
     for (const changed of [
       { configuration: liveConfiguration({ localities: ['gazipur'] }) },
