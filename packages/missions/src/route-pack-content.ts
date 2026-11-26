@@ -50,9 +50,10 @@ type CurrentPack = {
   status: PackStatus;
   configuration: RouteConfiguration;
 };
-// The go-live check judges both the pack in force and the latest pack by version: a route is live while either one is
-// LIMITED or ACTIVE, so neither a pack published live for a later date nor a later DRAFT scheduled after a live pack lets a
-// Core field turn Pending. The latest pack, which a new version follows, is judged first; the same pack is judged once.
+// The go-live check judges the pack in force, and also the latest pack by version when that one is LIMITED or ACTIVE or
+// nothing is in force yet. So a route is live while either is live: neither a pack published live for a later date nor a
+// later DRAFT scheduled after a live pack lets a Core field turn Pending, and a scheduled DRAFT alone never holds back a
+// write. A live latest pack, which a new version follows, is judged first; the same pack is judged once.
 async function packsOf(db: DatabaseClient, tenantId: string, routeId: string) {
   const rows = (
     await db.query<CurrentPack & { in_force: boolean }>(
@@ -71,7 +72,11 @@ export function judgedPacks(
   inForce: CurrentPack | undefined,
   latest: CurrentPack | undefined,
 ): PackView[] {
-  const packs = [latest, inForce].flatMap((pack) => (pack ? [pack] : []));
+  const judgedLatest =
+    latest && (!inForce || latest.status === 'LIMITED' || latest.status === 'ACTIVE')
+      ? latest
+      : undefined;
+  const packs = [judgedLatest, inForce].flatMap((pack) => (pack ? [pack] : []));
   if (!packs.length) return [null];
   return packs
     .filter((pack, index) => packs.findIndex((other) => other.id === pack.id) === index)
