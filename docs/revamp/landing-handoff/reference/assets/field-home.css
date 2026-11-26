@@ -1,0 +1,55 @@
+.field-home {background:#e8edf0;color:#142438}
+.field-home .dh-header {background:#e8edf0;color:#142438;border-color:#acbac5}
+.field-home .dh-header-cta {color:white;background:#2856c5;border-color:#2856c5}
+.field-home .dh-header-cta:hover {background:#173fa9}
+.field-home .dh-menu summary {color:#142438}
+.field-home .dh-desktop a:hover,.field-home .dh-sign:hover {color:#2856c5}
+.field-home .field-main {padding-block:clamp(27px,3.5vw,56px) 34px;max-width:1510px;padding-inline:var(--dh-gutter)}
+.field-home .field-intro h1 {font-size:clamp(65px,9.3vw,146px)}
+.fh-atlas-head,.fh-caption {display:flex;justify-content:space-between;align-items:center;gap:6px 18px;margin:12px 0}
+.fh-atlas-head h2 {font-size:clamp(17px,1.8vw,26px);letter-spacing:-.04em}
+.fh-choices {display:flex;gap:4px;flex-wrap:wrap}
+.fh-choices button {min-height:44px;padding:6px 9px;border:1px solid #9baec6;font-size:.88rem;font-weight:700;color:#142438;background:#e9eff5}
+.fh-choices button[aria-pressed=true] {background:white;color:#1945a9;border-color:#2856c5;box-shadow:inset 0 -2px #2856c5}
+.field-home .atlas-routes {border:0;border-bottom:1px solid #667d9e}
+.field-home .fh-atlas[data-mode=selective] #route-availability,.field-home .atlas[data-mode=selective] #route-availability {color:#cbdeff}
+.field-home .atlas[data-mode=open] #route-availability {color:#e5ecb7}
+.field-home .atlas[data-mode=ask] #route-availability {color:#dbe5fa}
+.field-home .inspector-top {margin-bottom:8px}
+.field-home .field-inspector h3 {font-size:clamp(29px,3.35vw,51px);line-height:1;letter-spacing:-.06em;margin:7px 0 10px}
+.fh-sample {color:#4a5c74}
+.fh-actions {display:flex;flex-wrap:wrap;gap:5px 14px;margin-top:13px}
+.fh-actions .primary[aria-pressed=true] {background:#fff;color:#2856c5;border-color:#2856c5}
+.fh-caption {font-size:.9rem;color:#42556b;margin-bottom:0}
+.fh-caption a {white-space:nowrap}
+.fh-mission {background:#f9fbfc;border-block:1px solid #b3c4d3}
+.fh-mission-grid {display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:14px}
+.fh-stages {border-top:1px solid #adbed0}
+.fh-stages button {display:block;width:100%;min-height:53px;text-align:left;padding:7px 12px;border:0;border-bottom:1px solid #adbed0;background:transparent;color:#142438;font-weight:700}
+.fh-stages button[aria-pressed=true] {background:#e4ecfa;box-shadow:inset 3px 0 #2856c5}
+#mission-record {background:#e7eef7;border:1px solid #adbed0;padding:clamp(17px,3vw,44px);min-height:212px}
+#mission-record h3 {font-size:clamp(27px,3.2vw,47px);line-height:1;letter-spacing:-.055em;margin-bottom:14px}
+#mission-record p {max-width:59ch;color:#334a64}
+.fh-trust-grid {grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr)}
+.fh-ledger {background:#edf3fa;color:#142438}
+.fh-ledger-controls {padding:10px 12px 0}
+#field-proof {padding:6px 12px 13px}
+#field-proof article {border-bottom:1px solid #b4c3d5;padding:8px 0}
+#field-proof small {display:block;font:700 .76rem/1.35 var(--mono);color:#234ba7;margin-bottom:3px}
+#field-proof p {font-size:.91rem;color:#3e526a}
+.fh-saved-list {padding:16px 22px}
+.fh-saved-list article {border-top:1px solid #b4c3d5;padding:9px 0}
+.fh-saved-list button {margin-right:12px}
+.field-home .dh-brief {background:#dee9f3}
+@media(max-width:710px) {
+  .fh-atlas-head,.fh-caption {flex-direction:column;align-items:start}
+  .fh-mission-grid,.fh-trust-grid {grid-template-columns:1fr}
+  .field-home .field-intro h1 {font-size:clamp(65px,14vw,115px)}
+}
+@media(max-width:450px) {
+  .fh-atlas-head .fh-choices {display:grid;width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .field-home .field-intro h1 {font-size:clamp(61px,15.5vw,70px)}
+}
+
+.field-home .field-intro h1 {font-size:clamp(43px,6.4vw,95px);line-height:.96;letter-spacing:-.065em}
+.field-home .field-intro>p {max-width:34ch}
