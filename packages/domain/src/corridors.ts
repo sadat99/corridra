@@ -18,7 +18,8 @@ const profileKeys = (max: number) =>
     .max(max)
     .refine((values) => new Set(values).size === values.length, 'Duplicate keys');
 // Text the database can store: no NUL and no lone surrogate (jsonb refuses both), so a bad value is a validation message.
-const unstorable = /\u0000|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+export const unstorable =
+  /\u0000|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 const profileText = (max: number) =>
   z
     .string()
