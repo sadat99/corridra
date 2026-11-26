@@ -7,6 +7,7 @@ import { AccessService } from '../../packages/auth/src/access';
 import { configureSourcingWorkflow } from '../../packages/auth/src/sourcing-workflow-configuration';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateSourcingWorkflow } from '../../packages/db/src/sourcing-workflow-migrate';
+import { migrateRoutePack } from '../../packages/db/src/route-pack-migrate';
 import { initialRoutes, storedTextOctets } from '../../packages/domain/src/corridors';
 import { CorridorService, initialRouteConfiguration } from '../../packages/missions/src/corridors';
 import { OperationsService } from '../../packages/missions/src/operations';
@@ -310,7 +311,7 @@ test('the block is bounded and versioned by the database itself', async () => {
   );
 });
 
-test('a sourcing pack goes through the reviewed flow: self-publication fails, an independent reviewer publishes the exact block', async () => {
+test('a sourcing pack goes through the reviewed flow: self-publication fails until one-person publication is installed, then the same owner publishes the exact block', async () => {
   await f.owner.query('UPDATE identity.assurance SET verified_at=now()');
   await routes.installTemplates(f.users.owner.ctx);
   await changeMemberNow(new AccessService(f.runtime), f.users.owner.ctx, {
@@ -364,7 +365,22 @@ test('a sourcing pack goes through the reviewed flow: self-publication fails, an
       reason,
     }),
   ).rejects.toThrow('independent');
-  await ops.command(f.users.reviewer.ctx, {
+  // ADR-093 Phase 2a: once installed, the same owner publishes; a pack outside the reviewed flow is still refused.
+  await migrateRoutePack(f.owner);
+  const rawDecision = (proposalId: string, packId: string) =>
+    rawContext(
+      f.runtime,
+      f.users.owner.ctx,
+      "INSERT INTO app.configuration_decision(id,tenant_id,proposal_id,decision,published_pack_id,created_by,reason) VALUES($1,$2,$3,'PUBLISH',$4,app.actor_id(),$5)",
+      [randomUUID(), f.tenantA, proposalId, packId, reason],
+    );
+  await expect(rawDecision(proposal, first.id)).rejects.toThrow(
+    'Exact reviewed configuration publication required',
+  );
+  await expect(rawDecision(randomUUID(), first.id)).rejects.toThrow(
+    'Configuration proposal required',
+  );
+  await ops.command(f.users.owner.ctx, {
     id: randomUUID(),
     action: 'decide',
     proposalId: proposal,
