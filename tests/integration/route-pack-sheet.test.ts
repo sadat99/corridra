@@ -724,3 +724,75 @@ test('the import body is read with a running cap: a chunked body over 2 MiB stop
   expect(notUtf8.status).toBe(400);
   expect((await notUtf8.json()).error).toBe('Send the file as UTF-8 text');
 });
+
+test('formula safety: every risky first character is escaped on export and export then import gives no change', async () => {
+  const saved = await save([
+    filled('EC-PE', 'identity.origin_scope', '=SUM(1)'),
+    filled('EC-PE', 'identity.destination_scope', '+1 more region'),
+    filled('EC-PE', 'market.notes', '@ Guayaquil port'),
+    filled('EC-PE', 'market.key_cities', '=A1 | Quito'),
+    filled('EC-PE', 'custom.balance_ec_pe', '-12.5', {
+      label: 'Usual balance',
+      section: '10',
+      type: 'number',
+    }),
+    filled('EC-PE', 'custom.trend_ec_pe', '=Up', {
+      label: '=Trend',
+      section: '16',
+      type: 'choice',
+      format: '=Up | -Down',
+    }),
+  ]);
+  expect(saved.errors).toEqual([]);
+  // Tab, CR and LF cannot come from the sheet, which trims plain cells, but the content service stores them as given.
+  const id = (await routeId('EC-PE'))!;
+  const document = await latestDocument('EC-PE');
+  await content.append(owner(), {
+    id: randomUUID(),
+    routeId: id,
+    version: 2,
+    reason,
+    document: {
+      ...document,
+      facts: [
+        ...document.facts,
+        ...[
+          ['identity.out_of_scope', '\tTabbed text'],
+          ['missions.eligibility_notes', '\rCarriage return text'],
+          ['missions.typical_timeline', '\nLine feed text'],
+        ].map(([key, value]) => ({
+          key,
+          state: 'FILLED',
+          value,
+          source: 'staff knowledge',
+          observedOn: observed,
+        })),
+      ],
+    },
+  });
+  const csv = await (await exportRequest('EC-PE')).text();
+  const cells = csvRows(csv, sheetLimits.rows, 'route pack').flatMap((r) => r.cells);
+  expect(cells.filter((cell) => /^[=+\-@\t\r\n]/.test(cell))).toEqual([]);
+  for (const escaped of [
+    "'=SUM(1)",
+    "'+1 more region",
+    "'@ Guayaquil port",
+    "'=A1 | Quito",
+    "'-12.5",
+    "'=Trend",
+    "'=Up | -Down",
+    "'=Up",
+    "'\tTabbed text",
+    "'\rCarriage return text",
+    "'\nLine feed text",
+  ])
+    expect(cells).toContain(escaped);
+  const report = (await (await sheetRequest({ mode: 'dry-run', csv })).json()) as SheetReport;
+  expect(report.errors).toEqual([]);
+  expect(plan(report, 'EC-PE').content).toMatchObject({
+    changed: false,
+    added: [],
+    updated: [],
+    removed: [],
+  });
+});

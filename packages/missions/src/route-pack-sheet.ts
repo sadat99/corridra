@@ -172,11 +172,12 @@ const stateWords: Record<SheetState, string> = {
 };
 const routeShape = /^([A-Z][A-Z0-9]{1,9})-([A-Z][A-Z0-9]{1,9})$/;
 // The export prefixes a cell that a spreadsheet could read as a formula with one apostrophe (csvCell); the import takes it off
-// again, so an export imported unchanged changes nothing. A genuine value that starts with an apostrophe and then one of these
-// characters loses the apostrophe.
+// again and keeps the rest exactly, a leading tab or line break included, so an export imported unchanged changes nothing.
+// A genuine value that starts with an apostrophe and then one of these characters loses the apostrophe. Other cells are
+// trimmed.
 const escapedFormula = /^'[=+\-@\t\r\n]/;
 const cleanCell = (cell: string | undefined) =>
-  (cell && escapedFormula.test(cell) ? cell.slice(1) : (cell ?? '')).trim();
+  cell && escapedFormula.test(cell) ? cell.slice(1) : (cell ?? '').trim();
 const isDate = (value: string) => z.iso.date().safeParse(value).success;
 
 export function sheetFromCells(rows: { row: number; cells: string[] }[]): {
