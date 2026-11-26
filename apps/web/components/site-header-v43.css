@@ -2,6 +2,14 @@
    here is scoped to .public-header[data-v43], so no other header rule changes. The wide panel is one narrow list of
    four rows with the six job pages one step down; the sheet shows the same rows as titles under a group label.
    Tokens only. Nothing animates. */
+/* The phone bar is a fixed 60 px in the shared rule; with text at 200% the 44 px targets grow past it and clip the
+   brand and Menu. Under V43 the bar keeps 60 px as its least height and grows with its content. */
+@media (max-width: 700px) {
+  .site-header.public-header[data-v43] {
+    height: auto;
+    min-height: var(--header-h-phone);
+  }
+}
 .public-header[data-v43] .public-nav-faq {
   display: none;
 }
@@ -134,4 +142,22 @@
   .public-header[data-v43] .public-jobs-sol li a {
     transition: none;
   }
+}
+
+/* The open sheet at 200% text on a 320 px screen: the sheet column may shrink to the screen (its flex item would not go
+   under the widest row of tools), and Listen and the language wrap onto two rows instead of running 5 px past the edge. */
+.public-header[data-v43] .public-nav.is-open {
+  min-inline-size: 0;
+}
+.public-header[data-v43] .top-bar-tools-drawer {
+  flex-wrap: wrap;
+}
+.public-header[data-v43] .top-bar-tools-drawer .top-bar-row {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+/* Start a Request in the sheet keeps its words whole: the 48 px side padding of the bar button leaves "Request" too
+   little room at 200% text, so inside the sheet it gives way to 8 px. */
+.public-header[data-v43] .public-nav.is-open .nav-cta {
+  padding-inline: var(--space-2);
 }

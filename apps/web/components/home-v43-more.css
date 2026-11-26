@@ -625,3 +625,112 @@
 .hv43 :is(.hv43-actions, .hv43-card-actions, .hv43-form-actions, .hv43-lede-actions) > * {
   margin-inline-start: 0;
 }
+
+/* Hero actions on a phone (pack: the worked example is a text link beside the start button, not a second full-width
+   button). The shared phone rules stretch every action in a section to the row and draw a text link as a button; the
+   selectors here are doubled to outrank them. The two sit side by side and wrap only when the words need the room. */
+@media (max-width: 700px) {
+  .hv43 .hv43-actions {
+    gap: var(--space-1) var(--space-3);
+  }
+  .hv43 .hv43-actions.hv43-actions > a.primary-link.primary-link {
+    inline-size: auto;
+    flex: 0 0 auto;
+    margin: 0;
+    padding-inline: var(--space-3);
+    font-size: var(--text-base);
+  }
+  .hv43 .hv43-actions.hv43-actions > a.text-link.text-link {
+    display: inline-flex;
+    inline-size: auto;
+    flex: 0 1 auto;
+    min-block-size: 2.75rem;
+    margin: 0;
+    padding: var(--space-2) 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--brand);
+    text-align: start;
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+}
+
+/* The ledger correction opens like the other disclosures of the page: a chevron at the end that turns when it is open,
+   so the shape, not only the label, says it opens (the flex summary drops the browser marker). */
+.hv43 .hv43-correction > summary {
+  justify-content: space-between;
+  gap: var(--space-3);
+  list-style: none;
+}
+.hv43 .hv43-correction > summary:hover {
+  color: var(--on-brand);
+}
+.hv43 .hv43-correction > summary::-webkit-details-marker {
+  display: none;
+}
+.hv43 .hv43-correction > summary::after {
+  content: '';
+  flex: none;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  margin-inline-end: var(--space-1);
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-0.125rem) rotate(45deg);
+}
+.hv43 .hv43-correction[open] > summary::after {
+  transform: translateY(0.125rem) rotate(225deg);
+}
+
+/* A mark inside a line of words keeps the words on the line's baseline: the shared mark box takes its baseline from
+   the picture, which lifts the written name about 2 px above its neighbours. The name stays on the baseline and the
+   mark is centred on the line. */
+.hv43 .ux-flagged {
+  align-items: baseline;
+}
+.hv43 .ux-flagged > :is(.ux-flag, .ux-region-mark) {
+  align-self: center;
+}
+
+/* Doors. At a narrow card (text at 200%) the card is one column and the shared card draws its parts in source order,
+   which puts the route line above the title. The title, as on every wider card, comes first. */
+@container (max-width: 16rem) {
+  .hv43 .hv42-door-wide.has-icon label > .ux-door-route {
+    order: 1;
+  }
+  .hv43 .hv42-door-wide.has-icon label > .ux-door-text {
+    order: 2;
+  }
+  .hv43 .hv42-door-wide.has-icon label > .ux-door-picked {
+    order: 3;
+  }
+}
+/* The demand sentence of the big door ("Bangladesh sells to EU UK US Australia") is one line from a 506 px window up
+   (v4.2). At 506 it needed 423.8 px of the 424 px the card gives it, so a sub-pixel difference in another browser's
+   text layout wrapped it. Under 48 rem the card's side padding, the gaps between the sentence's units and the gap
+   between a mark and its name give back about 28 px, so the line holds with room to spare. The two big doors stay in
+   one column until 70 rem for the same reason (side by side each would be about 336 px wide); the two small doors
+   already sit side by side from 40 rem. */
+@media (max-width: 47.99rem) {
+  @container (min-width: 16rem) {
+    .hv43 .ux-door.is-big label {
+      padding-inline-start: var(--space-3);
+      padding-inline-end: calc(var(--space-3) + 1.75rem);
+    }
+  }
+  .hv43 .hv42-line {
+    column-gap: calc(var(--space-1) * 1.5);
+  }
+  .hv43 .ux-flagged {
+    gap: calc(var(--space-1) * 1.5);
+  }
+}
+
+/* Route statuses: a one-column grid sizes its track to the widest unbreakable line of its cards (a route line that does
+   not wrap), which at 200% text on a 320 px screen is wider than the column and scrolls the page sideways. The cards may
+   shrink to the column, and their lines wrap inside them. */
+.hv43 .tr-routes > div {
+  min-inline-size: 0;
+}
