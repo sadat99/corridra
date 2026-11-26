@@ -3,7 +3,12 @@ import { DomainError } from './index';
 import { currencies } from './currencies';
 import { currency, minorUnits } from './opportunities';
 import { missionCatalogue, requirementFields } from './commercial-missions';
-import { storedTextOctets, unstorable, type RouteConfiguration } from './corridors';
+import {
+  proposalOctetBudget,
+  storedTextOctets,
+  unstorable,
+  type RouteConfiguration,
+} from './corridors';
 import { hasContactShape, supplySourceKinds } from './supply-sources';
 
 // ADR-093 Route Pack Standard v1 (decisions B to G). One standard for every route: the locked part stays the guarded pack
@@ -961,6 +966,8 @@ export const routePackWords = {
   tooLarge: `This route content is larger than ${routePackContentOctetBudget} octets. Shorten notes or long lists.`,
   coreNotApplicable: (key: string) =>
     `${key} is needed before the route may go live, so it cannot be Not applicable.`,
+  lockedCoreFilled: (key: string) =>
+    `${key} is a locked pack setting the route needs before it may go live. Set it in the pack; the content does not hold it.`,
   lockedFilled: (key: string) =>
     `${key} belongs to the locked pack. Set it in the pack; content may only mark it Not applicable.`,
   lockedDetails: (key: string) =>
@@ -976,12 +983,16 @@ export const routePackWords = {
   standardDefinition: (key: string) =>
     `${key} is a standard field, so it takes no label, section, type or allowed values.`,
   tooManyCustom: 'A route may hold at most 100 custom fields.',
+  listSeparator: (key: string) =>
+    `${key}: a list value or an allowed value cannot contain the | sign, because the sheet uses it to separate values.`,
   repeatedSection: 'Mark each section Not applicable once.',
   sectionName: `Name the section by its number or name: ${sectionNameList}.`,
   customKeyConflict: (key: string) =>
     `${key} already means something else on another route: use the same section, type and allowed values, or a new key.`,
   contentChanged: "This route's content changed since you opened it. Reload and try again.",
   commandReused: 'Command key reused with different values',
+  packChanged: "This route's pack changed since you opened it. Reload and try again.",
+  proposalTooLarge: `This route pack is larger than the ${proposalOctetBudget} octet review limit. Shorten long lists.`,
   goLivePendingCore: (labels: string) =>
     `The route cannot go live while these Core fields are Pending: ${labels}.`,
   coreTurnsPending: (labels: string) =>
@@ -1129,6 +1140,12 @@ function documentRulesV1(document: ContentDocument, ctx: z.RefinementCtx) {
     if (texts.some((text) => hasContactShape(text, { phone: false })))
       issue(path, routePackWords.email);
     if (texts.some((text) => unstorable.test(text))) issue(path, routePackWords.unstorable);
+    if (
+      [...(Array.isArray(fact.value) ? fact.value : []), ...(fact.allowedValues ?? [])].some(
+        (item) => item.includes('|'),
+      )
+    )
+      issue(path, routePackWords.listSeparator(fact.key));
     if (fact.state === 'NOT_APPLICABLE' && (fact.note ?? '').length < 3)
       issue(path, routePackWords.notApplicableNote);
     const defined =
@@ -1162,7 +1179,13 @@ function documentRulesV1(document: ContentDocument, ctx: z.RefinementCtx) {
       }
       if (defined) issue(path, routePackWords.standardDefinition(fact.key));
       if (field.part === 'Locked') {
-        if (field.core) issue(path, routePackWords.coreNotApplicable(fact.key));
+        if (field.core)
+          issue(
+            path,
+            fact.state === 'FILLED'
+              ? routePackWords.lockedCoreFilled(fact.key)
+              : routePackWords.coreNotApplicable(fact.key),
+          );
         else if (fact.state === 'FILLED') issue(path, routePackWords.lockedFilled(fact.key));
         if (
           fact.value !== undefined ||
@@ -1455,6 +1478,28 @@ export function customKeyConflicts(
     .filter(([, entry]) => entry.signatures.size > 1)
     .map(([key, entry]) => ({ key, routeIds: [...entry.routeIds].sort() }))
     .sort((a, b) => a.key.localeCompare(b.key));
+}
+
+// The label of each custom key as the latest save gave it (ADR-093 E): the label is shown for the key on every route. Saves
+// are ordered by time, then by content version, then by route key, so two saves in one transaction still give one answer.
+const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+export function latestCustomLabels(
+  contents: Iterable<{
+    routeKey: string;
+    version: number;
+    createdAt: string;
+    document: ContentDocument;
+  }>,
+): Record<string, string> {
+  const labels: Record<string, string> = {};
+  const ordered = [...contents].sort(
+    (a, b) =>
+      byText(a.createdAt, b.createdAt) || a.version - b.version || byText(a.routeKey, b.routeKey),
+  );
+  for (const content of ordered)
+    for (const fact of content.document.facts)
+      if (fact.key.startsWith('custom.') && fact.label) labels[fact.key] = fact.label;
+  return labels;
 }
 
 // The long sheet (ADR-093 G): one row per route and field.

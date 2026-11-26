@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
-import { future } from './access-fixture';
+import { command, future } from './access-fixture';
 import { changeMemberNow } from './change-member';
 import { rawContext } from './support';
 import { bdCnSourcingProfile } from './fixtures/bd-cn-sourcing-profile';
@@ -202,6 +202,40 @@ describe('Route Pack Standard v1, domain', () => {
       routePackWords.lockedFilled('pack.localities'),
       routePackWords.lockedDetails('pack.localities'),
     ]);
+  });
+
+  test('a Filled Locked Core fact gets its own words, not the Not applicable ones', () => {
+    const issues = issuesOf({ ...emptyContentDocument, facts: [filled('pack.languages', ['en'])] });
+    expect(issues).toEqual([
+      routePackWords.lockedCoreFilled('pack.languages'),
+      routePackWords.lockedDetails('pack.languages'),
+    ]);
+    expect(issues).not.toContain(routePackWords.coreNotApplicable('pack.languages'));
+  });
+
+  test('a list value or an allowed value with the | sign is refused, so the sheet round trip is safe', () => {
+    expect(
+      issuesOf({
+        ...emptyContentDocument,
+        facts: [filled('market.key_cities', ['Dhaka|Gazipur'])],
+      }),
+    ).toEqual([routePackWords.listSeparator('market.key_cities')]);
+    expect(
+      issuesOf({
+        ...emptyContentDocument,
+        facts: [
+          customFact({
+            type: 'choice',
+            value: 'Spring',
+            allowedValues: ['Spring', 'Summer|Autumn'],
+          }),
+        ],
+      }),
+    ).toEqual([routePackWords.listSeparator('custom.visit_season')]);
+    // A | inside plain text is still text.
+    expect(
+      issuesOf({ ...emptyContentDocument, facts: [filled('identity.summary', 'A | B')] }),
+    ).toEqual([]);
   });
 
   test('Not applicable without a reason in the note is refused', () => {
@@ -451,8 +485,7 @@ async function stamp() {
   return new Date().toISOString();
 }
 let pairs = 0;
-async function newRoute() {
-  const id = randomUUID();
+async function newRoute(id: string = randomUUID()) {
   // Each route a new pair of real market keys, both orders alike.
   const [origin, destination] = [countryCodes[2 * pairs]!, countryCodes[2 * pairs + 1]!];
   pairs++;
@@ -1043,13 +1076,15 @@ describe('route pack content on the database', () => {
       ).rows[0].n;
     expect(await proposals()).toBe(1);
     expect(await createRoutePack(deps(), owner(), input)).toEqual({ ...first, duplicate: true });
+    // The same command with other values is refused; with the values it published, it is a duplicate.
+    const retry = { commandId, routeId, status: 'TESTING' as const, reason };
+    await expect(
+      publishReviewed(deps(), owner(), { ...retry, configuration: current }),
+    ).rejects.toMatchObject({ status: 409, code: 'ROUTE_PACK_COMMAND_REUSED' });
     expect(
       await publishReviewed(deps(), owner(), {
-        commandId,
-        routeId,
-        status: 'TESTING',
-        configuration: current,
-        reason,
+        ...retry,
+        configuration: { ...current, missionTypes: ['sourcing', 'trade_fairs'] },
       }),
     ).toMatchObject({
       proposalId: commandStepId(commandId, 'propose'),
@@ -1067,6 +1102,205 @@ describe('route pack content on the database', () => {
     expect('sourcing' in after).toBe(false);
     expect(after.requirements).toEqual([requirement]);
     expect(after.localities).toEqual(['dhaka']);
+  });
+
+  test('a route whose latest pack is live but scheduled counts as live; content still names the pack in force', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    const inForce = await appendPack(routeId, 1, 'DRAFT', liveConfiguration());
+    await saveContent(routeId, coreDocument());
+    const day = 86400000;
+    const scheduled = (version: number, days: number, configuration: RouteConfiguration) =>
+      corridors.appendPack(owner(), {
+        id: randomUUID(),
+        routeId,
+        version,
+        status: 'ACTIVE',
+        effectiveFrom: new Date(Date.now() + days * day).toISOString(),
+        reason,
+        configuration,
+      });
+    await scheduled(2, 1, liveConfiguration());
+    const turns = { status: 409, code: 'ROUTE_PACK_CORE_TURNS_PENDING' };
+    await expect(saveContent(routeId, coreDocument(['identity.summary']))).rejects.toMatchObject(
+      turns,
+    );
+    await expect(scheduled(3, 2, liveConfiguration({ languages: [] }))).rejects.toMatchObject(
+      turns,
+    );
+    const saved = await saveContent(
+      routeId,
+      coreDocument(['identity.summary'], [notApplicable('identity.summary')]),
+    );
+    expect(saved.packId).toBe(inForce.id);
+  });
+
+  test('a retried reviewed publish with other values is refused; with the same values it publishes', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'DRAFT', liveConfiguration());
+    let failDecide = true;
+    const flaky = {
+      ...deps(),
+      operations: {
+        command: async (
+          ctx: Parameters<OperationsService['command']>[0],
+          input: { action?: string },
+        ) => {
+          if (input.action === 'decide' && failDecide) {
+            failDecide = false;
+            throw new Error('Forced failure between propose and decide');
+          }
+          return operations.command(ctx, input);
+        },
+      } as unknown as OperationsService,
+    };
+    const first = {
+      commandId: randomUUID(),
+      routeId,
+      status: 'TESTING' as const,
+      configuration: liveConfiguration({ localities: ['dhaka'] }),
+      reason,
+    };
+    await expect(publishReviewed(flaky, owner(), first)).rejects.toThrow('Forced failure');
+    expect(await packVersions(routeId)).toHaveLength(1);
+    for (const changed of [
+      { configuration: liveConfiguration({ localities: ['gazipur'] }) },
+      { status: 'ACTIVE' as const },
+      { reason: 'A different reason for the same command' },
+    ])
+      await expect(publishReviewed(flaky, owner(), { ...first, ...changed })).rejects.toMatchObject(
+        { status: 409, code: 'ROUTE_PACK_COMMAND_REUSED' },
+      );
+    expect(await packVersions(routeId)).toHaveLength(1);
+    expect(await publishReviewed(flaky, owner(), first)).toMatchObject({
+      version: 2,
+      duplicate: true,
+    });
+    expect((await latestPack(routeId)).configuration).toEqual(first.configuration);
+  });
+
+  test('a stale form or a changed base is refused, and a double click publishes once', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'DRAFT', liveConfiguration());
+    const changed = {
+      status: 409,
+      code: 'ROUTE_PACK_PACK_CHANGED',
+      message: routePackWords.packChanged,
+    };
+    await expect(
+      createRoutePack(deps(), owner(), formInput(routeId, 1, 'TESTING')),
+    ).rejects.toMatchObject(changed);
+    await expect(
+      publishReviewed(deps(), owner(), {
+        commandId: randomUUID(),
+        routeId,
+        status: 'TESTING',
+        configuration: liveConfiguration(),
+        reason,
+        expectedBasePackId: randomUUID(),
+      }),
+    ).rejects.toMatchObject(changed);
+    expect(await packVersions(routeId)).toHaveLength(1);
+    const click = formInput(routeId, 2, 'TESTING');
+    const once = await createRoutePack(deps(), owner(), click);
+    expect(await createRoutePack(deps(), owner(), click)).toEqual({ ...once, duplicate: true });
+    expect(await packVersions(routeId)).toHaveLength(2);
+    // The base the caller read is accepted while it is still current.
+    expect(
+      await publishReviewed(deps(), owner(), {
+        commandId: randomUUID(),
+        routeId,
+        status: 'TESTING',
+        configuration: liveConfiguration({ localities: ['dhaka'] }),
+        reason,
+        expectedBasePackId: once.id,
+      }),
+    ).toMatchObject({ version: 3, duplicate: false });
+  });
+
+  test('a pack over the 8192 octet review limit is refused in plain words before any proposal', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'DRAFT', liveConfiguration());
+    const long = (prefix: string) =>
+      Array.from({ length: 50 }, (_, i) =>
+        `${prefix}${String(i).padStart(2, '0')}`.padEnd(80, 'x'),
+      );
+    await expect(
+      createRoutePack(deps(), owner(), {
+        ...formInput(routeId, 2, 'TESTING'),
+        localities: long('l'),
+        clusters: long('c'),
+      }),
+    ).rejects.toMatchObject({
+      status: 400,
+      code: 'ROUTE_PACK_INVALID',
+      message: routePackWords.proposalTooLarge,
+    });
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM app.configuration_proposal WHERE route_id=$1',
+          [routeId],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+  });
+
+  test('a carried policy reference that expired is dropped and named, so the route can still be paused', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    const policy = await f.communications.command(
+      owner(),
+      command('policy', {
+        jurisdiction: 'DE',
+        channel: 'SYNTHETIC',
+        contactPurpose: 'institutional_introduction',
+        basis: 'Invented policy that expires during this test',
+        validUntil: new Date(Date.now() + 1500).toISOString(),
+        enabled: true,
+      }),
+    );
+    await appendPack(
+      routeId,
+      1,
+      'DRAFT',
+      liveConfiguration({ jurisdictionPolicyRefs: [policy.id] }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const paused = await createRoutePack(deps(), owner(), formInput(routeId, 2, 'PAUSED'));
+    expect(paused).toMatchObject({ version: 2, removedRefs: [policy.id] });
+    const after = await latestPack(routeId);
+    expect(after.status).toBe('PAUSED');
+    expect(after.configuration.jurisdictionPolicyRefs).toEqual([]);
+  });
+
+  test('the latest label of a custom key is chosen the same way every time: time, then version, then route key', async () => {
+    formSwitch(true);
+    // The route ids run against the route keys, so an order by id would pick the other label.
+    const small = await newRoute('ffffffff-ffff-4fff-bfff-ffffffffffff');
+    const large = await newRoute('00000000-0000-4000-8000-000000000001');
+    const labelled = (label: string) =>
+      coreDocument([], [customFact({ key: 'custom.tie_label', label })]);
+    const item = (routeId: string, version: number, label: string) => ({
+      id: randomUUID(),
+      routeId,
+      version,
+      document: labelled(label),
+      reason,
+    });
+    await content.appendBatch(owner(), {
+      items: [item(small, 1, 'From the first route'), item(large, 1, 'From the second route')],
+    });
+    const label = async () => (await content.overview(owner())).customLabels['custom.tie_label'];
+    expect(await label()).toBe('From the second route');
+    await saveContent(small, labelled('First route again'));
+    await content.appendBatch(owner(), {
+      items: [item(small, 3, 'Higher version'), item(large, 2, 'Lower version')],
+    });
+    expect(await label()).toBe('Higher version');
   });
 
   test('rollback/0002 hides the module: Not found, an inert check and no inserts, while every row stays', async () => {
