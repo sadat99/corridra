@@ -51,7 +51,11 @@ The nine named in the plan, none in an id or class name:
 8. "Review the draft, then open Corridra's request form ..." becomes "Review the summary, then open Corridra's request form ...".
 9. The delegation example "from the original brief" becomes "from the original request".
 
-Further substitutions the guard forces (the same test reads every English value, so these words cannot be written either): "The example and request brief will update to match." becomes "The example and request will update to match."; "or a visit brief" becomes "or a visit plan"; "meeting briefs" becomes "meeting agendas"; "A clear first brief" becomes "A clear first request"; stage "Match hosts to the brief" becomes "Match hosts to the request". The words file test lists every one of them. Open question for the Guardian: the owner's 26 Nov "100%" and the owner's 23 Nov rule collide on these words; the guard is kept, as the plan and the conductor default decide.
+Further substitutions the guard forces (the same test reads every English value, so these words cannot be written either): "The example and request brief will update to match." becomes "The example and request will update to match."; "or a visit brief" becomes "or a visit plan"; "meeting briefs" becomes "meeting agendas"; "A clear first brief" becomes "A clear first request"; stage "Match hosts to the brief" becomes "Match hosts to the request"; the sample status "Outside brief" becomes "Outside the request"; the local helper's "a clear brief" becomes "a clear scope". `tests/integration/home-v43-words.test.ts` holds every one of them and fails on any banned word.
+
+Other word changes that follow from the rules and not from taste: the textarea help reuses the shipped `home.b3.br.need.help` (600 characters, deviation 6) so the pack's "Up to 1,000 characters" line is not written; the Bangla footer entry is the existing language switcher option, so the pack's Bangla string is not copied; the sample amounts (USD 36,800, 34,200, 39,100, 37,400) and the delivery codes (FOB Ningbo, CIF Chattogram) live in `lib/home-v43-data.ts`, not in the catalogue, as the language tests require.
+
+Open question for the Guardian: the owner's 26 Nov "100%" and the owner's 23 Nov rule collide on these words; the guard is kept, as the plan and the conductor default decide.
 
 ## Decisions (designer D1 to D13 as applied, then Guardian and conductor)
 
