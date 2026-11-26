@@ -32,8 +32,8 @@ Not amended, and unchanged by this record:
 
 - ADR-029: "Only the external-dependencies dimension may be explicitly inapplicable." Thirteen dimensions with named active owners and retained source evidence. Pinning to an exact pack. The release states (no real or public activation). "A technical pack status is not legal or operational clearance."
 - ADR-028: independent review of partner tasks.
-- Every rule, other than those amended above, that needs a second person for money, invoices, evidence decisions or any other gate. For example, real invoices keep their second approver.
-- Roles. Proposing and publishing a pack keep the `config.manage` permission, which is the owner only (`packages/domain/src/index.ts:98`). Readiness and release keep `opportunities.accounting`, owner or admin (`:80`). Every operations command keeps its fresh authenticator check (`packages/missions/src/operations.ts:247-257`). No role gains anything.
+- Every rule, other than those amended above, that needs a second person for money, invoices, evidence decisions or any other gate. For example, real invoices keep their second approver. Amended gate, named explicitly: route readiness evidence and route release. Phase 2a removes the `r.created_by=NEW.created_by` comparison on evidenced readiness observations, so one person may record readiness evidence and release a route pack.
+- Roles. Proposing and publishing a pack keep the `config.manage` permission, which is the owner only (`packages/domain/src/index.ts:98`). Readiness and release keep `opportunities.accounting`, owner or admin (`:80`). Every operations command keeps its fresh authenticator check (`packages/missions/src/operations.ts:247-257`). No role set changes, but one admin can now complete readiness and release alone.
 
 ## Context
 
@@ -209,7 +209,7 @@ The simplest shape that meets A to G: one new table, in a new optional migration
   - 2c: the CSV import with dry run, apply to many and export, on the existing team control route.
   - Each install is a separate owner-approved run of the reviewed installer; builds never migrate.
 - **Phase 3**: the one editor screen in Settings (team desk D17: routes first with their pack state), with completeness, stale marks, import and export, under UI/UX.v4.
-- **Phase 4**: load the first eight routes (Bangladesh with China, EU, UK and US, both directions) from the owner's sheets, each saved and each moved to TESTING, LIMITED or ACTIVE only on the owner's word. Retiring the sample companies and the AL to AU route stays a separate owner step.
+- **Phase 4**: load the first eight routes (Bangladesh with China, EU, UK and US, both directions) from the owner's sheets, each saved and each moved to TESTING, LIMITED or ACTIVE only on the owner's word. Retiring the sample companies and the AL to AU route stays a separate owner step. A pack status of TESTING, LIMITED or ACTIVE, or any other status, does not open any real-operation gate: D01 to D06, D08, real payments and payouts stay closed, and each gate keeps its own owner decision.
 
 ## Rollback
 
