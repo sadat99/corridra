@@ -14,6 +14,7 @@ import { csvRows } from '../../packages/delivery/src/import';
 import { DomainError } from '../../packages/domain/src/index';
 import { initialRoutes } from '../../packages/domain/src/corridors';
 import {
+  reasonWithRemovedPolicies,
   routePackWords,
   sheetColumns,
   standardFieldsV1,
@@ -121,7 +122,7 @@ const latestDocument = async (key: string) =>
 const latestPack = async (key: string) =>
   (
     await f.owner.query(
-      'SELECT id,version,status,configuration FROM app.corridor_pack_version WHERE route_id=$1 ORDER BY version DESC LIMIT 1',
+      'SELECT id,version,status,configuration,reason FROM app.corridor_pack_version WHERE route_id=$1 ORDER BY version DESC LIMIT 1',
       [await routeId(key)],
     )
   ).rows[0];
@@ -1144,4 +1145,10 @@ test('an expired carried policy reference refuses the pack step of a route that 
   const pack = await latestPack('CR-PA');
   expect(pack.status).toBe('PAUSED');
   expect(pack.configuration).toMatchObject({ languages: ['es'], jurisdictionPolicyRefs: [] });
+  // The recorded reason names what was dropped, the same words the guided form records.
+  const name = refused.errors[0]!.message.match(
+    /communication policy DE SYNTHETIC [a-z_]+ version \d+/,
+  )![0];
+  expect(pack.reason).toBe(reasonWithRemovedPolicies(reason, [name]));
+  expect(pack.reason).not.toBe(reason);
 });

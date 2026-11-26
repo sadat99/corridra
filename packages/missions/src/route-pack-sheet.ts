@@ -15,8 +15,9 @@ import {
   deriveCompleteness,
   factSource,
   factTypes,
-  goLiveCheck,
   goLiveMessage,
+  latestCustomLabels,
+  reasonWithRemovedPolicies,
   routePackSections,
   routePackWords,
   sheetColumns,
@@ -35,6 +36,8 @@ import type { CorridorService } from './corridors';
 import { changedPackFields, type OperationsService } from './operations';
 import {
   commandStepId,
+  judge,
+  judgedPacks,
   loadRoutePackState,
   routePackContentActive,
   type RoutePackContentService,
@@ -131,7 +134,7 @@ export const sheetWords = {
     (unknown.length ? ` Not a column: ${unknown.join(', ')}.` : '') +
     (repeated.length ? ` Repeated: ${repeated.join(', ')}.` : ''),
   rows: `Use at most ${sheetLimits.rows} route pack rows`,
-  octets: `The file is larger than ${sheetLimits.octets} octets. Split it into smaller files.`,
+  octets: 'The file is larger than 1 MiB. Split it into smaller files.',
   routes: `A file may name at most ${sheetLimits.routes} routes. Split it into smaller files.`,
   exportRoutes: `Export at most ${sheetLimits.routes} routes at a time.`,
   route: 'Write the route as ORIGIN-DESTINATION with market keys, for example BD-CN.',
@@ -499,24 +502,11 @@ function planRoute(
   const configuration = carriedConfiguration(pack?.configuration ?? null, set);
   const changedFields = changedPackFields(pack?.configuration, configuration);
   const packChanged = pack ? changedFields.length > 0 : Object.keys(set).length > 0;
-  // Go-live is judged as every pack and content write judges it (route-pack-content.ts judgedPacks): against the latest pack
-  // by version, scheduled or in force, and against the pack in force; the first refusal wins.
+  // Go-live is judged exactly as every pack and content write judges it, against the same packs.
   const latest = existing ? state.latestPacks.get(existing.id) : undefined;
-  const judged = [latest, pack].flatMap((p, i, all) =>
-    p && all.findIndex((other) => other?.id === p.id) === i
-      ? [{ status: p.status, configuration: p.configuration }]
-      : [],
-  );
+  const judged = judgedPacks(pack, latest);
   const newPack: PackView = packChanged ? { status, configuration } : null;
-  const goLive =
-    (judged.length ? judged : [null])
-      .map((current) =>
-        goLiveCheck({
-          before: { pack: current, document: before },
-          after: { pack: newPack ?? current, document },
-        }),
-      )
-      .find((result) => !result.ok) ?? ({ ok: true } as const);
+  const goLive = judge(judged, before, { pack: newPack ?? undefined, document });
   const afterPack: PackView = newPack ?? judged[0] ?? null;
   if (!goLive.ok)
     for (const key of goLive.keys)
@@ -726,9 +716,9 @@ export class RoutePackSheetService {
       }
       for (const plan of planned.routes.filter((p) => p.pack.changed)) {
         step = plan;
-        // As the guided form: an expired policy reference is dropped and named on a pack staying PAUSED, and refuses the
-        // route's pack step for any other carried status.
-        const { configuration, removedRefs } = await this.content.withoutExpiredRefs(
+        // As the guided form: an expired policy reference is dropped and named on a pack staying PAUSED, and the reason
+        // recorded says so; any other carried status refuses the route's pack step.
+        const { configuration, removedRefs, removedNames } = await this.content.withoutExpiredRefs(
           ctx,
           plan.configuration,
           plan.pack.status,
@@ -741,7 +731,7 @@ export class RoutePackSheetService {
             routeId: ids.get(plan.route)!,
             status: plan.pack.status,
             configuration,
-            reason: v.reason,
+            reason: reasonWithRemovedPolicies(v.reason, removedNames),
             expectedBasePackId: plan.basePackId,
           },
         );
@@ -789,7 +779,12 @@ export class RoutePackSheetService {
     return withTenant(this.pool, ctx, 'missions.read', async ({ db }) => {
       await requireContent(db);
       const state = await loadRoutePackState(db, ctx.tenantId);
-      const labels = latestCustomLabels(state);
+      const labels = latestCustomLabels(
+        [...state.routes].flatMap(([routeKey, route]) => {
+          const content = state.contents.get(route.id);
+          return content ? [{ routeKey, ...content }] : [];
+        }),
+      );
       const rows: string[][] = [[...sheetColumns]];
       for (const route of wanted) {
         const found = state.routes.get(route);
@@ -807,17 +802,6 @@ export class RoutePackSheetService {
     });
   }
 }
-function latestCustomLabels(state: RoutePackState) {
-  const labels = new Map<string, { label: string; at: string }>();
-  for (const content of state.contents.values())
-    for (const fact of content.document.facts)
-      if (fact.key.startsWith('custom.') && fact.label) {
-        const seen = labels.get(fact.key);
-        if (!seen || seen.at < content.createdAt)
-          labels.set(fact.key, { label: fact.label, at: content.createdAt });
-      }
-  return new Map([...labels].map(([key, { label }]) => [key, label]));
-}
 function valueText(value: Value): string {
   if (value === undefined) return '';
   if (Array.isArray(value)) return value.join(' | ');
@@ -827,7 +811,7 @@ function exportRoute(
   route: string,
   configuration: RouteConfiguration | null,
   document: ContentDocument | null,
-  labels: Map<string, string>,
+  labels: Record<string, string>,
 ): string[][] {
   const facts = new Map((document?.facts ?? []).map((fact) => [fact.key, fact]));
   const sectionName = (n: number) => routePackSections.find((s) => s.number === n)!.name;
@@ -871,7 +855,7 @@ function exportRoute(
       route,
       sectionName(fact.section ?? 17),
       fact.key,
-      labels.get(fact.key) ?? fact.label ?? '',
+      labels[fact.key] ?? fact.label ?? '',
       'Content',
       'Optional',
       fact.type ?? '',
