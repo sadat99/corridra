@@ -643,6 +643,14 @@
       "bytes": 10314,
       "sha256": "7b91870c138b355d161121bfb4d69e9e562c8e295d6bb7f5574f8c7a351a17df",
       "meaning": "Exact active ledger at main 8f8aadb (PR 666 merged), as written by the 26 Nov records for PR 665 (header still said main 9944c7da), before the ADR-093 records, to keep the always-read guides within 36 KiB, shortened the Merged list (661, 662 and 664 kept here), the superseded builder model, draft label, languages, D1 and real invoices clauses, G65 answers (5) and (8) and the ADR-089 acceptance clause (now pointing to PLAN_STATUS). Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "41d18bf5",
+      "archive": "docs/v3/history/ledger-before-g67-records-2026-11-26.md",
+      "bytes": 10302,
+      "sha256": "e76c950bc3d0de2ab620b9f9e50511ffc504e8f2b5ee3c0bd387ed39a0440691",
+      "meaning": "Exact active ledger at main 41d18bf5 (PR 668 merged), before the 26 Nov 2026 records for PRs 667 and 668 removed the unit 04 decisions pointer and the earlier observations pointer to keep the always-read guides within 36 KiB. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
