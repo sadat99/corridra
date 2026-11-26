@@ -53,7 +53,7 @@ section_no,section,field_key,label,part,core,type,format,example,help
 11,Travel,travel.visa_lead_time_days,Days to get a visa,Content,Optional,number,Whole days,,Usual days from applying to having the visa.
 11,Travel,travel.visit_notes,Visit notes,Content,Optional,text,Up to 1000 characters,,"Factory visit habits, meeting customs, what to bring."
 11,Travel,travel.travel_advice,Official travel advice,Content,Optional,link,https:// address,https://...,The official travel advice page for visitors.
-12,Compliance and outreach,pack.channels,Message channel,Locked,Core,choice,SYNTHETIC or MANUAL,SYNTHETIC,"SYNTHETIC means sample messages only. MANUAL means the team sends by hand. Real email sending is decided elsewhere, not here."
+12,Compliance and outreach,pack.channels,Message channels,Locked,Core,list,"Any of: SYNTHETIC, MANUAL (no other value)",SYNTHETIC,"SYNTHETIC means sample messages only. MANUAL means the team sends by hand. Real email sending is decided elsewhere, not here."
 12,Compliance and outreach,compliance.privacy_laws,Privacy laws,Content,Core,list,"Law name for each side, one per row",China: Personal Information Protection Law (PIPL),The data protection laws that apply to people we contact on this route.
 12,Compliance and outreach,compliance.outreach_rules,Rules for first contact,Content,Core,text,Up to 1000 characters,,May we write to a company that did not ask us? What must a first message say? How do people opt out?
 12,Compliance and outreach,compliance.sanctions_check,Sanctions and export controls,Content,Core,text,Up to 1000 characters; add the official list in source,,"Which lists the team checks before work on this route, and goods that need an export control check."

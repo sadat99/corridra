@@ -20,13 +20,19 @@ ADR-029 (Evidenced route readiness and observed operations). For route pack publ
 3. In "Reversion publishes an independently reviewed new version using the previous desired configuration.", the word "independently".
 4. In "Approvals preserve exact observation IDs and require a different reviewer.", the words "and require a different reviewer". Approvals still preserve exact observation IDs.
 
-ADR-083 (The sourcing workflow on the shared base), decision 1: the words "independently approved" (in "so the profile is reviewed, independently approved and published with the pack") and "with an independent reviewer" (in "it is proposed through the reviewed flow with an independent reviewer as pack version 2 or later"). The rest of decision 1 stands unchanged: the `sourcing` key, its 4096 octet budget, the unchanged 8192 octet proposal CHECK, no seed and no country branch.
+ADR-083 (The sourcing workflow on the shared base), for route packs only:
+
+1. Decision 1: the words "independently approved" (in "so the profile is reviewed, independently approved and published with the pack") and "with an independent reviewer" (in "it is proposed through the reviewed flow with an independent reviewer as pack version 2 or later").
+2. Context (line 15): in "Publication goes through the reviewed flow: an independent reviewer is required and the published pack's configuration must equal the proposal's", the words "an independent reviewer is required and". The published configuration must still equal the proposal's.
+3. The S1 acceptance phrase (line 60) "pack not independently reviewed is refused". From the 2a install on, S1's acceptance is that a pack published without the reviewed flow (proposal, preview and decision) is refused; the same person may propose and publish.
+
+The rest of ADR-083 decision 1 stands unchanged: the `sourcing` key, its 4096 octet budget, the unchanged 8192 octet proposal CHECK, no seed and no country branch.
 
 Not amended, and unchanged by this record:
 
 - ADR-029: "Only the external-dependencies dimension may be explicitly inapplicable." Thirteen dimensions with named active owners and retained source evidence. Pinning to an exact pack. The release states (no real or public activation). "A technical pack status is not legal or operational clearance."
 - ADR-028: independent review of partner tasks.
-- Every rule that needs a second person for money, invoices, evidence decisions or any other gate. For example, real invoices keep their second approver.
+- Every rule, other than those amended above, that needs a second person for money, invoices, evidence decisions or any other gate. For example, real invoices keep their second approver.
 - Roles. Proposing and publishing a pack keep the `config.manage` permission, which is the owner only (`packages/domain/src/index.ts:98`). Readiness and release keep `opportunities.accounting`, owner or admin (`:80`). Every operations command keeps its fresh authenticator check (`packages/missions/src/operations.ts:247-257`). No role gains anything.
 
 ## Context
@@ -35,7 +41,7 @@ Read on main `8f8aadb`.
 
 - The locked pack. A pack version's `configuration` is a closed set of 18 keys plus the optional `sourcing` block. The guard `app.guard_corridor_configuration`, latest in `packages/db/sourcing-workflow-migrations/0001_route_sourcing_profile.sql:33-64`, refuses any other key, needs `reviewRequired` true, bounds every array at 50 strings and checks currencies, time zones, policy references and the sourcing block (at most 4096 octets, and only while the sourcing control is open). The application mirror is `routeConfiguration`, `.strict()` (`packages/domain/src/corridors.ts:106-128`). Most of these keys carry authority: `missionTypes`, `channels`, `requiredCapabilities`, `operatorCapabilities`, `jurisdictionPolicyRefs`, `aiPolicyRef`, `pricingRef` and `reviewRequired`; `resolveConfiguration` lets lower layers narrow the allowed lists but never widen them (`:142-187`).
 - The size cap. A proposal is held in `app.configuration_proposal.proposed_pack` under `CHECK(octet_length(proposed_pack::text)<=8192)` (`packages/db/migrations/0028_operations_control_center.sql:20`).
-- The guided form. "Add route pack" (`apps/web/app/operator/review-settings.tsx:155-200`, shown while `CORRIDRA_ROUTE_PACK_FORM` is on) sends `createRoutePack` (`packages/missions/src/route-pack-form.ts:13-69`). It fills mission types, languages, currencies, time zones, the manual channel and the reason, and writes every other key empty (`:34-55`). It writes the pack version straight through `CorridorService.appendPack` (`packages/missions/src/corridors.ts:209-227`), with no proposal, preview or decision record.
+- The guided form. "Add route pack" (`apps/web/app/operator/review-settings.tsx:155-200`, shown while `CORRIDRA_ROUTE_PACK_FORM` is on) sends `createRoutePack` (`packages/missions/src/route-pack-form.ts:13-69`). It takes the status, the effective date, mission types, languages, currencies, time zones, the manual channel, the optional ADR-083 `sourcing` block and the reason, and writes every other key empty (`:34-55`), even when the current pack has values for them. It writes the pack version straight through `CorridorService.appendPack` (`packages/missions/src/corridors.ts:209-227`), with no proposal, preview or decision record.
 - The reviewed path. `OperationsService.preview` names the base and the changed fields and always answers `readinessInvalidated: true` (`packages/missions/src/operations.ts:208-245`): any new pack version needs its readiness recorded again. Publishing refuses the proposer in the service (`:355-356`, "An independent authorized reviewer is required") and in the database (`0028_operations_control_center.sql:100`, live as replaced at `packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:561`, "Independent configuration reviewer required").
 - Readiness. A `SYNTHETIC_APPROVED` release needs all 13 current, evidenced dimensions, and refuses any dimension recorded by the person releasing (`0028_operations_control_center.sql:93`, live at real-use `0003:554`, `r.created_by=NEW.created_by`, "Independent approval of current evidenced readiness required"). Only the `dependencies` dimension may be `NOT_APPLICABLE` (real-use `0003:544`).
 - The guard `app.guard_operations_control()` is the live definition from real-use `0003:523`, which checks a hash of the core 0028 definition before replacing it (`:522`). No later file replaces it.
@@ -77,19 +83,21 @@ Seventeen fixed sections. The fields of each are in the [field dictionary](0093/
 
 The same sections and keys serve every route. No section, field or code path names a country.
 
-Section 13 keeps ADR-083 exactly as it works today: the `sourcing` block stays in the locked part, enters through the pack when the sourcing control is open, and keeps its 4096 octet budget. The sheet carries one row for it, used only to mark it Not applicable with a reason or leave it Pending. Its state shows Filled when the current pack carries the block. Moving it into content would need a new guard migration and would split a block that the buying comparison reads, for no gain.
+Section 13 keeps ADR-083 exactly as it works today: the `sourcing` block stays in the locked part, enters through the pack when the sourcing control is open, and keeps its 4096 octet budget. The sheet carries one row for it (`sourcing.profile`, Locked, Optional), used only to mark it Not applicable with a reason or leave it Pending. Its state shows Filled when the current pack carries the block. Moving it into content would need a new guard migration and would split a block that the buying comparison reads, for no gain.
 
-Locked rows in the sheet (keys starting `pack.`) are the guarded configuration keys under their own names. Four locked keys are never in the sheet, because they are references chosen on the screen: `requirements`, `assessments`, `jurisdictionPolicyRefs` and `aiPolicyRef`. `pricingRef` stays null as the guard requires. Pack status is never set from a file: it is chosen on the screen, so a file can never take a route live by accident.
+Locked rows in the sheet (keys starting `pack.`) are 12 of the 18 guarded configuration keys, under their own names. The other 6 are never in the sheet: `requirements`, `assessments`, `jurisdictionPolicyRefs` and `aiPolicyRef` are references chosen on the screen, `pricingRef` stays null as the guard requires, and `reviewRequired` stays true. 12 plus 6 is the 18; the optional `sourcing` block is the 19th key and has only its state row.
+
+Carrying over: a pack version built by the import or by the guided form copies every key it does not set from the current pack unchanged: `requirements`, `assessments`, `jurisdictionPolicyRefs`, `aiPolicyRef`, `pricingRef`, `reviewRequired` and `sourcing` (for a route with no pack yet: empty lists, null, true and no block). The import also carries the pack status from the current pack (DRAFT for a new route). Pack status is never set from a file: a status change is a separate, explicit action on the screen, so a file can never take a route live by accident. This also fixes, as a Phase 2 item, the precedent in `routePackConfiguration` (`packages/missions/src/route-pack-form.ts:34-55`) that writes those keys empty and so silently drops them from the next version.
 
 ### C. States, Core and the completeness view
 
 - Every field row has one state: **Filled**, **Not applicable** (a reason is required in the note) or **Pending**.
-- A whole section can be marked Not applicable with one row whose field key is the section prefix followed by `.*` (for example `events.*`) and a reason.
+- A whole section can be marked Not applicable with one row whose `field_key` is the word `section`, whose `section` cell names the section by its number or its name (for example `5` or `Trade fairs and events`), and whose note gives the reason. Sections are never marked by key prefix. The mark covers every row in that section that is not Filled, including custom fields placed in that section, except Locked Core rows, which stay required. A Filled row keeps its value.
 - A section's state is derived: Not applicable when marked so or when every field in it is; Filled when every Core field in it is Filled or Not applicable and at least one field is Filled; otherwise Pending.
 - Each field is **Core** (needed before the route may go live) or **Optional**. The Core set is small: 20 fields, 5 of them locked. Custom fields are always Optional.
-- Locked Core rows must be Filled; Not applicable is refused for locked rows, because an empty list is not the same thing as "does not apply".
+- Locked Core rows must be Filled; Not applicable is refused for them, because an empty list is not the same thing as "does not apply". On a Locked Optional row (such as `sourcing.profile` or `pack.localities`) Not applicable is accepted with a reason: the key stays as it is in the pack, and the mark and reason are kept in the content record.
 - The completeness view lists every Pending Core field by route, and counts Pending Optional fields without listing them, so nobody faces everything at once.
-- Go-live check: the service refuses to publish a pack with status LIMITED or ACTIVE while the route's latest content has a Pending Core field. It only ever refuses; it never allows anything the existing checks refuse. DRAFT and TESTING packs are not held back.
+- Go-live check: one shared domain check refuses any write that would leave a route with a LIMITED or ACTIVE pack while its content has a Pending Core field. Every path that writes a pack version calls it: `appendPack` (so the Advanced raw `corridor-pack` command, `apps/web/app/api/workspace/[action]/route.ts:332`, cannot bypass it), the guided form, the reviewed publish and the status change action. The content append calls it too, so a new content version that turns a Core field back to Pending is refused while the route is LIMITED or ACTIVE. It only ever refuses; it never allows anything the existing checks refuse. DRAFT and TESTING packs are not held back.
 - "Not applicable" in content is about the content record only. It never changes the ADR-029 readiness rules: only the `dependencies` dimension may be inapplicable there, and a content field marked Not applicable is not readiness evidence of any kind.
 
 ### D. Every fact has a source and a date
@@ -98,11 +106,13 @@ Locked rows in the sheet (keys starting `pack.`) are the guarded configuration k
 - A fact past its valid until date is shown to the team as stale (Phase 3). Staleness never blocks anything by itself; a stale Core fact is listed in the completeness view.
 - Locked rows carry no source or dates: they are decisions, and the pack's reason records why.
 - Content facts are not readiness evidence. Readiness keeps its own retained `source_record` evidence under ADR-029.
-- Content must not hold personal data. Values name organisations, places and rules, never people, email addresses or phone numbers. The importer refuses any value that contains an email address. A staff owner per route is the readiness `owner` dimension (a principal), not a content field.
+- Content must not hold personal data. Values name organisations, places and rules, never people, email addresses or phone numbers. The importer and the service refuse any value, note or source that contains an email address. A staff owner per route is the readiness `owner` dimension (a principal), not a content field.
 
 ### E. Custom fields
 
-- A custom field has a key starting with `custom.`, a label, a section and a type, defined once per workspace, so the same key means the same thing on every route.
+- A custom field lives inside the route's content document: each custom fact carries its key (starting with `custom.`), label, section, type and, for `choice` and `list`, its allowed values. There is no separate definitions table.
+- The same key keeps the same meaning: the importer and the service refuse a custom key whose type or label differs from the same key in the latest content of any other route in the workspace.
+- The importer creates a custom field from a row only when the row is Filled or Not applicable. A Pending row with a new custom key is listed in the dry run and skipped, so an untouched example row never creates a field.
 - Types, the same set as the standard fields:
   - `text`
   - `number`
@@ -111,17 +121,17 @@ Locked rows in the sheet (keys starting `pack.`) are the guarded configuration k
   - `choice`: one value from the field's list
   - `list`: several values, each from the field's list if it has one
   - `link`: an `https://` address
-- A definition may name the routes it applies to; none means any route. Values exist only where entered.
+- A custom field exists only on the routes where it is entered.
 - Free notes per route use the standard field `notes.general`.
-- Promotion: when a custom field is used on many routes, the next standard version may adopt it as a standard field with a recorded alias from the old key. The completeness view shows how many routes use each custom key to inform that choice. Nothing is promoted automatically.
+- Promotion: adopting a widely used custom field into a later standard version is a manual change to this record (a new ADR or amendment). Nothing is promoted automatically, and v1 has no alias mechanism.
 
 ### F. The standard is versioned
 
-Each content version names its standard version (`standardVersion: 1`). The domain holds one schema per standard version, and v1 is frozen once built. A later v2 may add, rename by alias, or retire fields. Old content stays readable under its own version. Moving a route to v2 appends a new content version; nothing is rewritten.
+Each content version names its standard version (`standardVersion: 1`). The domain holds one schema per standard version, and v1 is frozen once built. A later v2 may add or retire fields. Old content stays readable under its own version. Moving a route to v2 appends a new content version; nothing is rewritten.
 
 ### G. Updating: one sheet shape for everything
 
-The spreadsheet is **one long sheet: one row per route and field**. Columns: `route`, `section`, `field_key`, `label`, `part`, `core`, `type`, `format`, `state`, `value`, `source`, `observed_on`, `valid_until`, `note`, `help`. The importer reads only `route`, `field_key`, `state`, `value`, `source`, `observed_on`, `valid_until` and `note`. For a new `custom.` key it also reads `section`, `label`, `type` and `format`. The other columns are there to help the person filling it.
+The spreadsheet is **one long sheet: one row per route and field**. Columns: `route`, `section`, `field_key`, `label`, `part`, `core`, `type`, `format`, `state`, `value`, `source`, `observed_on`, `valid_until`, `note`, `help`. The importer reads only `route`, `field_key`, `state`, `value`, `source`, `observed_on`, `valid_until` and `note`. For a new `custom.` key it also reads `section`, `label`, `type` and `format`; for a section mark row (`field_key` `section`) it also reads `section`. The other columns are there to help the person filling it.
 
 Why this shape, by the 20 percent rule: one sheet per section would need a source, observed date and valid until column for every field, about three times the columns, and a new custom field would change the sheet layout. The long sheet serves every route in one file, a custom field is just a new row, each fact carries its own source, and import is a plain row loop. The long sheet is both simpler and better, so there is nothing to trade.
 
@@ -135,33 +145,37 @@ Rules of the sheet:
 - **Dry run first**: import always runs a dry run that writes nothing and lists every error with its row number, then shows per route what will change: the locked part as the existing preview of changed fields, and the content as added, changed and removed facts. Nothing is saved while any error remains. A route in the file that does not exist yet is listed as "will be added".
 - **Save**: one confirmation with one reason and a fresh authenticator check saves the whole file. Each step below is idempotent by command id, so a failed step can be retried without duplicates. Per route, in order:
   1. add the route if needed (existing `createRoute`);
-  2. if the locked rows differ from the current pack, propose and publish the new pack version through the reviewed path (same person, see below);
-  3. append one content version.
+  2. append one content version;
+  3. if the locked rows differ from the current pack, propose and publish the new pack version through the reviewed path (same person, see below), with the status carried from the current pack.
+
+  The dry run already runs the go-live check on the content that will result (the current content with the file applied) and refuses the file if the route's pack is LIMITED or ACTIVE and a Core field would be Pending. Content is written before the pack, and the pack's status does not change, so there is never a moment when a LIMITED or ACTIVE route has a Pending Core field. The content version names the pack in force when it was saved, which is the version before a pack published in step 3; the editor shows both.
+
 - **Export**: writes the same sheet for one or more routes, with every standard field listed, Pending rows included, so the gaps are visible.
 - **One editor screen** (Phase 3): routes first, each with its pack state, completeness and stale marks, and one route opened section by section with the same fields, states and sources as the sheet.
 
 ### H. Storage (Phase 2)
 
-The simplest shape that meets A to G: one content table and one definitions table, in a new optional migration directory, added through the existing reviewed installer.
+The simplest shape that meets A to G: one new table, in a new optional migration directory, added through the existing reviewed installer.
 
 - `app.route_pack_content`:
   - columns: `id`, `tenant_id`, `route_id`, nullable `pack_id` (the pack version in force when saved), `version` (sequential per route), `standard_version`, `document` jsonb, `reason` (3 to 500 characters), `created_by` and server-set `created_at`;
   - checks: `jsonb_typeof(document)='object'`, `octet_length(document::text)<=131072`, at most 500 facts;
   - a guard trigger requires the route and pack to belong to the tenant and the next sequential version; it is a new function, so it needs no hash pin;
-  - the document holds `standardVersion`, the section marks and the facts. Each fact is `key`, `state`, `value`, `source`, `observedOn`, optional `validUntil` and `note`; text values are at most 1000 characters, `notes.general` at most 4000.
-- `app.route_field_definition`: `id`, `tenant_id`, `key` (`custom.` plus a short key), `version`, `section`, `label`, `type`, `choices`, `applies_to` (route ids, empty for any), `status` ACTIVE or RETIRED, `reason`, `created_by`, `created_at`. At most 200 active definitions per workspace.
-- Both tables are append-only and follow the existing corridor table pattern (`packages/db/migrations/0020_versioned_corridors.sql:73-82`):
+  - the document holds `standardVersion`, the section marks and the facts. Each fact is `key`, `state`, `value`, `source`, `observedOn`, optional `validUntil` and `note`, and a custom fact also its `label`, `section`, `type` and allowed values. Text values are at most 1000 characters, `notes.general` at most 4000, a note at most 1000, a custom label at most 120; at most 100 custom keys per route;
+  - the octet cap on the whole document wins over the per-field character limits: a document over 131072 octets is refused even when every field is within its own limit.
+- The table is append-only and follows the existing corridor table pattern (`packages/db/migrations/0020_versioned_corridors.sql:73-82`):
   - row security, with read and add policies equal to those of `app.corridor_pack_version`, including the real-use pair (`customer-real-use-migrations/0002_real_request_authority.sql:190-192`);
   - `SELECT, INSERT` only;
   - the `reject_rewrite` trigger;
   - the `record_change` event, which carries ids only.
 - Writing needs owner or admin with a fresh authenticator check in the database, and the owner-only `config.manage` permission in the service, the same as a pack. Reading needs `missions.read`, like the corridor catalogue. Customers see none of it.
-- Full validation of a document is the domain schema of its standard version, in one new domain file; the database checks shape and size. The field dictionary in this record is the human copy of that schema; a test asserts that the CSV and the schema list the same keys, parts, Core flags and types.
+- Full validation of a document is the domain schema of its standard version, in one new domain file; the database checks shape and size. The custom key consistency check runs in the service, inside the same transaction as the insert, under the existing per-workspace corridor lock. The field dictionary in this record is the human copy of that schema; a test asserts that the CSV and the schema list the same keys, parts, Core flags and types.
 - No new switch. The content features show only while `CORRIDRA_ROUTE_PACK_FORM` is on and the module's marker function exists, so they appear only after the owner-approved install.
 
 ### I. One person may publish a route pack and take it live
 
 - The same person may propose and publish a route pack version, record its readiness dimensions, and release it. The roles stay as they are: proposing and publishing need the owner (`config.manage`), readiness and release need owner or admin (`opportunities.accounting`). Every step needs a fresh authenticator check and a reason.
+- After 2a an admin alone, not only the owner, can record all readiness dimensions and release a route, within the existing `opportunities.accounting` role set. This follows the owner's "one person is enough"; publishing a pack still needs the owner.
 - Self-publication keeps every other check:
   - the preview of changed fields;
   - the pinned base, refused if the current pack changed;
@@ -171,7 +185,10 @@ The simplest shape that meets A to G: one content table and one definitions tabl
 - Phase 2 builds this as an additive, hash-checked replacement of `app.guard_operations_control()`. It is equal to the live real-use `0003:523` definition except that it drops exactly two comparisons:
   - `q.created_by=NEW.created_by` in the `configuration_decision` branch (`:561`);
   - `r.created_by=NEW.created_by` in the release loop (`:554`).
-- The service drops its matching check (`operations.ts:355-356`). The two error texts go with them.
+- The service drops the proposer comparison from its check (`operations.ts:355-356`). Each existing error still needs a message for the conditions it still covers, reworded to drop "Independent", and tests match the new texts:
+  - service `:356`, "An independent authorized reviewer is required": still raised when the proposal does not exist or is not readable in this workspace; reworded to "Configuration proposal not found".
+  - database `0003:561`, "Independent configuration reviewer required": still raised when the proposal does not exist in the tenant; reworded to "Configuration proposal required".
+  - database `0003:554`, "Independent approval of current evidenced readiness required": still raised when a dimension has no observation, its latest observation is not in the release list, is for another pack, is BLOCKED or expired, or its source is missing, unreadable or past retention; reworded to "Current evidenced readiness required for every dimension".
 - `configuration_proposal` is route pack configuration only, and readiness and release are route-only, so the change cannot reach any other record.
 - The guided form and the import both use the reviewed path (propose, then publish) instead of `appendPack`, so every pack version they write has a proposal, a preview and a decision. `appendPack` stays as the existing developer path under Advanced, as ADR-029 allows for trusted compatibility entry points.
 - Assumption the owner can narrow: the owner's words came in the route pack thread. This record reads "one person is enough" as covering pack publication and the readiness approvals and release, because without the second part the owner alone still could not take a route live. If the owner wants readiness to keep a second person, Phase 2 drops only the decision comparison and keeps the release one.
@@ -181,7 +198,7 @@ The simplest shape that meets A to G: one content table and one definitions tabl
 - **Phase 1**: this record, the field dictionary and the template. The owner can start gathering data now.
 - **Phase 2**: Class A, full process; three PRs, each leaving main releasable.
   - 2a: one-person route publication (decision I). The new migration directory `packages/db/route-pack-migrations/` with `0001_one_person_route_publication.sql` and a rollback file restoring the exact current definition. One new option, `route_pack_install`, on the existing `field_modules_action` input (no new workflow input); it needs the real-use modules installed first. The service change, screen copy and tests.
-  - 2b: `0002_route_pack_content.sql` (decision H), the Standard v1 domain schema, the content and definition service, the completeness view and go-live check, and the guided form extended with the remaining locked key lists (same validators and guard).
+  - 2b: `0002_route_pack_content.sql` (decision H), the Standard v1 domain schema, the content service with the custom key consistency check, the completeness view and the shared go-live check (wired into `appendPack`, the guided form, the reviewed publish and the content append), and the guided form extended with the remaining locked key lists and the carry-over of unset keys (same validators and guard).
   - 2c: the CSV import with dry run, apply to many and export, on the existing team control route.
   - Each install is a separate owner-approved run of the reviewed installer; builds never migrate.
 - **Phase 3**: the one editor screen in Settings (team desk D17: routes first with their pack state), with completeness, stale marks, import and export, under UI/UX.v4.
@@ -191,25 +208,31 @@ The simplest shape that meets A to G: one content table and one definitions tabl
 
 - Phase 1: revert the commit.
 - 2a: a reviewed forward run of the rollback file restores the exact earlier `guard_operations_control()` definition, so publication and release need a second person again. Records written meanwhile stay, and each still shows who did what.
-- 2b and 2c: content is append-only and harmless when unread. Turning `CORRIDRA_ROUTE_PACK_FORM` off hides the form and the content features. The tables stay; nothing is deleted.
+- 2b and 2c: content is append-only and harmless when unread. Turning `CORRIDRA_ROUTE_PACK_FORM` off hides the form and the content features. The table stays; nothing is deleted.
 
 ## Tests (for Phase 2 and 3)
 
 - `tests/integration/operations.test.ts`:
   - before the module install, self-publication and self-release fail exactly as today;
   - after it, the same owner proposes, previews and publishes, and records readiness and releases;
-  - still refused: without a fresh authenticator check, with a stale base, with a configuration different from the proposal, and for a member without the permission.
+  - an admin alone records all 13 dimensions and releases;
+  - still refused: without a fresh authenticator check, with a stale base, with a configuration different from the proposal, and for a member without the permission;
+  - the reworded error texts.
+- `tests/integration/sourcing-workflow-install.test.ts:313-366` ("a sourcing pack goes through the reviewed flow"): before the 2a install, self-publication of the sourcing block still fails; after it, the same owner proposes and publishes the exact block, and a pack outside the reviewed flow is still refused.
 - Real invoice second-person approval and ADR-028 task review are unchanged; their existing tests stay green untouched.
-- The content tables, each in positive, denial and recovery form:
+- The content table, in positive, denial and recovery form:
   - row security per tenant;
   - append-only, with update and delete refused;
   - sequential versions and the size cap;
   - an admin without `config.manage` refused in the service;
-  - a retried save adds nothing.
+  - a retried save adds nothing;
+  - a custom key with a different type or label from another route is refused.
 - Domain tests:
   - every v1 key parses;
-  - a value containing an email address is refused;
-  - a Locked Core row marked Not applicable is refused;
+  - an email address in a value, note or source is refused;
+  - a Locked Core row marked Not applicable is refused; `sourcing.profile` and other Locked Optional rows marked Not applicable with a reason are accepted;
+  - a section mark by number or name covers its non-Filled rows and its custom fields, never a Locked Core row;
+  - a document over the octet cap is refused even when every field is within its character limit;
   - a Not applicable row without a reason is refused;
   - section states and the Core completeness are derived as decided;
   - an unknown key outside `custom.` is refused;
@@ -220,8 +243,11 @@ The simplest shape that meets A to G: one content table and one definitions tabl
   - `|` values and repeated rows join;
   - money keeps exact minor units and refuses extra decimals;
   - a file with any error saves nothing;
+  - a Pending row with a new custom key is reported and skipped;
+  - a file that would leave a LIMITED or ACTIVE route with a Pending Core field is refused in the dry run;
+  - a pack built by import keeps the current pack's status and every unsheeted key, including `sourcing`;
   - export then import gives no change.
-- Go-live check: LIMITED or ACTIVE is refused with a Pending Core field, and allowed once it is Filled or Not applicable.
+- Go-live check: LIMITED or ACTIVE is refused with a Pending Core field through `appendPack` (the raw `corridor-pack` command), the guided form, the reviewed publish and the status action, and allowed once it is Filled or Not applicable; a content version that turns a Core field Pending on a LIMITED or ACTIVE route is refused.
 - A property test: country pairs in both orders give the same code path; no country branch.
 
 ## Consequences
@@ -236,6 +262,7 @@ The simplest shape that meets A to G: one content table and one definitions tabl
 
 - **Put all route facts into the pack configuration and raise the 8192 cap.** Every fact would need a guard migration, every edit would create a pack version and invalidate all readiness, and authority and description would mix.
 - **Free jsonb with no standard.** No completeness, no comparison across routes, and no way to tell a gap from a choice.
+- **A separate custom field definitions table, with routes it applies to, a retired state and promotion by alias.** More tables and lifecycle for little value over keys kept consistent inside the content (owner's 20 percent rule).
 - **One table per section, or a row per fact.** More migrations and slower snapshots for no value the jsonb document and the domain schema do not already give.
 - **One sheet per section, or XLSX import.** About three times the columns, layout changes for custom fields, and a new parser; see G.
 - **Keep a second person for publication.** The owner said "no need to have second person. one person is enough".
