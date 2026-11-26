@@ -10,7 +10,7 @@ import { faqIds, v43 } from '../lib/home-v43-data';
 // Home page v4.3 "Common questions": the pack's eight, all closed on load. The questions are headings, so they keep
 // sentence case. The product's own eight answers (privacy, limits, cost) stay complete under "More Answers", so no
 // sentence is lost. The privacy link is a prose link to /privacy.
-export function HomeV43Faq() {
+export function HomeV43Faq({ more = true }: { more?: boolean }) {
   const t = useT();
   return (
     <section className="hv43-band hv43-faq" id="questions" aria-labelledby="questions-title">
@@ -37,12 +37,14 @@ export function HomeV43Faq() {
             </p>
           </details>
         ))}
-        <details className="hv43-more">
-          <summary>{t(v43('faq.more'))}</summary>
-          <div className="hv43-more-body">
-            <FaqSection />
-          </div>
-        </details>
+        {more ? (
+          <details className="hv43-more">
+            <summary>{t(v43('faq.more'))}</summary>
+            <div className="hv43-more-body">
+              <FaqSection />
+            </div>
+          </details>
+        ) : null}
       </div>
     </section>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useReducer, useState } from 'react';
+import { useCallback, useReducer, useState, type ReactNode } from 'react';
 import { ctaWords } from './home-routes';
 import { HomeShared } from './home-shared';
 import { PlainLimits } from './home-v42-parts';
@@ -35,7 +35,19 @@ import './home-v43-more.css';
 // the people, the questions, the request form, Plain limits and the closing band. All interaction is one pure reducer
 // (lib/home-v43-state.ts). The page sends nothing until /plan. It owns one polite announcement: a door choice or a
 // press inside a widget writes one short message there, and no other region of its own is live.
-export function HomeV43({ whatsapp = null }: { whatsapp?: string | null }) {
+export function HomeV43({
+  whatsapp = null,
+  summaries,
+}: {
+  whatsapp?: string | null;
+  /**
+   * CORRIDRA_UX_HOW_TRUST_V43 (owner, 26 Nov 2026, first hand to Guardian G66): the process and trust bands become the
+   * given summaries (three short lines each, linking to /how-it-works and /trust); the role picker, the long answers
+   * and Plain Limits leave the home, because those pages carry them. The bands arrive as slots from
+   * home-v43-summarised.tsx, so this module names neither them nor their stylesheet. Off, the page is what it was.
+   */
+  summaries?: { process: ReactNode; trust: ReactNode };
+}) {
   const { t } = useLanguage();
   const [state, dispatch] = useReducer(homeV43Reducer, initialState);
   const [announcement, setAnnouncement] = useState('');
@@ -92,12 +104,16 @@ export function HomeV43({ whatsapp = null }: { whatsapp?: string | null }) {
           onMarket={(market) => dispatch({ type: 'market', market })}
         />
       ) : null}
-      <HomeV43Process
-        intent={intent}
-        stage={state.stage}
-        onStage={(index) => dispatch({ type: 'stage', index })}
-        announce={announce}
-      />
+      {summaries ? (
+        summaries.process
+      ) : (
+        <HomeV43Process
+          intent={intent}
+          stage={state.stage}
+          onStage={(index) => dispatch({ type: 'stage', index })}
+          announce={announce}
+        />
+      )}
       <HomeV43Markets
         market={state.market}
         direction={state.direction}
@@ -116,14 +132,23 @@ export function HomeV43({ whatsapp = null }: { whatsapp?: string | null }) {
           revealThenFocus('home-brief-job');
         }}
       />
-      <HomeV43Trust />
-      <HomeV43People
-        role={state.role}
-        onRole={(role) => dispatch({ type: 'role', role })}
-        announce={announce}
-      />
-      <HomeV43Faq />
-      <PlainLimits />
+      {summaries ? (
+        <>
+          {summaries.trust}
+          <HomeV43Faq more={false} />
+        </>
+      ) : (
+        <>
+          <HomeV43Trust />
+          <HomeV43People
+            role={state.role}
+            onRole={(role) => dispatch({ type: 'role', role })}
+            announce={announce}
+          />
+          <HomeV43Faq />
+          <PlainLimits />
+        </>
+      )}
       <HomeV43Brief state={state} dispatch={dispatch} whatsapp={whatsapp} />
       <HomeShared shown={shown} href={href} cta={cta} whatsapp={whatsapp} />
     </div>
