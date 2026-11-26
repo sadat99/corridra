@@ -2,6 +2,7 @@ import '../components/home-landing.css';
 import '../components/home-routes.css';
 import { HomeRoutes } from '../components/home-routes';
 import { HomeV42Page } from '../components/home-v42-page';
+import { HomeV43Page } from '../components/home-v43-page';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
@@ -15,11 +16,16 @@ import { uxSwitchOn } from '../lib/ux-switches';
 // Home page v4.2 (owner, 25 Nov 2026: "lock this v4.2", "Add a switch, off by default"): only while
 // CORRIDRA_UX_HOME_V42 is exactly "true" the page is the v4.2 composition (docs/revamp/specs/ui-ux-v4-2.md), loaded
 // by HomeV42Page only then. The switch is read when the page is built, so a change needs a redeploy.
+// Home page v4.3 (owner, 26 Nov 2026, via the Guardian: "update as per attachment 100% correctly"): only while
+// CORRIDRA_UX_HOME_V43 is exactly "true" the page is the v4.3 composition (docs/revamp/specs/ui-ux-v4-3.md), loaded by
+// HomeV43Page only then. It wins over V42; with it off the page is the V42 or the legacy home, byte for byte.
 export default function Home() {
   return (
     <PublicShell className="ux-guide-home ac1-home tr-home" translated>
       <LegacyHashRedirect />
-      {uxSwitchOn('CORRIDRA_UX_HOME_V42') ? (
+      {uxSwitchOn('CORRIDRA_UX_HOME_V43') ? (
+        <HomeV43Page whatsapp={supportWhatsappHref()} />
+      ) : uxSwitchOn('CORRIDRA_UX_HOME_V42') ? (
         <HomeV42Page whatsapp={supportWhatsappHref()} />
       ) : (
         <HomeRoutes whatsapp={supportWhatsappHref()} />

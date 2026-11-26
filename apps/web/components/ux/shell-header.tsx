@@ -16,6 +16,7 @@ export function ShellHeader({
   mode,
   whatsappHref,
   pocket = false,
+  homeV43 = false,
 }: {
   /** CORRIDRA_UX_SHELLS_V2, read on the server. */
   shells: boolean;
@@ -29,6 +30,8 @@ export function ShellHeader({
   whatsappHref?: string;
   /** CORRIDRA_UX_POCKET, read on the server: the customer header adds the page title for the phone header. */
   pocket?: boolean;
+  /** CORRIDRA_UX_HOME_V43, read on the server: the public header gets the Solutions menu. */
+  homeV43?: boolean;
 }) {
   const pathname = usePathname();
   // A bare page (the decision card) renders no header, so nothing here can ask the server who is signed in.
@@ -45,5 +48,5 @@ export function ShellHeader({
         {...(pocket ? { pocket } : {})}
       />
     );
-  return <SiteHeader accounts={accounts} mode={mode} />;
+  return <SiteHeader accounts={accounts} mode={mode} {...(homeV43 ? { homeV43 } : {})} />;
 }

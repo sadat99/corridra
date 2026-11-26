@@ -33,7 +33,7 @@ const lines: Record<'china' | 'sell', { words: MessageKey; to: Place[] }> = {
 };
 
 /** One whole-sentence template with {from} and {to} slots, so each language keeps its own word order. */
-function Sentence({ route }: { route: 'china' | 'sell' }) {
+export function Sentence({ route }: { route: 'china' | 'sell' }) {
   const t = useT();
   const { words, to } = lines[route];
   const template = t(words);

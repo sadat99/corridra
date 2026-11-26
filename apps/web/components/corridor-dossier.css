@@ -1,0 +1,121 @@
+/* The sample counterparty dossier at /corridors#mission-example, drawn only while CORRIDRA_UX_HOME_V43 is on. Scoped to
+   .ux-dossier. Tokens only. Nothing animates. */
+.ux-dossier {
+  display: grid;
+  gap: var(--space-4);
+  margin-block: var(--space-4);
+  padding: var(--space-6);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.ux-dossier-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.ux-dossier-head h3,
+.ux-dossier-name {
+  margin: 0;
+  font-weight: 600;
+}
+.ux-dossier-head h3 {
+  font-size: var(--text-title);
+}
+.ux-dossier-lead {
+  margin: 0;
+  color: var(--text-2);
+}
+.ux-dossier-choices,
+.ux-dossier-choices > div,
+.ux-dossier-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.ux-dossier-choices {
+  flex-direction: column;
+}
+.ux-dossier-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding-inline: var(--space-3);
+  font: inherit;
+  color: var(--text-1);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.ux-dossier-choice[aria-pressed='true'] {
+  font-weight: 600;
+  background: var(--selected-surface);
+  border: 2px solid var(--selected);
+}
+.ux-dossier-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  font-weight: 600;
+}
+.ux-dossier-status {
+  font-weight: 400;
+  color: var(--text-2);
+}
+.ux-dossier-rows {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.ux-dossier-rows > div {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--line);
+}
+.ux-dossier-rows dt {
+  font-weight: 600;
+}
+.ux-dossier-rows dd {
+  margin: 0;
+  color: var(--text-1);
+}
+.ux-dossier-rows dd p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0 0 var(--space-2);
+}
+.ux-dossier-words {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-1);
+}
+.ux-dossier-actions {
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+}
+.ux-dossier-actions .text-link,
+.ux-dossier-actions .button-secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+.ux-dossier-saved {
+  margin: 0;
+  color: var(--text-2);
+}
+@media (min-width: 48rem) {
+  .ux-dossier-choices {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+}

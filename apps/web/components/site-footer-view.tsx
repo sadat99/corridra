@@ -77,12 +77,13 @@ export const footerGroups: readonly FooterGroup[] = [
  * if led to the same"). Join the Corridra Network is the helper door's way in; the page it names links on to /network.
  * The label and the translation key do not change.
  */
-const doorFor: Record<string, string> = { '/network': '/access/team' };
+export const doorFor: Record<string, string> = { '/network': '/access/team' };
 
 export function SiteFooterView({
   realUse,
   accessDoors = false,
   trim = false,
+  trimV43 = false,
 }: {
   realUse: boolean;
   /**
@@ -98,8 +99,11 @@ export function SiteFooterView({
    * the language switcher stay. Left out, nothing here changes.
    */
   trim?: boolean;
+  /** CORRIDRA_UX_HOME_V43 (owner, 26 Nov 2026): the same trimmed footer on the pages that keep it, so V43 implies it. */
+  trimV43?: boolean;
 }) {
   const t = useT();
+  const trimmed = trim || trimV43;
   // The public header has already asked who is signed in; a signed-in person is never offered sign-in here.
   const who = useSignedInSeen();
   const known = useSignedInSettled();
@@ -136,17 +140,17 @@ export function SiteFooterView({
       ? 'guide-footer guide-footer-doors'
       : 'guide-footer';
   return (
-    <footer className={trim ? `${kind} guide-footer-trim` : kind}>
+    <footer className={trimmed ? `${kind} guide-footer-trim` : kind}>
       <div className="guide-footer-top">
         <div className="guide-footer-brand">
           <Link prefetch={false} className="guide-footer-wordmark" href="/">
             <BrandLockup />
             <span className="sr-only">Corridra</span>
           </Link>
-          {trim ? null : <p className="guide-footer-promise">{t('footer.tagline')}</p>}
-          {preview || (trim && doors) ? null : (
+          {trimmed ? null : <p className="guide-footer-promise">{t('footer.tagline')}</p>}
+          {preview || (trimmed && doors) ? null : (
             <div className="guide-footer-actions">
-              {trim ? null : (
+              {trimmed ? null : (
                 <Link prefetch={false} className="primary-link" href="/plan">
                   {t('header.start')}
                 </Link>
@@ -230,7 +234,7 @@ export function SiteFooterView({
             ))}
         </nav>
       </div>
-      {trim ? null : compact ? (
+      {trimmed ? null : compact ? (
         <details className="guide-footer-trust guide-footer-trust-fold">
           <summary>{t('footer.facts')}</summary>
           <div className="guide-footer-trust-body">{trust}</div>
@@ -241,7 +245,7 @@ export function SiteFooterView({
       <div className="guide-footer-bottom">
         <span className="guide-footer-copy">© 2026 Corridra</span>
         <span className="guide-footer-private">{t('footer.private')}</span>
-        {trim ? null : <span className="guide-footer-routes">{t('footer.routes')}</span>}
+        {trimmed ? null : <span className="guide-footer-routes">{t('footer.routes')}</span>}
         <LanguageSwitcher />
       </div>
     </footer>

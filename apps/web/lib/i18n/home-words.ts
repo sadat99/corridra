@@ -1,4 +1,6 @@
 import { inEveryLanguage } from './lang';
+import { homeV43En } from './home-v43-words';
+import { homeV43MoreEn } from './home-v43-words-more';
 
 // Words for the home page (owner decision of 25 October 2026: the pages follow the chosen language).
 // English is the source and this file holds English only; each other language's words are in lang/<code>.ts.
@@ -704,6 +706,8 @@ export const homeEn = {
   ...homeBoardEn,
   ...homeLandingEn,
   ...homeTwoEn,
+  ...homeV43En,
+  ...homeV43MoreEn,
   'home.country.bd': 'Bangladesh',
   'home.country.cn': 'China',
   'home.country.es': 'Spain',
