@@ -3,12 +3,7 @@ import { DomainError } from './index';
 import { currencies } from './currencies';
 import { currency, minorUnits } from './opportunities';
 import { missionCatalogue, requirementFields } from './commercial-missions';
-import {
-  proposalOctetBudget,
-  storedTextOctets,
-  unstorable,
-  type RouteConfiguration,
-} from './corridors';
+import { storedTextOctets, unstorable, type RouteConfiguration } from './corridors';
 import { hasContactShape, supplySourceKinds } from './supply-sources';
 
 // ADR-093 Route Pack Standard v1 (decisions B to G). One standard for every route: the locked part stays the guarded pack
@@ -949,6 +944,7 @@ export const sheetLockedKeys = [
 ] as const;
 export type SheetLockedKey = (typeof sheetLockedKeys)[number];
 
+const expiredPoliciesNote = ' Expired policies removed: ';
 const sectionNameList = routePackSections
   .map((section) => `${section.number} ${section.name}`)
   .join(', ');
@@ -963,7 +959,7 @@ export const routePackWords = {
   email:
     'Remove the email address. Route content names organisations, places and rules, never people.',
   unstorable: 'Remove the characters the database cannot store.',
-  tooLarge: `This route content is larger than ${routePackContentOctetBudget} octets. Shorten notes or long lists.`,
+  tooLarge: 'This route content is too large to save. Shorten notes or long lists.',
   coreNotApplicable: (key: string) =>
     `${key} is needed before the route may go live, so it cannot be Not applicable.`,
   lockedCoreFilled: (key: string) =>
@@ -993,8 +989,11 @@ export const routePackWords = {
   commandReused: 'Command key reused with different values',
   policyExpired: (names: string) =>
     `These policies have expired: ${names}. Pause the route, or publish with a current policy.`,
+  expiredPoliciesRemoved: (names: string) => `${expiredPoliciesNote}${names}.`,
   packChanged: "This route's pack changed since you opened it. Reload and try again.",
-  proposalTooLarge: `This route pack is larger than the ${proposalOctetBudget} octet review limit. Shorten long lists.`,
+  proposalTooLarge: 'This route pack is too large to review. Shorten long lists.',
+  notPublished:
+    'The proposal was saved but not published. Send the same request again to publish it.',
   goLivePendingCore: (labels: string) =>
     `The route cannot go live while these Core fields are Pending: ${labels}.`,
   coreTurnsPending: (labels: string) =>
@@ -1485,6 +1484,30 @@ export function customKeyConflicts(
 // The label of each custom key as the latest save gave it (ADR-093 E): the label is shown for the key on every route. Saves
 // are ordered by time, then by content version, then by route key, so two saves in one transaction still give one answer.
 const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+// The reason of a PAUSED publish that dropped expired policy references, so the pack history shows what was removed. It
+// stays within the 500 character reason limit: names that do not fit end as "and N more", and only when even the shortest
+// note does not fit is the person's own reason shortened.
+const reasonLimit = 500;
+export function reasonWithRemovedPolicies(reason: string, names: readonly string[]): string {
+  if (!names.length) return reason;
+  const note = (shown: number) =>
+    routePackWords.expiredPoliciesRemoved(
+      shown === names.length
+        ? names.join(', ')
+        : shown
+          ? `${names.slice(0, shown).join(', ')} and ${names.length - shown} more`
+          : `${names.length} policies`,
+    );
+  for (let shown = names.length; shown >= 0; shown--) {
+    const full = reason + note(shown);
+    if (full.length <= reasonLimit) return full;
+  }
+  return reason.slice(0, reasonLimit - note(0).length).trimEnd() + note(0);
+}
+// True when a recorded reason is this reason with the note of removed policies added.
+export function recordsRemovedPolicies(recorded: string, reason: string): boolean {
+  return recorded.startsWith(reason + expiredPoliciesNote);
+}
 export function latestCustomLabels(
   contents: Iterable<{
     routeKey: string;

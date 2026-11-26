@@ -16,6 +16,8 @@ import {
 import {
   carriedConfiguration,
   goLiveMessage,
+  reasonWithRemovedPolicies,
+  recordsRemovedPolicies,
   routePackWords,
   type PackStatus,
   type SheetLockedKey,
@@ -30,6 +32,26 @@ import { commandStepId, type RoutePackContentService } from './route-pack-conten
 // missions package next to CorridorService so the command stays in one place).
 // ADR-093 2b: once the route pack content module is active the form publishes through the reviewed path (propose, then
 // decide) and carries every key it does not set from the current pack; before that it writes exactly as it always did.
+// The form's input as it was before 2b, byte for byte, still the only shape accepted until the module is active.
+export const legacyGuidedRoutePack = z
+  .object({
+    routeId: z.uuid(),
+    version: z.int().positive(),
+    status: z.enum(['DRAFT', 'TESTING', 'LIMITED', 'ACTIVE', 'PAUSED']),
+    effectiveFrom: z.iso.datetime({ offset: true }),
+    reason: z.string().trim().min(3).max(500),
+    missionTypes: z
+      .array(z.string().regex(/^[a-z][a-z0-9_.-]{0,79}$/))
+      .min(1)
+      .max(50),
+    languages: z.array(locale).max(30).default([]),
+    currencies: z.array(currency).max(30).default([]),
+    timeZones: z.array(timeZone).max(30).default([]),
+    manualChannel: z.boolean().default(false),
+    // ADR-083 S1. Optional and carried unchanged into the reviewed pack; absent means the pack is exactly as before.
+    sourcing: sourcingProfile.optional(),
+  })
+  .strict();
 const keyList = z.array(z.string().regex(/^[a-z][a-z0-9_.-]{0,79}$/)).max(50);
 export const guidedRoutePack = z
   .object({
@@ -166,14 +188,73 @@ export async function publishReviewed(
     });
     pack = proposed;
   }
-  await deps.operations.command(ctx, {
-    id: decisionId,
-    action: 'decide',
-    proposalId,
-    decision: 'PUBLISH',
-    reason,
-  });
+  try {
+    await deps.operations.command(ctx, {
+      id: decisionId,
+      action: 'decide',
+      proposalId,
+      decision: 'PUBLISH',
+      reason,
+    });
+  } catch (error) {
+    // Propose and decide are two transactions: the proposal stays, so say so and how to finish.
+    throw error instanceof DomainError
+      ? new DomainError(`${error.message} ${routePackWords.notPublished}`, error.status, error.code)
+      : new DomainError(routePackWords.notPublished, 409, 'ROUTE_PACK_NOT_PUBLISHED');
+  }
   return { proposalId, packId: pack.id, version: pack.version, duplicate: existing !== null };
+}
+
+// The reason a publish records: a PAUSED publish that dropped expired policies says so, the same for the proposal, the
+// decision and the pack. A retry after it finds the policies gone already, so it keeps the reason recorded the first time.
+async function recordedReason(
+  deps: PublishDeps,
+  ctx: RequestContext,
+  commandId: string,
+  reason: string,
+  removedNames: string[],
+) {
+  const existing = await deps.content.proposalOf(ctx, commandStepId(commandId, 'propose'));
+  return {
+    existing,
+    reason:
+      existing && !removedNames.length && recordsRemovedPolicies(existing.reason, reason)
+        ? existing.reason
+        : reasonWithRemovedPolicies(reason, removedNames),
+  };
+}
+
+// The status change (ADR-093 B): the current configuration, read on the server, published again with only a new status
+// through the reviewed path. It takes no configuration, so nothing edited can ride along; only a move to PAUSED drops
+// expired policy references.
+const routeStatusChange = z
+  .object({
+    commandId: z.uuid(),
+    routeId: z.uuid(),
+    status: z.enum(['DRAFT', 'TESTING', 'LIMITED', 'ACTIVE', 'PAUSED']),
+    reason: z.string().trim().min(3).max(500),
+    expectedBasePackId: z.uuid().nullable().optional(),
+  })
+  .strict();
+export async function changeRouteStatus(deps: PublishDeps, ctx: RequestContext, input: unknown) {
+  const v = routeStatusChange.parse(input);
+  const [route] = (await deps.content.overview(ctx, { routeIds: [v.routeId] })).routes;
+  if (!route?.pack) throw new DomainError('Route unavailable', 404);
+  const { configuration, removedRefs, removedNames } = await deps.content.withoutExpiredRefs(
+    ctx,
+    route.pack.configuration,
+    v.status,
+  );
+  const { reason } = await recordedReason(deps, ctx, v.commandId, v.reason, removedNames);
+  const published = await publishReviewed(deps, ctx, {
+    commandId: v.commandId,
+    routeId: v.routeId,
+    status: v.status,
+    configuration,
+    reason,
+    expectedBasePackId: v.expectedBasePackId === undefined ? route.pack.id : v.expectedBasePackId,
+  });
+  return { ...published, removedRefs, removedPolicies: removedNames };
 }
 
 // Without a command id from the page, the form's own values name the command, so a double click publishes once.
@@ -189,38 +270,38 @@ export async function createRoutePack(
   ctx: RequestContext,
   input: unknown,
 ) {
-  const v = guidedRoutePack.parse(input);
   const capabilities = await deps.content.capabilities(ctx);
-  if (!capabilities.routePackForm || !capabilities.contentInstalled)
+  // Until the module is active the form accepts exactly the input it always did and writes as it always did.
+  if (!capabilities.routePackForm || !capabilities.contentInstalled) {
+    const legacy = legacyGuidedRoutePack.parse(input);
     return deps.corridors.appendPack(ctx, {
       id: randomUUID(),
-      routeId: v.routeId,
-      version: v.version,
-      status: v.status,
-      effectiveFrom: v.effectiveFrom ?? new Date().toISOString(),
-      reason: v.reason,
-      configuration: routePackConfiguration(v),
+      routeId: legacy.routeId,
+      version: legacy.version,
+      status: legacy.status,
+      effectiveFrom: legacy.effectiveFrom,
+      reason: legacy.reason,
+      configuration: routePackConfiguration({ ...legacy, removeSourcingProfile: false }),
     });
+  }
+  const v = guidedRoutePack.parse(input);
   const [route] = (await deps.content.overview(ctx, { routeIds: [v.routeId] })).routes;
   if (!route) throw new DomainError('Route unavailable', 404);
-  const { configuration, removedRefs } = await deps.content.withoutExpiredRefs(
+  const { configuration, removedRefs, removedNames } = await deps.content.withoutExpiredRefs(
     ctx,
     routePackConfiguration(v, route.pack?.configuration ?? null),
     v.status,
   );
   const commandId = v.commandId ?? formCommandId(v, configuration);
+  const { existing, reason } = await recordedReason(deps, ctx, commandId, v.reason, removedNames);
   // A form opened on an older pack is refused, as before; a retry of a publish already proposed is not.
-  if (
-    v.version !== (route.pack?.version ?? 0) + 1 &&
-    !(await deps.content.proposalExists(ctx, commandStepId(commandId, 'propose')))
-  )
-    throw packChanged();
+  if (v.version !== (route.pack?.version ?? 0) + 1 && !existing) throw packChanged();
   const published = await publishReviewed(deps, ctx, {
     commandId,
     routeId: v.routeId,
     status: v.status,
     configuration,
-    reason: v.reason,
+    reason,
     effectiveFrom: v.effectiveFrom,
     expectedBasePackId: route.pack?.id ?? null,
   });
@@ -230,5 +311,6 @@ export async function createRoutePack(
     proposalId: published.proposalId,
     duplicate: published.duplicate,
     removedRefs,
+    removedPolicies: removedNames,
   };
 }

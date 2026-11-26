@@ -50,9 +50,10 @@ type CurrentPack = {
   status: PackStatus;
   configuration: RouteConfiguration;
 };
-// The go-live check judges both the pack in force and the latest pack by version: a route is live while either one is
-// LIMITED or ACTIVE, so neither a pack published live for a later date nor a later DRAFT scheduled after a live pack lets a
-// Core field turn Pending. The latest pack, which a new version follows, is judged first; the same pack is judged once.
+// The go-live check judges the pack in force, and also the latest pack by version when that one is LIMITED or ACTIVE or
+// nothing is in force yet. So a route is live while either is live: neither a pack published live for a later date nor a
+// later DRAFT scheduled after a live pack lets a Core field turn Pending, and a scheduled DRAFT alone never holds back a
+// write. A live latest pack, which a new version follows, is judged first; the same pack is judged once.
 async function packsOf(db: DatabaseClient, tenantId: string, routeId: string) {
   const rows = (
     await db.query<CurrentPack & { in_force: boolean }>(
@@ -67,18 +68,22 @@ async function packsOf(db: DatabaseClient, tenantId: string, routeId: string) {
     rows.find((row) => !row.in_force),
   );
 }
-function judgedPacks(
+export function judgedPacks(
   inForce: CurrentPack | undefined,
   latest: CurrentPack | undefined,
 ): PackView[] {
-  const packs = [latest, inForce].flatMap((pack) => (pack ? [pack] : []));
+  const judgedLatest =
+    latest && (!inForce || latest.status === 'LIMITED' || latest.status === 'ACTIVE')
+      ? latest
+      : undefined;
+  const packs = [judgedLatest, inForce].flatMap((pack) => (pack ? [pack] : []));
   if (!packs.length) return [null];
   return packs
     .filter((pack, index) => packs.findIndex((other) => other.id === pack.id) === index)
     .map((pack) => ({ status: pack.status, configuration: pack.configuration }));
 }
 // The go-live check against every judged pack; the first refusal wins. With no new pack, each judged pack stays as it is.
-function judge(
+export function judge(
   packs: PackView[],
   before: ContentDocument | null,
   after: { pack?: PackView; document: ContentDocument | null },
@@ -625,7 +630,7 @@ export class RoutePackContentService {
     ctx: RequestContext,
     configuration: RouteConfiguration,
     status: PackStatus,
-  ): Promise<{ configuration: RouteConfiguration; removedRefs: string[] }> {
+  ): Promise<{ configuration: RouteConfiguration; removedRefs: string[]; removedNames: string[] }> {
     return withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
       const expiredPolicies = (
         await db.query<{ id: string; name: string | null }>(
@@ -668,6 +673,7 @@ export class RoutePackContentService {
               : configuration.aiPolicyRef,
         },
         removedRefs,
+        removedNames: expired.map((ref) => ref.name ?? ref.id),
       };
     });
   }
