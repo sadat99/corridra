@@ -198,7 +198,7 @@ The simplest shape that meets A to G: one new table, in a new optional migration
   - database `0003:554`, "Independent approval of current evidenced readiness required": still raised when a dimension has no observation, its latest observation is not in the release list, is for another pack, is BLOCKED or expired, or its source is missing, unreadable or past retention; reworded to "Current evidenced readiness required for every dimension".
 - `configuration_proposal` is route pack configuration only, and readiness and release are route-only, so the change cannot reach any other record.
 - The guided form and the import both use the reviewed path (propose, then publish) instead of `appendPack`, so every pack version they write has a proposal, a preview and a decision. `appendPack` stays as the existing developer path under Advanced, as ADR-029 allows for trusted compatibility entry points.
-- Assumption the owner can narrow: the owner's words came in the route pack thread. This record reads "one person is enough" as covering pack publication and the readiness approvals and release, because without the second part the owner alone still could not take a route live. If the owner wants readiness to keep a second person, Phase 2 drops only the decision comparison and keeps the release one.
+- Owner scope, confirmed by the owner 26 Nov 2026: this record reads "one person is enough" as covering pack publication, the readiness approvals and release. The owner confirmed it first hand to Guardian G67 on 26 Nov 2026, verbatim "yes, covers readiness evidence and release too", in answer to whether the one-person rule covers readiness evidence and release. Every other second-person, money, auth, tenant and real-invoice rule is unchanged.
 
 ### Phases
 
