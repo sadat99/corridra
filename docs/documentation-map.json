@@ -1774,6 +1774,21 @@
       "use": "UI/UX.v4.2 public home amendment of 25 Nov 2026: owner words verbatim, decisions H1 to H10 (option 2 hero with route map, option 1 choice block with one-line route sentences, bento, Plain limits, trimmed footer) behind CORRIDRA_UX_HOME_V42, off by default"
     },
     {
+      "path": "docs/revamp/specs/ui-ux-v4-3.md",
+      "classification": "Current guide/contract",
+      "use": "UI/UX.v4.3 public home amendment of 26 Nov 2026 (owner, via the Guardian: update as per attachment 100% correctly): light hero with photo, one home with contextual examples, Solutions menu and pack footer behind CORRIDRA_UX_HOME_V43, off by default; deviations from the pack, decisions and the reconciliation table"
+    },
+    {
+      "path": "docs/revamp/landing-handoff/Corridra-Claude-Code-Prompt.md",
+      "classification": "Preserved source/working copy",
+      "use": "Owner's landing handoff prompt of 26 Nov 2026 (the attachment of the v4.3 decision), kept as written for reference; the v4.3 record is the contract, never edit (SHA256SUMS covers it)"
+    },
+    {
+      "path": "docs/revamp/landing-handoff/README.md",
+      "classification": "Preserved source/working copy",
+      "use": "Readme of the owner's landing handoff pack of 26 Nov 2026, kept as written for reference; never edit (SHA256SUMS covers it)"
+    },
+    {
       "path": "docs/revamp/CONTRACT.md",
       "classification": "Current guide/contract",
       "use": "Owner's V3 controlled revamp execution contract of 4 Nov 2026, byte for byte (sha256 93230e4b...d4ea); never edit, amend forward in docs/revamp/README.md"

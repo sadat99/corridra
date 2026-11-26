@@ -1,11 +1,16 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useT } from './language-provider';
 import { SiteFooterView } from './site-footer-view';
 import { signedInShellFor } from '../lib/ux/shells';
 import { isBarePublicPage } from '../lib/ux/bare-pages';
+import { isQuiet } from './use-signed-in';
+
+// Home page v4.3: the pack footer and its stylesheet load only while the switch is on, so an off build ships neither.
+const SiteFooterPack = dynamic(() => import('./site-footer-pack').then((m) => m.SiteFooterPack));
 
 /**
  * Chooses the footer for the page. `shells` is CORRIDRA_UX_SHELLS_V2, read on the server, the same switch the
@@ -19,6 +24,7 @@ export function SiteFooterPlace({
   shells,
   accessDoors = false,
   homeV42 = false,
+  homeV43 = false,
 }: {
   realUse: boolean;
   shells: boolean;
@@ -26,12 +32,26 @@ export function SiteFooterPlace({
   accessDoors?: boolean;
   /** CORRIDRA_UX_HOME_V42, read on the server: the full footer is the trimmed one (owner, 25 Nov 2026). */
   homeV42?: boolean;
+  /**
+   * CORRIDRA_UX_HOME_V43, read on the server (owner, 26 Nov 2026, via the Guardian): the public footer takes the pack's
+   * groups. It wins over V42. The request page (/plan) and the staff preview keep the trimmed footer.
+   */
+  homeV43?: boolean;
 }) {
   const t = useT();
   const pathname = usePathname();
   if (isBarePublicPage(pathname)) return null;
   if (!shells || !signedInShellFor(pathname))
-    return <SiteFooterView realUse={realUse} accessDoors={accessDoors} trim={homeV42} />;
+    return homeV43 && pathname !== '/plan' && !isQuiet(pathname) ? (
+      <SiteFooterPack realUse={realUse} accessDoors={accessDoors} />
+    ) : (
+      <SiteFooterView
+        realUse={realUse}
+        accessDoors={accessDoors}
+        trim={homeV42}
+        {...(homeV43 ? { trimV43: true } : {})}
+      />
+    );
   return (
     <footer className="site-footer">
       {/* Owner decision, 12 Nov 2026 (locked mockups revision 2): the quiet footer gains How We Label Facts. */}

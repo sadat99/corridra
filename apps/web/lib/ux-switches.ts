@@ -38,6 +38,8 @@ export const uxSwitchNames = [
   'CORRIDRA_UX_TEAM_DESK_V41',
   // Home page v4.2 (owner approved 25 Nov 2026): the new home composition and the trimmed public footer. Off unless exactly "true"; read at build time, so a change needs a redeploy. Presentation only.
   'CORRIDRA_UX_HOME_V42',
+  // Home page v4.3 (owner, 26 Nov 2026, via the Guardian: "update as per attachment 100% correctly"): the light hero with a photo, one page of contextual examples and the pack footer. On only when exactly "true" and wins over V42; read at build time, so a change needs a redeploy. Presentation only.
+  'CORRIDRA_UX_HOME_V43',
   'CORRIDRA_NOTIFICATIONS_V2',
   'CORRIDRA_TEAM_INVITES',
   'CORRIDRA_ROUTE_PACK_FORM',

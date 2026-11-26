@@ -567,6 +567,13 @@ export default function Page() {
               </p>
               <ul>
                 <li>Necessary session cookies from the account provider keep you signed in.</li>
+                <li>
+                  In the browsers of Corridra team members only, a plain cookie named corridra-team
+                  is set when a team member signs in, and renewed while they use the site. It tells
+                  our pages that a team session may exist, so they check it before showing the team
+                  member as signed in. It holds no secret and no personal data, and it ends 24 hours
+                  after it was last renewed, or when the team member signs out.
+                </li>
                 {real && (
                   <li>
                     A private cookie carries a possession token for a pending request while you

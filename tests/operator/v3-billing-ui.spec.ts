@@ -970,3 +970,58 @@ test('staff in a real operator workspace see plain-text notes and a title that m
   await expect(page.getByText(/start with Synthetic/)).toHaveCount(0);
   expect(await axe(page)).toEqual([]);
 });
+
+// Team desk v4.1 follow-up B (26 Nov 2026): a save refused only because the authenticator check lapsed opened no check
+// and ended on "Owner or admin access with a fresh authenticator check is required". It now asks for the in-place check
+// (the corridra:step-up request the team frame's dialog answers; answered here by the test) and sends the same command
+// once more; with the check closed it says the change is kept and the same command is sent on the next try.
+for (const verified of [true, false])
+  test(`staff save refused for a lapsed check ${verified ? 'is sent again after the code' : 'keeps the change when the check is closed'}`, async ({
+    page,
+  }) => {
+    await page.addInitScript((answer) => {
+      (window as unknown as { asked: number }).asked = 0;
+      window.addEventListener('corridra:step-up', (event) => {
+        event.preventDefault();
+        (window as unknown as { asked: number }).asked += 1;
+        (event as CustomEvent<{ resolve: (v: boolean) => void }>).detail.resolve(answer);
+      });
+    }, verified);
+    const posts: StaffPost[] = [];
+    await serveStaff(page, (url, method, body) => {
+      if (method === 'POST') {
+        posts.push(body!);
+        return posts.length === 1 || !verified
+          ? {
+              status: 401,
+              json: {
+                error: 'Verify your authenticator again to continue',
+                code: 'STEP_UP_REQUIRED',
+              },
+            }
+          : { json: staffSummary({ status: 'active' }) };
+      }
+      const scope = url.searchParams.get('scope');
+      if (scope === 'detail') return { json: staffDetail() };
+      return { json: { subscriptions: [staffSummary()], nextAfter: null, synthetic: true } };
+    });
+    await page.goto(origin + '/?view=staff');
+    await page.getByRole('button', { name: /^Open Organiser monthly/ }).click();
+    const form = page.getByRole('form', { name: 'Activate' });
+    await form.getByLabel('Period starts on').fill('2026-10-23');
+    await form.getByRole('button', { name: 'Activate This Plan' }).click();
+    if (verified) {
+      await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+      expect(posts).toHaveLength(2);
+    } else {
+      await expect(
+        page.getByText('Confirm your authenticator code to finish this. Your changes are kept.'),
+      ).toBeVisible();
+      await expect(page.getByText(/Owner or admin access with a fresh/)).toHaveCount(0);
+      await expect(form.getByLabel('Period starts on')).toHaveValue('2026-10-23');
+      expect(posts).toHaveLength(1);
+      expect(await axe(page)).toEqual([]);
+    }
+    expect(new Set(posts.map((p) => p.commandId)).size).toBe(1);
+    expect(await page.evaluate(() => (window as unknown as { asked: number }).asked)).toBe(1);
+  });

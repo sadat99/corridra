@@ -1,5 +1,6 @@
 'use client';
 import { useRef } from 'react';
+import { STEP_UP_REQUIRED, requestStepUp, stepUpKeptMessage } from '../lib/ux/step-up';
 
 /** A response which definitively rejected a write may be corrected and submitted again. */
 export class SubmissionFailure extends Error {
@@ -9,6 +10,8 @@ export class SubmissionFailure extends Error {
     message: string,
     readonly status: number,
     requestId?: string | null,
+    /** The server's code, when it sent one (STEP_UP_REQUIRED for a lapsed authenticator check). */
+    readonly code?: string,
   ) {
     super(
       message +
@@ -31,6 +34,26 @@ export function submissionMessage(error: unknown, fallback: string, intentMayExi
     ? message
     : message +
         ' Receipt not confirmed. Retry this form to resend its original entries and reference.';
+}
+
+/**
+ * Runs one retained submission under the in-place authenticator check, as withStepUp does: refused only because the
+ * check lapsed (401 STEP_UP_REQUIRED, which is decided before anything is written), it opens the check and sends the
+ * same command once more after the code is accepted. Closed, it fails with a message that says the entries are kept.
+ */
+export async function withStepUpSubmission<T>(send: () => Promise<T>): Promise<T> {
+  try {
+    return await send();
+  } catch (error) {
+    if (!(
+      error instanceof SubmissionFailure &&
+      error.status === 401 &&
+      error.code === STEP_UP_REQUIRED
+    ))
+      throw error;
+    if (!(await requestStepUp())) throw new SubmissionFailure(stepUpKeptMessage, 401);
+    return send();
+  }
 }
 
 /** Keep each mounted form's original command until its actual receipt or definitive rejection. */

@@ -255,11 +255,35 @@ export const goalRoute: Record<GoalKey, 'china' | 'sell' | 'delegation' | 'other
   other: 'other',
 };
 
-/** The request address the brief opens: the job, and the visitor's own words as a note for the form's notes field. */
-export function briefHref(goal: GoalKey | null, note: string): string {
+/** Country codes the request form accepts as the company's country, and as the target market (the EU too). */
+const pairFrom = ['BD', 'CN', 'GB', 'US', 'AU'] as const;
+const pairTo = ['BD', 'CN', 'EU', 'GB', 'US', 'AU'] as const;
+/** Where the company is based and the target market, as place codes ("OTHER" and "REGION" are not countries). */
+export type RoutePair = { from: string; to: string };
+
+/** Whether a pair is one the request form takes: a country of its own, a market of its own, never the same place. */
+export function validPair(pair: RoutePair | null | undefined): pair is RoutePair {
+  return (
+    !!pair &&
+    (pairFrom as readonly string[]).includes(pair.from) &&
+    (pairTo as readonly string[]).includes(pair.to) &&
+    pair.from !== pair.to
+  );
+}
+
+/**
+ * The request address the brief opens: the job, and the visitor's own words as a note for the form's notes field.
+ * The optional pair adds `companyCountry` and `marketCode`, only when it is a valid pair (the form ignores one without
+ * the other); a region or an undecided place is left out.
+ */
+export function briefHref(goal: GoalKey | null, note: string, pair?: RoutePair | null): string {
   const query = new URLSearchParams();
   const job = goal ? goalJob[goal] : null;
   if (job) query.set('job', job);
+  if (validPair(pair)) {
+    query.set('companyCountry', pair.from);
+    query.set('marketCode', pair.to);
+  }
   // At most the notes field's 1000 units, cut between whole characters so no character is split in half.
   let words = '';
   for (const character of note.trim()) {

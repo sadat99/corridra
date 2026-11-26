@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { destinationRows } from '../../content/corridors';
 import { Arrow } from '../../components/arrow';
 import { Flagged } from '../../components/ux/flag';
+import { CorridorDossierSlot } from '../../components/corridor-dossier-slot';
+import { uxSwitchOn } from '../../lib/ux-switches';
 import '../../components/page-compact.css';
 import './corridors.css';
 import '../../components/public-body.css';
@@ -31,6 +33,7 @@ export default function Page() {
         </div>
       </section>
       <DiscoveryExperience
+        {...(uxSwitchOn('CORRIDRA_UX_HOME_V43') ? { dossier: <CorridorDossierSlot /> } : {})}
         linkedOnPage={[...destinationRows.map((row) => row.href), '/corridors/bangladesh-spain']}
         about={
           <>

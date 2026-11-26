@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 import { mountHomeV42 } from '../ux/home-v42-fixture';
+import { mountHomeV43 } from '../ux/home-v43-fixture';
 
 // The footer, Option B (owner decision of 12 November 2026, locked mockups revision 2; it replaces the Ledger layout
 // of 6 November): a full-width navy band with the logo, promise and actions on the left, three family tiles (Buy
@@ -460,4 +461,148 @@ test('switch on (v4.2): the trimmed footer drops its four repeats, keeps the res
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     ),
   ).toBe(0);
+});
+
+// Home page v4.3, CORRIDRA_UX_HOME_V43 exactly "true" (owner, 26 Nov 2026, via the Guardian: "update as per attachment
+// 100% correctly"). V43 on implies the pack footer on the public pages; the cases above stay the switch-off truth and are
+// unchanged. These cases mount the real SiteFooterPack on the live home's styles (tests/ux/home-v43-fixture.ts), so the
+// suite keeps one build with the switch off. The request page and the staff preview keep the trimmed footer (checked on
+// the real switch-on build in tests/ux/home-v43-server.spec.ts).
+const packDestinations = [
+  '/source',
+  '/machinery',
+  '/corridors/bangladesh-china',
+  '/corridors#mission-example',
+  '/trade-missions',
+  '/business-trips',
+  '/institutions',
+  '/network',
+  '/sell',
+  '/enter-market',
+  '/corridors/bangladesh-eu',
+  '/corridors',
+  '/how-it-works',
+  '/about',
+  '/trust',
+  '/privacy',
+];
+const packLinks = (page: Page) =>
+  page
+    .locator('footer.guide-footer-pack a')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href') ?? ''));
+
+test('switch on (v4.3): the pack footer has Solutions, Explore, Already working with us and a legal row, each of the 16 destinations once', async ({
+  page,
+}) => {
+  await mountHomeV43(page, { width: 1440 });
+  const pack = page.locator('footer.guide-footer-pack');
+  for (const title of ['Solutions', 'Explore', 'Already working with us?'])
+    await expect(pack.getByRole('heading', { name: title, exact: true })).toBeVisible();
+  const hrefs = await packLinks(page);
+  for (const href of packDestinations)
+    expect(
+      hrefs.filter((h) => h === href),
+      href,
+    ).toHaveLength(1);
+  for (const href of [
+    '/#service-source',
+    '/#service-sell',
+    '/#service-delegation',
+    '/#inbound',
+    '/#questions',
+  ])
+    expect(
+      hrefs.filter((h) => h === href),
+      href,
+    ).toHaveLength(1);
+  // Signed out: the three sign-in rows and the workspace link, with the private-link sentence.
+  expect(hrefs).toEqual(
+    expect.arrayContaining(['/account', '/operator', '/contributor', '/workspace']),
+  );
+  await expect(pack).toContainText('Suppliers and programme members can use the private link');
+  // The legal row: the copyright, privacy, the Bangladesh guide, the language switcher and the privacy line.
+  const legal = pack.locator('.gfp-legal');
+  await expect(legal.locator('.guide-footer-copy')).toHaveText('© 2026 Corridra');
+  await expect(legal.locator('a[href="/corridors/bangladesh-china"]')).toContainText('Guide');
+  // The language switcher shows only where more than one language is offered (the real switch-on build checks it).
+  await expect(legal).toContainText('Your work stays private to the people given access');
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBe(0);
+});
+
+test('switch on (v4.3): with the access doors the three doors replace the sign-in rows', async ({
+  page,
+}) => {
+  await mountHomeV43(page, { width: 1440, doors: true });
+  const hrefs = await packLinks(page);
+  for (const href of ['/access/customer', '/access/link'])
+    expect(
+      hrefs.filter((h) => h === href),
+      href,
+    ).toHaveLength(1);
+  // The network link goes to the team door, as in the shipped footer, so that door shows twice.
+  expect(hrefs.filter((h) => h === '/access/team')).toHaveLength(2);
+  expect(hrefs).not.toContain('/operator');
+  expect(hrefs).not.toContain('/contributor');
+  expect(hrefs).toContain('/workspace');
+});
+
+test('switch on (v4.3): signed in, the footer opens the workspace and never offers a sign-in row', async ({
+  page,
+}) => {
+  await mountHomeV43(page, { width: 1440, signedIn: true });
+  const access = page.locator('footer.guide-footer-pack .gfp-access');
+  await expect(
+    access.getByRole('link', { name: 'Open Your Workspace', exact: true }),
+  ).toHaveAttribute('href', /^\/(account|operator)$/);
+  await expect(access.locator('a[href="/contributor"], a[href="/signin"]')).toHaveCount(0);
+});
+
+test('switch on (v4.3): on a phone Solutions starts open, Explore folds, every footer control is a 44 px target and nothing scrolls sideways at 320, 390 and 768', async ({
+  page,
+}) => {
+  await mountHomeV43(page, { width: 390 });
+  const groups = page.locator('footer.guide-footer-pack details.gfp-group');
+  await expect(groups).toHaveCount(2);
+  await expect(groups.nth(0)).toHaveAttribute('open', '');
+  await expect(groups.nth(1)).not.toHaveAttribute('open', '');
+  await groups.nth(1).locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(groups.nth(1)).toHaveAttribute('open', '');
+  await page.keyboard.press('Enter');
+  await expect(groups.nth(1)).not.toHaveAttribute('open', '');
+  const small = await page
+    .locator('footer.guide-footer-pack :is(a, summary, button)')
+    .evaluateAll((all) =>
+      all
+        .filter((node) => node.getClientRects().length > 0)
+        .map((node) => ({ text: node.textContent, height: node.getBoundingClientRect().height }))
+        .filter((node) => node.height < 43.5),
+    );
+  expect(small).toEqual([]);
+  for (const width of [320, 390, 768]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+      String(width),
+    ).toBe(0);
+  }
+});
+
+test('switch on (v4.3): the pack footer has no axe violations at 1440 and 390', async ({
+  page,
+}) => {
+  for (const width of [1440, 390]) {
+    await mountHomeV43(page, { width });
+    const result = await new AxeBuilder({ page })
+      .include('footer.guide-footer-pack')
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+    expect(result.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 120)}`)).toEqual([]);
+  }
 });

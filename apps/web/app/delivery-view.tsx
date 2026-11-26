@@ -80,11 +80,23 @@ function ScopedDeliveryView({
   // The first load's request: a reread ends it, so a slow first answer never overwrites a newer one.
   const firstLoad = useRef<AbortController | null>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
+  // An error from the first load (a missing or ended link) is announced by its alert but takes no focus: the page
+  // has just opened, so the first Tab still reaches the skip link and the page in reading order. An error after the
+  // person acts (Try again, a reply, an export) moves focus to the message, as before.
+  const quietError = useRef(false);
   useEffect(() => {
     if (untickedTick) untickedBox.current?.focus();
   }, [untickedTick]);
   useEffect(() => {
-    if (error) feedback.current?.focus();
+    if (!error) {
+      quietError.current = false;
+      return;
+    }
+    if (quietError.current) {
+      quietError.current = false;
+      return;
+    }
+    feedback.current?.focus();
   }, [error]);
   const token = useRef(''),
     commands = useRef(new Map<string, string>());
@@ -143,6 +155,7 @@ function ScopedDeliveryView({
     if (!/^[a-f0-9]{64}$/.test(token.current)) {
       Promise.resolve().then(() => {
         if (active) {
+          quietError.current = true;
           setFailureKind('denied');
           setError(linkGone);
         }
@@ -166,6 +179,7 @@ function ScopedDeliveryView({
       .catch((e) => {
         // An ended first load (left, or superseded by a reread) says nothing.
         if (active && !controller.signal.aborted) {
+          quietError.current = true;
           setFailureKind(accessDenied(e) ? 'denied' : 'unavailable');
           setError(e.message);
         }
@@ -277,6 +291,7 @@ function ScopedDeliveryView({
                 className="text-link"
                 disabled={busy}
                 onClick={() => {
+                  quietError.current = false;
                   token.current = capability;
                   if (!/^[a-f0-9]{64}$/.test(token.current)) {
                     setError(linkGone);

@@ -230,8 +230,9 @@ function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boole
         <dt>Data handling</dt>
         <dd>{task.disclosure.dataHandling}</dd>
         <dt>Reviewer</dt>
-        {/* The record holds the reviewer as an id only; a helper is never shown an id. */}
-        <dd>Independent reviewer</dd>
+        {/* The record holds the reviewer as an id only; a helper is never shown an id. The reviewer is never the
+            helper who did the work, so the row says what happens in plain words (owner decision, 26 Nov 2026). */}
+        <dd>Someone other than you checks your work</dd>
         <dt>Cancellation</dt>
         <dd>{task.disclosure.cancellationTerms}</dd>
         <dt>Disputes</dt>

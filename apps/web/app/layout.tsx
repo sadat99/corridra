@@ -140,6 +140,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               }
               {...(whatsappHref ? { whatsappHref } : {})}
               {...(uxSwitchOn('CORRIDRA_UX_POCKET') ? { pocket: true } : {})}
+              {...(uxSwitchOn('CORRIDRA_UX_HOME_V43') ? { homeV43: true } : {})}
             />
             {children}
             <SiteFooter />

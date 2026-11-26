@@ -1,5 +1,8 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { ReverifyLine } from '../../components/ux/reverify-line';
+import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
+import { isStepUpResponse, sendWithStepUp, stepUpKeptMessage } from '../../lib/ux/step-up';
 
 type Entry = {
   key: string;
@@ -40,7 +43,11 @@ export function CustomerServiceCatalogue({ tenant }: { tenant: string }) {
     [form, setForm] = useState<typeof blank | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
-    [pending, setPending] = useState<Record<string, unknown> | null>(null);
+    [pending, setPending] = useState<Record<string, unknown> | null>(null),
+    // The list was refused only because the authenticator check lapsed: one quiet line with the check, not an error.
+    // Inside the billing group (Reports) the group's one line says it; a catalogue mounted alone draws its own.
+    [needsCheck, setNeedsCheck] = useState(false);
+  const { allowed, epoch, settle, grouped } = useStepUpRead();
   const task = useRef<AbortController | null>(null);
   const endpoint = '/api/workspace/customer-service-requests?tenant=' + encodeURIComponent(tenant);
   const load = useCallback(async () => {
@@ -54,6 +61,13 @@ export function CustomerServiceCatalogue({ tenant }: { tenant: string }) {
         signal: controller.signal,
       });
       if (controller.signal.aborted) return;
+      if (await refusedForCheck(r)) {
+        settle(true);
+        setNeedsCheck(true);
+        return;
+      }
+      settle(false);
+      setNeedsCheck(false);
       if (!r.ok) throw new Error('catalogue');
       const body = (await r.json()) as { services?: Entry[] };
       if (!Array.isArray(body.services)) throw new Error('catalogue');
@@ -61,11 +75,11 @@ export function CustomerServiceCatalogue({ tenant }: { tenant: string }) {
     } catch {
       if (!controller.signal.aborted) setMessage('The service list could not be loaded.');
     }
-  }, [endpoint]);
+  }, [endpoint, settle]);
   useEffect(() => {
-    void Promise.resolve().then(() => load());
+    if (allowed) void Promise.resolve().then(() => load());
     return () => task.current?.abort();
-  }, [load]);
+  }, [load, allowed, epoch]);
   function edit(entry: Entry | null) {
     setPending(null);
     setMessage('');
@@ -105,13 +119,20 @@ export function CustomerServiceCatalogue({ tenant }: { tenant: string }) {
     setBusy(true);
     setMessage('');
     try {
-      const r = await fetch(endpoint, {
-        method: 'POST',
-        credentials: 'same-origin',
-        cache: 'no-store',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      // A lapsed check opens the in-place check and saves again once; closed, the entries and the command are kept.
+      const r = await sendWithStepUp(() =>
+        fetch(endpoint, {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        }),
+      );
+      if (await isStepUpResponse(r)) {
+        setMessage(stepUpKeptMessage);
+        return;
+      }
       if (!r.ok) {
         if (r.status < 500 || r.status === 503) setPending(null);
         setMessage(
@@ -144,8 +165,13 @@ export function CustomerServiceCatalogue({ tenant }: { tenant: string }) {
         Customers read this list and cannot change it. A change makes a new version; requests that
         already exist keep the wording they were made against.
       </p>
+      {needsCheck && !grouped ? (
+        <ReverifyLine what="the services customers can ask for" onVerified={() => void load()} />
+      ) : null}
       {message && <p role={message === 'Saved.' ? 'status' : 'alert'}>{message}</p>}
-      {entries === null && !message && <p role="status">Loading the services…</p>}
+      {entries === null && !message && !needsCheck && allowed && (
+        <p role="status">Loading the services…</p>
+      )}
       {entries && (
         <ul>
           {entries.map((s) => (

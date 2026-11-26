@@ -84,3 +84,35 @@ test('with the switch on the server HTML holds the v4.2 home and links a stylesh
     'a stylesheet linked from the server HTML holds the v4.2 rules',
   ).toBeGreaterThan(0);
 });
+
+// Home page v4.3 (owner, 26 Nov 2026, via the Guardian): with CORRIDRA_UX_HOME_V43 unset and V42 on, the header, the home
+// page and the footer are what they were. The copy was captured on 26 Nov 2026 from an unchanged build of c783c0f with
+// CORRIDRA_UX_HOME_V42=true and nothing else (tests/ux/fixtures/home-v42-on-c783c0f.html, same normaliser as
+// home-v42-off.spec.ts, never regenerated), and no v4.3 code or rule may be named in the HTML or its stylesheets.
+test('with V42 on and V43 unset the header, home page and footer are exactly those captured from c783c0f', async ({
+  request,
+}) => {
+  const html = await (await request.get(origin + '/')).text();
+  const part = (tag: string) => {
+    const start = html.indexOf(`<${tag}`);
+    const end = html.indexOf(`</${tag}>`, start);
+    if (start < 0 || end < 0) throw new Error(`no <${tag}> in the home page`);
+    return html.slice(start, end + tag.length + 3);
+  };
+  const now = [part('header'), part('main'), part('footer')]
+    .join('\n')
+    .replace(/\/_next\/static\/[^"')\s]+/g, '/_next/static/HASH')
+    .replace(/\?dpl=[^"'&\s]+/g, '');
+  expect(now + '\n').toBe(
+    readFileSync(resolve('tests/ux/fixtures/home-v42-on-c783c0f.html'), 'utf8'),
+  );
+  expect(html).not.toMatch(
+    /hv43|home-v43|HomeV43|homeV43|guide-footer-pack|gfp-|data-v43|site-header-solutions|ux-dossier/,
+  );
+  const sheets = [...html.matchAll(/<link[^>]+href="([^"]+\.css[^"]*)"/g)].map((m) => m[1]!);
+  for (const sheet of sheets) {
+    const css = await (await request.get(new URL(sheet, origin).href)).text();
+    for (const rule of ['.hv43', 'data-v43', '.gfp-', 'guide-footer-pack', '.ux-dossier'])
+      expect(css, `${sheet} ${rule}`).not.toContain(rule);
+  }
+});

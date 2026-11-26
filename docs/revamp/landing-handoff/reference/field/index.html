@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Explore directional corridors and inspect sample counterparty evidence.">
+<title>Market explorer | Corridra</title><link rel="stylesheet" href="../assets/style.css"><link rel="stylesheet" href="../assets/directive-home.css"><link rel="stylesheet" href="../assets/field-home.css">
+</head>
+<body class="field directive-home field-home"><a class="dh-skip" href="#main">Skip to content</a>
+<header class="dh-header" id="top">
+  <div class="dh-wrap dh-header-inner">
+    <a href="../" class="dh-logo" aria-label="Corridra homepage"><img src="../assets/corridra-wordmark-navy.svg" width="116" height="30" alt="Corridra"></a>
+    <nav class="dh-desktop" aria-label="Main navigation"><a href="#mission">How it works</a><a href="#atlas">Routes</a><a href="#trust">Trust</a></nav>
+    <div class="dh-account"><a class="dh-sign" href="https://c.obsidianglobal.studio/signin">Sign in</a><a class="dh-header-cta" href="#brief">Start a request</a></div>
+    <details class="dh-menu"><summary>Menu</summary><nav class="dh-menu-panel" aria-label="Mobile navigation"><a href="#brief">Start a request</a><a href="#mission">How it works</a><a href="#atlas">Routes</a><a href="#trust">Trust</a><a href="https://c.obsidianglobal.studio/signin">Sign in</a></nav></details>
+  </div>
+</header>
+<main id="main">
+<div class="field-main">
+  <section class="field-intro"><div><p class="micro kicker">WORKED EXAMPLE</p><h1>Market explorer</h1></div><p>Choose a route and inspect a sample counterparty’s fit, evidence and next action.</p></section>
+  <section id="atlas" aria-labelledby="atlas-heading">
+    <div class="fh-atlas-head"><h2 id="atlas-heading">Explore a commercial route</h2>
+      <div class="fh-choices" role="group" aria-label="Commercial objective">
+        <button type="button" data-intent="buy" aria-pressed="true">Buy from China</button>
+        <button type="button" data-intent="sell" aria-pressed="false">Sell abroad</button>
+        <button type="button" data-intent="delegate" aria-pressed="false">Lead a delegation</button>
+        <button type="button" data-intent="other" aria-pressed="false">Something else</button>
+      </div>
+    </div>
+    <div class="field-stage">
+    <div class="atlas">
+      <div class="atlas-top"><span class="micro">DIRECTIONAL ROUTE</span><button id="reverse-route" class="atlas-button" type="button">Reverse direction <span aria-hidden="true">⇄</span></button></div>
+      <div class="atlas-routes"><label for="field-market">Explore a market</label><select id="field-market"></select><p id="route-availability" aria-live="polite"></p></div>
+      <div class="atlas-map">
+        <canvas data-terrain aria-hidden="true"></canvas>
+        <div id="map-origin" class="atlas-node atlas-origin"></div>
+        <div id="map-destination" class="atlas-node atlas-destination"></div>
+        <span class="atlas-legend micro">SCHEMATIC / SAMPLE</span>
+      </div>
+
+    </div>
+    <div class="field-inspector">
+      <div class="inspector-top"><p class="micro">COUNTERPARTY DOSSIER</p><button type="button" class="dh-text-action" id="view-saved">Shortlist <span id="shortlist-total" aria-live="polite">0</span></button></div>
+      <p class="micro fh-sample">ILLUSTRATIVE DOSSIER</p><h3 id="dossier-title" tabindex="-1"></h3><p id="dossier-summary"></p>
+      <div class="segmented" role="group" aria-label="Dossier layer"><button type="button" data-layer="fit" aria-pressed="true">Fit</button><button type="button" data-layer="evidence" aria-pressed="false">Evidence</button><button type="button" data-layer="next" aria-pressed="false">Next action</button></div>
+      <div id="dossier-layer" aria-live="polite"></div>
+<div class="fh-actions"><button class="primary" id="shortlist" type="button" aria-pressed="false">Save to shortlist</button><a class="dh-text-action" id="use-route" href="#brief">Start with this route</a></div>
+    </div>
+
+    </div>
+    <div class="fh-caption"><p>China is the sourcing focus. Explore sales enquiries for other markets, or reverse the route for work into Bangladesh. Corridra confirms scope and availability per request.</p><a class="dh-text-action" href="https://c.obsidianglobal.studio/corridors">View live routes</a></div>
+  </section>
+</div>
+<section class="dh-section fh-mission" id="mission" aria-labelledby="mission-title">
+  <div class="dh-wrap">
+    <div class="dh-section-header"><div><p class="micro">HOW A MISSION WORKS</p><h2 id="mission-title">What earns the next move?</h2></div><p>Corridra scopes the assignment, qualifies the right people and records the commercial outcome of each step.</p></div>
+    <div class="fh-mission-grid">
+      <div class="fh-stages" role="group" aria-label="Mission stage">
+        <button type="button" data-stage="0" aria-pressed="true">Set the requirement</button>
+        <button type="button" data-stage="1" aria-pressed="false">Qualify the fit</button>
+        <button type="button" data-stage="2" aria-pressed="false">Make contact</button>
+        <button type="button" data-stage="3" aria-pressed="false">Follow through</button>
+      </div>
+      <article id="mission-record" aria-live="polite"></article>
+    </div>
+  </div>
+</section>
+<section class="dh-section dh-trust" id="trust" aria-labelledby="trust-title">
+  <div class="dh-wrap">
+    <div class="dh-section-header"><div><p class="micro">THE STANDARD OF PROOF</p><h2 id="trust-title">See what the evidence supports.</h2></div><p>A supplier’s capacity claim, a completed check and a meeting outcome carry different weight.</p></div>
+    <div class="dh-trust-grid fh-trust-grid">
+      <div class="dh-ledger fh-ledger">
+        <div class="dh-console-head"><span id="ledger-title">Machinery decision</span><span class="dh-sample">Sample records</span></div>
+        <div class="fh-choices fh-ledger-controls" role="group" aria-label="Evidence view"><button type="button" data-proof="all" aria-pressed="true">All records</button><button type="button" data-proof="open" aria-pressed="false">Questions still open</button></div>
+        <div id="field-proof" aria-live="polite"></div>
+      </div>
+      <div>
+        <ul class="dh-trust-labels">
+          <li><strong>Self-declared</strong><span>Stated by the person or company.</span></li><li><strong>Evidence available</strong><span>A document or record supports it.</span></li><li><strong>Verified</strong><span>A defined check was completed.</span></li><li><strong>Derived</strong><span>Worked out from available data.</span></li><li><strong>Outcome observed</strong><span>A real result was recorded.</span></li>
+        </ul>
+        <a class="dh-text-action" href="https://c.obsidianglobal.studio/trust">Read Corridra’s trust principles</a>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="dh-section dh-people" id="people" aria-labelledby="people-title">
+    <div class="dh-wrap">
+      <div class="dh-section-header"><div><p class="micro">WHO IT’S FOR</p><h2 id="people-title">Your role in the mission.</h2></div><p>See what you bring to the work and what Corridra helps you do next.</p></div>
+      <div class="dh-people-grid">
+        <div class="dh-roles" role="group" aria-label="Select your role">
+          <button type="button" data-person="exporter" aria-pressed="false">Exporter</button><button type="button" data-person="importer" aria-pressed="true">Importer</button><button type="button" data-person="machinery" aria-pressed="false">Machinery buyer</button><button type="button" data-person="entering" aria-pressed="false">Company entering Bangladesh</button><button type="button" data-person="buyer" aria-pressed="false">Overseas buyer</button><button type="button" data-person="supplier" aria-pressed="false">Supplier</button><button type="button" data-person="leader" aria-pressed="false">Delegation leader</button><button type="button" data-person="helper" aria-pressed="false">Local helper</button>
+        </div>
+        <article class="dh-role-record" id="role-record" aria-live="polite"></article>
+      </div>
+    </div>
+  </section><section class="dh-section dh-brief" id="brief" aria-labelledby="brief-title">
+    <div class="dh-wrap">
+      <div class="dh-section-header"><div><p class="micro">START A REQUEST</p><h2 id="brief-title">Put the route to work.</h2></div><p>Give Corridra the goal, direction and timing. A person reviews requests and confirms what the team can take on.</p></div>
+      <div class="dh-brief-grid">
+        <form id="mission-form" class="dh-form">
+          <label>What do you need?<select id="job" name="job"><option value="sourcing">Source products from China</option><option value="machinery_procurement">Buy machinery</option><option value="buyers">Find buyers or distributors</option><option value="trade_fairs">Get more from a trade fair</option><option value="delegations">Organise a delegation</option><option value="other">Describe another need</option></select></label>
+          <div class="dh-input-pair">
+            <label>Company based in<select id="origin" name="origin"><option value="BD">Bangladesh</option></select></label>
+            <label>Target market<select id="destination" name="destination"><option value="CN">China</option></select></label>
+          </div>
+          <label>Timing<select id="timing" name="timing"><option value="">Choose when</option><option>As soon as possible</option><option>Within a month</option><option>In one to three months</option><option>Exploring for later</option></select></label>
+          <label>What should Corridra help with?<textarea id="scope" name="scope" rows="3" maxlength="1000" placeholder="For example, compare three machinery offers before I visit the factories."></textarea></label>
+          <div class="dh-form-actions"><button class="dh-button" type="submit">Review draft</button><button class="dh-text-action" id="help-button" type="button">I need help scoping this</button></div>
+        </form>
+        <aside class="dh-brief-preview" aria-labelledby="preview-title">
+          <p class="micro">YOUR DRAFT</p><h3 id="preview-title">Source products from China</h3>
+          <div id="mission-route" class="dh-route-line"></div><p id="mission-fit"></p>
+          <dl class="dh-draft-facts"><div><dt>Timing</dt><dd id="draft-timing">To be discussed</dd></div><div><dt>What you need</dt><dd id="draft-note">Your notes appear here.</dd></div></dl>
+          <p class="dh-brief-note">This mockup keeps the draft in this page. Review it, then choose whether to open the live request.</p>
+        </aside>
+      </div>
+    </div>
+  </section><section class="dh-section dh-faq" id="questions" aria-labelledby="faq-title">
+    <div class="dh-wrap dh-faq-grid">
+      <div><p class="micro">BEFORE YOU START</p><h2 id="faq-title">Straight answers.</h2></div>
+      <div class="dh-accordions">
+        <details><summary>Who is Corridra?</summary><p>Corridra runs commercial missions. We help find and qualify counterparties, compare offers, arrange business meetings and visits, and track the agreed next steps.</p></details>
+        <details><summary>Which markets do you work in?</summary><p>We accept sourcing requests from Bangladesh to China and selling requests from Bangladesh to the EU, UK, US, Australia and key Asian markets. Requests into Bangladesh are assessed case by case. For any other route, tell us what you need.</p></details>
+        <details><summary>What does it cost?</summary><p>Missions are paid and quoted based on the scope. After a short conversation, you can review the quote and decide whether to proceed.</p></details>
+        <details><summary>Can I work with my existing agent or trade fair?</summary><p>Yes. Corridra works alongside the people and events you already use. We can look beyond a fair list, check terms an offer leaves unclear, and track the follow-up.</p></details>
+        <details><summary>Can a chamber or trade body organise a programme?</summary><p>The programme tools are designed for organisers. Each company brings its own goals, and an organiser works with the programme information shared with them.</p></details>
+        <details><summary>Who can see my mission?</summary><p>Corridra limits private records to people with access to the relevant work. Shared links have limited access and can expire. <a href="https://c.obsidianglobal.studio/privacy">Read the privacy notice</a>.</p></details>
+        <details><summary>Do you arrange visas or hotels?</summary><p>Corridra’s scope is commercial work: counterparties, comparisons, meetings, factory visits and follow-up. Visas, hotels and tourism are outside that scope.</p></details>
+        <details><summary>What happens after I send a request?</summary><p>A person reviews your request, asks what they need to know and sends a quote for the agreed scope. You decide whether work goes ahead.</p></details>
+      </div>
+    </div>
+  </section><section class="dh-access" aria-labelledby="access-title">
+    <div class="dh-wrap">
+      <h2 id="access-title">Already working with Corridra?</h2>
+      <div class="dh-access-grid">
+        <div><h3>Customer</h3><p>See your requests and active missions.</p><a class="dh-text-action" href="https://c.obsidianglobal.studio/account">Open my account</a></div>
+        <div><h3>Corridra team</h3><p>Use your invitation to open the team workspace.</p><a class="dh-text-action" href="https://c.obsidianglobal.studio/operator">Team sign-in</a></div>
+        <div><h3>Supplier, programme member or local helper</h3><p>Use the private link Corridra sent you. Local helpers can also see their assigned tasks.</p><a class="dh-text-action" href="https://c.obsidianglobal.studio/contributor">Local helper sign-in</a></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="dh-footer">
+  <div class="dh-wrap dh-footer-grid">
+    <div><a href="#top" aria-label="Back to the top"><img class="wordmark" src="../assets/corridra-wordmark-reversed.svg" width="116" height="30" alt="Corridra"></a><p>Cross-border market access</p></div>
+    <nav aria-label="Footer"><a href="#mission">How it works</a><a href="#atlas">Routes</a><a href="#trust">Trust</a><a href="#questions">Questions</a><a href="https://c.obsidianglobal.studio/privacy">Privacy</a></nav>
+    <div class="dh-footer-note"><a href="../#routes">Back to markets on the Corridra homepage</a></div>
+  </div>
+</footer><dialog id="brief-dialog" aria-labelledby="brief-dialog-title">
+  <form method="dialog" class="dialog-head"><strong id="brief-dialog-title">Corridra request preview</strong><button aria-label="Close preview">×</button></form>
+  <div id="brief-content"></div>
+</dialog>
+<dialog id="saved-dialog" aria-labelledby="saved-title">
+  <form method="dialog" class="dialog-head"><strong id="saved-title">Sample shortlist</strong><button aria-label="Close shortlist">×</button></form>
+  <div id="field-saved-list" class="fh-saved-list"></div>
+</dialog>
+<script src="../assets/common.js" defer></script><script src="../assets/terrain.js" defer></script><script src="../assets/field.js" defer></script>
+</body></html>

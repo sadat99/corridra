@@ -770,6 +770,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_HOME_V43',
+    label: 'Home page v4.3',
+    line: 'The public home page shows the v4.3 layout (a light hero with a photo, the route choice, three solutions, a worked example that follows the chosen route, Markets, Trust, Who it is for and a request form) with a Solutions menu in the header and the new footer. It wins over Home page v4.2 while it is on. Every address, form and payload stays the same. Off by default. Turn it off by removing the setting in Vercel and redeploying.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_NOTIFICATIONS_V2',
     label: 'Inbox and hand-off emails',
     line: 'Every hand-off writes an inbox item and sends an email when the person has chosen email. Needs the commercial readiness database module.',

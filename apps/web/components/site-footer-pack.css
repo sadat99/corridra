@@ -1,0 +1,169 @@
+/* The public footer while CORRIDRA_UX_HOME_V43 is on (owner, 26 Nov 2026, via the Guardian). It keeps the navy band
+   and the colours of the shipped footer (.guide-footer) and lays out its own groups: Solutions, Explore, Already
+   working with us, then the legal row. On a phone the first two groups are native disclosures (Solutions starts
+   open); from 48rem every group shows open and its summary is hidden, where the browser can force a closed group
+   open. Tokens only. */
+.guide-footer-pack .gfp-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  padding: var(--space-8) 0 var(--space-4);
+  border-bottom: 1px solid var(--footer-line);
+}
+.gfp-eyebrow {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--footer-text);
+}
+.gfp-groups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.gfp-group {
+  border-top: 1px solid var(--footer-line);
+}
+.gfp-group > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3.25rem;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--on-brand);
+  list-style: none;
+  cursor: pointer;
+}
+.gfp-group > summary::-webkit-details-marker {
+  display: none;
+}
+.gfp-group > summary::after {
+  content: '+';
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--footer-quiet);
+}
+.gfp-group[open] > summary::after {
+  content: '\2212';
+}
+.gfp-title {
+  display: none;
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  color: var(--footer-quiet);
+}
+.gfp-access .gfp-title {
+  display: block;
+}
+.guide-footer-pack ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.guide-footer-pack .gfp-body li a,
+.gfp-access li a {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: var(--text-base);
+  overflow-wrap: anywhere;
+}
+/* A place name carries its mark: keep the mark and the words on one line of text. */
+.guide-footer-pack a > span {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-1);
+}
+.gfp-sub {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--footer-quiet);
+  border-top: 1px solid var(--footer-line);
+}
+.guide-footer-pack .gfp-quiet li a {
+  font-size: var(--text-sm);
+  color: var(--footer-quiet);
+}
+.gfp-body {
+  padding-bottom: var(--space-3);
+}
+.gfp-access {
+  min-width: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--footer-line);
+}
+.gfp-note {
+  margin: var(--space-2) 0 0;
+  max-width: 32ch;
+  font-size: var(--text-sm);
+  color: var(--footer-quiet);
+}
+.gfp-access .button-secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+.guide-footer-pack .gfp-legal {
+  padding-block: var(--space-4) var(--space-6);
+}
+.guide-footer-pack .gfp-legal a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+@media (max-width: 700px) {
+  .guide-footer-pack .gfp-legal {
+    padding-inline-end: var(--space-12);
+  }
+  .guide-footer-pack .guide-footer-copy {
+    flex-basis: 100%;
+  }
+}
+
+@media (min-width: 48rem) {
+  .guide-footer-pack .gfp-top {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    column-gap: var(--space-8);
+  }
+  .gfp-brand {
+    grid-column: 1 / -1;
+  }
+  .gfp-groups {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+    column-gap: var(--space-8);
+  }
+  .gfp-group,
+  .gfp-access {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+@media (min-width: 64rem) {
+  .guide-footer-pack .gfp-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1.12fr);
+  }
+  .gfp-brand {
+    grid-column: auto;
+  }
+}
+@supports selector(::details-content) {
+  @media (min-width: 48rem) {
+    .gfp-group > summary {
+      display: none;
+    }
+    .gfp-group::details-content {
+      content-visibility: visible;
+    }
+    .gfp-group .gfp-title {
+      display: block;
+    }
+  }
+}

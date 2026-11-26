@@ -176,11 +176,14 @@ export function DiscoveryExperience({
   children,
   about,
   linkedOnPage = [],
+  dossier,
 }: {
   children?: ReactNode;
   about?: ReactNode;
   /** Addresses the page around the picker already links. The picker does not link them a second time. */
   linkedOnPage?: readonly string[];
+  /** The sample counterparty dossier, passed only while CORRIDRA_UX_HOME_V43 is on; shown inside the open sample mission. */
+  dossier?: ReactNode;
 }) {
   const [direction, setDirection] = useState(directions[0].key);
   // Any other route: a company country and a target market chosen freely. Empty means none.
@@ -501,6 +504,7 @@ export function DiscoveryExperience({
               </p>
             )}
           </div>
+          {dossier}
           <p>
             {route.reverse
               ? 'This route runs the other way and is taken case by case. No operating offer announced. We tell you plainly if we can help.'

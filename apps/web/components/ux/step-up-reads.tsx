@@ -14,6 +14,7 @@ import {
   type ReactNode,
 } from 'react';
 import { ReverifyLine } from './reverify-line';
+import { isStepUpResponse } from '../../lib/ux/step-up';
 
 type Gate = 'probing' | 'open' | 'needs-check';
 type Reads = {
@@ -61,10 +62,11 @@ export function StepUpReads({ what, children }: { what: string; children: ReactN
 /**
  * What one panel of the group uses. `allowed` is false while the group waits for the probe or for the code; `epoch`
  * changes after the code is accepted; `settle(true)` says this read was refused for the check, `settle(false)` that it
- * was answered (or failed some other way, which the panel shows itself).
+ * was answered (or failed some other way, which the panel shows itself). `grouped` is false for a panel mounted alone,
+ * which then shows its own re-verify line.
  */
 const noSettle: (refusedForCheck: boolean) => void = () => undefined;
-const alone = { allowed: true, epoch: 0, settle: noSettle };
+const alone = { allowed: true, epoch: 0, settle: noSettle, grouped: false };
 export function useStepUpRead(probe = false) {
   const reads = useContext(Context);
   if (!reads) return alone;
@@ -72,17 +74,9 @@ export function useStepUpRead(probe = false) {
     allowed: reads.gate === 'open' || (probe && reads.gate === 'probing'),
     epoch: reads.epoch,
     settle: reads.settle,
+    grouped: true,
   };
 }
 
 /** True when a refused read was refused only for the authenticator check (401 STEP_UP_REQUIRED). */
-export async function refusedForCheck(response: Response): Promise<boolean> {
-  if (response.status !== 401) return false;
-  try {
-    return (
-      ((await response.clone().json()) as { code?: unknown } | null)?.code === 'STEP_UP_REQUIRED'
-    );
-  } catch {
-    return false;
-  }
-}
+export const refusedForCheck = isStepUpResponse;

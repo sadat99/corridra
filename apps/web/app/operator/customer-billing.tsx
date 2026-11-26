@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type RefObjec
 import { displayMoney } from '@corridra/domain/locale';
 import { formatDate, formatDateTime } from '../../lib/ux/format';
 import { refusedForCheck, useStepUpRead } from '../../components/ux/step-up-reads';
+import { requestStepUp, stepUpKeptMessage, stepUpReadMessage } from '../../lib/ux/step-up';
 
 type Summary = {
   id: string;
@@ -242,8 +243,14 @@ function Scoped({ tenant }: { tenant: string }) {
     setRows(body.subscriptions);
   }, [call, settle]);
   const loadPlans = useCallback(async () => {
-    const r = await call('&scope=plans');
+    // Opened by the person: a lapsed authenticator check opens the in-place check and reads again once.
+    let r = await call('&scope=plans');
+    if (r?.check && (await requestStepUp())) r = await call('&scope=plans');
     if (!r) return;
+    if (r.check) {
+      setFault(stepUpReadMessage);
+      return;
+    }
     const body = r.body as PlanList | null;
     if (r.status !== 200 || !body || !Array.isArray(body.plans)) {
       setFault(plainError(r.status));
@@ -253,8 +260,15 @@ function Scoped({ tenant }: { tenant: string }) {
   }, [call]);
   const open = useCallback(
     async (id: string) => {
-      const r = await call('&scope=detail&subscription=' + encodeURIComponent(id));
+      // Opened by the person: a lapsed authenticator check opens the in-place check and reads again once.
+      let r = await call('&scope=detail&subscription=' + encodeURIComponent(id));
+      if (r?.check && (await requestStepUp()))
+        r = await call('&scope=detail&subscription=' + encodeURIComponent(id));
       if (!r) return;
+      if (r.check) {
+        setFault(stepUpReadMessage);
+        return;
+      }
       if (r.status !== 200) {
         setDetail(null);
         setFault(plainError(r.status));
@@ -294,9 +308,16 @@ function Scoped({ tenant }: { tenant: string }) {
     setMessage('');
     setSavedKey('');
     setMessageAt(after === 'plans' ? 'plans' : 'detail');
-    const r = await call('', body);
+    let r = await call('', body);
+    // A lapsed authenticator check opens the in-place check and sends the same command once more after the code is
+    // accepted. Closed, the command and the form are kept for the next try.
+    if (r?.check && (await requestStepUp())) r = await call('', body);
     setBusy(false);
     if (!r) return;
+    if (r.check) {
+      setMessage(stepUpKeptMessage);
+      return;
+    }
     if (r.status !== 200) {
       const unsure = r.status === 0 || (r.status >= 500 && r.status !== 503);
       if (!unsure) setPending(null);
