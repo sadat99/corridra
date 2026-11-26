@@ -67,7 +67,7 @@ async function packsOf(db: DatabaseClient, tenantId: string, routeId: string) {
     rows.find((row) => !row.in_force),
   );
 }
-function judgedPacks(
+export function judgedPacks(
   inForce: CurrentPack | undefined,
   latest: CurrentPack | undefined,
 ): PackView[] {
@@ -78,7 +78,7 @@ function judgedPacks(
     .map((pack) => ({ status: pack.status, configuration: pack.configuration }));
 }
 // The go-live check against every judged pack; the first refusal wins. With no new pack, each judged pack stays as it is.
-function judge(
+export function judge(
   packs: PackView[],
   before: ContentDocument | null,
   after: { pack?: PackView; document: ContentDocument | null },
