@@ -1,6 +1,6 @@
 # ADR-090: Real outreach by email, test mode first
 
-Status: Proposed 23 November 2026 for the owner decision of 23 November 2026 that opened "Real outreach" (commercial-ready run, section 1). Test mode first. Live mode is not opened by this record: it needs the owner's word "live".
+Status: Proposed 23 November 2026 for the owner decision of 23 November 2026 that opened "Real outreach" (commercial-ready run, section 1). Test mode first. Live mode is not opened by this record: it needs the owner's word "live". Update 26 November 2026 (records, decided by Guardian G65 on the owner's delegation): built and merged in PRs 620 (`bf608ec8`, unit B9) and 627 (`916abd3f`, unit B9b). `CORRIDRA_REAL_OUTREACH` defaults off and the mode defaults to test; no module install, provider values or webhook are recorded as done. Live mode still needs the owner's word "live". This note changes no decision.
 
 Amends ADR-018 and ADR-069 forward: both say real outreach and email to suppliers are closed. From this record on, a real workspace may email a reviewed introduction to a real company contact under the rules below. Everything else ADR-018, ADR-056, ADR-058, ADR-069 and ADR-081 decide stays in force. Those records are not edited.
 
