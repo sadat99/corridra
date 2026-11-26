@@ -1,6 +1,6 @@
 # ADR-092: Invoice issuer details typed by the owner
 
-Status: Proposed 23 November 2026 for the owner decision of 23 November 2026 (commercial-ready run, section 1, row "Invoice data"): "The owner types issuer details in a new Owner-only staff screen with an authenticator check". Unit B8. This record opens nothing: real invoices go live only on the owner's word "live", and real payments and payouts stay closed.
+Status: Proposed 23 November 2026 for the owner decision of 23 November 2026 (commercial-ready run, section 1, row "Invoice data"): "The owner types issuer details in a new Owner-only staff screen with an authenticator check". Unit B8. This record opens nothing: real invoices go live only on the owner's word "live", and real payments and payouts stay closed. Update 26 November 2026 (records, decided by Guardian G65 on the owner's delegation): built and merged in PR 622 (`5e274731`, unit B8) and the addendum below in PR 631 (`fe621d82`, unit B8b). `CORRIDRA_INVOICE_ISSUER` is off by default; no production install is recorded; real invoices still need the owner's word "live". This note changes no decision.
 
 Amends ADR-064 forward. ADR-064 and its amendment of 17 November 2026 say the supplier details are written only by the offline install step from the protected secret. From this record on, the owner may also type them on a staff screen. Everything else ADR-064, ADR-062 and ADR-065 decide stays in force. Those records are not edited.
 
