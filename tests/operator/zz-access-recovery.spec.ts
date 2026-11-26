@@ -4,8 +4,22 @@ import { mkdir } from 'node:fs/promises';
 
 test('pending invitation guidance is conditional; operator recovery handles interruption, one submission and private token cleanup', async ({
   page,
+  context,
 }) => {
   test.setTimeout(90000);
+  // An invitation is found only for a person signed in to their customer account, so the browser holds a customer
+  // session (final walk m2: the hint is drawn only then; a signed-out visit asks nothing). The answer is still faked.
+  await context.addCookies([
+    {
+      name: '__Secure-neon-auth.session_token',
+      value: 'synthetic-customer-session',
+      domain: '127.0.0.1',
+      path: '/',
+      secure: true,
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+  ]);
   let invited = true;
   await page.route('**/api/operator-setup', (route) =>
     route.fulfill({ json: { available: invited } }),
