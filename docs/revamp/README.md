@@ -59,7 +59,7 @@ The ledger, work log and gap register are shared. Each session appends its own e
 
 ## Current lanes, 26 November 2026
 
-Home v4.3 (`CORRIDRA_UX_HOME_V43`), built on branch `claude/home-v43` in steps behind a switch that is off by default (owner, 26 Nov 2026, via the Guardian: "update as per attachment 100% correctly"). Record: [ui-ux-v4-3.md](specs/ui-ux-v4-3.md). The owner's pack is kept as reference in [landing-handoff](landing-handoff/README.md) and is not edited. Not merged, not switched on; the PR and the live state are recorded in the ledger.
+Home v4.3 (`CORRIDRA_UX_HOME_V43`), built on branch `claude/home-v43` in steps behind a switch that is off by default (owner, 26 Nov 2026, via the Guardian: "update as per attachment 100% correctly"). Record: [ui-ux-v4-3.md](specs/ui-ux-v4-3.md). The owner's pack is kept as reference in [landing-handoff](landing-handoff/README.md) and is not edited. Not merged, not switched on; the PR and the live state are recorded in the ledger. Superseded, replaced by 26 Nov 2026: merged in PR 663 (`111ec0d4`, builder H2, Sonnet) and switched on in production by G65 on the owner's "update as per attachment" (ledger).
 
 ## Current lanes, 25 November 2026
 

@@ -5529,3 +5529,33 @@ Ledger trim: to keep the always-read guides within 36 KiB, these ledger bullets 
 Model rule (owner, 26 Nov 2026, first hand to G65, relayed to the scribe): "always use sonnet 5.5 medium, high and opus only when the works sensitivity requires that." It replaces the earlier "builders on claude-opus-5-5" rule (as relayed by G65) and the older 24 Nov 2026 "all builders must be in fable 5.2 medium" (entry above); those stay as history.
 
 Next action: G65 merges units M1 and H1; then the final records push of this branch with their merge SHAs.
+
+## 26 Nov 2026: M1 minors and home v4.3 merged, v4.3 switched on (records)
+
+Records only (docs only), records builder R3 for Guardian G65 on branch `claude/records-decisions-1126` merged with main 111ec0d4, authority stamp auth-a99c9a14f9d3. Facts relayed by G65; PR bodies read by the scribe through the GitHub API. No application code, test, switch or migration changed.
+
+### PR 662, unit M1 (merged 05:32:04Z as aee51bb6fc8f4073ed5e9e61604a0f4da579e2fa, head 07b132f6)
+
+Scope (from the PR body): walk minors m2 (no signed-out 401 on /operator/signin; the invitation hint is drawn only when a customer session cookie is present, looked for, never read), m3 (/client and /programme first-load error no longer takes focus) and m4 (Home cards wrap at 200% text); team header at 320 px with 200% text now 0 px too wide, 44 px targets kept; A06 country words on the Helpers fold with `CORRIDRA_UX_TEAM_DESK_V41` on; step-up recovery in place for the STEP_UP_REQUIRED screens and staff-admin-24 (shared helpers in `lib/ux/step-up.ts`, same body and command id resent once after the check); Reviewer row reads "Someone other than you checks your work"; privacy notice line for the `corridra-team` cookie (G65 decision 1). No route, id, payload, permission, migration or switch changed.
+
+Checks (PR body): format:check, lint, typecheck, build 0; `pnpm test` docs 135/135; design and vocabulary guards 55/55; test:ux 926 passed; touched operator specs 174, browser 77, vitest 93 passed, with fail-before evidence. Not run locally: full test:operator, test:e2e, test:verification, full test:integration (CI ran them). Review: fresh Opus reviewer, no blocking item, three should-fix items fixed in ff8827b.
+
+Production deploy dpl_4mBvA444pRe8U6pNQHbKxKte9GWN READY (G65's report, not read by the scribe).
+
+Noted, not changed: with `CORRIDRA_UX_SHELLS_V2` off no step-up dialog is mounted (production has shells on); at 1024 with 200% text Home still has other wide parts. The owner may still want to read the final cookie words.
+
+### PR 663, home v4.3 (merged 10:23:53Z as 111ec0d4eae56c26a542a7803b00c0201e664484, head c673c963)
+
+Builder H2 (Sonnet, session_0187kU9rmG9EVMsqqXG198Po); unit H1 archived before the build finished. Scope (PR body): the owner's landing handoff pack (`docs/revamp/landing-handoff/`) built as a new home, header Solutions panel, footer and market dossier behind `CORRIDRA_UX_HOME_V43` (exactly "true", off by default; off, header, home and footer are byte-equal to before). Record: `docs/revamp/specs/ui-ux-v4-3.md`. 311 new English-only `home.v43.*` keys; one polite announcement on a door choice (walk minor m5, with V43 on). No dependency, migration, permission, outreach or money change.
+
+Checks (PR body): on 9a3e21e test:e2e 882 passed, test:ux 988 passed, test:operator 0 failures up to about 2437 of 2484 (stopped on instruction); on c673c96 home-v43-server 21/21, V43-off and V42 specs 42/42, six browser specs 164 passed, typecheck pass, vitest 139 passed, design-system 41 pass. Integration failures outside V43 need ClamAV, Blob and backup services.
+
+Switch: `CORRIDRA_UX_HOME_V43=true` set in Vercel production by G65 about 10:30Z 26 Nov on the owner's words "update as per attachment"; redeploy dpl_GPvvQRx9EQ3EcQ5gh3ZpWTXhAFx5 READY. Live check by G65 at 320 with 200% text, 390, 768 and 1440: v4.3 hero, industrial image, route choice, Start a Request, See a Worked Example; no sideways scroll; axe (wcag2a, wcag2aa, wcag21a, wcag21aa) clean at 390 and 1440; no console errors (G65's report, not re-run by the scribe). Rollback: unset `CORRIDRA_UX_HOME_V43` and redeploy; the v4.2 home returns.
+
+Records updated for the merge and switch: the Document status line of `ui-ux-v4-3.md`, its `docs/PLAN_STATUS.md` row and the lanes line in `docs/revamp/README.md` (forward notes; text kept). Ledger: Resume line moved to main 111ec0d4; M1 and H1 removed from the next action; m2 to m5 and the team header removed from the follow-ups.
+
+Open follow-ups: designer item 15 (768 two-by-two big doors) deliberately not built, as it conflicts with the v4.2 one-line demand rule (recorded in `ui-ux-v4-3.md`); native language review gate stays OPEN (home.v42 and home.v43 words English only); deleting the merged branches needs the owner (proxy 403); the gitleaks generic-api-key finding on main (also on 762d7511) to investigate. No signed-in live journey pass is claimed.
+
+Records checks (scribe, this branch): see the PR body.
+
+Next action: the owner's native review and branch clean-up; then the owner live steps in the ledger.
