@@ -11,6 +11,8 @@ import { OutboxDispatcher } from '../../packages/workflows/src/index';
 import { SyntheticChannel } from '../../packages/communications/src/adapters';
 import { CommercialMissionService } from '../../packages/missions/src/commercial';
 import { changeMemberNow } from './change-member';
+import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
+import { migrateRoutePack } from '../../packages/db/src/route-pack-migrate';
 let f: Awaited<ReturnType<typeof commercialFixture>>, s: OperationsService, r: CorridorService;
 const reason = 'Explicit synthetic operational acceptance';
 beforeAll(async () => {
@@ -563,4 +565,324 @@ test('the dashboard names each mission and only this workspace’s mission owner
   // A role outside owner, admin and operator is still refused, as is a person outside the workspace.
   await expect(s.dashboard(f.users.viewer!.ctx)).rejects.toThrow('Operations access denied');
   await expect(s.dashboard({ ...f.users.other!.ctx, tenantId: f.tenantA })).rejects.toThrow();
+});
+
+// ADR-093 Phase 2a. These run last: they install the real-use modules and then one-person route publication, which change the
+// guard every earlier test in this file relies on.
+const guardHash = async () =>
+  (
+    await f.owner.query(
+      "SELECT encode(sha256(convert_to(pg_get_functiondef('app.guard_operations_control()'::regprocedure),'UTF8')),'hex') h",
+    )
+  ).rows[0].h;
+const onePersonMarker = async () =>
+  (await f.owner.query("SELECT to_regprocedure('app.route_pack_one_person_publication()') r"))
+    .rows[0].r;
+async function nextVersion(p: Awaited<ReturnType<typeof route>>) {
+  const pack = {
+    ...p,
+    id: randomUUID(),
+    version: 2,
+    effectiveFrom: new Date(Date.now() + 100).toISOString(),
+    configuration: { ...p.configuration, languages: ['en'] },
+  };
+  const id = randomUUID();
+  await s.command(f.users.owner.ctx, { id, action: 'propose', basePackId: p.id, pack, reason });
+  return { id, pack };
+}
+// A raw decision row under the same authority and the same trigger, so the database guard is exercised on its own.
+const rawDecision = (
+  ctx: typeof f.users.owner.ctx,
+  proposalId: string,
+  decision: 'PUBLISH' | 'REJECT',
+  packId: string | null,
+) =>
+  rawContext(
+    f.runtime,
+    ctx,
+    'INSERT INTO app.configuration_decision(id,tenant_id,proposal_id,decision,published_pack_id,created_by,reason) VALUES($1,$2,$3,$4,$5,app.actor_id(),$6)',
+    [randomUUID(), f.tenantA, proposalId, decision, packId, reason],
+  );
+async function recordReadiness(
+  ctx: typeof f.users.owner.ctx,
+  routeId: string,
+  packId: string,
+  sourceId: string,
+  dimensions: readonly string[] = readinessDimensions,
+) {
+  const ids: string[] = [];
+  for (const dimension of dimensions) {
+    const id = randomUUID();
+    await s.command(ctx, {
+      id,
+      action: 'readiness',
+      routeId,
+      packId,
+      missionType: 'sourcing',
+      dimension,
+      version: 1,
+      status: 'PASS',
+      ownerId: f.users.operator.id,
+      sourceId,
+      validUntil: future(),
+      reason,
+    });
+    ids.push(id);
+  }
+  return ids;
+}
+const releaseCommand = (routeId: string, packId: string, readinessIds: string[]) => ({
+  id: randomUUID(),
+  action: 'release',
+  routeId,
+  packId,
+  missionType: 'sourcing',
+  version: 1,
+  state: 'SYNTHETIC_APPROVED',
+  ownerId: f.users.operator.id,
+  readinessIds,
+  reason,
+});
+const publishedEffective = () => new Promise((resolve) => setTimeout(resolve, 200));
+
+test('before the one-person install, self-publication and self-release fail in the service and the database with the texts of today', async () => {
+  await migrateCustomerRealUse(f.owner);
+  expect(await guardHash()).toBe(
+    'df18b4d178c4fc824869c924da7110ea802e7594681659dbabebe24950edbd97',
+  );
+  expect(await onePersonMarker()).toBeNull();
+  const p = await route('PE', 'CL'),
+    t = await f.target();
+  const { id } = await nextVersion(p);
+  await expect(
+    s.command(f.users.owner.ctx, {
+      id: randomUUID(),
+      action: 'decide',
+      proposalId: id,
+      decision: 'PUBLISH',
+      reason,
+    }),
+  ).rejects.toThrow('An independent authorized reviewer is required');
+  await expect(rawDecision(f.users.owner.ctx, id, 'REJECT', null)).rejects.toThrow(
+    'Independent configuration reviewer required',
+  );
+  const ids = await recordReadiness(f.users.owner.ctx, p.routeId, p.id, t.sourceId);
+  await expect(s.command(f.users.owner.ctx, releaseCommand(p.routeId, p.id, ids))).rejects.toThrow(
+    'Independent approval of current evidenced readiness required',
+  );
+  expect((await s.controlCenter(f.users.owner.ctx)).onePersonPublication).toBe(false);
+});
+test('after the one-person install the same owner proposes, previews and publishes the exact proposal, records readiness and releases', async () => {
+  await migrateRoutePack(f.owner);
+  expect(await guardHash()).toBe(
+    '4d61d39fc11128eb607997d815f033495fe349b0db47717ceb3bd925953f216b',
+  );
+  expect(await onePersonMarker()).not.toBeNull();
+  const p = await route('UY', 'PY'),
+    t = await f.target();
+  const { id, pack } = await nextVersion(p);
+  expect((await s.preview(f.users.owner.ctx, pack)).changedFields).toContain('languages');
+  await s.command(f.users.owner.ctx, {
+    id: randomUUID(),
+    action: 'decide',
+    proposalId: id,
+    decision: 'PUBLISH',
+    reason,
+  });
+  const published = (
+    await f.owner.query(
+      'SELECT configuration,status,version,created_by FROM app.corridor_pack_version WHERE id=$1',
+      [pack.id],
+    )
+  ).rows[0];
+  expect(published).toEqual({
+    configuration: pack.configuration,
+    status: pack.status,
+    version: pack.version,
+    created_by: f.users.owner.id,
+  });
+  const c = await s.controlCenter(f.users.owner.ctx);
+  expect(c.onePersonPublication).toBe(true);
+  expect(c.proposals.find((x) => x.id === id)).toMatchObject({
+    created_by: f.users.owner.id,
+    decided_by: f.users.owner.id,
+    decision: 'PUBLISH',
+    published_by_you: true,
+  });
+  // A proposal another owner published is never shown as yours.
+  const others = c.proposals.filter((x) => x.decided_by && x.decided_by !== x.created_by);
+  expect(others.length).toBeGreaterThan(0);
+  expect(others.every((x) => x.published_by_you === false)).toBe(true);
+  // The same proposal seen by the other owner is not theirs either.
+  expect(
+    (await s.controlCenter(f.users.reviewer.ctx)).proposals.find((x) => x.id === id)
+      ?.published_by_you,
+  ).toBe(false);
+  await publishedEffective();
+  const ids = await recordReadiness(f.users.owner.ctx, p.routeId, pack.id, t.sourceId);
+  await s.command(f.users.owner.ctx, releaseCommand(p.routeId, pack.id, ids));
+  expect(
+    (
+      await f.owner.query(
+        "SELECT state,created_by FROM app.route_release WHERE route_id=$1 AND mission_type='sourcing'",
+        [p.routeId],
+      )
+    ).rows,
+  ).toEqual([{ state: 'SYNTHETIC_APPROVED', created_by: f.users.owner.id }]);
+  expect((await s.controlCenter(f.users.owner.ctx)).publicActivation).toBe(false);
+});
+test('after the install an admin alone records all 13 readiness dimensions and releases, but cannot decide a proposal', async () => {
+  await changeMemberNow(new AccessService(f.runtime), f.users.owner.ctx, {
+    userId: f.users.viewer.id,
+    role: 'admin',
+    revoked: false,
+  });
+  const admin = f.users.viewer.ctx;
+  const p = await route('GH', 'NG'),
+    t = await f.target();
+  const ids = await recordReadiness(admin, p.routeId, p.id, t.sourceId);
+  await s.command(admin, releaseCommand(p.routeId, p.id, ids));
+  expect(
+    (
+      await f.owner.query(
+        'SELECT r.state,count(DISTINCT x.created_by)::int AS people FROM app.route_release r JOIN app.route_readiness x ON x.id=ANY(r.readiness_ids) WHERE r.route_id=$1 GROUP BY r.state',
+        [p.routeId],
+      )
+    ).rows,
+  ).toEqual([{ state: 'SYNTHETIC_APPROVED', people: 1 }]);
+  const { id } = await nextVersion(p);
+  await expect(
+    s.command(admin, {
+      id: randomUUID(),
+      action: 'decide',
+      proposalId: id,
+      decision: 'PUBLISH',
+      reason,
+    }),
+  ).rejects.toMatchObject({ status: 403 });
+});
+test('after the install publication is still refused without a fresh authenticator check, with a stale base, with a configuration other than the proposal, and without the permission', async () => {
+  const p = await route('KE', 'TZ'),
+    t = await f.target();
+  const { id, pack } = await nextVersion(p);
+  const decide = {
+    id: randomUUID(),
+    action: 'decide',
+    proposalId: id,
+    decision: 'PUBLISH',
+    reason,
+  };
+  await f.owner.query(
+    "UPDATE identity.assurance SET verified_at=now()-interval '20 minutes' WHERE session_id=$1",
+    [f.users.owner.sessionId],
+  );
+  await expect(s.command(f.users.owner.ctx, decide)).rejects.toThrow('authenticator');
+  await f.owner.query('UPDATE identity.assurance SET verified_at=now()');
+  const other = await r.appendPack(f.users.owner.ctx, {
+    ...pack,
+    id: randomUUID(),
+    effectiveFrom: new Date(Date.now() + 100).toISOString(),
+    configuration: { ...p.configuration, languages: ['fr'] },
+  });
+  await expect(rawDecision(f.users.owner.ctx, id, 'PUBLISH', other.id)).rejects.toThrow(
+    'Exact reviewed configuration publication required',
+  );
+  await publishedEffective();
+  await expect(s.command(f.users.owner.ctx, decide)).rejects.toThrow(
+    'Configuration changed; submit a new preview',
+  );
+  expect(
+    (
+      await f.owner.query(
+        'SELECT count(*)::int n FROM app.configuration_decision WHERE proposal_id=$1',
+        [id],
+      )
+    ).rows[0].n,
+  ).toBe(0);
+  await expect(
+    s.command(f.users.operator.ctx, {
+      id: randomUUID(),
+      action: 'propose',
+      basePackId: other.id,
+      pack: { ...pack, id: randomUUID(), version: 3 },
+      reason,
+    }),
+  ).rejects.toMatchObject({ status: 403 });
+  await expect(
+    recordReadiness(f.users.operator.ctx, p.routeId, other.id, t.sourceId, ['offer']),
+  ).rejects.toMatchObject({ status: 403 });
+});
+test('after the install the remaining refusals carry the reworded texts', async () => {
+  await expect(
+    s.command(f.users.owner.ctx, {
+      id: randomUUID(),
+      action: 'decide',
+      proposalId: randomUUID(),
+      decision: 'REJECT',
+      reason,
+    }),
+  ).rejects.toMatchObject({ message: 'Configuration proposal not found', status: 409 });
+  await expect(rawDecision(f.users.owner.ctx, randomUUID(), 'REJECT', null)).rejects.toThrow(
+    'Configuration proposal required',
+  );
+  const p = await route('MA', 'TN'),
+    t = await f.target();
+  const ids = await recordReadiness(
+    f.users.owner.ctx,
+    p.routeId,
+    p.id,
+    t.sourceId,
+    readinessDimensions.filter((d) => d !== 'pilot'),
+  );
+  await expect(
+    s.command(f.users.owner.ctx, releaseCommand(p.routeId, p.id, [...ids, randomUUID()])),
+  ).rejects.toThrow('Current evidenced readiness required for every dimension');
+});
+test('after the install a proposal by another owner is never shown as published by you, and a pack written by someone else cannot be published', async () => {
+  const p = await route('BO', 'EC');
+  const pack = {
+    ...p,
+    id: randomUUID(),
+    version: 2,
+    effectiveFrom: new Date(Date.now() + 100).toISOString(),
+    configuration: { ...p.configuration, languages: ['en'] },
+  };
+  const id = randomUUID();
+  await s.command(f.users.reviewer.ctx, { id, action: 'propose', basePackId: p.id, pack, reason });
+  await s.command(f.users.owner.ctx, {
+    id: randomUUID(),
+    action: 'decide',
+    proposalId: id,
+    decision: 'PUBLISH',
+    reason,
+  });
+  expect(
+    (await s.controlCenter(f.users.owner.ctx)).proposals.find((x) => x.id === id),
+  ).toMatchObject({
+    created_by: f.users.reviewer.id,
+    decided_by: f.users.owner.id,
+    decision: 'PUBLISH',
+    published_by_you: false,
+  });
+  // The kept check: the person who decides must have written the published pack, even when it equals the proposal.
+  await publishedEffective();
+  const exact = {
+    ...pack,
+    id: randomUUID(),
+    version: 3,
+    effectiveFrom: new Date(Date.now() + 100).toISOString(),
+    configuration: { ...pack.configuration, languages: ['fr'] },
+  };
+  const proposal = randomUUID();
+  await s.command(f.users.owner.ctx, {
+    id: proposal,
+    action: 'propose',
+    basePackId: pack.id,
+    pack: exact,
+    reason,
+  });
+  await r.appendPack(f.users.reviewer.ctx, exact);
+  await expect(rawDecision(f.users.owner.ctx, proposal, 'PUBLISH', exact.id)).rejects.toThrow(
+    'Exact reviewed configuration publication required',
+  );
 });

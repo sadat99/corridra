@@ -114,6 +114,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'real_intake_owner_apply',
     'qa_data_retire',
     'outreach_real_install',
+    'route_pack_install',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
@@ -171,6 +172,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['real_intake_owner_apply', u, u, u, u, u, u, u, u],
     ['qa_data_retire', u, u, u, u, u, u, u, u],
     ['outreach_real_install', u, u, u, u, u, u, u, u],
+    ['route_pack_install', u, u, u, u, u, u, u, u],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
@@ -223,7 +225,13 @@ test('each field-module choice maps to install only and reaches the exact-head c
       evaluate(env.QUOTATION_LINK_CHECK_ACTION, inputs),
       choice === 'quotation_link_check' ? 'install' : u,
     );
+    // ADR-093 Phase 2a: its own choice installs one-person route publication and nothing else, and no other choice does.
+    assert.equal(
+      evaluate(env.ROUTE_PACK_ACTION, inputs),
+      choice === 'route_pack_install' ? 'install' : u,
+    );
     for (const [own, line] of [
+      ['route_pack_install', 'ROUTE_PACK_ACTION'],
       ['personal_profile', 'PERSONAL_PROFILE_ACTION'],
       ['profile_picture', 'PROFILE_PICTURE_ACTION'],
       ['viewer_reply_metadata', 'VIEWER_REPLY_METADATA_ACTION'],

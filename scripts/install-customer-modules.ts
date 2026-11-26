@@ -50,6 +50,7 @@ import { migrateCustomerProgrammeErasure } from '../packages/db/src/customer-pro
 import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-change-migrate';
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-migrate';
+import { migrateRoutePack } from '../packages/db/src/route-pack-migrate';
 import { migrateAiModelPolicyReal } from '../packages/db/src/ai-model-policy-real-migrate';
 import { migrateAiRealRuns } from '../packages/db/src/ai-real-runs-migrate';
 import { migrateOutreachReal } from '../packages/db/src/outreach-real-migrate';
@@ -170,6 +171,8 @@ const v = z
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
     ),
+    // ADR-093 Phase 2a: one person may propose and publish a route pack, record its readiness and release it.
+    ROUTE_PACK_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     SUPPLY_SOURCES_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     SUPPLY_SOURCES_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -380,6 +383,8 @@ if (v.SOURCING_WORKFLOW_ACTION !== 'unchanged' && !apply)
   throw new Error('Sourcing workflow changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.SOURCING_WORKFLOW_ACTION) && !v.SOURCING_WORKFLOW_REASON)
   throw new Error('Sourcing workflow changes require an explicit reason');
+if (v.ROUTE_PACK_ACTION !== 'unchanged' && !apply)
+  throw new Error('Route pack publication installation requires INSTALL_APPLY=yes');
 if (v.SUPPLY_SOURCES_ACTION !== 'unchanged' && !apply)
   throw new Error('Supply sources changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.SUPPLY_SOURCES_ACTION) && !v.SUPPLY_SOURCES_REASON)
@@ -408,6 +413,7 @@ const registries = [
   'customer_problem_report_migrations',
   'counterparty_change_migrations',
   'sourcing_workflow_migrations',
+  'route_pack_migrations',
   'ai_model_policy_real_migrations',
   'supply_source_migrations',
   'helper_interest_migrations',
@@ -933,6 +939,14 @@ try {
           `Sourcing workflow ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
+    }
+    // ADR-093 Phase 2a is never part of the base run. It replaces app.guard_operations_control() after a hash check so one person
+    // may propose and publish a route pack, record its readiness and release it, and adds a marker the service reads. No switch
+    // and no gate. Needs the real-use modules installed and the owner's word. Reached only through
+    // field_modules_action=route_pack_install.
+    if (v.ROUTE_PACK_ACTION === 'install') {
+      await migrateRoutePack(pool);
+      console.log('Route pack one-person publication installed or already current');
     }
     // ADR-089 is never part of the base run. It replaces app.guard_ai() after a hash check so real workspaces may hold a reviewed
     // model policy only; runs stay sample-only and AI stays off. Needs the real-use modules installed and the owner's word.

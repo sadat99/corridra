@@ -204,6 +204,16 @@ async function insert(db: DatabaseClient, table: string, values: Record<string, 
     Object.values(values),
   );
 }
+// ADR-093 Phase 2a: true once the optional route pack module is installed; then one person may propose and publish a route
+// pack, record its readiness and release it. Looking the marker up needs no grant on it.
+async function onePersonPublication(db: DatabaseClient) {
+  const row = (
+    await db.query<{ present: boolean }>(
+      "SELECT to_regprocedure('app.route_pack_one_person_publication()') IS NOT NULL AS present",
+    )
+  ).rows[0];
+  return row?.present === true;
+}
 export class OperationsService {
   constructor(private pool: DatabasePool) {}
   preview(ctx: RequestContext, input: unknown) {
@@ -352,7 +362,17 @@ export class OperationsService {
               [ctx.tenantId, v.proposalId],
             )
           ).rows[0];
-          if (!q || q.created_by === actorId)
+          // ADR-093 Phase 2a: once the optional module's marker exists, the proposer may decide; until then a second owner is
+          // required, with the text of today. The database guard installed with the marker makes the same choice.
+          const onePerson = await onePersonPublication(db);
+          if (!q)
+            throw new DomainError(
+              onePerson
+                ? 'Configuration proposal not found'
+                : 'An independent authorized reviewer is required',
+              409,
+            );
+          if (!onePerson && q.created_by === actorId)
             throw new DomainError('An independent authorized reviewer is required', 409);
           let packId = null;
           if (v.decision === 'PUBLISH') {
@@ -468,7 +488,7 @@ export class OperationsService {
     return withTenant(this.pool, ctx, 'audit.read', async ({ role }) => ({ role }));
   }
   controlCenter(ctx: RequestContext) {
-    return withTenant(this.pool, ctx, 'audit.read', async ({ db, role }) => {
+    return withTenant(this.pool, ctx, 'audit.read', async ({ db, role, actorId }) => {
       const data: Record<string, Record<string, unknown>[]> = {};
       for (const [name, sql] of Object.entries({
         markets: 'SELECT key,kind,name,country_code FROM app.market_scope ORDER BY key',
@@ -477,7 +497,7 @@ export class OperationsService {
         releases:
           'SELECT DISTINCT ON(route_id,mission_type) * FROM app.route_release WHERE tenant_id=$1 ORDER BY route_id,mission_type,version DESC',
         proposals:
-          'SELECT p.*,d.decision,d.published_pack_id FROM app.configuration_proposal p LEFT JOIN app.configuration_decision d ON d.tenant_id=p.tenant_id AND d.proposal_id=p.id WHERE p.tenant_id=$1 ORDER BY p.created_at DESC LIMIT 100',
+          'SELECT p.*,d.decision,d.published_pack_id,d.created_by AS decided_by FROM app.configuration_proposal p LEFT JOIN app.configuration_decision d ON d.tenant_id=p.tenant_id AND d.proposal_id=p.id WHERE p.tenant_id=$1 ORDER BY p.created_at DESC LIMIT 100',
         cases:
           'SELECT DISTINCT ON(key) * FROM app.operations_case WHERE tenant_id=$1 ORDER BY key,version DESC',
         documents:
@@ -499,6 +519,12 @@ export class OperationsService {
       return {
         role,
         ...data,
+        proposals: (data.proposals ?? []).map((p): Record<string, unknown> => ({
+          ...p,
+          published_by_you:
+            p.decision === 'PUBLISH' && p.created_by === actorId && p.decided_by === actorId,
+        })),
+        onePersonPublication: await onePersonPublication(db),
         releases: data.releases,
         checkedAt: new Date().toISOString(),
         registeredTemplates: missionCatalogue.map((t) => ({
