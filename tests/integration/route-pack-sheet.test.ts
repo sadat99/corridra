@@ -136,8 +136,12 @@ const sheetRequest = (body: unknown, origin = 'http://localhost:3300') =>
     new Request(`http://localhost:3300/api/team-control/route-pack-import?tenant=${f.tenantA}`, {
       method: 'POST',
       headers: { origin, 'content-type': 'application/json' },
-      body: typeof body === 'string' ? body : JSON.stringify(body),
-    }),
+      body:
+        typeof body === 'string' || body instanceof Uint8Array || body instanceof ReadableStream
+          ? body
+          : JSON.stringify(body),
+      duplex: 'half',
+    } as RequestInit),
     { params: Promise.resolve({ action: 'route-pack-import' }) },
   );
 const exportRequest = (routes: string) =>
@@ -700,4 +704,23 @@ test('the actions refuse a foreign origin and answer 404 while the route pack fo
     { params: Promise.resolve({ action: 'route-pack' }) },
   );
   expect(invite.status).toBe(413);
+});
+
+test('the import body is read with a running cap: a chunked body over 2 MiB stops early, and bytes that are not UTF-8 are refused', async () => {
+  const chunk = new Uint8Array(65536).fill(0x20);
+  let pulled = 0;
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (pulled >= 8 * sheetLimits.octets) return controller.close();
+      pulled += chunk.length;
+      controller.enqueue(chunk);
+    },
+  });
+  const large = await sheetRequest(body);
+  expect(large.status).toBe(413);
+  expect((await large.json()).error).toBe('Request is too large');
+  expect(pulled).toBeLessThanOrEqual(2 * sheetLimits.octets + 4 * chunk.length);
+  const notUtf8 = await sheetRequest(new Uint8Array([0x7b, 0x22, 0xff, 0x22, 0x7d]));
+  expect(notUtf8.status).toBe(400);
+  expect((await notUtf8.json()).error).toBe('Send the file as UTF-8 text');
 });

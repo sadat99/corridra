@@ -35,6 +35,23 @@ const utf8 = new TextDecoder('utf-8', { fatal: true });
 const sheetCsv = (rows: string[][]) =>
   '\uFEFF' + rows.map((row) => row.map((cell) => csvCell(cell)).join(',')).join('\r\n') + '\r\n';
 const savedNothing = (report: SheetReport) => !report.saved?.length;
+// Reads at most `limit` octets, stopping as soon as the body passes it; a client-supplied Content-Length is not trusted.
+async function boundedBody(request: Request, limit: number) {
+  const reader = request.body?.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  for (;;) {
+    const next = await reader?.read();
+    if (!next || next.done) break;
+    length += next.value.length;
+    if (length > limit) {
+      await reader!.cancel();
+      throw new DomainError('Request is too large', 413);
+    }
+    chunks.push(next.value);
+  }
+  return Buffer.concat(chunks);
+}
 
 async function handle(request: Request, { params }: { params: Promise<{ action: string }> }) {
   const correlationId = randomUUID();
@@ -146,10 +163,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       }
       if (action === 'route-pack-import' && request.method === 'POST') {
         // Its own body reader: the file is far larger than the 4096 octets every other action allows.
-        if (Number(request.headers.get('content-length') ?? 0) > sheetBodyOctets)
-          throw new DomainError('Request is too large', 413);
-        const bytes = new Uint8Array(await request.arrayBuffer());
-        if (bytes.byteLength > sheetBodyOctets) throw new DomainError('Request is too large', 413);
+        const bytes = await boundedBody(request, sheetBodyOctets);
         let text: string;
         try {
           text = utf8.decode(bytes);
