@@ -48,3 +48,39 @@ export function placeText(
     Object.hasOwn(names, name) ? names[name]! : whole,
   );
 }
+
+/**
+ * A shipped sentence that names a place in plain words (the home.tr.* roles and questions were written before the
+ * slots): the written name of each place, found in the text as the language writes it, is drawn with its mark. The
+ * words are never changed and no key is added; a language that writes the place differently shows the sentence as
+ * it was. The text is split, never parsed as markup.
+ */
+export function FlaggedNames({
+  text,
+  places = ['bd'],
+}: {
+  text: string;
+  places?: readonly (keyof typeof placeSlots)[];
+}) {
+  const t = useT();
+  const names = places
+    .map((slot) => ({ slot, name: t(placeName[placeSlots[slot]]) }))
+    .filter(({ name }) => name.length > 0)
+    .sort((a, b) => b.name.length - a.name.length);
+  if (names.length === 0) return <>{text}</>;
+  const escaped = names.map(({ name }) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const parts = text.split(new RegExp(`(${escaped.join('|')})`, 'u'));
+  return (
+    <>
+      {parts.map((part, index) => {
+        const hit = names.find(({ name }) => name === part);
+        if (!hit) return part;
+        return (
+          <Flagged key={index} code={placeFlag[placeSlots[hit.slot]]}>
+            {part}
+          </Flagged>
+        );
+      })}
+    </>
+  );
+}
