@@ -4,6 +4,8 @@
 // calls `focusNow`. Client only: every function reads the browser.
 export const anchorEvent = 'corridra:anchor';
 
+const nativelyFocusable = 'a[href], button, input, select, textarea, summary';
+
 type Doc = Pick<Document, 'getElementById'>;
 type Frame = (callback: () => void) => unknown;
 
@@ -39,7 +41,7 @@ export function openAncestors(element: Element | null): boolean {
 
 /**
  * Scrolls to the element and moves focus to it, two animation frames from now (so a block opened a moment ago is
- * drawn). A target that is not focusable gets `tabindex="-1"` first. Returns false when the id is not on the page.
+ * drawn). A target that is not natively focusable gets `tabindex="-1"` first. Returns false when the id is not on the page.
  */
 export function focusNow(
   id: string,
@@ -50,7 +52,9 @@ export function focusNow(
   if (!element) return false;
   frame(() =>
     frame(() => {
-      if (!element.hasAttribute('tabindex')) element.setAttribute('tabindex', '-1');
+      // A heading or a section needs tabindex to take focus; a field or a link already has it, and must stay in tab order.
+      if (!element.hasAttribute('tabindex') && !element.matches?.(nativelyFocusable))
+        element.setAttribute('tabindex', '-1');
       element.focus({ preventScroll: true });
       element.scrollIntoView({ block: 'start' });
     }),

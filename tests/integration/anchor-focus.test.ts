@@ -52,6 +52,18 @@ describe('anchor focus', () => {
     expect(focusNow('missing', { getElementById: () => null }, () => undefined)).toBe(false);
   });
 
+  it('leaves a field in tab order: no tabindex is added to something natively focusable', () => {
+    const element = { ...fakeElement(), matches: () => true };
+    const queue: (() => void)[] = [];
+    focusNow('home-brief-job', { getElementById: () => element as unknown as HTMLElement }, (cb) =>
+      queue.push(cb),
+    );
+    queue.shift()!();
+    queue.shift()!();
+    expect(element.attrs.has('tabindex')).toBe(false);
+    expect(element.calls).toEqual(['focus {"preventScroll":true}', 'scroll {"block":"start"}']);
+  });
+
   it('announces the id on the window event, and stops after the cleanup', () => {
     const listeners = new Set<(event: Event) => void>();
     const target = {

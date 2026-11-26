@@ -306,6 +306,7 @@ export function RoutesSection({
   readyLead,
   v42 = false,
   limits = true,
+  allRoutes = true,
 }: {
   mine?: RouteKey | null;
   flags?: boolean;
@@ -317,6 +318,8 @@ export function RoutesSection({
   v42?: boolean;
   /** What Corridra is not, under the statuses; v4.2 shows it as its own navy section instead. */
   limits?: boolean;
+  /** The link to /corridors under the statuses; home page v4.3 links it once, from its markets explorer. */
+  allRoutes?: boolean;
 }) {
   const t = useT();
   const matches = (route: RouteKey) =>
@@ -378,15 +381,17 @@ export function RoutesSection({
         </ul>
         <p>{t('home.tr.rs.ready.end')}</p>
       </div>
-      <Link prefetch={false} className="ac1-quiet" href="/corridors">
-        {t('home.other.link')}
-        {links ? (
-          <>
-            {' '}
-            <Arrow />
-          </>
-        ) : null}
-      </Link>
+      {allRoutes ? (
+        <Link prefetch={false} className="ac1-quiet" href="/corridors">
+          {t('home.other.link')}
+          {links ? (
+            <>
+              {' '}
+              <Arrow />
+            </>
+          ) : null}
+        </Link>
+      ) : null}
       {limits ? (
         <>
           <h3 className="tr-h3">{t('home.tr.not.title')}</h3>

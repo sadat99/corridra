@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mountHomeV42 } from '../ux/home-v42-fixture';
+import { mountHomeV43 } from '../ux/home-v43-fixture';
 
 // UI/UX.v4.1 ("No repeated links"): inside main, no address is linked twice. Anchors that only move within the page
 // (an address starting with #) are the page's own contents and are left out. The public pages that were touched for
@@ -64,5 +65,44 @@ test('switch on (v4.2) /: no address is linked twice inside main beyond the kept
       value,
     ).toEqual([]);
   }
+  expect((await new AxeBuilder({ page }).include('main').analyze()).violations).toEqual([]);
+});
+
+// Home page v4.3, CORRIDRA_UX_HOME_V43 exactly "true" (owner, 26 Nov 2026, via the Guardian: "update as per attachment
+// 100% correctly"): the real v4.3 components on the live home's styles (tests/ux/home-v43-fixture.ts). Only the request
+// links repeat (the choice block and the closing band, as on v4.2); /corridors and /trust are linked once.
+test('switch on (v4.3) /: no address is linked twice inside main beyond the request links, before and after each door', async ({
+  page,
+}) => {
+  await mountHomeV43(page, { width: 1440 });
+  const links = () =>
+    page
+      .locator('main a[href]')
+      .evaluateAll((all) =>
+        all
+          .map((link) => link.getAttribute('href') ?? '')
+          .filter((href) => !/^(#|mailto:|tel:)/.test(href)),
+      );
+  const repeated = async () => {
+    const hrefs = await links();
+    return [...new Set(hrefs.filter((href, index) => hrefs.indexOf(href) !== index))];
+  };
+  expect(await repeated()).toEqual(['/plan?job=sourcing']);
+  const job = {
+    china: '/plan?job=sourcing',
+    sell: '/plan?job=buyers',
+    delegation: '/plan?job=delegations',
+    other: '/plan',
+  };
+  for (const [value, href] of Object.entries(job)) {
+    await page.locator(`.hv43-choose .tr-door:has(input[value="${value}"]) label`).click();
+    expect(
+      (await repeated()).filter((h) => h !== href),
+      value,
+    ).toEqual([]);
+  }
+  const hrefs = await links();
+  expect(hrefs.filter((h) => h === '/corridors')).toHaveLength(1);
+  expect(hrefs.filter((h) => h === '/trust')).toHaveLength(1);
   expect((await new AxeBuilder({ page }).include('main').analyze()).violations).toEqual([]);
 });

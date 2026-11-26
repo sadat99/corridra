@@ -4,10 +4,17 @@ import Link from 'next/link';
 import { useCallback, useReducer, useState } from 'react';
 import { ctaWords } from './home-routes';
 import { HomeShared } from './home-shared';
+import { PlainLimits } from './home-v42-parts';
 import { useAnchorReveal } from './home-v43-anchors';
+import { HomeV43Brief } from './home-v43-brief';
 import { HomeV43Choice } from './home-v43-choice';
 import { HomeV43Example } from './home-v43-example';
+import { HomeV43Faq } from './home-v43-faq';
 import { HomeV43Hero } from './home-v43-hero';
+import { HomeV43Inbound, HomeV43Trust } from './home-v43-inbound-trust';
+import { HomeV43Markets } from './home-v43-markets';
+import { HomeV43People } from './home-v43-people';
+import { HomeV43Process } from './home-v43-process';
 import { HomeV43Reveal } from './home-v43-reveal';
 import { HomeV43Solutions } from './home-v43-solutions';
 import { useLanguage } from './language-provider';
@@ -19,6 +26,7 @@ import { fill } from '../lib/i18n/fill';
 import { revealThenFocus } from '../lib/ux/anchor-focus';
 import './home-v42.css';
 import './home-v43.css';
+import './home-v43-more.css';
 
 // The home page v4.3, shown only while CORRIDRA_UX_HOME_V43 is exactly "true" (owner, 26 Nov 2026, via the Guardian:
 // "update as per attachment 100% correctly"; docs/revamp/specs/ui-ux-v4-3.md). One light page: the hero with the
@@ -84,6 +92,39 @@ export function HomeV43({ whatsapp = null }: { whatsapp?: string | null }) {
           onMarket={(market) => dispatch({ type: 'market', market })}
         />
       ) : null}
+      <HomeV43Process
+        intent={intent}
+        stage={state.stage}
+        onStage={(index) => dispatch({ type: 'stage', index })}
+        announce={announce}
+      />
+      <HomeV43Markets
+        market={state.market}
+        direction={state.direction}
+        mine={state.intent}
+        onMarket={(market) => dispatch({ type: 'market', market })}
+        onDirection={(direction) => dispatch({ type: 'direction', direction })}
+        onUse={() => {
+          dispatch({ type: 'useRoute' });
+          revealThenFocus('home-brief-job');
+        }}
+        announce={announce}
+      />
+      <HomeV43Inbound
+        onInbound={() => {
+          dispatch({ type: 'inbound' });
+          revealThenFocus('home-brief-job');
+        }}
+      />
+      <HomeV43Trust />
+      <HomeV43People
+        role={state.role}
+        onRole={(role) => dispatch({ type: 'role', role })}
+        announce={announce}
+      />
+      <HomeV43Faq />
+      <PlainLimits />
+      <HomeV43Brief state={state} dispatch={dispatch} whatsapp={whatsapp} />
       <HomeShared shown={shown} href={href} cta={cta} whatsapp={whatsapp} />
     </div>
   );

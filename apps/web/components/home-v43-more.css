@@ -1,0 +1,549 @@
+/* Home page v4.3, part two (docs/revamp/specs/ui-ux-v4-3.md): how it works, the markets explorer, the inbound band,
+   trust, people, questions and the request form with its preview. Same rules as part one: loaded only while
+   CORRIDRA_UX_HOME_V43 is exactly "true", every rule scoped under .hv43, tokens only, weights 400, 500 and 600, radii
+   8, 12 and 16, no gradient, no animation. Pressed states use a fill, a 2 px edge and the check, never colour alone. */
+.hv43 .hv43-process,
+.hv43 .hv43-trust,
+.hv43 .hv43-faq {
+  --hv43-band: var(--surface-raised);
+}
+
+/* How it works: four stage buttons (two by two on a phone), the record beneath. */
+.hv43 .hv43-stages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+@media (min-width: 40rem) {
+  .hv43 .hv43-stages {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.hv43 .hv43-stages .hv43-toggle {
+  min-block-size: 3.5rem;
+  justify-content: center;
+}
+.hv43 .hv43-record {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--selected-surface);
+  min-inline-size: 0;
+}
+.hv43 .hv43-record h3 {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: 500;
+  line-height: var(--leading-title);
+}
+.hv43 .hv43-record p {
+  margin: 0;
+  color: var(--text-2);
+  line-height: var(--leading-reading);
+}
+@media (min-width: 48rem) {
+  .hv43 .hv43-process .hv43-record {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-8);
+    padding: var(--space-6) var(--space-8);
+  }
+}
+
+/* A named disclosure: closed, one 44 px summary, the shipped content inside without its own band. */
+.hv43 .hv43-more {
+  margin-block-start: var(--space-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.hv43 .hv43-more > summary {
+  min-block-size: 2.75rem;
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  cursor: pointer;
+}
+.hv43 .hv43-more-body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+.hv43 .hv43-more-body .tr-section {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  clip-path: none;
+}
+.hv43 .hv43-more-body .hv42-tile {
+  padding: var(--space-4);
+}
+
+/* Markets explorer: the list beside the inspector from 64 rem. */
+.hv43 .hv43-explorer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  margin-block-end: var(--space-4);
+}
+@media (min-width: 64rem) {
+  .hv43 .hv43-explorer {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: var(--space-8);
+  }
+}
+.hv43 .hv43-markets-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv43 .hv43-markets-list li {
+  display: grid;
+  gap: var(--space-1);
+}
+.hv43 .hv43-market {
+  inline-size: 100%;
+  min-block-size: 3.5rem;
+}
+.hv43 .hv43-market-line {
+  padding-inline: var(--space-4);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv43 .hv43-inspector {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-inline-size: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+@media (min-width: 48rem) {
+  .hv43 .hv43-inspector {
+    padding: var(--space-6);
+  }
+}
+.hv43 .hv43-inspector .hv43-segments > * {
+  flex: 1 1 10rem;
+  justify-content: center;
+}
+.hv43 .hv43-schematic {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: 10rem;
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+}
+@media (min-width: 64rem) {
+  .hv43 .hv43-schematic {
+    min-block-size: 12.5rem;
+  }
+}
+.hv43 .hv43-schematic::after {
+  content: '';
+  order: 1;
+  flex: 1 1 var(--space-8);
+  min-inline-size: var(--space-6);
+  border-block-start: 2px solid var(--brand);
+}
+.hv43 .hv43-schematic[data-status='selective']::after {
+  border-block-start-style: dashed;
+}
+.hv43 .hv43-schematic .hv43-endpoint:first-child {
+  order: 0;
+}
+.hv43 .hv43-schematic .hv43-endpoint:last-child {
+  order: 2;
+}
+.hv43 .hv43-endpoint {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+  min-inline-size: 0;
+  font-weight: 600;
+}
+.hv43 .hv43-endpoint .label {
+  color: var(--text-2);
+}
+.hv43 .hv43-caption {
+  margin: 0;
+  color: var(--text-2);
+  font: 400 var(--text-xs) / 1.4 var(--font-mono);
+}
+.hv43 .hv43-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  font-weight: 600;
+}
+.hv43 .hv43-chips .hv43-endpoint {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.hv43 .hv43-explorer .hv43-record {
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+}
+.hv43 .hv43-explorer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+}
+@media (forced-colors: active) {
+  .hv43 .hv43-schematic::after {
+    border-block-start-color: CanvasText;
+  }
+}
+
+/* Inbound band and trust. */
+.hv43 .hv43-inbound-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+@media (min-width: 48rem) {
+  .hv43 .hv43-inbound-grid {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    gap: var(--space-8);
+  }
+}
+.hv43 .hv43-inbound h2,
+.hv43 .hv43-brief h2,
+.hv43 .hv43-faq h2 {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-h2);
+  font-weight: 500;
+  line-height: 1.2;
+}
+.hv43 .hv43-inbound-text {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+.hv43 .hv43-inbound-text p {
+  margin: 0;
+  line-height: var(--leading-reading);
+}
+.hv43 .hv43-trust-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8);
+  margin-block-end: var(--space-6);
+}
+@media (min-width: 64rem) {
+  .hv43 .hv43-trust-grid {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: var(--space-12);
+  }
+}
+.hv43 .hv43-labels {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv43 .hv43-labels li {
+  display: grid;
+  gap: var(--space-1) var(--space-4);
+  align-items: center;
+  justify-items: start;
+  min-inline-size: 0;
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+@media (min-width: 30rem) {
+  .hv43 .hv43-labels li {
+    grid-template-columns: minmax(8.25rem, 1fr) minmax(0, 1.25fr);
+  }
+}
+.hv43 .hv43-labels li > span {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv43 .hv43-ledger {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-inline-size: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--brand-deep);
+  color: var(--on-brand);
+}
+.hv43 .hv43-ledger-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+.hv43 .hv43-ledger-row {
+  margin: 0;
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid color-mix(in srgb, var(--on-brand) 40%, transparent);
+}
+.hv43 .hv43-ledger-row span {
+  display: block;
+  font: 400 var(--text-xs) / 1.4 var(--font-mono);
+}
+.hv43 .hv43-correction {
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid color-mix(in srgb, var(--on-brand) 40%, transparent);
+}
+.hv43 .hv43-correction > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hv43 .hv43-correction p {
+  margin: var(--space-2) 0 0;
+}
+.hv43 .hv43-ledger :focus-visible {
+  outline-color: var(--on-brand);
+}
+
+/* People: the roles beside the record from 48 rem; the record keeps a 3 px selected edge. */
+.hv43 .hv43-people-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+@media (min-width: 48rem) {
+  .hv43 .hv43-people-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-8);
+  }
+}
+.hv43 .hv43-roles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+@media (min-width: 23rem) {
+  .hv43 .hv43-roles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.hv43 .hv43-roles .hv43-toggle {
+  min-block-size: 2.9375rem;
+}
+.hv43 .hv43-people .hv43-record {
+  margin: 0;
+  border-inline-start: 3px solid var(--selected);
+  border-radius: var(--radius-md);
+}
+.hv43 .hv43-record dl {
+  display: grid;
+  grid-template-columns: minmax(0, 6rem) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+.hv43 .hv43-record dt {
+  font-weight: 600;
+}
+.hv43 .hv43-record dd {
+  margin: 0;
+  color: var(--text-2);
+}
+
+/* Questions: closed details with a plus and a minus drawn as shapes, never as a character in the text. */
+@media (min-width: 64rem) {
+  .hv43 .hv43-faq {
+    display: grid;
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+    gap: var(--space-12);
+    align-items: start;
+  }
+  .hv43 .hv43-faq .hv43-head {
+    display: block;
+  }
+}
+.hv43 .hv43-faq-list {
+  display: grid;
+  min-inline-size: 0;
+}
+.hv43 .hv43-faq-list > details:not(.hv43-more) {
+  border-block-end: 1px solid var(--border-subtle);
+}
+.hv43 .hv43-faq-list > details:not(.hv43-more) > summary {
+  position: relative;
+  min-block-size: 3rem;
+  padding: var(--space-3) var(--space-8) var(--space-3) 0;
+  font-weight: 600;
+  line-height: var(--leading-title);
+  cursor: pointer;
+  list-style: none;
+}
+.hv43 .hv43-faq-list > details > summary::-webkit-details-marker {
+  display: none;
+}
+.hv43 .hv43-faq-list > details:not(.hv43-more) > summary::before,
+.hv43 .hv43-faq-list > details:not(.hv43-more) > summary::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: var(--space-2);
+  inset-block-start: 50%;
+  inline-size: 0.875rem;
+  border-block-start: 2px solid var(--brand);
+}
+.hv43 .hv43-faq-list > details:not(.hv43-more) > summary::after {
+  transform: rotate(90deg);
+}
+.hv43 .hv43-faq-list > details[open]:not(.hv43-more) > summary::after {
+  content: none;
+}
+.hv43 .hv43-faq-list > details:not(.hv43-more) > p {
+  max-inline-size: 60ch;
+  margin: 0;
+  padding-block-end: var(--space-4);
+  color: var(--text-2);
+  line-height: var(--leading-reading);
+}
+
+/* The request form and the summary card. */
+.hv43 .hv43-brief-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+@media (min-width: 64rem) {
+  .hv43 .hv43-brief-grid {
+    grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+    gap: var(--space-12);
+  }
+  .hv43 .hv43-draft {
+    position: sticky;
+    inset-block-start: calc(var(--space-20) + var(--space-4));
+  }
+}
+.hv43 .hv43-form {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+.hv43 .hv43-form-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+@media (min-width: 30rem) {
+  .hv43 .hv43-form-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.hv43 .hv43-form .field {
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.hv43 .hv43-form .field label {
+  font-weight: 600;
+}
+.hv43 .hv43-form .field :is(select, input, textarea) {
+  inline-size: 100%;
+  min-block-size: 3rem;
+  padding: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-1);
+  font: 400 var(--text-base) / 1.4 var(--font-ui);
+}
+.hv43 .hv43-form .field textarea {
+  resize: vertical;
+}
+.hv43 .hv43-help {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv43 .hv43-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+.hv43 .hv43-draft {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-block-start: 2px solid var(--brand);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+.hv43 .hv43-draft :is(h3, p, dl) {
+  margin: 0;
+}
+.hv43 .hv43-draft h3 {
+  font-size: var(--text-title);
+  font-weight: 500;
+  line-height: var(--leading-title);
+}
+.hv43 .hv43-draft dl {
+  display: grid;
+  grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+}
+.hv43 .hv43-draft dt {
+  font-weight: 600;
+}
+.hv43 .hv43-draft dd {
+  margin: 0;
+}
+.hv43 .hv43-notes,
+.hv43 .hv43-dialog-notes {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.hv43 .hv43-fit,
+.hv43 .hv43-note {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
+}
+
+/* The preview dialog sits in the page's top layer, outside .hv43's cascade; its content class carries the scope. */
+.hv43-dialog {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+.hv43-dialog :is(h3, p) {
+  margin: 0;
+}
+.hv43-dialog .hv43-dialog-notes {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.hv43-dialog .hv43-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.hv43-dialog .hv43-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
