@@ -24,7 +24,7 @@ import { uxSwitchOn } from '../lib/ux-switches';
 export default function Home() {
   return (
     <PublicShell className="ux-guide-home ac1-home tr-home" translated>
-      <LegacyHashRedirect />
+      <LegacyHashRedirect {...(howTrustV43On() ? { deepPages: true } : {})} />
       {uxSwitchOn('CORRIDRA_UX_HOME_V43') ? (
         <HomeV43Page
           whatsapp={supportWhatsappHref()}

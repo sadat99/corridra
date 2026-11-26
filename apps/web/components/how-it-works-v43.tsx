@@ -139,14 +139,14 @@ function Stages() {
 /** The fourteen stages and the four rules, the live words of the home disclosure; the optional ones are dashed and named. */
 function Fourteen() {
   return (
-    <section className="hv43-band htv43-subtle htv43-how" aria-label="The fourteen steps">
+    <div className="hv43-band htv43-subtle htv43-how">
       <HowTile />
       <p className="htv43-legend" aria-hidden="true">
         <i className="htv43-dot" />
         {page.optionalKey}
       </p>
       <RulesTile />
-    </section>
+    </div>
   );
 }
 

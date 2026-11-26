@@ -150,6 +150,34 @@ describe('with the switch off, the pages are what they were', () => {
     expect(props().props).toMatchObject({ summaries: true });
   });
 
+  it('old home anchors go to the pages that now hold them, only with the switch on', async () => {
+    const { legacyHashTarget } = await load('components/legacy-hash-redirect.tsx');
+    // Off (or only the home on): the sample mission still moves, nothing else does.
+    expect(legacyHashTarget('#mission-example')).toBe('/corridors#mission-example');
+    for (const hash of ['#who', '#how', '#limits', '#trust', '#process', ''])
+      expect(legacyHashTarget(hash), hash).toBeNull();
+    // On: the roles and the fourteen steps go to /how-it-works, Plain Limits to /trust; the home's own ids stay.
+    expect(legacyHashTarget('#who', true)).toBe('/how-it-works#who');
+    expect(legacyHashTarget('#how', true)).toBe('/how-it-works#how');
+    expect(legacyHashTarget('#limits', true)).toBe('/trust#limits');
+    expect(legacyHashTarget('#mission-example', true)).toBe('/corridors#mission-example');
+    for (const hash of ['#process', '#trust', '#questions', '#inbound', '#start', '#brief'])
+      expect(legacyHashTarget(hash, true), hash).toBeNull();
+    // The home passes the flag only with both switches on.
+    const { default: Home } = await load('app/page.tsx');
+    const { LegacyHashRedirect } = await load('components/legacy-hash-redirect.tsx');
+    const redirect = () => {
+      const page = Home() as { props: { children: { type: unknown; props: object }[] } };
+      expect(page.props.children[0]!.type).toBe(LegacyHashRedirect);
+      return page.props.children[0]!.props;
+    };
+    expect(Object.keys(redirect())).not.toContain('deepPages');
+    vi.stubEnv('CORRIDRA_UX_HOME_V43', 'true');
+    expect(Object.keys(redirect())).not.toContain('deepPages');
+    vi.stubEnv('CORRIDRA_UX_HOW_TRUST_V43', 'true');
+    expect(redirect()).toMatchObject({ deepPages: true });
+  });
+
   it('the new compositions are lazy chunks, never static imports of a page', () => {
     for (const file of ['app/how-it-works/page.tsx', 'app/trust/page.tsx', 'app/page.tsx'])
       expect(read(file), file).not.toMatch(
