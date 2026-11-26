@@ -1,13 +1,22 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { z } from 'zod';
 import type { RequestContext } from '@corridra/db';
 import { DomainError } from '@corridra/domain';
 import { currency } from '@corridra/domain/opportunities';
 import { locale, timeZone } from '@corridra/domain/geography';
-import { sourcingProfile, type RouteConfiguration } from '@corridra/domain/corridors';
+import {
+  proposalOctetBudget,
+  routeConfiguration,
+  routePack,
+  sourcingProfile,
+  storedTextOctets,
+  type RouteConfiguration,
+} from '@corridra/domain/corridors';
 import {
   carriedConfiguration,
   goLiveMessage,
+  routePackWords,
   type PackStatus,
   type SheetLockedKey,
 } from '@corridra/domain/route-pack-standard';
@@ -89,9 +98,15 @@ export function routePackConfiguration(
 }
 
 type PublishDeps = { operations: OperationsService; content: RoutePackContentService };
+const packChanged = () =>
+  new DomainError(routePackWords.packChanged, 409, 'ROUTE_PACK_PACK_CHANGED');
+// A plain copy for comparing with a stored proposal: no undefined keys, and the same canonical values the proposal stores.
+const comparable = (configuration: RouteConfiguration) =>
+  JSON.parse(JSON.stringify(routeConfiguration.parse(configuration))) as unknown;
 // The one reviewed publish the form, the sheet and the editor share: propose, then decide PUBLISH, by the same person
-// (ADR-093 I). Every step id comes from the command id, so a retry with the same command id reuses an existing proposal and
-// the decision replays, and nothing is created twice.
+// (ADR-093 I). Every step id comes from the command id. A retry with the same command id and the same values reuses the
+// proposal and the decision replays, so nothing is created twice; the same command id with other values is refused.
+// expectedBasePackId, when given, is the pack the caller read: a newer pack in between is refused, not overwritten.
 export async function publishReviewed(
   deps: PublishDeps,
   ctx: RequestContext,
@@ -102,53 +117,73 @@ export async function publishReviewed(
     configuration: RouteConfiguration;
     reason: string;
     effectiveFrom?: string;
+    expectedBasePackId?: string | null;
   },
 ): Promise<{ proposalId: string; packId: string; version: number; duplicate: boolean }> {
   const proposalId = commandStepId(input.commandId, 'propose');
-  const packId = commandStepId(input.commandId, 'pack');
   const decisionId = commandStepId(input.commandId, 'decide');
-  const check = await deps.content.goLive(ctx, {
-    routeId: input.routeId,
-    pack: { status: input.status, configuration: input.configuration },
-  });
-  if (!check.ok) throw new DomainError(goLiveMessage(check), 409, check.code);
-  const duplicate = await deps.content.proposalExists(ctx, proposalId);
-  let version: number | undefined;
-  if (!duplicate) {
+  const reason = input.reason.trim();
+  const existing = await deps.content.proposalOf(ctx, proposalId);
+  let pack: { id: string; version: number };
+  if (existing) {
+    if (
+      existing.pack.routeId !== input.routeId ||
+      existing.pack.status !== input.status ||
+      existing.reason !== reason ||
+      !isDeepStrictEqual(comparable(existing.pack.configuration), comparable(input.configuration))
+    )
+      throw new DomainError(routePackWords.commandReused, 409, 'ROUTE_PACK_COMMAND_REUSED');
+    pack = existing.pack;
+  } else {
+    const check = await deps.content.goLive(ctx, {
+      routeId: input.routeId,
+      pack: { status: input.status, configuration: input.configuration },
+    });
+    if (!check.ok) throw new DomainError(goLiveMessage(check), 409, check.code);
     const [route] = (await deps.content.overview(ctx, { routeIds: [input.routeId] })).routes;
     if (!route) throw new DomainError('Route unavailable', 404);
-    version = (route.pack?.version ?? 0) + 1;
+    const basePackId = route.pack?.id ?? null;
+    if (input.expectedBasePackId !== undefined && input.expectedBasePackId !== basePackId)
+      throw packChanged();
+    const proposed = routePack.parse({
+      id: commandStepId(input.commandId, 'pack'),
+      routeId: input.routeId,
+      version: (route.pack?.version ?? 0) + 1,
+      status: input.status,
+      effectiveFrom: input.effectiveFrom ?? new Date().toISOString(),
+      reason,
+      configuration: input.configuration,
+    });
+    // The proposal table keeps at most 8192 octets; say so plainly instead of meeting the database refusal.
+    if (storedTextOctets(proposed) > proposalOctetBudget)
+      throw new DomainError(routePackWords.proposalTooLarge, 400, 'ROUTE_PACK_INVALID');
     await deps.operations.command(ctx, {
       id: proposalId,
       action: 'propose',
-      basePackId: route.pack?.id ?? null,
-      pack: {
-        id: packId,
-        routeId: input.routeId,
-        version,
-        status: input.status,
-        effectiveFrom: input.effectiveFrom ?? new Date().toISOString(),
-        reason: input.reason,
-        configuration: input.configuration,
-      },
-      reason: input.reason,
+      basePackId,
+      pack: proposed,
+      reason,
     });
+    pack = proposed;
   }
   await deps.operations.command(ctx, {
     id: decisionId,
     action: 'decide',
     proposalId,
     decision: 'PUBLISH',
-    reason: input.reason,
+    reason,
   });
-  // A retry reads the version of the pack it published the first time.
-  version ??= (await deps.content.packHistory(ctx, { routeId: input.routeId })).find(
-    (pack) => pack.packId === packId,
-  )?.version;
-  if (version === undefined) throw new DomainError('Route pack unavailable', 404);
-  return { proposalId, packId, version, duplicate };
+  return { proposalId, packId: pack.id, version: pack.version, duplicate: existing !== null };
 }
 
+// Without a command id from the page, the form's own values name the command, so a double click publishes once.
+const formCommands = 'a3e1c5d2-6b7f-4c18-9d0e-2f4b8a6c1e93';
+function formCommandId(v: z.infer<typeof guidedRoutePack>, configuration: RouteConfiguration) {
+  const values = createHash('sha256')
+    .update(JSON.stringify([v.status, v.reason, configuration]))
+    .digest('hex');
+  return commandStepId(formCommands, v.routeId, String(v.version), values);
+}
 export async function createRoutePack(
   deps: PublishDeps & { corridors: CorridorService },
   ctx: RequestContext,
@@ -168,18 +203,31 @@ export async function createRoutePack(
     });
   const [route] = (await deps.content.overview(ctx, { routeIds: [v.routeId] })).routes;
   if (!route) throw new DomainError('Route unavailable', 404);
+  const { configuration, removedRefs } = await deps.content.withoutExpiredRefs(
+    ctx,
+    routePackConfiguration(v, route.pack?.configuration ?? null),
+  );
+  const commandId = v.commandId ?? formCommandId(v, configuration);
+  // A form opened on an older pack is refused, as before; a retry of a publish already proposed is not.
+  if (
+    v.version !== (route.pack?.version ?? 0) + 1 &&
+    !(await deps.content.proposalExists(ctx, commandStepId(commandId, 'propose')))
+  )
+    throw packChanged();
   const published = await publishReviewed(deps, ctx, {
-    commandId: v.commandId ?? randomUUID(),
+    commandId,
     routeId: v.routeId,
     status: v.status,
-    configuration: routePackConfiguration(v, route.pack?.configuration ?? null),
+    configuration,
     reason: v.reason,
     effectiveFrom: v.effectiveFrom,
+    expectedBasePackId: route.pack?.id ?? null,
   });
   return {
     id: published.packId,
     version: published.version,
     proposalId: published.proposalId,
     duplicate: published.duplicate,
+    removedRefs,
   };
 }
