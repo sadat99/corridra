@@ -188,6 +188,13 @@ export async function publishReviewed(
     });
     pack = proposed;
   }
+  // A retry under an existing proposal either finds the pack already published (a duplicate: nothing changes now) or
+  // publishes it now, after an earlier decision was refused.
+  const publishedBefore =
+    existing !== null &&
+    (await deps.content.packHistory(ctx, { routeId: input.routeId })).some(
+      (published) => published.packId === pack.id,
+    );
   try {
     await deps.operations.command(ctx, {
       id: decisionId,
@@ -197,12 +204,17 @@ export async function publishReviewed(
       reason,
     });
   } catch (error) {
-    // Propose and decide are two transactions: the proposal stays, so say so and how to finish.
-    throw error instanceof DomainError
-      ? new DomainError(`${error.message} ${routePackWords.notPublished}`, error.status, error.code)
-      : new DomainError(routePackWords.notPublished, 409, 'ROUTE_PACK_NOT_PUBLISHED');
+    // Propose and decide are two transactions: a refused decision leaves the proposal, so say so and how to finish. Any
+    // other failure keeps its own status and log.
+    if (error instanceof DomainError)
+      throw new DomainError(
+        `${error.message} ${routePackWords.notPublished}`,
+        error.status,
+        error.code,
+      );
+    throw error;
   }
-  return { proposalId, packId: pack.id, version: pack.version, duplicate: existing !== null };
+  return { proposalId, packId: pack.id, version: pack.version, duplicate: publishedBefore };
 }
 
 // The reason a publish records: a PAUSED publish that dropped expired policies says so, the same for the proposal, the
