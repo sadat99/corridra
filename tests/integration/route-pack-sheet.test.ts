@@ -12,7 +12,11 @@ import { migrateRoutePack } from '../../packages/db/src/route-pack-migrate';
 import { csvRows } from '../../packages/delivery/src/import';
 import { DomainError } from '../../packages/domain/src/index';
 import { initialRoutes } from '../../packages/domain/src/corridors';
-import { sheetColumns, standardFieldsV1 } from '../../packages/domain/src/route-pack-standard';
+import {
+  routePackWords,
+  sheetColumns,
+  standardFieldsV1,
+} from '../../packages/domain/src/route-pack-standard';
 import { CorridorService, initialRouteConfiguration } from '../../packages/missions/src/corridors';
 import { OperationsService } from '../../packages/missions/src/operations';
 import { RoutePackContentService } from '../../packages/missions/src/route-pack-content';
@@ -1003,4 +1007,46 @@ test('the dry run judges go-live against the latest pack, a scheduled one includ
     keys: ['identity.summary'],
   });
   expect(report.ok).toBe(false);
+});
+
+test('a pack over the review size limit is a route error in the save report, and nothing is written', async () => {
+  const id = await newRoute('SV-HN');
+  await corridors.appendPack(owner(), {
+    id: randomUUID(),
+    routeId: id,
+    version: 1,
+    status: 'DRAFT',
+    effectiveFrom: new Date().toISOString(),
+    reason,
+    configuration: initialRouteConfiguration(initialRoutes[2]),
+  });
+  const keys = (prefix: string) =>
+    Array.from({ length: 50 }, (_, i) =>
+      `${prefix}${String(i).padStart(2, '0')}`.padEnd(70, 'x'),
+    ).join(' | ');
+  const file = ['localities', 'clusters', 'coverage'].map((key) =>
+    line({ route: 'SV-HN', field_key: `pack.${key}`, state: 'Filled', value: keys(key[0]!) }),
+  );
+  const before = await counts();
+  const report = await save(file);
+  expect(report.ok).toBe(false);
+  expect(report.saved).toEqual([]);
+  expect(report.errors).toEqual([
+    {
+      row: null,
+      route: 'SV-HN',
+      key: null,
+      code: 'ROUTE_PACK_INVALID',
+      message: routePackWords.proposalTooLarge,
+    },
+  ]);
+  expect(await counts()).toEqual(before);
+  const response = await sheetRequest({
+    mode: 'save',
+    csv: csvOf(file),
+    saveId: randomUUID(),
+    reason,
+  });
+  expect(response.status).toBe(409);
+  expect((await response.json()).error).toBe(routePackWords.proposalTooLarge);
 });

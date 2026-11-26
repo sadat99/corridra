@@ -729,11 +729,13 @@ export class RoutePackSheetService {
         progress(plan, ids.get(plan.route)!, { packVersion: published.version });
       }
     } catch (error) {
-      // Nothing written by this call: the refusal stands as it is (a changed route, a stale authenticator check), except a
-      // saveId already used for another file, which is worded for the sheet. Once a step is written, any failure returns the
-      // report of how far the save got, so the same file and saveId can finish it.
+      // A refusal of one route's step (its pack changed, it is too large to review) is that route's error in the report, and a
+      // saveId already used for another file is worded for the sheet. Once a step is written, any failure returns the report
+      // of how far the save got, so the same file and saveId can finish it. Otherwise, with nothing written, the refusal
+      // stands as it is: a stale authenticator check still asks for a new one.
       const reused = error instanceof DomainError && error.code === 'ROUTE_PACK_COMMAND_REUSED';
-      if (saved.size === 0 && !reused) throw error;
+      const routeRefusal = error instanceof DomainError && step !== null && error.status !== 401;
+      if (saved.size === 0 && !reused && !routeRefusal) throw error;
       if (!(error instanceof DomainError))
         console.error(JSON.stringify({ event: 'route_pack_sheet_save_stopped' }));
       const message = reused
