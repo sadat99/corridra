@@ -40,6 +40,8 @@ export const uxSwitchNames = [
   'CORRIDRA_UX_HOME_V42',
   // Home page v4.3 (owner, 26 Nov 2026, via the Guardian: "update as per attachment 100% correctly"): the light hero with a photo, one page of contextual examples and the pack footer. On only when exactly "true" and wins over V42; read at build time, so a change needs a redeploy. Presentation only.
   'CORRIDRA_UX_HOME_V43',
+  // One job per page for the home, /how-it-works and /trust (owner, 26 Nov 2026, first hand to Guardian G66: "yes to all three, build it"): the home shows a short summary of the process and of trust, each linking to its page, and the two pages carry the full process and the full proof. Takes effect only while CORRIDRA_UX_HOME_V43 is also on; read at build time, so a change needs a redeploy. Presentation only.
+  'CORRIDRA_UX_HOW_TRUST_V43',
   'CORRIDRA_NOTIFICATIONS_V2',
   'CORRIDRA_TEAM_INVITES',
   'CORRIDRA_ROUTE_PACK_FORM',
