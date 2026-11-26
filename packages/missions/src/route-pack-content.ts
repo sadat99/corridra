@@ -7,12 +7,13 @@ import {
   type RequestContext,
 } from '@corridra/db';
 import { DomainError, stepUpRequired } from '@corridra/domain';
-import { routeConfiguration, type RouteConfiguration } from '@corridra/domain/corridors';
+import { routeConfiguration, routePack, type RouteConfiguration } from '@corridra/domain/corridors';
 import {
   customKeyConflicts,
   deriveCompleteness,
   goLiveCheck,
   goLiveMessage,
+  latestCustomLabels,
   parseContentDocument,
   routePackWords,
   type Completeness,
@@ -48,10 +49,12 @@ type CurrentPack = {
   status: PackStatus;
   configuration: RouteConfiguration;
 };
-async function currentPack(db: DatabaseClient, tenantId: string, routeId: string) {
+// The go-live check judges the latest pack by version, in force or scheduled: a pack published live with a later effective
+// date already makes the route live for the rules that stop a Core field turning Pending.
+async function latestPack(db: DatabaseClient, tenantId: string, routeId: string) {
   return (
     await db.query<CurrentPack>(
-      'SELECT id,version,status,configuration FROM app.corridor_pack_version WHERE tenant_id=$1 AND route_id=$2 AND effective_from<=now() ORDER BY version DESC LIMIT 1',
+      'SELECT id,version,status,configuration FROM app.corridor_pack_version WHERE tenant_id=$1 AND route_id=$2 ORDER BY version DESC LIMIT 1',
       [tenantId, routeId],
     )
   ).rows[0];
@@ -77,7 +80,7 @@ export async function assertPackGoLive(
 ): Promise<void> {
   if (!(await routePackContentActive(db))) return;
   await lockCorridor(db, tenantId);
-  const current = await currentPack(db, tenantId, pack.routeId);
+  const current = await latestPack(db, tenantId, pack.routeId);
   const document = await latestDocument(db, tenantId, pack.routeId);
   refuse(
     goLiveCheck({
@@ -140,6 +143,11 @@ const goLiveInput = z
   })
   .strict();
 
+export type ExistingProposal = {
+  basePackId: string | null;
+  reason: string;
+  pack: z.infer<typeof routePack>;
+};
 export type ContentAppendResult = {
   id: string;
   routeId: string;
@@ -205,6 +213,10 @@ async function readState(db: DatabaseClient, tenantId: string) {
     'SELECT DISTINCT ON(route_id) id,route_id,version,status,configuration,effective_from,created_by,reason FROM app.corridor_pack_version WHERE tenant_id=$1 AND effective_from<=now() ORDER BY route_id,version DESC',
     [tenantId],
   );
+  const latest = await db.query<CurrentPack & { route_id: string }>(
+    'SELECT DISTINCT ON(route_id) id,route_id,version,status,configuration FROM app.corridor_pack_version WHERE tenant_id=$1 ORDER BY route_id,version DESC',
+    [tenantId],
+  );
   const contents = await db.query<ContentRow>(
     'SELECT DISTINCT ON(route_id) id,route_id,version,pack_id,document,created_at,created_by,reason FROM app.route_pack_content WHERE tenant_id=$1 ORDER BY route_id,version DESC',
     [tenantId],
@@ -213,6 +225,7 @@ async function readState(db: DatabaseClient, tenantId: string) {
     routes: routes.rows,
     markets: new Set(markets.rows.map((row) => row.key)),
     packs: new Map(packs.rows.map((row) => [row.route_id, row])),
+    latestPacks: new Map(latest.rows.map((row) => [row.route_id, row])),
     contents: new Map(
       contents.rows.map((row) => [
         row.route_id,
@@ -231,6 +244,18 @@ export async function loadRoutePackState(db: DatabaseClient, tenantId: string) {
     markets: state.markets,
     packs: new Map(
       [...state.packs].map(([routeId, pack]) => [
+        routeId,
+        {
+          id: pack.id,
+          version: pack.version,
+          status: pack.status,
+          configuration: pack.configuration,
+        },
+      ]),
+    ),
+    // The latest pack by version, scheduled or in force: what the go-live check judges.
+    latestPacks: new Map(
+      [...state.latestPacks].map(([routeId, pack]) => [
         routeId,
         {
           id: pack.id,
@@ -275,13 +300,17 @@ export class RoutePackContentService {
       const capabilities = await capabilitiesOf(db);
       if (!active(capabilities)) throw notFound();
       const state = await readState(db, ctx.tenantId);
-      // The label of the latest save of a custom key is shown for that key on every route.
-      const customLabels: Record<string, string> = {};
-      for (const content of [...state.contents.values()].sort(
-        (a, b) => a.created_at.getTime() - b.created_at.getTime(),
-      ))
-        for (const fact of content.document.facts)
-          if (fact.key.startsWith('custom.') && fact.label) customLabels[fact.key] = fact.label;
+      const keyOf = new Map(
+        state.routes.map((route) => [route.id, `${route.origin}-${route.destination}`]),
+      );
+      const customLabels = latestCustomLabels(
+        [...state.contents.values()].map((content) => ({
+          routeKey: keyOf.get(content.route_id) ?? '',
+          version: content.version,
+          createdAt: content.created_at.toISOString(),
+          document: content.document,
+        })),
+      );
       const routes = v.routeIds
         ? state.routes.filter((route) => v.routeIds?.includes(route.id))
         : state.routes;
@@ -486,8 +515,12 @@ export class RoutePackContentService {
         );
       const results: ContentAppendResult[] = [];
       for (const item of items) {
+        // Content names the pack in force (the database checks the same); the go-live check judges the latest pack.
         const pack = state.packs.get(item.routeId);
-        const packView = pack ? { status: pack.status, configuration: pack.configuration } : null;
+        const latest = state.latestPacks.get(item.routeId);
+        const packView = latest
+          ? { status: latest.status, configuration: latest.configuration }
+          : null;
         refuse(
           goLiveCheck({
             before: {
@@ -527,7 +560,7 @@ export class RoutePackContentService {
     const v = goLiveInput.parse(input);
     return withTenant(this.pool, ctx, 'audit.read', async ({ db }) => {
       if (!(await routePackContentActive(db))) throw notFound();
-      const current = await currentPack(db, ctx.tenantId, v.routeId);
+      const current = await latestPack(db, ctx.tenantId, v.routeId);
       const document = await latestDocument(db, ctx.tenantId, v.routeId);
       return goLiveCheck({
         before: { pack: current ?? null, document },
@@ -538,20 +571,65 @@ export class RoutePackContentService {
       });
     });
   }
-  proposalExists(ctx: RequestContext, id: string): Promise<boolean> {
+  // The proposal a reviewed publish created under this id, so a retry can prove it carries the same values.
+  proposalOf(ctx: RequestContext, id: string): Promise<ExistingProposal | null> {
     const proposalId = z.uuid().parse(id);
-    return withTenant(
-      this.pool,
-      ctx,
-      'config.manage',
-      async ({ db }) =>
-        (
-          await db.query('SELECT FROM app.configuration_proposal WHERE tenant_id=$1 AND id=$2', [
-            ctx.tenantId,
-            proposalId,
-          ])
-        ).rowCount === 1,
-    );
+    return withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
+      const row = (
+        await db.query<{ base_pack_id: string | null; proposed_pack: unknown; reason: string }>(
+          'SELECT base_pack_id,proposed_pack,reason FROM app.configuration_proposal WHERE tenant_id=$1 AND id=$2',
+          [ctx.tenantId, proposalId],
+        )
+      ).rows[0];
+      return row
+        ? {
+            basePackId: row.base_pack_id,
+            reason: row.reason,
+            pack: routePack.parse(row.proposed_pack),
+          }
+        : null;
+    });
+  }
+  async proposalExists(ctx: RequestContext, id: string): Promise<boolean> {
+    return (await this.proposalOf(ctx, id)) !== null;
+  }
+  // A carried communication policy or AI policy reference that is no longer current would make the pack guard refuse every
+  // new version, PAUSED included. The reviewed path drops such references, with the same tests as the guard, and names them,
+  // so the person sees what changed and the route can always be paused. The guard itself is unchanged.
+  withoutExpiredRefs(
+    ctx: RequestContext,
+    configuration: RouteConfiguration,
+  ): Promise<{ configuration: RouteConfiguration; removedRefs: string[] }> {
+    return withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
+      const expiredPolicies = (
+        await db.query<{ id: string }>(
+          'SELECT x AS id FROM unnest($2::text[]) x WHERE NOT EXISTS(SELECT FROM app.communication_policy WHERE tenant_id=$1 AND id::text=x AND effective_from<=now() AND valid_until>now())',
+          [ctx.tenantId, configuration.jurisdictionPolicyRefs],
+        )
+      ).rows.map((row) => row.id);
+      const aiPolicyExpired =
+        configuration.aiPolicyRef !== null &&
+        !(
+          await db.query(
+            "SELECT FROM app.ai_model_policy p WHERE p.tenant_id=$1 AND p.id::text=$2 AND p.effective_from<=now() AND (p.configuration->>'effectiveUntil')::timestamptz>now() AND p.version=(SELECT max(version) FROM app.ai_model_policy n WHERE n.tenant_id=p.tenant_id AND n.key=p.key AND n.effective_from<=now())",
+            [ctx.tenantId, configuration.aiPolicyRef],
+          )
+        ).rowCount;
+      const removedRefs = [
+        ...expiredPolicies,
+        ...(aiPolicyExpired && configuration.aiPolicyRef ? [configuration.aiPolicyRef] : []),
+      ];
+      return {
+        configuration: {
+          ...configuration,
+          jurisdictionPolicyRefs: configuration.jurisdictionPolicyRefs.filter(
+            (ref) => !expiredPolicies.includes(ref),
+          ),
+          aiPolicyRef: aiPolicyExpired ? null : configuration.aiPolicyRef,
+        },
+        removedRefs,
+      };
+    });
   }
 }
 async function capabilitiesOf(db: DatabaseClient): Promise<Capabilities> {
