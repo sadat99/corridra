@@ -5526,4 +5526,6 @@ Ledger trim: to keep the always-read guides within 36 KiB, these ledger bullets 
 - PR 595 (aae53aa): invited members get the workspace processing purpose. Follow-ups: its test uses a synthetic tenant; `packages/auth/src/operator-invitation.ts:93` has the same defect, not fixed. A peer session's manual production membership repair is not verified here.
 - Installs (VERIFIED from job logs, 20 Nov): run 44599063142 ai\*model_policy_real 1; run 44642528307 member_access 2, core 30, member_notice 1. AI in real workspaces is NOT active (app.part4_enabled false for real workspaces); it needs unit B10's migration and an install. Older install counts: [snapshot](v3/history/ledger-before-pr573-merge-records-2026-11-19.md).
 
+Model rule (owner, 26 Nov 2026, first hand to G65, relayed to the scribe): "always use sonnet 5.5 medium, high and opus only when the works sensitivity requires that." It replaces the earlier "builders on claude-opus-5-5" rule (as relayed by G65) and the older 24 Nov 2026 "all builders must be in fable 5.2 medium" (entry above); those stay as history.
+
 Next action: G65 merges units M1 and H1; then the final records push of this branch with their merge SHAs.
