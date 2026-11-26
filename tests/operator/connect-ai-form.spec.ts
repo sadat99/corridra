@@ -1101,8 +1101,8 @@ test('Add route pack with the module active sends only what was set and says wha
               version: 1,
               proposalId: id(81),
               duplicate: true,
-              removedRefs: [],
-              removedPolicies: [],
+              removedRefs: [id(82)],
+              removedPolicies: [removed],
             },
     },
   });

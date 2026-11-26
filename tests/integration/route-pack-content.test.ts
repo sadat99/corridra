@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'vitest';
 import { ZodError } from 'zod';
+import { DomainError } from '../../packages/domain/src/index';
 import { commercialFixture } from './commercial-fixture';
 import { command, future } from './access-fixture';
 import { changeMemberNow } from './change-member';
@@ -1237,7 +1238,7 @@ describe('route pack content on the database', () => {
         ) => {
           if (input.action === 'decide' && failDecide) {
             failDecide = false;
-            throw new Error('Forced failure between propose and decide');
+            throw new DomainError('Forced refusal between propose and decide', 409, 'FORCED');
           }
           return operations.command(ctx, input);
         },
@@ -1252,8 +1253,8 @@ describe('route pack content on the database', () => {
     };
     await expect(publishReviewed(flaky, owner(), first)).rejects.toMatchObject({
       status: 409,
-      code: 'ROUTE_PACK_NOT_PUBLISHED',
-      message: routePackWords.notPublished,
+      code: 'FORCED',
+      message: `Forced refusal between propose and decide ${routePackWords.notPublished}`,
     });
     expect(await packVersions(routeId)).toHaveLength(1);
     for (const changed of [
@@ -1265,11 +1266,47 @@ describe('route pack content on the database', () => {
         { status: 409, code: 'ROUTE_PACK_COMMAND_REUSED' },
       );
     expect(await packVersions(routeId)).toHaveLength(1);
+    // The retry publishes now, so it is not a duplicate; once more, it is.
+    expect(await publishReviewed(flaky, owner(), first)).toMatchObject({
+      version: 2,
+      duplicate: false,
+    });
+    expect((await latestPack(routeId)).configuration).toEqual(first.configuration);
     expect(await publishReviewed(flaky, owner(), first)).toMatchObject({
       version: 2,
       duplicate: true,
     });
-    expect((await latestPack(routeId)).configuration).toEqual(first.configuration);
+  });
+
+  test('a decision that fails for a reason other than a refusal keeps its own error', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'DRAFT', liveConfiguration());
+    const denied = Object.assign(new Error('permission denied for table corridor_pack_version'), {
+      code: '42501',
+    });
+    const failing = {
+      ...deps(),
+      operations: {
+        command: async (
+          ctx: Parameters<OperationsService['command']>[0],
+          input: { action?: string },
+        ) => {
+          if (input.action === 'decide') throw denied;
+          return operations.command(ctx, input);
+        },
+      } as unknown as OperationsService,
+    };
+    const attempt = publishReviewed(failing, owner(), {
+      commandId: randomUUID(),
+      routeId,
+      status: 'TESTING',
+      configuration: liveConfiguration(),
+      reason,
+    });
+    // The team control route answers a 42501 with 403.
+    await expect(attempt).rejects.toBe(denied);
+    await expect(attempt).rejects.not.toBeInstanceOf(DomainError);
   });
 
   test('a stale form or a changed base is refused, and a double click publishes once', async () => {

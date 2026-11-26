@@ -256,7 +256,7 @@ function RoutePackForm({
         typeof result.duplicate !== 'boolean'
           ? `Route pack version ${nextVersion} saved. Review is still required.`
           : result.duplicate
-            ? `Already saved. Nothing changed.${removed}`
+            ? 'Already saved. Nothing changed.'
             : `Route pack version ${result.version} published.${removed}`,
       );
       form.reset();
