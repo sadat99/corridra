@@ -150,7 +150,9 @@ test('no id is shown as the reviewer and the words are plain', async ({ page }) 
   await page.locator('details.helper-task-row > summary').click();
   const text = await page.locator('main').innerText();
   expect(text).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-  expect(text).toContain('Independent reviewer');
+  // The Reviewer row says what happens: a second person, never the helper, checks the work.
+  expect(text).toContain('Someone other than you checks your work');
+  expect(text).not.toContain('Independent reviewer');
   // The live words are kept: only a raw status code ("Assign ·") is made plain.
   for (const kept of [
     'EXACT ASSIGNMENT',

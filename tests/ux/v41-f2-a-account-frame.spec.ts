@@ -418,3 +418,57 @@ test('26: the sidebar keeps one landmark for its links, and none around the sing
     .analyze();
   expect(scan.violations.map((violation) => violation.id)).toEqual([]);
 });
+
+// Final walk m4 (25 Nov 2026): at 1440 with 200% text the cards' content-sized tracks kept a heading or a task title
+// on one line, so a card link ran past its card and a task's action was cut off by the card, which hides its overflow.
+// Fails on the code before (the "Waiting for you" card scrolled 622 px inside itself and "Accept or Decline" was cut).
+test.describe('m4: Home cards at 1440 with 200% text', () => {
+  test('no card scrolls sideways and every card link and task action is whole inside its card', async ({
+    page,
+  }) => {
+    await open(page, 1440, homePath, '', 200);
+    expect(await sidewaysScroll(page)).toBeLessThanOrEqual(0);
+    const misses = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('.move-card')].flatMap((card) => {
+        const head = card.querySelector('h2')?.textContent?.trim() ?? '';
+        const edge = card.getBoundingClientRect();
+        const out =
+          card.scrollWidth > card.clientWidth
+            ? [`${head}: scrolls ${card.scrollWidth - card.clientWidth} px`]
+            : [];
+        for (const el of card.querySelectorAll<HTMLElement>('a, button')) {
+          const box = el.getBoundingClientRect();
+          if (box.width <= 1 || getComputedStyle(el).visibility === 'hidden') continue;
+          if (box.left < edge.left - 0.5 || box.right > edge.right + 0.5)
+            out.push(
+              `${head}: ${el.textContent?.trim()} ends ${Math.round(box.right - edge.right)} px past`,
+            );
+        }
+        return out;
+      }),
+    );
+    expect(misses).toEqual([]);
+    // The task's words are whole: its title wraps instead of ending in an ellipsis.
+    const title = page.locator('.move-items .mr-move h3').first();
+    expect(await title.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    await expect(page.getByRole('link', { name: 'Accept or Decline' })).toBeVisible();
+  });
+
+  test('at the normal size a long task title still ends in an ellipsis on one line, with its action beside it', async ({
+    page,
+  }) => {
+    await open(page, 1024);
+    const row = page.locator('.move-items .mr-move').first();
+    const card = page.locator('section.move-card[aria-labelledby="move-you"]');
+    expect(await card.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
+    const title = row.locator('h3');
+    expect(await title.evaluate((el) => getComputedStyle(el).whiteSpace)).toBe('nowrap');
+    const [titleBox, actionBox, cardBox] = [
+      (await title.boundingBox())!,
+      (await row.locator('.mr-move-action').boundingBox())!,
+      (await card.boundingBox())!,
+    ];
+    expect(actionBox.x).toBeGreaterThan(titleBox.x);
+    expect(actionBox.x + actionBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width + 0.5);
+  });
+});

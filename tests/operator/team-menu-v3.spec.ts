@@ -602,34 +602,39 @@ test('search: with the switch on a page is found by the word the menu shows; off
 // Final walk W-3a (25 Nov 2026): below 480 px the team header gives back the shell's 24 px gutter. It took back a rem
 // step instead, 48 px at 200% text, so at 390 px the page was 414 px wide and the account menu button ended at 406 px.
 // Fails on the code before; at the normal size the row still reaches both edges of the screen.
-for (const text of [100, 200])
-  test(`the team header stays inside the window at 390 px with ${text}% text`, async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${fixture.origin}/operator?v41=on&role=owner`);
-    const header = page.locator('header.ux-team-header');
-    await expect(header).toBeVisible();
-    await expect(page.locator('#workspace-navigation')).toHaveAttribute('data-menu', 'v3');
-    if (text !== 100)
-      await page.evaluate((percent) => {
-        document.documentElement.style.fontSize = `${percent}%`;
-      }, text);
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      ),
-      'sideways scroll in px',
-    ).toBeLessThanOrEqual(0);
-    const box = (await header.boundingBox())!;
-    expect(Math.round(box.x)).toBe(0);
-    expect(Math.round(box.x + box.width)).toBe(390);
-    const outside = await header.evaluate((element) =>
-      Array.from(element.querySelectorAll('a, button'))
-        .filter((control) => control.getBoundingClientRect().width > 1)
-        .filter((control) => {
-          const edge = control.getBoundingClientRect();
-          return edge.left < -0.5 || edge.right > window.innerWidth + 0.5;
-        })
-        .map((control) => control.getAttribute('aria-label') ?? control.textContent?.trim()),
-    );
-    expect(outside).toEqual([]);
-  });
+// Final walk follow-up (26 Nov 2026): at 320 px (WCAG 1.4.10 reflow width) with 200% text the header was still 20 px
+// wider than the screen. The same checks run at 320.
+for (const width of [390, 320])
+  for (const text of [100, 200])
+    test(`the team header stays inside the window at ${width} px with ${text}% text`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`${fixture.origin}/operator?v41=on&role=owner`);
+      const header = page.locator('header.ux-team-header');
+      await expect(header).toBeVisible();
+      await expect(page.locator('#workspace-navigation')).toHaveAttribute('data-menu', 'v3');
+      if (text !== 100)
+        await page.evaluate((percent) => {
+          document.documentElement.style.fontSize = `${percent}%`;
+        }, text);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        ),
+        'sideways scroll in px',
+      ).toBeLessThanOrEqual(0);
+      const box = (await header.boundingBox())!;
+      expect(Math.round(box.x)).toBe(0);
+      expect(Math.round(box.x + box.width)).toBe(width);
+      const outside = await header.evaluate((element) =>
+        Array.from(element.querySelectorAll('a, button'))
+          .filter((control) => control.getBoundingClientRect().width > 1)
+          .filter((control) => {
+            const edge = control.getBoundingClientRect();
+            return edge.left < -0.5 || edge.right > window.innerWidth + 0.5;
+          })
+          .map((control) => control.getAttribute('aria-label') ?? control.textContent?.trim()),
+      );
+      expect(outside).toEqual([]);
+    });

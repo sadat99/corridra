@@ -4,6 +4,7 @@ import { CustomerMissionDelivery } from './customer-mission-delivery';
 import { DecisionDisclosures } from './decision-disclosures';
 import { SpecificationRequests } from './specification-requests';
 import { StepUpReads } from '../../components/ux/step-up-reads';
+import { isStepUpResponse, sendWithStepUp, stepUpKeptMessage } from '../../lib/ux/step-up';
 import { CustomerServiceRequests } from './customer-service-requests';
 import { CustomerBilling } from './customer-billing';
 import { CustomerInvoicing } from './customer-invoicing';
@@ -160,12 +161,18 @@ export function DeliveryExperience(props: Props) {
     setMessage('');
     try {
       const input = build(fields(form));
-      const r = await fetch(endpoint, {
+      // One command, sent again with the same id only after a lapsed authenticator check is confirmed in place (the
+      // publication, identity and disclosure actions need a fresh check). Closed, the form keeps what was entered.
+      const body = JSON.stringify({ action, input: { commandId: crypto.randomUUID(), ...input } });
+      const r = await sendWithStepUp(() =>
+        fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, input: { commandId: crypto.randomUUID(), ...input } }),
+          body,
         }),
-        v = await r.json();
+      );
+      if (await isStepUpResponse(r)) throw Error(stepUpKeptMessage);
+      const v = await r.json();
       if (!r.ok) throw Error(v.error);
       setMessage(
         'Recorded in this workspace. Client detail and recipient disclosures apply only to the explicitly approved publication or link.',
