@@ -949,6 +949,7 @@ export const sheetLockedKeys = [
 ] as const;
 export type SheetLockedKey = (typeof sheetLockedKeys)[number];
 
+const expiredPoliciesNote = ' Expired policies removed: ';
 const sectionNameList = routePackSections
   .map((section) => `${section.number} ${section.name}`)
   .join(', ');
@@ -993,6 +994,7 @@ export const routePackWords = {
   commandReused: 'Command key reused with different values',
   policyExpired: (names: string) =>
     `These policies have expired: ${names}. Pause the route, or publish with a current policy.`,
+  expiredPoliciesRemoved: (names: string) => `${expiredPoliciesNote}${names}.`,
   packChanged: "This route's pack changed since you opened it. Reload and try again.",
   proposalTooLarge: `This route pack is larger than the ${proposalOctetBudget} octet review limit. Shorten long lists.`,
   goLivePendingCore: (labels: string) =>
@@ -1485,6 +1487,30 @@ export function customKeyConflicts(
 // The label of each custom key as the latest save gave it (ADR-093 E): the label is shown for the key on every route. Saves
 // are ordered by time, then by content version, then by route key, so two saves in one transaction still give one answer.
 const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+// The reason of a PAUSED publish that dropped expired policy references, so the pack history shows what was removed. It
+// stays within the 500 character reason limit: names that do not fit end as "and N more", and only when even the shortest
+// note does not fit is the person's own reason shortened.
+const reasonLimit = 500;
+export function reasonWithRemovedPolicies(reason: string, names: readonly string[]): string {
+  if (!names.length) return reason;
+  const note = (shown: number) =>
+    routePackWords.expiredPoliciesRemoved(
+      shown === names.length
+        ? names.join(', ')
+        : shown
+          ? `${names.slice(0, shown).join(', ')} and ${names.length - shown} more`
+          : `${names.length} policies`,
+    );
+  for (let shown = names.length; shown >= 0; shown--) {
+    const full = reason + note(shown);
+    if (full.length <= reasonLimit) return full;
+  }
+  return reason.slice(0, reasonLimit - note(0).length).trimEnd() + note(0);
+}
+// True when a recorded reason is this reason with the note of removed policies added.
+export function recordsRemovedPolicies(recorded: string, reason: string): boolean {
+  return recorded.startsWith(reason + expiredPoliciesNote);
+}
 export function latestCustomLabels(
   contents: Iterable<{
     routeKey: string;

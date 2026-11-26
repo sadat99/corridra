@@ -27,6 +27,7 @@ import {
   emptyContentDocument,
   goLiveCheck,
   parseContentDocument,
+  reasonWithRemovedPolicies,
   routePackWords,
   sectionFromName,
   standardFieldsV1,
@@ -438,6 +439,22 @@ describe('Route Pack Standard v1, domain', () => {
     });
   });
 
+  test('the note of removed policies keeps the reason within 500 characters', () => {
+    expect(reasonWithRemovedPolicies('Pause the route', [])).toBe('Pause the route');
+    expect(reasonWithRemovedPolicies('Pause the route', ['policy A', 'policy B'])).toBe(
+      'Pause the route Expired policies removed: policy A, policy B.',
+    );
+    const names = Array.from({ length: 20 }, (_, i) => `communication policy number ${i + 1}`);
+    const long = reasonWithRemovedPolicies('r'.repeat(300), names);
+    expect(long.length).toBeLessThanOrEqual(500);
+    expect(long).toMatch(
+      /^r{300} Expired policies removed: communication policy number 1, .* and \d+ more\.$/,
+    );
+    const full = reasonWithRemovedPolicies('r'.repeat(500), names);
+    expect(full.length).toBeLessThanOrEqual(500);
+    expect(full.endsWith(' Expired policies removed: 20 policies.')).toBe(true);
+  });
+
   test('property: country pairs in both orders take the same code path', () => {
     let seed = 20261126;
     const next = () => (seed = (seed * 1664525 + 1013904223) >>> 0);
@@ -511,7 +528,7 @@ async function appendPack(
 async function packVersions(routeId: string) {
   return (
     await f.owner.query(
-      'SELECT version,status,configuration,configuration::text AS text FROM app.corridor_pack_version WHERE route_id=$1 ORDER BY version',
+      'SELECT version,status,reason,configuration,configuration::text AS text FROM app.corridor_pack_version WHERE route_id=$1 ORDER BY version',
       [routeId],
     )
   ).rows;
@@ -1340,6 +1357,51 @@ describe('route pack content on the database', () => {
     const after = await latestPack(routeId);
     expect(after.status).toBe('PAUSED');
     expect(after.configuration.jurisdictionPolicyRefs).toEqual([]);
+  });
+
+  test('a PAUSED publish with an expired reference records the policy it removed in its reason', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    const policy = await f.communications.command(
+      owner(),
+      command('policy', {
+        jurisdiction: 'DE',
+        channel: 'SYNTHETIC',
+        contactPurpose: 'institutional_introduction',
+        basis: 'Invented policy that expires before the route is paused',
+        validUntil: new Date(Date.now() + 1500).toISOString(),
+        enabled: true,
+      }),
+    );
+    await appendPack(
+      routeId,
+      1,
+      'DRAFT',
+      liveConfiguration({ jurisdictionPolicyRefs: [policy.id] }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const input = { ...formInput(routeId, 2, 'PAUSED'), commandId: randomUUID() };
+    expect(await createRoutePack(deps(), owner(), input)).toMatchObject({
+      version: 2,
+      duplicate: false,
+    });
+    const recorded = new RegExp(
+      `^${reason} Expired policies removed: communication policy DE SYNTHETIC institutional_introduction version \\d+\\.$`,
+    );
+    expect((await latestPack(routeId)).reason).toMatch(recorded);
+    const proposal = (
+      await f.owner.query(
+        "SELECT q.reason AS proposal,q.proposed_pack->>'reason' AS pack,d.reason AS decision FROM app.configuration_proposal q JOIN app.configuration_decision d ON d.proposal_id=q.id WHERE q.route_id=$1",
+        [routeId],
+      )
+    ).rows[0];
+    for (const text of [proposal.proposal, proposal.pack, proposal.decision])
+      expect(text).toMatch(recorded);
+    // A retry finds the policy gone already and keeps the recorded reason.
+    expect(await createRoutePack(deps(), owner(), input)).toMatchObject({
+      duplicate: true,
+      version: 2,
+    });
   });
 
   test('the latest label of a custom key is chosen the same way every time: time, then version, then route key', async () => {

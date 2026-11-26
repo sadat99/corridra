@@ -625,7 +625,7 @@ export class RoutePackContentService {
     ctx: RequestContext,
     configuration: RouteConfiguration,
     status: PackStatus,
-  ): Promise<{ configuration: RouteConfiguration; removedRefs: string[] }> {
+  ): Promise<{ configuration: RouteConfiguration; removedRefs: string[]; removedNames: string[] }> {
     return withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
       const expiredPolicies = (
         await db.query<{ id: string; name: string | null }>(
@@ -668,6 +668,7 @@ export class RoutePackContentService {
               : configuration.aiPolicyRef,
         },
         removedRefs,
+        removedNames: expired.map((ref) => ref.name ?? ref.id),
       };
     });
   }

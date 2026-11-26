@@ -16,6 +16,8 @@ import {
 import {
   carriedConfiguration,
   goLiveMessage,
+  reasonWithRemovedPolicies,
+  recordsRemovedPolicies,
   routePackWords,
   type PackStatus,
   type SheetLockedKey,
@@ -203,24 +205,27 @@ export async function createRoutePack(
     });
   const [route] = (await deps.content.overview(ctx, { routeIds: [v.routeId] })).routes;
   if (!route) throw new DomainError('Route unavailable', 404);
-  const { configuration, removedRefs } = await deps.content.withoutExpiredRefs(
+  const { configuration, removedRefs, removedNames } = await deps.content.withoutExpiredRefs(
     ctx,
     routePackConfiguration(v, route.pack?.configuration ?? null),
     v.status,
   );
   const commandId = v.commandId ?? formCommandId(v, configuration);
+  const existing = await deps.content.proposalOf(ctx, commandStepId(commandId, 'propose'));
   // A form opened on an older pack is refused, as before; a retry of a publish already proposed is not.
-  if (
-    v.version !== (route.pack?.version ?? 0) + 1 &&
-    !(await deps.content.proposalExists(ctx, commandStepId(commandId, 'propose')))
-  )
-    throw packChanged();
+  if (v.version !== (route.pack?.version ?? 0) + 1 && !existing) throw packChanged();
+  // A PAUSED publish that dropped expired policies says so in its reason, the same for the proposal, the decision and the
+  // pack. A retry after it finds the policies gone already, so it keeps the reason recorded the first time.
+  const reason =
+    existing && !removedNames.length && recordsRemovedPolicies(existing.reason, v.reason)
+      ? existing.reason
+      : reasonWithRemovedPolicies(v.reason, removedNames);
   const published = await publishReviewed(deps, ctx, {
     commandId,
     routeId: v.routeId,
     status: v.status,
     configuration,
-    reason: v.reason,
+    reason,
     effectiveFrom: v.effectiveFrom,
     expectedBasePackId: route.pack?.id ?? null,
   });
