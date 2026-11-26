@@ -647,7 +647,9 @@ const publishedEffective = () => new Promise((resolve) => setTimeout(resolve, 20
 
 test('before the one-person install, self-publication and self-release fail in the service and the database with the texts of today', async () => {
   await migrateCustomerRealUse(f.owner);
-  expect(await guardHash()).toBe('df18b4d178c4fc824869c924da7110ea802e7594681659dbabebe24950edbd97');
+  expect(await guardHash()).toBe(
+    'df18b4d178c4fc824869c924da7110ea802e7594681659dbabebe24950edbd97',
+  );
   expect(await onePersonMarker()).toBeNull();
   const p = await route('PE', 'CL'),
     t = await f.target();
@@ -665,14 +667,16 @@ test('before the one-person install, self-publication and self-release fail in t
     'Independent configuration reviewer required',
   );
   const ids = await recordReadiness(f.users.owner.ctx, p.routeId, p.id, t.sourceId);
-  await expect(
-    s.command(f.users.owner.ctx, releaseCommand(p.routeId, p.id, ids)),
-  ).rejects.toThrow('Independent approval of current evidenced readiness required');
+  await expect(s.command(f.users.owner.ctx, releaseCommand(p.routeId, p.id, ids))).rejects.toThrow(
+    'Independent approval of current evidenced readiness required',
+  );
   expect((await s.controlCenter(f.users.owner.ctx)).onePersonPublication).toBe(false);
 });
 test('after the one-person install the same owner proposes, previews and publishes the exact proposal, records readiness and releases', async () => {
   await migrateRoutePack(f.owner);
-  expect(await guardHash()).toBe('4d61d39fc11128eb607997d815f033495fe349b0db47717ceb3bd925953f216b');
+  expect(await guardHash()).toBe(
+    '4d61d39fc11128eb607997d815f033495fe349b0db47717ceb3bd925953f216b',
+  );
   expect(await onePersonMarker()).not.toBeNull();
   const p = await route('UY', 'PY'),
     t = await f.target();
@@ -741,7 +745,7 @@ test('after the install an admin alone records all 13 readiness dimensions and r
   expect(
     (
       await f.owner.query(
-        "SELECT r.state,count(DISTINCT x.created_by)::int AS people FROM app.route_release r JOIN app.route_readiness x ON x.id=ANY(r.readiness_ids) WHERE r.route_id=$1 GROUP BY r.state",
+        'SELECT r.state,count(DISTINCT x.created_by)::int AS people FROM app.route_release r JOIN app.route_readiness x ON x.id=ANY(r.readiness_ids) WHERE r.route_id=$1 GROUP BY r.state',
         [p.routeId],
       )
     ).rows,
@@ -789,9 +793,10 @@ test('after the install publication is still refused without a fresh authenticat
   );
   expect(
     (
-      await f.owner.query('SELECT count(*)::int n FROM app.configuration_decision WHERE proposal_id=$1', [
-        id,
-      ])
+      await f.owner.query(
+        'SELECT count(*)::int n FROM app.configuration_decision WHERE proposal_id=$1',
+        [id],
+      )
     ).rows[0].n,
   ).toBe(0);
   await expect(
