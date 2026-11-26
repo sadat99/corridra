@@ -20,9 +20,10 @@ const normalise = (text: string) =>
   text.replace(/\/_next\/static\/[^"')\s]+/g, '/_next/static/HASH').replace(/\?dpl=[^"'&\s]+/g, '');
 
 const named =
-  /hv43|home-v43|HomeV43|homeV43|guide-footer-pack|gfp-|data-v43|site-header-solutions|ux-dossier/;
+  /hv43|htv43|home-v43|how-trust-v43|HomeV43|HowItWorksV43|TrustV43|homeV43|howTrustV43|guide-footer-pack|gfp-|data-v43|site-header-solutions|ux-dossier/;
 const inStyles = [
   '.hv43',
+  '.htv43',
   'data-v43',
   '.gfp-',
   'guide-footer-pack',
@@ -37,7 +38,7 @@ test('with the switch off the public header is exactly the one captured from c78
   expect(normalise(part(html, 'header')) + '\n').toBe(readFileSync(fixture, 'utf8'));
 });
 
-for (const path of ['/', '/about', '/corridors', '/how-it-works']) {
+for (const path of ['/', '/about', '/corridors', '/how-it-works', '/trust']) {
   test(`with the switch off ${path} names no v4.3 code and links no v4.3 rule`, async ({
     request,
   }) => {

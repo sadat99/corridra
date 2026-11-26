@@ -9,7 +9,7 @@ import type { HomeRoutesKey } from '../lib/home-routes-keys';
 // existing key except the "Plain limits" eyebrow, which is the owner's own name for the section.
 const key = (name: string) => name as HomeRoutesKey;
 /** One owned icon per person, in the order of the live words (UI spec D3). */
-const personIcon: IconName[] = [
+export const personIcon: IconName[] = [
   'sell',
   'buy',
   'work',

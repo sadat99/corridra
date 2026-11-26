@@ -1,6 +1,9 @@
 import { HomeTrustMore } from '../../components/home-more';
+import { TrustV43Page } from '../../components/how-trust-v43-page';
 import { PublicPage } from '../../components/public-page';
+import { PublicShell } from '../../components/public-shell';
 import { publicPages } from '../../content/public-pages';
+import { howTrustV43On } from '../../lib/how-trust-v43';
 import { pageOpenGraph } from '../../lib/ux/page-metadata';
 const content = publicPages['trust'];
 export const metadata = {
@@ -8,6 +11,14 @@ export const metadata = {
   description: content.description,
   openGraph: pageOpenGraph(content.title, content.description),
 };
+// With CORRIDRA_UX_HOW_TRUST_V43 on (owner, 26 Nov 2026, first hand to Guardian G66: "yes to all three, build it") the
+// page is the whole proof on one page, loaded by TrustV43Page only then. Off, it is the page it was.
 export default function Page() {
+  if (howTrustV43On())
+    return (
+      <PublicShell className="ux-guide-home ac1-home tr-home">
+        <TrustV43Page />
+      </PublicShell>
+    );
   return <PublicPage content={content} more={<HomeTrustMore />} />;
 }

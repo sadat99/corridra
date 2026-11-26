@@ -22,3 +22,4 @@ tests/ux/fixtures/
 
 # Owner landing handoff pack: verbatim, byte-exact per its SHA256SUMS
 docs/revamp/landing-handoff/
+tests/integration/fixtures/*-off.html
