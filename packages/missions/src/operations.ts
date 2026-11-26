@@ -519,7 +519,7 @@ export class OperationsService {
       return {
         role,
         ...data,
-        proposals: (data.proposals ?? []).map((p) => ({
+        proposals: (data.proposals ?? []).map((p): Record<string, unknown> => ({
           ...p,
           published_by_you:
             p.decision === 'PUBLISH' && p.created_by === actorId && p.decided_by === actorId,
