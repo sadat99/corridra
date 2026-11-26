@@ -154,6 +154,7 @@ export const sheetWords = {
   customType: 'A custom field needs a type: text, number, money, date, choice, list or link.',
   customChoice: 'A choice field needs its allowed values in the format column, separated by |.',
   money: 'Write money as a currency code and an amount, for example USD 45.00.',
+  moneyRange: 'Write an amount above zero with at most 18 digits, for example USD 45.00.',
   notAllowed: (value: string) => `${value} is not one of the allowed values for this field.`,
   saveErrors: 'Fix the errors in the dry run first',
   savePartly: 'The save stopped part way. Fix the error, then save the same file again to finish.',
@@ -301,6 +302,8 @@ function typedValue(type: FactType, text: string): { value: Value } | { message:
     return { value: { currency: code.data, amountMinor: parseMoney(m[2]!, code.data) } };
   } catch (error) {
     if (error instanceof DomainError) return { message: error.message };
+    // The amount parsed but is zero or longer than 18 digits in minor units.
+    if (error instanceof z.ZodError) return { message: sheetWords.moneyRange };
     throw error;
   }
 }

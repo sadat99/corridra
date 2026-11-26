@@ -325,6 +325,11 @@ test('money keeps exact minor units in its own currency, and extra decimals are 
       message: 'Enter an amount with the currency’s supported decimal places',
     },
   ]);
+  // Zero and an amount longer than 18 digits in minor units are row errors, not a refusal of the whole request.
+  for (const amount of ['USD 0', 'USD 12345678901234567.89'])
+    expect((await sheet.dryRun(owner(), { rows: rowsOf([money(amount)]) })).errors).toEqual([
+      { row: 2, route: 'BR-PE', key: 'custom.sample_cost_br_pe', message: sheetWords.moneyRange },
+    ]);
 });
 
 test('the template saves nothing from its example rows: a Pending new custom row is skipped and a Filled EXAMPLE ROW is refused', async () => {
