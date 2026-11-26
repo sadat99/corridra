@@ -5559,3 +5559,7 @@ Open follow-ups: designer item 15 (768 two-by-two big doors) deliberately not bu
 Records checks (scribe, this branch): see the PR body.
 
 Next action: the owner's native review and branch clean-up; then the owner live steps in the ledger.
+
+## 26 Nov 2026 - gitleaks finding on main (builder S1)
+
+The finding (rule `generic-api-key`, `docs/ux10x/evidence-sha256.json:3`) is a SHA-256 of `docs/ux10x/evidence/evidence-secret-scan.json`, not a credential, and it appeared only in shallow clones: the shallow boundary commit looks like it adds the whole tree, so the existing `.gitleaksignore` entry (commit `21410efb`, which exists in full history) no longer matched. With full history `node scripts/security-scan.mjs` reports 0 findings, as CI (`fetch-depth: 0`) does. Fix: the scan now unshallows first (`scripts/ensure-full-history.mjs`), with `tests/security-scan-history.test.mjs` (3 tests) in `test:docs`. No allowlist or ignore entry added. Next action: unchanged.
