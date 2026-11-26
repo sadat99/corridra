@@ -1050,3 +1050,30 @@ test('a pack over the review size limit is a route error in the save report, and
   expect(response.status).toBe(409);
   expect((await response.json()).error).toBe(routePackWords.proposalTooLarge);
 });
+
+test('the dry run also judges the pack in force: a live pack with a scheduled pause still refuses a Core field turning Pending', async () => {
+  expect((await save(coreLines('HN-NI'))).ok).toBe(true);
+  const draft = await latestPack('HN-NI');
+  const id = (await routeId('HN-NI'))!;
+  for (const [offset, status] of [
+    [1, 'ACTIVE'],
+    [2, 'PAUSED'],
+  ] as const)
+    await corridors.appendPack(owner(), {
+      id: randomUUID(),
+      routeId: id,
+      version: draft.version + offset,
+      status,
+      effectiveFrom: new Date(Date.now() + (status === 'PAUSED' ? 3600000 : 0)).toISOString(),
+      reason,
+      configuration: draft.configuration,
+    });
+  const report = await sheet.dryRun(owner(), {
+    rows: rowsOf([line({ route: 'HN-NI', field_key: 'identity.summary', state: 'Pending' })]),
+  });
+  expect(plan(report, 'HN-NI').goLive).toEqual({
+    ok: false,
+    code: 'ROUTE_PACK_CORE_TURNS_PENDING',
+    keys: ['identity.summary'],
+  });
+});

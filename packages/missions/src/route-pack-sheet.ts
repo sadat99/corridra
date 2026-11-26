@@ -497,16 +497,25 @@ function planRoute(
   const configuration = carriedConfiguration(pack?.configuration ?? null, set);
   const changedFields = changedPackFields(pack?.configuration, configuration);
   const packChanged = pack ? changedFields.length > 0 : Object.keys(set).length > 0;
-  // Go-live is judged against the latest pack by version, scheduled or in force, as every pack and content write is.
+  // Go-live is judged as every pack and content write judges it (route-pack-content.ts judgedPacks): against the latest pack
+  // by version, scheduled or in force, and against the pack in force; the first refusal wins.
   const latest = existing ? state.latestPacks.get(existing.id) : undefined;
-  const beforePack: PackView = latest
-    ? { status: latest.status, configuration: latest.configuration }
-    : null;
-  const afterPack: PackView = packChanged ? { status, configuration } : beforePack;
-  const goLive = goLiveCheck({
-    before: { pack: beforePack, document: before },
-    after: { pack: afterPack, document },
-  });
+  const judged = [latest, pack].flatMap((p, i, all) =>
+    p && all.findIndex((other) => other?.id === p.id) === i
+      ? [{ status: p.status, configuration: p.configuration }]
+      : [],
+  );
+  const newPack: PackView = packChanged ? { status, configuration } : null;
+  const goLive =
+    (judged.length ? judged : [null])
+      .map((current) =>
+        goLiveCheck({
+          before: { pack: current, document: before },
+          after: { pack: newPack ?? current, document },
+        }),
+      )
+      .find((result) => !result.ok) ?? ({ ok: true } as const);
+  const afterPack: PackView = newPack ?? judged[0] ?? null;
   if (!goLive.ok)
     for (const key of goLive.keys)
       issue(firstRow.get(key) ?? null, key, goLiveMessage({ ...goLive, keys: [key] }));
