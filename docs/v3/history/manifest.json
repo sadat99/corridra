@@ -627,6 +627,14 @@
       "bytes": 10646,
       "sha256": "8b43a35d67708f518cc6a0576d7516490f7a28d96471686b34281bc3aa72d8f1",
       "meaning": "Exact active ledger at main 43c2bbc (PR 598 merged), as written by the 23 Nov records for PRs 593, 595 and the Connect AI switch (header still said main aae53aa), before the R0 records of the 23 Nov 2026 commercial-ready run replaced the gate list, the draft-label relay, the merge list and the next action. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "9944c7d",
+      "archive": "docs/v3/history/ledger-before-g66-records-2026-11-26.md",
+      "bytes": 10290,
+      "sha256": "c1856b7f8486baa3aa0a6b5c03959328d8fc4e9e6c7f93dcd0258f0a4d6baaaa",
+      "meaning": "Exact active ledger at main 9944c7d (PR 665 merged), as written by the 26 Nov records for PR 663 (header still said main 111ec0d4), before the records for PR 665, the KI-68 flake and the dedupe decision shortened the Merged list. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

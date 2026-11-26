@@ -455,3 +455,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Fix (test only, intent unchanged):** `initiator_id` is taken out and asserted to be the owner's id, the remaining keys are asserted to be exactly `changedFields`, `initiator_kind`, `madeupFieldsLeft`, `synthetic` and `version`, and the search for `900` or `700` runs on those. `initiator_id` is the only id in the payload (`packages/db/customer-invoicing-real-migrations/0003_owner_issuer_details.sql` and `0004_issuer_tax_rate.sql`).
 - **Proof:** the file passes 22 of 22 locally after the change. The failure depends on a random value and was not reproduced locally before the change.
 - **If it recurs:** a new field with a random value was added to the payload; the exact key list fails first and names it.
+
+### KI-68 `home-v43.spec.ts:734` saw one extra link after the dialog closed (26 November 2026, passed on rerun, flake suspected)
+
+- **Seen:** PR 665 head 7fb497c1, CI run 45807410068, job `ux (2)`, `tests/ux/home-v43.spec.ts:734`, test "Review Request opens the preview with the exact request link, Escape returns focus, closed it adds no link", failing at line 768: after the dialog closed, one extra `/plan?job=buyers&companyCountry=BD&marketCode=EU&note=...` link was in the recorded list.
+- **Why a flake is suspected:** PR 665 touched no UI; main's `ux (2)` passed; one re-run of the failed job passed. The cause was not reproduced or confirmed. The likely reading, not proved, is that the test read the link list before the closed dialog had finished clearing.
+- **If it recurs:** treat it as a real V43 defect, not a flake. Record the run id and job here, reopen this entry, and inspect the dialog close path before touching the test. Do not add a fixed sleep or loosen the assertion.
