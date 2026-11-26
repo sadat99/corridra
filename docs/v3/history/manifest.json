@@ -651,6 +651,14 @@
       "bytes": 10302,
       "sha256": "e76c950bc3d0de2ab620b9f9e50511ffc504e8f2b5ee3c0bd387ed39a0440691",
       "meaning": "Exact active ledger at main 41d18bf5 (PR 668 merged), before the 26 Nov 2026 records for PRs 667 and 668 removed the unit 04 decisions pointer and the earlier observations pointer to keep the always-read guides within 36 KiB. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "c746d078",
+      "archive": "docs/v3/history/ledger-before-g69-records-2026-11-26.md",
+      "bytes": 10280,
+      "sha256": "3f5e15e7bb1d70c6fd8e9c4ea960d6e597b1170cf8dbb6e8a184186d3023ed80",
+      "meaning": "Exact active ledger at main c746d078 (PR 675 merged), as written by the 26 Nov records for PR 673 (its Resume line still said main 47ba4b99), before the G69 records for PRs 674 and 675 shortened the G65 answers (1) to (3), (5) and (7), the follow-up list and a superseded clause to keep the always-read guides within 36 KiB. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
