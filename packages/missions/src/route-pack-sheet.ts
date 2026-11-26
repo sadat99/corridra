@@ -87,6 +87,8 @@ export type SheetReport = {
     routeId: string;
     contentVersion: number | null;
     packVersion: number | null;
+    // Expired policy references a pack moved to PAUSED no longer carries.
+    removedRefs?: string[];
   }[];
 };
 type SheetState = 'FILLED' | 'NOT_APPLICABLE' | 'PENDING';
@@ -678,13 +680,14 @@ export class RoutePackSheetService {
     const progress = (
       plan: PlannedRoute,
       routeId: string,
-      change: { contentVersion?: number; packVersion?: number },
+      change: { contentVersion?: number; packVersion?: number; removedRefs?: string[] },
     ) =>
       saved.set(plan.route, {
         route: plan.route,
         routeId,
         contentVersion: change.contentVersion ?? saved.get(plan.route)?.contentVersion ?? null,
         packVersion: change.packVersion ?? saved.get(plan.route)?.packVersion ?? null,
+        ...(change.removedRefs?.length ? { removedRefs: change.removedRefs } : {}),
       });
     const ids = new Map<string, string>();
     let step: PlannedRoute | null = null;
@@ -723,6 +726,13 @@ export class RoutePackSheetService {
       }
       for (const plan of planned.routes.filter((p) => p.pack.changed)) {
         step = plan;
+        // As the guided form: an expired policy reference is dropped and named on a pack staying PAUSED, and refuses the
+        // route's pack step for any other carried status.
+        const { configuration, removedRefs } = await this.content.withoutExpiredRefs(
+          ctx,
+          plan.configuration,
+          plan.pack.status,
+        );
         const published = await publishReviewed(
           { operations: this.operations, content: this.content },
           ctx,
@@ -730,12 +740,12 @@ export class RoutePackSheetService {
             commandId: commandStepId(v.saveId, plan.route, 'pack'),
             routeId: ids.get(plan.route)!,
             status: plan.pack.status,
-            configuration: plan.configuration,
+            configuration,
             reason: v.reason,
             expectedBasePackId: plan.basePackId,
           },
         );
-        progress(plan, ids.get(plan.route)!, { packVersion: published.version });
+        progress(plan, ids.get(plan.route)!, { packVersion: published.version, removedRefs });
       }
     } catch (error) {
       // A refusal of one route's step (its pack changed, it is too large to review) is that route's error in the report, and a

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, beforeEach, expect, test, vi } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
+import { command } from './access-fixture';
 import { changeMemberNow } from './change-member';
 import { AccessService } from '../../packages/auth/src/access';
 import { configureSourcingWorkflow } from '../../packages/auth/src/sourcing-workflow-configuration';
@@ -1076,4 +1077,71 @@ test('the dry run also judges the pack in force: a live pack with a scheduled pa
     code: 'ROUTE_PACK_CORE_TURNS_PENDING',
     keys: ['identity.summary'],
   });
+});
+
+test('an expired carried policy reference refuses the pack step of a route that is not paused, in plain words, and a paused route drops and names it', async () => {
+  const policy = await f.communications.command(
+    owner(),
+    command('policy', {
+      jurisdiction: 'DE',
+      channel: 'SYNTHETIC',
+      contactPurpose: 'institutional_introduction',
+      basis: 'Invented policy that expires during the sheet test',
+      validUntil: new Date(Date.now() + 1500).toISOString(),
+      enabled: true,
+    }),
+  );
+  const configuration = {
+    ...initialRouteConfiguration(initialRoutes[2]),
+    jurisdictionPolicyRefs: [policy.id],
+  };
+  const routes: Record<string, string> = {};
+  for (const [key, status] of [
+    ['NI-CR', 'DRAFT'],
+    ['CR-PA', 'PAUSED'],
+  ] as const) {
+    routes[key] = await newRoute(key);
+    await corridors.appendPack(owner(), {
+      id: randomUUID(),
+      routeId: routes[key]!,
+      version: 1,
+      status,
+      effectiveFrom: new Date().toISOString(),
+      reason,
+      configuration,
+    });
+  }
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  const languages = (route: string) => [
+    line({ route, field_key: 'pack.languages', state: 'Filled', value: 'es' }),
+  ];
+  const before = await counts();
+  const refused = await save(languages('NI-CR'));
+  expect(refused.ok).toBe(false);
+  expect(refused.saved).toEqual([]);
+  expect(refused.errors).toMatchObject([
+    {
+      row: null,
+      route: 'NI-CR',
+      key: null,
+      code: 'ROUTE_PACK_POLICY_EXPIRED',
+      message: expect.stringContaining('communication policy DE SYNTHETIC'),
+    },
+  ]);
+  expect(refused.errors[0]!.message).not.toContain(policy.id);
+  expect(await counts()).toEqual(before);
+  const paused = await save(languages('CR-PA'));
+  expect(paused.ok).toBe(true);
+  expect(paused.saved).toEqual([
+    {
+      route: 'CR-PA',
+      routeId: routes['CR-PA'],
+      contentVersion: null,
+      packVersion: 2,
+      removedRefs: [policy.id],
+    },
+  ]);
+  const pack = await latestPack('CR-PA');
+  expect(pack.status).toBe('PAUSED');
+  expect(pack.configuration).toMatchObject({ languages: ['es'], jurisdictionPolicyRefs: [] });
 });
