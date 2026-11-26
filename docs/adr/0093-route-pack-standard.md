@@ -87,17 +87,22 @@ Section 13 keeps ADR-083 exactly as it works today: the `sourcing` block stays i
 
 Locked rows in the sheet (keys starting `pack.`) are 12 of the 18 guarded configuration keys, under their own names. The other 6 are never in the sheet: `requirements`, `assessments`, `jurisdictionPolicyRefs` and `aiPolicyRef` are references chosen on the screen, `pricingRef` stays null as the guard requires, and `reviewRequired` stays true. 12 plus 6 is the 18; the optional `sourcing` block is the 19th key and has only its state row.
 
-Carrying over: a pack version built by the import or by the guided form copies every key it does not set from the current pack unchanged: `requirements`, `assessments`, `jurisdictionPolicyRefs`, `aiPolicyRef`, `pricingRef`, `reviewRequired` and `sourcing` (for a route with no pack yet: empty lists, null, true and no block). The import also carries the pack status from the current pack (DRAFT for a new route). Pack status is never set from a file: a status change is a separate, explicit action on the screen, so a file can never take a route live by accident. This also fixes, as a Phase 2 item, the precedent in `routePackConfiguration` (`packages/missions/src/route-pack-form.ts:34-55`) that writes those keys empty and so silently drops them from the next version.
+Carrying over: a pack version built by the import or by the guided form copies every key it does not set from the current pack unchanged: `requirements`, `assessments`, `jurisdictionPolicyRefs`, `aiPolicyRef`, `pricingRef`, `reviewRequired` and `sourcing` (for a route with no pack yet: empty lists, null, true and no block). The import also carries the pack status from the current pack (DRAFT for a new route). Pack status is never set from a file, so a file can never take a route live by accident. A status change is a separate, explicit action on the screen: a reviewed propose-and-publish of the current configuration, unchanged except for the new status. It uses the existing proposal path, the same authority, a fresh authenticator check and a reason; there is no new command. Leaving a key out never removes it: in particular a `sourcing` block is removed only by the explicit choice "Remove sourcing profile" in the reviewed publish path, with a reason. This also fixes, as a Phase 2 item, the precedent in `routePackConfiguration` (`packages/missions/src/route-pack-form.ts:34-55`) that writes those keys empty and so silently drops them from the next version.
 
 ### C. States, Core and the completeness view
 
 - Every field row has one state: **Filled**, **Not applicable** (a reason is required in the note) or **Pending**.
 - A whole section can be marked Not applicable with one row whose `field_key` is the word `section`, whose `section` cell names the section by its number or its name (for example `5` or `Trade fairs and events`), and whose note gives the reason. Sections are never marked by key prefix. The mark covers every row in that section that is not Filled, including custom fields placed in that section, except Locked Core rows, which stay required. A Filled row keeps its value.
-- A section's state is derived: Not applicable when marked so or when every field in it is; Filled when every Core field in it is Filled or Not applicable and at least one field is Filled; otherwise Pending.
+- A section's state is derived: Not applicable when it is marked so (or every field in it is) and all of its Locked Core rows are Filled; a marked section with a Locked Core row not Filled shows Pending and lists those rows. Filled when every Core field in it is Filled or Not applicable and at least one field is Filled; otherwise Pending.
 - Each field is **Core** (needed before the route may go live) or **Optional**. The Core set is small: 20 fields, 5 of them locked. Custom fields are always Optional.
 - Locked Core rows must be Filled; Not applicable is refused for them, because an empty list is not the same thing as "does not apply". On a Locked Optional row (such as `sourcing.profile` or `pack.localities`) Not applicable is accepted with a reason: the key stays as it is in the pack, and the mark and reason are kept in the content record.
 - The completeness view lists every Pending Core field by route, and counts Pending Optional fields without listing them, so nobody faces everything at once.
-- Go-live check: one shared domain check refuses any write that would leave a route with a LIMITED or ACTIVE pack while its content has a Pending Core field. Every path that writes a pack version calls it: `appendPack` (so the Advanced raw `corridor-pack` command, `apps/web/app/api/workspace/[action]/route.ts:332`, cannot bypass it), the guided form, the reviewed publish and the status change action. The content append calls it too, so a new content version that turns a Core field back to Pending is refused while the route is LIMITED or ACTIVE. It only ever refuses; it never allows anything the existing checks refuse. DRAFT and TESTING packs are not held back.
+- Go-live check: one shared domain check, evaluated on the resulting pack and content together, refuses exactly two things:
+  - a move of a route's pack status to LIMITED or ACTIVE (from any other status) while a Core field would be Pending;
+  - a content version that turns a Filled or Not applicable Core field back to Pending while the route is LIMITED or ACTIVE.
+- Every path that writes a pack version calls it: `appendPack` (so the Advanced raw `corridor-pack` command, `apps/web/app/api/workspace/[action]/route.ts:332`, cannot bypass it), the guided form, the reviewed publish and the status change. The content append calls it too. It only ever refuses; it never allows anything the existing checks refuse. DRAFT and TESTING packs are not held back.
+- The check acts only once the 2b install marker exists. Before that install, or while `CORRIDRA_ROUTE_PACK_FORM` is off, every pack path behaves exactly as on main.
+- Routes that are already LIMITED or ACTIVE when 2b is installed keep working. The completeness view lists their Pending Core fields, and the check refuses only the two writes above. No production pack exists today, so this case is not expected.
 - "Not applicable" in content is about the content record only. It never changes the ADR-029 readiness rules: only the `dependencies` dimension may be inapplicable there, and a content field marked Not applicable is not readiness evidence of any kind.
 
 ### D. Every fact has a source and a date
@@ -111,7 +116,8 @@ Carrying over: a pack version built by the import or by the guided form copies e
 ### E. Custom fields
 
 - A custom field lives inside the route's content document: each custom fact carries its key (starting with `custom.`), label, section, type and, for `choice` and `list`, its allowed values. There is no separate definitions table.
-- The same key keeps the same meaning: the importer and the service refuse a custom key whose type or label differs from the same key in the latest content of any other route in the workspace.
+- The same key keeps the same meaning: the importer and the service refuse a custom key whose type, allowed values or section differs from the same key in the latest content of any other route in the workspace, compared with the state as it will be after the whole file is applied. The label is not compared across routes: the label of the latest save is shown for that key everywhere, so a label change needs one row, not one per route.
+- The importer refuses any label that starts with `EXAMPLE ROW`, so the template's example rows can never be saved as they are.
 - The importer creates a custom field from a row only when the row is Filled or Not applicable. A Pending row with a new custom key is listed in the dry run and skipped, so an untouched example row never creates a field.
 - Types, the same set as the standard fields:
   - `text`
@@ -148,7 +154,7 @@ Rules of the sheet:
   2. append one content version;
   3. if the locked rows differ from the current pack, propose and publish the new pack version through the reviewed path (same person, see below), with the status carried from the current pack.
 
-  The dry run already runs the go-live check on the content that will result (the current content with the file applied) and refuses the file if the route's pack is LIMITED or ACTIVE and a Core field would be Pending. Content is written before the pack, and the pack's status does not change, so there is never a moment when a LIMITED or ACTIVE route has a Pending Core field. The content version names the pack in force when it was saved, which is the version before a pack published in step 3; the editor shows both.
+  The dry run and the save run the go-live check on the resulting pack and content together (the current pack and content with the whole file applied), so a file that fills a Locked Core row is judged against the new pack, not the old one. The pack's status never changes on import. The content version names the pack in force when it was saved, which is the version before a pack published in step 3; the editor shows both.
 
 - **Export**: writes the same sheet for one or more routes, with every standard field listed, Pending rows included, so the gaps are visible.
 - **One editor screen** (Phase 3): routes first, each with its pack state, completeness and stale marks, and one route opened section by section with the same fields, states and sources as the sheet.
@@ -161,7 +167,7 @@ The simplest shape that meets A to G: one new table, in a new optional migration
   - columns: `id`, `tenant_id`, `route_id`, nullable `pack_id` (the pack version in force when saved), `version` (sequential per route), `standard_version`, `document` jsonb, `reason` (3 to 500 characters), `created_by` and server-set `created_at`;
   - checks: `jsonb_typeof(document)='object'`, `octet_length(document::text)<=131072`, at most 500 facts;
   - a guard trigger requires the route and pack to belong to the tenant and the next sequential version; it is a new function, so it needs no hash pin;
-  - the document holds `standardVersion`, the section marks and the facts. Each fact is `key`, `state`, `value`, `source`, `observedOn`, optional `validUntil` and `note`, and a custom fact also its `label`, `section`, `type` and allowed values. Text values are at most 1000 characters, `notes.general` at most 4000, a note at most 1000, a custom label at most 120; at most 100 custom keys per route;
+  - the document holds `standardVersion`, the section marks and the facts. Each fact is `key`, `state`, `value`, `source`, `observedOn`, optional `validUntil` and `note`, and a custom fact also its `label`, `section`, `type` and allowed values. Text values are at most 1000 characters, `notes.general` at most 4000, a note at most 1000, a custom label at most 120 characters; at most 100 custom keys per route;
   - the octet cap on the whole document wins over the per-field character limits: a document over 131072 octets is refused even when every field is within its own limit.
 - The table is append-only and follows the existing corridor table pattern (`packages/db/migrations/0020_versioned_corridors.sql:73-82`):
   - row security, with read and add policies equal to those of `app.corridor_pack_version`, including the real-use pair (`customer-real-use-migrations/0002_real_request_authority.sql:190-192`);
@@ -185,7 +191,7 @@ The simplest shape that meets A to G: one new table, in a new optional migration
 - Phase 2 builds this as an additive, hash-checked replacement of `app.guard_operations_control()`. It is equal to the live real-use `0003:523` definition except that it drops exactly two comparisons:
   - `q.created_by=NEW.created_by` in the `configuration_decision` branch (`:561`);
   - `r.created_by=NEW.created_by` in the release loop (`:554`).
-- The service drops the proposer comparison from its check (`operations.ts:355-356`). Each existing error still needs a message for the conditions it still covers, reworded to drop "Independent", and tests match the new texts:
+- The service keeps its proposer comparison (`operations.ts:355-356`) until the 2a install marker exists, so before the install the refusal and its text are unchanged. Once the marker exists, the service drops that comparison and both layers allow one person. Each existing error still needs a message for the conditions it still covers, reworded to drop "Independent" once the 2a marker exists, and tests match the new texts:
   - service `:356`, "An independent authorized reviewer is required": still raised when the proposal does not exist or is not readable in this workspace; reworded to "Configuration proposal not found".
   - database `0003:561`, "Independent configuration reviewer required": still raised when the proposal does not exist in the tenant; reworded to "Configuration proposal required".
   - database `0003:554`, "Independent approval of current evidenced readiness required": still raised when a dimension has no observation, its latest observation is not in the release list, is for another pack, is BLOCKED or expired, or its source is missing, unreadable or past retention; reworded to "Current evidenced readiness required for every dimension".
@@ -198,7 +204,7 @@ The simplest shape that meets A to G: one new table, in a new optional migration
 - **Phase 1**: this record, the field dictionary and the template. The owner can start gathering data now.
 - **Phase 2**: Class A, full process; three PRs, each leaving main releasable.
   - 2a: one-person route publication (decision I). The new migration directory `packages/db/route-pack-migrations/` with `0001_one_person_route_publication.sql` and a rollback file restoring the exact current definition. One new option, `route_pack_install`, on the existing `field_modules_action` input (no new workflow input); it needs the real-use modules installed first. The service change, screen copy and tests.
-  - 2b: `0002_route_pack_content.sql` (decision H), the Standard v1 domain schema, the content service with the custom key consistency check, the completeness view and the shared go-live check (wired into `appendPack`, the guided form, the reviewed publish and the content append), and the guided form extended with the remaining locked key lists and the carry-over of unset keys (same validators and guard).
+  - 2b: `0002_route_pack_content.sql` (decision H), the Standard v1 domain schema, the content service with the custom key consistency check, the completeness view, the shared go-live check (acting only once the 2b marker exists; wired into `appendPack`, the guided form, the reviewed publish and the content append), the status change as a reviewed propose-and-publish of the current configuration with only the status changed, the explicit "Remove sourcing profile" choice in the reviewed publish path, and the guided form extended with the remaining locked key lists and the carry-over of unset keys (same validators and guard).
   - 2c: the CSV import with dry run, apply to many and export, on the existing team control route.
   - Each install is a separate owner-approved run of the reviewed installer; builds never migrate.
 - **Phase 3**: the one editor screen in Settings (team desk D17: routes first with their pack state), with completeness, stale marks, import and export, under UI/UX.v4.
@@ -213,8 +219,8 @@ The simplest shape that meets A to G: one new table, in a new optional migration
 ## Tests (for Phase 2 and 3)
 
 - `tests/integration/operations.test.ts`:
-  - before the module install, self-publication and self-release fail exactly as today;
-  - after it, the same owner proposes, previews and publishes, and records readiness and releases;
+  - before the 2a install (no marker), self-publication and self-release fail exactly as today, in both the service and the database, with today's error texts;
+  - after it, the same owner proposes, previews and publishes, and records readiness and releases, through the service and the database;
   - an admin alone records all 13 dimensions and releases;
   - still refused: without a fresh authenticator check, with a stale base, with a configuration different from the proposal, and for a member without the permission;
   - the reworded error texts.
@@ -226,12 +232,12 @@ The simplest shape that meets A to G: one new table, in a new optional migration
   - sequential versions and the size cap;
   - an admin without `config.manage` refused in the service;
   - a retried save adds nothing;
-  - a custom key with a different type or label from another route is refused.
+  - a custom key with a different type, allowed values or section from another route is refused, judged after the whole file is applied; a different label is accepted and the latest label is shown for the key on every route.
 - Domain tests:
   - every v1 key parses;
   - an email address in a value, note or source is refused;
   - a Locked Core row marked Not applicable is refused; `sourcing.profile` and other Locked Optional rows marked Not applicable with a reason are accepted;
-  - a section mark by number or name covers its non-Filled rows and its custom fields, never a Locked Core row;
+  - a section mark by number or name covers its non-Filled rows and its custom fields, never a Locked Core row; a marked section with a Locked Core row not Filled shows Pending and lists it;
   - a document over the octet cap is refused even when every field is within its character limit;
   - a Not applicable row without a reason is refused;
   - section states and the Core completeness are derived as decided;
@@ -244,10 +250,16 @@ The simplest shape that meets A to G: one new table, in a new optional migration
   - money keeps exact minor units and refuses extra decimals;
   - a file with any error saves nothing;
   - a Pending row with a new custom key is reported and skipped;
-  - a file that would leave a LIMITED or ACTIVE route with a Pending Core field is refused in the dry run;
-  - a pack built by import keeps the current pack's status and every unsheeted key, including `sourcing`;
+  - a label starting with `EXAMPLE ROW` is refused;
+  - a file that turns a Filled Core field Pending on a LIMITED or ACTIVE route is refused in the dry run; a file that fills a Locked Core row is judged against the resulting pack;
+  - a pack built by import keeps the current pack's status and every unsheeted key, including `sourcing`; the `sourcing` block is removed only by "Remove sourcing profile" with a reason in the reviewed publish path;
   - export then import gives no change.
-- Go-live check: LIMITED or ACTIVE is refused with a Pending Core field through `appendPack` (the raw `corridor-pack` command), the guided form, the reviewed publish and the status action, and allowed once it is Filled or Not applicable; a content version that turns a Core field Pending on a LIMITED or ACTIVE route is refused.
+- Go-live check:
+  - a move to LIMITED or ACTIVE with a Pending Core field is refused through `appendPack` (the raw `corridor-pack` command), the guided form, the reviewed publish and the status change, and allowed once the field is Filled or Not applicable;
+  - status change: DRAFT to ACTIVE with a Pending Core field is refused; with every Core field Filled or Not applicable it passes, as a reviewed proposal and decision with the configuration unchanged;
+  - a content version that turns a Filled Core field Pending on a LIMITED or ACTIVE route is refused;
+  - a route already ACTIVE with Pending Core fields when 2b is installed keeps working and is listed;
+  - before the 2b install, or with `CORRIDRA_ROUTE_PACK_FORM` off, every pack path is unchanged from main.
 - A property test: country pairs in both orders give the same code path; no country branch.
 
 ## Consequences
