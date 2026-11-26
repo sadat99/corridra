@@ -12,7 +12,7 @@ import { hasContactShape, supplySourceKinds } from './supply-sources';
 // keys. Pure, zod only, so a page may import it; the server re-checks on every write and is the authority. No section, field
 // or branch names a country. v1 is frozen once built: a later standard adds a new registry beside this one.
 export const routePackStandardVersion = 1 as const;
-export const routePackContentOctetBudget = 131072;
+const routePackContentOctetBudget = 131072;
 export const routePackSections = [
   { number: 1, name: 'Identity and scope' },
   { number: 2, name: 'Missions' },
@@ -995,7 +995,6 @@ export const factSource = z.union([
   z.url({ protocol: /^https$/ }).max(1000),
 ]);
 export const moneyValue = z.object({ currency, amountMinor: minorUnits }).strict();
-export type MoneyValue = z.infer<typeof moneyValue>;
 export const contentFact = z
   .object({
     key: z
