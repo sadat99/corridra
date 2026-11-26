@@ -4,7 +4,7 @@ Document status: WAITING OWNER.
 
 UI spec for ADR-093 Phase 3 under UI/UX.v4 (with the v4.1 desk rules). Spec only: no application code, migration or service is written or changed by this record, and nothing is built or live because of it. It follows team desk unit D17 ("Settings with routes first and their pack state") and extends it with completeness, stale marks, editing, import, export and the one-person publish flow of ADR-093 decision I.
 
-Written 26 November 2026 on main `0d0bff7`, with the authority stamp `auth-d8359000b3d7`. Phase 2 (2a, 2b, 2c) had no draft PR when this was written, so every service contract below is taken from ADR-093 and from the code on main, and each place where the spec needs more than that is a numbered question in section 14 for Guardian G68. The repository wins over this record: if a Phase 2 PR differs, the spec is amended before the build starts.
+Written 26 November 2026 on main `0d0bff7`, with the authority stamp `auth-d8359000b3d7`. Phase 2 (2a, 2b, 2c) had no draft PR when this was written, so every service contract below is taken from ADR-093 and from the code on main, and each place where the spec needs more than that is a numbered question in section 17 for Guardian G68. The repository wins over this record: if a Phase 2 PR differs, the spec is amended before the build starts.
 
 ## 1. What this screen is for
 
@@ -35,20 +35,20 @@ Name: **UI/UX.v4** (with the v4.1 desk amendment). Rows of `docs/agents/ui-direc
 | Sample and real data                                                                  | Sample routes keep the one tenant mode label. Words say "sample", never "synthetic".             |
 | No repeated links (team desk v4.1)                                                    | One link per destination inside `<main>`. No Back-to links, no Jump-to chips, no second tab row. |
 | Team desk decision 4                                                                  | Actions open in the centred `Dialog` with the authenticator check in place (`StepUpDialog`).     |
-| How to build a new screen, steps 1 to 12, and Definition of done for a visible change | The checklist at the end of this file (section 13).                                              |
+| How to build a new screen, steps 1 to 12, and Definition of done for a visible change | The checklist at the end of this file (section 18).                                              |
 
 Preserved, unchanged: the Routes list as D17 draws it today (name, status chip, "Pack version N", "No pack yet"), "Refresh Reviewed Configuration" and its counts, "Create a directional corridor route", the guided "Add route pack" form and its payload, the Advanced raw `corridor-pack` command, every element `id` and `name`, the section `id` `workspace-settings`, all role gates, the fresh authenticator rule, and the closed real-operation gates. The left menu and its places are unchanged; this screen adds no menu entry.
 
 ## 3. Where it lives, who sees it, when it shows
 
-| Item          | Decision                                                                                                                                                                                                                                                                                                |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Place         | The existing Settings place "Routes and settings" (`workspace-settings`). The Routes list stays its first block (D17). No new menu place, no new tab row.                                                                                                                                               |
-| Addresses     | Same place address plus `?route=BD-CN` (route key in the ADR-093 sheet form), `&view=todo` or `&view=sections`, `&section=5`. A deep link opens that state; Back and Forward move through them. The existing `#workspace-settings` link still lands on the Routes list.                                 |
-| Shown only if | `CORRIDRA_UX_TEAM_DESK_V41` is on (the Routes list of D17 exists only then), `CORRIDRA_ROUTE_PACK_FORM` is on, and the route pack content module (2b marker) is installed. Otherwise the page is exactly today's page for that combination: the D17 list with no completeness, no editor and no import. |
-| Owner         | Reads, edits facts, changes pack settings and status, imports and exports. Needs `config.manage` for every write; fresh authenticator check on every write.                                                                                                                                             |
-| Admin         | Reads everything and exports (`missions.read`). Writes are not offered: the editor shows a read-only note (section 9). Admin keeps readiness and release in the existing Control Center, and after 2a can do both alone.                                                                                |
-| Other roles   | Whatever the Settings place already allows today. Nobody below the Settings gate sees any of it. Customers see none of it, ever.                                                                                                                                                                        |
+| Item          | Decision                                                                                                                                                                                                                                                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Place         | The existing Settings place "Routes and settings" (`workspace-settings`). The Routes list stays its first block (D17). No new menu place, no new tab row.                                                                                                                                                                                  |
+| Addresses     | Same place address plus `?route=BD-CN` (route key in the ADR-093 sheet form), `&view=todo` or `&view=sections`, `&section=5`. A deep link opens that state; Back and Forward move through them. The existing `#workspace-settings` link still lands on the Routes list.                                                                    |
+| Shown only if | `CORRIDRA_UX_TEAM_DESK_V41` is on (the Routes list of D17 exists only then), `CORRIDRA_ROUTE_PACK_FORM` is on, and the route pack content module (2b marker) is installed. Otherwise the page is exactly today's page for that combination: the D17 list with no completeness, no editor and no import.                                    |
+| Owner         | Reads, edits facts, changes pack settings and status, imports and exports. Needs `config.manage` for every write; fresh authenticator check on every write.                                                                                                                                                                                |
+| Admin         | Reads everything and exports (`missions.read`). Limiting export to owner and admin is a design choice of this spec, not an ADR-093 rule (question 10 stays open). Writes are not offered: the editor shows a read-only note (section 9). Admin keeps readiness and release in the existing Control Center, and after 2a can do both alone. |
+| Other roles   | Whatever the Settings place already allows today. Nobody below the Settings gate sees any of it. Customers see none of it, ever.                                                                                                                                                                                                           |
 
 ## 4. Screens
 
@@ -254,7 +254,7 @@ The owner can take a route from data to live alone. The roles are unchanged (ADR
 
 The one link from this screen to step 4 is in the readiness line: "Record Readiness" (text link, to the existing controls for this route and pack). The editor has no release button and no copy that implies the route is cleared.
 
-Wording rule for every status and pack change (ADR-029 and ADR-093 Phase 4): a pack status is not clearance. The dialogs say it: "A pack status is not clearance. Real payments, outreach and payouts stay closed until you open each gate."
+Wording rule for every status and pack change (ADR-029 and ADR-093 Phase 4): a pack status is not clearance. The dialogs say it: "A pack status is not clearance. Real payments, outreach and payouts stay closed until the owner decides each gate."
 
 ## 11. Publishing a pack change
 
