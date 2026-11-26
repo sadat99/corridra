@@ -50,6 +50,8 @@ export type SheetIssue = {
   route: string | null;
   key: string | null;
   message: string;
+  // Set on a save step's refusal that carries one, for example ROUTE_PACK_PACK_CHANGED.
+  code?: string;
 };
 type FieldChange = { key: string; label: string };
 export type SheetRoutePlan = {
@@ -277,6 +279,8 @@ type PlannedRoute = SheetRoutePlan & {
   destination: string;
   document: ContentDocument;
   configuration: RouteConfiguration;
+  // The pack the plan read, so the pack step refuses if another write changed it meanwhile.
+  basePackId: string | null;
 };
 const listItems = (text: string) =>
   text
@@ -551,6 +555,7 @@ function planRoute(
     goLive,
     document,
     configuration,
+    basePackId: pack?.id ?? null,
   };
 }
 
@@ -716,6 +721,7 @@ export class RoutePackSheetService {
             status: plan.pack.status,
             configuration: plan.configuration,
             reason: v.reason,
+            expectedBasePackId: plan.basePackId,
           },
         );
         progress(plan, ids.get(plan.route)!, { packVersion: published.version });
@@ -736,7 +742,15 @@ export class RoutePackSheetService {
       return {
         ...result,
         ok: false,
-        errors: [{ row: null, route: step?.route ?? null, key: null, message }],
+        errors: [
+          {
+            row: null,
+            route: step?.route ?? null,
+            key: null,
+            message,
+            ...(error instanceof DomainError && error.code ? { code: error.code } : {}),
+          },
+        ],
         saved: [...saved.values()],
       };
     }

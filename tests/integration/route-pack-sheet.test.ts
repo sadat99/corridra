@@ -871,3 +871,113 @@ test('an export of more than 20 routes says so plainly, and a custom number row 
   expect(number.cells[14]).toBe('Use text for codes with leading zeros.');
   expect(rows.find((r) => r.cells[2] === 'custom.trend_ec_pe')!.cells[14]).toBe('');
 });
+
+test('a save that stopped after propose and before decide publishes on retry with the same file, and a changed file under that saveId is refused in plain words', async () => {
+  const file = (missions: string) => [
+    filled('EC-GT', 'identity.display_name', 'Ecuador to Guatemala'),
+    line({ route: 'EC-GT', field_key: 'pack.missionTypes', state: 'Filled', value: missions }),
+  ];
+  const saveId = randomUUID();
+  const before = await counts();
+  const first = await interruptedOnce(
+    'decide',
+    new DomainError('Synthetic interruption', 503),
+  ).save(owner(), { rows: rowsOf(file('buyers')), saveId, reason });
+  expect(first.ok).toBe(false);
+  const id = await routeId('EC-GT');
+  expect(first.saved).toEqual([
+    { route: 'EC-GT', routeId: id, contentVersion: 1, packVersion: null },
+  ]);
+  const proposed = {
+    ...before,
+    routes: before.routes + 1,
+    contents: before.contents + 1,
+    proposals: before.proposals + 1,
+  };
+  expect(await counts()).toEqual(proposed);
+  const changed = await save(file('sourcing'), owner(), saveId);
+  expect(changed.ok).toBe(false);
+  expect(changed.saved).toEqual([]);
+  expect(changed.errors).toMatchObject([
+    { row: null, route: 'EC-GT', key: null, message: sheetWords.saveReused },
+  ]);
+  const response = await sheetRequest({
+    mode: 'save',
+    csv: csvOf(file('sourcing')),
+    saveId,
+    reason,
+  });
+  expect(response.status).toBe(409);
+  expect((await response.json()).error).toBe(sheetWords.saveReused);
+  expect(await counts()).toEqual(proposed);
+  const finished = await save(file('buyers'), owner(), saveId);
+  expect(finished.ok).toBe(true);
+  expect(finished.saved).toEqual([
+    { route: 'EC-GT', routeId: id, contentVersion: null, packVersion: 1 },
+  ]);
+  expect((await latestPack('EC-GT')).configuration.missionTypes).toEqual(['buyers']);
+  expect(await counts()).toEqual({
+    ...proposed,
+    packs: before.packs + 1,
+    decisions: before.decisions + 1,
+  });
+});
+
+test('a pack paused after the plan is not un-paused by the save: the pack step is refused as changed and the report shows the content saved', async () => {
+  expect((await save(coreLines('GT-HN'))).ok).toBe(true);
+  const id = (await routeId('GT-HN'))!;
+  const draft = await latestPack('GT-HN');
+  const statusChange = async (status: 'ACTIVE' | 'PAUSED', version: number) =>
+    corridors.appendPack(owner(), {
+      id: randomUUID(),
+      routeId: id,
+      version,
+      status,
+      effectiveFrom: new Date().toISOString(),
+      reason,
+      configuration: draft.configuration,
+    });
+  await statusChange('ACTIVE', draft.version + 1);
+  // Someone pauses the route while this save is between its content step and its pack step.
+  const racing = new Proxy(content, {
+    get(target, property) {
+      if (property === 'appendBatch')
+        return async (
+          ctx: Parameters<RoutePackContentService['appendBatch']>[0],
+          input: unknown,
+        ) => {
+          const written = await target.appendBatch(ctx, input);
+          await statusChange('PAUSED', draft.version + 2);
+          return written;
+        };
+      const value = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  const raced = new RoutePackSheetService(f.runtime, corridors, operations, racing);
+  const report = await raced.save(owner(), {
+    rows: rowsOf([
+      filled('GT-HN', 'market.notes', 'Coffee and textiles'),
+      line({ route: 'GT-HN', field_key: 'pack.languages', state: 'Filled', value: 'es' }),
+    ]),
+    saveId: randomUUID(),
+    reason,
+  });
+  expect(plan(report, 'GT-HN').pack.status).toBe('ACTIVE');
+  expect(report.ok).toBe(false);
+  expect(report.errors).toEqual([
+    {
+      row: null,
+      route: 'GT-HN',
+      key: null,
+      code: 'ROUTE_PACK_PACK_CHANGED',
+      message: "This route's pack changed since you opened it. Reload and try again.",
+    },
+  ]);
+  expect(report.saved).toEqual([
+    { route: 'GT-HN', routeId: id, contentVersion: 2, packVersion: null },
+  ]);
+  const pack = await latestPack('GT-HN');
+  expect(pack.version).toBe(draft.version + 2);
+  expect(pack.status).toBe('PAUSED');
+});
