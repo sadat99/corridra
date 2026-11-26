@@ -5617,3 +5617,15 @@ Main is 41d18bf5. Production deploys for c6d74d0a and 41d18bf5 are building; not
 Open minor follow-ups, recorded and not fixed: (a) `scripts/preflight.mjs` about lines 120 to 124 hides an offline `git fetch --unshallow` failure as "scanner unavailable, skipped"; (b) the third test in `tests/security-scan-history.test.mjs` asserts `/shallow/` and can pass vacuously; tighten to `/could not be completed/`.
 
 Verification (scribe, this branch): `node scripts/authority.mjs stamp` run first (auth-12d72cb8f7f1); focused doc checks listed in the PR body. Full suites not run. Next action: unchanged (native review, owner live steps; owner flip of the how/trust switch on the owner's word). PR: the records PR for branch claude/records-g67-667-668.
+
+## 26 Nov 2026 - how/trust switch flipped, PR 670 follow-ups closed (scribe, from G67's report)
+
+Request: record the owner flip, PR 670 and main ed3b85c1. Changed files: this entry; `docs/V3_LEDGER.md` (Resume line); `docs/PLAN_STATUS.md` (v4.3 row). No application code, test or ADR changed.
+
+Owner flip: the owner said "flip it" first hand to Guardian G67 on 26 Nov 2026. `CORRIDRA_UX_HOW_TRUST_V43=true` was set in Vercel production (env id cDyK1cbDOhbh7rzc, plain, production only; comment: rollback = unset and redeploy) and production was redeployed: dpl_YiJBWBXary9drMZPvBRQQFpFrBNH READY for c982c6b0, aliased to corridra.vercel.app (canonical c.obsidianglobal.studio). Live check by HTML only: /how-it-works and /trust return 200 with htv43 v4.3 markup; the home links to both. Not checked: rendered layout by a human; old home anchors on live. Rollback: unset the variable and redeploy. Effective only while `CORRIDRA_UX_HOME_V43` is on (it is). The PLAN_STATUS v4.3 row moved from "switch off, awaiting owner flip" to live, switch on 26 Nov 2026. Native language review of the new words is still open. Reported by G67; not re-run by the scribe.
+
+PR 670 merged as ed3b85c1 (builder B2): `scripts/preflight.mjs` now surfaces the "could not be completed" scanner line instead of hiding an offline unshallow failure; the third test in `tests/security-scan-history.test.mjs` asserts `/could not be completed/`. Both open follow-ups (a) and (b) recorded in the PR 665 and PR 667 entries are closed. The production deploy for ed3b85c1 was not verified when this was written; READY is not claimed.
+
+Main is ed3b85c1. ADR-093 Phase 2a is not built; no requirement moves to VERIFIED.
+
+Verification (scribe): `node scripts/authority.mjs stamp` first (auth-7ba0ede95d43); focused doc checks in the PR body. Full suites not run. Next action: native review of the new words, then the owner live steps as in the ledger. PR: records PR for branch claude/records-g67-flip.
