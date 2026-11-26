@@ -1,0 +1,119 @@
+/* The Solutions menu of the public header, only while CORRIDRA_UX_HOME_V43 is on (the header sets data-v43). Everything
+   here is scoped to .public-header[data-v43], so no other header rule changes. The wide panel is one narrow list of
+   four rows with the six job pages one step down; the sheet shows the same rows as titles under a group label.
+   Tokens only. Nothing animates. */
+.public-header[data-v43] .public-nav-faq {
+  display: none;
+}
+.public-header[data-v43] .public-sol-label {
+  display: none;
+}
+.public-header[data-v43] .public-more {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--line);
+}
+.public-header[data-v43] .public-more > summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-weight: 600;
+  color: var(--text-1);
+  cursor: pointer;
+}
+.public-header[data-v43] .public-more ul {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.public-header[data-v43] .public-more li a {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding-inline: var(--space-2);
+  color: var(--text-1);
+  text-decoration: none;
+  border: 0;
+}
+.public-header[data-v43] .public-more li a:hover {
+  color: var(--action);
+}
+.public-header[data-v43] .public-more li a[aria-current='page'] {
+  background: var(--selected-surface);
+}
+.public-header[data-v43] .public-more .public-jobs-else {
+  display: inline-flex;
+  margin-top: var(--space-2);
+}
+
+/* The sheet: a group label, then the four titles, then More Ways to Work as a closed group. */
+@container public-header (max-width: 66.99rem) {
+  .public-header[data-v43] .public-nav-sol {
+    display: none;
+  }
+  .public-header[data-v43] .public-jobs-sol > .public-sol-label {
+    display: block;
+    margin: 0;
+    padding: var(--space-3) 0 var(--space-1);
+  }
+  .public-header[data-v43] .public-jobs-sol {
+    padding-block: 0 var(--space-1);
+  }
+  .public-header[data-v43] .public-more {
+    margin: 0;
+    padding-inline-start: var(--space-4);
+    border-top: 0;
+  }
+  .public-header[data-v43] .public-more > summary {
+    min-height: 3rem;
+    font-weight: 500;
+  }
+  .public-header[data-v43] .public-more li a {
+    min-height: 3rem;
+    padding-inline-start: var(--space-4);
+  }
+  .public-header[data-v43] .public-more .public-jobs-else {
+    display: inline-flex;
+  }
+  .public-header[data-v43] .public-nav-faq {
+    display: flex;
+  }
+}
+
+/* The bar on a wide screen. */
+@container public-header (min-width: 67rem) {
+  .public-header[data-v43] .public-jobs-sol {
+    width: min(22rem, 100%);
+    max-height: calc(100dvh - 5rem - var(--space-4));
+    padding: var(--space-2);
+    overflow-y: auto;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-3);
+  }
+  .public-header[data-v43] .public-jobs-sol > ul {
+    display: block;
+  }
+  .public-header[data-v43] .public-jobs-sol > ul li a {
+    align-items: center;
+    height: auto;
+    min-height: 3.5rem;
+    padding: var(--space-2);
+    border: 0;
+    border-radius: var(--radius-md);
+  }
+  .public-header[data-v43] .public-jobs-sol > ul li a:hover {
+    background: var(--surface-2);
+  }
+  .public-header[data-v43] .public-jobs-sol .public-job-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 0;
+  }
+  .public-header[data-v43] .public-more li {
+    min-width: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-header[data-v43] .public-jobs-sol li a {
+    transition: none;
+  }
+}

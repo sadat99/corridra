@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -8,11 +9,19 @@ import { CornerDock } from './corner-dock';
 import { CorridraIcon } from './corridra-icon';
 import { TopBarTools } from './ux/top-bar';
 import { useLanguage } from './language-provider';
-import { useSignedIn } from './use-signed-in';
+import { isQuiet, useSignedIn } from './use-signed-in';
 import { useSignOut } from './use-sign-out';
 import { defaultLocale } from '../lib/i18n/locales';
 import { translate, type MessageKey } from '../lib/i18n/messages';
 import { WORDMARK } from './brand-paths';
+import { revealThenFocus } from '../lib/ux/anchor-focus';
+
+// Home page v4.3 (owner, 26 Nov 2026, via the Guardian): the Solutions menu and its stylesheet load only while the
+// header is told CORRIDRA_UX_HOME_V43 is on, so a header without it ships neither.
+const faqs = 'home.v43.menu.faqs' as MessageKey;
+const SiteHeaderSolutions = dynamic(() =>
+  import('./site-header-solutions').then((m) => m.SiteHeaderSolutions),
+);
 
 /**
  * The Corridra logo, drawn here only (the design system allows this one inline drawing). The halftone
@@ -156,6 +165,7 @@ function reachable(root: HTMLElement) {
 export function SiteHeader({
   accounts = false,
   mode,
+  homeV43 = false,
 }: {
   accounts?: boolean;
   /**
@@ -164,6 +174,11 @@ export function SiteHeader({
    * shows "Live" or "Preview" instead. Absent keeps the "(sample request)" screen-reader text.
    */
   mode?: 'sample' | 'real';
+  /**
+   * CORRIDRA_UX_HOME_V43, read on the server: the What We Do menu becomes Solutions (four home sections, the six job
+   * pages one step down) and the sheet gains FAQs. Not on the request page (/plan) and not in the staff preview.
+   */
+  homeV43?: boolean;
 }) {
   const { t, locale } = useLanguage();
   const pathname = usePathname();
@@ -186,6 +201,7 @@ export function SiteHeader({
     locale !== defaultLocale && t(key) === translate(defaultLocale, key) ? 'en' : undefined;
   const current = (href: string) => (pathname === href ? 'page' : undefined);
   const account = who === 'staff' ? '/operator' : '/account';
+  const solutions = homeV43 && pathname !== '/plan' && !isQuiet(pathname);
 
   function close() {
     setOpen(false);
@@ -229,6 +245,7 @@ export function SiteHeader({
     <header
       className="site-header public-header"
       data-open={open ? 'true' : undefined}
+      data-v43={solutions ? 'true' : undefined}
       ref={header}
       onBlur={(event) => {
         // The open menu keeps focus inside itself; the wide-screen panel closes when focus leaves the header.
@@ -290,52 +307,66 @@ export function SiteHeader({
         <div className="public-drawer-tools">
           <TopBarTools variant="drawer" />
         </div>
-        <button
-          ref={whatWeDo}
-          type="button"
-          className="public-nav-what"
-          aria-expanded={jobsOpen}
-          aria-controls="public-jobs"
-          data-current={jobs.some(({ href }) => href === pathname) ? 'true' : undefined}
-          onClick={() => setJobsOpen(!jobsOpen)}
-        >
-          <span lang={english('header.whatWeDo')}>{t('header.whatWeDo')}</span>
-          <CorridraIcon name="chevron" size={16} className="public-nav-chevron" />
-        </button>
-        <div id="public-jobs" className="public-jobs" hidden={!jobsOpen}>
-          <p className="public-nav-label" lang={english('header.jobs')}>
-            {t('header.jobs')}
-          </p>
-          <ul>
-            {jobs.map(({ href, icon, title, line }) => (
-              <li key={href}>
-                <Link prefetch={false} href={href} aria-current={current(href)} onClick={close}>
-                  <span className="public-job-icon">
-                    <CorridraIcon name={icon} size={20} />
-                  </span>
-                  <span className="public-job-words">
-                    <span className="public-job-title" lang={english(title)}>
-                      {t(title)}
-                    </span>
-                    <span className="public-job-line" lang={english(line)}>
-                      {t(line)}
-                    </span>
-                  </span>
+        {solutions ? (
+          <SiteHeaderSolutions
+            open={jobsOpen}
+            onToggle={() => setJobsOpen(!jobsOpen)}
+            onClose={close}
+            buttonRef={whatWeDo}
+            jobs={jobs}
+            pathname={pathname}
+            english={english}
+          />
+        ) : (
+          <>
+            <button
+              ref={whatWeDo}
+              type="button"
+              className="public-nav-what"
+              aria-expanded={jobsOpen}
+              aria-controls="public-jobs"
+              data-current={jobs.some(({ href }) => href === pathname) ? 'true' : undefined}
+              onClick={() => setJobsOpen(!jobsOpen)}
+            >
+              <span lang={english('header.whatWeDo')}>{t('header.whatWeDo')}</span>
+              <CorridraIcon name="chevron" size={16} className="public-nav-chevron" />
+            </button>
+            <div id="public-jobs" className="public-jobs" hidden={!jobsOpen}>
+              <p className="public-nav-label" lang={english('header.jobs')}>
+                {t('header.jobs')}
+              </p>
+              <ul>
+                {jobs.map(({ href, icon, title, line }) => (
+                  <li key={href}>
+                    <Link prefetch={false} href={href} aria-current={current(href)} onClick={close}>
+                      <span className="public-job-icon">
+                        <CorridraIcon name={icon} size={20} />
+                      </span>
+                      <span className="public-job-words">
+                        <span className="public-job-title" lang={english(title)}>
+                          {t(title)}
+                        </span>
+                        <span className="public-job-line" lang={english(line)}>
+                          {t(line)}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="public-jobs-foot">
+                <Link prefetch={false} className="public-jobs-else" href="/plan" onClick={close}>
+                  {t('home.else')}
+                  <CorridraIcon name="arrow" size={18} />
                 </Link>
-              </li>
-            ))}
-          </ul>
-          <div className="public-jobs-foot">
-            <Link prefetch={false} className="public-jobs-else" href="/plan" onClick={close}>
-              {t('home.else')}
-              <CorridraIcon name="arrow" size={18} />
-            </Link>
-            <span className="public-jobs-note">
-              <CorridraIcon name="check" size={16} />
-              {t('home.calm.account')}
-            </span>
-          </div>
-        </div>
+                <span className="public-jobs-note">
+                  <CorridraIcon name="check" size={16} />
+                  {t('home.calm.account')}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
         {sections.map(({ href, key }) => (
           <Link
             prefetch={false}
@@ -349,6 +380,20 @@ export function SiteHeader({
             <CorridraIcon name="chevron" size={16} className="public-nav-chevron" />
           </Link>
         ))}
+        {solutions && (
+          <Link
+            prefetch={false}
+            className="public-nav-link public-nav-faq"
+            href="/#questions"
+            onClick={() => {
+              close();
+              if (pathname === '/') revealThenFocus('questions');
+            }}
+          >
+            <span lang={english(faqs)}>{t(faqs)}</span>
+            <CorridraIcon name="chevron" size={16} className="public-nav-chevron" />
+          </Link>
+        )}
         <div className="public-nav-actions">
           {/* Wide bar order (board 10): Listen, the language by name, Sign In, Start a Request. */}
           <div className="public-wide-tools">
