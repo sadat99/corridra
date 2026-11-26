@@ -7,12 +7,13 @@ import {
   type DatabaseClient,
 } from '@corridra/db';
 import { DomainError, stepUpRequired } from '@corridra/domain';
-import { routePack } from '@corridra/domain/corridors';
+import { routePack, type RouteConfiguration } from '@corridra/domain/corridors';
 import {
   missionCatalogue,
   machineryFields,
   requirementFields,
 } from '@corridra/domain/commercial-missions';
+import { assertPackGoLive } from './route-pack-content';
 export const readinessDimensions = [
   'offer',
   'owner',
@@ -214,6 +215,15 @@ async function onePersonPublication(db: DatabaseClient) {
   ).rows[0];
   return row?.present === true;
 }
+// The configuration keys a new pack version changes against the current one, as the preview names them.
+export function changedPackFields(
+  current: Partial<RouteConfiguration> | undefined,
+  next: RouteConfiguration,
+): string[] {
+  return (Object.keys(next) as (keyof RouteConfiguration)[]).filter(
+    (key) => JSON.stringify(current?.[key]) !== JSON.stringify(next[key]),
+  );
+}
 export class OperationsService {
   constructor(private pool: DatabasePool) {}
   preview(ctx: RequestContext, input: unknown) {
@@ -242,11 +252,7 @@ export class OperationsService {
       ).rows[0].count;
       return {
         basePackId: current?.id ?? null,
-        changedFields: Object.keys(v.configuration).filter(
-          (k) =>
-            JSON.stringify(current?.configuration[k]) !==
-            JSON.stringify(v.configuration[k as keyof typeof v.configuration]),
-        ),
+        changedFields: changedPackFields(current?.configuration, v.configuration),
         historicalAssignmentsPreserved: assignments,
         readinessInvalidated: true,
         publiclyOperational: false,
@@ -388,6 +394,8 @@ export class OperationsService {
             ).rows[0];
             if ((current?.id ?? null) !== q.base_pack_id)
               throw new DomainError('Configuration changed; submit a new preview', 409);
+            // ADR-093 2b: the shared go-live check on the pack as published. Both locks are already held.
+            await assertPackGoLive(db, ctx.tenantId, p);
             await insert(db, 'corridor_pack_version', {
               id: p.id,
               tenant_id: ctx.tenantId,

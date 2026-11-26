@@ -7,6 +7,7 @@ import {
   machineryFields,
   requirementFields,
 } from '@corridra/domain/commercial-missions';
+import { assertPackGoLive } from './route-pack-content';
 const endpoints = z
   .object({
     id: z.uuid(),
@@ -209,6 +210,8 @@ export class CorridorService {
   appendPack(ctx: RequestContext, input: unknown) {
     const v = routePack.parse(input);
     return withTenant(this.pool, ctx, 'config.manage', async ({ db, actorId }) => {
+      // ADR-093 2b: the shared go-live check, so the raw corridor-pack command cannot take a route live with Core fields Pending.
+      await assertPackGoLive(db, ctx.tenantId, v);
       await db.query(
         'INSERT INTO app.corridor_pack_version(id,tenant_id,route_id,version,status,configuration,effective_from,created_by,reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',
         [
