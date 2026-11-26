@@ -120,7 +120,7 @@ async function main() {
     step('security-scan', [
       'sh',
       '-c',
-      `node scripts/security-scan.mjs >/dev/null 2>&1; if [ -x .cache/security/gitleaks ]; then .cache/security/gitleaks git . --redact=100 --no-banner --log-opts='${base}..HEAD'; else echo 'scanner unavailable, skipped'; fi`,
+      `node scripts/security-scan.mjs 2>&1 >/dev/null | grep -m1 'could not be completed' >&2; if [ -x .cache/security/gitleaks ]; then .cache/security/gitleaks git . --redact=100 --no-banner --log-opts='${base}..HEAD'; else echo 'scanner unavailable, skipped'; fi`,
     ]),
   ];
 
