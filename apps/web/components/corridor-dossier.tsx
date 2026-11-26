@@ -107,11 +107,16 @@ export function CorridorDossier() {
           <dd>
             <p>
               <FactLabel label="Self-declared" english />{' '}
-              <PlaceWords text="Says it ships to {bd}. Their own words, not checked." />
+              <span className="ux-dossier-words">
+                <PlaceWords text="Says it ships to {bd}" />
+              </span>
+              <span className="ux-dossier-words">Their own words, not checked.</span>
             </p>
             <p>
-              <FactLabel label="Evidence available" english /> An export licence copy can be shared.
-              Corridra has not checked it.
+              <FactLabel label="Evidence available" english />{' '}
+              <span className="ux-dossier-words">
+                An export licence copy can be shared. Corridra has not checked it.
+              </span>
             </p>
           </dd>
         </div>

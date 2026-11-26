@@ -15,10 +15,28 @@
 .public-header[data-v43] .public-more > summary {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-height: 2.75rem;
+  padding-inline: var(--space-2);
   font-weight: 600;
   color: var(--text-1);
+  text-decoration: none;
+  list-style: none;
   cursor: pointer;
+}
+.public-header[data-v43] .public-more > summary::-webkit-details-marker {
+  display: none;
+}
+/* A plus while closed and a minus while open: the shape, not only the colour, says it opens. */
+.public-header[data-v43] .public-more > summary::after {
+  content: '+';
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--text-2);
+}
+.public-header[data-v43] .public-more[open] > summary::after {
+  content: '\2212';
 }
 .public-header[data-v43] .public-more ul {
   display: grid;

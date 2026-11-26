@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { mountHomeV42 } from '../ux/home-v42-fixture';
+import { mountHomeV43 } from '../ux/home-v43-fixture';
 
 // The home page, Two Routes (owner decision of 17 November 2026, design board "Corridra Two Routes", revision 3c;
 // docs/revamp/specs/public-home.md). It replaces concept G of 6 November 2026 and its Mission Player. The visitor
@@ -493,4 +494,24 @@ test('switch on (v4.2): the page still names every open market, key Asian market
     await door(page, name).click();
     expect(await page.locator('main').innerText()).not.toMatch(/—/);
   }
+});
+
+// Home page v4.3, CORRIDRA_UX_HOME_V43 exactly "true" (owner, 26 Nov 2026, via the Guardian: "update as per attachment
+// 100% correctly"). The cases above stay the switch-off truth and are unchanged; this case mounts the real v4.3
+// components on the live home's styles (tests/ux/home-v43-fixture.ts).
+test('switch on (v4.3): the page still names every open market, and no door leaves an em dash on the page', async ({
+  page,
+}) => {
+  await mountHomeV43(page, { width: 1440 });
+  const text = (await page.locator('main').innerText()).toLowerCase();
+  for (const word of ['eu', 'uk', 'us', 'australia', 'key asian markets'])
+    expect(text).toContain(word);
+  for (const value of ['china', 'sell', 'delegation', 'other']) {
+    await page.locator(`.hv43-choose .tr-door:has(input[value="${value}"]) label`).click();
+    expect(await page.locator('main').innerText()).not.toMatch(/—/);
+  }
+  // The request link follows the chosen door.
+  await expect(page.locator('#home-start')).toHaveAttribute('href', '/plan');
+  await page.locator('.hv43-choose .tr-door:has(input[value="sell"]) label').click();
+  await expect(page.locator('#home-start')).toHaveAttribute('href', '/plan?job=buyers');
 });

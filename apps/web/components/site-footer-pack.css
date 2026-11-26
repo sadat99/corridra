@@ -73,6 +73,13 @@
   font-size: var(--text-base);
   overflow-wrap: anywhere;
 }
+/* A place name carries its mark: keep the mark and the words on one line of text. */
+.guide-footer-pack a > span {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-1);
+}
 .gfp-sub {
   margin: var(--space-3) 0 0;
   padding-top: var(--space-3);

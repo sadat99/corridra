@@ -18,6 +18,10 @@
 .ux-dossier-head h3,
 .ux-dossier-name {
   margin: 0;
+  font-weight: 600;
+}
+.ux-dossier-head h3 {
+  font-size: var(--text-title);
 }
 .ux-dossier-lead {
   margin: 0;
@@ -52,6 +56,10 @@
   border: 2px solid var(--selected);
 }
 .ux-dossier-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
   margin: 0;
   font-weight: 600;
 }
@@ -78,7 +86,17 @@
   color: var(--text-1);
 }
 .ux-dossier-rows dd p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
   margin: 0 0 var(--space-2);
+}
+.ux-dossier-words {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-1);
 }
 .ux-dossier-actions {
   align-items: center;

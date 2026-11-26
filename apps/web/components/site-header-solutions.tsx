@@ -35,6 +35,9 @@ export function SiteHeaderSolutions({
   english: (key: MessageKey) => 'en' | undefined;
 }) {
   const t = useT();
+  // A word with no translation shows English: an English island keeps its own order inside a right-to-left page.
+  const island = (key: MessageKey) =>
+    english(key) ? ({ lang: 'en', dir: 'ltr' } as const) : ({} as const);
   const solutions = v43('menu.solutions');
   const more = v43('menu.more');
   return (
@@ -48,11 +51,11 @@ export function SiteHeaderSolutions({
         data-current={jobs.some(({ href }) => href === pathname) ? 'true' : undefined}
         onClick={onToggle}
       >
-        <span lang={english(solutions)}>{t(solutions)}</span>
+        <span {...island(solutions)}>{t(solutions)}</span>
         <CorridraIcon name="chevron" size={16} className="public-nav-chevron" />
       </button>
       <div id="public-jobs" className="public-jobs public-jobs-sol" hidden={!open}>
-        <p className="public-nav-label public-sol-label" lang={english(solutions)}>
+        <p className="public-nav-label public-sol-label" {...island(solutions)}>
           {t(solutions)}
         </p>
         <ul>
@@ -71,10 +74,10 @@ export function SiteHeaderSolutions({
                   <CorridraIcon name={icon} size={20} />
                 </span>
                 <span className="public-job-words">
-                  <span className="public-job-title" lang={english(title)}>
+                  <span className="public-job-title" {...island(title)}>
                     <PlaceWords text={t(title)} />
                   </span>
-                  <span className="public-job-line" lang={english(line)}>
+                  <span className="public-job-line" {...island(line)}>
                     {t(line)}
                   </span>
                 </span>
@@ -83,7 +86,7 @@ export function SiteHeaderSolutions({
           ))}
         </ul>
         <details className="public-more">
-          <summary lang={english(more)}>{t(more)}</summary>
+          <summary {...island(more)}>{t(more)}</summary>
           <ul>
             {jobs.map(({ href, title }) => (
               <li key={href}>
@@ -93,7 +96,7 @@ export function SiteHeaderSolutions({
                   aria-current={pathname === href ? 'page' : undefined}
                   onClick={onClose}
                 >
-                  <span lang={english(title)}>{t(title)}</span>
+                  <span {...island(title)}>{t(title)}</span>
                 </Link>
               </li>
             ))}

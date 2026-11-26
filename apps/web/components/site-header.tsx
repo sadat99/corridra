@@ -390,7 +390,7 @@ export function SiteHeader({
               if (pathname === '/') revealThenFocus('questions');
             }}
           >
-            <span lang={english(faqs)}>{t(faqs)}</span>
+            <span {...(english(faqs) ? { lang: 'en', dir: 'ltr' } : {})}>{t(faqs)}</span>
             <CorridraIcon name="chevron" size={16} className="public-nav-chevron" />
           </Link>
         )}

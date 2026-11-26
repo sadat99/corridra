@@ -50,7 +50,10 @@ export function SiteFooterPack({
   const who = useSignedInSeen();
   const english = (key: MessageKey) =>
     locale !== defaultLocale && t(key) === translate(defaultLocale, key) ? 'en' : undefined;
-  const word = (key: MessageKey) => <span lang={english(key)}>{t(key)}</span>;
+  // A word with no translation shows English: an English island keeps its own order inside a right-to-left page.
+  const island = (key: MessageKey) =>
+    english(key) ? ({ lang: 'en', dir: 'ltr' } as const) : ({} as const);
+  const word = (key: MessageKey) => <span {...island(key)}>{t(key)}</span>;
   const faqs = faqRow.title;
   // A link on the home page opens what hides its target, then takes focus there.
   const home = (id: string) => () => {
@@ -88,7 +91,7 @@ export function SiteFooterPack({
                 {solutionRows.map(({ id, href, title }) => (
                   <li key={id}>
                     <Link prefetch={false} href={href} onClick={home(id)}>
-                      <span lang={english(title)}>
+                      <span {...island(title)}>
                         <PlaceWords text={t(title)} />
                       </span>
                     </Link>
@@ -188,7 +191,7 @@ export function SiteFooterPack({
           </Link>
         ) : null}
         <Link prefetch={false} href="/corridors/bangladesh-china">
-          <span lang={english(v43('foot.guide'))}>
+          <span {...island(v43('foot.guide'))}>
             <PlaceWords text={t(v43('foot.guide'))} />
           </span>
         </Link>

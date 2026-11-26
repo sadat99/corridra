@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 import { mountHomeV42 } from '../ux/home-v42-fixture';
+import { mountHomeV43 } from '../ux/home-v43-fixture';
 
 // LP3: the home page as the owner's design board "Corridra Two Routes", revision 3c, in full. Owner, 18 November
 // 2026, first hand to Guardian 29: "why didnt we implement https://claude.ai/artifact/END7KDT2Y3KhZZoYb8pExX with all
@@ -1005,4 +1006,31 @@ test('switch on (v4.2): the Sell Abroad door says "Bangladesh sells to EU, UK, U
   // The Sell route status card drops it too; the hero sentence keeps it.
   await expect(page.locator('#routes .tr-routes > div').nth(1)).not.toContainText(/Key Asian|Asia/);
   await expect(page.locator('#hero .tr-lead')).toContainText('key Asian markets');
+});
+
+// Home page v4.3, CORRIDRA_UX_HOME_V43 exactly "true" (owner, 26 Nov 2026, via the Guardian: "update as per attachment
+// 100% correctly"; Key Asian Markets stays out of the Sell Abroad line). The cases above stay the switch-off truth and are
+// unchanged; this case mounts the real v4.3 components on the live home's styles (tests/ux/home-v43-fixture.ts).
+test('switch on (v4.3): the Sell Abroad door says "Bangladesh sells to EU, UK, US, Australia" with flags, no Key Asian Markets', async ({
+  page,
+}) => {
+  await mountHomeV43(page, { width: 1440 });
+  const flags = page.locator('main img[data-flag]');
+  expect(await flags.count()).toBeGreaterThan(5);
+  for (const flag of await flags.all()) {
+    await expect(flag).toHaveAttribute('alt', '');
+    await expect(flag).toHaveAttribute('aria-hidden', 'true');
+  }
+  const sell = page.locator('.hv43-choose .tr-door:has(input[value="sell"]) label');
+  await expect(sell.locator('.hv42-line .ux-flagged')).toHaveText([
+    'Bangladesh',
+    'EU',
+    'UK',
+    'US',
+    'Australia',
+  ]);
+  await expect(sell).not.toContainText(/Key Asian|Asia/);
+  // The doors are one radio group and the headline is the pack's.
+  await expect(page.locator('input[name="home-route"]')).toHaveCount(4);
+  await expect(page.locator('#hero h1')).toHaveText('Find the right business partners.');
 });
