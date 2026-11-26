@@ -156,6 +156,9 @@ function RouteList({ catalogue, failed }: { catalogue: Catalogue | null; failed:
  * Guided "Add route pack" form (CQ-66). The server builds the reviewed pack command with
  * createRoutePack; nobody types JSON. Shown only when CORRIDRA_ROUTE_PACK_FORM is on: the server
  * answers 404 otherwise. Review stays required and the raw command stays under Advanced.
+ * ADR-093 2b: once the server says the route pack module is active (`reviewed`), the form sends only
+ * what the person set, so every key left alone is carried from the current pack, and the result
+ * says what the reviewed publish did. Until then it sends and says exactly what it always did.
  */
 function RoutePackForm({
   tenant,
@@ -170,6 +173,8 @@ function RoutePackForm({
   onShownChange: (shown: boolean) => void;
 }) {
   const [available, setAvailable] = useState(false);
+  const [reviewed, setReviewed] = useState(false);
+  const [channelTouched, setChannelTouched] = useState(false);
   // Team desk v4.1: a route is named by its places, not by their codes. The value sent stays the route id.
   const { teamDeskV41: deskV41 } = useOperatorFlags();
   const [routeId, setRouteId] = useState('');
@@ -179,9 +184,13 @@ function RoutePackForm({
   useEffect(() => {
     let live = true;
     fetch(`/api/team-control/route-pack?${new URLSearchParams({ tenant })}`, { cache: 'no-store' })
-      .then((r) => {
+      .then(async (r) => {
+        const body = r.ok
+          ? ((await r.json().catch(() => null)) as { reviewed?: unknown } | null)
+          : null;
         if (!live) return;
         setAvailable(r.ok);
+        setReviewed(body?.reviewed === true);
         onShownChange(r.ok);
       })
       .catch(() => undefined);
@@ -201,33 +210,59 @@ function RoutePackForm({
       feedback.error('Choose at least one mission type.');
       return;
     }
+    const lists = {
+      languages: f.getAll('languages').map(String),
+      currencies: f.getAll('currencies').map(String),
+      timeZones: f.getAll('timeZones').map(String),
+    };
+    const manualChannel = f.get('manualChannel') === 'on';
+    const body = reviewed
+      ? {
+          routeId,
+          version: nextVersion,
+          status: f.get('status'),
+          ...(effectiveFrom ? { effectiveFrom } : {}),
+          reason: f.get('reason'),
+          missionTypes,
+          ...Object.fromEntries(Object.entries(lists).filter(([, values]) => values.length)),
+          ...(channelTouched ? { manualChannel } : {}),
+        }
+      : {
+          routeId,
+          version: nextVersion,
+          status: f.get('status'),
+          effectiveFrom: effectiveFrom ?? new Date(Date.now() + 60000).toISOString(),
+          reason: f.get('reason'),
+          missionTypes,
+          ...lists,
+          manualChannel,
+        };
     setBusy(true);
     feedback.clear();
     try {
-      await withStepUp(async () =>
-        readJson(
+      const result = await withStepUp(async () =>
+        readJson<{ version?: number; duplicate?: boolean; removedPolicies?: string[] }>(
           await fetch(`/api/team-control/route-pack?${new URLSearchParams({ tenant })}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              routeId,
-              version: nextVersion,
-              status: f.get('status'),
-              effectiveFrom: effectiveFrom ?? new Date(Date.now() + 60000).toISOString(),
-              reason: f.get('reason'),
-              missionTypes,
-              languages: f.getAll('languages').map(String),
-              currencies: f.getAll('currencies').map(String),
-              timeZones: f.getAll('timeZones').map(String),
-              manualChannel: f.get('manualChannel') === 'on',
-            }),
+            body: JSON.stringify(body),
           }),
         ),
       );
-      feedback.success(`Route pack version ${nextVersion} saved. Review is still required.`);
+      const removed = result.removedPolicies?.length
+        ? ` Expired policies removed: ${result.removedPolicies.join(', ')}.`
+        : '';
+      feedback.success(
+        typeof result.duplicate !== 'boolean'
+          ? `Route pack version ${nextVersion} saved. Review is still required.`
+          : result.duplicate
+            ? `Already saved. Nothing changed.${removed}`
+            : `Route pack version ${result.version} published.${removed}`,
+      );
       form.reset();
       setRouteId('');
       setEffectiveFrom(null);
+      setChannelTouched(false);
       onSaved();
     } catch (error) {
       feedback.error(error instanceof Error ? error.message : 'The route pack was not saved.');
@@ -312,8 +347,8 @@ function RoutePackForm({
             ))}
           </fieldset>
           <label className="ux-check">
-            <input type="checkbox" name="manualChannel" /> The team contacts companies by hand
-            (manual channel)
+            <input type="checkbox" name="manualChannel" onChange={() => setChannelTouched(true)} />{' '}
+            The team contacts companies by hand (manual channel)
           </label>
           <label className="field">
             Reason for this pack

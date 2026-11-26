@@ -115,7 +115,14 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     if (action === 'route-pack') {
       // CQ-66: guided route pack form. The reviewed command is built on the server.
       if (!uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM')) throw new DomainError('Not found', 404);
-      if (request.method === 'GET') return Response.json({ enabled: true }, { headers });
+      // reviewed: the route pack module is active, so the form publishes through the reviewed path and carries unset keys.
+      if (request.method === 'GET') {
+        const capabilities = await s.routePackContent.capabilities(ctx);
+        return Response.json(
+          { enabled: true, reviewed: capabilities.routePackForm && capabilities.contentInstalled },
+          { headers },
+        );
+      }
       return Response.json(
         await createRoutePack(
           { corridors: s.corridors, operations: s.operations, content: s.routePackContent },
