@@ -23,9 +23,9 @@ export const homeV43En = {
   'home.v43.hero.example': 'See a Worked Example',
   // The note inside main for a visitor without scripts
   'home.v43.noscript.lead': 'The on-page examples and route explorer require JavaScript.',
-  'home.v43.noscript.start': 'Start a request on Corridra',
+  'home.v43.noscript.start': 'Start a Request on Corridra',
   'home.v43.noscript.or': 'or',
-  'home.v43.noscript.routes': 'view routes',
+  'home.v43.noscript.routes': 'View Routes',
 
   // Route choice (the legend is the existing home.tr.q)
   'home.v43.q.sub': 'Choose what you need. The example and request will update to match.',

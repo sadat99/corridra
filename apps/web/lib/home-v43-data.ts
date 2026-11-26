@@ -186,7 +186,7 @@ export function fitLine(origin: PlaceCode, target: PlaceCode, goal: GoalKey) {
  * Which route block each anchor of the shipped route blocks lives in (read from home-routes.tsx and home-sell.tsx on
  * 26 Nov 2026). An anchor in this list opens its route before it takes focus.
  */
-export const anchorRoute: Readonly<Record<string, RouteKey>> = {
+export const anchorRoutes: Readonly<Record<string, RouteKey>> = {
   'route-china': 'china',
   gaps: 'china',
   'quote-a': 'china',
@@ -200,6 +200,20 @@ export const anchorRoute: Readonly<Record<string, RouteKey>> = {
   'route-delegation': 'delegation',
   'route-other': 'other',
 };
+
+/** The id a hash names; a malformed escape (`%E0%A4%A`) is no anchor rather than an error. */
+export function hashId(hash: string): string {
+  try {
+    return decodeURIComponent(hash.slice(1));
+  } catch {
+    return '';
+  }
+}
+
+/** The route block that hides an anchor id, or undefined. Own names only: `constructor` or `__proto__` is no route. */
+export function anchorRoute(id: string): RouteKey | undefined {
+  return Object.hasOwn(anchorRoutes, id) ? anchorRoutes[id] : undefined;
+}
 
 /** The section anchors the header, the footer and the hero point at (each id exists once on the V43 page). */
 export const sectionIds = [

@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   anchorRoute,
+  anchorRoutes,
+  hashId,
   buyerRows,
   deliveryCodes,
   ledgerAmounts,
@@ -191,11 +193,9 @@ describe('the v4.3 words', () => {
       'mk.use',
       'mk.all',
       'mk.dossier',
-      'mk.every',
       'inbound.go',
       'trust.d11.summary',
       'trust.link',
-      'people.full',
       'faq.more',
       'brief.review',
       'brief.help',
@@ -268,10 +268,20 @@ describe('the v4.3 words', () => {
   });
 
   it('give the one route block of each anchor the shipped route blocks own', () => {
-    expect(new Set(Object.values(anchorRoute))).toEqual(new Set(intentKeys));
-    expect(anchorRoute['route-delegation']).toBe('delegation');
-    expect(anchorRoute['quote-b']).toBe('china');
-    expect(anchorRoute['faircost-title']).toBe('sell');
+    expect(new Set(Object.values(anchorRoutes))).toEqual(new Set(intentKeys));
+    expect(anchorRoute('route-delegation')).toBe('delegation');
+    expect(anchorRoute('quote-b')).toBe('china');
+    expect(anchorRoute('faircost-title')).toBe('sell');
+  });
+
+  it('read a prototype name or a broken escape as no anchor, never as an error', () => {
+    for (const name of ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'])
+      expect(anchorRoute(name), name).toBeUndefined();
+    expect(anchorRoute('')).toBeUndefined();
+    expect(hashId('#constructor')).toBe('constructor');
+    expect(hashId('#route-china')).toBe('route-china');
+    expect(hashId('#%E0%A4%A')).toBe('');
+    expect(anchorRoute(hashId('#%E0%A4%A'))).toBeUndefined();
   });
 });
 

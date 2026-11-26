@@ -547,3 +547,81 @@
   align-items: center;
   gap: var(--space-2) var(--space-4);
 }
+
+/* Text at 200% on a 320 px screen: a button or a card never breaks a word letter by letter. The page-wide
+   `overflow-wrap: anywhere` lets a flex item shrink to nothing, so inside v4.3 a long word only breaks as a last resort
+   (`break-word` leaves the minimum width alone) and the side padding of an action gives way on a phone. */
+.hv43,
+.hv43 * {
+  overflow-wrap: break-word;
+}
+@media (max-width: 40rem) {
+  .hv43 :is(.primary-link, .button-secondary, .secondary-link, .hv43-toggle) {
+    padding-inline: var(--space-4);
+  }
+  .hv43 .ux-flagged {
+    flex-wrap: wrap;
+  }
+  .hv43 .ux-flagged > span {
+    min-width: auto;
+    overflow-wrap: break-word;
+  }
+  .hv43 .hv43-toggle {
+    flex-wrap: wrap;
+    padding-inline: var(--space-2);
+  }
+  .hv43 :is(.hv43-inspector, .hv43-draft, .hv43-schematic, .hv43-explorer .hv43-record) {
+    padding: var(--space-2);
+  }
+  .hv43 .hv43-inspector .hv43-segments > * {
+    flex: 1 1 100%;
+    min-inline-size: 0;
+  }
+  .hv43 .hv43-schematic {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+  .hv43 .hv43-schematic::after {
+    flex: 0 0 auto;
+    min-inline-size: 0;
+    inline-size: 100%;
+  }
+  .hv43 .hv43-draft dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+  .hv43 .hv43-draft dd {
+    margin-block-end: var(--space-2);
+  }
+}
+
+/* English words on an Arabic page (every v4.3 line is English until it has native words): each text block takes its
+   direction from its first strong letter, so a full stop or a bracket stays at the end of the English sentence. The
+   layout (grid, flex, alignment of the block) stays right to left. */
+.hv43
+  :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    p,
+    dt,
+    dd,
+    summary,
+    figcaption,
+    label,
+    legend,
+    li,
+    .tr-small,
+    .tr-door label > *,
+    .hv43-toggle > span
+  ) {
+  unicode-bidi: plaintext;
+}
+
+/* A wrapped action row starts flush: the page rule that spaces one action from the one before it with a leading margin
+   would stagger the second line. */
+.hv43 :is(.hv43-actions, .hv43-card-actions, .hv43-form-actions, .hv43-lede-actions) > * {
+  margin-inline-start: 0;
+}

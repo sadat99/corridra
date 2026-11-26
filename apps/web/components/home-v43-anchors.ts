@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, type Dispatch } from 'react';
-import { anchorRoute } from '../lib/home-v43-data';
+import { anchorRoute, hashId } from '../lib/home-v43-data';
 import type { HomeV43Event } from '../lib/home-v43-state';
 import { focusNow, onAnchor, openAncestors } from '../lib/ux/anchor-focus';
 
@@ -13,7 +13,7 @@ export function useAnchorReveal(dispatch: Dispatch<HomeV43Event>) {
   useEffect(() => {
     const go = (id: string) => {
       if (!id) return;
-      const route = anchorRoute[id];
+      const route = anchorRoute(id);
       if (route) dispatch({ type: 'openRoute', route });
       openAncestors(document.getElementById(id));
       // The route block is drawn on the next commit; look the target up after it.
@@ -22,7 +22,7 @@ export function useAnchorReveal(dispatch: Dispatch<HomeV43Event>) {
         focusNow(id);
       });
     };
-    const fromHash = () => go(decodeURIComponent(window.location.hash.slice(1)));
+    const fromHash = () => go(hashId(window.location.hash));
     const stop = onAnchor(go);
     window.addEventListener('hashchange', fromHash);
     // The page was opened on an anchor: reveal it once the first paint is done.

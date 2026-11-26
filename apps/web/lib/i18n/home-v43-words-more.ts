@@ -36,7 +36,6 @@ export const homeV43MoreEn = {
   'home.v43.mk.use': 'Use This Route in the Request',
   'home.v43.mk.all': 'View All Routes',
   'home.v43.mk.dossier': 'Explore a Sample Counterparty Dossier',
-  'home.v43.mk.every': 'See Every Route Status',
 
   // Inbound
   'home.v43.inbound.eyebrow': 'Into {bd}',
@@ -73,7 +72,6 @@ export const homeV43MoreEn = {
   'home.v43.people.group': 'Select your role',
   'home.v43.people.bring': 'You bring',
   'home.v43.people.get': 'You get',
-  'home.v43.people.full': 'Read the Full Promise for Each Role',
   'home.v43.people.role.exporter.name': 'Exporter',
   'home.v43.people.role.exporter.bring': 'Your offer, production capacity and markets of interest.',
   'home.v43.people.role.exporter.get':

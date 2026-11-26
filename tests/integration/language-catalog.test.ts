@@ -267,7 +267,10 @@ describe('where the words come from', () => {
     };
     for (const dir of ['apps/web/app', 'apps/web/components', 'apps/web/lib']) walk(dir);
     const sources = files.map(read).join('\n');
-    for (const key of keys) expect(sources, key).toContain(`'${key}'`);
+    // The home page v4.3 words are read through `v43('suffix')`, never by their whole name; their readers are proved
+    // key by key (and family by family) in tests/integration/home-v43-words.test.ts, so an unused one still fails there.
+    for (const key of keys.filter((name) => !name.startsWith('home.v43.')))
+      expect(sources, key).toContain(`'${key}'`);
   });
 
   it('the page is built in English and the language is applied after load', () => {

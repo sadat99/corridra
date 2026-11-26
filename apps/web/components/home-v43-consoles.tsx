@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useState, useSyncExternalStore } from 'react';
 import { Toggle } from './home-v43-toggle';
 import { useT } from './language-provider';
 import { PlaceWords } from './place-words';
@@ -21,6 +21,16 @@ import { fill, fillNodes } from '../lib/i18n/fill';
 // no live region of their own; the page has one announcer and a press posts a short message to it. Amounts are the
 // sample figures, USD as written, never converted, summed or ranked.
 type Announce = (text: string) => void;
+
+// False on the server and while the page hydrates, true once script runs: a control that does nothing without script
+// is not drawn as a button before then (the offers read as plain lines, and the noscript block repeats the example).
+const subscribeNone = () => () => undefined;
+const useScript = () =>
+  useSyncExternalStore(
+    subscribeNone,
+    () => true,
+    () => false,
+  );
 
 function Result({
   title,
@@ -43,6 +53,7 @@ function Result({
 export function QuoteConsole({ announce }: { announce: Announce }) {
   const t = useT();
   const ids = useId();
+  const script = useScript();
   const [picked, setPicked] = useState<(typeof offerIds)[number] | null>(null);
   const name = (id: (typeof offerIds)[number]) => t(v43(`ex.china.offer.${id}.name`));
   const terms = (id: (typeof offerIds)[number]) =>
@@ -54,31 +65,39 @@ export function QuoteConsole({ announce }: { announce: Announce }) {
       <ul className="hv43-offers">
         {offerIds.map((id) => (
           <li key={id}>
-            <Toggle
-              on={picked === id}
-              describedBy={`${ids}-terms-${id}`}
-              onPress={() => {
-                setPicked(id);
-                announce(fill(t(v43('live.chosen')), { item: name(id) }));
-              }}
-            >
-              {name(id)} <span dir="ltr">{offerAmounts[id]}</span>
-            </Toggle>
+            {script ? (
+              <Toggle
+                on={picked === id}
+                describedBy={`${ids}-terms-${id}`}
+                onPress={() => {
+                  setPicked(id);
+                  announce(fill(t(v43('live.chosen')), { item: name(id) }));
+                }}
+              >
+                {name(id)} <span dir="ltr">{offerAmounts[id]}</span>
+              </Toggle>
+            ) : (
+              <strong className="hv43-offer-name">
+                {name(id)} <span dir="ltr">{offerAmounts[id]}</span>
+              </strong>
+            )}
             <span id={`${ids}-terms-${id}`} className="hv43-terms">
               {terms(id)}
             </span>
           </li>
         ))}
       </ul>
-      <Result
-        labelledBy={`${ids}-result`}
-        title={
-          picked
-            ? fill(t(v43('ex.china.result')), { name: name(picked) })
-            : t(v43('ex.china.start.title'))
-        }
-        line={picked ? t(v43(`ex.china.offer.${picked}.detail`)) : t(v43('ex.china.start.line'))}
-      />
+      {script ? (
+        <Result
+          labelledBy={`${ids}-result`}
+          title={
+            picked
+              ? fill(t(v43('ex.china.result')), { name: name(picked) })
+              : t(v43('ex.china.start.title'))
+          }
+          line={picked ? t(v43(`ex.china.offer.${picked}.detail`)) : t(v43('ex.china.start.line'))}
+        />
+      ) : null}
       <p className="hv43-next">
         <strong>{t(v43('ex.next'))}</strong> {t(v43('ex.china.next'))}
       </p>
