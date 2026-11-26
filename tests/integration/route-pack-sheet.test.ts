@@ -981,3 +981,26 @@ test('a pack paused after the plan is not un-paused by the save: the pack step i
   expect(pack.version).toBe(draft.version + 2);
   expect(pack.status).toBe('PAUSED');
 });
+
+test('the dry run judges go-live against the latest pack, a scheduled one included', async () => {
+  expect((await save(coreLines('GT-SV'))).ok).toBe(true);
+  const draft = await latestPack('GT-SV');
+  await corridors.appendPack(owner(), {
+    id: randomUUID(),
+    routeId: (await routeId('GT-SV'))!,
+    version: draft.version + 1,
+    status: 'ACTIVE',
+    effectiveFrom: new Date(Date.now() + 3600000).toISOString(),
+    reason,
+    configuration: draft.configuration,
+  });
+  const report = await sheet.dryRun(owner(), {
+    rows: rowsOf([line({ route: 'GT-SV', field_key: 'identity.summary', state: 'Pending' })]),
+  });
+  expect(plan(report, 'GT-SV').goLive).toEqual({
+    ok: false,
+    code: 'ROUTE_PACK_CORE_TURNS_PENDING',
+    keys: ['identity.summary'],
+  });
+  expect(report.ok).toBe(false);
+});

@@ -497,10 +497,12 @@ function planRoute(
   const configuration = carriedConfiguration(pack?.configuration ?? null, set);
   const changedFields = changedPackFields(pack?.configuration, configuration);
   const packChanged = pack ? changedFields.length > 0 : Object.keys(set).length > 0;
-  const beforePack: PackView = pack
-    ? { status: pack.status, configuration: pack.configuration }
+  // Go-live is judged against the latest pack by version, scheduled or in force, as every pack and content write is.
+  const latest = existing ? state.latestPacks.get(existing.id) : undefined;
+  const beforePack: PackView = latest
+    ? { status: latest.status, configuration: latest.configuration }
     : null;
-  const afterPack: PackView = pack || packChanged ? { status, configuration } : null;
+  const afterPack: PackView = packChanged ? { status, configuration } : beforePack;
   const goLive = goLiveCheck({
     before: { pack: beforePack, document: before },
     after: { pack: afterPack, document },
