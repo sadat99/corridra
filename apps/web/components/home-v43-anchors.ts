@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, type Dispatch } from 'react';
+import { flushSync } from 'react-dom';
 import { anchorRoute, hashId } from '../lib/home-v43-data';
 import type { HomeV43Event } from '../lib/home-v43-state';
 import { focusNow, onAnchor, openAncestors } from '../lib/ux/anchor-focus';
@@ -14,9 +15,11 @@ export function useAnchorReveal(dispatch: Dispatch<HomeV43Event>) {
     const go = (id: string) => {
       if (!id) return;
       const route = anchorRoute(id);
-      if (route) dispatch({ type: 'openRoute', route });
+      // The route block must be in the page before the target is looked up. A hash on load and an event from outside
+      // React arrive from a timer or a listener, where a plain dispatch is committed on a later task; a frame can come
+      // first, find no target, and leave focus on the body. `flushSync` commits the block now.
+      if (route) flushSync(() => dispatch({ type: 'openRoute', route }));
       openAncestors(document.getElementById(id));
-      // The route block is drawn on the next commit; look the target up after it.
       requestAnimationFrame(() => {
         openAncestors(document.getElementById(id));
         focusNow(id);
