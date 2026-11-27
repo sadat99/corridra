@@ -5984,3 +5984,27 @@ Checks at f236a8f0, all exit 0:
 **Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
 
 **Not verified.** No signed-in journey. PR2c was not exercised in production. ADR-093 2b (content store, migration 0002) is still NOT installed (needs owner approval and a production PG 18 major check); route-pack-facts and route-pack-publish still answer 404 in production. Deploy dpl_Fdctk5MY3RS59stPHo6HuTHyEL6H READY (G72, Vercel list_deployments by sha). Native language review gate OPEN.
+
+## 27 Nov 2026 - records: PR 694 merged, main 17ee69f2, ADR-093 Phase 3 PR3b (scribe, for Guardian G72)
+
+**Request.** Records for Guardian G72 (session https://claude.ai/code/session_0187kU9tpg5kGmsYPezLQUpt): the merge of PR 694, "ADR-093 Phase 3 PR3b: route pack editor pack dialogs" (Change Pack Setting, Change Pack Status, Remove Sourcing Profile, Publish; locked key list controls; Class A). Branch claude/records-694 from origin/main (contains 17ee69f); authority stamp auth-7469a8b91055 at start. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger, register and editor spec read PR3b as open. It is merged.
+
+**Outcome (as relayed by G72).**
+
+- PR 694 merged 27 Nov 2026 as a squash, 17ee69f242f32bfe7aa295d63ceb28adc6a7c81a, from exact head 6837e94dbc43943dc9d17c598445007013374e4c. All CI green, CodeQL neutral. Production deploy dpl_9HjM6JDDTgHXEEvcv7U5hYuyomCd (G72 confirms READY before merge).
+- Route: two independent Opus reviews on e8c9af7 (one major: a pack-less route offered Change on every Locked row; minors); fix round b7922bb plus spec section 8.9 amendment 9c1bd68; main merges 49ec3c2 (PR 693) and 6837e94 (PR 695); test adjustments 8fdbff5 (44 px scoped to the header Change Pack Status) and 33bd8ad (more.spec: per pack row exactly one Change, Guardian ruling); Opus delta verification e8c9af7..33bd8ad, all items VERIFIED.
+- Dormant in production (404) while the 2b marker is absent.
+
+**Follow-up minors.** The TW-AU browser test checks only section 3 and mission types for a stray Change (other sections unit-tested only). The tooLarge outcome relies on exact server words (pinned by an integration test).
+
+**Next action.** PR4 (Import/Export Route Data UI, History disclosure); F2 (base-pack read in route-pack-content.ts so a same-id publish with an omitted list is refused); server code for saved-but-not-published; the PR2b follow-up list (mirror key without user); the two PR3b minors. Owner items: 2b install approval, BD-CN template and the 7 other launch routes; Phase 4 only on the owner's word.
+
+**Verification.** G72 receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, node --test tests/documents.test.mjs and prettier@3.9.10 --check, results in the PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action, condensed to stay within the 36864-byte guides budget); docs/PLAN_STATUS.md (editor spec row and ADR-093 row); docs/revamp/specs/route-pack-editor.md (Document status line and the PR 3b amendment note); this entry. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. PR3b was not exercised in production. ADR-093 2b (content store, migration 0002) is still NOT installed (needs owner approval and a production PG 18 major check); route-pack-facts and route-pack-publish still answer 404 in production.
