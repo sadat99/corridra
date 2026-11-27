@@ -19,13 +19,14 @@ import { HomeV43Reveal } from './home-v43-reveal';
 import { HomeV43Solutions } from './home-v43-solutions';
 import { useLanguage } from './language-provider';
 import { placeText } from './place-words';
-import { hashId, v43, type PlaceCode } from '../lib/home-v43-data';
+import { hashId, v43 } from '../lib/home-v43-data';
 import {
   homeV43Reducer,
   initialState,
   sellMarket,
   viewIntent,
   type HomeV43Event,
+  type HomeV43State,
 } from '../lib/home-v43-state';
 import { routeHref, type RouteKey } from '../lib/home-routes-data';
 import { fill } from '../lib/i18n/fill';
@@ -56,10 +57,7 @@ export type HomeV44Slots = {
     cta: string;
     whatsapp: string | null;
     onChoose: (route: RouteKey) => void;
-    map: ReactNode;
   }) => ReactNode;
-  /** A still row of route statuses under the route choice. */
-  strip: ReactNode;
   /** The page's own footer (the shared one is hidden on this page). */
   footer: ReactNode;
   /** The route statuses as a list, after the evidence. */
@@ -71,12 +69,14 @@ export type HomeV44Slots = {
     cta: string;
     whatsapp: string | null;
   }) => ReactNode;
-  map: (route: {
-    origin: PlaceCode;
-    target: PlaceCode;
-    /** Only the route choice lets a visitor pick the target market from the map; the form has its own list. */
-    pick: boolean;
+  /** The worked example, as four steps of who does what (replaces the v4.3 console). */
+  example: (props: { onFull: () => void }) => ReactNode;
+  /** The request, in four short steps (replaces the v4.3 form inside the sheet). */
+  sheet: (props: {
+    state: HomeV43State;
     dispatch: Dispatch<HomeV43Event>;
+    whatsapp: string | null;
+    onCancel: () => void;
   }) => ReactNode;
 };
 
@@ -165,15 +165,7 @@ export function HomeV43({
       {v44 ? v44.hero : <HomeV43Hero />}
       {v44 ? (
         <>
-          {v44.choice({
-            intent,
-            href,
-            cta,
-            whatsapp,
-            onChoose: choose,
-            map: v44.map({ origin: state.origin, target: state.target, pick: true, dispatch }),
-          })}
-          {v44.strip}
+          {v44.choice({ intent, href, cta, whatsapp, onChoose: choose })}
         </>
       ) : (
         <HomeV43Choice
@@ -187,12 +179,20 @@ export function HomeV43({
       {wide ? null : (
         <HomeV43Solutions onExplore={choose} onWalk={() => revealThenFocus('route-delegation')} />
       )}
-      {wide ? wide.summaries.process : null}
-      <HomeV43Example
-        intent={intent}
-        announce={announce}
-        onFull={() => revealThenFocus(`route-${intent}`)}
-      />
+      {wide ? (
+        <>
+          {wide.summaries.process}
+          {wide.v44.status}
+          {wide.summaries.trust}
+          {wide.v44.example({ onFull: () => revealThenFocus(`route-${intent}`) })}
+        </>
+      ) : (
+        <HomeV43Example
+          intent={intent}
+          announce={announce}
+          onFull={() => revealThenFocus(`route-${intent}`)}
+        />
+      )}
       {state.open ? (
         <HomeV43Reveal
           open={state.open}
@@ -230,33 +230,12 @@ export function HomeV43({
           announce={announce}
         />
       )}
-      {wide ? (
-        <>
-          {wide.summaries.trust}
-          {wide.v44.status}
-        </>
-      ) : null}
       <HomeV43Inbound
         onInbound={() => {
           dispatch({ type: 'inbound' });
           revealThenFocus('home-brief-job');
         }}
       />
-      {wide ? (
-        <HomeV43Markets
-          routes={false}
-          market={state.market}
-          direction={state.direction}
-          mine={state.intent}
-          onMarket={(market) => dispatch({ type: 'market', market })}
-          onDirection={(direction) => dispatch({ type: 'direction', direction })}
-          onUse={() => {
-            dispatch({ type: 'useRoute' });
-            revealThenFocus('home-brief-job');
-          }}
-          announce={announce}
-        />
-      ) : null}
       {summaries ? (
         <>
           {wide ? null : summaries.trust}
@@ -277,21 +256,7 @@ export function HomeV43({
       {v44 ? (
         <Dialog open={sheet} onClose={closeSheet} title={t(v43('brief.eyebrow'))} keepMounted>
           <div className="hv44-sheet">
-            <HomeV43Brief
-              state={state}
-              dispatch={dispatch}
-              whatsapp={whatsapp}
-              {...(v44
-                ? {
-                    map: v44.map({
-                      origin: state.origin,
-                      target: state.target,
-                      pick: false,
-                      dispatch,
-                    }),
-                  }
-                : {})}
-            />
+            {v44.sheet({ state, dispatch, whatsapp, onCancel: closeSheet })}
           </div>
         </Dialog>
       ) : (

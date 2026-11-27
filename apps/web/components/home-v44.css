@@ -842,3 +842,524 @@
   font-size: var(--text-sm);
   border-block-start: 1px solid var(--border-subtle);
 }
+
+/* ======== Design approved 27 Nov 2026 (v7): dotted maps, one Start, stepped request sheet ======== */
+
+/* Dotted maps. Colours by class, so the SVG carries none. The arcs draw once; the travelling dots and pulses stop
+   under Pause Motion and under reduced motion. */
+.hv43 .hv44-dotmap {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+.hv43 .hv44-land {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.hv43 .hv44-dotmap .hv44-arc {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: hv44-draw 1.6s ease-out forwards;
+}
+.hv43 .hv44-travel {
+  fill: var(--brand);
+}
+.hv43 .hv44-pin-dot {
+  fill: var(--brand);
+  stroke: none;
+}
+.hv43 .hv44-pin[data-tone='ask'] .hv44-pin-dot {
+  fill: var(--text-2);
+}
+.hv43 .hv44-pin-home .hv44-pin-dot {
+  fill: var(--accent-marigold);
+}
+.hv43 .hv44-pulse {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hv44-pulse 2.4s ease-out infinite;
+}
+.hv43 .hv44-pin-home .hv44-pulse {
+  stroke: var(--accent-marigold);
+}
+@keyframes hv44-pulse {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+:root[data-hv44-paused] .hv44-travel {
+  display: none;
+}
+:root[data-hv44-paused] .hv44-pulse {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv43 .hv44-dotmap .hv44-arc {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .hv43 .hv44-pulse {
+    animation: none;
+    opacity: 0;
+  }
+  .hv43 .hv44-travel {
+    display: none;
+  }
+}
+
+/* One Start a Request on screen at a time: the header's stays hidden while the hero's is in view. */
+:root[data-hv44-hero='in'] .site-header .nav-cta {
+  visibility: hidden;
+}
+
+/* Hero: a quiet dotted world behind the words, faded out under them. */
+.hv43 .hv44-hero {
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(180deg, var(--surface-subtle), var(--surface-0) 90%);
+  overflow: hidden;
+}
+.hv43 .hv44-hero-map {
+  position: absolute;
+  inset: 4rem 0 0;
+  z-index: -1;
+  opacity: 0.9;
+}
+.hv43 .hv44-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 52% 46% at 50% 42%,
+    var(--surface-0) 0,
+    var(--surface-0) 45%,
+    transparent 100%
+  );
+}
+.hv43 .hv44-hero .hv44-pause {
+  position: absolute;
+  inset-inline-end: var(--space-4);
+  inset-block-end: var(--space-4);
+}
+
+/* Route choice: a segmented control, the panel and its own map. No button: the page's Start opens the sheet. */
+.hv43 .hv44-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--surface-subtle);
+  border: 0;
+  border-radius: var(--radius-lg);
+}
+.hv43 .hv44-tab {
+  min-block-size: 2.75rem;
+  padding-inline: var(--space-5);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  transition:
+    background 0.25s,
+    color 0.25s;
+}
+.hv43 .hv44-tab[aria-selected='true'] {
+  color: var(--text-1);
+  font-weight: 600;
+  background: var(--surface-1);
+}
+.hv43 .hv44-pick {
+  align-items: stretch;
+}
+.hv43 .hv44-pick-map {
+  position: static;
+  min-block-size: 18rem;
+  overflow: hidden;
+  background: var(--surface-subtle);
+  border-radius: var(--radius-lg);
+}
+.hv43 .hv44-pick-note {
+  margin: 0;
+}
+
+/* How it works: one timeline. */
+.hv43 .hv44-process {
+  display: grid;
+  gap: var(--space-4);
+}
+.hv43 .hv44-timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.hv43 .hv44-timeline li {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding-inline-end: var(--space-4);
+}
+.hv43 .hv44-timeline li span:last-child {
+  color: var(--text-2);
+  line-height: var(--leading-reading);
+}
+.hv43 .hv44-step-no {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  color: var(--surface-1);
+  font-weight: 600;
+  font-size: var(--text-lg);
+  background: var(--brand);
+  border-radius: 50%;
+}
+@media (min-width: 48rem) {
+  .hv43 .hv44-timeline {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .hv43 .hv44-timeline::before {
+    content: '';
+    position: absolute;
+    inset-inline: 1.75rem 25%;
+    inset-block-start: 1.7rem;
+    block-size: 3px;
+    background: var(--brand);
+    transform-origin: left;
+  }
+}
+@media (min-width: 48rem) and (prefers-reduced-motion: no-preference) {
+  .hv43 .hv44-timeline::before {
+    animation: hv44-grow 1.2s ease-out backwards;
+  }
+}
+@keyframes hv44-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Evidence: one card, a few ticks. */
+.hv43 .hv44-trust-card {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+@media (min-width: 48rem) {
+  .hv43 .hv44-trust-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: center;
+    gap: var(--space-12);
+  }
+}
+.hv43 .hv44-ticks {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv43 .hv44-ticks li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-block-start: 1px solid var(--border-subtle);
+}
+.hv43 .hv44-ticks li:first-child {
+  border-block-start: 0;
+}
+
+/* Route statuses: a map and one list. */
+.hv43 .hv44-status-grid {
+  display: grid;
+  gap: var(--space-6);
+}
+@media (min-width: 64rem) {
+  .hv43 .hv44-status-grid {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+.hv43 .hv44-status-map {
+  min-block-size: 16rem;
+  overflow: hidden;
+  background: var(--surface-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/* Worked example: four steps, who does what. */
+.hv43 .hv44-example {
+  display: grid;
+  gap: var(--space-3);
+}
+.hv43 .hv44-example-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.hv43 .hv44-example-lead {
+  max-inline-size: 40rem;
+  margin: 0;
+  color: var(--text-2);
+  line-height: var(--leading-reading);
+}
+.hv43 .hv44-cards {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 48rem) {
+  .hv43 .hv44-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .hv43 .hv44-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.hv43 .hv44-card-step {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-5);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.hv43 .hv44-card-step span:last-child {
+  color: var(--text-2);
+  line-height: var(--leading-reading);
+}
+.hv43 .hv44-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-block-end: var(--space-2);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv43 .hv44-who {
+  padding: var(--space-1) var(--space-3);
+  font-weight: 600;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--brand);
+}
+.hv43 .hv44-who[data-who='team'] {
+  color: var(--text-1);
+  background: var(--accent-marigold);
+}
+.hv43 .hv44-example-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin-block-start: var(--space-3);
+}
+
+/* Closing: one light band, one line, one Start, a small map. */
+.hv43 .hv44-closing {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  padding: 0;
+  background: linear-gradient(120deg, var(--surface-subtle), var(--surface-0) 55%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.hv43 .hv44-closing-text {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+  padding: var(--space-8);
+}
+.hv43 .hv44-closing h2 {
+  margin: 0;
+  font-size: clamp(2.25rem, 1rem + 4vw, 4.5rem);
+  line-height: 1;
+}
+.hv43 .hv44-closing-actions {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+.hv43 .hv44-closing-note {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv43 .hv44-closing-map {
+  min-block-size: 12rem;
+}
+@media (min-width: 48rem) {
+  .hv43 .hv44-closing {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: center;
+    min-block-size: 24rem;
+  }
+  .hv43 .hv44-closing-text {
+    padding: var(--space-12);
+  }
+  .hv43 .hv44-closing-map {
+    block-size: 100%;
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 30%);
+    mask-image: linear-gradient(90deg, transparent, black 30%);
+  }
+}
+
+/* The request sheet: four steps, one question each. A bottom sheet on a phone, a centred sheet from 48 rem. */
+.ux-dialog:has(.hv44-sheet) {
+  inline-size: min(38rem, calc(100vw - 2rem));
+}
+@media (max-width: 47.99rem) {
+  .ux-dialog:has(.hv44-sheet) {
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin-block-end: 0;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+}
+.hv43 .hv44-steps {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-1) var(--space-4);
+}
+.hv43 .hv44-steps-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.hv43 .hv44-steps-back {
+  min-block-size: 2.75rem;
+  padding: 0;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 500;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.hv43 .hv44-steps-count {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv43 .hv44-steps-dots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+.hv43 .hv44-steps-dots i {
+  block-size: 4px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+}
+.hv43 .hv44-steps-dots i[data-on] {
+  background: var(--brand);
+}
+.hv43 .hv44-steps-title {
+  margin: 0;
+  font-size: var(--text-h1);
+  font-weight: 500;
+  line-height: 1.1;
+}
+.hv43 .hv44-opts {
+  display: grid;
+  overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.hv43 .hv44-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: 3.25rem;
+  padding: var(--space-2) var(--space-4);
+  color: var(--text-1);
+  font: inherit;
+  text-align: start;
+  background: none;
+  border: 0;
+  border-block-start: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+.hv43 .hv44-opt:first-child {
+  border-block-start: 0;
+}
+.hv43 .hv44-opt[aria-checked='true'] {
+  font-weight: 600;
+}
+.hv43 .hv44-opt-mark {
+  color: var(--brand);
+  font-weight: 600;
+}
+.hv43 .hv44-opt:focus-visible,
+.hv43 .hv44-steps-back:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+.hv43 .hv44-base {
+  margin-block-start: var(--space-4);
+}
+.hv43 .hv44-steps-sum {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv43 .hv44-steps-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hv43 .hv44-steps-body {
+    animation: hv44-step 0.3s ease-out;
+  }
+}
+@keyframes hv44-step {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

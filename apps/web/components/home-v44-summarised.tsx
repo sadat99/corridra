@@ -1,14 +1,13 @@
 'use client';
 
 import { HomeV43 } from './home-v43';
-import { HomeV43ProcessSummary, HomeV43TrustSummary } from './home-v43-summaries';
 import { HomeV44Choice } from './home-v44-choice';
 import { HomeV44Closing } from './home-v44-closing';
 import { HomeV44Footer } from './home-v44-footer';
 import { HomeV44Hero } from './home-v44-hero';
-import { HomeV44Map } from './home-v44-map';
+import { HomeV44Example, HomeV44Process, HomeV44Trust } from './home-v44-parts';
+import { HomeV44Sheet } from './home-v44-sheet';
 import { HomeV44Status } from './home-v44-status';
-import { HomeV44Strip } from './home-v44-strip';
 import './home-v44.css';
 import './how-trust-v43.css';
 
@@ -18,15 +17,15 @@ export function HomeV44Summarised({ whatsapp }: { whatsapp: string | null }) {
   return (
     <HomeV43
       whatsapp={whatsapp}
-      summaries={{ process: <HomeV43ProcessSummary />, trust: <HomeV43TrustSummary /> }}
+      summaries={{ process: <HomeV44Process />, trust: <HomeV44Trust /> }}
       v44={{
-        hero: <HomeV44Hero whatsapp={whatsapp} />,
+        hero: <HomeV44Hero />,
         choice: (props) => <HomeV44Choice {...props} />,
-        strip: <HomeV44Strip />,
         status: <HomeV44Status />,
         footer: <HomeV44Footer />,
         closing: (props) => <HomeV44Closing {...props} />,
-        map: (route) => <HomeV44Map {...route} />,
+        example: (props) => <HomeV44Example {...props} />,
+        sheet: (props) => <HomeV44Sheet {...props} />,
       }}
     />
   );

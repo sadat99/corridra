@@ -6,11 +6,28 @@ import { useEffect } from 'react';
 // Nothing is hidden without script, and nothing is hidden or moved when the visitor has asked for reduced motion.
 // The route map's own motion (travelling dot, pulse) is stopped by its Pause Motion control.
 export function useHomeV44Motion() {
+  // One Start a Request on screen at a time: the header's own stays out of sight while the hero's is in view.
+  useEffect(() => {
+    const start = document.getElementById('home-start');
+    const root = document.documentElement;
+    if (!start || typeof IntersectionObserver === 'undefined') return;
+    const watch = new IntersectionObserver(
+      ([entry]) => {
+        if (entry) root.setAttribute('data-hv44-hero', entry.isIntersecting ? 'in' : 'out');
+      },
+      { threshold: 0 },
+    );
+    watch.observe(start);
+    return () => {
+      watch.disconnect();
+      root.removeAttribute('data-hv44-hero');
+    };
+  }, []);
   useEffect(() => {
     if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const targets = Array.from(
-      document.querySelectorAll<HTMLElement>('.hv43 .hv43-band, .hv44-closing, .hv44-status-card'),
+      document.querySelectorAll<HTMLElement>('.hv43 .hv43-band, .hv44-closing'),
     );
     const seen = new IntersectionObserver(
       (entries) => {

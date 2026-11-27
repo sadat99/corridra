@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useRef, type KeyboardEvent } from 'react';
 import { CorridraIcon } from './corridra-icon';
+import { DotMap, type SpotKey } from './home-v44-dotmap';
 import { Sentence } from './home-v42-choice';
 import { useT } from './language-provider';
 import { PlaceWords } from './place-words';
@@ -11,25 +12,22 @@ import type { MessageKey } from '../lib/i18n/messages';
 
 // Home page v4.4 "Which way is your business moving?": the four routes as tabs, one panel for the chosen route (what it
 // is, what the visitor can get) and the route map beside it. A tab choice moves no focus and opens nothing: the map,
-// the example, the steps and the request follow it, as the v4.3 doors did. Same ids as v4.3 (home-route-group takes
-// focus from "Start a Request"; home-start and #brief are the same targets), same words, same polite announcement.
+// the example, the steps and the request follow it, as the v4.3 doors did. Same ids as v4.3 (home-route-group, #brief). The panel has no button of its own: the page's Start a Request opens the sheet, same words, same polite announcement.
 const routes = ['china', 'sell', 'delegation', 'other'] as const;
+const mapFor: Record<RouteKey, { view: string; routes: SpotKey[] }> = {
+  china: { view: '430 40 230 130', routes: ['CN', 'SG'] },
+  sell: { view: '120 20 560 190', routes: ['EU', 'UK', 'US'] },
+  delegation: { view: '380 40 300 200', routes: ['CN', 'AU', 'AE'] },
+  other: { view: '470 70 150 90', routes: [] },
+};
 const sol = { china: 'source', sell: 'sell', delegation: 'delegation' } as const;
 
 export function HomeV44Choice({
   intent,
-  href,
-  cta,
-  whatsapp,
   onChoose,
-  map,
 }: {
   intent: RouteKey;
-  href: string;
-  cta: string;
-  whatsapp: string | null;
   onChoose: (route: RouteKey) => void;
-  map: ReactNode;
 }) {
   const t = useT();
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -110,7 +108,13 @@ export function HomeV44Choice({
               </p>
             )}
           </div>
-          <div className="hv44-pick-map">{map}</div>
+          <div className="hv44-pick-map" key={`m-${intent}`}>
+            <DotMap
+              view={mapFor[intent].view}
+              routes={mapFor[intent].routes}
+              pins={mapFor[intent].routes}
+            />
+          </div>
         </div>
         <div className="tr-start hv42-start hv44-start">
           <ul className="ac1-calm">
@@ -121,12 +125,7 @@ export function HomeV44Choice({
               </li>
             ))}
           </ul>
-          <p className="hv43-build">
-            <a className="button-secondary" href="#brief" id="home-start">
-              {t(v43('brief.go'))}
-            </a>
-            <span className="tr-small">{t(v43('q.note'))}</span>
-          </p>
+          <p className="tr-small hv44-pick-note">{t(v43('q.note'))}</p>
         </div>
       </div>
     </section>

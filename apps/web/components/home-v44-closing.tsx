@@ -1,37 +1,25 @@
 'use client';
 
-import Link from 'next/link';
-import { HomeJobs } from './home-jobs';
 import type { Shown } from './home-routes';
-import { TalkLink } from './home-talk';
+import { DotMap } from './home-v44-dotmap';
 import { useT } from './language-provider';
 import { Eyebrow } from './ux/example-tag';
 import { StartBar } from './ux/start-bar';
-import type { HomeRoutesKey } from '../lib/home-routes-keys';
+import { v43 } from '../lib/home-v43-data';
 
-// Home page v4.4 close: the same words as the v4.3 close (the line follows the chosen route, only true risk reversal,
-// the one first action, Talk where the number is set, the three jobs) on a light band with the three jobs as cards,
-// as in the approved page. The phone start bar is the one HomeShared uses.
-const key = (name: string) => name as HomeRoutesKey;
+// Home page v4.4 close (design approved 27 Nov 2026): one light band, one line, the one Start a Request and the
+// existing promise that nothing is sent until the visitor checks it, beside a small route map. The phone start bar is the one HomeShared uses.
 const hideStartBarAt = [
   'main .primary-link:not(.ux-start-bar .primary-link)',
   'main [data-start-action]',
   '#final',
   'footer',
 ];
-const finalTitle: Record<Shown, HomeRoutesKey> = {
-  none: 'home.tr.fn.title.none',
-  china: 'home.tr.fn.title.china',
-  sell: 'home.tr.fn.title.sell',
-  delegation: 'home.tr.fn.title.delegation',
-  other: 'home.tr.fn.title.other',
-};
 
 export function HomeV44Closing({
   shown,
   href,
   cta,
-  whatsapp,
 }: {
   shown: Shown;
   href: string;
@@ -42,33 +30,22 @@ export function HomeV44Closing({
   return (
     <>
       <section className="hv44-closing" id="final" aria-labelledby="final-title">
-        <Eyebrow>{t('home.tr.fn.eyebrow')}</Eyebrow>
-        <h2 id="final-title">{t(finalTitle[shown])}</h2>
-        <div className="hv44-closing-lines">
-          {[1, 2, 3].map((n) => (
-            <p key={n}>
-              <strong>{t(key(`home.tr.fn.r${n}`))}</strong>{' '}
-              <span>{t(key(`home.tr.fn.r${n}.text`))}</span>
-            </p>
-          ))}
+        <div className="hv44-closing-text">
+          <Eyebrow>{t('home.v44.close.eyebrow')}</Eyebrow>
+          <h2 id="final-title">
+            {t('home.v44.close.a')} <span className="hv44-outline">{t('home.v44.close.b')}</span>{' '}
+            {t('home.v44.close.c')}
+          </h2>
+          <div className="hv44-closing-actions">
+            <a className="primary-link" href="#brief" id="final-start" data-start-action>
+              {t(v43('hero.start'))}
+            </a>
+            <p className="hv44-closing-note">{t('home.tr.fn.r1')}</p>
+          </div>
         </div>
-        <div className="hv44-closing-actions">
-          <Link
-            prefetch={false}
-            data-start-action
-            className="primary-link"
-            href={href}
-            id="final-start"
-          >
-            {cta}
-          </Link>
-          <TalkLink href={whatsapp} />
+        <div className="hv44-closing-map" aria-hidden="true">
+          <DotMap view="360 50 260 140" fill routes={['CN']} pins={['CN']} />
         </div>
-        <p className="label hv44-closing-lead">{t('home.tr.fn.jobs')}</p>
-        <HomeJobs className="hv44-jobs" />
-        <Link prefetch={false} className="text-link" href="/plan">
-          {t('home.else')}
-        </Link>
       </section>
       <StartBar
         href={href}
