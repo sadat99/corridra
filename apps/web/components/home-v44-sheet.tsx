@@ -67,7 +67,7 @@ export function HomeV44Sheet({
   const review = step === stepNames.length;
   const title = review
     ? 'Check your request.'
-    : [t(v43('brief.f.job')), t(v43('brief.f.to')), t(v43('brief.f.timing')), t(v43('brief.f.note'))][step];
+    : ['What do you want to do?', 'Which market?', 'When do you need it?', 'Anything to add?'][step];
   const sub = [
     'Pick the closest one. You can change it later.',
     'Where should we look first?',
