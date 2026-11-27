@@ -14,6 +14,7 @@ import {
   packKeyPattern,
   packOutcome,
   packRowAction,
+  proposalTooLargeWords,
   previewBody,
   previewReason,
   publishBody,
@@ -256,6 +257,7 @@ describe('the row actions and the lists', () => {
           { key: field.key, part: 'Locked', state: 'FILLED' },
           'owner',
           field.configurationKey,
+          true,
         ),
       ).toEqual({ kind: 'change', key: field.configurationKey });
   });
@@ -265,9 +267,9 @@ describe('the row actions and the lists', () => {
       part: byKey.get('sourcing.profile')!.part,
       state: 'FILLED',
     };
-    expect(packRowAction(row, 'owner', undefined)).toEqual({ kind: 'removeSourcing' });
-    expect(packRowAction({ ...row, state: 'PENDING' }, 'owner', undefined)).toBeNull();
-    expect(packRowAction(row, 'admin', undefined)).toBeNull();
+    expect(packRowAction(row, 'owner', undefined, true)).toEqual({ kind: 'removeSourcing' });
+    expect(packRowAction({ ...row, state: 'PENDING' }, 'owner', undefined, true)).toBeNull();
+    expect(packRowAction(row, 'admin', undefined, true)).toBeNull();
   });
   test('an admin and a viewer get no pack action', () => {
     for (const role of ['admin', 'viewer'])
@@ -276,6 +278,7 @@ describe('the row actions and the lists', () => {
           { key: 'pack.languages', part: 'Locked', state: 'FILLED' },
           role,
           'languages',
+          true,
         ),
       ).toBeNull();
   });
@@ -296,6 +299,31 @@ describe('the row actions and the lists', () => {
     expect(sameAsPack({ kind: 'channel', manual: true }, configuration, 'ACTIVE')).toBe(true);
     expect(sameAsPack({ kind: 'status', status: 'ACTIVE' }, configuration, 'ACTIVE')).toBe(true);
     expect(manualOf(['SYNTHETIC'])).toBe(false);
+  });
+});
+
+describe('PR 3b review fixes', () => {
+  test('on a route with no pack only Mission types offers Change; the server refuses a first pack without them', () => {
+    for (const field of standardFieldsV1.filter((item) => item.configurationKey))
+      expect(
+        packRowAction(
+          { key: field.key, part: 'Locked', state: 'PENDING' },
+          'owner',
+          field.configurationKey,
+          false,
+        ),
+      ).toEqual(
+        field.configurationKey === 'missionTypes' ? { kind: 'change', key: 'missionTypes' } : null,
+      );
+  });
+  test('a publish refused as too large to review reads as too large, not invalid', () => {
+    expect(proposalTooLargeWords).toBe(routePackWords.proposalTooLarge);
+    expect(packOutcome('publish', 400, 'ROUTE_PACK_INVALID', proposalTooLargeWords, true)).toBe(
+      'tooLarge',
+    );
+    expect(packOutcome('publish', 400, 'ROUTE_PACK_INVALID', 'Something else.', true)).toBe(
+      'invalid',
+    );
   });
 });
 

@@ -135,9 +135,10 @@ test.describe('who sees Edit, and what it opens', () => {
     // PR 3b (spec 8.9) replaces the interim PR 2 rule (8.7, Locked rows read only): no Edit on a pack row, and exactly one
     // Change on each for the owner; an admin gets no button on a pack row.
     await expect(packRows.getByRole('button', { name: /^Edit / })).toHaveCount(0);
-    await expect(packRows.getByRole('button', { name: /^Change / })).toHaveCount(
-      await packRows.count(),
-    );
+    for (const row of await packRows.all()) {
+      await expect(row.getByRole('button')).toHaveCount(1);
+      await expect(row.getByRole('button', { name: /^Change / })).toHaveCount(1);
+    }
     await open(page, { role: 'admin', query: 'route=BD-EU&section=3' });
     const adminRows = rows(page).filter({ hasText: 'Pack setting' });
     expect(await adminRows.count()).toBeGreaterThan(0);

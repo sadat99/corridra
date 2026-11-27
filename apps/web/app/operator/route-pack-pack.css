@@ -148,3 +148,11 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+/* The first step, locked while its preview is asked for. A plain group: no border, no inset. */
+.route-pack-lock {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}

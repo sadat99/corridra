@@ -622,6 +622,7 @@ function RouteBody({
       shownRow,
       role,
       standardFieldByKey.get(item.key)?.configurationKey,
+      !!pack,
     );
     // The open answer is this row's when its key is, and only a row that has a field can be open.
     const draft = open && open.key === item.key && field ? open : null;

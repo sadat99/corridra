@@ -110,6 +110,8 @@ export function PackDialog(props: {
   const [view, setView] = useState<View>('form');
   const [busy, setBusy] = useState<Busy>(null);
   const [preview, setPreview] = useState<PackPreview | null>(null);
+  // The change as it was previewed: Review shows and publishes exactly this, never a later state of the first step.
+  const [previewed, setPreviewed] = useState<PackEdit | null>(null);
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,6 +140,7 @@ export function PackDialog(props: {
       setView('form');
       setBusy(null);
       setPreview(null);
+      setPreviewed(null);
       setReason('');
       setReasonError(false);
       setError(null);
@@ -180,17 +183,19 @@ export function PackDialog(props: {
   };
 
   const check = async () => {
-    if (!props.edit || busy) return;
+    const edit = props.edit;
+    if (!edit || busy) return;
     setError(null);
     setBusy('checking');
     const result = await sendPack(
       props.tenant,
-      previewBody(props.edit, props.routeId, props.packVersion, () => crypto.randomUUID()),
+      previewBody(edit, props.routeId, props.packVersion, () => crypto.randomUUID()),
       false,
     );
     setBusy(null);
     if (result.outcome === 'previewed') {
       setPreview(result.preview);
+      setPreviewed(edit);
       setStep('review');
       focusAfter.current = () => (single ? reasonBox.current : reviewLine.current);
       return;
@@ -209,7 +214,8 @@ export function PackDialog(props: {
   }, [props.open]);
 
   const publish = async () => {
-    if (!props.edit || !preview || busy || preview.blocked) return;
+    const edit = previewed;
+    if (!edit || !preview || busy || preview.blocked) return;
     if (reason.trim().length < 3) {
       setReasonError(true);
       focusAfter.current = () => reasonBox.current;
@@ -218,13 +224,13 @@ export function PackDialog(props: {
     setError(null);
     command.current = nextPackCommand(
       command.current,
-      packFingerprint(props.edit, props.routeId, props.packVersion, reason),
+      packFingerprint(edit, props.routeId, props.packVersion, reason),
       () => crypto.randomUUID(),
     );
     setBusy('publishing');
     const result = await sendPack(
       props.tenant,
-      publishBody(props.edit, props.routeId, props.packVersion, reason, command.current),
+      publishBody(edit, props.routeId, props.packVersion, reason, command.current),
       preview.onePersonPublication,
     );
     setBusy(null);
@@ -436,7 +442,10 @@ export function PackDialog(props: {
         ) : (
           <>
             <p className="route-edit-step">{props.stepWords}</p>
-            {props.stepOne}
+            {/* While the preview is asked for, the first step cannot change (what Review shows is what was previewed). */}
+            <fieldset className="route-pack-lock" disabled={busy === 'checking'}>
+              {props.stepOne}
+            </fieldset>
             {errorLine}
             <div className="route-dialog-actions">
               <button

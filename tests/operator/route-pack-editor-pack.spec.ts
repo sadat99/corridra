@@ -30,6 +30,8 @@ type Options = {
   facts?: FactsWorld | null;
   publish?: Partial<PublishWorld>;
   totp?: 'ok' | 'bad';
+  /** The route opened; Bangladesh to China by default. */
+  route?: string;
 };
 async function open(page: Page, options: Options = {}) {
   const { role = 'owner', width = 1440, height = 900 } = options;
@@ -45,13 +47,18 @@ async function open(page: Page, options: Options = {}) {
     role,
     reports: 'on',
     applications: 'on',
-    route: 'BD-CN',
+    route: options.route ?? 'BD-CN',
     view: 'sections',
   });
   await page.goto(`${fixture.origin}/operator/settings?${words}`);
   await expect(page.getByLabel('Workspace status')).toBeAttached();
   await expect(page.getByText('Loading workspace…')).toHaveCount(0);
-  if (facts) await expect(editor(page).getByText('Pack version 2', { exact: true })).toBeVisible();
+  if (facts)
+    await expect(
+      editor(page).getByText(options.route === 'TW-AU' ? 'No pack yet' : 'Pack version 2', {
+        exact: true,
+      }),
+    ).toBeVisible();
   return { world, publish: publish!, facts: facts! };
 }
 const editor = (page: Page) => page.locator('section.route-editor');
@@ -100,6 +107,14 @@ test.describe('who sees the pack controls', () => {
       for (const field of lockedFields.filter((item) => item.section === number))
         await expect(button(page, `Change ${field.label}`)).toBeVisible();
     }
+    // Each pack row holds exactly one button, its Change, and nothing else.
+    await section(page, 3);
+    const packRows = editor(page).locator('li.ux-fact-row').filter({ hasText: 'Pack setting' });
+    await expect(packRows.first()).toBeVisible();
+    for (const row of await packRows.all()) {
+      await expect(row.getByRole('button')).toHaveCount(1);
+      await expect(row.getByRole('button', { name: /^Change / })).toHaveCount(1);
+    }
     // There is no sourcing profile on this pack, so there is nothing to remove.
     await expect(button(page, 'Remove Sourcing Profile')).toHaveCount(0);
   });
@@ -122,11 +137,53 @@ test.describe('who sees the pack controls', () => {
     await expect(button(page, 'Change Pack Status')).toBeVisible();
     await open(page, { facts: null });
     await expect(page.getByText('Change Pack Status')).toHaveCount(0);
-    await expect(page.getByText('Change Pack Setting')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Change / })).toHaveCount(0);
   });
 });
 
 test.describe('Change Pack Setting', () => {
+  test('a route with no pack offers Change only on Mission types, which starts pack version 1 as Draft', async ({
+    page,
+  }) => {
+    const { publish } = await open(page, { route: 'TW-AU' });
+    await expect(button(page, 'Change Pack Status')).toHaveCount(0);
+    await section(page, 3);
+    await expect(editor(page).getByText(labelOfConfig('languages'))).toBeVisible();
+    await expect(editor(page).getByRole('button', { name: /^Change / })).toHaveCount(0);
+    const missions = lockedFields.find((item) => item.configurationKey === 'missionTypes')!;
+    await section(page, missions.section);
+    await expect(editor(page).getByRole('button', { name: /^Change / })).toHaveCount(1);
+    await button(page, `Change ${missions.label}`).click();
+    await expect(
+      settingDialog(page).getByText('This starts the pack as Draft, not used yet.'),
+    ).toBeVisible();
+    await settingDialog(page).getByRole('checkbox').first().check();
+    await settingDialog(page).getByRole('button', { name: 'Next' }).click();
+    await expect(settingDialog(page).getByText('This starts pack version 1')).toBeVisible();
+    await reason(page).fill('Start the pack for this route');
+    await settingDialog(page).getByRole('button', { name: 'Publish Pack Change' }).click();
+    await expect(settingDialog(page)).toBeHidden();
+    expect(publish.bodies[1]!.change).toMatchObject({ kind: 'settings', version: 1 });
+    expect(publish.bodies[1]!.change.missionTypes).toHaveLength(1);
+    await expect(status(page)).toContainText('Pack version 1 is published.');
+  });
+
+  test('while Next is checking, the first step cannot change, and Publish sends exactly what was previewed', async ({
+    page,
+  }) => {
+    const { publish } = await open(page, { publish: { previewDelay: 1500 } });
+    await openLanguages(page);
+    await settingDialog(page).getByRole('checkbox', { name: 'Chinese' }).check();
+    await settingDialog(page).getByRole('button', { name: 'Next' }).click();
+    await expect(settingDialog(page).getByRole('checkbox', { name: 'Spanish' })).toBeDisabled();
+    await expect(settingDialog(page).getByText('Step 2 of 2: Review')).toBeVisible();
+    await reason(page).fill(reasonText);
+    await settingDialog(page).getByRole('button', { name: 'Publish Pack Change' }).click();
+    await expect(settingDialog(page)).toBeHidden();
+    expect(publish.bodies[1]!.change.languages).toEqual(publish.bodies[0]!.change.languages);
+    expect(publish.bodies[1]!.change.languages).toEqual(['en', 'bn', 'zh']);
+  });
+
   test('Next previews under its own id and the internal reason; Publish sends one new id with the typed reason', async ({
     page,
   }) => {
@@ -512,6 +569,35 @@ test.describe('Change Pack Status and Remove Sourcing Profile', () => {
   });
 });
 
+const sourcingFacts = (): FactsWorld => ({
+  packs: {
+    'BD-CN': {
+      status: 'ACTIVE',
+      version: 2,
+      configuration: {
+        missionTypes: ['supplier_discovery'],
+        languages: ['en', 'bn'],
+        currencies: ['USD'],
+        timeZones: ['Asia/Dhaka'],
+        channels: ['SYNTHETIC'],
+        sourcing: { sample: true },
+      },
+    },
+  },
+});
+/** Every visible button in `scope` is at least 44 px high and wide. */
+async function targets(page: Page, names: string[]) {
+  for (const name of names) {
+    const found = page.getByRole('button', { name, exact: true });
+    for (const one of await found.all()) {
+      const box = await one.boundingBox();
+      expect(box, name).not.toBeNull();
+      expect(box!.height, `${name} height`).toBeGreaterThanOrEqual(44);
+      expect(box!.width, `${name} width`).toBeGreaterThanOrEqual(44);
+    }
+  }
+}
+
 test.describe('layout and accessibility', () => {
   for (const width of [320, 390, 768, 1024, 1440, 1920])
     test(`each step is axe clean with no sideways scroll at ${width}`, async ({ page }) => {
@@ -526,10 +612,61 @@ test.describe('layout and accessibility', () => {
       await button(page, 'Change Pack Status').click();
       await noSidewaysScroll(page);
       await axeClean(page);
+      await statusDialog(page)
+        .getByRole('button', { name: /^Limited use/ })
+        .click();
+      await statusDialog(page).getByRole('button', { name: 'Next' }).click();
+      await expect(statusDialog(page).getByText('Step 2 of 2: Review')).toBeVisible();
+      await noSidewaysScroll(page);
+      await axeClean(page);
+      await statusDialog(page).getByRole('button', { name: 'Cancel' }).click();
+      const field = lockedFields.find((item) => item.configurationKey === 'localities')!;
+      await section(page, field.section);
+      await button(page, `Change ${field.label}`).click();
+      const box = settingDialog(page).getByRole('textbox', { name: 'Add a key' });
+      await box.fill('dhaka');
+      await box.press('Enter');
+      await box.fill('Bad');
+      await noSidewaysScroll(page);
+      await axeClean(page);
+      if (width < 1024) await targets(page, ['Add Key', 'Remove dhaka', 'Next', 'Cancel']);
+      await settingDialog(page).getByRole('button', { name: 'Cancel' }).click();
+      if (width < 1024) await targets(page, [`Change ${field.label}`, 'Change Pack Status']);
       if (width === 390 || width === 1440)
         await page.screenshot({
           path: `test-results/route-pack-pack-${width}.png`,
           fullPage: false,
         });
+    });
+  for (const width of [320, 768, 1440])
+    test(`Remove Sourcing Profile and the stale and denied end states are axe clean at ${width}`, async ({
+      page,
+    }) => {
+      await open(page, { width, height: width === 320 ? 568 : 900, facts: sourcingFacts() });
+      const sourcing = standardFieldsV1.find((item) => item.key === 'sourcing.profile')!;
+      await section(page, sourcing.section);
+      await button(page, 'Remove Sourcing Profile').click();
+      const remove = dialog(page, 'Remove Sourcing Profile');
+      await expect(remove.getByRole('textbox', { name: 'Reason' })).toBeVisible();
+      await noSidewaysScroll(page);
+      await axeClean(page);
+      if (width < 1024) await targets(page, ['Remove Sourcing Profile', 'Cancel']);
+      await remove.getByRole('button', { name: 'Cancel' }).click();
+      for (const [answer, words] of [
+        [
+          { status: 409, code: 'ROUTE_PACK_PACK_CHANGED', error: 'Changed' },
+          'Another change to this pack was published first.',
+        ],
+        [{ status: 403, error: 'Access denied' }, 'Only the owner can publish pack changes.'],
+      ] as const) {
+        const { publish } = await open(page, { width, height: width === 320 ? 568 : 900 });
+        publish.script = [answer];
+        await openLanguages(page);
+        await settingDialog(page).getByRole('checkbox', { name: 'Chinese' }).check();
+        await settingDialog(page).getByRole('button', { name: 'Next' }).click();
+        await expect(settingDialog(page).getByText(words)).toBeVisible();
+        await noSidewaysScroll(page);
+        await axeClean(page);
+      }
     });
 });

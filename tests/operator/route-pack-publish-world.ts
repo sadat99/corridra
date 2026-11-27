@@ -8,6 +8,8 @@ import { packNow, routeIds, type FactsWorld } from './p5c-desk-world';
 export type PublishWorld = {
   /** The next answers, one per request, before the server-like default. */
   script?: Array<{ status: number; code?: string; error?: string; body?: unknown }>;
+  /** Every preview waits this many milliseconds before it is answered (to see the first step locked). */
+  previewDelay?: number;
   /** False: the one-person module is not installed (default true). */
   onePerson?: boolean;
   /** Keys a preview names as `blocked` (the one go-live refusal). */
@@ -53,6 +55,8 @@ export async function answerPublish(
     if (request.method() !== 'POST') return refuse(404, 'Not found');
     const body = request.postDataJSON() as PublishWorld['bodies'][number];
     world.bodies.push(body);
+    if (body.mode === 'preview' && world.previewDelay)
+      await new Promise((resolve) => setTimeout(resolve, world.previewDelay));
     const scripted = world.script?.shift();
     if (scripted)
       return scripted.body !== undefined
@@ -66,6 +70,13 @@ export async function answerPublish(
     const key = keyById[String(change.routeId)];
     if (!key) return refuse(400, 'Check the submitted values');
     const pack = packNow(facts, key);
+    // requestedPack: a first pack needs its mission types (the server's exact words).
+    if (
+      !pack &&
+      change.kind === 'settings' &&
+      !(Array.isArray(change.missionTypes) && change.missionTypes.length)
+    )
+      return refuse(400, 'Choose at least one mission type.', 'ROUTE_PACK_INVALID');
     const before = (pack?.configuration ?? {}) as Record<string, unknown>;
     const next: Record<string, unknown> = structuredClone(before);
     let status: string = pack?.status ?? 'DRAFT';

@@ -123,6 +123,12 @@ export function publishBody(
  */
 export const notPublishedWords =
   'The proposal was saved but not published. Send the same request again to publish it.';
+/**
+ * The server's words when the proposal of a publish is too large to review (routePackWords.proposalTooLarge, pinned by a test).
+ * A preview is sized with the short internal reason and a publish with the typed one, so near the limit a preview can pass and
+ * the publish be refused with these words: the page then says the change is too large, not that it is invalid.
+ */
+export const proposalTooLargeWords = 'This route pack is too large to review. Shorten long lists.';
 export type PackOutcome =
   /** 200 to a preview. */
   | 'previewed'
@@ -163,7 +169,7 @@ export function packOutcome(
     if (code === 'ROUTE_PACK_LOCKED_CORE_EMPTIED') return 'blocked';
     return 'invalid';
   }
-  if (status === 400) return 'invalid';
+  if (status === 400) return error?.trim() === proposalTooLargeWords ? 'tooLarge' : 'invalid';
   if (status === 413) return 'tooLarge';
   if (status === 401) return code === 'STEP_UP_REQUIRED' ? 'stepUp' : 'signedOut';
   if (status === 403) return 'denied';
@@ -288,10 +294,14 @@ export function packRowAction(
   row: { key: string; part: string; state: string },
   role: string,
   configurationKey: string | undefined,
+  /** False on a route with no pack yet: the server refuses a first pack without mission types, so only that row offers Change. */
+  hasPack: boolean,
 ): { kind: 'change'; key: SettingKey } | { kind: 'removeSourcing' } | null {
   if (role !== 'owner' || row.part !== 'Locked') return null;
   if (configurationKey && isSettingKey(configurationKey))
-    return { kind: 'change', key: configurationKey };
+    return hasPack || configurationKey === 'missionTypes'
+      ? { kind: 'change', key: configurationKey }
+      : null;
   if (row.key === 'sourcing.profile' && row.state === 'FILLED') return { kind: 'removeSourcing' };
   return null;
 }
