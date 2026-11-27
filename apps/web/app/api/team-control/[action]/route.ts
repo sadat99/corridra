@@ -8,6 +8,7 @@ import { createRoutePack } from '@corridra/missions/route-pack-form';
 import { sheetLimits, sheetWords, type SheetReport } from '@corridra/missions/route-pack-sheet';
 import { csvRows } from '@corridra/delivery/import';
 import { csvCell } from '@corridra/auth/customer-programme-export-csv';
+import { answerRoutePackRead, isRoutePackReadAction } from '../../../../lib/route-pack-editor-read';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +42,12 @@ const sheetRefusal = (report: SheetReport) =>
     : report.saved.length
       ? sheetWords.savePartly
       : (report.errors[0]?.message ?? sheetWords.saveErrors);
+// ADR-093: the route pack module acts only while its switch is on and the 2b marker is installed. The switch is read first, so
+// with it off nothing else is asked; every caller answers Not found, as for an unknown action, before it reads or parses a word
+// of the request.
+async function routePackModuleOn(s: { routePackSheet: { available(): Promise<boolean> } }) {
+  return uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM') && (await s.routePackSheet.available());
+}
 // Reads at most `limit` octets, stopping as soon as the body passes it; a client-supplied Content-Length is not trusted.
 async function boundedBody(request: Request, limit: number) {
   const reader = request.body?.getReader();
@@ -156,8 +163,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       });
     if (action === 'route-pack-export' || action === 'route-pack-import') {
       // Switch off, or the content module not installed: Not found, before the request is read or parsed.
-      if (!uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM') || !(await s.routePackSheet.available()))
-        throw new DomainError('Not found', 404);
+      if (!(await routePackModuleOn(s))) throw new DomainError('Not found', 404);
       if (action === 'route-pack-export' && request.method === 'GET') {
         const routes = (new URL(request.url).searchParams.get('routes') ?? '').split('|');
         const rows = await s.routePackSheet.export(ctx, { routes });
@@ -199,6 +205,21 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         );
       }
       throw new DomainError('Not found', 404);
+    }
+    if (isRoutePackReadAction(action)) {
+      // ADR-093 Phase 3, PR 1: the reads behind the route pack editor. Same gate as export and import, before any query
+      // word beyond the tenant is read; reads only, so any other method is Not found too.
+      if (!(await routePackModuleOn(s)) || request.method !== 'GET')
+        throw new DomainError('Not found', 404);
+      return Response.json(
+        await answerRoutePackRead(
+          s.routePackContent,
+          ctx,
+          action,
+          new URL(request.url).searchParams,
+        ),
+        { headers },
+      );
     }
     if (action === 'route-pack') {
       // CQ-66: guided route pack form. The reviewed command is built on the server.
