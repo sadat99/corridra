@@ -1749,6 +1749,11 @@
       "use": "Waiting owner: ADR-093 Phase 3 UI spec for the one route pack editor in Settings (completeness, stale marks, fact and pack editing, import dry run and apply, export, one-person publish flow, status change warning, 15 contract questions); spec only, nothing built"
     },
     {
+      "path": "docs/revamp/specs/ui-ux-v4-4.md",
+      "classification": "Owner proposal",
+      "use": "Waiting owner: redesign proposal compared with UI/UX.v4 to v4.3, nine decisions with recommended defaults (fonts, weights, accent, home, team menu, words, journey switcher, Listen), what exists already and what is new; proposal only, nothing built or locked"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v4 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"
