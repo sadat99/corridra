@@ -9,7 +9,6 @@ import { HomeV44Example, HomeV44Process, HomeV44Trust } from './home-v44-parts';
 import { HomeV44Sheet } from './home-v44-sheet';
 import { HomeV44Status } from './home-v44-status';
 import './home-v44.css';
-import './how-trust-v43.css';
 
 // The home page v4.4 with CORRIDRA_UX_HOW_TRUST_V43 also on: the same page with the process and trust bands as
 // summaries, as HomeV43Summarised does. A lazy chunk loaded from home-v44-page.tsx only then.

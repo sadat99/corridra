@@ -1,13 +1,19 @@
-/* Home page v4.4 (owner, 27 Nov 2026, decision 4 "keep mine"). Loaded only by home-v44.tsx, so it ships only while
-   CORRIDRA_UX_HOME_V44 and CORRIDRA_UX_HOME_V43 are both on. Every rule is scoped under .hv43 and uses tokens only
-   (weights 400/500/600, radius tokens, no hex). The one animation draws the route arc once when the route changes:
-   300 ms, started by the visitor's own choice, off under reduced motion. Nothing loops. */
-
+/* Home page v4.4 (design approved 27 Nov 2026). Loaded only by home-v44.tsx, so it ships only while CORRIDRA_UX_HOME_V44
+   and CORRIDRA_UX_HOME_V43 are both on. Every rule is scoped under .hv43 and uses tokens only (weights 400/500/600,
+   radius tokens, no hex). Arcs draw once; the travelling dots and pulses stop under Pause Motion and reduced motion. */
 /* Hero: centred, text only. */
 .hv43 .hv44-hero {
   grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   text-align: center;
+  position: relative;
+  isolation: isolate;
+  margin-block-end: var(--space-8);
+  padding-block: var(--space-12) var(--space-16);
+  background: linear-gradient(180deg, var(--surface-subtle), var(--surface-0) 90%);
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
 }
 @media (min-width: 48rem) {
   .hv43 .hv44-hero {
@@ -25,13 +31,11 @@
 .hv43 .hv44-actions {
   justify-content: center;
 }
-
-/* Route choice with the map beside the picker from 64 rem. */
 .hv43 .hv44-pick {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
-  align-items: start;
+  align-items: stretch;
 }
 @media (min-width: 64rem) {
   .hv43 .hv44-pick {
@@ -47,68 +51,11 @@
 .hv43 .hv44-pick-map {
   min-inline-size: 0;
 }
-.hv43 .hv43-draft .hv44-route {
-  margin-block-end: var(--space-3);
-}
-
-/* The route figure. */
-.hv43 .hv44-route {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-}
-.hv43 .hv44-frame {
-  overflow: hidden;
-  aspect-ratio: 2;
-  background: var(--surface-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-}
-.hv43 .hv44-map {
-  display: block;
-  inline-size: 100%;
-  block-size: 100%;
-}
-.hv43 .hv44-caption {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-1) var(--space-3);
-}
-.hv43 .hv44-route-words {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  font-weight: 500;
-}
-
-/* Map drawing: colours by class, so the SVG carries no colour of its own. */
 .hv43 .hv44-land {
-  fill: var(--surface-1);
+  fill: none;
   stroke: var(--border-subtle);
-}
-.hv43 .hv44-from {
-  fill: var(--surface-1);
-  stroke: var(--brand);
-}
-.hv43 .hv44-to {
-  fill: var(--surface-1);
-  stroke: var(--brand);
-}
-.hv43 .hv44-arc-halo {
-  fill: none;
-  stroke: var(--surface-1);
+  stroke-width: 2;
   stroke-linecap: round;
-  opacity: 0.9;
-}
-.hv43 .hv44-arc {
-  fill: none;
-  stroke: var(--brand);
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  animation: hv44-draw 300ms ease-out both;
 }
 @keyframes hv44-draw {
   from {
@@ -118,77 +65,8 @@
     stroke-dashoffset: 0;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .hv43 .hv44-arc {
-    animation: none;
-  }
-}
-.hv43 .hv44-halo {
-  fill: var(--surface-1);
-  opacity: 0.7;
-}
-.hv43 .hv44-pin {
-  fill: var(--brand);
-  stroke: var(--surface-1);
-}
-.hv43 .hv44-pin-to {
-  fill: var(--accent-marigold);
-}
-.hv43 .hv44-dot {
-  fill: var(--accent-marigold);
-  stroke: var(--surface-1);
-}
-.hv43 .hv44-tag rect {
-  fill: var(--surface-1);
-  stroke: var(--border-strong);
-}
-.hv43 .hv44-tag text {
-  fill: var(--text-1);
-  font-family: inherit;
-  font-weight: 500;
-}
-
-/* Target-market chips, shown in the route choice. */
-.hv43 .hv44-markets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-.hv43 .hv44-chip {
-  display: inline-flex;
-  align-items: center;
-  min-block-size: 2.75rem;
-  padding: var(--space-1) var(--space-3);
-  color: var(--text-1);
-  font: inherit;
-  font-weight: 500;
-  background: var(--surface-1);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-.hv43 .hv44-chip[aria-pressed='true'] {
-  color: var(--brand);
-  border-color: var(--brand);
-  background: var(--surface-subtle);
-}
-.hv43 .hv44-chip:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
-}
-
 /* ---- Redesign to the approved page (27 Nov 2026) ---- */
-
 /* The soft arc behind the hero, and the outlined first word. */
-.hv43 .hv44-hero {
-  position: relative;
-  isolation: isolate;
-  margin-block-end: var(--space-8);
-  padding-block: var(--space-12) var(--space-16);
-  background: linear-gradient(180deg, var(--surface-subtle), var(--surface-0) 85%);
-  border: 1px solid var(--border-subtle);
-  border-radius: 50% / 14%;
-}
 @media (min-width: 64rem) {
   .hv43 .hv44-hero {
     padding-block: var(--space-16) var(--space-20, 6rem);
@@ -209,7 +87,6 @@
 .hv43 .hv44-hero .hv43-actions {
   gap: var(--space-3) var(--space-4);
 }
-
 /* The route choice card. */
 .hv43 .hv44-card {
   display: grid;
@@ -238,9 +115,13 @@
   letter-spacing: -0.01em;
 }
 .hv43 .hv44-tabs {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--surface-subtle);
+  border: 0;
+  border-radius: var(--radius-lg);
 }
 .hv43 .hv44-tab {
   display: inline-flex;
@@ -250,15 +131,19 @@
   color: var(--text-1);
   font: inherit;
   font-weight: 500;
-  background: var(--surface-1);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
   cursor: pointer;
+  transition: background 0.25s,
+    color 0.25s;
+  padding-inline: var(--space-5);
 }
 .hv43 .hv44-tab[aria-selected='true'] {
-  color: var(--surface-1);
-  background: var(--brand);
+  color: var(--text-1);
+  background: var(--surface-1);
   border-color: var(--brand);
+  font-weight: 600;
 }
 .hv43 .hv44-tab:focus-visible {
   outline: 2px solid var(--brand);
@@ -268,6 +153,7 @@
   display: grid;
   align-content: start;
   gap: var(--space-3);
+  animation: hv44-rise 300ms ease-out both;
 }
 .hv43 .hv44-panel-title {
   margin: 0;
@@ -288,40 +174,21 @@
 .hv43 .hv44-start {
   padding-block-start: var(--space-4);
   border-block-start: 1px solid var(--border-subtle);
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  text-align: start;
 }
 @media (min-width: 64rem) {
   .hv43 .hv44-pick {
     grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   }
 }
-
-/* The route statuses, one still row. */
-.hv43 .hv44-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-5);
-  margin: 0;
-  padding: var(--space-4) 0;
-  list-style: none;
-  border-block: 1px solid var(--border-subtle);
-}
-.hv43 .hv44-strip li {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  font-weight: 500;
-}
-.hv43 .hv44-strip strong {
-  color: var(--brand);
-  font-weight: 600;
-}
-
 /* Listen leaves the top bar of this page (owner decision 9, 27 Nov 2026). Scoped to the home with v4.4, so no other
    page changes. */
 :root:has(.hv44-hero) .site-header button.top-bar-tool[aria-pressed] {
   display: none;
 }
-
 /* Sections below: larger headings and rounder cards, to the approved page. */
 .hv43 .hv43-head h2 {
   font-size: var(--text-display);
@@ -335,14 +202,7 @@
 .hv43 .hv43-solutions .hv43-card-actions {
   align-items: flex-start;
 }
-
 /* The start block inside the card: left aligned, one tidy column. */
-.hv43 .hv44-start {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-3);
-  text-align: start;
-}
 .hv43 .hv44-start .tr-start-actions {
   display: flex;
   flex-wrap: wrap;
@@ -371,83 +231,7 @@
   gap: var(--space-3);
   margin: 0;
 }
-
 /* ---- Lower sections, to the approved page ---- */
-
-/* How it works and Evidence: three cards each. */
-.hv43 .hv43-band.htv43-summary .htv43-summary-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-5);
-}
-.hv43 .hv43-band.htv43-summary h2 {
-  font-size: var(--text-display);
-  font-weight: 500;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  max-inline-size: 18ch;
-}
-.hv43 .htv43-summary .htv43-summary-body {
-  display: grid;
-  gap: var(--space-5);
-  max-inline-size: none;
-}
-.hv43 .htv43-lines {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: hv44;
-}
-@media (min-width: 48rem) {
-  .hv43 .htv43-lines {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-.hv43 .htv43-lines li {
-  display: grid;
-  align-content: start;
-  gap: var(--space-3);
-  padding: var(--space-5);
-  color: var(--text-1);
-  font-family: var(--font-heading, inherit);
-  font-size: var(--text-title);
-  font-weight: 500;
-  line-height: 1.2;
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  counter-increment: hv44;
-  transition:
-    transform 200ms ease-out,
-    border-color 200ms ease-out;
-}
-.hv43 .htv43-lines li::before {
-  content: '0' counter(hv44);
-  color: var(--brand);
-  font-family: var(--font-mono, monospace);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-}
-.hv43 .htv43-lines li:hover {
-  border-color: var(--brand);
-  transform: translateY(-2px);
-}
-/* The six steps of the process as a still row of dots under the cards. */
-.hv43 .hv43-process.htv43-summary .htv43-lines::after {
-  content: '';
-  grid-column: 1 / -1;
-  block-size: 1rem;
-  background:
-    radial-gradient(circle at center, var(--brand) 0.2rem, transparent 0.22rem) 0 50% / 16.6667%
-      100% repeat-x,
-    linear-gradient(var(--border-strong), var(--border-strong)) 8.3333% 50% / 83.3333% 1px no-repeat;
-}
-
-/* Route statuses. */
 .hv43 .hv44-status-card {
   display: grid;
   gap: var(--space-4);
@@ -508,7 +292,6 @@
   font-size: var(--text-sm);
   line-height: var(--leading-reading);
 }
-
 /* Inbound band: warm, one dark action. */
 .hv43 .hv43-inbound {
   background: var(--surface-subtle);
@@ -537,75 +320,36 @@
   border: 0;
   border-radius: var(--radius-sm);
 }
-
-/* Close: light, centred, the three jobs as cards. */
 .hv43 .hv44-closing {
   display: grid;
   justify-items: center;
   gap: var(--space-4);
   padding-block: var(--space-12);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  background: linear-gradient(120deg, var(--surface-subtle), var(--surface-0) 55%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
 }
 .hv43 .hv44-closing h2 {
   max-inline-size: 18ch;
   margin: 0;
-  font-size: var(--text-display);
+  font-size: clamp(2.25rem, 1rem + 4vw, 4.5rem);
   font-weight: 500;
-  line-height: 1.05;
+  line-height: 1;
   letter-spacing: -0.02em;
 }
-.hv43 .hv44-closing-lines {
-  display: grid;
-  gap: var(--space-1);
-  max-inline-size: 56ch;
-  color: var(--text-2);
-}
-.hv43 .hv44-closing-lines p {
-  margin: 0;
-}
-.hv43 .hv44-closing-lines strong {
-  color: var(--text-1);
-  font-weight: 500;
-}
 .hv43 .hv44-closing-actions {
-  display: flex;
+  display: grid;
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-3);
+  justify-items: start;
 }
-.hv43 .hv44-jobs {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
-  inline-size: 100%;
-  text-align: start;
-}
-@media (min-width: 48rem) {
-  .hv43 .hv44-jobs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-.hv43 .hv44-jobs .ac1-job {
-  border-radius: var(--radius-lg);
-  transition: transform 200ms ease-out;
-}
-.hv43 .hv44-jobs .ac1-job:hover {
-  transform: translateY(-3px);
-}
-
 /* ---- Motion (owner asked for animation, 27 Nov 2026). Every rule is off under reduced motion; the map's own motion
    has a Pause Motion control. ---- */
-.hv43 [data-hv44-r] {
-  opacity: 0;
-  transform: translateY(1rem);
-  transition:
-    opacity 420ms ease-out,
-    transform 420ms ease-out;
-}
-.hv43 [data-hv44-r][data-in] {
-  opacity: 1;
-  transform: none;
-}
 .hv43 .hv44-hero-text > * {
   animation: hv44-rise 420ms ease-out both;
 }
@@ -618,22 +362,9 @@
 .hv43 .hv44-hero-text > :nth-child(4) {
   animation-delay: 180ms;
 }
-.hv43 .hv44-panel {
-  animation: hv44-rise 300ms ease-out both;
-}
-.hv43 .hv44-tab {
-  transition:
-    background-color 200ms ease-out,
-    color 200ms ease-out;
-}
 .hv43 .hv44-travel {
-  fill: var(--accent-marigold);
+  fill: var(--brand);
   stroke: var(--surface-1);
-}
-.hv43 .hv44-halo-to {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: hv44-pulse 2400ms ease-out infinite;
 }
 .hv43 .hv44-pause {
   justify-self: start;
@@ -648,11 +379,15 @@
   border-radius: var(--radius-md);
   cursor: pointer;
 }
-.hv43 .hv44-paused .hv44-travel {
-  display: none;
+.hv43 [data-hv44-r] {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition: opacity 420ms ease-out,
+    transform 420ms ease-out;
 }
-.hv43 .hv44-paused .hv44-halo-to {
-  animation: none;
+.hv43 [data-hv44-r][data-in] {
+  opacity: 1;
+  transform: none;
 }
 @keyframes hv44-rise {
   from {
@@ -664,21 +399,10 @@
     transform: none;
   }
 }
-@keyframes hv44-pulse {
-  from {
-    opacity: 0.7;
-    transform: scale(0.6);
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.6);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .hv43 [data-hv44-r],
   .hv43 .hv44-hero-text > *,
-  .hv43 .hv44-panel,
-  .hv43 .hv44-halo-to {
+  .hv43 .hv44-panel {
     opacity: 1;
     transform: none;
     transition: none;
@@ -687,86 +411,14 @@
   .hv43 .hv44-travel {
     display: none;
   }
-  .hv43 .htv43-lines li,
-  .hv43 .hv44-jobs .ac1-job {
-    transition: none;
-  }
 }
-
-/* The three jobs on the close, as cards. */
-.hv43 .hv44-jobs .ac1-job {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--space-3);
-  padding: var(--space-5);
-  color: var(--text-1);
-  text-decoration: none;
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-}
-.hv43 .hv44-jobs .ac1-job:nth-child(1) {
-  background: color-mix(in srgb, var(--brand) 9%, var(--surface-1));
-}
-.hv43 .hv44-jobs .ac1-job:nth-child(3) {
-  background: color-mix(in srgb, var(--accent-marigold) 14%, var(--surface-1));
-}
-.hv43 .hv44-jobs .ac1-job-words {
-  display: grid;
-  gap: var(--space-2);
-  min-inline-size: 0;
-}
-.hv43 .hv44-jobs .ac1-job-words strong {
-  font-family: var(--font-heading, inherit);
-  font-size: var(--text-title);
-  font-weight: 500;
-  line-height: 1.15;
-}
-.hv43 .hv44-jobs .ac1-job-text,
-.hv43 .hv44-jobs .ac1-job-route {
-  color: var(--text-2);
-  font-size: var(--text-sm);
-}
-.hv43 .hv44-jobs .ac1-job-name {
-  color: var(--brand);
-}
-
-/* The Pause Motion control sits on the map, as in the approved page. */
-.hv43 .hv44-frame {
-  position: relative;
-}
-.hv43 .hv44-frame .hv44-pause {
-  position: absolute;
-  inset-block-end: var(--space-3);
-  inset-inline-end: var(--space-3);
-}
-
-/* Polish found in the audit: flag spacing on tabs and titles, calmer route text on the job cards. */
 .hv43 .hv44-tab .ux-flagged,
 .hv43 .hv44-panel-title .ux-flagged {
   margin-inline-start: 0.3em;
 }
-.hv43 .hv44-jobs .ac1-job {
-  align-items: start;
-  min-block-size: 9rem;
-}
-.hv43 .hv44-jobs .ac1-job-route {
-  padding: 0;
-  font-family: inherit;
-  font-size: var(--text-sm);
-  letter-spacing: 0;
-  text-transform: none;
-  background: none;
-  border: 0;
-  border-radius: 0;
-}
-.hv43 .hv44-jobs .ac1-job-icon {
-  margin-block-start: var(--space-1);
-}
-
 /* ---- The request form as a sheet, and the page's own footer ---- */
 .ux-dialog:has(.hv44-sheet) {
-  inline-size: min(72rem, calc(100vw - 2rem));
+  inline-size: min(38rem, calc(100vw - 2rem));
   max-block-size: calc(100dvh - 2rem);
   border-radius: var(--radius-lg);
 }
@@ -776,7 +428,6 @@
 .hv43 .hv44-sheet .hv43-head h2 {
   font-size: var(--text-h1);
 }
-
 /* The shared footer gives way to the page's own, on this page only. */
 :root:has(.hv44-hero) .site-shell footer:not(.hv44-footer) {
   display: none;
@@ -842,21 +493,13 @@
   font-size: var(--text-sm);
   border-block-start: 1px solid var(--border-subtle);
 }
-
 /* ======== Design approved 27 Nov 2026 (v7): dotted maps, one Start, stepped request sheet ======== */
-
 /* Dotted maps. Colours by class, so the SVG carries none. The arcs draw once; the travelling dots and pulses stop
    under Pause Motion and under reduced motion. */
 .hv43 .hv44-dotmap {
   display: block;
   inline-size: 100%;
   block-size: 100%;
-}
-.hv43 .hv44-land {
-  fill: none;
-  stroke: var(--border-subtle);
-  stroke-width: 2;
-  stroke-linecap: round;
 }
 .hv43 .hv44-dotmap .hv44-arc {
   fill: none;
@@ -865,9 +508,6 @@
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: hv44-draw 1.6s ease-out forwards;
-}
-.hv43 .hv44-travel {
-  fill: var(--brand);
 }
 .hv43 .hv44-pin-dot {
   fill: var(--brand);
@@ -918,19 +558,11 @@
     display: none;
   }
 }
-
 /* One Start a Request on screen at a time: the header's stays hidden while the hero's is in view. */
 :root[data-hv44-hero='in'] .site-header .nav-cta {
   visibility: hidden;
 }
-
 /* Hero: a quiet dotted world behind the words, faded out under them. */
-.hv43 .hv44-hero {
-  border: 0;
-  border-radius: 0;
-  background: linear-gradient(180deg, var(--surface-subtle), var(--surface-0) 90%);
-  overflow: hidden;
-}
 .hv43 .hv44-hero-map {
   position: absolute;
   inset: 4rem 0 0;
@@ -955,35 +587,7 @@
   inset-inline-start: var(--space-4);
   inset-block-end: var(--space-4);
 }
-
 /* Route choice: a segmented control, the panel and its own map. No button: the page's Start opens the sheet. */
-.hv43 .hv44-tabs {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  background: var(--surface-subtle);
-  border: 0;
-  border-radius: var(--radius-lg);
-}
-.hv43 .hv44-tab {
-  min-block-size: 2.75rem;
-  padding-inline: var(--space-5);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: transparent;
-  transition:
-    background 0.25s,
-    color 0.25s;
-}
-.hv43 .hv44-tab[aria-selected='true'] {
-  color: var(--text-1);
-  font-weight: 600;
-  background: var(--surface-1);
-}
-.hv43 .hv44-pick {
-  align-items: stretch;
-}
 .hv43 .hv44-pick-map {
   position: static;
   min-block-size: 18rem;
@@ -994,7 +598,6 @@
 .hv43 .hv44-pick-note {
   margin: 0;
 }
-
 /* How it works: one timeline. */
 .hv43 .hv44-process {
   display: grid;
@@ -1059,7 +662,6 @@
     transform: scaleX(1);
   }
 }
-
 /* Evidence: one card, a few ticks. */
 .hv43 .hv44-trust-card {
   display: grid;
@@ -1092,7 +694,6 @@
 .hv43 .hv44-ticks li:first-child {
   border-block-start: 0;
 }
-
 /* Route statuses: a map and one list. */
 .hv43 .hv44-status-grid {
   display: grid;
@@ -1110,7 +711,6 @@
   background: var(--surface-subtle);
   border-radius: var(--radius-lg);
 }
-
 /* Worked example: four steps, who does what. */
 .hv43 .hv44-example {
   display: grid;
@@ -1185,17 +785,7 @@
   gap: var(--space-5);
   margin-block-start: var(--space-3);
 }
-
 /* Closing: one light band, one line, one Start, a small map. */
-.hv43 .hv44-closing {
-  position: relative;
-  display: grid;
-  overflow: hidden;
-  padding: 0;
-  background: linear-gradient(120deg, var(--surface-subtle), var(--surface-0) 55%);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-}
 .hv43 .hv44-closing-text {
   position: relative;
   z-index: 1;
@@ -1203,16 +793,7 @@
   gap: var(--space-4);
   justify-items: start;
   padding: var(--space-8);
-}
-.hv43 .hv44-closing h2 {
-  margin: 0;
-  font-size: clamp(2.25rem, 1rem + 4vw, 4.5rem);
-  line-height: 1;
-}
-.hv43 .hv44-closing-actions {
-  display: grid;
-  gap: var(--space-3);
-  justify-items: start;
+  text-align: start;
 }
 .hv43 .hv44-closing-note {
   margin: 0;
@@ -1237,11 +818,7 @@
     mask-image: linear-gradient(90deg, transparent, black 30%);
   }
 }
-
 /* The request sheet: four steps, one question each. A bottom sheet on a phone, a centred sheet from 48 rem. */
-.ux-dialog:has(.hv44-sheet) {
-  inline-size: min(38rem, calc(100vw - 2rem));
-}
 @media (max-width: 47.99rem) {
   .ux-dialog:has(.hv44-sheet) {
     inline-size: 100vw;
@@ -1361,7 +938,6 @@
     transform: none;
   }
 }
-
 /* Headings of the new bands match the display headings of the page. */
 .hv43 .hv44-process h2,
 .hv43 .hv44-trust h2,
@@ -1378,8 +954,4 @@
   justify-self: start;
   inline-size: fit-content;
   margin-block-start: var(--space-3);
-}
-
-.hv43 .hv44-closing-text {
-  text-align: start;
 }

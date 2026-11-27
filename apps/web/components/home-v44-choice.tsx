@@ -89,7 +89,7 @@ export function HomeV44Choice({
                 <PlaceWords text={t(v43(`door.${intent}.line`))} />
               )}
             </p>
-            <h3 className="hv44-panel-title">
+            <h3 className="hv44-panel-title sr-only">
               <PlaceWords text={t(v43(`door.${intent}.title`))} />
             </h3>
             {solution ? (
