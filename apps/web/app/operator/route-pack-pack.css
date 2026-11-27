@@ -135,6 +135,14 @@
 .route-pack-status-button {
   min-block-size: 44px;
 }
+/* In the first header line beside More: the same 44 px target, so the line grows by neither button. */
+.route-editor-line .route-pack-status-button {
+  min-height: 44px;
+  padding-block: 0;
+  padding-inline: var(--space-3);
+  flex: none;
+  white-space: nowrap;
+}
 @media (min-width: 768px) {
   .route-pack-key-entry {
     grid-template-columns: minmax(0, 1fr) auto;
