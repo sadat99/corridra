@@ -5993,7 +5993,7 @@ Checks at f236a8f0, all exit 0:
 
 **Outcome (as relayed by G72).**
 
-- PR 694 merged 27 Nov 2026 as a squash, 17ee69f242f32bfe7aa295d63ceb28adc6a7c81a, from exact head 6837e94dbc43943dc9d17c598445007013374e4c. All CI green, CodeQL neutral. Production deploy dpl_9HjM6JDDTgHXEEvcv7U5hYuyomCd (G72 confirms READY before merge).
+- PR 694 merged 27 Nov 2026 as a squash, 17ee69f242f32bfe7aa295d63ceb28adc6a7c81a, from exact head 6837e94dbc43943dc9d17c598445007013374e4c. All CI green, CodeQL neutral. Production deploy dpl_9HjM6JDDTgHXEEvcv7U5hYuyomCd READY (G72, Vercel list_deployments by sha).
 - Route: two independent Opus reviews on e8c9af7 (one major: a pack-less route offered Change on every Locked row; minors); fix round b7922bb plus spec section 8.9 amendment 9c1bd68; main merges 49ec3c2 (PR 693) and 6837e94 (PR 695); test adjustments 8fdbff5 (44 px scoped to the header Change Pack Status) and 33bd8ad (more.spec: per pack row exactly one Change, Guardian ruling); Opus delta verification e8c9af7..33bd8ad, all items VERIFIED.
 - Dormant in production (404) while the 2b marker is absent.
 
