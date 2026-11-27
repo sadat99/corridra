@@ -5697,6 +5697,7 @@ Verification (scribe): `node scripts/authority.mjs stamp` first (auth-b8414d0519
 Request: owner, first hand in session session_0187kU9tSHgFpneDdBwfinN9, 27 Nov 2026: "confirm warn only". The owner first said "Warn only" first hand to Guardian G68 on 26 Nov. Guardian G69 (session_0187kU9ry9kwDk5ZWeCjyzAB) reviews and merges. Branch claude/bold-edison-gn2iwu from main 8db293d7.
 
 Change (ffec35dc, 8a40cebb):
+
 - `goLiveCheck` now returns `{ ok: true, warnings }` for two cases: a move to LIMITED or ACTIVE with a Core field Pending (`ROUTE_PACK_GO_LIVE_PENDING_CORE`), and content turning a Core field Pending on a live route (`ROUTE_PACK_CORE_TURNS_PENDING`).
 - It refuses only `ROUTE_PACK_LOCKED_CORE_EMPTIED` (409): a pack version that empties a Filled Locked Core row while the route is LIMITED or ACTIVE before and after the write. Nothing is written on that refusal.
 - Locked Core rows still cannot be Not applicable.
@@ -5706,6 +5707,7 @@ Change (ffec35dc, 8a40cebb):
 - ADR-093 section C and Tests, and the Phase 3 editor spec error codes, are updated (docs commit). The Phases line is left to G69's records PR.
 
 Checks (builder; local PostgreSQL 16, KI-15), all exit 0:
+
 - integration: route-pack-content, route-pack-install, operations, sourcing-workflow-install, sourcing-route-profile, commercial-readiness-contracts, commercial-missions and global-foundation, 135 tests;
 - typecheck, lint, format:check, test:docs and preservation;
 - design tests 41;
