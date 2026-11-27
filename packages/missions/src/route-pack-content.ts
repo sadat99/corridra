@@ -521,6 +521,7 @@ export class RoutePackContentService {
             (row) =>
               row.id === item.id &&
               row.route_id === item.routeId &&
+              row.version === item.version &&
               row.reason === item.reason &&
               row.same,
           ),

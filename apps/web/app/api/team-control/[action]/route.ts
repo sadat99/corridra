@@ -1,15 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
+import { routePackContentOctetBudget } from '@corridra/domain/route-pack-standard';
 import { foundations } from '../../../../lib/foundations';
 import { notify } from '../../../../lib/notify';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { createRoutePack } from '@corridra/missions/route-pack-form';
+import { contentAppendItem } from '@corridra/missions/route-pack-content';
 import { sheetLimits, sheetWords, type SheetReport } from '@corridra/missions/route-pack-sheet';
 import { csvRows } from '@corridra/delivery/import';
 import { csvCell } from '@corridra/auth/customer-programme-export-csv';
 import { liveStatuses } from '@corridra/domain/route-pack-standard';
 import { answerRoutePackRead, isRoutePackReadAction } from '../../../../lib/route-pack-editor-read';
+import { factsSavedAnswer, isRoutePackFactsAction } from '../../../../lib/route-pack-editor-write';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +34,9 @@ const sheetRequest = z
   })
   .strict();
 const sheetBodyOctets = 2 * sheetLimits.octets;
+// ADR-093 Phase 3, PR 2a: a facts document may hold up to the content budget of the domain, and the request adds the command id,
+// the route, the version and the reason around it. The 4096 octets of body() stay for every other action.
+const factsBodyOctets = routePackContentOctetBudget + 8192;
 const utf8 = new TextDecoder('utf-8', { fatal: true });
 // Every cell goes through csvCell, which puts an apostrophe before a cell a spreadsheet could read as a formula; the import
 // takes it off again.
@@ -222,6 +228,25 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         ),
         { headers },
       );
+    }
+    if (isRoutePackFactsAction(action)) {
+      // ADR-093 Phase 3, PR 2a: the one write behind the route pack editor, Save Route Facts. The gate comes first and answers
+      // Not found as for an unknown action, for every method but POST too, before a word of the body is read; the service then
+      // holds the authority (config.manage, the fresh authenticator, the content module active) and this handler adds none.
+      if (!(await routePackModuleOn(s)) || request.method !== 'POST')
+        throw new DomainError('Not found', 404);
+      const bytes = await boundedBody(request, factsBodyOctets);
+      let text: string;
+      try {
+        text = utf8.decode(bytes);
+      } catch {
+        throw new DomainError('Send the request as UTF-8 text', 400);
+      }
+      const saved = await s.routePackContent.append(ctx, contentAppendItem.parse(JSON.parse(text)));
+      return Response.json(factsSavedAnswer(saved), {
+        status: saved.duplicate ? 200 : 201,
+        headers,
+      });
     }
     if (action === 'route-pack') {
       // CQ-66: guided route pack form. The reviewed command is built on the server.
