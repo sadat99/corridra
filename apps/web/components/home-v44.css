@@ -740,3 +740,26 @@
   inset-block-end: var(--space-3);
   inset-inline-end: var(--space-3);
 }
+
+/* Polish found in the audit: flag spacing on tabs and titles, calmer route text on the job cards. */
+.hv43 .hv44-tab .ux-flagged,
+.hv43 .hv44-panel-title .ux-flagged {
+  margin-inline-start: 0.3em;
+}
+.hv43 .hv44-jobs .ac1-job {
+  align-items: start;
+  min-block-size: 9rem;
+}
+.hv43 .hv44-jobs .ac1-job-route {
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  letter-spacing: 0;
+  text-transform: none;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+.hv43 .hv44-jobs .ac1-job-icon {
+  margin-block-start: var(--space-1);
+}
