@@ -11,6 +11,7 @@ export function NumberField({
   value,
   onChange,
   whole = false,
+  min = 0,
   error,
 }: {
   id: string;
@@ -22,6 +23,11 @@ export function NumberField({
   onChange: (value: string, unreadable: boolean) => void;
   /** Whole numbers only (people, days, meetings). */
   whole?: boolean;
+  /**
+   * The smallest value the field takes. 0 when left out (every older caller); `null` draws no minimum at all, for a field that
+   * may be negative (a custom number of a route pack).
+   */
+  min?: number | null;
   error?: string | null;
 }) {
   return (
@@ -34,7 +40,7 @@ export function NumberField({
         id={id}
         type="number"
         inputMode={whole ? 'numeric' : 'decimal'}
-        min={0}
+        min={min === null ? undefined : min}
         step={whole ? 1 : 'any'}
         value={value}
         aria-invalid={error ? true : undefined}

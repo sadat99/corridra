@@ -26,6 +26,9 @@
   font-size: var(--text-lg);
 }
 .ux-dialog-close {
+  /* A long title wraps beside it; Close itself never shrinks or breaks ("Clo / se" at 320 px). */
+  flex-shrink: 0;
+  white-space: nowrap;
   min-height: 44px;
   min-width: 44px;
   padding: 0 var(--space-3);

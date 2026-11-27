@@ -591,6 +591,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
             refreshKey={catalogue}
             address={address}
             onGone={overview.retry}
+            onSaved={overview.refresh}
           />
         ) : (
           routeList
