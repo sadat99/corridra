@@ -21,8 +21,8 @@ import {
   nowValue,
   packWords,
   statusLine,
-} from '../../lib/route-pack-editor-pack-words';
-import { packCurrencies, packLanguages, packZones, words } from '../../lib/route-pack-options';
+} from './route-pack-pack-words';
+import { packCurrencies, packLanguages, packZones, words } from './review-settings';
 import { KeyListEntry } from './route-pack-key-list';
 import { PackDialog, PendingCaution, type PackDone } from './route-pack-pack-publish';
 import './route-pack-pack.css';
@@ -249,7 +249,7 @@ export function ChangePackStatusDialog(
       stepWords={packWords.stepStatus}
       stepOne={stepOne}
       primary={packWords.publishStatus}
-      summary={(preview) => [
+      summary={() => [
         statusLine(props.statusWords(pack.status), props.statusWords(picked ?? pack.status)),
         packWords.settingsKept,
       ]}

@@ -89,7 +89,7 @@ import { DiscardDialog, LeaveDialog } from './route-pack-leave-dialogs';
 import { SaveFactsDialog } from './route-pack-save-dialog';
 import { UnsavedBar } from './route-pack-unsaved-bar';
 import { packRowAction, type SettingKey } from '../../lib/route-pack-editor-pack';
-import { duplicateLine, proposedLine, publishedLine } from '../../lib/route-pack-editor-pack-words';
+import { duplicateLine, proposedLine, publishedLine } from './route-pack-pack-words';
 import {
   ChangePackSettingDialog,
   ChangePackStatusButton,

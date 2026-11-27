@@ -23,7 +23,7 @@ import {
   type PackEdit,
   type PackOutcome,
 } from '../../apps/web/lib/route-pack-editor-pack';
-import { keyIssueWords, packWords } from '../../apps/web/lib/route-pack-editor-pack-words';
+import { keyIssueWords, packWords } from '../../apps/web/app/operator/route-pack-pack-words';
 
 // ADR-093 Phase 3, PR 3b: the page's side of route-pack-publish. Pure: no network, no page. Every body the page builds is
 // parsed by the server's own schema, so the two cannot drift apart.

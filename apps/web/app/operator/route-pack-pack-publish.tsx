@@ -25,7 +25,7 @@ import {
   readinessWarning,
   reasonCount,
   showFields,
-} from '../../lib/route-pack-editor-pack-words';
+} from './route-pack-pack-words';
 import { sendPack, type PackSendResult } from './route-pack-pack-send';
 import './route-pack-pack.css';
 

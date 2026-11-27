@@ -1,4 +1,4 @@
-import type { KeyIssue } from './route-pack-editor-pack';
+import type { KeyIssue } from '../../lib/route-pack-editor-pack';
 
 // ADR-093 Phase 3, PR 3b: the words of the pack dialogs (spec 8.9, 10, 11.1 to 11.6, and the designer's UI spec for PR 3b).
 // Pure and free of value imports, so the browser tests can load it. English only: the native language review is open.

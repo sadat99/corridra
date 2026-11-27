@@ -9,7 +9,7 @@ import {
   keyRemoved,
   packWords,
   removeKey,
-} from '../../lib/route-pack-editor-pack-words';
+} from './route-pack-pack-words';
 import './route-pack-pack.css';
 
 // ADR-093 Phase 3, PR 3b: one of the seven key lists, typed in one key at a time (spec 8.9). The key stays as typed (trimmed),
