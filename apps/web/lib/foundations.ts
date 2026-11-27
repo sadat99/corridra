@@ -200,6 +200,7 @@ import { CommercialMissionService } from '@corridra/missions/commercial';
 import { CorridorService } from '@corridra/missions/corridors';
 import { OperationsService } from '@corridra/missions/operations';
 import { RoutePackContentService } from '@corridra/missions/route-pack-content';
+import { RoutePackSheetService } from '@corridra/missions/route-pack-sheet';
 import { CommunicationService } from '@corridra/communications';
 import { OutreachChannel } from '@corridra/communications/adapters';
 import { OutboxDispatcher } from '@corridra/workflows';
@@ -992,6 +993,13 @@ function createServices() {
     corridors: new CorridorService(runtimePool),
     operations: new OperationsService(runtimePool),
     routePackContent: new RoutePackContentService(runtimePool),
+    // ADR-093 G: the route pack sheet writes through the same corridor, operations and content services.
+    routePackSheet: new RoutePackSheetService(
+      runtimePool,
+      new CorridorService(runtimePool),
+      new OperationsService(runtimePool),
+      new RoutePackContentService(runtimePool),
+    ),
     opportunities: new OpportunityService(runtimePool),
     communications: new CommunicationService(runtimePool, config.AUTH_SECRET),
     // ADR-090: sample channels go down the sample lane; EMAIL goes down the real lane, which is off unless its

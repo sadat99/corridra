@@ -14,7 +14,8 @@
     "./request-withdrawal-signal": "./src/request-withdrawal-signal.ts",
     "./route-assignment": "./src/route-assignment.ts",
     "./route-pack-form": "./src/route-pack-form.ts",
-    "./route-pack-content": "./src/route-pack-content.ts"
+    "./route-pack-content": "./src/route-pack-content.ts",
+    "./route-pack-sheet": "./src/route-pack-sheet.ts"
   },
   "dependencies": {
     "@corridra/db": "workspace:*",

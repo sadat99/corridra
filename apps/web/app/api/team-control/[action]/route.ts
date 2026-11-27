@@ -5,6 +5,9 @@ import { foundations } from '../../../../lib/foundations';
 import { notify } from '../../../../lib/notify';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { createRoutePack } from '@corridra/missions/route-pack-form';
+import { sheetLimits, sheetWords, type SheetReport } from '@corridra/missions/route-pack-sheet';
+import { csvRows } from '@corridra/delivery/import';
+import { csvCell } from '@corridra/auth/customer-programme-export-csv';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +19,45 @@ const command = z.discriminatedUnion('action', [
   z.object({ action: z.literal('resend'), invitationId: z.uuid() }).strict(),
   z.object({ action: z.literal('cancel'), invitationId: z.uuid() }).strict(),
 ]);
+// ADR-093 G: the route pack sheet. The CSV travels inside JSON so the dry run and the save send the same body.
+const sheetRequest = z
+  .object({
+    mode: z.enum(['dry-run', 'save']),
+    csv: z.string(),
+    saveId: z.uuid().optional(),
+    reason: z.string().optional(),
+  })
+  .strict();
+const sheetBodyOctets = 2 * sheetLimits.octets;
+const utf8 = new TextDecoder('utf-8', { fatal: true });
+// Every cell goes through csvCell, which puts an apostrophe before a cell a spreadsheet could read as a formula; the import
+// takes it off again.
+const sheetCsv = (rows: string[][]) =>
+  '\uFEFF' + rows.map((row) => row.map((cell) => csvCell(cell)).join(',')).join('\r\n') + '\r\n';
+// A plan with errors saved nothing; a save that stopped after writing says so; otherwise the step's own words.
+const sheetRefusal = (report: SheetReport) =>
+  !report.saved
+    ? sheetWords.saveErrors
+    : report.saved.length
+      ? sheetWords.savePartly
+      : (report.errors[0]?.message ?? sheetWords.saveErrors);
+// Reads at most `limit` octets, stopping as soon as the body passes it; a client-supplied Content-Length is not trusted.
+async function boundedBody(request: Request, limit: number) {
+  const reader = request.body?.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  for (;;) {
+    const next = await reader?.read();
+    if (!next || next.done) break;
+    length += next.value.length;
+    if (length > limit) {
+      await reader!.cancel();
+      throw new DomainError('Request is too large', 413);
+    }
+    chunks.push(next.value);
+  }
+  return Buffer.concat(chunks);
+}
 
 async function handle(request: Request, { params }: { params: Promise<{ action: string }> }) {
   const correlationId = randomUUID();
@@ -112,6 +154,52 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         status: 201,
         headers,
       });
+    if (action === 'route-pack-export' || action === 'route-pack-import') {
+      // Switch off, or the content module not installed: Not found, before the request is read or parsed.
+      if (!uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM') || !(await s.routePackSheet.available()))
+        throw new DomainError('Not found', 404);
+      if (action === 'route-pack-export' && request.method === 'GET') {
+        const routes = (new URL(request.url).searchParams.get('routes') ?? '').split('|');
+        const rows = await s.routePackSheet.export(ctx, { routes });
+        return new Response(sheetCsv(rows), {
+          headers: {
+            ...headers,
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': `attachment; filename=route-packs-${new Date().toISOString().slice(0, 10)}.csv`,
+          },
+        });
+      }
+      if (action === 'route-pack-import' && request.method === 'POST') {
+        // Its own body reader: the file is far larger than the 4096 octets every other action allows.
+        const bytes = await boundedBody(request, sheetBodyOctets);
+        let text: string;
+        try {
+          text = utf8.decode(bytes);
+        } catch {
+          throw new DomainError('Send the file as UTF-8 text', 400);
+        }
+        const v = sheetRequest.parse(JSON.parse(text));
+        if (Buffer.byteLength(v.csv, 'utf8') > sheetLimits.octets)
+          throw new DomainError(sheetWords.octets, 413);
+        const rows = csvRows(v.csv, sheetLimits.rows, 'route pack');
+        if (v.mode === 'dry-run')
+          return Response.json(await s.routePackSheet.dryRun(ctx, { rows }), { headers });
+        const report = await s.routePackSheet.save(ctx, {
+          rows,
+          saveId: v.saveId,
+          reason: v.reason,
+        });
+        if (report.ok) return Response.json(report, { status: 201, headers });
+        return Response.json(
+          {
+            error: sheetRefusal(report),
+            report,
+          },
+          { status: 409, headers },
+        );
+      }
+      throw new DomainError('Not found', 404);
+    }
     if (action === 'route-pack') {
       // CQ-66: guided route pack form. The reviewed command is built on the server.
       if (!uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM')) throw new DomainError('Not found', 404);

@@ -312,6 +312,8 @@ describe('M-10 no new export, and a book carries no price, quote, markup or cont
       'app/api/customer-member-access/route.ts',
       'app/api/customer-programme-exports/route.ts',
       'app/api/delivery/route.ts',
+      // ADR-093 2c route pack export, staff only under missions.read, reviewed in PR 678
+      'app/api/team-control/[action]/route.ts',
       'app/api/workspace/[action]/route.ts',
       'app/api/workspace/delivery/route.ts',
     ]);
