@@ -287,6 +287,8 @@ html:has(.route-bar) {
 .route-more {
   /* A block of its own, so no line box (and no fractional strut) stands around the button. */
   display: flex;
+  /* At the end of the first header line where it fits; wraps to its own row when the line is full. */
+  margin-inline-start: auto;
   min-inline-size: 0;
 }
 .route-more .ux-menu-button {

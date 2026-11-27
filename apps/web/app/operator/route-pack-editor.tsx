@@ -769,8 +769,19 @@ function RouteBody({
   };
   return (
     <>
-      {owner ? (
-        <div className="route-editor-actions">
+      <div className="route-editor-line">
+        {pack ? (
+          <>
+            <StatusBadge tone={packTones[pack.status]}>{packStatusWords(pack.status)}</StatusBadge>{' '}
+            <span>Pack version {pack.version}</span>
+          </>
+        ) : (
+          <StatusBadge tone="unknown">No pack yet</StatusBadge>
+        )}
+        <span>
+          {content || fresh ? `Route facts version ${savedVersion}` : 'No facts saved yet'}
+        </span>
+        {owner ? (
           <RouteMoreMenu
             routeName={routeName}
             sectionName={section === null ? '' : sectionName(section)}
@@ -784,21 +795,8 @@ function RouteBody({
             onUnmark={section !== null && markNote !== null ? unmarkSection : undefined}
             onDiscard={staged > 0 ? () => setDiscardOpen(true) : undefined}
           />
-        </div>
-      ) : null}
-      <p className="route-editor-line">
-        {pack ? (
-          <>
-            <StatusBadge tone={packTones[pack.status]}>{packStatusWords(pack.status)}</StatusBadge>{' '}
-            <span>Pack version {pack.version}</span>
-          </>
-        ) : (
-          <StatusBadge tone="unknown">No pack yet</StatusBadge>
-        )}
-        <span>
-          {content || fresh ? `Route facts version ${savedVersion}` : 'No facts saved yet'}
-        </span>
-      </p>
+        ) : null}
+      </div>
       <div className="route-editor-progress">
         <p>{progressWords({ total, pending })}</p>
         <progress value={total - pending} max={total} aria-label="Core fields done" />

@@ -628,3 +628,45 @@ test.describe('widths: no sideways scroll, axe clean, 44 px targets', () => {
     });
   }
 });
+
+test.describe('More shares the first line of the route header', () => {
+  test('at 1440 More stands on the same line as the pack and route facts versions, and the header gains no line for it', async ({
+    page,
+  }) => {
+    await open(page, { width: 1440, height: 900, query: 'route=BD-CN&section=5' });
+    const more = await box(moreButton(page));
+    for (const words of [/^Pack version /, /^Route facts version /]) {
+      const text = await box(
+        editor(page).locator('.route-editor-line span').filter({ hasText: words }).first(),
+      );
+      // One line: the middle of More lies within the text's own band.
+      const middle = more.y + more.height / 2;
+      expect(middle).toBeGreaterThan(text.y - 1);
+      expect(middle).toBeLessThan(text.y + text.height + more.height / 2 + 1);
+      expect(Math.abs(more.y + more.height / 2 - (text.y + text.height / 2))).toBeLessThan(
+        more.height / 2,
+      );
+    }
+    // The whole first line is one row of More's own height: the header gains no line for More, so the 900 px budget of the
+    // route region (measured in route-pack-editor-edit.spec.ts) is untouched.
+    const line = await box(editor(page).locator('.route-editor-line').first());
+    expect(line.height).toBeLessThanOrEqual(more.height + 1);
+  });
+  for (const width of [320, 390]) {
+    test(`at ${width} More is one line, 44 px high, and its panel lies inside the viewport`, async ({
+      page,
+    }) => {
+      await open(page, { width, height: 900, query: 'route=BD-CN&section=5' });
+      const button = await box(moreButton(page));
+      expect(button.height).toBeGreaterThanOrEqual(44);
+      const word = moreButton(page).getByText('More', { exact: true });
+      const fontSize = await word.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+      expect((await box(word)).height).toBeLessThan(fontSize * 2);
+      await moreButton(page).click();
+      const panel = await box(menu(page));
+      expect(panel.x).toBeGreaterThanOrEqual(0);
+      expect(panel.x + panel.width).toBeLessThanOrEqual(width);
+      await noSidewaysScroll(page);
+    });
+  }
+});
