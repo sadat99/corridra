@@ -30,7 +30,7 @@ export function Hero() {
     <section className="hv7-hero" id="hero" aria-labelledby="home-title">
       <div className="hv7-hero-map" aria-hidden="true">
         <DotMap
-          view="120 10 560 230"
+          view="60 10 640 250"
           routes={['EU', 'US', 'AU', 'CN', 'AE']}
           labels={{ EU: {}, US: {}, AU: {}, CN: {}, AE: {}, BD: {} }}
         />
@@ -79,7 +79,7 @@ const doors: readonly Door[] = [
     tab: 'Buy from China',
     title: 'Buy from China, from checked suppliers.',
     ticks: ['Suppliers checked first', 'Meetings set up for you', 'Follow-through after'],
-    view: '410 30 270 150',
+    view: '330 10 380 250',
     routes: ['CN', 'SG'],
     labels: { CN: {}, SG: {}, BD: {} },
     inbound: true,
@@ -89,7 +89,7 @@ const doors: readonly Door[] = [
     tab: 'Sell abroad',
     title: 'Sell abroad, to buyers who fit.',
     ticks: ['Buyers matched to your product', 'Introductions, not cold calls', 'Follow-through after'],
-    view: '120 20 560 190',
+    view: '90 0 620 250',
     routes: ['EU', 'UK', 'US'],
     labels: { EU: {}, UK: {}, US: {}, BD: {} },
   },
@@ -98,7 +98,7 @@ const doors: readonly Door[] = [
     tab: 'Business delegation',
     title: 'Take a business delegation.',
     ticks: ['Companies chosen for your goal', 'Meetings booked in order', 'A single plan to follow'],
-    view: '380 40 300 200',
+    view: '330 10 380 250',
     routes: ['CN', 'AU', 'AE'],
     labels: { CN: {}, AU: {}, AE: {}, BD: {} },
   },
@@ -107,7 +107,7 @@ const doors: readonly Door[] = [
     tab: 'Something else',
     title: 'Something else? Tell us.',
     ticks: ['Describe it in your own words', 'We reply with the right route'],
-    view: '470 70 150 90',
+    view: '400 30 280 200',
     routes: [],
     labels: { BD: {} },
   },
@@ -197,7 +197,7 @@ const tag = (x: number, y: number, width: number, text: string, tone: 'plain' | 
 );
 
 function ProcessMap({ step }: { step: number }) {
-  const view = '420 40 260 140';
+  const view = '390 20 330 200';
   if (step === 1)
     return <DotMap key={1} view={view} flags labels={{ BD: { name: 'Your request' } }} />;
   if (step === 2)
@@ -282,7 +282,7 @@ export function Status() {
       <div className="hv7-status">
         <div className="hv7-status-map" aria-hidden="true">
           <DotMap
-            view="300 20 380 220"
+            view="280 10 420 250"
             routes={['CN']}
             pins={['AE', 'EU', 'SG']}
             tones={{ CN: 'open', AE: 'soon', SG: 'soon', EU: 'ask' }}
@@ -386,7 +386,7 @@ export function Inbound({ onInbound }: { onInbound: () => void }) {
           </button>
         </div>
         <div className="hv7-inbound-map" aria-hidden="true">
-          <DotMap view="300 20 380 220" routes={['EU']} inbound />
+          <DotMap view="280 10 420 250" routes={['EU']} inbound />
         </div>
       </div>
     </section>
@@ -447,7 +447,7 @@ export function Closing({ shown, href, cta }: { shown: Shown; href: string; cta:
             </div>
           </div>
           <div className="hv7-closing-map" aria-hidden="true">
-            <DotMap view="360 50 260 140" routes={['CN']} fill />
+            <DotMap view="330 20 340 200" routes={['CN']} fill />
           </div>
         </div>
       </section>

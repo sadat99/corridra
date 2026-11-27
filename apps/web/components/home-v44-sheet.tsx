@@ -105,7 +105,7 @@ export function HomeV44Sheet({
         <p className="hv7-side-h">Taking shape as you choose.</p>
         <div className="hv7-side-map" aria-hidden="true">
           <DotMap
-            view="120 10 560 230"
+            view="90 0 620 250"
             routes={arcs}
             labels={mapLabels}
             flags
