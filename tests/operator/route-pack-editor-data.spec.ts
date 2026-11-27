@@ -217,7 +217,8 @@ test.describe('Import Route Data: the owner', () => {
     await button(importDialog(page), 'Save All Routes').click();
     await importDialog(page).getByRole('link', { name: 'Open Bangladesh to China' }).click();
     await expect(importDialog(page)).toBeHidden();
-    expect(new URL(page.url()).searchParams.get('route')).toBe('BD-CN');
+    // The route opens once the dialog has closed and returned focus (50 ms later).
+    await expect.poll(() => new URL(page.url()).searchParams.get('route')).toBe('BD-CN');
     // Focus goes to the opened route's name, not to the list status line.
     await expect(
       editor(page).getByRole('heading', { level: 2, name: 'Bangladesh to China' }),
