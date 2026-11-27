@@ -169,7 +169,6 @@ export function Choose({ intent, onChoose }: { intent: RouteKey; onChoose: (rout
           </div>
         </div>
       </div>
-      <p className="hv7-caption">Pick a route and the map changes. Nothing to press here: Start is already in the header.</p>
     </section>
   );
 }
