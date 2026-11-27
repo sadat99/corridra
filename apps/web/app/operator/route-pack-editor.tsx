@@ -69,7 +69,7 @@ import {
   type RouteAddress,
   type SectionLine,
 } from '../../lib/route-pack-editor-view';
-import { CountryName } from './country-name';
+import { CountryName, countryName } from './country-name';
 import {
   goTo,
   setLeaveGuard,
@@ -778,11 +778,8 @@ function RouteBody({
             onClose={() => setSaveOpen(false)}
             tenant={tenant}
             routeId={summary.routeId}
-            routeName={
-              <>
-                <CountryName code={summary.origin} /> to <CountryName code={summary.destination} />
-              </>
-            }
+            // Plain words in the statement sentence: a flag inside running text breaks its line (designer audit).
+            routeName={`${countryName(summary.origin)} to ${countryName(summary.destination)}`}
             stage={stage}
             document={saved}
             savedVersion={savedVersion}

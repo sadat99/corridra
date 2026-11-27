@@ -265,6 +265,12 @@ test.describe('Save Route Facts', () => {
     await expect(dialog).toContainText(
       'This saves a new version of the facts for Bangladesh to China. It does not change the pack, so readiness stays as it is. Only your team can see route facts.',
     );
+    // The route is named in plain words inside the sentence: no flag or region mark breaks its line.
+    await expect(
+      dialog
+        .locator('p', { hasText: 'This saves a new version of the facts' })
+        .locator('.ux-flagged'),
+    ).toHaveCount(0);
     await expect(dialog).toContainText('Added 0, changed 1, removed 0');
     await expect(dialog).toContainText(`Changed: ${summaryLabel}`);
     await expect(dialog.getByRole('textbox', { name: 'Reason' })).toHaveAttribute(
