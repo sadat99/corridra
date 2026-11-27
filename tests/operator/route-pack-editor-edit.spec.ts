@@ -1284,15 +1284,32 @@ test.describe('widths: no sideways scroll, axe clean, targets, the bar never cov
       // 44 px targets up to 1023 px; from 1024 px the desk's laptop density (a 36 px control) applies.
       for (const button of await bar(page).getByRole('button').all())
         expect((await box(button)).height).toBeGreaterThanOrEqual(width >= 1024 ? 36 : 44);
-      // A control that takes focus is not under the bar.
-      const last = editor(page)
-        .getByRole('button', { name: /^Edit / })
-        .last();
-      await last.focus();
+      // A control that takes focus by keyboard is not under the bar. The first Edit below the window is scrolled to stand just
+      // behind the bar (the bar stands over the list there; the last row is never under it, the bar being the editor's last
+      // block), then reached with Tab: the page must move it clear of the bar.
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+      const edits = editor(page).getByRole('button', { name: /^Edit / });
+      const fold = page.viewportSize()!.height;
+      let target = edits.last();
+      for (const candidate of await edits.all())
+        if ((await box(candidate)).y > fold) {
+          target = candidate;
+          break;
+        }
+      const before = await box(target);
+      await page.evaluate(
+        (top) => window.scrollTo({ top, behavior: 'instant' }),
+        Math.ceil(before.y + before.height - fold + 8),
+      );
+      // A script's focus() does not scroll; Shift Tab then Tab reaches the same button as a person would.
+      await target.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(target).toBeFocused();
       // The page may scroll smoothly to what has focus, so the position is read once it has settled.
       await expect
         .poll(async () => {
-          const [focused, now] = [await box(last), await box(bar(page))];
+          const [focused, now] = [await box(target), await box(bar(page))];
           return Math.round(now.y - (focused.y + focused.height));
         })
         .toBeGreaterThanOrEqual(-1);

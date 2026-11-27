@@ -164,7 +164,59 @@ describe('ChangeSummary', () => {
   });
 });
 
+// Recorded from number-field.tsx and money-input.tsx as they stood on main (2882b1c0), before PR 2b added its optional props.
+// Every caller outside the route pack editor gives none of them, so each must still draw exactly this.
+const mainNumber = {
+  whole: {
+    props: { id: 'n', label: 'Days', value: '12', onChange: () => undefined, whole: true },
+    html: '<div class="ux-number-field"><label for="n">Days</label><input id="n" type="number" inputMode="numeric" min="0" step="1" aria-describedby="n-error" value="12"/><p class="ux-number-error" id="n-error" aria-live="polite"></p></div>',
+  },
+  unit: {
+    props: {
+      id: 'b',
+      label: 'Daily budget',
+      unit: 'USD',
+      value: '2.5',
+      onChange: () => undefined,
+      error: 'Use a number.',
+    },
+    html: '<div class="ux-number-field"><label for="b">Daily budget<span> (USD)</span></label><input id="b" type="number" inputMode="decimal" min="0" step="any" aria-invalid="true" aria-describedby="b-error" value="2.5"/><p class="ux-number-error" id="b-error" aria-live="polite">Use a number.</p></div>',
+  },
+};
+const mainMoney = {
+  usd: {
+    props: {
+      label: 'Amount',
+      currency: 'USD',
+      value: '4500',
+      onChange: () => undefined,
+      id: 'm',
+      required: true,
+    },
+    html: '<div class="ux-kit-field"><label class="ux-kit-label" for="m">Amount (USD)<span class="ux-kit-hint"> (required)</span></label><input id="m" class="ux-kit-input" inputMode="decimal" autoComplete="off" required="" aria-describedby="_R_0_-preview" placeholder="0.00" value="45.00"/><p class="ux-kit-preview" id="_R_0_-preview" aria-live="polite">Amount: USD 45.00</p></div>',
+  },
+  jpy: {
+    props: {
+      label: 'Tier 1 fee',
+      currency: 'JPY',
+      value: null,
+      onChange: () => undefined,
+      id: 'j',
+      disabled: true,
+      error: 'Give an amount.',
+    },
+    html: '<div class="ux-kit-field"><label class="ux-kit-label" for="j">Tier 1 fee (JPY)</label><input id="j" class="ux-kit-input" inputMode="numeric" autoComplete="off" disabled="" aria-invalid="true" aria-describedby="_R_0_-preview _R_0_-error" placeholder="0" value=""/><p class="ux-kit-preview" id="_R_0_-preview" aria-live="polite"></p><p class="ux-kit-error" id="_R_0_-error" role="alert">Give an amount.</p></div>',
+  },
+};
+
 describe('NumberField', () => {
+  test.each(Object.entries(mainNumber))(
+    'a caller that gives no min draws the markup of main (%s)',
+    async (_name, { props, html }) => {
+      const { NumberField } = await load('number-field.tsx');
+      expect(render(ce(NumberField, props))).toBe(html);
+    },
+  );
   test('a caller that gives no min is drawn with min 0, as before; null draws no minimum; a number draws that number', async () => {
     const { NumberField } = await load('number-field.tsx');
     const props = { id: 'n', label: 'Days', value: '', onChange: () => undefined, whole: true };
@@ -176,6 +228,13 @@ describe('NumberField', () => {
 });
 
 describe('MoneyInput', () => {
+  test.each(Object.entries(mainMoney))(
+    'a caller that gives neither new prop draws the markup of main (%s)',
+    async (_name, { props, html }) => {
+      const { MoneyInput } = await load('money-input.tsx');
+      expect(render(ce(MoneyInput, props))).toBe(html);
+    },
+  );
   test('a caller that gives neither new prop is drawn as before', async () => {
     const { MoneyInput } = await load('money-input.tsx');
     const props = {
