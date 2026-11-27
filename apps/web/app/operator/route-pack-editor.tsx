@@ -30,6 +30,7 @@ import {
   stageMark,
   unstageFact,
   warningWords,
+  type Stage,
 } from '../../lib/route-pack-editor-stage';
 import type { FactsSaved } from '../../lib/route-pack-editor-write';
 import { canOfferMark } from '../../lib/route-pack-editor-section';
@@ -85,6 +86,7 @@ import {
   clearMirror,
   isMirrored,
   isTouched,
+  mirrorMatches,
   useRouteSession,
   type RouteSession,
 } from './route-pack-editor-stage-store';
@@ -750,11 +752,12 @@ function RouteBody({
   const openMore = (which: 'mark' | 'custom') => {
     if (!openRowBlocks()) setMoreDialog(which);
   };
-  const saveDone = (result: FactsSaved, document: ContentDocument) => {
+  const saveDone = (result: FactsSaved, document: ContentDocument, sent: Stage) => {
     setJustSaved({ version: result.version, document });
     setStage(() => emptyStage(result.version));
     setOpen(null);
-    clearMirror(tenant, summary.routeId);
+    // Only a copy of what was sent: edits made since (on this route again, after leaving it) keep their copy.
+    if (mirrorMatches(tenant, summary.routeId, sent)) clearMirror(tenant, summary.routeId);
     // The dialog closes itself (it was told to), so focus is returned by the dialog to the status line.
     setStaging('');
     setStatus({

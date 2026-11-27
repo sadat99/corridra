@@ -121,8 +121,8 @@ export type SaveProps = {
   }>;
   /** The page's stage changes: edits that were already saved leave it, and a merge moves it to the version just read. */
   onStage: (stage: Stage) => void;
-  /** The save went through: what the server answered and the document that was saved. */
-  onSaved: (saved: FactsSaved, document: ContentDocument) => void;
+  /** The save went through: what the server answered, the document that was saved and the stage it was made from. */
+  onSaved: (saved: FactsSaved, document: ContentDocument, sent: Stage) => void;
   returnFocusTo: () => HTMLElement | null;
 };
 
@@ -267,7 +267,7 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
     if (result.outcome === 'saved') {
       // Even when the dialog has gone, the page is told: it clears the stage and the tab's copy, so saved edits never come back
       // as "Restored".
-      props.onSaved(result.saved, prepared.body.document);
+      props.onSaved(result.saved, prepared.body.document, s.work.stage);
       if (mounted.current) setShown(false);
       return;
     }
