@@ -1129,6 +1129,59 @@ test('Add route pack with the module active sends only what was set and says wha
   expect(Object.keys(routePackSent[1]!)).not.toContain('effectiveFrom');
 });
 
+test('Add route pack with the module active keeps a caution naming the Core fields still Pending until the next save', async ({
+  page,
+}) => {
+  const published = {
+    id: id(80),
+    version: 1,
+    proposalId: id(81),
+    duplicate: false,
+    removedRefs: [],
+    removedPolicies: [],
+  };
+  await open(page, {
+    read: () => ({ status: 404, json: { error: 'Not found' } }),
+    catalogue: packCatalogue,
+    routePack: {
+      reviewed: true,
+      answer: (count) =>
+        count === 1
+          ? {
+              ...published,
+              warnings: [
+                {
+                  code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE',
+                  keys: ['payments.norms', 'risks.key_risks'],
+                },
+              ],
+            }
+          : { ...published, version: 2, warnings: [] },
+    },
+  });
+  await page.getByText('Add route pack', { exact: true }).click();
+  let form = await fillRoutePack(page);
+  await form.getByLabel('Status').selectOption('ACTIVE');
+  await form.getByRole('button', { name: 'Save Route Pack' }).click();
+  const caution =
+    'Route pack version 1 saved and published. These Core fields are still Pending: Usual payment terms, Main risks for customers. This does not mean the route is cleared.';
+  const line = routePackFeedback(page);
+  await expect(line).toHaveText(caution);
+  await expect(line).toHaveAttribute('role', 'status');
+  await expect(line.locator('.ux-kit-feedback')).toHaveAttribute('data-kind', 'caution');
+  expect(
+    await new AxeBuilder({ page }).include('[data-feedback-scope="route-pack"]').analyze(),
+  ).toMatchObject({ violations: [] });
+  // A success clears itself after 6 seconds; the caution does not.
+  await page.waitForTimeout(6500);
+  await expect(line).toHaveText(caution);
+  // The next save replaces it; without warnings it is the success line again.
+  form = await fillRoutePack(page);
+  await form.getByRole('button', { name: 'Save Route Pack' }).click();
+  await expect(line).toHaveText('Route pack version 2 published.');
+  await expect(line.locator('.ux-kit-feedback')).toHaveAttribute('data-kind', 'success');
+});
+
 test('Add route pack with the module inactive sends and says what it always did', async ({
   page,
 }) => {

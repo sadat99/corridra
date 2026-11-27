@@ -5,12 +5,12 @@ import './ux-kit.css';
 import { useEffect, useId, useRef, useState } from 'react';
 import { fieldAnchor, summaryFocusDue } from '../../lib/ux/focus';
 
-export type Feedback = { kind: 'success' | 'error'; text: string } | null;
+export type Feedback = { kind: 'success' | 'caution' | 'error'; text: string } | null;
 
 /**
  * Shows one message next to the action that caused it. `scope` names the panel; a message from
  * another panel is never passed in, so messages never pile up across panels. Success clears after
- * 6 seconds; errors stay until the next attempt.
+ * 6 seconds; a caution (saved, with something still to do) and an error stay until the next attempt.
  */
 export function ActionFeedback({
   scope,
@@ -47,6 +47,7 @@ export function useActionFeedback() {
   return {
     feedback,
     success: (text: string) => setFeedback({ kind: 'success', text }),
+    caution: (text: string) => setFeedback({ kind: 'caution', text }),
     error: (text: string) => setFeedback({ kind: 'error', text }),
     clear: () => setFeedback(null),
   };

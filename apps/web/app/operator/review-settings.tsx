@@ -2,6 +2,7 @@
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { PanelHeading } from './panel-heading';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { goLiveWarningsMessage, type GoLiveWarning } from '@corridra/domain/route-pack-standard';
 import { CountryOptions } from './country-options';
 import { ActionFeedback, useActionFeedback } from '../../components/ux/feedback';
 import { DateTimeInput } from '../../components/ux/date-time-input';
@@ -158,7 +159,8 @@ function RouteList({ catalogue, failed }: { catalogue: Catalogue | null; failed:
  * answers 404 otherwise. Review stays required and the raw command stays under Advanced.
  * ADR-093 2b: once the server says the route pack module is active (`reviewed`), the form sends only
  * what the person set, so every key left alone is carried from the current pack, and the result
- * says what the reviewed publish did. Until then it sends and says exactly what it always did.
+ * says what the reviewed publish did; with go-live warnings (Core fields still Pending) it says so
+ * as a caution that stays on screen. Until then it sends and says exactly what it always did.
  */
 function RoutePackForm({
   tenant,
@@ -241,7 +243,12 @@ function RoutePackForm({
     feedback.clear();
     try {
       const result = await withStepUp(async () =>
-        readJson<{ version?: number; duplicate?: boolean; removedPolicies?: string[] }>(
+        readJson<{
+          version?: number;
+          duplicate?: boolean;
+          removedPolicies?: string[];
+          warnings?: GoLiveWarning[];
+        }>(
           await fetch(`/api/team-control/route-pack?${new URLSearchParams({ tenant })}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -252,13 +259,20 @@ function RoutePackForm({
       const removed = result.removedPolicies?.length
         ? ` Expired policies removed: ${result.removedPolicies.join(', ')}.`
         : '';
-      feedback.success(
-        typeof result.duplicate !== 'boolean'
-          ? `Route pack version ${nextVersion} saved. Review is still required.`
-          : result.duplicate
-            ? 'Already saved. Nothing changed.'
-            : `Route pack version ${result.version} published.${removed}`,
-      );
+      const warned = goLiveWarningsMessage(result.warnings ?? []);
+      // Saved with Core fields still Pending: a caution that stays until the next save, never a success that clears itself.
+      if (result.duplicate === false && warned)
+        feedback.caution(
+          `Route pack version ${result.version} saved and published.${removed} ${warned}`,
+        );
+      else
+        feedback.success(
+          typeof result.duplicate !== 'boolean'
+            ? `Route pack version ${nextVersion} saved. Review is still required.`
+            : result.duplicate
+              ? 'Already saved. Nothing changed.'
+              : `Route pack version ${result.version} published.${removed}`,
+        );
       form.reset();
       setRouteId('');
       setEffectiveFrom(null);

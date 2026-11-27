@@ -13,6 +13,7 @@ import {
   machineryFields,
   requirementFields,
 } from '@corridra/domain/commercial-missions';
+import type { GoLiveWarning } from '@corridra/domain/route-pack-standard';
 import { assertPackGoLive } from './route-pack-content';
 export const readinessDimensions = [
   'offer',
@@ -286,6 +287,8 @@ export class OperationsService {
           return old.result;
         }
         const base = { id: v.id, tenant_id: ctx.tenantId, created_by: actorId, reason: v.reason };
+        // The go-live warnings of a published pack while the route pack module is active; absent otherwise, as before.
+        let warnings: GoLiveWarning[] | undefined;
         if (v.action === 'ai-budget')
           await insert(db, 'ai_mission_budget', {
             ...base,
@@ -394,8 +397,9 @@ export class OperationsService {
             ).rows[0];
             if ((current?.id ?? null) !== q.base_pack_id)
               throw new DomainError('Configuration changed; submit a new preview', 409);
-            // ADR-093 2b: the shared go-live check on the pack as published. Both locks are already held.
-            await assertPackGoLive(db, ctx.tenantId, p);
+            // ADR-093 2b: the shared go-live check on the pack as published. Both locks are already held. Its warnings are
+            // kept with the command result, so a replayed decision says the same.
+            warnings = await assertPackGoLive(db, ctx.tenantId, p);
             await insert(db, 'corridor_pack_version', {
               id: p.id,
               tenant_id: ctx.tenantId,
@@ -479,7 +483,7 @@ export class OperationsService {
             due_at: v.dueAt,
             source_id: v.sourceId,
           });
-        const result = { id: v.id, action: v.action };
+        const result = { id: v.id, action: v.action, ...(warnings ? { warnings } : {}) };
         await insert(db, 'operations_command', {
           id: v.id,
           tenant_id: ctx.tenantId,
