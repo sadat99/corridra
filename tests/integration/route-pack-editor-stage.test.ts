@@ -649,6 +649,30 @@ describe('carry A: the body of a save is built in one place and its version is t
     });
   });
 
+  test('a newer version given with no clash to resolve is not taken: a stage made on 5 is sent as 6, so the server refuses it instead of saving over version 7', () => {
+    const saved = doc([fact(optionalKey, 'Saved')]);
+    const stage = stageFact(emptyStage(5), saved, optionalKey, fact(optionalKey, 'Mine'));
+    // A stage restored from an older version whose check never ran (or failed): the page knows version 7 is saved now.
+    expect(resolve(stage, [], {}, 7).stage.baseVersion).toBe(5);
+    expect(
+      prepareSave({ stage, document: saved, routeId, id: command, reason, theirsVersion: 7 }),
+    ).toMatchObject({ ok: true, body: { version: 6 } });
+    expect(canSave(stage, [], {}, 7)).toBe(true);
+    // After the merge that read version 7 (nothing clashes), the stage stands on 7 and is sent as 8.
+    const merged = mergeStage(stage, saved, 7);
+    expect(merged.conflicts).toEqual([]);
+    expect(
+      prepareSave({
+        stage: merged.stage,
+        document: saved,
+        routeId,
+        id: command,
+        reason,
+        theirsVersion: 7,
+      }),
+    ).toMatchObject({ ok: true, body: { version: 8 } });
+  });
+
   test('after a merge onto version 7 with a clash, nothing can be sent until every clash has a choice; it never sends version 8 conflicted', () => {
     const saved = doc([fact(optionalKey, 'Saved')]);
     const stage = stageFact(emptyStage(5), saved, optionalKey, fact(optionalKey, 'Mine'));

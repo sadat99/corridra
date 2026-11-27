@@ -112,6 +112,11 @@ export type OverviewData = {
   /** Asks again; `retrying` is true until the answer arrives. */
   retry: () => void;
   retrying: boolean;
+  /**
+   * Asks again quietly (after a save): a failed answer keeps the list that was shown, so the open route and its "Saved" line
+   * stay on screen. A later read or Try Again still shows a failure.
+   */
+  refresh: () => void;
 };
 /**
  * The list of routes with their completeness. Asked once `enabled`, and again whenever `refreshKey` changes identity (the
@@ -129,20 +134,28 @@ export function useRoutePackOverview(
   });
   const [attempt, setAttempt] = useState(0);
   const [retrying, setRetrying] = useState(false);
+  // Set by `refresh` for the one read it starts: that read may not replace a list that was shown with a failure.
+  const quiet = useRef(false);
   useEffect(() => {
     if (!enabled) return;
     let live = true;
+    const keepShown = quiet.current;
+    quiet.current = false;
+    const show = (next: { state: ReadState; routes: RouteSummary[] }) =>
+      setResult((shown) =>
+        keepShown && next.state !== 'ready' && shown.state === 'ready' ? shown : next,
+      );
     read<OverviewList>('route-pack-overview', tenant)
       .then((answer) => {
         if (!live) return;
-        setResult({
+        show({
           state:
             answer.state === 'ready' && !Array.isArray(answer.body.routes) ? 'error' : answer.state,
           routes:
             answer.state === 'ready' && Array.isArray(answer.body.routes) ? answer.body.routes : [],
         });
       })
-      .catch(() => live && setResult({ state: 'error', routes: [] }))
+      .catch(() => live && show({ state: 'error', routes: [] }))
       .finally(() => live && setRetrying(false));
     return () => {
       live = false;
@@ -152,7 +165,11 @@ export function useRoutePackOverview(
     setRetrying(true);
     setAttempt((count) => count + 1);
   }, []);
-  return { ...result, retry, retrying };
+  const refresh = useCallback(() => {
+    quiet.current = true;
+    setAttempt((count) => count + 1);
+  }, []);
+  return { ...result, retry, retrying, refresh };
 }
 
 type RouteRead = Omit<DetailData, 'retry' | 'retrying' | 'reload'> & { routeId: string | null };

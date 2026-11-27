@@ -52,7 +52,7 @@ export function LeaveDialog({
   return (
     <Dialog open={open} onClose={onKeep} title={leaveTitle}>
       <div className="route-dialog">
-        <p>{leaveWords(count)}</p>
+        <p>{leaveWords(count, kept)}</p>
         {kept ? <p>{leaveKept}</p> : null}
         <div className="route-dialog-actions">
           <button type="button" className="primary-link" data-autofocus onClick={onKeep}>

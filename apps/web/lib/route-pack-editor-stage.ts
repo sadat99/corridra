@@ -259,8 +259,8 @@ export function mergeStage(
 /**
  * Applies the person's choices to a merged stage. "Use theirs" drops the edit (the saved value stays). "Keep mine" keeps it and
  * moves its base to what is saved now, so the conflict is over. A conflict with no choice is left exactly as it is and its id
- * is listed in `missing`: the page must not offer "Save With These Choices" while `missing` is not empty. Once nothing is
- * missing, the stage is made on `theirsVersion`.
+ * is listed in `missing`: the page must not offer "Save With These Choices" while `missing` is not empty. Once there were
+ * clashes and nothing is missing, the stage is made on `theirsVersion`; with no clashes it keeps its own version.
  */
 export function resolve(
   stage: Stage,
@@ -290,7 +290,10 @@ export function resolve(
   return {
     stage: {
       ...stage,
-      baseVersion: missing.length ? stage.baseVersion : theirsVersion,
+      // Only a merge gives clashes, so with none to resolve the stage keeps its own version: a version newer than the stage's
+      // can never be taken without the merge that read it (a stage that is behind is then refused by the server, never saved
+      // on top of the newer save).
+      baseVersion: missing.length || conflicts.length === 0 ? stage.baseVersion : theirsVersion,
       facts,
       marks,
     },

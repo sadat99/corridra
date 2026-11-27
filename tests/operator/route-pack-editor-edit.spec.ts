@@ -808,6 +808,137 @@ test.describe('conflict: Someone saved route facts for this route first', () => 
     await expect(saveDialog(page)).toBeHidden();
     expect((world.saves[0]!.body as { version: number }).version).toBe(base.version + 1);
   });
+  test('a restored stage made on an older version is never sent before a check works: the first read fails, nothing is posted, Check Again reads and asks', async ({
+    page,
+  }) => {
+    const world = await open(page, { query: 'route=BD-CN&section=1', facts: {} });
+    const base = await savedDocument(page);
+    const saved = base.document.facts.find((fact) => fact.key === summaryKey)!;
+    const stage = {
+      v: 1,
+      baseVersion: base.version - 1,
+      facts: { [summaryKey]: { base: saved, mine: { ...saved, value: 'Mine' } } },
+      marks: {},
+    };
+    await page.evaluate(
+      ({ tenant, route, value }) =>
+        window.sessionStorage.setItem(`corridra:route-pack-stage:${tenant}:${route}`, value),
+      { tenant: fixtureTenant, route: routeIds.bdCn, value: JSON.stringify(stage) },
+    );
+    await page.reload();
+    await expect(status(page)).toHaveText('Restored 1 change that was not saved.');
+    // The read that checks what changed fails once.
+    world.facts!.failDetail = 1;
+    await reviewAndSave(page, 1);
+    const dialog = saveDialog(page);
+    await expect(dialog.getByRole('alert')).toHaveText(
+      'The latest route facts could not be read, so nothing was saved. Your changes are still here.',
+    );
+    // Save Facts is not offered: a stage made on the older version would land on top of the newer save.
+    await expect(saveFacts(page)).toHaveCount(0);
+    const again = dialog.getByRole('button', { name: 'Check Again' });
+    await expect(again).toBeFocused();
+    await fillReason(page);
+    expect(world.saves).toHaveLength(0);
+    await axeClean(page);
+    await again.click();
+    const banner = dialog.locator('.route-save-banner');
+    await expect(banner).toBeFocused();
+    await expect(banner).toContainText(
+      `Someone saved route facts for this route first. Their changes do not clash with yours. The latest version is ${base.version}.`,
+    );
+    expect(world.saves).toHaveLength(0);
+    await saveFacts(page).click();
+    await expect(dialog).toBeHidden();
+    expect(world.saves).toHaveLength(1);
+    expect((world.saves[0]!.body as { version: number }).version).toBe(base.version + 1);
+  });
+
+  test('while Save With These Choices is in flight, Cancel and the choices are locked', async ({
+    page,
+  }) => {
+    const world = await open(page, { query: 'route=BD-CN&section=1', facts: {} });
+    const wait = await theirs(page, (document) => withFact(document, summaryKey, 'Theirs'));
+    world.facts!.saveScript = [{ status: 409, code: conflict, theirs: wait }];
+    await stageSummary(page);
+    await reviewAndSave(page);
+    await fillReason(page);
+    await saveFacts(page).click();
+    const dialog = saveDialog(page);
+    await expect(clashHeading(page)).toBeFocused();
+    await dialog.getByRole('button', { name: 'Keep mine: Mine' }).click();
+    // The next send waits, then fails: the dialog stays, every control comes back.
+    world.facts!.saveScript = [{ status: 500, delay: 1500 }];
+    await dialog.getByRole('button', { name: 'Save With These Choices' }).click();
+    await expect(dialog.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+    await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeDisabled();
+    await expect(dialog.getByRole('button', { name: 'Keep mine: Mine' })).toBeDisabled();
+    await expect(dialog.getByRole('button', { name: 'Use theirs: Theirs' })).toBeDisabled();
+    await expect(dialog.getByRole('alert')).toHaveText(
+      'Not saved. Your changes are still here. Try again.',
+    );
+    await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeEnabled();
+    await expect(dialog.getByRole('button', { name: 'Keep mine: Mine' })).toBeEnabled();
+  });
+});
+
+test.describe('after a save', () => {
+  test('a new edit made before the route is read again stands on the version just saved: no false conflict, sent as the next version', async ({
+    page,
+  }) => {
+    const world = await open(page, { query: 'route=BD-CN&section=1', facts: {} });
+    const before = await savedDocument(page);
+    await stageSummary(page, 'First');
+    await reviewAndSave(page);
+    await fillReason(page);
+    // The reads of the route that follow the save fail, so the page still holds the version before it.
+    world.facts!.failDetail = 5;
+    await saveFacts(page).click();
+    await expect(status(page)).toHaveText(
+      `Saved. Route facts are now version ${before.version + 1}.`,
+    );
+    await stageSummary(page, 'Second');
+    await reviewAndSave(page);
+    const dialog = saveDialog(page);
+    await expect(dialog).toContainText('This saves a new version of the facts');
+    await expect(dialog).not.toContainText('Someone saved');
+    await expect(dialog).not.toContainText('Not saved');
+    await expect(dialog).not.toContainText('could not be read');
+    await fillReason(page);
+    await saveFacts(page).click();
+    await expect(dialog).toBeHidden();
+    expect(world.saves).toHaveLength(2);
+    expect((world.saves[1]!.body as { version: number }).version).toBe(before.version + 2);
+    await expect(status(page)).toHaveText(
+      `Saved. Route facts are now version ${before.version + 2}.`,
+    );
+  });
+
+  test('a failed read of the Routes list after a save keeps the open route and its Saved line', async ({
+    page,
+  }) => {
+    const world = await open(page, { query: 'route=BD-CN&section=1', facts: {} });
+    const before = await savedDocument(page);
+    await stageSummary(page, 'Saved once');
+    await reviewAndSave(page);
+    await fillReason(page);
+    world.facts!.overview = 500;
+    const listRead = page.waitForResponse(
+      (response) =>
+        response.url().includes('route-pack-overview') && !response.url().includes('routeId='),
+    );
+    await saveFacts(page).click();
+    expect((await listRead).status()).toBe(500);
+    // Two frames after the answer: whatever it changes has been drawn.
+    await page.evaluate(
+      () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+    );
+    await expect(editor(page)).toBeVisible();
+    await expect(status(page)).toHaveText(
+      `Saved. Route facts are now version ${before.version + 1}.`,
+    );
+    await expect(rowOf(page, summaryLabel)).toContainText('Saved once');
+  });
 });
 
 // ---- Discard, leave, the tab's copy ------------------------------------------------------------------------------------------------
@@ -849,10 +980,12 @@ test.describe('Discard Changes and leaving the route', () => {
     const other = page.getByRole('link', { name: /^Bangladesh to European Union/ });
     await other.click();
     const dialog = page.getByRole('dialog', { name: 'You Have Changes That Are Not Saved' });
+    // The copy is kept, so the dialog never says the edits are removed (spec 9, amended after the designer audit).
     await expect(dialog).toContainText(
-      'Leaving this route removes 1 change that is not saved. Your saved facts are not affected.',
+      'Leaving this route puts your 1 unsaved change aside. Your saved facts are not affected.',
     );
     await expect(dialog).toContainText('Your changes are kept for this tab session.');
+    await expect(dialog).not.toContainText('removes');
     await expect(dialog.getByRole('button', { name: 'Keep Editing' })).toBeFocused();
     await dialog.getByRole('button', { name: 'Keep Editing' }).click();
     await expect(dialog).toBeHidden();

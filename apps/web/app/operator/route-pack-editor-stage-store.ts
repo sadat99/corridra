@@ -74,14 +74,19 @@ export function useRouteSession(
     return stage ? { stage, restored: stageCount(stage) } : { stage: emptyStage(0), restored: 0 };
   });
   const [open, setOpen] = useState<OpenRow | null>(null);
-  const stage =
-    stageCount(raw.stage) === 0 && savedVersion !== null ? emptyStage(savedVersion) : raw.stage;
+  // An empty stage stands on the newest version known: the one read, or the one a save just made (the page sets an empty stage
+  // on it), which the read of the route may not show yet. A new edit is then never made on the version before the save.
+  const follow = (current: Stage) =>
+    stageCount(current) === 0 && savedVersion !== null
+      ? emptyStage(Math.max(savedVersion, current.baseVersion))
+      : current;
+  const stage = follow(raw.stage);
   const setStage = useCallback(
     (change: (stage: Stage) => Stage) =>
       setRaw((current) => {
         const from =
           stageCount(current.stage) === 0 && savedVersion !== null
-            ? emptyStage(savedVersion)
+            ? emptyStage(Math.max(savedVersion, current.stage.baseVersion))
             : current.stage;
         return { stage: change(from), restored: 0 };
       }),

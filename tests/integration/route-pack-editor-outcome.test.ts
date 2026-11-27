@@ -21,7 +21,9 @@ describe('factsOutcome: every status and code', () => {
     [409, 'ROUTE_PACK_CONTENT_CHANGED', 'conflict'],
     [409, 'ROUTE_PACK_COMMAND_REUSED', 'commandReused'],
     [409, 'ROUTE_PACK_CUSTOM_KEY_CONFLICT', 'customKeyConflict'],
-    [409, 'SOMETHING_ELSE', 'offline'],
+    // Any other 409 (a go-live refusal, for one) shows the server's words; it is never "Try again".
+    [409, 'SOMETHING_ELSE', 'invalid'],
+    [409, undefined, 'invalid'],
     [400, 'ROUTE_PACK_INVALID', 'invalid'],
     [400, undefined, 'invalid'],
     [413, undefined, 'tooLarge'],
@@ -37,6 +39,16 @@ describe('factsOutcome: every status and code', () => {
     test(`${status} ${code ?? ''} is ${outcome}`, () => {
       expect(factsOutcome(status, code)).toBe(outcome);
     });
+});
+
+test('an unrecognised 409 shows the server words as a refusal and keeps the changes', () => {
+  const words = outcomeWords(
+    factsOutcome(409, 'ROUTE_PACK_GO_LIVE_BLOCKED') as Exclude<FactsOutcome, 'saved' | 'conflict'>,
+    'This route cannot go live yet.',
+  );
+  expect(words).toBe(
+    'The save was refused: This route cannot go live yet. Nothing was saved. Your changes are still here.',
+  );
 });
 
 describe('outcomeWords', () => {

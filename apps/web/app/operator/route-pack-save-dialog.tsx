@@ -30,6 +30,7 @@ import {
 } from '../../lib/route-pack-editor-write';
 import {
   allDroppedWords,
+  checkFailedWords,
   checkingWords,
   checkSummary,
   choosePrompt,
@@ -71,6 +72,12 @@ type State = {
   work: Work;
   command: Command | null;
   checks: number;
+  /**
+   * The stage must be checked against what is saved now before anything is sent: a stage made on an older version (restored,
+   * or behind another save) until a check has worked, and again after a check that failed. Save Facts is not offered then;
+   * "Check Again" is.
+   */
+  unchecked: boolean;
   conflicts: Conflict[];
   merged: MergeNote[];
   dropped: MergeNote[];
@@ -126,13 +133,15 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
     (state: State, change: Partial<State>) => ({ ...state, ...change }),
     {
       view: 'review',
-      busy: null,
+      // A stage that is behind is checked as soon as the dialog opens: it shows "Checking what changed…" from the first paint.
+      busy: behind ? 'checking' : null,
       reason: '',
       reasonAsked: false,
       error: null,
       work: { stage: props.stage, document: props.document, version: props.savedVersion },
       command: null,
       checks: 0,
+      unchecked: behind,
       conflicts: [],
       merged: [],
       dropped: [],
@@ -145,7 +154,16 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
   const banner = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const reasonBox = useRef<HTMLTextAreaElement>(null);
+  const checkAgain = useRef<HTMLButtonElement>(null);
   const started = useRef(false);
+  // The dialog can go (the person moves to another route) while a read or a send is out: what comes back then changes nothing.
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   // Rebuilds the stage on what is saved now. One path for a 409 and for a stage that was made on an older version.
   async function check(work: Work, checks: number, reason: string) {
@@ -156,9 +174,10 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
     } catch {
       read = null;
     }
+    if (!mounted.current) return;
     const route = read?.state === 'ready' ? read.detail?.route : null;
     if (!route) {
-      patch({ busy: null, error: outcomeWords('offline', null) });
+      patch({ busy: null, error: checkFailedWords, unchecked: true });
       return;
     }
     const theirs = route.content?.document ?? null;
@@ -168,6 +187,7 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
     const next: Work = { stage: merged.stage, document: theirs, version };
     const base = {
       busy: null,
+      unchecked: false,
       work: next,
       checks: checks + 1,
       merged: merged.merged,
@@ -198,6 +218,11 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
     if (s.view === 'clash') heading.current?.focus();
   }, [s.view, s.busy, s.checks]);
 
+  // A check that failed leaves focus on Check Again (the control that was pressed went while the route was read).
+  useEffect(() => {
+    if (s.unchecked && !s.busy && s.error) checkAgain.current?.focus();
+  }, [s.unchecked, s.busy, s.error]);
+
   const lines = summaryLines(s.work.stage, labelOf);
   const caution = cautionKeys(pack, s.work.document, applyStage(s.work.document, s.work.stage));
   const trimmed = s.reason.trim();
@@ -211,6 +236,8 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
   const openChoices = openConflictIds(s.work.stage, s.conflicts, s.choices);
 
   async function save() {
+    // Nothing is sent before the stage was checked against what is saved now (a stage behind it would land on top of it).
+    if (s.unchecked) return;
     let command = s.command;
     const prepared = prepareSave({
       stage: s.work.stage,
@@ -234,6 +261,7 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
     }
     patch({ busy: 'saving', error: null, command });
     const result = await sendFacts(tenant, prepared.body);
+    if (!mounted.current) return;
     if (result.outcome === 'saved') {
       props.onSaved(result.saved, prepared.body.document);
       setShown(false);
@@ -380,6 +408,7 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
                     {(['mine', 'theirs'] as const).map((side) => (
                       <ChoiceButton
                         key={side}
+                        disabled={locked}
                         chosen={s.choices[key] === side}
                         onClick={() =>
                           patch({ choices: { ...s.choices, [key]: side }, error: null })
@@ -401,6 +430,7 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
                 <button
                   type="button"
                   className="primary-link"
+                  disabled={locked}
                   onClick={() => patch({ step: s.step + 1 })}
                 >
                   Next
@@ -439,12 +469,13 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
                 <button
                   type="button"
                   className="text-link"
+                  disabled={locked}
                   onClick={() => patch({ step: s.step - 1 })}
                 >
                   Back
                 </button>
               ) : null}
-              <button type="button" className="text-link" onClick={leave}>
+              <button type="button" className="text-link" disabled={locked} onClick={leave}>
                 Cancel
               </button>
             </div>
@@ -470,15 +501,27 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
               {reasonField}
               {errorLine}
               <div className="route-dialog-actions">
-                <button
-                  type="button"
-                  className="primary-link"
-                  disabled={locked}
-                  aria-busy={s.busy === 'saving' || undefined}
-                  onClick={() => void save()}
-                >
-                  {s.busy === 'saving' ? 'Saving…' : 'Save Facts'}
-                </button>
+                {s.unchecked ? (
+                  <button
+                    ref={checkAgain}
+                    type="button"
+                    className="primary-link"
+                    disabled={locked}
+                    onClick={() => void check(s.work, s.checks, s.reason)}
+                  >
+                    Check Again
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="primary-link"
+                    disabled={locked}
+                    aria-busy={s.busy === 'saving' || undefined}
+                    onClick={() => void save()}
+                  >
+                    {s.busy === 'saving' ? 'Saving…' : 'Save Facts'}
+                  </button>
+                )}
                 <button type="button" className="text-link" disabled={locked} onClick={leave}>
                   Cancel
                 </button>

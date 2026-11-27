@@ -23,9 +23,12 @@ export const openFieldNotIncluded = (label: string) =>
 export const discardWords = (n: number) =>
   `This removes ${n} ${many(n, 'change', 'changes')} that ${many(n, 'is', 'are')} not saved. The saved facts stay as they are.`;
 export const leaveTitle = 'You Have Changes That Are Not Saved';
-export const leaveWords = (n: number) =>
+/** `kept`: the edits are in the tab's copy, so leaving sets them aside (they come back); otherwise leaving removes them. */
+export const leaveWords = (n: number, kept = false) =>
   n > 0
-    ? `Leaving this route removes ${n} ${many(n, 'change', 'changes')} that ${many(n, 'is', 'are')} not saved. Your saved facts are not affected.`
+    ? kept
+      ? `Leaving this route puts your ${n} unsaved ${many(n, 'change', 'changes')} aside. Your saved facts are not affected.`
+      : `Leaving this route removes ${n} ${many(n, 'change', 'changes')} that ${many(n, 'is', 'are')} not saved. Your saved facts are not affected.`
     : 'Leaving this route removes the answer you are editing, which is not kept yet. Your saved facts are not affected.';
 export const leaveKept = 'Your changes are kept for this tab session.';
 export const pendingClears =
@@ -68,6 +71,9 @@ export const noteLabel = (note: MergeNote, factLabel: (key: string) => string) =
 
 // ---- Conflict: what an answer to Save Route Facts says when another save landed first ---------------------------------------
 export const checkingWords = 'Checking what changed…';
+/** The route could not be read again to check what changed: nothing was sent, and nothing is sent until a check has worked. */
+export const checkFailedWords =
+  'The latest route facts could not be read, so nothing was saved. Your changes are still here.';
 export const clashHeading = (again: boolean) =>
   again
     ? 'Someone saved route facts again first.'

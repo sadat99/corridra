@@ -65,7 +65,8 @@ export function factsOutcome(status: number, code?: string | null): FactsOutcome
     if (code === 'ROUTE_PACK_CONTENT_CHANGED') return 'conflict';
     if (code === 'ROUTE_PACK_COMMAND_REUSED') return 'commandReused';
     if (code === 'ROUTE_PACK_CUSTOM_KEY_CONFLICT') return 'customKeyConflict';
-    return 'offline';
+    // Any other 409 is a refusal the server explains (a go-live check, for one): its words are shown, never "Try again".
+    return 'invalid';
   }
   if (status === 400) return 'invalid';
   if (status === 413) return 'tooLarge';

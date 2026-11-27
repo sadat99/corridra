@@ -49,6 +49,14 @@ describe('counts in words', () => {
     expect(words.leaveWords(3)).toBe(
       'Leaving this route removes 3 changes that are not saved. Your saved facts are not affected.',
     );
+    // With the tab's copy kept, leaving sets the edits aside: the line never says they are removed (designer audit, spec 9).
+    expect(words.leaveWords(3, true)).toBe(
+      'Leaving this route puts your 3 unsaved changes aside. Your saved facts are not affected.',
+    );
+    expect(words.leaveWords(1, true)).toBe(
+      'Leaving this route puts your 1 unsaved change aside. Your saved facts are not affected.',
+    );
+    expect(words.leaveWords(3, false)).toBe(words.leaveWords(3));
     expect(words.leaveTitle).toBe('You Have Changes That Are Not Saved');
     expect(words.leaveKept).toBe('Your changes are kept for this tab session.');
     expect(words.openFieldNotIncluded('Working week')).toBe(
