@@ -5784,3 +5784,40 @@ No migration, no visible change, nothing installed, no switch touched.
 **Not verified.** The integration suites on the merged head (local Postgres gone; CI is the gate). Full operator and ux suites (no visible change).
 
 **Next.** G69 reviews and merges 678. Then Phase 3, the editor screen (spec #672). route_pack_install for 2a still waits for the owner's word after G69 checks the production Postgres major.
+
+Follow-up, 27 Nov 2026 (conductor): PR 678 Guardian G69 review fixes. G69's Opus review of 781d56f5 found 0 blocking issues. The head is now 76919e2e, which merges main 1453a1ca (records PR 679).
+
+**Required fixes**
+
+- 1a9e994b: with the switch on and the 2b marker absent, which is production today, both actions answer 404 before any body read or parse, the same as with the switch off.
+- d3b1a5bd: a Pending row on a Filled pack setting is listed as skipped in plain words in the dry run and the save, never dropped silently. It is a skipped note rather than an error, so a fresh template can still be loaded over a route that has data.
+- a742ddbf: state words are a Map, so "constructor" and "**proto**" are refused.
+- fe454cee: the M-10 file-route pin adds `app/api/team-control/[action]/route.ts`. CI on 781d56f5 failed on this tripwire.
+
+**Optional fixes**
+
+- 02cf23f1: exact formula round trip for values that already start with an apostrophe. A value that differs only by end spaces is noted instead of shown as updated.
+- 259132ab: the save-stopped log carries correlationId and code, and grouping pushes instead of copying.
+- 1ed6a46d: tests, including a dry run that also counts events, outbox and command rows. Five tests fail on 781d56f5.
+
+**Checks at 76919e2e**, all exit 0:
+
+- 6 focused files, 117 tests;
+- 16 neighbouring route, header and file-export integration files, 401 tests;
+- typecheck, lint, format, docs, preservation and build.
+
+Not run: the browser, e2e and operator specs found by the same grep.
+
+**Why the export is safe under M-10**
+
+- It is staff only, under `missions.read`, with no customer-facing surface and no book or supplier shortlist.
+- The Route Pack Standard v1 fields carry no price, quote, markup or contact. The closest are route-level notes: `trade.duty_notes`, `payments.fx_source` and `compliance.outreach_rules`.
+- Email addresses are refused at write in every value, note, source and label.
+- Said plainly, the export does reproduce two things:
+  - A custom money field can hold a route-level cost, for example the template's own `custom.sample_courier_cost`.
+  - A custom text field or a note can hold a phone number, because only emails are refused.
+
+**For the Phase 3 editor**
+
+- Note 8: an export of 20 full routes can exceed the 1 MiB import cap. The import message says to split the file.
+- Note 10: STEP_UP_REQUIRED on a sheet save comes back nested in `report.errors[0].code`, not as the top-level error.
