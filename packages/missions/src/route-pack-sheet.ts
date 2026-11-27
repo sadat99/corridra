@@ -410,7 +410,9 @@ function planRoute(
   for (const row of rows) {
     if (!firstRow.has(row.key)) firstRow.set(row.key, row.row);
     if (row.key !== 'section') {
-      byKey.set(row.key, [...(byKey.get(row.key) ?? []), row]);
+      const same = byKey.get(row.key);
+      if (same) same.push(row);
+      else byKey.set(row.key, [row]);
       continue;
     }
     const section = sectionFromName(row.section);
@@ -618,7 +620,11 @@ function planSheet(
   const warnings: SheetIssue[] = [];
   const byRoute = new Map<string, SheetRow[]>();
   for (const row of sheet.rows)
-    for (const route of row.routes) byRoute.set(route, [...(byRoute.get(route) ?? []), row]);
+    for (const route of row.routes) {
+      const same = byRoute.get(route);
+      if (same) same.push(row);
+      else byRoute.set(route, [row]);
+    }
   const routes = [...byRoute]
     .map(([route, rows]) => planRoute(route, rows, state, today, errors, warnings))
     .filter((plan): plan is PlannedRoute => plan !== null);
@@ -827,7 +833,13 @@ export class RoutePackSheetService {
       const routeRefusal = error instanceof DomainError && step !== null && error.status !== 401;
       if (saved.size === 0 && !reused && !routeRefusal) throw error;
       if (!(error instanceof DomainError))
-        console.error(JSON.stringify({ event: 'route_pack_sheet_save_stopped' }));
+        console.error(
+          JSON.stringify({
+            event: 'route_pack_sheet_save_stopped',
+            correlationId: ctx.correlationId,
+            code: (error as { code?: unknown }).code ?? null,
+          }),
+        );
       const message = reused
         ? sheetWords.saveReused
         : error instanceof DomainError
