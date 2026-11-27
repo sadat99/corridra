@@ -177,7 +177,9 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
     if (!mounted.current) return;
     const route = read?.state === 'ready' ? read.detail?.route : null;
     if (!route) {
-      patch({ busy: null, error: checkFailedWords, unchecked: true });
+      // Back to the review view whatever view the check came from (a 409 on Save With These Choices too): its one primary is
+      // Check Again while the stage is unchecked, so no dead Save button is left on screen.
+      patch({ busy: null, error: checkFailedWords, unchecked: true, view: 'review' });
       return;
     }
     const theirs = route.content?.document ?? null;
@@ -261,12 +263,14 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
     }
     patch({ busy: 'saving', error: null, command });
     const result = await sendFacts(tenant, prepared.body);
-    if (!mounted.current) return;
     if (result.outcome === 'saved') {
+      // Even when the dialog has gone, the page is told: it clears the stage and the tab's copy, so saved edits never come back
+      // as "Restored".
       props.onSaved(result.saved, prepared.body.document);
-      setShown(false);
+      if (mounted.current) setShown(false);
       return;
     }
+    if (!mounted.current) return;
     if (result.outcome === 'conflict') {
       await check(s.work, s.checks, s.reason);
       return;

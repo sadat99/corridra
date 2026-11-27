@@ -880,6 +880,42 @@ test.describe('conflict: Someone saved route facts for this route first', () => 
     await expect(dialog.getByRole('button', { name: 'Cancel', exact: true })).toBeEnabled();
     await expect(dialog.getByRole('button', { name: 'Keep mine: Mine' })).toBeEnabled();
   });
+
+  test('a 409 on Save With These Choices whose re-read fails leaves no dead Save button: Check Again takes focus and reads again', async ({
+    page,
+  }) => {
+    const world = await open(page, { query: 'route=BD-CN&section=1', facts: {} });
+    const wait = await theirs(page, (document) => withFact(document, summaryKey, 'Theirs'));
+    world.facts!.saveScript = [{ status: 409, code: conflict, theirs: wait }];
+    await stageSummary(page);
+    await reviewAndSave(page);
+    await fillReason(page);
+    await saveFacts(page).click();
+    const dialog = saveDialog(page);
+    await expect(clashHeading(page)).toBeFocused();
+    await dialog.getByRole('button', { name: 'Keep mine: Mine' }).click();
+    // Someone saves again, and the read that would show it fails once.
+    const again = {
+      document: withFact(wait.document, summaryKey, 'Theirs again'),
+      version: wait.version + 1,
+    };
+    world.facts!.saveScript = [{ status: 409, code: conflict, theirs: again }];
+    world.facts!.failDetail = 1;
+    await dialog.getByRole('button', { name: 'Save With These Choices' }).click();
+    await expect(dialog.getByRole('alert')).toHaveText(
+      'The latest route facts could not be read, so nothing was saved. Your changes are still here.',
+    );
+    await expect(dialog.getByRole('button', { name: 'Save With These Choices' })).toHaveCount(0);
+    await expect(saveFacts(page)).toHaveCount(0);
+    const check = dialog.getByRole('button', { name: 'Check Again' });
+    await expect(check).toBeFocused();
+    expect(world.saves).toHaveLength(2);
+    await check.click();
+    await expect(clashHeading(page)).toHaveText('Someone saved route facts again first.');
+    await expect(clashHeading(page)).toBeFocused();
+    await expect(dialog.getByRole('button', { name: 'Use theirs: Theirs again' })).toBeVisible();
+    expect(world.saves).toHaveLength(2);
+  });
 });
 
 test.describe('after a save', () => {
@@ -938,6 +974,62 @@ test.describe('after a save', () => {
       `Saved. Route facts are now version ${before.version + 1}.`,
     );
     await expect(rowOf(page, summaryLabel)).toContainText('Saved once');
+  });
+
+  test('a save that lands after the person went to another route still clears the edits and the tab copy: nothing comes back as Restored', async ({
+    page,
+  }) => {
+    const world = await open(page, { query: 'route=BD-CN&section=1', facts: {} });
+    // In one page: to the other route by its link, and Back, so Forward later leaves this route while the save is out.
+    await page
+      .getByRole('link', { name: /^Bangladesh to European Union/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/route=BD-EU/);
+    await page.goBack();
+    await expect(page).toHaveURL(/route=BD-CN/);
+    await expect(rows(page).first()).toBeVisible();
+    await stageSummary(page, 'Saved while away');
+    await reviewAndSave(page);
+    await fillReason(page);
+    // The answer waits, and meanwhile the person goes Forward to the other route (Back and Forward are never blocked).
+    world.facts!.saveScript = [{ status: 201, delay: 1500 }];
+    await saveFacts(page).click();
+    await page.goForward();
+    await expect(page).toHaveURL(/route=BD-EU/);
+    await expect(editor(page).getByRole('heading', { level: 2 })).toContainText('European Union');
+    await expect.poll(() => world.saves.length).toBe(1);
+    await expect.poll(() => stageKeys(page), { timeout: 5000 }).toEqual([]);
+    await page.goBack();
+    await expect(page).toHaveURL(/route=BD-CN/);
+    await expect(rows(page).first()).toBeVisible();
+    await expect(bar(page)).toHaveCount(0);
+    await expect(editor(page)).not.toContainText('Restored');
+  });
+
+  test('a dialog with a long title at 320 keeps Close whole on one line', async ({ page }) => {
+    await open(page, { width: 320, height: 568, query: 'route=BD-CN&section=1' });
+    await stageSummary(page);
+    const fold = page.locator('.settings-routes-fold > summary');
+    if (await fold.isVisible()) await fold.click();
+    await page
+      .getByRole('link', { name: /^Bangladesh to European Union/ })
+      .first()
+      .click();
+    const dialog = page.getByRole('dialog', { name: 'You Have Changes That Are Not Saved' });
+    await expect(dialog).toBeVisible();
+    const close = dialog.locator('.ux-dialog-close');
+    await expect(close).toHaveText('Close');
+    // One line: the word is never broken ("Clo / se"), and the button keeps its 44 px target.
+    const size = await close.evaluate((button) => {
+      const range = document.createRange();
+      range.selectNodeContents(button);
+      const lines = new Set(Array.from(range.getClientRects()).map((rect) => Math.round(rect.top)));
+      return { lines: lines.size, height: button.getBoundingClientRect().height };
+    });
+    expect(size.lines).toBe(1);
+    expect(size.height).toBeGreaterThanOrEqual(44);
+    await axeClean(page);
   });
 });
 

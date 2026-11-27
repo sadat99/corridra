@@ -137,10 +137,11 @@ export function useRoutePackOverview(
   // Set by `refresh` for the one read it starts: that read may not replace a list that was shown with a failure.
   const quiet = useRef(false);
   useEffect(() => {
-    if (!enabled) return;
-    let live = true;
+    // Taken before anything else, so a refresh asked while disabled never makes a later read keep a list.
     const keepShown = quiet.current;
     quiet.current = false;
+    if (!enabled) return;
+    let live = true;
     const show = (next: { state: ReadState; routes: RouteSummary[] }) =>
       setResult((shown) =>
         keepShown && next.state !== 'ready' && shown.state === 'ready' ? shown : next,
