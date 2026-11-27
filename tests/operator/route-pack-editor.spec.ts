@@ -247,7 +247,9 @@ test.describe('the route view', () => {
     await expect(header).toContainText(
       'Pack version 2, proposed and published by you, effective 20 Nov 2026',
     );
-    await expect(header).toContainText('Route facts are shown read only here.');
+    // PR 2b: the owner has Edit buttons, so the read only note is gone.
+    await expect(header).not.toContainText('Route facts are shown read only here.');
+    await expect(header).not.toContainText('Only the owner can change route facts and packs.');
     // The View choice, with counts from the data.
     const view = header
       .getByRole('radiogroup', { name: 'View' })
@@ -278,7 +280,7 @@ test.describe('the route view', () => {
     await axeClean(page);
   });
 
-  test('the owner and the admin each read their note once, and no control writes anything', async ({
+  test('the admin reads the note once and sees no control that writes; the owner reads no note', async ({
     page,
   }) => {
     await open(page, { role: 'admin', query: 'route=BD-CN' });
@@ -300,6 +302,16 @@ test.describe('the route view', () => {
       page.getByRole('button', { name: /Edit|Change|Status|Save|Import|Export|Publish/ }),
     ).toHaveCount(0);
     await axeClean(page);
+    // PR 2b: the owner reads no note at all (Edit, not a note, says what the owner can do), and still sees the same header.
+    await open(page, { role: 'owner', query: 'route=BD-CN' });
+    await expect(editor(page).locator('li.ux-fact-row').first()).toBeVisible();
+    await expect(editor(page)).not.toContainText('shown read only here');
+    await expect(editor(page)).not.toContainText('Only the owner can change route facts');
+    await expect(
+      editor(page)
+        .getByRole('button', { name: /^Edit / })
+        .first(),
+    ).toBeVisible();
   });
 
   test('deep links open the state they name; choosing a segment clears the section; Back and Forward move through them', async ({

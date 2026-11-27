@@ -1,0 +1,258 @@
+/* ADR-093 Phase 3, PR 2b: editing a field row, the unsaved bar and the save dialog. Tokens only, no inline style, no
+   text-transform; weights 400, 500 and 600. Every width reflows: nothing here fixes a width in px, and a long word in any script
+   wraps. The row editor reads the width of its own region (a container), not the window. */
+.route-editor {
+  --route-bar-h: 3.75rem;
+}
+/* The visible status line (a save, a discard, a restore) takes focus; it is in the page before its words and takes no room while
+   it is empty (the grid gap above it is taken back). */
+.route-editor-status {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.route-editor-status:empty {
+  block-size: 0;
+  margin-block-end: calc(var(--space-2) * -1);
+}
+.route-editor-status p {
+  margin: 0;
+}
+.route-editor-status:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.ux-fact-editor {
+  container: route-edit / inline-size;
+}
+.route-edit {
+  display: grid;
+  gap: var(--space-3);
+  max-inline-size: 40rem;
+  min-inline-size: 0;
+  padding-block: var(--space-2);
+}
+.route-edit p,
+.route-edit fieldset,
+.route-edit legend {
+  margin: 0;
+}
+.route-edit-step {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.route-edit-step:focus-visible,
+.route-save-heading:focus-visible,
+.route-save-banner:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.route-edit-question {
+  font-weight: 600;
+}
+.route-edit-quiet {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.route-edit-count {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.route-edit-field {
+  min-inline-size: 0;
+}
+.route-edit-field input,
+.route-edit-field textarea,
+.route-edit-field select {
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+.route-edit-field label {
+  font-weight: 600;
+}
+.route-edit-caution {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 2px solid var(--caution);
+  background: var(--caution-surface);
+  color: var(--ink);
+}
+.route-edit-caution .corridra-icon {
+  flex: none;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+}
+.route-edit-actions,
+.route-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.route-edit-actions .primary-link,
+.route-dialog-actions .primary-link {
+  min-block-size: 44px;
+  border: 0;
+  cursor: pointer;
+  justify-content: center;
+}
+.route-edit-actions .text-link,
+.route-dialog-actions .text-link,
+.route-edit-entry .text-link,
+.route-edit-list > .text-link {
+  min-block-size: 44px;
+}
+.route-edit-boxes,
+.route-edit-list,
+.route-edit-dates {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+}
+.route-edit-boxes legend,
+.route-edit-list legend,
+.route-edit-dates legend {
+  padding: 0;
+  font-weight: 600;
+}
+.route-edit-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: 44px;
+}
+.route-edit-check input {
+  flex: none;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+}
+.route-edit-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-1) var(--space-3);
+}
+.route-edit-entry > .route-edit-field {
+  flex: 1 1 12rem;
+}
+.route-edit-list > .text-link {
+  justify-self: start;
+}
+.route-edit-source,
+.route-edit-choice,
+.route-edit-money {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+@container route-edit (min-width: 30rem) {
+  .route-edit-money {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+@container route-edit (min-width: 36rem) {
+  .route-edit-dates {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .route-edit-dates > legend {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The unsaved bar: the last block of the editor, sticky at the bottom of it (never the page's bottom area). 60 px at least; it
+   grows with the text. A focused control is never hidden behind it: its neighbours keep room (scroll-margin) while it is there. */
+.route-bar {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-4);
+  box-sizing: border-box;
+  min-block-size: var(--route-bar-h);
+  padding-block: var(--space-2);
+  padding-block-end: max(var(--space-2), env(safe-area-inset-bottom));
+  padding-inline: var(--space-3);
+  border-block-start: 1px solid var(--line);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-2);
+}
+.route-bar-count {
+  flex: 1 1 8rem;
+  margin: 0;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.route-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1) var(--space-4);
+}
+.route-bar .primary-link {
+  min-block-size: 44px;
+  border: 0;
+  cursor: pointer;
+  justify-content: center;
+}
+.route-bar .text-link {
+  min-block-size: 44px;
+}
+/* While the bar is there the page keeps room for it above the bottom edge, so a control that takes focus (Tab, Shift Tab, a
+   refusal) is scrolled clear of it and never stands under it. A phone bar can take three lines, a wide one is one. */
+html:has(.route-bar) {
+  scroll-padding-block-end: 10rem;
+}
+@media (min-width: 30rem) {
+  html:has(.route-bar) {
+    scroll-padding-block-end: 5.5rem;
+  }
+}
+
+/* The dialogs: Save Route Facts, Discard Changes, the leave question. The dialog is min(32rem, 100vw - 2rem) wide and scrolls. */
+.route-dialog {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+.route-dialog p,
+.route-dialog h3 {
+  margin: 0;
+}
+.route-save-heading {
+  font-size: var(--text-lg);
+}
+.route-save-clash {
+  display: grid;
+  gap: var(--space-2);
+}
+.route-save-clash h3 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.route-save-banner {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 2px solid var(--line);
+  background: var(--surface-1);
+}
+.route-save-banner:empty {
+  display: none;
+}

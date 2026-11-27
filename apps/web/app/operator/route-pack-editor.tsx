@@ -11,14 +11,49 @@ import { ShowMoreList } from '../../components/ux/show-more';
 import { formatDate, formatUtcDay } from '../../lib/ux/format';
 import type { OverviewRoute, RouteSummary } from '../../lib/route-pack-editor-read';
 import {
+  answersFor,
+  draftFromFact,
+  factFromDraft,
+  liveIssues,
+  type FactDraft,
+  type FormField,
+} from '../../lib/route-pack-editor-fact-form';
+import {
+  applyStage,
+  cautionKeys,
+  discard as discardStage,
+  emptyStage,
+  overlayDocument,
+  sameValue,
+  stageCount,
+  stageFact,
+  unstageFact,
+  warningWords,
+} from '../../lib/route-pack-editor-stage';
+import type { FactsSaved } from '../../lib/route-pack-editor-write';
+import {
+  cautionLine,
+  changeKept,
+  changesDiscarded,
+  changesNotSaved,
+  finishOpenField,
+  noChangeToKeep,
+  openFieldNotIncluded,
+  restoredLine,
+  savedLine,
+} from '../../lib/route-pack-editor-words';
+import {
   addressFor,
   coreListWords,
   defaultView,
   factsByKey,
   fieldView,
+  formFieldOf,
   gapsLine,
+  isEditable,
   markedButOpen,
   optionalLine,
+  overlayCompleteness,
   packChangeLine,
   progressWords,
   readinessLine,
@@ -27,6 +62,7 @@ import {
   sectionParts,
   staleLine,
   staleListWords,
+  todayUtc,
   todoCount,
   todoItems,
   type EditorView,
@@ -34,10 +70,33 @@ import {
   type SectionLine,
 } from '../../lib/route-pack-editor-view';
 import { CountryName } from './country-name';
-import { goTo, takePendingFocus, useRouteDetail, type DetailData } from './route-pack-editor-data';
+import {
+  goTo,
+  setLeaveGuard,
+  takePendingFocus,
+  useRouteDetail,
+  type DetailData,
+} from './route-pack-editor-data';
+import {
+  clearMirror,
+  isMirrored,
+  isTouched,
+  useRouteSession,
+  type RouteSession,
+} from './route-pack-editor-stage-store';
+import { RouteFactEditor } from './route-pack-fact-editor';
+import { DiscardDialog, LeaveDialog } from './route-pack-leave-dialogs';
+import { SaveFactsDialog } from './route-pack-save-dialog';
+import { UnsavedBar } from './route-pack-unsaved-bar';
 import { packStatusWords, packTones } from './pack-status';
-import { standardFieldByKey, liveStatuses } from '@corridra/domain/route-pack-standard';
+import {
+  standardFieldByKey,
+  liveStatuses,
+  type ContentDocument,
+  type PackView,
+} from '@corridra/domain/route-pack-standard';
 import './route-pack-editor.css';
+import './route-pack-editor-edit.css';
 
 // ADR-093 Phase 3, PR 1: the route pack editor, read only. One place in Settings: the Routes list (with completeness), and for
 // the route a person opened, its header, a View choice and one of To Do, All Sections or one section. No control here writes:
@@ -45,7 +104,6 @@ import './route-pack-editor.css';
 // from the standard's field dictionary.
 const routeHeading = 'route-pack-editor-heading';
 const sectionHeading = 'route-pack-section-heading';
-const ownerNote = 'Route facts are shown read only here.';
 const adminNote = 'Only the owner can change route facts and packs. You can read everything here.';
 const notFoundRoute = 'That route was not found. Choose one from the list.';
 const notFoundSection = 'That section was not found.';
@@ -157,6 +215,7 @@ export function RouteEditorShell({
   refreshKey,
   address,
   onGone,
+  onSaved,
 }: {
   list: ReactNode;
   summary: RouteSummary;
@@ -166,6 +225,8 @@ export function RouteEditorShell({
   address: RouteAddress;
   /** The route read answered 404: ask the list again, which then answers 404 too and the page falls back to the plain list. */
   onGone: () => void;
+  /** A save went through: the Routes list is asked again, so its Core words follow the new facts. */
+  onSaved: () => void;
 }) {
   const shell = useRef<HTMLDivElement>(null);
   const [wide, setWide] = useState(false);
@@ -199,6 +260,7 @@ export function RouteEditorShell({
         refreshKey={refreshKey}
         address={address}
         onGone={onGone}
+        onSaved={onSaved}
       />
     </div>
   );
@@ -215,13 +277,27 @@ function Skeleton() {
   );
 }
 
-function RoutePackEditor({
+function RoutePackEditor(props: {
+  tenant: string;
+  role: string;
+  summary: RouteSummary;
+  refreshKey: unknown;
+  address: RouteAddress;
+  onGone: () => void;
+  onSaved: () => void;
+}) {
+  // One editor per route: the unsaved edits, the open row and the leave question belong to the route and start fresh with it.
+  return <RoutePackEditorOf key={`${props.tenant}/${props.summary.routeId}`} {...props} />;
+}
+
+function RoutePackEditorOf({
   tenant,
   role,
   summary,
   refreshKey,
   address,
   onGone,
+  onSaved,
 }: {
   tenant: string;
   role: string;
@@ -229,6 +305,7 @@ function RoutePackEditor({
   refreshKey: unknown;
   address: RouteAddress;
   onGone: () => void;
+  onSaved: () => void;
 }) {
   const data = useRouteDetail(tenant, summary.routeId, refreshKey);
   // A 404 is never shown as an error: the list is asked again and falls back quietly if it answers 404 as well.
@@ -242,8 +319,36 @@ function RoutePackEditor({
     if (target) document.getElementById(target)?.focus();
   });
   const route = data.detail?.route ?? null;
+  const owner = role === 'owner';
+  const session = useRouteSession(
+    tenant,
+    summary.routeId,
+    route ? (route.content?.version ?? 0) : null,
+    owner,
+  );
+  // Leaving this route with edits that are not saved (or an answer that is open and changed) asks first. Only a move to another
+  // route is asked: a view, a section, Back and Forward are not.
+  const held = stageCount(session.stage) > 0 || isTouched(session.open);
+  const holding = useRef(false);
+  useEffect(() => {
+    holding.current = held;
+  }, [held]);
+  const [leaving, setLeaving] = useState<(() => void) | null>(null);
+  useEffect(() => {
+    if (!owner) return;
+    setLeaveGuard((go) => {
+      if (!holding.current) return false;
+      setLeaving(() => go);
+      return true;
+    });
+    return () => setLeaveGuard(null);
+  }, [owner]);
   return (
-    <section className="route-editor" aria-labelledby={routeHeading}>
+    <section
+      className="route-editor"
+      aria-labelledby={routeHeading}
+      data-staged={stageCount(session.stage) > 0 ? 'true' : undefined}
+    >
       <h2 id={routeHeading} tabIndex={-1}>
         <CountryName code={summary.origin} /> to <CountryName code={summary.destination} />
       </h2>
@@ -278,40 +383,87 @@ function RoutePackEditor({
           detail={data.detail!}
           packHistory={data.packHistory}
           role={role}
+          tenant={tenant}
           summary={summary}
           address={address}
+          session={session}
+          reload={data.reload}
+          onSaved={onSaved}
         />
       )}
+      <LeaveDialog
+        open={leaving !== null}
+        count={stageCount(session.stage)}
+        kept={leaving !== null && isMirrored(tenant, summary.routeId)}
+        onKeep={() => setLeaving(null)}
+        onLeave={() => {
+          const go = leaving;
+          setLeaving(null);
+          go?.();
+        }}
+      />
     </section>
   );
 }
 
 type Route = NonNullable<OverviewRoute['route']>;
+type FieldItem = Route['completeness']['fields'][number];
 
 function RouteBody({
   route,
   detail,
   packHistory,
   role,
+  tenant,
   summary,
   address,
+  session,
+  reload,
+  onSaved,
 }: {
   route: Route;
   detail: OverviewRoute;
   packHistory: DetailData['packHistory'];
   role: string;
+  tenant: string;
   summary: RouteSummary;
   address: RouteAddress;
+  session: RouteSession;
+  reload: DetailData['reload'];
+  onSaved: () => void;
 }) {
   const { completeness, pack, content } = route;
   const total = completeness.fields.filter((row) => row.core).length;
   const pending = completeness.pendingCore.length;
   const stale = completeness.staleCore.length;
   const live = !!pack && (liveStatuses as readonly string[]).includes(pack.status);
-  const document = content?.document ?? null;
-  const facts = factsByKey(document);
+  // Right after a save the rows already show what was saved, until the route read that follows it arrives (nothing flashes back).
+  const [justSaved, setJustSaved] = useState<{ version: number; document: ContentDocument } | null>(
+    null,
+  );
+  const fresh = justSaved && justSaved.version > (content?.version ?? 0) ? justSaved : null;
+  const saved = fresh?.document ?? content?.document ?? null;
+  const savedVersion = fresh?.version ?? content?.version ?? 0;
+  const { stage, setStage, open, setOpen } = session;
+  const owner = role === 'owner';
+  const today = todayUtc();
+  const packView: PackView = pack
+    ? { status: pack.status, configuration: pack.configuration }
+    : null;
+  // What the rows show: the saved document with the unsaved edits on top. Which rows there are, their headings and every count of
+  // the header stay the saved truth, so nothing moves until it is saved.
+  const shownDocument = overlayDocument(saved, stage);
+  const shownRows = new Map(
+    overlayCompleteness(packView, saved, stage, today).fields.map((item) => [item.key, item]),
+  );
+  const savedFacts = factsByKey(saved);
+  const facts = factsByKey(shownDocument);
   const labels = (key: string) =>
-    standardFieldByKey.get(key)?.label ?? facts.get(key)?.label ?? detail.customLabels[key] ?? key;
+    standardFieldByKey.get(key)?.label ??
+    facts.get(key)?.label ??
+    savedFacts.get(key)?.label ??
+    detail.customLabels[key] ??
+    key;
   const view: EditorView | 'section' = address.section
     ? 'section'
     : address.sectionUnknown
@@ -321,8 +473,115 @@ function RouteBody({
   const changeWords = lastChange
     ? packChangeLine(lastChange, formatDate(lastChange.effectiveFrom))
     : null;
-  const row = (item: Route['completeness']['fields'][number], heading?: ReactNode) => {
-    const v = fieldView(item, facts, pack?.configuration ?? null, detail.customLabels);
+
+  // Messages: one visible status line that takes focus after a save, a discard or a refusal to leave an answer half open, and one
+  // hidden status for the small announcements of staging. Both are mounted before their words.
+  const [status, setStatus] = useState<{ text: string; caution: string | null }>({
+    text: '',
+    caution: null,
+  });
+  const [staging, setStaging] = useState('');
+  const statusLine = useRef<HTMLDivElement>(null);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
+  // The restore is announced once, after the route is drawn, so the status line is in the page before its words.
+  useEffect(() => {
+    if (session.restored === 0) return;
+    const timer = window.setTimeout(
+      () => setStatus({ text: restoredLine(session.restored), caution: null }),
+      0,
+    );
+    return () => window.clearTimeout(timer);
+    // Only the first draw of the route restores anything.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const focusKey = useRef<string | null>(null);
+  useEffect(() => {
+    const key = focusKey.current;
+    if (!key) return;
+    focusKey.current = null;
+    document.querySelector<HTMLElement>(`[data-edit-key="${CSS.escape(key)}"]`)?.focus();
+  });
+  const focusOpenEditor = () =>
+    document.querySelector<HTMLElement>('.route-edit .ux-choice')?.focus();
+
+  const staged = stageCount(stage);
+  const openField = (item: FieldItem) => {
+    const field = formFieldOf(item, saved, shownDocument);
+    if (!field) return null;
+    return field;
+  };
+  const edit = (item: FieldItem) => {
+    if (open && isTouched(open) && open.key !== item.key) {
+      setStatus({ text: finishOpenField, caution: null });
+      focusOpenEditor();
+      return;
+    }
+    const field = openField(item);
+    if (!field) return;
+    let draft = draftFromFact(field, facts.get(item.key) ?? null, today);
+    // A row with nothing in it opens ready to be filled: that is why the person pressed Edit. Pending stays one press away.
+    if (draft.answer === 'PENDING') draft = { ...draft, answer: 'FILLED' };
+    if (field.type === 'money' && !draft.currency) draft = { ...draft, currency: 'USD' };
+    setStatus({ text: '', caution: null });
+    setOpen({ key: item.key, initial: draft, draft, step: 1, shown: [], focus: 0 });
+  };
+  const close = (key: string, message: string) => {
+    focusKey.current = key;
+    setOpen(null);
+    setStaging(message);
+  };
+  const attempt = (item: FieldItem, step: 'next' | 'keep') => {
+    const field = openField(item);
+    if (!open || !field) return;
+    const built = factFromDraft(field, open.draft, today);
+    if (!built.ok) {
+      const first = built.refusals[0]!.field;
+      const early = ['text', 'items', 'currency', 'amount', 'note', 'form', 'filledNote'].includes(
+        first,
+      );
+      if (step === 'next' && !early) {
+        setOpen({ ...open, step: 2, shown: [] });
+        return;
+      }
+      setOpen({ ...open, step: early ? 1 : 2, shown: built.refusals, focus: open.focus + 1 });
+      return;
+    }
+    if (step === 'next') {
+      setOpen({ ...open, step: 2, shown: [] });
+      return;
+    }
+    const after = stageFact(stage, saved, item.key, built.fact);
+    const changed = !sameValue(stage.facts[item.key] ?? null, after.facts[item.key] ?? null);
+    setStage((current) => stageFact(current, saved, item.key, built.fact));
+    close(item.key, changed ? changeKept(stageCount(after)) : '');
+    if (!changed) setStatus({ text: noChangeToKeep, caution: null });
+  };
+  const undo = (item: FieldItem) => {
+    const left = staged - (stage.facts[item.key] ? 1 : 0);
+    setStage((current) => unstageFact(current, item.key));
+    if (open?.key === item.key) setOpen(null);
+    focusKey.current = item.key;
+    setStaging(left > 0 ? `Change undone. ${changesNotSaved(left)}.` : 'Change undone.');
+  };
+  const cautionFor = (field: FormField, draft: FactDraft) => {
+    if (draft.answer !== 'PENDING' || !live || !field.core) return null;
+    const after = applyStage(saved, stageFact(stage, saved, field.key, null));
+    const keys = cautionKeys(packView, saved, after).filter((key) => key === field.key);
+    return keys.length ? cautionLine(keys, labels) : null;
+  };
+  const row = (item: FieldItem, heading?: ReactNode) => {
+    const shownRow: FieldItem = shownRows.get(item.key) ?? {
+      ...item,
+      state: 'PENDING',
+      stale: false,
+    };
+    const v = fieldView(shownRow, facts, pack?.configuration ?? null, detail.customLabels);
+    const field = formFieldOf(item, saved, shownDocument);
+    const isStaged = !!stage.facts[item.key];
+    const editable = isEditable(shownRow, role, field);
+    const editing = !!open && open.key === item.key && !!field;
+    const live2 = editing && field ? liveIssues(field, open!.draft) : [];
     return (
       <RouteFactRow
         key={item.key}
@@ -336,10 +595,94 @@ function RouteBody({
         source={v.source}
         observed={v.observedOn ? formatUtcDay(v.observedOn) : null}
         validUntil={v.validUntil ? formatUtcDay(v.validUntil) : null}
-        staleSince={item.stale && v.validUntil ? formatUtcDay(v.validUntil) : null}
+        staleSince={shownRow.stale && v.validUntil ? formatUtcDay(v.validUntil) : null}
         heading={heading}
+        unsaved={isStaged}
+        editing={editing}
+        editor={
+          editing && field && open ? (
+            <RouteFactEditor
+              label={v.label}
+              field={field}
+              answers={answersFor({ field, coveredBySection: shownRow.coveredBySection })}
+              covered={shownRow.coveredBySection && !field.custom}
+              savedFilled={!!facts.get(item.key)}
+              open={{
+                ...open,
+                shown: [
+                  ...live2,
+                  ...open.shown.filter((refusal) => !live2.some((l) => l.field === refusal.field)),
+                ],
+              }}
+              today={today}
+              caution={cautionFor(field, open.draft)}
+              onChange={(draft) => setOpen({ ...open, draft, shown: [] })}
+              onNext={() => attempt(item, 'next')}
+              onBack={() => setOpen({ ...open, step: 1, shown: [] })}
+              onKeep={() => attempt(item, 'keep')}
+              onCancel={() => close(item.key, '')}
+            />
+          ) : undefined
+        }
+        action={
+          editable ? (
+            <>
+              <button
+                type="button"
+                className="text-link"
+                data-edit-key={item.key}
+                aria-label={`Edit ${v.label}`}
+                onClick={() => edit(item)}
+              >
+                Edit
+              </button>
+              {isStaged ? (
+                <button
+                  type="button"
+                  className="text-link"
+                  aria-label={`Undo Change to ${v.label}`}
+                  onClick={() => undo(item)}
+                >
+                  Undo Change
+                </button>
+              ) : null}
+            </>
+          ) : undefined
+        }
       />
     );
+  };
+  const review = () => {
+    if (open && isTouched(open)) {
+      const label = open.key ? labels(open.key) : '';
+      setStatus({ text: openFieldNotIncluded(label), caution: null });
+      focusOpenEditor();
+      return;
+    }
+    if (open) setOpen(null);
+    setSaveOpen(true);
+  };
+  const discard = () => {
+    setStage(discardStage);
+    setOpen(null);
+    clearMirror(tenant, summary.routeId);
+    setDiscardOpen(false);
+    setStaging('');
+    setStatus({ text: changesDiscarded, caution: null });
+  };
+  const saveDone = (result: FactsSaved, document: ContentDocument) => {
+    setJustSaved({ version: result.version, document });
+    setStage(() => emptyStage(result.version));
+    setOpen(null);
+    clearMirror(tenant, summary.routeId);
+    // The dialog closes itself (it was told to), so focus is returned by the dialog to the status line.
+    setStaging('');
+    setStatus({
+      text: savedLine(result.version),
+      caution: warningWords(result.warnings, labels) || null,
+    });
+    void reload();
+    onSaved();
   };
   return (
     <>
@@ -352,7 +695,9 @@ function RouteBody({
         ) : (
           <StatusBadge tone="unknown">No pack yet</StatusBadge>
         )}
-        <span>{content ? `Route facts version ${content.version}` : 'No facts saved yet'}</span>
+        <span>
+          {content || fresh ? `Route facts version ${savedVersion}` : 'No facts saved yet'}
+        </span>
       </p>
       <div className="route-editor-progress">
         <p>{progressWords({ total, pending })}</p>
@@ -377,7 +722,19 @@ function RouteBody({
           {changeWords ?? 'The last pack change is not available.'}
         </p>
       ) : null}
-      <p className="route-editor-quiet">{role === 'owner' ? ownerNote : adminNote}</p>
+      {owner ? null : <p className="route-editor-quiet">{adminNote}</p>}
+      <div className="route-editor-status" role="status" tabIndex={-1} ref={statusLine}>
+        {status.text ? <p>{status.text}</p> : null}
+        {status.caution ? (
+          <p className="route-edit-caution">
+            <CorridraIcon name="alert" />
+            <span>{status.caution}</span>
+          </p>
+        ) : null}
+      </div>
+      <p className="sr-only" role="status">
+        {staging}
+      </p>
       <SegmentedFilter<EditorView | 'section'>
         label="View"
         // A section is neither choice, so choosing either one fires and clears the section.
@@ -406,9 +763,47 @@ function RouteBody({
           route={route}
           section={address.section!}
           row={row}
-          markedOpen={markedButOpen(completeness, document, address.section!, labels)}
+          markedOpen={markedButOpen(completeness, saved, address.section!, labels)}
         />
       )}
+      {owner && staged > 0 ? (
+        <UnsavedBar count={staged} onReview={review} onDiscard={() => setDiscardOpen(true)} />
+      ) : null}
+      {owner ? (
+        <>
+          <SaveFactsDialog
+            open={saveOpen}
+            onClose={() => setSaveOpen(false)}
+            tenant={tenant}
+            routeId={summary.routeId}
+            routeName={
+              <>
+                <CountryName code={summary.origin} /> to <CountryName code={summary.destination} />
+              </>
+            }
+            stage={stage}
+            document={saved}
+            savedVersion={savedVersion}
+            pack={packView}
+            labelOf={(key, fact) =>
+              standardFieldByKey.get(key)?.label ?? fact?.label ?? labels(key)
+            }
+            reload={reload}
+            onStage={(next) => setStage(() => next)}
+            onSaved={saveDone}
+            returnFocusTo={() =>
+              document.querySelector<HTMLElement>('.route-bar button') ?? statusLine.current
+            }
+          />
+          <DiscardDialog
+            open={discardOpen}
+            count={staged}
+            onKeep={() => setDiscardOpen(false)}
+            onDiscard={discard}
+            returnFocusTo={() => statusLine.current}
+          />
+        </>
+      ) : null}
     </>
   );
 }

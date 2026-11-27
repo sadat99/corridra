@@ -119,7 +119,7 @@ describe('outcomeWords', () => {
     ];
     for (const outcome of all) {
       const text = outcomeWords(outcome, 'Sample words', label);
-      expect(text).not.toContain('—');
+      expect(text).not.toContain(String.fromCharCode(0x2014));
       expect(text).not.toMatch(/ROUTE_PACK|stage|version conflict|rebase/i);
     }
   });

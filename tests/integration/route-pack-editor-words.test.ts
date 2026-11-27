@@ -282,6 +282,6 @@ describe('no em dash anywhere', () => {
       words.pendingClears,
       words.removeFieldHelp,
     );
-    for (const text of strings) expect(text).not.toContain('—');
+    for (const text of strings) expect(text).not.toContain(String.fromCharCode(0x2014));
   });
 });
