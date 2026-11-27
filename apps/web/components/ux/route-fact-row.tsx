@@ -8,8 +8,8 @@ import { SourceStamp } from './source-stamp';
 import './route-fact-row.css';
 
 // One field of a route (ADR-093 Phase 3): its label, the Core word, the value, the state, the source and the stale mark. It
-// draws what it is given and holds no rule of its own. It draws no button: `action` is the one slot a later slice fills
-// with the editing control. Everything a person reads is words: the shape of the state never stands alone.
+// draws what it is given and holds no rule of its own. It draws no button of its own: `action` is the one slot the editor fills
+// with the editing control (PR 2b: Edit, or Undo Change on a row with an unsaved edit). Everything a person reads is words: the shape of the state never stands alone.
 export type RouteFactValue =
   { kind: 'empty' } | { kind: 'text'; text: string } | { kind: 'list'; items: string[] };
 const longText = 140;
@@ -28,6 +28,9 @@ export function RouteFactRow({
   validUntil,
   staleSince,
   action,
+  editing,
+  editor,
+  unsaved,
   heading,
   hidden,
 }: {
@@ -49,7 +52,13 @@ export function RouteFactRow({
   validUntil?: string | null;
   /** The valid-until day, already formatted, of a fact that has run out. */
   staleSince?: string | null;
+  /** The one button of the row (Edit, or Undo Change), drawn once, in the state line after the stale mark. */
   action?: ReactNode;
+  /** The row is open for editing: its label and Core chip stay, its value and meta are hidden and `editor` is drawn under it. */
+  editing?: boolean;
+  editor?: ReactNode;
+  /** The row has an edit that is not saved: "Changed, not saved" is said beside its state. */
+  unsaved?: boolean;
   /** A heading drawn inside the row, so a folded row hides it too (the first row of a section in a folded list). */
   heading?: ReactNode;
   /** Set by `ShowMoreList` on a row it has folded. */
@@ -75,7 +84,7 @@ export function RouteFactRow({
             className="ux-fact-value"
             id={valueId}
             dir="auto"
-            hidden={value.kind === 'empty' && state === 'NOT_APPLICABLE'}
+            hidden={editing === true || (value.kind === 'empty' && state === 'NOT_APPLICABLE')}
           >
             {value.kind === 'empty' ? (
               <p className="ux-fact-quiet">{packNote ?? 'Not filled yet'}</p>
@@ -103,11 +112,13 @@ export function RouteFactRow({
             ) : null}
           </div>
         </div>
-        <div className="ux-fact-meta">
+        <div className="ux-fact-meta" hidden={editing === true}>
           <div className="ux-fact-state">
             <FactMark state={state} />
+            {unsaved ? <span className="ux-fact-unsaved">Changed, not saved</span> : null}
             {note ? <span className="ux-fact-note">Not applicable: {note}</span> : null}
             {staleSince ? <StaleMark>Stale since {staleSince}</StaleMark> : null}
+            {action ? <span className="ux-fact-action">{action}</span> : null}
           </div>
           {locked ? (
             <span className="ux-fact-pack">
@@ -120,9 +131,9 @@ export function RouteFactRow({
               {validUntil ? <span className="ux-fact-until">Valid until {validUntil}</span> : null}
             </span>
           ) : null}
-          {action ? <div className="ux-fact-action">{action}</div> : null}
         </div>
       </div>
+      {editing && editor ? <div className="ux-fact-editor">{editor}</div> : null}
     </li>
   );
 }

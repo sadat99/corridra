@@ -9,6 +9,7 @@ import {
   type GoLiveWarning,
   type PackView,
 } from '@corridra/domain/route-pack-standard';
+import type { FactsSaveBody } from './route-pack-editor-write';
 
 // ADR-093 Phase 3, PR 2a: the unsaved edits of the route pack editor, as plain data and pure functions. Nothing here reads a
 // page, a clock or a network, so the editor shell (PR 2b) only holds one Stage, and the same code is tested without a browser.
@@ -51,17 +52,30 @@ const factOf = (document: ContentDocument | null, key: string): ContentFact | nu
 const markOf = (document: ContentDocument | null, section: number): string | null =>
   document?.sectionMarks.find((mark) => mark.section === section)?.note ?? null;
 
-/** Stages one fact. `document` is the saved document the page shows; `mine` null removes the fact (Pending). */
+/**
+ * Stages one fact. `document` is the saved document the page shows; `mine` null removes the fact (Pending).
+ *
+ * `mine` is read through the domain's own `contentFact` (the same read `parseStage` makes of a mirrored copy), and what is
+ * staged is the read result, so a fact is kept exactly as it will be saved: text is trimmed, so 'x ' on top of a saved 'x' is no
+ * edit, and a staged stage always survives `serialiseStage` then `parseStage`. A fact that does not read, or whose key is not
+ * `key`, changes nothing: the page has already refused such a fact before it gets here (`factFromDraft`).
+ */
 export function stageFact(
   stage: Stage,
   document: ContentDocument | null,
   key: string,
   mine: ContentFact | null,
 ): Stage {
+  let kept: ContentFact | null = null;
+  if (mine !== null) {
+    const parsed = contentFact.safeParse(mine);
+    if (!parsed.success || parsed.data.key !== key) return stage;
+    kept = parsed.data;
+  }
   const base = stage.facts[key] ? stage.facts[key].base : factOf(document, key);
   const facts = { ...stage.facts };
-  if (sameValue(base, mine)) delete facts[key];
-  else facts[key] = { base, mine };
+  if (sameValue(base, kept)) delete facts[key];
+  else facts[key] = { base, mine: kept };
   return { ...stage, facts };
 }
 /** Stages the mark of one section: a note marks it Not applicable, null removes the mark. */
@@ -91,6 +105,9 @@ export const discard = (stage: Stage): Stage => emptyStage(stage.baseVersion);
 /** The number in "3 changes not saved": one per fact and one per section mark. */
 export const stageCount = (stage: Stage) =>
   Object.keys(stage.facts).length + Object.keys(stage.marks).length;
+/** A stage made on an older version than the one saved now: it must be merged and the person asked, however little clashes. */
+export const isBehind = (stage: Stage, savedVersion: number) =>
+  stageCount(stage) > 0 && stage.baseVersion < savedVersion;
 
 /** The whole document with the stage applied: edited facts keep their place, new ones follow in key order. */
 export function applyStage(document: ContentDocument | null, stage: Stage): ContentDocument {
@@ -121,6 +138,10 @@ export function applyStage(document: ContentDocument | null, stage: Stage): Cont
     facts: [...kept, ...added],
   };
 }
+
+/** What the page shows behind the edits: the saved document with the stage applied (state and value of every row). */
+export const overlayDocument = (document: ContentDocument | null, stage: Stage): ContentDocument =>
+  applyStage(document, stage);
 
 // ---- The summary of Save Route Facts: added, changed and removed, in words ----------------------------------------------
 
@@ -274,6 +295,76 @@ export function resolve(
       marks,
     },
     missing,
+  };
+}
+
+// ---- The save: the only builder of the body of route-pack-facts (carry A of PR 2a) -------------------------------------------
+
+/** The ids of the conflicts that have no choice yet. While any is listed the stage is not saved. */
+export function openConflictIds(
+  stage: Stage,
+  conflicts: Conflict[],
+  choices: Record<string, Choice | undefined>,
+): string[] {
+  return resolve(stage, conflicts, choices, stage.baseVersion).missing;
+}
+/**
+ * Whether Save Route Facts may send: something is staged once the choices are applied, and no conflict is without a choice.
+ * `theirsVersion` is the version just read, which only matters after a merge; left out it is the version of the stage.
+ */
+export function canSave(
+  stage: Stage,
+  conflicts: Conflict[] = [],
+  choices: Record<string, Choice | undefined> = {},
+  theirsVersion: number = stage.baseVersion,
+): boolean {
+  const resolved = resolve(stage, conflicts, choices, theirsVersion);
+  return resolved.missing.length === 0 && stageCount(resolved.stage) > 0;
+}
+export type PrepareSave =
+  { ok: true; body: FactsSaveBody } | { ok: false; why: 'nothing' | 'conflict' | 'reason' };
+/**
+ * The body of one save, or why there is none. The only place the body is built: the page gives the stage, the document the stage
+ * stands on (the saved one, or `theirs` after a merge), the clashes and the choices, and never a version. The choices are
+ * applied here, a conflict without a choice refuses (`conflict`), nothing staged refuses (`nothing`) and the reason is trimmed
+ * and must be 3 to 500 characters (`reason`). The version written is the version of the stage plus 1, and the version of the
+ * stage is `theirsVersion` once nothing is open, so a conflicted stage can never be sent on top of a newer version.
+ */
+export function prepareSave(input: {
+  stage: Stage;
+  document: ContentDocument | null;
+  conflicts?: Conflict[];
+  choices?: Record<string, Choice | undefined>;
+  /** The version just read; left out it is the version of the stage. */
+  theirsVersion?: number;
+  routeId: string;
+  /**
+   * The command id, or a function that gives it from the rest of the body once the body is known: the page keeps one id per
+   * route, version, document and reason (`nextCommand`), so the id can only be chosen after the body is built.
+   */
+  id: string | ((rest: Omit<FactsSaveBody, 'id'>) => string);
+  reason: string;
+}): PrepareSave {
+  const resolved = resolve(
+    input.stage,
+    input.conflicts ?? [],
+    input.choices ?? {},
+    input.theirsVersion ?? input.stage.baseVersion,
+  );
+  if (stageCount(resolved.stage) === 0 && resolved.missing.length === 0)
+    return { ok: false, why: 'nothing' };
+  if (resolved.missing.length) return { ok: false, why: 'conflict' };
+  const reason = input.reason.trim();
+  if (reason.length < 3 || reason.length > 500) return { ok: false, why: 'reason' };
+  const rest = {
+    routeId: input.routeId,
+    version: resolved.stage.baseVersion + 1,
+    document: applyStage(input.document, resolved.stage),
+    reason,
+  };
+  return {
+    ok: true,
+    body: { id: typeof input.id === 'function' ? input.id(rest) : input.id, ...rest },
   };
 }
 

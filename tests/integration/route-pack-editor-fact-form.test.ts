@@ -7,6 +7,7 @@ import {
 } from '../../packages/domain/src/route-pack-standard';
 import {
   answersFor,
+  controlFor,
   coveredHelp,
   customDefinition,
   customField,
@@ -15,6 +16,7 @@ import {
   emptyDraft,
   factFromDraft,
   fieldOfCustomFact,
+  liveIssues,
   lockedCoreHelp,
   refusalWords,
   standardField,
@@ -106,7 +108,7 @@ describe('every type builds a fact the standard accepts', () => {
     for (const typed of ['-3', '2.5', '10000', '007', '', 'abc', '+5', '-0'])
       expect(refusals(numberRow, { text: typed })[0]).toMatchObject({
         field: 'text',
-        message: 'Use a whole number, such as 12.',
+        message: 'Use a whole number.',
       });
   });
 
@@ -125,7 +127,9 @@ describe('every type builds a fact the standard accepts', () => {
       passes(fact);
     }
     for (const typed of ['-0', '1,5', '1e3', ' ', '12.1234567', '1234567890123456'])
-      expect(refusals(row, { text: typed })[0]!.message).toBe('Use a number, such as 12 or 12.5.');
+      expect(refusals(row, { text: typed })[0]!.message).toBe(
+        'Use a number such as 12 or 12.5, with at most 5 decimals.',
+      );
   });
 
   test('money: exact minor units in its own currency, never converted', () => {
@@ -154,13 +158,13 @@ describe('every type builds a fact the standard accepts', () => {
   test('money refuses extra decimals with the words of the spec, a zero or negative amount and a currency that is not one', () => {
     const row = customRow('money');
     expect(refusals(row, { currency: 'USD', amount: '45.001' })).toEqual([
-      { field: 'amount', message: 'Use at most 2 decimals for USD' },
+      { field: 'amount', message: 'Use at most 2 decimals for USD.' },
     ]);
     expect(refusals(row, { currency: 'JPY', amount: '1200.5' })[0]!.message).toBe(
-      'Use no decimals for JPY',
+      'Use a whole amount for JPY.',
     );
     expect(refusals(row, { currency: 'BHD', amount: '1.2345' })[0]!.message).toBe(
-      'Use at most 3 decimals for BHD',
+      'Use at most 3 decimals for BHD.',
     );
     expect(refusals(row, { currency: 'USD', amount: '0' })[0]!.message).toBe(
       'Enter an amount above zero.',
@@ -184,7 +188,7 @@ describe('every type builds a fact the standard accepts', () => {
     const row = customRow('date');
     passes(okFact(row, { text: '2027-02-28' }));
     for (const typed of ['2027-02-30', '28/02/2027', '2027-2-3', ''])
-      expect(refusals(row, { text: typed })[0]!.message).toBe('Write the date as YYYY-MM-DD.');
+      expect(refusals(row, { text: typed })[0]!.message).toBe('Pick a date.');
   });
 
   test('choice: one of the allowed answers', () => {
@@ -211,16 +215,23 @@ describe('every type builds a fact the standard accepts', () => {
     );
     const allowed = allowedListRow.allowed![0]!;
     passes(okFact(allowedListRow, { items: [allowed] }));
-    expect(refusals(allowedListRow, { items: ['not an allowed value'] })[0]!.message).toBe(
-      'Choose from the answers offered.',
-    );
+    // The entry is named by its place, and the format of the field is the field's own words from the standard.
+    expect(refusals(allowedListRow, { items: [allowed, 'not an allowed value'] })[0]).toEqual({
+      field: 'items',
+      index: 1,
+      message: `Check entry 2. ${allowedListRow.format!.replace(/[.\s]+$/, '')}.`,
+    });
     expect(
       refusals(listRow, {
         items: Array.from({ length: (listRow.maxItems ?? 100) + 1 }, (_, i) => `Item ${i}`),
       })[0]!.message,
     ).toMatch(/^Add at most \d+ entries\.$/);
-    // The sheet uses the | sign to separate values, so the server refuses it and the words come from the domain.
-    expect(refusals(listRow, { items: ['a|b'] })[0]!.message).toContain('|');
+    // The sheet uses the | sign to separate values: refused on the entry, in the words of the spec.
+    expect(refusals(listRow, { items: ['fine', 'a|b'] })[0]).toEqual({
+      field: 'items',
+      index: 1,
+      message: 'Do not use the | sign in an entry. The route file uses it to separate values.',
+    });
   });
 
   test('link: starts with https://', () => {
@@ -625,5 +636,88 @@ describe('v1 number fields and negatives (asked by the plan for the PR text)', (
     ).toEqual([]);
     // So a control for a custom number field must not carry a minimum of 0.
     expect(okFact(customRow('number'), { text: '-12.5' })).toMatchObject({ value: '-12.5' });
+  });
+});
+
+describe('the control a field gets and what is refused as a person types (PR 2b)', () => {
+  test('only the one standard number field has a minimum of 0; a custom number has none and takes negatives and decimals', () => {
+    expect(controlFor(numberRow)).toEqual({
+      kind: 'number',
+      numberMin: 0,
+      whole: true,
+      choiceStyle: null,
+      boxes: false,
+    });
+    expect(numberRow.key).toBe('travel.visa_lead_time_days');
+    expect(controlFor(customRow('number'))).toMatchObject({
+      kind: 'number',
+      numberMin: null,
+      whole: false,
+    });
+    for (const typed of ['-12', '-0.25', '3.5']) {
+      const fact = okFact(customRow('number'), { text: typed });
+      expect(fact).toMatchObject({ value: typed });
+    }
+  });
+
+  test('a choice with 4 values or fewer is answer rows, with 5 or more a select; a list with allowed values is check boxes', () => {
+    expect(controlFor(customRow('choice', ['a', 'b', 'c', 'd'])).choiceStyle).toBe('row');
+    expect(controlFor(customRow('choice', ['a', 'b', 'c', 'd', 'e'])).choiceStyle).toBe('select');
+    expect(controlFor(customRow('text')).choiceStyle).toBeNull();
+    expect(controlFor(allowedListRow).boxes).toBe(true);
+    expect(controlFor(listRow).boxes).toBe(false);
+    expect(controlFor(linkRow).kind).toBe('link');
+  });
+
+  test('liveIssues: a counter over its limit and money decimals show at once; nothing else does', () => {
+    const long = 'x'.repeat(optionalText.maxLength + 204);
+    expect(liveIssues(optionalText, draft({ text: long }))).toEqual([
+      {
+        field: 'text',
+        message: `That is ${(optionalText.maxLength + 204).toLocaleString('en-US')} characters. The limit is ${optionalText.maxLength}. Shorten it.`,
+      },
+    ]);
+    expect(liveIssues(optionalText, draft({ text: 'x' }))).toEqual([]);
+    expect(
+      liveIssues(optionalText, draft({ answer: 'NOT_APPLICABLE', note: 'y'.repeat(1001) })),
+    ).toEqual([
+      { field: 'note', message: 'That is 1,001 characters. The limit is 1000. Shorten it.' },
+    ]);
+    const money = customRow('money');
+    expect(liveIssues(money, draft({ currency: 'USD', amount: '45.001' }))).toEqual([
+      { field: 'amount', message: 'Use at most 2 decimals for USD.' },
+    ]);
+    expect(liveIssues(money, draft({ currency: 'JPY', amount: '5.5' }))[0]!.message).toBe(
+      'Use a whole amount for JPY.',
+    );
+    expect(liveIssues(money, draft({ currency: 'USD', amount: '45.00' }))).toEqual([]);
+    // Missing things wait for Next or Keep Change.
+    expect(liveIssues(money, draft({ currency: 'USD', amount: '' }))).toEqual([]);
+    expect(liveIssues(numberRow, draft({ text: 'abc' }))).toEqual([]);
+    expect(liveIssues(optionalText, draft({ answer: 'PENDING', text: long }))).toEqual([]);
+  });
+
+  test('the words of the spec, one by one', () => {
+    expect(refusalWords.number).toBe('Use a number such as 12 or 12.5, with at most 5 decimals.');
+    expect(refusalWords.wholeNumber).toBe('Use a whole number.');
+    expect(refusalWords.pickDate).toBe('Pick a date.');
+    expect(refusalWords.link).toBe('Give a web address that starts with https://.');
+    expect(refusalWords.entry(1, 'Any of: sea, air')).toBe('Check entry 2. Any of: sea, air.');
+    expect(refusalWords.entry(0)).toBe('Check entry 1.');
+    expect(refusalWords.atLeast(3)).toBe('Write at least 3 characters.');
+    expect(refusalWords.decimals(2, 'USD')).toBe('Use at most 2 decimals for USD.');
+    expect(refusalWords.wholeAmount('JPY')).toBe('Use a whole amount for JPY.');
+    expect(refusalWords.observedFuture).toBe('The observed date cannot be in the future.');
+    expect(refusalWords.validBefore).toBe('Valid until must be on or after the observed date.');
+    for (const text of Object.values(refusalWords).filter((word) => typeof word === 'string'))
+      expect(text).not.toContain('\u2014');
+  });
+
+  test('a text shorter than its minimum is refused in the words of the spec', () => {
+    const short = field((f) => f.part === 'Content' && f.type === 'text' && (f.minLength ?? 0) > 1);
+    expect(refusals(short, { text: 'x' })[0]).toEqual({
+      field: 'text',
+      message: `Write at least ${short.minLength} characters.`,
+    });
   });
 });

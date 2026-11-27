@@ -11,12 +11,17 @@ import {
 } from '../../packages/domain/src/route-pack-standard';
 import {
   applyStage,
+  canSave,
   cautionKeys,
   conflictId,
   discard,
   emptyStage,
+  isBehind,
   mergeStage,
+  openConflictIds,
+  overlayDocument,
   parseStage,
+  prepareSave,
   resolve,
   sameValue,
   serialiseStage,
@@ -594,5 +599,263 @@ describe('cautionKeys and warningWords', () => {
     );
     expect(warningWords([])).toBe('');
     expect(warningWords([{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: [] }])).toBe('');
+  });
+});
+
+// ---- PR 2b, carry A of G70's verification of PR 2a: nothing sends a conflicted stage on top of a newer version ----------------
+
+const routeId = '00000000-0000-4000-8000-000000000101';
+const command = '00000000-0000-4000-8000-0000000000aa';
+const reason = 'Added the 2027 public holidays';
+
+describe('carry A: the body of a save is built in one place and its version is the version of the stage plus 1', () => {
+  test('a stage made on version 5 saves as version 6, with the whole document', () => {
+    const saved = doc([fact(optionalKey, 'Saved')]);
+    const stage = stageFact(emptyStage(5), saved, optionalKey, fact(optionalKey, 'Mine'));
+    const result = prepareSave({ stage, document: saved, routeId, id: command, reason });
+    expect(result).toEqual({
+      ok: true,
+      body: {
+        id: command,
+        routeId,
+        version: 6,
+        document: doc([fact(optionalKey, 'Mine')]),
+        reason,
+      },
+    });
+    expect(canSave(stage)).toBe(true);
+  });
+
+  test('the id may be chosen from the rest of the body, so one id belongs to one body', () => {
+    const saved = doc([]);
+    const stage = stageFact(emptyStage(0), saved, optionalKey, fact(optionalKey, 'Mine'));
+    let seen: unknown = null;
+    const result = prepareSave({
+      stage,
+      document: saved,
+      routeId,
+      reason,
+      id: (rest) => {
+        seen = rest;
+        return command;
+      },
+    });
+    expect(result.ok && result.body.id).toBe(command);
+    expect(seen).toEqual({
+      routeId,
+      version: 1,
+      document: doc([fact(optionalKey, 'Mine')]),
+      reason,
+    });
+  });
+
+  test('after a merge onto version 7 with a clash, nothing can be sent until every clash has a choice; it never sends version 8 conflicted', () => {
+    const saved = doc([fact(optionalKey, 'Saved')]);
+    const stage = stageFact(emptyStage(5), saved, optionalKey, fact(optionalKey, 'Mine'));
+    const theirs = doc([fact(optionalKey, 'Theirs')]);
+    const merged = mergeStage(stage, theirs, 7);
+    expect(merged.conflicts).toHaveLength(1);
+    // The stage keeps its old version while the clash is open, and a body built now is refused.
+    expect(merged.stage.baseVersion).toBe(5);
+    const open = { stage: merged.stage, document: theirs, routeId, id: command, reason };
+    expect(prepareSave({ ...open, conflicts: merged.conflicts, theirsVersion: 7 })).toEqual({
+      ok: false,
+      why: 'conflict',
+    });
+    expect(canSave(merged.stage, merged.conflicts, {}, 7)).toBe(false);
+    expect(openConflictIds(merged.stage, merged.conflicts, {})).toEqual([
+      conflictId(merged.conflicts[0]!),
+    ]);
+    // A choice for another key is no choice for this one.
+    expect(canSave(merged.stage, merged.conflicts, { 'fact:other.key': 'mine' }, 7)).toBe(false);
+    const chosen = { [conflictId(merged.conflicts[0]!)]: 'mine' as const };
+    expect(canSave(merged.stage, merged.conflicts, chosen, 7)).toBe(true);
+    const sent = prepareSave({
+      ...open,
+      conflicts: merged.conflicts,
+      choices: chosen,
+      theirsVersion: 7,
+    });
+    expect(sent).toMatchObject({ ok: true, body: { version: 8 } });
+    expect(sent.ok && sent.body.document).toEqual(doc([fact(optionalKey, 'Mine')]));
+  });
+
+  test('one choice missing among several still refuses; with all chosen the version is theirs plus 1', () => {
+    const [a, b] = [
+      optionalKey,
+      standardFieldsV1.find(
+        (f) => f.type === 'text' && f.key !== optionalKey && !f.core && f.part === 'Content',
+      )!.key,
+    ];
+    const saved = doc([fact(a, 'A saved'), fact(b, 'B saved')]);
+    let stage = stageFact(emptyStage(2), saved, a, fact(a, 'A mine'));
+    stage = stageFact(stage, saved, b, fact(b, 'B mine'));
+    const theirs = doc([fact(a, 'A theirs'), fact(b, 'B theirs')]);
+    const merged = mergeStage(stage, theirs, 9);
+    expect(merged.conflicts).toHaveLength(2);
+    const base = {
+      stage: merged.stage,
+      document: theirs,
+      conflicts: merged.conflicts,
+      theirsVersion: 9,
+      routeId,
+      id: command,
+      reason,
+    };
+    const idA = conflictId(merged.conflicts.find((c) => c.key === a)!);
+    const idB = conflictId(merged.conflicts.find((c) => c.key === b)!);
+    expect(prepareSave({ ...base, choices: { [idA]: 'mine' } })).toEqual({
+      ok: false,
+      why: 'conflict',
+    });
+    const both = prepareSave({ ...base, choices: { [idA]: 'mine', [idB]: 'theirs' } });
+    expect(both).toMatchObject({ ok: true, body: { version: 10 } });
+    // Use theirs leaves the saved value of B in the document.
+    expect(both.ok && both.body.document.facts.map((f) => f.value)).toEqual(['A mine', 'B theirs']);
+  });
+
+  test('a merge with nothing clashing is on the new version at once and saves as theirs plus 1, on top of theirs', () => {
+    const saved = doc([fact(optionalKey, 'Saved')]);
+    const other = standardFieldsV1.find(
+      (f) => f.type === 'text' && !f.core && f.part === 'Content' && f.key !== optionalKey,
+    )!.key;
+    const stage = stageFact(emptyStage(5), saved, optionalKey, fact(optionalKey, 'Mine'));
+    const theirs = doc([fact(optionalKey, 'Saved'), fact(other, 'Added by them')]);
+    const merged = mergeStage(stage, theirs, 7);
+    expect(merged.conflicts).toEqual([]);
+    const sent = prepareSave({
+      stage: merged.stage,
+      document: theirs,
+      routeId,
+      id: command,
+      reason,
+    });
+    expect(sent).toMatchObject({ ok: true, body: { version: 8 } });
+    expect(sent.ok && sent.body.document.facts.map((f) => f.key)).toEqual([optionalKey, other]);
+    expect(isBehind(stage, 7)).toBe(true);
+    expect(isBehind(merged.stage, 7)).toBe(false);
+  });
+
+  test('after resolve the version is theirs plus 1, and a stage that resolved to nothing is not saved', () => {
+    const saved = doc([fact(optionalKey, 'Saved')]);
+    const stage = stageFact(emptyStage(5), saved, optionalKey, fact(optionalKey, 'Mine'));
+    const theirs = doc([fact(optionalKey, 'Theirs')]);
+    const merged = mergeStage(stage, theirs, 12);
+    const choices = { [conflictId(merged.conflicts[0]!)]: 'theirs' as const };
+    expect(resolve(merged.stage, merged.conflicts, choices, 12).stage.baseVersion).toBe(12);
+    // Use theirs for the only edit leaves nothing to save.
+    expect(canSave(merged.stage, merged.conflicts, choices, 12)).toBe(false);
+    expect(
+      prepareSave({
+        stage: merged.stage,
+        document: theirs,
+        conflicts: merged.conflicts,
+        choices,
+        theirsVersion: 12,
+        routeId,
+        id: command,
+        reason,
+      }),
+    ).toEqual({ ok: false, why: 'nothing' });
+  });
+
+  test('nothing staged and a reason of 2 or 501 characters give no body; 3 and 500 do, trimmed', () => {
+    const saved = doc([]);
+    expect(
+      prepareSave({ stage: emptyStage(3), document: saved, routeId, id: command, reason }),
+    ).toEqual({ ok: false, why: 'nothing' });
+    expect(canSave(emptyStage(3))).toBe(false);
+    const stage = stageFact(emptyStage(3), saved, optionalKey, fact(optionalKey, 'Mine'));
+    const make = (text: string) =>
+      prepareSave({ stage, document: saved, routeId, id: command, reason: text });
+    expect(make('ab')).toEqual({ ok: false, why: 'reason' });
+    expect(make('  a  ')).toEqual({ ok: false, why: 'reason' });
+    expect(make('x'.repeat(501))).toEqual({ ok: false, why: 'reason' });
+    expect(make('abc')).toMatchObject({ ok: true, body: { reason: 'abc' } });
+    expect(make(`  ${'x'.repeat(500)}  `)).toMatchObject({ ok: true });
+    expect(make('  Added it  ')).toMatchObject({ ok: true, body: { reason: 'Added it' } });
+  });
+
+  test('overlayDocument is the saved document with the stage applied', () => {
+    const saved = doc([fact(optionalKey, 'Saved')]);
+    const stage = stageFact(emptyStage(1), saved, optionalKey, null);
+    expect(overlayDocument(saved, stage)).toEqual(doc([]));
+    expect(overlayDocument(saved, emptyStage(1))).toEqual(saved);
+  });
+});
+
+// ---- PR 2b, carry B: what is staged is what contentFact reads, so a restore never drops the whole stage ----------------------
+
+describe('carry B: stageFact reads the fact through contentFact, as parseStage does', () => {
+  test("base 'x' and mine 'x ' is no edit; 'y ' stages 'y'", () => {
+    const saved = doc([custom('custom.dock', 'x')]);
+    const same = stageFact(
+      emptyStage(1),
+      saved,
+      'custom.dock',
+      custom('custom.dock', 'x', { note: 'n ' }),
+    );
+    // A note is trimmed by the schema, so only a real difference stages.
+    expect(same.facts['custom.dock']!.mine!.note).toBe('n');
+    const nothing = stageFact(
+      emptyStage(1),
+      doc([custom('custom.dock', 'x', { note: 'n' })]),
+      'custom.dock',
+      custom('custom.dock', 'x', { note: 'n ' }),
+    );
+    expect(stageCount(nothing)).toBe(0);
+    const label = stageFact(
+      emptyStage(1),
+      doc([custom('custom.dock', 'x', { label: 'Dock rules' })]),
+      'custom.dock',
+      custom('custom.dock', 'x', { label: 'Dock rules  ' }),
+    );
+    expect(stageCount(label)).toBe(0);
+    const y = stageFact(
+      emptyStage(1),
+      saved,
+      'custom.dock',
+      custom('custom.dock', 'x', { note: 'y ' }),
+    );
+    expect(y.facts['custom.dock']!.mine!.note).toBe('y');
+  });
+
+  test('a staged fact survives serialiseStage then parseStage as the same stage, never null', () => {
+    const saved = doc([custom('custom.dock', 'x', { note: 'n' })]);
+    const stage = stageFact(
+      emptyStage(4),
+      saved,
+      'custom.dock',
+      custom('custom.dock', 'x', { note: 'n2  ' }),
+    );
+    expect(stageCount(stage)).toBe(1);
+    expect(parseStage(serialiseStage(stage))).toEqual(stage);
+    // The case G70 found: the base was 'x', the edit 'x ' (equal once read), which used to be staged and then dropped on restore.
+    const odd = stageFact(
+      emptyStage(4),
+      doc([custom('custom.dock', 'x', { label: 'Dock rules' })]),
+      'custom.dock',
+      custom('custom.dock', 'x', { label: ' Dock rules ' }),
+    );
+    expect(parseStage(serialiseStage(odd))).toEqual(odd);
+  });
+
+  test('a fact that does not read, or whose key is another key, leaves the stage as it was', () => {
+    const saved = doc([]);
+    const before = stageFact(emptyStage(1), saved, optionalKey, fact(optionalKey, 'One'));
+    expect(
+      stageFact(before, saved, optionalKey, {
+        key: optionalKey,
+        state: 'FILLED',
+        source: 'not a source',
+      } as ContentFact),
+    ).toBe(before);
+    expect(stageFact(before, saved, optionalKey, fact(coreKey, 'Wrong key'))).toBe(before);
+    expect(
+      stageFact(before, saved, optionalKey, {
+        ...fact(optionalKey),
+        extra: 1,
+      } as unknown as ContentFact),
+    ).toBe(before);
   });
 });

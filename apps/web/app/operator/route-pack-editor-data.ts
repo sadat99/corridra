@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type {
   OverviewList,
   OverviewRoute,
@@ -55,14 +55,27 @@ export function useRouteAddress(): RouteAddress & { routeNotFound: boolean } {
     [snapshot],
   );
 }
-export function goTo(
-  next: { route: string | null; view?: EditorView | null; section?: number | null },
-  focus?: string,
-) {
+type Move = { route: string | null; view?: EditorView | null; section?: number | null };
+/**
+ * PR 2b: the editor registers one guard while a route holds edits that are not saved. A move to another route (or to none) asks
+ * it first: it answers true when it took the move over (it asks the person, and calls `go` only after "Leave Route"), false when
+ * the move may go on. Moves inside the same route (a view, a section) are never asked, and Back and Forward are never blocked.
+ */
+export type LeaveGuard = (go: () => void) => boolean;
+let leaveGuard: LeaveGuard | null = null;
+export function setLeaveGuard(guard: LeaveGuard | null) {
+  leaveGuard = guard;
+}
+function move(next: Move, focus?: string) {
   pendingFocus = focus ?? null;
   routeNotFound = false;
   window.history.pushState(window.history.state, '', addressFor(window.location.href, next));
   window.dispatchEvent(new Event(addressEvent));
+}
+export function goTo(next: Move, focus?: string) {
+  const current = parseAddress(window.location.search).route;
+  if (leaveGuard && next.route !== current && leaveGuard(() => move(next, focus))) return;
+  move(next, focus);
 }
 /** Takes the route out of the address without a new history entry (an unknown route key). */
 export function leaveRoute() {
@@ -142,6 +155,27 @@ export function useRoutePackOverview(
   return { ...result, retry, retrying };
 }
 
+type RouteRead = Omit<DetailData, 'retry' | 'retrying' | 'reload'> & { routeId: string | null };
+/** One route in full with its pack history. A failed pack history never blocks the view. */
+export async function readRoute(tenant: string, routeId: string): Promise<RouteRead> {
+  const [detail, history] = await Promise.all([
+    read<OverviewRoute>('route-pack-overview', tenant, { routeId }),
+    read<{ versions: PackVersion[] }>('route-pack-pack-history', tenant, { routeId }),
+  ]);
+  const packHistory =
+    history.state === 'ready' && Array.isArray(history.body.versions)
+      ? history.body.versions
+      : null;
+  return detail.state === 'ready'
+    ? { state: 'ready', detail: detail.body, packHistory, routeId }
+    : {
+        state: detail.state === 'denied' ? 'denied' : detail.state === 'off' ? 'off' : 'error',
+        detail: null,
+        packHistory: null,
+        routeId,
+      };
+}
+
 export type DetailData = {
   /** `off`: the route read answered 404 (the switch is off or the module is gone): never an error, the page falls back. */
   state: 'loading' | 'off' | 'denied' | 'error' | 'ready';
@@ -151,6 +185,11 @@ export type DetailData = {
   packHistory: PackVersion[] | null;
   retry: () => void;
   retrying: boolean;
+  /**
+   * Reads the route again without the loading state (the rows stay) and answers with what was read, for the conflict flow of
+   * Save Route Facts. Only an answer that is ready replaces what the page shows; a failed read changes nothing.
+   */
+  reload: () => Promise<{ state: RouteRead['state']; detail: OverviewRoute | null }>;
 };
 /**
  * One route in full, with its pack history. Both reads start together; a failed pack history never blocks the view. A newer
@@ -161,42 +200,41 @@ export function useRouteDetail(
   routeId: string | null,
   refreshKey: unknown,
 ): DetailData {
-  const [result, setResult] = useState<
-    Omit<DetailData, 'retry' | 'retrying'> & { routeId: string | null }
-  >({ state: 'loading', detail: null, packHistory: null, routeId: null });
+  const [result, setResult] = useState<RouteRead>({
+    state: 'loading',
+    detail: null,
+    packHistory: null,
+    routeId: null,
+  });
   const [attempt, setAttempt] = useState(0);
   const [retrying, setRetrying] = useState(false);
   useEffect(() => {
     if (!routeId) return;
     let live = true;
-    Promise.all([
-      read<OverviewRoute>('route-pack-overview', tenant, { routeId }),
-      read<{ versions: PackVersion[] }>('route-pack-pack-history', tenant, { routeId }),
-    ])
-      .then(([detail, history]) => {
-        if (!live) return;
-        const packHistory =
-          history.state === 'ready' && Array.isArray(history.body.versions)
-            ? history.body.versions
-            : null;
-        setResult(
-          detail.state === 'ready'
-            ? { state: 'ready', detail: detail.body, packHistory, routeId }
-            : {
-                state:
-                  detail.state === 'denied' ? 'denied' : detail.state === 'off' ? 'off' : 'error',
-                detail: null,
-                packHistory: null,
-                routeId,
-              },
-        );
-      })
+    readRoute(tenant, routeId)
+      .then((answer) => live && setResult(answer))
       .catch(() => live && setResult({ state: 'error', detail: null, packHistory: null, routeId }))
       .finally(() => live && setRetrying(false));
     return () => {
       live = false;
     };
   }, [tenant, routeId, refreshKey, attempt]);
+  // The route a reload belongs to: an answer that arrives after the person moved to another route is dropped.
+  const asked = useRef<string | null>(null);
+  useEffect(() => {
+    asked.current = routeId ? `${tenant}/${routeId}` : null;
+  }, [tenant, routeId]);
+  const reload = useCallback(async () => {
+    if (!routeId) return { state: 'error' as const, detail: null };
+    const key = `${tenant}/${routeId}`;
+    try {
+      const answer = await readRoute(tenant, routeId);
+      if (answer.state === 'ready' && asked.current === key) setResult(answer);
+      return { state: answer.state, detail: answer.detail };
+    } catch {
+      return { state: 'error' as const, detail: null };
+    }
+  }, [tenant, routeId]);
   const retry = useCallback(() => {
     setRetrying(true);
     setAttempt((count) => count + 1);
@@ -209,5 +247,6 @@ export function useRouteDetail(
     packHistory: mine ? result.packHistory : null,
     retry,
     retrying,
+    reload,
   };
 }
