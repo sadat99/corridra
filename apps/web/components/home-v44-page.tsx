@@ -12,11 +12,17 @@ const HomeV44Summarised = dynamic(() =>
 
 export function HomeV44Page({
   whatsapp,
-  summaries = false,
+  summaries,
 }: {
   whatsapp: string | null;
   /** CORRIDRA_UX_HOW_TRUST_V43 (read by app/page.tsx): the home keeps summaries of the process and of trust. */
   summaries?: boolean;
 }) {
-  return summaries ? <HomeV44Summarised whatsapp={whatsapp} /> : <HomeV44 whatsapp={whatsapp} />;
+  // The approved page is the summarised one (three process lines, three evidence lines); the plain composition stays for
+  // a caller that asks for it explicitly.
+  return summaries === false ? (
+    <HomeV44 whatsapp={whatsapp} />
+  ) : (
+    <HomeV44Summarised whatsapp={whatsapp} />
+  );
 }

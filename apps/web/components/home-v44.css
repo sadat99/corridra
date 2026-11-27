@@ -371,3 +371,323 @@
   gap: var(--space-3);
   margin: 0;
 }
+
+/* ---- Lower sections, to the approved page ---- */
+
+/* How it works and Evidence: three cards each. */
+.hv43 .htv43-summary .htv43-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+}
+.hv43 .htv43-summary h2 {
+  font-size: var(--text-display);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-inline-size: 18ch;
+}
+.hv43 .htv43-summary .htv43-summary-body {
+  display: grid;
+  gap: var(--space-5);
+  max-inline-size: none;
+}
+.hv43 .htv43-lines {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: hv44;
+}
+@media (min-width: 48rem) {
+  .hv43 .htv43-lines {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.hv43 .htv43-lines li {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  font-family: var(--font-heading, inherit);
+  font-size: var(--text-title);
+  font-weight: 500;
+  line-height: 1.2;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  counter-increment: hv44;
+  transition:
+    transform 200ms ease-out,
+    border-color 200ms ease-out;
+}
+.hv43 .htv43-lines li::before {
+  content: '0' counter(hv44);
+  color: var(--brand);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+.hv43 .htv43-lines li:hover {
+  border-color: var(--brand);
+  transform: translateY(-2px);
+}
+/* The six steps of the process as a still row of dots under the cards. */
+.hv43 .hv43-process.htv43-summary .htv43-lines::after {
+  content: '';
+  grid-column: 1 / -1;
+  block-size: 1rem;
+  background:
+    radial-gradient(circle at center, var(--brand) 0.2rem, transparent 0.22rem) 0 50% / 16.66% 100%
+      repeat-x,
+    linear-gradient(var(--border-strong), var(--border-strong)) 8% 50% / 84% 1px no-repeat;
+}
+
+/* Route statuses. */
+.hv43 .hv44-status-card {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+@media (min-width: 48rem) {
+  .hv43 .hv44-status-card {
+    padding: var(--space-8);
+  }
+}
+.hv43 .hv44-status-card h2 {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-inline-size: 20ch;
+}
+.hv43 .hv44-status-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv43 .hv44-status-list a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-4);
+  color: var(--text-1);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  text-decoration: none;
+  border-block-start: 1px solid var(--border-subtle);
+}
+.hv43 .hv44-status-list a:hover .hv44-status-name {
+  color: var(--brand);
+}
+.hv43 .hv44-status-tag {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--surface-subtle);
+  border-radius: var(--radius-sm);
+}
+.hv43 .hv44-status-tag[data-tone='open'] {
+  color: var(--brand);
+}
+.hv43 .hv44-status-note {
+  max-inline-size: 72ch;
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
+}
+
+/* Inbound band: warm, one dark action. */
+.hv43 .hv43-inbound {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+@media (min-width: 48rem) {
+  .hv43 .hv43-inbound {
+    padding: var(--space-8);
+  }
+}
+.hv43 .hv43-inbound h2 {
+  font-size: var(--text-display);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.hv43 .hv43-inbound .text-link {
+  min-block-size: 3rem;
+  padding: var(--space-2) var(--space-5);
+  color: var(--surface-1);
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--brand-deep);
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+/* Close: light, centred, the three jobs as cards. */
+.hv43 .hv44-closing {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding-block: var(--space-12);
+  text-align: center;
+}
+.hv43 .hv44-closing h2 {
+  max-inline-size: 18ch;
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.hv43 .hv44-closing-lines {
+  display: grid;
+  gap: var(--space-1);
+  max-inline-size: 56ch;
+  color: var(--text-2);
+}
+.hv43 .hv44-closing-lines p {
+  margin: 0;
+}
+.hv43 .hv44-closing-lines strong {
+  color: var(--text-1);
+  font-weight: 500;
+}
+.hv43 .hv44-closing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+.hv43 .hv44-jobs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  inline-size: 100%;
+  text-align: start;
+}
+@media (min-width: 48rem) {
+  .hv43 .hv44-jobs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.hv43 .hv44-jobs .ac1-job {
+  border-radius: var(--radius-lg);
+  transition: transform 200ms ease-out;
+}
+.hv43 .hv44-jobs .ac1-job:hover {
+  transform: translateY(-3px);
+}
+
+/* ---- Motion (owner asked for animation, 27 Nov 2026). Every rule is off under reduced motion; the map's own motion
+   has a Pause Motion control. ---- */
+.hv43 [data-hv44-r] {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition:
+    opacity 420ms ease-out,
+    transform 420ms ease-out;
+}
+.hv43 [data-hv44-r][data-in] {
+  opacity: 1;
+  transform: none;
+}
+.hv43 .hv44-hero-text > * {
+  animation: hv44-rise 420ms ease-out both;
+}
+.hv43 .hv44-hero-text > :nth-child(2) {
+  animation-delay: 60ms;
+}
+.hv43 .hv44-hero-text > :nth-child(3) {
+  animation-delay: 120ms;
+}
+.hv43 .hv44-hero-text > :nth-child(4) {
+  animation-delay: 180ms;
+}
+.hv43 .hv44-panel {
+  animation: hv44-rise 300ms ease-out both;
+}
+.hv43 .hv44-tab {
+  transition:
+    background-color 200ms ease-out,
+    color 200ms ease-out;
+}
+.hv43 .hv44-travel {
+  fill: var(--accent-marigold);
+  stroke: var(--surface-1);
+}
+.hv43 .hv44-halo-to {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hv44-pulse 2400ms ease-out infinite;
+}
+.hv43 .hv44-pause {
+  justify-self: start;
+  min-block-size: 2.75rem;
+  padding: var(--space-1) var(--space-3);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.hv43 .hv44-paused .hv44-travel {
+  display: none;
+}
+.hv43 .hv44-paused .hv44-halo-to {
+  animation: none;
+}
+@keyframes hv44-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hv44-pulse {
+  from {
+    opacity: 0.7;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv43 [data-hv44-r],
+  .hv43 .hv44-hero-text > *,
+  .hv43 .hv44-panel,
+  .hv43 .hv44-halo-to {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    animation: none;
+  }
+  .hv43 .hv44-travel {
+    display: none;
+  }
+  .hv43 .htv43-lines li,
+  .hv43 .hv44-jobs .ac1-job {
+    transition: none;
+  }
+}

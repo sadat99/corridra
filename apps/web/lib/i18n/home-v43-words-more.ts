@@ -217,4 +217,7 @@ export const homeV43MoreEn = {
   'home.v43.foot.team': 'Team Sign-In',
   'home.v43.foot.helper': 'Local Helper Sign-In',
   'home.v43.foot.guide': '{bd} Guide',
+  // Home page v4.4: the control that stops the page's own motion.
+  'home.v44.motion.pause': 'Pause Motion',
+  'home.v44.motion.play': 'Play Motion',
 };

@@ -311,6 +311,11 @@ export function ZoomRouteMap({
           />
         </>
       ) : null}
+      {path ? (
+        <circle className="hv44-travel" r={4 * f.k} strokeWidth={1.4 * f.k}>
+          <animateMotion dur="3.6s" repeatCount="indefinite" path={path} />
+        </circle>
+      ) : null}
       {dot ? (
         <circle
           className="hv44-dot"

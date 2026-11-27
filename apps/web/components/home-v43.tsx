@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useReducer, useState, type Dispatch, type ReactNode } from 'react';
-import { ctaWords } from './home-routes';
+import { ctaWords, type Shown } from './home-routes';
 import { HomeShared } from './home-shared';
 import { PlainLimits } from './home-v42-parts';
 import { useAnchorReveal } from './home-v43-anchors';
@@ -59,6 +59,15 @@ export type HomeV44Slots = {
   }) => ReactNode;
   /** A still row of route statuses under the route choice. */
   strip: ReactNode;
+  /** The route statuses as a list, after the evidence. */
+  status: ReactNode;
+  /** The close of the page, light, with the three jobs as cards. */
+  closing: (props: {
+    shown: Shown;
+    href: string;
+    cta: string;
+    whatsapp: string | null;
+  }) => ReactNode;
   map: (route: {
     origin: PlaceCode;
     target: PlaceCode;
@@ -93,6 +102,7 @@ export function HomeV43({
     setAnnouncement('');
     requestAnimationFrame(() => setAnnouncement(text));
   }, []);
+  const wide = v44 && summaries ? { v44, summaries } : null;
   const intent = viewIntent(state);
   const shown = state.intent ?? 'none';
   const href = routeHref[intent];
@@ -141,7 +151,10 @@ export function HomeV43({
           onChoose={choose}
         />
       )}
-      <HomeV43Solutions onExplore={choose} onWalk={() => revealThenFocus('route-delegation')} />
+      {wide ? null : (
+        <HomeV43Solutions onExplore={choose} onWalk={() => revealThenFocus('route-delegation')} />
+      )}
+      {wide ? wide.summaries.process : null}
       <HomeV43Example
         intent={intent}
         announce={announce}
@@ -160,7 +173,7 @@ export function HomeV43({
           onMarket={(market) => dispatch({ type: 'market', market })}
         />
       ) : null}
-      {summaries ? (
+      {wide ? null : summaries ? (
         summaries.process
       ) : (
         <HomeV43Process
@@ -170,27 +183,49 @@ export function HomeV43({
           announce={announce}
         />
       )}
-      <HomeV43Markets
-        market={state.market}
-        direction={state.direction}
-        mine={state.intent}
-        onMarket={(market) => dispatch({ type: 'market', market })}
-        onDirection={(direction) => dispatch({ type: 'direction', direction })}
-        onUse={() => {
-          dispatch({ type: 'useRoute' });
-          revealThenFocus('home-brief-job');
-        }}
-        announce={announce}
-      />
+      {wide ? null : (
+        <HomeV43Markets
+          market={state.market}
+          direction={state.direction}
+          mine={state.intent}
+          onMarket={(market) => dispatch({ type: 'market', market })}
+          onDirection={(direction) => dispatch({ type: 'direction', direction })}
+          onUse={() => {
+            dispatch({ type: 'useRoute' });
+            revealThenFocus('home-brief-job');
+          }}
+          announce={announce}
+        />
+      )}
+      {wide ? (
+        <>
+          {wide.summaries.trust}
+          {wide.v44.status}
+        </>
+      ) : null}
       <HomeV43Inbound
         onInbound={() => {
           dispatch({ type: 'inbound' });
           revealThenFocus('home-brief-job');
         }}
       />
+      {wide ? (
+        <HomeV43Markets
+          market={state.market}
+          direction={state.direction}
+          mine={state.intent}
+          onMarket={(market) => dispatch({ type: 'market', market })}
+          onDirection={(direction) => dispatch({ type: 'direction', direction })}
+          onUse={() => {
+            dispatch({ type: 'useRoute' });
+            revealThenFocus('home-brief-job');
+          }}
+          announce={announce}
+        />
+      ) : null}
       {summaries ? (
         <>
-          {summaries.trust}
+          {wide ? null : summaries.trust}
           <HomeV43Faq more={false} />
         </>
       ) : (
@@ -220,7 +255,11 @@ export function HomeV43({
             }
           : {})}
       />
-      <HomeShared shown={shown} href={href} cta={cta} whatsapp={whatsapp} />
+      {v44 ? (
+        v44.closing({ shown, href, cta, whatsapp })
+      ) : (
+        <HomeShared shown={shown} href={href} cta={cta} whatsapp={whatsapp} />
+      )}
     </div>
   );
 }

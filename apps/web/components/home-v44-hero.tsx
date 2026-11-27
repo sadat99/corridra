@@ -3,6 +3,7 @@
 import { PlaceWords } from './place-words';
 import { TalkLink } from './home-talk';
 import { useT } from './language-provider';
+import { useHomeV44Motion } from './home-v44-motion';
 import { Eyebrow } from './ux/example-tag';
 import { v43 } from '../lib/home-v43-data';
 import { revealThenFocus } from '../lib/ux/anchor-focus';
@@ -13,6 +14,7 @@ import { revealThenFocus } from '../lib/ux/anchor-focus';
 // page is ready and then moves focus to the route choice.
 export function HomeV44Hero({ whatsapp }: { whatsapp: string | null }) {
   const t = useT();
+  useHomeV44Motion();
   const [first = '', ...rest] = t(v43('hero.title.b')).split(' ');
   return (
     <section className="hv43-hero hv44-hero" id="hero" aria-labelledby="home-title">

@@ -28,6 +28,7 @@ export function HomeV44Map({
 }) {
   const t = useT();
   const [world, setWorld] = useState<World | null>(null);
+  const [paused, setPaused] = useState(false);
   useEffect(() => {
     let live = true;
     void import('./world-geography').then((m) => {
@@ -40,7 +41,7 @@ export function HomeV44Map({
   const name = (code: PlaceCode) => t(placeName[code]);
   const markets = targetOptions(origin);
   return (
-    <figure className="hv44-route">
+    <figure className={paused ? 'hv44-route hv44-paused' : 'hv44-route'}>
       <div className="hv44-frame">
         {world ? (
           <ZoomRouteMap
@@ -59,6 +60,14 @@ export function HomeV44Map({
           <Flagged code={placeFlag[target]}>{name(target)}</Flagged>
         </span>
       </figcaption>
+      <button
+        type="button"
+        className="hv44-pause"
+        aria-pressed={paused}
+        onClick={() => setPaused(!paused)}
+      >
+        {t(paused ? 'home.v44.motion.play' : 'home.v44.motion.pause')}
+      </button>
       {pick ? (
         <div className="hv44-markets" role="group" aria-label={t(v43('brief.f.to'))}>
           {markets.map((code) => (

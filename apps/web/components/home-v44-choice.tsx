@@ -82,6 +82,7 @@ export function HomeV44Choice({
           <div
             className="hv44-pick-main hv44-panel"
             id="hv44-panel"
+            key={intent}
             role="tabpanel"
             aria-labelledby={`hv44-tab-${intent}`}
           >

@@ -2,8 +2,10 @@
 
 import { HomeV43 } from './home-v43';
 import { HomeV44Choice } from './home-v44-choice';
+import { HomeV44Closing } from './home-v44-closing';
 import { HomeV44Hero } from './home-v44-hero';
 import { HomeV44Map } from './home-v44-map';
+import { HomeV44Status } from './home-v44-status';
 import { HomeV44Strip } from './home-v44-strip';
 import './home-v44.css';
 
@@ -20,6 +22,8 @@ export function HomeV44({ whatsapp }: { whatsapp: string | null }) {
         hero: <HomeV44Hero whatsapp={whatsapp} />,
         choice: (props) => <HomeV44Choice {...props} />,
         strip: <HomeV44Strip />,
+        status: <HomeV44Status />,
+        closing: (props) => <HomeV44Closing {...props} />,
         map: (route) => <HomeV44Map {...route} />,
       }}
     />
