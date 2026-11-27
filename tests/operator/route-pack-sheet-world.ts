@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import type { FactVersion } from '../../apps/web/lib/route-pack-editor-read';
 import type { SheetReport, SheetRoutePlan } from '../../packages/missions/src/route-pack-sheet';
-import { routeIds } from './p5c-desk-world';
+import { routeIds, routeSummaries } from './p5c-desk-world';
 
 // ADR-093 Phase 3, PR 4: the fixture's answers to route-pack-import, route-pack-export and route-pack-fact-history, registered
 // after answerReads (a later route wins). With the scripts empty it does what the server does (spec 12.1, 12.2, 17A): a check
@@ -23,10 +23,17 @@ export type SheetWorld = {
   exportDelay?: number;
   /** The report of a clean check. Left out, `cleanReport()`. */
   report?: SheetReport;
+  /** The fact history read waits this many milliseconds (to see "Loading history…"). */
+  factDelay?: number;
   /** Status of the fact history read. Default 200. */
   factHistory?: number;
   /** The fact versions of every route. Left out, `factVersions()`. */
   versions?: FactVersion[];
+  /**
+   * The list read answers this many routes (copies of Bangladesh to China under other keys), for the 20-route export limit.
+   * Left out, the desk world's three.
+   */
+  manyRoutes?: number;
   /** Every body sent to route-pack-import, in order. */
   bodies: Array<{ mode: string; csv: string; saveId?: string; reason?: string }>;
   /** The routes query word of every export, in order. */
@@ -35,6 +42,24 @@ export type SheetWorld = {
   factReads: string[];
 };
 export const exportName = 'route-packs-2026-11-27.csv';
+/** The export file: a byte order mark, then text with characters beyond ASCII, which must arrive byte for byte. */
+export const exportText = '\uFEFFroute,value\r\nBD-CN,Société বাংলা\r\n';
+const markets = [
+  'FR',
+  'DE',
+  'IT',
+  'ES',
+  'PT',
+  'NL',
+  'BE',
+  'AT',
+  'PL',
+  'SE',
+  'FI',
+  'DK',
+  'NO',
+  'IE',
+];
 const change = (key: string, label: string) => ({ key, label });
 export const plan = (route: string, over: Partial<SheetRoutePlan> = {}): SheetRoutePlan => ({
   route,
@@ -143,12 +168,43 @@ export async function answerSheet(
         'content-type': 'text/csv; charset=utf-8',
         'content-disposition': `attachment; filename=${exportName}`,
       },
-      body: '﻿route,section\r\nBD-CN,Identity\r\n',
+      body: Buffer.from(exportText, 'utf8'),
     });
   });
+  if (world.manyRoutes)
+    await page.route('**/api/team-control/route-pack-overview*', async (route) => {
+      const url = new URL(route.request().url());
+      if (url.searchParams.get('routeId')) return route.fallback();
+      const [first] = routeSummaries({}, 'owner');
+      const routes = Array.from({ length: world.manyRoutes ?? 0 }, (_, i) => {
+        const origin = markets[i % markets.length]!;
+        const destination = markets[(i + 1 + Math.floor(i / markets.length)) % markets.length]!;
+        return {
+          ...first!,
+          key: `${origin}-${destination}`,
+          origin,
+          destination,
+          routeId: `00000000-0000-4000-8000-0000000007${String(i).padStart(2, '0')}`,
+        };
+      });
+      return route.fulfill(
+        json(
+          {
+            capabilities: {
+              routePackForm: true,
+              contentInstalled: true,
+              onePersonPublication: false,
+            },
+            routes,
+          },
+          200,
+        ),
+      );
+    });
   await page.route('**/api/team-control/route-pack-fact-history*', async (route) => {
     const url = new URL(route.request().url());
     world.factReads.push(url.searchParams.get('routeId') ?? '');
+    await wait(world.factDelay);
     const code = world.factHistory ?? 200;
     if (code !== 200)
       return route.fulfill(json({ error: 'The request could not be completed' }, code));

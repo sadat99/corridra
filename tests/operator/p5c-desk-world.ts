@@ -340,6 +340,9 @@ function routeViews(world: FactsWorld, role: string): RouteView[] {
     routeView('TW-AU', routeIds.twAu, packOf(world, 'TW-AU', null), written['TW-AU'] ?? null, null),
   ];
 }
+/** ADR-093 Phase 3, PR 4: the route summaries the overview list answers, for the sheet world. */
+export const routeSummaries = (facts: FactsWorld, role: string) =>
+  routeViews(facts, role).map((view) => summariseRoute(view, liveStatuses));
 /** ADR-093 Phase 3, PR 3b: the pack a route has now in this world, for the publish world. */
 export const packNow = (facts: FactsWorld, key: string) =>
   routeViews(facts, 'owner').find((view) => view.key === key)?.pack ?? null;

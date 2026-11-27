@@ -1739,8 +1739,11 @@ test.describe('widths: no sideways scroll, axe clean, targets, the bar never cov
         });
         // Only the route PR 1 measured is held to the length budget: eight rows of a route with nothing saved are longer than it by
         // design, and Edit is not what makes them so.
-        if (route === 'BD-CN')
+        if (route === 'BD-CN') {
           expect(withEdit.region).toBeLessThanOrEqual(withEdit.wide ? 900 : 1688);
+          // PR 4 per G72: the admin's read-only route (with its note and More) holds the same budget.
+          expect(without.region).toBeLessThanOrEqual(without.wide ? 900 : 1688);
+        }
         await noSidewaysScroll(page);
       }
     }

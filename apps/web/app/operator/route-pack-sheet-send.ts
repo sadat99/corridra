@@ -59,7 +59,11 @@ export async function saveSheet(
 
 /** Puts a text in the person's downloads under a name, through a link that is clicked once and removed. */
 export function downloadText(name: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+  downloadBlob(name, new Blob([text], { type: 'text/csv;charset=utf-8' }));
+}
+/** The same for bytes as they came: nothing is decoded, so the byte order mark and every character stay exactly. */
+function downloadBlob(name: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = name;
@@ -83,7 +87,11 @@ export async function downloadExport(
       return { ok: false };
     const name = exportFileName(response.headers.get('content-disposition'));
     if (!name) return { ok: false };
-    downloadText(name, await response.text());
+    // The bytes as the server sent them: text() would drop the byte order mark spreadsheets need to read UTF-8.
+    downloadBlob(
+      name,
+      new Blob([await response.arrayBuffer()], { type: 'text/csv;charset=utf-8' }),
+    );
     return { ok: true, name };
   } catch {
     return { ok: false };

@@ -231,7 +231,9 @@ export function RoutesFactsHead({
           {notFoundRoute}
         </p>
       ) : null}
-      {data ? <RouteDataActions {...data} /> : null}
+      {data ? (
+        <RouteDataActions {...data} onOpenRoute={(key) => goTo({ route: key }, routeHeading)} />
+      ) : null}
     </>
   );
 }

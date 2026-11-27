@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fixtureTenant, startP5cFixture } from './p5c-desk-fixture';
@@ -6,6 +7,7 @@ import {
   answerSheet,
   cleanReport,
   exportName,
+  exportText,
   plan,
   savedReport,
   type SheetWorld,
@@ -53,7 +55,7 @@ async function open(page: Page, options: Options = {}) {
   await page.goto(`${fixture.origin}/operator/settings?${words}`);
   await expect(page.getByLabel('Workspace status')).toBeAttached();
   await expect(page.getByText('Loading workspace…')).toHaveCount(0);
-  if (facts) await expect(routes(page).locator('a.settings-route-name').first()).toBeAttached();
+  if (facts) await expect(routes(page).locator('.route-data-head')).toBeAttached();
   if (options.route) await expect(editor(page).locator('li.ux-fact-row').first()).toBeVisible();
   return { world, sheet };
 }
@@ -131,12 +133,18 @@ test.describe('Import Route Data: the owner', () => {
     await expect(dialog.getByLabel('Choose File')).toBeFocused();
     const text = 'route,section\r\nBD-CN,Identity\r\n';
     await choose(page, csvFile(text));
-    await expect(dialog.getByText('Step 2 of 4: Check', { exact: true })).toBeVisible();
+    await expect(dialog.getByText('Step 2 of 4: Check', { exact: true })).toBeFocused();
+    // The opener is busy while the check runs, and only then.
+    await expect(button(routes(page), 'Import Route Data')).toHaveAttribute('aria-busy', 'true');
     await expect(dialog.getByText('Checking only. Nothing is saved.')).toBeVisible();
     await expect(dialog.locator('p.sr-only[role="status"]')).toHaveText('Checking the file…');
     await expect(dialog.locator('.route-data')).toHaveAttribute('aria-busy', 'true');
     const ready = dialog.getByRole('heading', { name: 'Ready to save 2 routes.' });
     await expect(ready).toBeFocused();
+    await expect(button(routes(page), 'Import Route Data')).not.toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
     expect(sheet.bodies).toEqual([{ mode: 'dry-run', csv: text }]);
     await expect(dialog.getByText('Step 3 of 4: Review', { exact: true })).toBeVisible();
     const bdCn = dialog.locator('li.route-data-route').filter({ hasText: 'Bangladesh to China' });
@@ -210,9 +218,10 @@ test.describe('Import Route Data: the owner', () => {
     await importDialog(page).getByRole('link', { name: 'Open Bangladesh to China' }).click();
     await expect(importDialog(page)).toBeHidden();
     expect(new URL(page.url()).searchParams.get('route')).toBe('BD-CN');
+    // Focus goes to the opened route's name, not to the list status line.
     await expect(
       editor(page).getByRole('heading', { level: 2, name: 'Bangladesh to China' }),
-    ).toBeVisible();
+    ).toBeFocused();
   });
 
   test('a wrong file type and a file over 1 MB are refused before any request', async ({
@@ -229,6 +238,16 @@ test.describe('Import Route Data: the owner', () => {
     await choose(page, csvFile('a'.repeat(1048577)));
     await expect(importDialog(page).getByText('That file is over 1 MB.')).toBeVisible();
     await expect(importDialog(page).getByText('That file is not a CSV.')).toHaveCount(0);
+    // PR 4 per G72: "Société" saved in Windows-1252 (é is the byte E9) is not UTF-8 and is refused in the page.
+    await choose(page, {
+      name: 'routes.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from([0x53, 0x6f, 0x63, 0x69, 0xe9, 0x74, 0xe9]),
+    });
+    await expect(
+      importDialog(page).getByText('That file is not in UTF-8. Use a CSV file saved in UTF-8.'),
+    ).toBeVisible();
+    await expect(importDialog(page).getByLabel('Choose File')).toBeFocused();
     expect(sheet.bodies).toEqual([]);
     await expect(importDialog(page).getByText('Step 1 of 4: Choose a file')).toBeVisible();
     // Recovery: a CSV is then checked.
@@ -283,8 +302,8 @@ test.describe('Import Route Data: the owner', () => {
     const all = button(dialog, 'Show all 26 problems');
     await expect(all).toHaveAttribute('aria-expanded', 'false');
     await all.click();
-    await expect(all).toHaveAttribute('aria-expanded', 'true');
     await expect(items).toHaveCount(26);
+    await expect(all).toHaveCount(0);
     const download = page.waitForEvent('download');
     await button(dialog, 'Download Problem List').click();
     expect((await download).suggestedFilename()).toBe('route-pack-problems.csv');
@@ -387,11 +406,18 @@ test.describe('Import Route Data: the save answers', () => {
     for (const body of saves) expect(body).toEqual(saves[0]);
   });
 
-  test('part way: the routes not saved with the reason or Not tried, and Try the Rest Again sends the same save id', async ({
+  test('part way: facts saved and a pack step not reached are told apart, the dialog survives a failed list read, and Try the Rest Again sends the same save id', async ({
     page,
   }) => {
+    const pack = {
+      changed: true,
+      changedFields: ['languages'],
+      status: 'ACTIVE' as const,
+      nextVersion: 2,
+    };
     const report = cleanReport();
-    report.routes.push(plan('EU-BD'));
+    report.routes.push(plan('EU-BD', { pack }));
+    // The server writes every route's facts first, then the packs: it stopped at Bangladesh to China's pack.
     const partWay = {
       ...report,
       mode: 'save',
@@ -399,27 +425,27 @@ test.describe('Import Route Data: the save answers', () => {
       errors: [
         {
           row: null,
-          route: 'CN-BD',
+          route: 'BD-CN',
           key: null,
           message: 'Saving this route stopped. Save the same file again to finish.',
         },
       ],
-      saved: [{ route: 'BD-CN', routeId: 'r', contentVersion: 6, packVersion: 3 }],
+      saved: [
+        { route: 'BD-CN', routeId: 'a', contentVersion: 6, packVersion: null },
+        { route: 'CN-BD', routeId: 'b', contentVersion: 1, packVersion: null },
+        { route: 'EU-BD', routeId: 'c', contentVersion: 1, packVersion: null },
+      ],
     };
-    // The second send plans again against the state the first left: Bangladesh to China has nothing left to write.
+    // The second send plans again against the state the first left: only the two pack steps are left.
     const rest = savedReport({
       ...report,
-      routes: report.routes.map((item) =>
-        item.route === 'BD-CN'
-          ? {
-              ...item,
-              content: { ...item.content, changed: false, added: [], updated: [] },
-              pack: { ...item.pack, changed: false, nextVersion: null },
-            }
-          : item,
-      ),
+      routes: report.routes.map((item) => ({
+        ...item,
+        willBeAdded: false,
+        content: { ...item.content, changed: false, added: [], updated: [] },
+      })),
     });
-    const { sheet } = await open(page, {
+    const { sheet, world } = await open(page, {
       sheet: {
         report,
         saveScript: [
@@ -432,16 +458,22 @@ test.describe('Import Route Data: the save answers', () => {
     await choose(page);
     await button(importDialog(page), 'Next').click();
     await reasonBox(page).fill(reasonText);
+    // The list read after the partial save fails: the dialog, its file and its save id stay (spec 12.1).
+    world.facts!.overview = 500;
     await button(importDialog(page), 'Save All Routes').click();
     const alert = importDialog(page).getByRole('alert');
-    await expect(alert).toHaveText(
-      'Saved 1 of 3 routes. Not saved: China to Bangladesh, European Union to Bangladesh.',
-    );
+    await expect(alert).toHaveText('Saved 1 of 3 routes.');
     await expect(alert).toBeFocused();
     await expect(importDialog(page).locator('ul.route-data-problems > li')).toHaveText([
-      'China to Bangladesh: Saving this route stopped. Save the same file again to finish.',
-      'European Union to Bangladesh: Not tried, because the save stopped before it.',
+      'Bangladesh to China: facts saved. Saving this route stopped. Save the same file again to finish.',
+      'European Union to Bangladesh: facts saved; pack setting not tried.',
     ]);
+    await expect(importDialog(page)).not.toContainText('Not saved');
+    await expect
+      .poll(() => world.asked.filter((line) => line.includes('mission-catalogue')).length)
+      .toBeGreaterThan(1);
+    await page.waitForTimeout(300);
+    await expect(importDialog(page)).toBeVisible();
     await expect(headStatus(page)).toHaveText('');
     await button(importDialog(page), 'Try the Rest Again').click();
     await expect(
@@ -452,38 +484,132 @@ test.describe('Import Route Data: the save answers', () => {
     expect(saves[1]).toEqual(saves[0]);
   });
 
-  test('a route changed meanwhile says so; Choose Another File starts again and the next save is a new save id', async ({
+  test('a route changed meanwhile after an earlier route saved: the earlier route, the changed one and a later Not tried one, with Try the Rest Again', async ({
     page,
   }) => {
+    const report = cleanReport();
+    report.routes.push(plan('EU-BD'));
     const changed = {
-      ...cleanReport(),
+      ...report,
       mode: 'save',
       ok: false,
       errors: [
         {
           row: null,
-          route: 'BD-CN',
+          route: 'CN-BD',
+          key: null,
+          code: 'ROUTE_PACK_CONTENT_CHANGED',
+          message: "This route's content changed since you opened it. Reload and try again.",
+        },
+      ],
+      saved: [{ route: 'BD-CN', routeId: 'a', contentVersion: 6, packVersion: 3 }],
+    };
+    const { sheet } = await open(page, {
+      sheet: {
+        report,
+        saveScript: [
+          { status: 409, body: { error: 'Changed', report: changed } },
+          {
+            status: 201,
+            // Planned again: Bangladesh to China has nothing left to write.
+            body: savedReport({
+              ...report,
+              routes: report.routes.map((item) =>
+                item.route === 'BD-CN'
+                  ? {
+                      ...item,
+                      content: { ...item.content, changed: false, added: [], updated: [] },
+                      pack: { ...item.pack, changed: false, nextVersion: null },
+                    }
+                  : item,
+              ),
+            }),
+          },
+        ],
+      },
+    });
+    await openImport(page);
+    await choose(page);
+    await button(importDialog(page), 'Next').click();
+    await reasonBox(page).fill(reasonText);
+    await button(importDialog(page), 'Save All Routes').click();
+    await expect(importDialog(page).getByRole('alert')).toHaveText(
+      'Saved 1 of 3 routes. Not saved: China to Bangladesh, European Union to Bangladesh.',
+    );
+    await expect(importDialog(page).locator('ul.route-data-problems > li')).toHaveText([
+      'China to Bangladesh changed while you were checking. It was not saved. Choose the file again to check it against the current state.',
+      'European Union to Bangladesh: Not tried, because the save stopped before it.',
+    ]);
+    await expect(button(importDialog(page), 'Choose Another File')).toBeVisible();
+    await button(importDialog(page), 'Try the Rest Again').click();
+    await expect(
+      importDialog(page).getByText('Saved 3 routes, 5 facts.', { exact: true }),
+    ).toBeVisible();
+    const saves = sheet.bodies.filter((body) => body.mode === 'save');
+    expect(saves[1]).toEqual(saves[0]);
+  });
+
+  test("a pack changed after the route's facts were written says the facts were saved; an unnamed change after a write never says nothing was saved", async ({
+    page,
+  }) => {
+    const pack = {
+      changed: true,
+      changedFields: ['languages'],
+      status: 'ACTIVE' as const,
+      nextVersion: 2,
+    };
+    const report = cleanReport();
+    report.routes[1] = plan('CN-BD', { pack });
+    report.routes.push(plan('EU-BD'));
+    const factsThenPack = {
+      ...report,
+      mode: 'save',
+      ok: false,
+      errors: [
+        {
+          row: null,
+          route: 'CN-BD',
           key: null,
           code: 'ROUTE_PACK_PACK_CHANGED',
           message: "This route's pack changed since you opened it. Reload and try again.",
         },
       ],
-      saved: [],
+      saved: [
+        { route: 'BD-CN', routeId: 'a', contentVersion: 6, packVersion: 3 },
+        { route: 'CN-BD', routeId: 'b', contentVersion: 1, packVersion: null },
+        { route: 'EU-BD', routeId: 'c', contentVersion: 1, packVersion: null },
+      ],
+    };
+    const unnamed = {
+      ...factsThenPack,
+      errors: [{ ...factsThenPack.errors[0]!, route: null, code: 'ROUTE_PACK_CONTENT_CHANGED' }],
     };
     const { sheet } = await open(page, {
       sheet: {
+        report,
         saveScript: [
-          { status: 409, body: { error: 'Changed', report: changed } },
+          { status: 409, body: { error: 'Changed', report: factsThenPack } },
+          { status: 409, body: { error: 'Changed', report: unnamed } },
           { status: 409, body: { error: 'Changed', code: 'ROUTE_PACK_CONTENT_CHANGED' } },
         ],
       },
     });
-    await toSave(page);
+    await openImport(page);
+    await choose(page);
+    await button(importDialog(page), 'Next').click();
     await reasonBox(page).fill(reasonText);
     await button(importDialog(page), 'Save All Routes').click();
-    await expect(importDialog(page).getByRole('alert')).toHaveText(
-      'Bangladesh to China changed while you were checking. It was not saved. Choose the file again to check it against the current state.',
+    await expect(importDialog(page).getByRole('alert')).toHaveText('Saved 2 of 3 routes.');
+    await expect(importDialog(page).locator('ul.route-data-problems > li')).toHaveText([
+      'China to Bangladesh: facts saved. The pack setting was not saved because it changed while you were checking.',
+    ]);
+    await button(importDialog(page), 'Try the Rest Again').click();
+    const alert = importDialog(page).getByRole('alert');
+    await expect(alert).toHaveText(
+      'A route changed while you were checking. Choose the file again to check it against the current state.',
     );
+    await expect(alert).not.toContainText('Nothing was saved');
+    // With no report (nothing written), the server named no route: then nothing was saved, and the words say so.
     await button(importDialog(page), 'Choose Another File').click();
     await expect(importDialog(page).getByText('Step 1 of 4: Choose a file')).toBeVisible();
     await choose(page);
@@ -494,7 +620,79 @@ test.describe('Import Route Data: the save answers', () => {
       'A route changed while you were checking. Nothing was saved. Choose the file again to check it against the current state.',
     );
     const saves = sheet.bodies.filter((body) => body.mode === 'save');
-    expect(saves[1]!.saveId).not.toBe(saves[0]!.saveId);
+    expect(saves[1]!.saveId).toBe(saves[0]!.saveId);
+    expect(saves[2]!.saveId).not.toBe(saves[0]!.saveId);
+  });
+
+  test('a save that wrote nothing says Nothing left to save; owner refusals and server words; problems on re-plan go back to the check step', async ({
+    page,
+  }) => {
+    const empty = { ...savedReport(cleanReport()), saved: [] };
+    const { sheet } = await open(page, {
+      sheet: {
+        saveScript: [
+          { status: 403, body: { error: 'Access denied' } },
+          {
+            status: 413,
+            body: { error: 'The file is larger than 1 MiB. Split it into smaller files.' },
+          },
+          { status: 201, body: empty },
+        ],
+      },
+    });
+    await toSave(page);
+    await reasonBox(page).fill(reasonText);
+    await button(importDialog(page), 'Save All Routes').click();
+    await expect(importDialog(page).getByRole('alert')).toHaveText(
+      'This save was refused. Only the owner can save a route file.',
+    );
+    await expect(importDialog(page)).not.toContainText('You can check it here');
+    await button(importDialog(page), 'Save All Routes').click();
+    await expect(importDialog(page).getByRole('alert')).toHaveText(
+      'The file is larger than 1 MiB. Split it into smaller files.',
+    );
+    await button(importDialog(page), 'Save All Routes').click();
+    await expect(
+      importDialog(page).getByText(
+        'Nothing left to save. An earlier try may already have saved these facts; see History.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    expect(sheet.bodies.filter((body) => body.mode === 'save')).toHaveLength(3);
+    // Problems found when the save plans again belong to the check step.
+    await importDialog(page)
+      .locator('.route-dialog-actions')
+      .getByRole('button', { name: 'Close' })
+      .click();
+    sheet.saveScript = [
+      {
+        status: 409,
+        body: {
+          error: 'Fix the errors in the dry run first',
+          report: {
+            ...cleanReport(),
+            mode: 'save',
+            ok: false,
+            errors: [
+              { row: 1240, route: 'BD-CN', key: null, message: 'Write dates as YYYY-MM-DD.' },
+            ],
+          },
+        },
+      },
+    ];
+    await toSave(page);
+    await reasonBox(page).fill(reasonText);
+    await button(importDialog(page), 'Save All Routes').click();
+    await expect(
+      importDialog(page).getByRole('heading', {
+        name: '1 problem in 1 row. Nothing is saved while any problem remains.',
+      }),
+    ).toBeFocused();
+    await expect(importDialog(page).getByText('Step 2 of 4: Check', { exact: true })).toBeVisible();
+    await expect(importDialog(page).getByText('Step 4 of 4: Save')).toHaveCount(0);
+    await expect(importDialog(page).locator('ol.route-data-problems > li')).toHaveText([
+      'Row 1240, BD-CN: Write dates as YYYY-MM-DD.',
+    ]);
   });
 
   test('a save that fails keeps the file; Try Again sends the same save id and saves', async ({
@@ -580,7 +778,18 @@ test.describe('Export Route Data', () => {
     const download = page.waitForEvent('download');
     await button(dialog, 'Download CSV').click();
     await expect(dialog.getByRole('button', { name: 'Preparing the file…' })).toBeDisabled();
-    expect((await download).suggestedFilename()).toBe(exportName);
+    await expect(button(routes(page), 'Export Route Data')).toHaveAttribute('aria-busy', 'true');
+    const file = await download;
+    expect(file.suggestedFilename()).toBe(exportName);
+    // PR 4 per G72: the bytes as the server sent them, the byte order mark and every character beyond ASCII included.
+    const bytes = readFileSync((await file.path())!);
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    expect(bytes.toString('utf8')).toBe(exportText);
+    expect(bytes.toString('utf8')).toContain('Société বাংলা');
+    await expect(button(routes(page), 'Export Route Data')).not.toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
     await expect(dialog).toBeHidden();
     await expect(headStatus(page)).toHaveText(`Downloaded ${exportName} with 3 routes.`);
     await expect(headStatus(page)).toBeFocused();
@@ -607,6 +816,31 @@ test.describe('Export Route Data', () => {
     await download;
     await expect(headStatus(page)).toHaveText(`Downloaded ${exportName} with 1 route.`);
     expect(sheet.exports).toEqual(['TW-AU', 'TW-AU']);
+  });
+
+  test('more than 20 routes ticked keeps Download CSV off, with the reason in words just before it', async ({
+    page,
+  }) => {
+    const { sheet } = await open(page, { sheet: { manyRoutes: 21 } });
+    await button(routes(page), 'Export Route Data').click();
+    const dialog = exportDialog(page);
+    await expect(dialog.getByRole('checkbox')).toHaveCount(21);
+    const download = button(dialog, 'Download CSV');
+    await expect(download).toBeDisabled();
+    const reason = dialog.getByText('Export at most 20 routes at a time.', { exact: true });
+    await expect(reason).toBeVisible();
+    expect(await download.getAttribute('aria-describedby')).toBe(await reason.getAttribute('id'));
+    // The reason stands before the buttons, so it is read before the button it explains.
+    expect(
+      await reason.evaluate((node) => {
+        const actions = node.parentElement!.querySelector('.route-dialog-actions')!;
+        return !!(node.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING);
+      }),
+    ).toBe(true);
+    await dialog.getByRole('checkbox').first().uncheck();
+    await expect(download).toBeEnabled();
+    await expect(reason).toHaveCount(0);
+    expect(sheet.exports).toEqual([]);
   });
 
   for (const role of ['owner', 'admin'])
@@ -671,7 +905,7 @@ test.describe('History', () => {
     );
     await expect(facts.locator('li').nth(1)).toContainText('Version 5, 25 Nov 2026, by a teammate');
     await expect(facts.locator('li').nth(2)).toContainText('No reason recorded.');
-    await button(history, 'Show all 6 versions').click();
+    await button(history, 'Show all 6 fact versions').click();
     await expect(facts.locator('li:visible')).toHaveCount(6);
     await expect(history.getByRole('heading', { name: 'Pack versions' })).toBeVisible();
     const pack = history.locator('ul').nth(1).locator('li').first();
@@ -681,7 +915,10 @@ test.describe('History', () => {
     await expect(pack).toContainText('Sample pack change for the route editor');
     // Closed and opened again, it reads nothing more.
     await history.locator('summary').click();
+    await expect(history).not.toHaveAttribute('open', '');
     await history.locator('summary').click();
+    await expect(history.getByText('Version 6, 26 Nov 2026, by you')).toBeVisible();
+    await page.waitForTimeout(200);
     expect(sheet.factReads).toHaveLength(1);
     await expect(history.getByRole('button')).toHaveCount(1);
   });
@@ -701,6 +938,57 @@ test.describe('History', () => {
     await expect(history).toContainText('Pack history is not available.');
   });
 
+  test('the admin reads pack rows: one that did not go through review, and one proposed by one team member and published by another', async ({
+    page,
+  }) => {
+    await open(page, { role: 'admin', route: 'BD-CN', facts: { unreviewedPack: true } });
+    let history = editor(page).locator('details.route-history');
+    await history.locator('summary').click();
+    const unreviewed = history.locator('ul').nth(1).locator('li').first();
+    await expect(unreviewed).toContainText(
+      'Pack version 2, effective 20 Nov 2026. This change did not go through review, so no proposer is recorded.',
+    );
+    await expect(unreviewed.locator('.route-history-reason')).toHaveText(
+      'Not recorded through review.',
+    );
+    await open(page, { role: 'admin', route: 'BD-EU' });
+    history = editor(page).locator('details.route-history');
+    await history.locator('summary').click();
+    const split = history.locator('ul').nth(1).locator('li').first();
+    await expect(split).toContainText(
+      'Pack version 1, proposed by one team member, published by another, effective 19 Nov 2026',
+    );
+    await expect(split.locator('.route-history-reason')).toHaveText('No reason recorded.');
+  });
+
+  test('History says it is loading; a failed fact read offers Try Again, and is read again when History is opened again', async ({
+    page,
+  }) => {
+    const { sheet } = await open(page, {
+      route: 'BD-CN',
+      sheet: { factHistory: 500, factDelay: 600 },
+    });
+    const history = editor(page).locator('details.route-history');
+    await history.locator('summary').click();
+    await expect(history.getByRole('status')).toHaveText('Loading history…');
+    await expect(history).toContainText('History is not available.');
+    sheet.factHistory = 200;
+    sheet.factDelay = 0;
+    await button(history, 'Try Again').click();
+    await expect(history.getByText('Version 6, 26 Nov 2026, by you')).toBeVisible();
+    expect(sheet.factReads).toHaveLength(2);
+    // A second page: the read fails, History is closed and opened again, and it is read again.
+    const again = await open(page, { route: 'BD-CN', sheet: { factHistory: 500 } });
+    const second = editor(page).locator('details.route-history');
+    await second.locator('summary').click();
+    await expect(second).toContainText('History is not available.');
+    again.sheet.factHistory = 200;
+    await second.locator('summary').click();
+    await second.locator('summary').click();
+    await expect(second.getByText('Version 6, 26 Nov 2026, by you')).toBeVisible();
+    expect(again.sheet.factReads).toHaveLength(2);
+  });
+
   test('a role refused the pack history sees no pack versions; with nothing recorded it says No history yet.', async ({
     page,
   }) => {
@@ -716,17 +1004,22 @@ test.describe('layout and accessibility', () => {
   for (const width of [320, 390, 768, 1024, 1440, 1920])
     test(`each step is axe clean with no sideways scroll at ${width}`, async ({ page }) => {
       const height = width === 320 ? 568 : 900;
-      await open(page, { width, height, route: 'BD-CN' });
+      const { sheet } = await open(page, { width, height, route: 'BD-CN' });
       await noSidewaysScroll(page);
       await axeClean(page);
       // The list folds below 56 rem of region; its head is then in the fold.
       const fold = page.locator('.settings-routes-fold > summary');
       if (await fold.isVisible()) await fold.click();
       await expect(button(routes(page), 'Import Route Data')).toBeVisible();
+      if (width < 1024) await targets(routes(page), ['Import Route Data', 'Export Route Data']);
       await openImport(page);
       await noSidewaysScroll(page);
       await axeClean(page);
-      if (width < 1024) await targets(importDialog(page), ['Download Blank Template', 'Cancel']);
+      if (width < 1024) {
+        await targets(importDialog(page), ['Download Blank Template', 'Cancel']);
+        const file = await importDialog(page).locator('label.route-data-file').boundingBox();
+        expect(file!.height, 'Choose File height').toBeGreaterThanOrEqual(44);
+      }
       await choose(page);
       await expect(
         importDialog(page).getByRole('heading', { name: 'Ready to save 2 routes.' }),
@@ -740,15 +1033,78 @@ test.describe('layout and accessibility', () => {
       await axeClean(page);
       if (width === 390 || width === 1440)
         await page.screenshot({ path: `test-results/route-pack-import-${width}.png` });
-      await button(importDialog(page), 'Cancel').click();
+      // Part way, then saved.
+      sheet.saveScript = [
+        {
+          status: 409,
+          body: {
+            error: 'Stopped',
+            report: {
+              ...savedReport(cleanReport()),
+              ok: false,
+              errors: [
+                { row: null, route: 'CN-BD', key: null, message: 'Saving this route stopped.' },
+              ],
+              saved: [{ route: 'BD-CN', routeId: 'a', contentVersion: 6, packVersion: 3 }],
+            },
+          },
+        },
+      ];
+      await reasonBox(page).fill(reasonText);
+      await button(importDialog(page), 'Save All Routes').click();
+      await expect(button(importDialog(page), 'Try the Rest Again')).toBeVisible();
+      await noSidewaysScroll(page);
+      await axeClean(page);
+      await button(importDialog(page), 'Try the Rest Again').click();
+      await expect(importDialog(page).getByText(/^Saved 2 routes/)).toBeVisible();
+      await noSidewaysScroll(page);
+      await axeClean(page);
+      await importDialog(page)
+        .locator('.route-dialog-actions')
+        .getByRole('button', { name: 'Close' })
+        .click();
+      // Problems.
+      sheet.checkScript = [
+        {
+          status: 200,
+          body: {
+            ...cleanReport(),
+            ok: false,
+            errors: Array.from({ length: 22 }, (_, i) => ({
+              row: i + 2,
+              route: 'BD-CN',
+              key: 'pack.languages',
+              message: 'use language tags such as en or bn.',
+            })),
+          },
+        },
+      ];
+      await openImport(page);
+      await choose(page);
+      await expect(importDialog(page).locator('ol.route-data-problems > li').first()).toBeVisible();
+      await noSidewaysScroll(page);
+      await axeClean(page);
+      if (width < 1024)
+        await targets(importDialog(page), ['Choose Another File', 'Download Problem List']);
+      await page.keyboard.press('Escape');
+      await expect(importDialog(page)).toBeHidden();
       await button(routes(page), 'Export Route Data').click();
       await noSidewaysScroll(page);
       await axeClean(page);
       if (width < 1024) await targets(exportDialog(page), ['Download CSV', 'Cancel']);
       await button(exportDialog(page), 'Cancel').click();
+      // The More export row.
+      await editor(page)
+        .getByRole('button', { name: /^More actions for / })
+        .click();
+      await expect(editor(page).getByRole('menuitem', { name: 'Export This Route' })).toBeVisible();
+      await noSidewaysScroll(page);
+      await axeClean(page);
+      await page.keyboard.press('Escape');
       const history = editor(page).locator('details.route-history');
       await history.locator('summary').click();
-      await expect(history.locator('li').first()).toBeVisible();
+      await expect(history.getByText('Version 6, 26 Nov 2026, by you')).toBeVisible();
+      await button(history, 'Show all 6 fact versions').click();
       await noSidewaysScroll(page);
       await axeClean(page);
       if (width < 1024) {

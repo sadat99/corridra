@@ -16,13 +16,14 @@ import './route-pack-data.css';
 type Facts =
   { state: 'idle' | 'loading' } | { state: 'failed' } | { state: 'ready'; versions: FactVersion[] };
 
-function Reason({ text }: { text: string | null }) {
+/** The second line of a row: the reason as written, or why there is none. */
+function Reason({ text, missing }: { text: string | null; missing: string }) {
   return text && text.trim() ? (
     <span className="route-history-reason" dir="auto">
       {text}
     </span>
   ) : (
-    <span className="route-history-reason route-edit-quiet">{historyWords.noReason}</span>
+    <span className="route-history-reason route-edit-quiet">{missing}</span>
   );
 }
 
@@ -49,21 +50,31 @@ export function RouteHistory({
     <details
       className="route-history"
       onToggle={(event) => {
-        if ((event.currentTarget as HTMLDetailsElement).open && facts.state === 'idle') load();
+        // Read on the first opening, and again on an opening after a failed read.
+        const opened = (event.currentTarget as HTMLDetailsElement).open;
+        if (opened && (facts.state === 'idle' || facts.state === 'failed')) load();
       }}
     >
       <summary>{historyWords.summary}</summary>
       <div className="route-data" aria-busy={facts.state === 'loading' || undefined}>
+        <p className="route-edit-quiet route-data-status" role="status">
+          {facts.state === 'loading' ? historyWords.loading : ''}
+        </p>
         {nothing ? (
           <p className="route-edit-quiet">{historyWords.empty}</p>
         ) : (
           <>
             <h3>{historyWords.factsHeading}</h3>
             {facts.state === 'failed' ? (
-              <p className="route-edit-quiet">{historyWords.factsFailed}</p>
+              <div className="route-history-failed">
+                <p className="route-edit-quiet">{historyWords.factsFailed}</p>
+                <button type="button" className="text-link" onClick={load}>
+                  {historyWords.tryAgain}
+                </button>
+              </div>
             ) : facts.state === 'ready' ? (
               facts.versions.length ? (
-                <ShowMoreList limit={5} noun="versions">
+                <ShowMoreList limit={5} noun={historyWords.factNoun}>
                   {facts.versions.map((version) => (
                     <li key={version.id}>
                       <span>
@@ -73,7 +84,7 @@ export function RouteHistory({
                           version.createdByYou ? historyWords.by.you : historyWords.by.teammate,
                         )}
                       </span>
-                      <Reason text={version.reason} />
+                      <Reason text={version.reason} missing={historyWords.noReason} />
                     </li>
                   ))}
                 </ShowMoreList>
@@ -87,11 +98,17 @@ export function RouteHistory({
                 {packs === null ? (
                   <p className="route-edit-quiet">{historyWords.packsFailed}</p>
                 ) : packs.length ? (
-                  <ShowMoreList limit={5} noun="versions">
+                  <ShowMoreList limit={5} noun={historyWords.packNoun}>
                     {packs.map((version) => (
                       <li key={version.version}>
                         <span>{packChangeLine(version, formatDate(version.effectiveFrom))}</span>
-                        <Reason text={version.reason} />
+                        <Reason
+                          text={version.reason}
+                          missing={
+                            // A pack that did not go through review has no publish decision, so no reason to show.
+                            version.reviewed ? historyWords.noReason : historyWords.notThroughReview
+                          }
+                        />
                       </li>
                     ))}
                   </ShowMoreList>

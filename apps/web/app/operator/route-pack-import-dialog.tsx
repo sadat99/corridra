@@ -10,17 +10,21 @@ import type { SheetReport, SheetRoutePlan } from '@corridra/missions/route-pack-
 import type { RouteSummary } from '../../lib/route-pack-editor-read';
 import { addressFor } from '../../lib/route-pack-editor-view';
 import {
+  changedUnnamed,
+  decodeSheet,
   doneRoutes,
   dryRunBody,
   fileRefusal,
   nextSaveCommand,
-  notSaved,
+  routeResults,
   onlyPendingCustom,
   packFieldLabels,
   problemItems,
   saveBody,
   savedFactCount,
+  savedSummary,
   skippedRows,
+  type RouteResult,
   type FileRefusal,
   type ProblemItem,
   type SaveCommand,
@@ -28,7 +32,6 @@ import {
 } from '../../lib/route-pack-editor-sheet';
 import { countryName } from './country-name';
 import { importWords } from './route-pack-data-words';
-import { goTo } from './route-pack-editor-data';
 import { packWords, reasonCount } from './route-pack-pack-words';
 import { checkSheet, downloadText, saveSheet } from './route-pack-sheet-send';
 import {
@@ -50,9 +53,11 @@ type Step = 1 | 2 | 3 | 4;
 type View =
   | { kind: 'form' }
   | { kind: 'problems'; items: ProblemItem[]; rows: number }
-  | { kind: 'saved'; routes: number; facts: number; first: string | null }
+  | { kind: 'saved'; words: string; first: string | null }
+  /** Part way, or a route changed after something was written: what each route got, and Try the Rest Again. */
   | { kind: 'partWay'; report: SheetReport }
-  | { kind: 'changed'; route: string | null };
+  /** A route changed and nothing was written (the server named none). */
+  | { kind: 'changed' };
 
 const routeName = (key: string) => {
   const [origin, destination] = key.split('-');
@@ -61,6 +66,20 @@ const routeName = (key: string) => {
 const labelOf = (key: string) => standardFieldByKey.get(key)?.label ?? key;
 const fieldNames = (list: { key: string; label: string }[]) =>
   list.map((item) => item.label || labelOf(item.key));
+/** One line for a route a save did not finish, in the words of spec 12.1 (PR 4 per G72). */
+function resultLine(item: Exclude<RouteResult, { kind: 'done' }>) {
+  const name = routeName(item.route);
+  if (item.kind === 'factsOnly')
+    return item.why === 'changed'
+      ? importWords.factsSavedPackChanged(name)
+      : item.why === 'refused' && item.reason
+        ? importWords.factsSavedReason(name, item.reason)
+        : importWords.factsSavedPackNotTried(name);
+  if (item.why === 'changed') return importWords.routeChanged(name);
+  return item.why === 'refused' && item.reason
+    ? importWords.routeReason(name, item.reason)
+    : importWords.notTried(name);
+}
 
 export function RouteDataImportDialog({
   open,
@@ -70,6 +89,8 @@ export function RouteDataImportDialog({
   onePersonPublication,
   routes,
   onSaved,
+  onOpenRoute,
+  onBusy,
   returnFocusTo,
 }: {
   open: boolean;
@@ -81,13 +102,17 @@ export function RouteDataImportDialog({
   routes: RouteSummary[];
   /** A save wrote something: the page reads the routes again and keeps the words for its status line. */
   onSaved: (words: string) => void;
+  /** Open {Route}: the dialog has closed and the page opens that route, focus on its name. */
+  onOpenRoute: (key: string) => void;
+  /** A check runs (true) or has settled (false): the list head shows the opener busy meanwhile. */
+  onBusy: (busy: boolean) => void;
   returnFocusTo?: () => HTMLElement | null;
 }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const owner = role === 'owner';
   const [step, setStep] = useState<Step>(1);
   const [view, setView] = useState<View>({ kind: 'form' });
-  const [refusal, setRefusal] = useState<FileRefusal | null>(null);
+  const [refusal, setRefusal] = useState<FileRefusal | 'encoding' | null>(null);
   const [file, setFile] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [checkFailed, setCheckFailed] = useState(false);
@@ -98,8 +123,9 @@ export function RouteDataImportDialog({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const command = useRef<SaveCommand | null>(null);
-  // Facts written by earlier answers of the same save (a part way save finished by Try the Rest Again).
+  // Facts written by earlier answers of the same save (a part way save finished by Try the Rest Again), and whether any wrote.
   const factsSoFar = useRef(0);
+  const wroteBefore = useRef(false);
   // Each check has a number; an answer for an older one (the file was changed or the dialog closed) is dropped.
   const asked = useRef(0);
   const input = useRef<HTMLInputElement>(null);
@@ -138,10 +164,15 @@ export function RouteDataImportDialog({
       setSaving(false);
     }
   }
-  const close = () => {
+  const forget = () => {
     asked.current++;
     command.current = null;
     factsSoFar.current = 0;
+    wroteBefore.current = false;
+    if (checking) onBusy(false);
+  };
+  const close = () => {
+    forget();
     onClose();
   };
 
@@ -149,9 +180,11 @@ export function RouteDataImportDialog({
     const mine = ++asked.current;
     setChecking(true);
     setCheckFailed(false);
+    onBusy(true);
     const outcome = await checkSheet(tenant, dryRunBody(csv));
     if (mine !== asked.current) return;
     setChecking(false);
+    onBusy(false);
     if (outcome.kind === 'failed') {
       setCheckFailed(true);
       focusAfter.current = () => banner.current;
@@ -191,22 +224,29 @@ export function RouteDataImportDialog({
       focusAfter.current = () => input.current;
       return;
     }
-    let csv: string;
+    let csv: string | null;
     try {
-      csv = await chosen.text();
+      // Decoded strictly: a file that is not UTF-8 is refused here, before any upload, instead of being changed silently.
+      csv = decodeSheet(await chosen.arrayBuffer());
     } catch {
       setCheckFailed(true);
       setStep(2);
+      focusAfter.current = () => banner.current;
+      return;
+    }
+    if (csv === null) {
+      setRefusal('encoding');
+      if (input.current) input.current.value = '';
+      focusAfter.current = () => input.current;
       return;
     }
     setFile(csv);
     setStep(2);
+    focusAfter.current = () => stepLine.current;
     void check(csv);
   };
   const chooseAnother = () => {
-    asked.current++;
-    command.current = null;
-    factsSoFar.current = 0;
+    forget();
     reset();
     focusAfter.current = () => input.current;
   };
@@ -228,34 +268,42 @@ export function RouteDataImportDialog({
   const settle = (outcome: SaveOutcome) => {
     switch (outcome.kind) {
       case 'saved': {
-        const facts = factsSoFar.current + savedFactCount(outcome.report);
-        const words = importWords.saved(outcome.report.routes.length, facts);
-        setView({
-          kind: 'saved',
-          routes: outcome.report.routes.length,
-          facts,
-          first: outcome.report.routes[0]?.route ?? null,
-        });
+        const summary = savedSummary(outcome.report, factsSoFar.current, wroteBefore.current);
+        const words =
+          summary.kind === 'nothingLeft'
+            ? importWords.nothingLeft
+            : importWords.saved(summary.routes, summary.facts);
+        setView({ kind: 'saved', words, first: outcome.report.routes[0]?.route ?? null });
         command.current = null;
         factsSoFar.current = 0;
+        wroteBefore.current = false;
         onSaved(words);
         focusAfter.current = () => doneLine.current;
         return;
       }
       case 'partWay':
-        factsSoFar.current += savedFactCount(outcome.report);
-        setView({ kind: 'partWay', report: outcome.report });
-        onSaved('');
+      case 'routeChanged': {
+        const report = outcome.report;
+        if (!report) {
+          // Refused before anything was written; the server named no route.
+          setView({ kind: 'changed' });
+          focusAfter.current = () => banner.current;
+          return;
+        }
+        factsSoFar.current += savedFactCount(report);
+        if (report.saved?.length) {
+          wroteBefore.current = true;
+          // The routes are read again; the dialog stays, with its file and save id.
+          onSaved('');
+        }
+        setView({ kind: 'partWay', report });
         focusAfter.current = () => banner.current;
         return;
-      case 'routeChanged':
-        if (outcome.report) factsSoFar.current += savedFactCount(outcome.report);
-        setView({ kind: 'changed', route: outcome.route });
-        if (outcome.report?.saved?.length) onSaved('');
-        focusAfter.current = () => banner.current;
-        return;
+      }
       case 'problems': {
         const found = problemItems(outcome.report.errors, labelOf);
+        // The save planned again and found problems: they belong to the check step.
+        setStep(2);
         showProblems(found.items, found.rows);
         return;
       }
@@ -263,7 +311,10 @@ export function RouteDataImportDialog({
         setSaveError(packWords.stepUpKept);
         break;
       case 'denied':
-        setSaveError(importWords.adminLock);
+        setSaveError(importWords.saveDenied);
+        break;
+      case 'refused':
+        setSaveError(outcome.message ?? importWords.notSaved);
         break;
       case 'signedOut':
         setSaveError(packWords.signedOut);
@@ -343,13 +394,13 @@ export function RouteDataImportDialog({
           </li>
         ))}
       </ol>
-      {view.items.length > 20 ? (
+      {view.items.length > 20 && !allProblems ? (
         <button
           type="button"
           className="text-link"
           aria-expanded={allProblems}
           aria-controls={`${id}-problems`}
-          onClick={() => setAllProblems((now) => !now)}
+          onClick={() => setAllProblems(true)}
         >
           {importWords.showAllProblems(view.items.length)}
         </button>
@@ -375,7 +426,7 @@ export function RouteDataImportDialog({
       return (
         <>
           <p className="route-data-done" tabIndex={-1} ref={doneLine} role="status">
-            {importWords.saved(view.routes, view.facts)}
+            {view.words}
           </p>
           {view.first ? (
             <p>
@@ -386,9 +437,10 @@ export function RouteDataImportDialog({
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0)
                     return;
                   event.preventDefault();
-                  const key = view.first!;
-                  close();
-                  goTo({ route: key });
+                  const key = view.first;
+                  if (!key) return;
+                  forget();
+                  onOpenRoute(key);
                 }}
               >
                 {importWords.openRoute(routeName(view.first))}
@@ -403,15 +455,15 @@ export function RouteDataImportDialog({
         </>
       );
     if (view.kind === 'partWay') {
-      const missing = notSaved(view.report);
+      const missing = routeResults(view.report).filter(
+        (item): item is Exclude<RouteResult, { kind: 'done' }> => item.kind !== 'done',
+      );
       return (
         <>
           <ul className="route-data-problems">
             {missing.map((item) => (
               <li key={item.route} dir="auto">
-                {item.reason
-                  ? importWords.routeReason(routeName(item.route), item.reason)
-                  : importWords.notTried(routeName(item.route))}
+                {resultLine(item)}
               </li>
             ))}
           </ul>
@@ -424,6 +476,9 @@ export function RouteDataImportDialog({
               onClick={() => void save()}
             >
               {saving ? importWords.saving(plans.length) : importWords.tryRest}
+            </button>
+            <button type="button" className="text-link" disabled={locked} onClick={chooseAnother}>
+              {importWords.chooseAnother}
             </button>
             <button type="button" className="text-link" disabled={locked} onClick={close}>
               {importWords.close}
@@ -475,7 +530,11 @@ export function RouteDataImportDialog({
           </div>
           {refusal ? (
             <FieldError id={`${id}-refusal`}>
-              {refusal === 'type' ? importWords.notCsv : importWords.tooBig}
+              {refusal === 'type'
+                ? importWords.notCsv
+                : refusal === 'size'
+                  ? importWords.tooBig
+                  : importWords.notUtf8}
             </FieldError>
           ) : null}
         </>
@@ -634,15 +693,17 @@ export function RouteDataImportDialog({
   const bannerWords = checkFailed
     ? importWords.checkFailed
     : view.kind === 'partWay'
-      ? importWords.partWay(
-          doneRoutes(view.report).length,
-          view.report.routes.length,
-          notSaved(view.report).map((item) => routeName(item.route)),
-        )
+      ? changedUnnamed(view.report)
+        ? importWords.changedSome
+        : importWords.partWay(
+            doneRoutes(view.report).length,
+            view.report.routes.length,
+            routeResults(view.report)
+              .filter((item) => item.kind === 'nothing')
+              .map((item) => routeName(item.route)),
+          )
       : view.kind === 'changed'
-        ? view.route
-          ? importWords.routeChanged(routeName(view.route))
-          : importWords.changedNoRoute
+        ? importWords.changedNoRoute
         : saveError;
   const showStep = view.kind === 'form' || view.kind === 'problems';
   return (

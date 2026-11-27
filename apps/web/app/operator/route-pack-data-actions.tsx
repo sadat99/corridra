@@ -16,6 +16,7 @@ export function RouteDataActions({
   routes,
   onePersonPublication,
   onImported,
+  onOpenRoute,
 }: {
   tenant: string;
   role: string;
@@ -23,9 +24,13 @@ export function RouteDataActions({
   onePersonPublication: boolean;
   /** A save wrote something: the page reads the routes and the catalogue again. */
   onImported: () => void;
+  /** Opens a route by its key and moves focus to its name (the Open link after a save). */
+  onOpenRoute: (key: string) => void;
 }) {
   const [dialog, setDialog] = useState<'import' | 'export' | null>(null);
   const [status, setStatus] = useState('');
+  // Only while a check or an export runs: the opener is busy (not merely because its dialog is open).
+  const [busy, setBusy] = useState<'import' | 'export' | null>(null);
   const pending = useRef('');
   const statusLine = useRef<HTMLParagraphElement>(null);
   const importButton = useRef<HTMLButtonElement>(null);
@@ -34,11 +39,20 @@ export function RouteDataActions({
   const focusStatusSoon = () => window.setTimeout(() => statusLine.current?.focus(), 50);
   const closeImport = () => {
     setDialog(null);
+    setBusy(null);
     if (pending.current) {
       setStatus(pending.current);
       pending.current = '';
       focusStatusSoon();
     }
+  };
+  const openRoute = (key: string) => {
+    setDialog(null);
+    setBusy(null);
+    setStatus(pending.current);
+    pending.current = '';
+    // After the dialog has closed and given focus back, so the route's name keeps it.
+    window.setTimeout(() => onOpenRoute(key), 50);
   };
   return (
     <>
@@ -48,7 +62,7 @@ export function RouteDataActions({
             type="button"
             ref={importButton}
             className="text-link"
-            aria-busy={dialog === 'import' || undefined}
+            aria-busy={busy === 'import' || undefined}
             onClick={() => {
               setStatus('');
               setDialog('import');
@@ -62,7 +76,7 @@ export function RouteDataActions({
             type="button"
             ref={exportButton}
             className="text-link"
-            aria-busy={dialog === 'export' || undefined}
+            aria-busy={busy === 'export' || undefined}
             onClick={() => {
               setStatus('');
               setDialog('export');
@@ -92,6 +106,8 @@ export function RouteDataActions({
             if (words) pending.current = words;
             onImported();
           }}
+          onOpenRoute={openRoute}
+          onBusy={(now) => setBusy(now ? 'import' : null)}
           returnFocusTo={() => importButton.current}
         />
       ) : null}
@@ -102,8 +118,10 @@ export function RouteDataActions({
           tenant={tenant}
           routes={routes}
           initial="all"
+          onBusy={(now) => setBusy(now ? 'export' : null)}
           onDone={(name, count) => {
             setDialog(null);
+            setBusy(null);
             setStatus(exportWords.downloaded(name, count));
             focusStatusSoon();
           }}

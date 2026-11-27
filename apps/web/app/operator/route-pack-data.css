@@ -105,6 +105,20 @@
   block-size: 0;
   margin: 0;
 }
+.route-history-failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+.route-history-failed .text-link {
+  min-block-size: 44px;
+}
+.route-data-done:focus-visible,
+.route-data h3:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
 .route-data-status:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;

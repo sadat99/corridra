@@ -396,6 +396,48 @@ describe('route-pack-fact-history and route-pack-pack-history', () => {
     });
   });
 
+  test('the reason sent is the publish decision reason only: a distinct proposal reason and pack reason never leave', async () => {
+    const routeId = await newRoute();
+    await pause();
+    const proposalId = randomUUID();
+    const reasons = {
+      pack: 'Synthetic pack row reason',
+      proposal: 'Synthetic proposal reason',
+      decision: 'Synthetic decision reason',
+    };
+    await operations.command(owner(), {
+      id: proposalId,
+      action: 'propose',
+      basePackId: null,
+      reason: reasons.proposal,
+      pack: {
+        id: randomUUID(),
+        routeId,
+        version: 1,
+        status: 'DRAFT',
+        effectiveFrom: new Date().toISOString(),
+        reason: reasons.pack,
+        configuration: draftConfiguration(),
+      },
+    });
+    await operations.command(owner(), {
+      id: randomUUID(),
+      action: 'decide',
+      proposalId,
+      decision: 'PUBLISH',
+      reason: reasons.decision,
+    });
+    const answer = await read('route-pack-pack-history', `routeId=${routeId}`);
+    expect(answer.status).toBe(200);
+    const body = (await answer.json()) as { versions: PackVersion[] };
+    expect(body.versions).toHaveLength(1);
+    expect(Object.keys(body.versions[0]!).sort()).toEqual(packVersionKeys);
+    expect(body.versions[0]!.reason).toBe(reasons.decision);
+    const text = JSON.stringify(body);
+    expect(text).not.toContain(reasons.proposal);
+    expect(text).not.toContain(reasons.pack);
+  });
+
   test('a pack that did not go through review has no decision, so its reason is null, never the pack reason', async () => {
     const answer = await read('route-pack-pack-history', `routeId=${withPack}`);
     expect(answer.status).toBe(200);

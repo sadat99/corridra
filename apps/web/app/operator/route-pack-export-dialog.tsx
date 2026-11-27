@@ -21,6 +21,7 @@ export function RouteDataExportDialog({
   routes,
   initial,
   onDone,
+  onBusy,
   returnFocusTo,
 }: {
   open: boolean;
@@ -31,6 +32,8 @@ export function RouteDataExportDialog({
   initial: 'all' | string;
   /** The download went through: the page says so on its status line. */
   onDone: (name: string, count: number) => void;
+  /** The download runs (true) or has settled (false), for the opener's aria-busy. */
+  onBusy?: (busy: boolean) => void;
   returnFocusTo?: () => HTMLElement | null;
 }) {
   const id = useId().replace(/[^a-zA-Z0-9_-]/g, '');
@@ -65,11 +68,13 @@ export function RouteDataExportDialog({
   const download = async () => {
     if (busy || offReason) return;
     setBusy(true);
+    onBusy?.(true);
     setFailed(false);
     // In the list's order, so the file reads as the page does.
     const keys = routes.map((route) => route.key).filter((key) => ticked.includes(key));
     const result = await downloadExport(tenant, keys);
     setBusy(false);
+    onBusy?.(false);
     if (result.ok) {
       onDone(result.name, keys.length);
       return;
@@ -122,6 +127,12 @@ export function RouteDataExportDialog({
             </label>
           ))}
         </fieldset>
+        {/* The reason Download CSV is off stands just before it, so it is read first. */}
+        {offReason ? (
+          <p className="route-edit-quiet" id={`${id}-off`}>
+            {offReason}
+          </p>
+        ) : null}
         <div className="route-dialog-actions">
           <button
             type="button"
@@ -137,11 +148,6 @@ export function RouteDataExportDialog({
           <button type="button" className="text-link" disabled={busy} onClick={onClose}>
             {exportWords.cancel}
           </button>
-          {offReason ? (
-            <span className="route-edit-quiet" id={`${id}-off`}>
-              {offReason}
-            </span>
-          ) : null}
         </div>
       </div>
     </Dialog>

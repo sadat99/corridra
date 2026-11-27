@@ -472,8 +472,13 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
             // A saved file may add routes: the catalogue is read again (and the route facts with it); if that read fails the
             // facts are still asked again.
             onImported: () => {
+              // Both reads are quiet (refresh first): a failed answer keeps the list, so the open import dialog, its file and
+              // its save id stay on the page (spec 12.1).
               void request('mission-catalogue')
-                .then(setCatalogue)
+                .then((value) => {
+                  overview.refresh();
+                  setCatalogue(value);
+                })
                 .catch(() => overview.refresh());
             },
           },

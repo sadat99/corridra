@@ -30,6 +30,8 @@ describe('Import Route Data words', () => {
         'use language tags such as en or bn.',
       ),
     ).toBe('Row 14, BD-CN, Working languages: use language tags such as en or bn.');
+    // PR 4 per G72: row numbers without grouping.
+    expect(importWords.problemItem(1240, 'BD-CN', null, 'x.')).toBe('Row 1240, BD-CN: x.');
     expect(importWords.problemItem(null, null, null, 'The file is empty.')).toBe(
       'The file is empty.',
     );
@@ -51,6 +53,20 @@ describe('Import Route Data words', () => {
     expect(importWords.partWay(1, 3, ['China to Bangladesh', 'EU to Bangladesh'])).toBe(
       'Saved 1 of 3 routes. Not saved: China to Bangladesh, EU to Bangladesh.',
     );
+    expect(importWords.partWay(2, 3, [])).toBe('Saved 2 of 3 routes.');
+    expect(importWords.factsSavedPackChanged('Bangladesh to China')).toBe(
+      'Bangladesh to China: facts saved. The pack setting was not saved because it changed while you were checking.',
+    );
+    expect(importWords.factsSavedPackNotTried('China to Bangladesh')).toBe(
+      'China to Bangladesh: facts saved; pack setting not tried.',
+    );
+    expect(importWords.factsSavedReason('China to Bangladesh', 'It stopped.')).toBe(
+      'China to Bangladesh: facts saved. It stopped.',
+    );
+    expect(importWords.nothingLeft).toBe(
+      'Nothing left to save. An earlier try may already have saved these facts; see History.',
+    );
+    expect(importWords.changedSome).not.toContain('Nothing was saved');
     expect(importWords.notTried('EU to China')).toBe(
       'EU to China: Not tried, because the save stopped before it.',
     );
@@ -88,5 +104,12 @@ describe('Export and History words', () => {
       'Changed: Currencies used',
     ]);
     expect(historyWords.noReason).toBe('No reason recorded.');
+    expect(historyWords.notThroughReview).toBe('Not recorded through review.');
+    expect(historyWords.loading).toBe('Loading history…');
+    expect([historyWords.factNoun, historyWords.packNoun]).toEqual([
+      'fact versions',
+      'pack versions',
+    ]);
+    expect(importWords.notUtf8).toBe('That file is not in UTF-8. Use a CSV file saved in UTF-8.');
   });
 });

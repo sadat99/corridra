@@ -546,6 +546,10 @@ test.describe('Discard Changes from More', () => {
     await expect(moreButton(page)).toBeVisible();
     await moreButton(page).click();
     await expect(item(page, 'Export This Route')).toBeVisible();
+    // The row is there (the page drew it) and the stylesheet hides it from 40rem.
+    await expect(
+      menu(page).getByRole('menuitem', { name: 'Discard Changes', includeHidden: true }),
+    ).toHaveCount(1);
     await expect(item(page, 'Discard Changes')).toBeHidden();
     await page.keyboard.press('Escape');
     await expect(bar(page).getByRole('button', { name: 'Discard Changes' })).toBeVisible();

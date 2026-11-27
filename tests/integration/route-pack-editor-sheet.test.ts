@@ -16,7 +16,10 @@ import {
   exportRoutes,
   fileRefusal,
   nextSaveCommand,
-  notSaved,
+  routeResults,
+  changedUnnamed,
+  decodeSheet,
+  savedSummary,
   onlyPendingCustom,
   packFieldLabels,
   pendingCustomWords,
@@ -239,12 +242,86 @@ describe('reading a report', () => {
       errors: [{ row: null, route: 'FI-EE', key: null, message: 'Saving this route stopped.' }],
     });
     expect(doneRoutes(partWay)).toEqual(['NO-SE']);
-    expect(notSaved(partWay)).toEqual([
-      { route: 'FI-EE', reason: 'Saving this route stopped.' },
-      { route: 'DK-IS', reason: null },
+    expect(routeResults(partWay)).toEqual([
+      { route: 'NO-SE', kind: 'done' },
+      { route: 'FI-EE', kind: 'nothing', why: 'refused', reason: 'Saving this route stopped.' },
+      { route: 'DK-IS', kind: 'nothing', why: 'notTried', reason: null },
     ]);
     expect(savedFactCount(partWay)).toBe(3);
     expect(savedFactCount(report({ routes: [routePlan('NO-SE')], saved: [] }))).toBe(0);
+  });
+
+  test('PR 4 per G72: facts written before a pack step are told apart from routes with nothing written', () => {
+    const pack = {
+      changed: true,
+      changedFields: ['languages'],
+      status: 'ACTIVE' as const,
+      nextVersion: 3,
+    };
+    const changed = report({
+      ok: false,
+      routes: [routePlan('NO-SE'), routePlan('FI-EE', { pack }), routePlan('DK-IS', { pack })],
+      saved: [
+        { route: 'NO-SE', routeId: 'a', contentVersion: 2, packVersion: null },
+        { route: 'FI-EE', routeId: 'b', contentVersion: 2, packVersion: null },
+        { route: 'DK-IS', routeId: 'c', contentVersion: 2, packVersion: null },
+      ],
+      errors: [
+        {
+          row: null,
+          route: 'FI-EE',
+          key: null,
+          message: 'changed',
+          code: 'ROUTE_PACK_PACK_CHANGED',
+        },
+      ],
+    });
+    expect(routeResults(changed)).toEqual([
+      { route: 'NO-SE', kind: 'done' },
+      { route: 'FI-EE', kind: 'factsOnly', why: 'changed', reason: 'changed' },
+      { route: 'DK-IS', kind: 'factsOnly', why: 'notTried', reason: null },
+    ]);
+    expect(changedUnnamed(changed)).toBe(false);
+    expect(
+      changedUnnamed(
+        report({
+          errors: [
+            { row: null, route: null, key: null, message: 'x', code: 'ROUTE_PACK_CONTENT_CHANGED' },
+          ],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  test('PR 4 per G72: a save that wrote nothing is "nothing left", unless an earlier answer of it wrote', () => {
+    const plans = [routePlan('NO-SE'), routePlan('FI-EE')];
+    expect(savedSummary(report({ routes: plans, saved: [] }), 0, false)).toEqual({
+      kind: 'nothingLeft',
+    });
+    expect(savedSummary(report({ routes: plans, saved: [] }), 3, true)).toEqual({
+      kind: 'saved',
+      routes: 2,
+      facts: 3,
+    });
+    expect(
+      savedSummary(
+        report({
+          routes: plans,
+          saved: [{ route: 'FI-EE', routeId: 'b', contentVersion: 2, packVersion: null }],
+        }),
+        3,
+        true,
+      ),
+    ).toEqual({ kind: 'saved', routes: 2, facts: 6 });
+  });
+
+  test('a file is read as strict UTF-8: Windows-1252 bytes are refused, UTF-8 with a byte order mark is read', () => {
+    // "Société" in Windows-1252: é is the single byte E9, which is not UTF-8.
+    expect(
+      decodeSheet(new Uint8Array([0x53, 0x6f, 0x63, 0x69, 0xe9, 0x74, 0xe9]).buffer),
+    ).toBeNull();
+    const utf8 = new TextEncoder().encode('\uFEFFroute,value\r\nBD-CN,Société বাংলা\r\n');
+    expect(decodeSheet(utf8.buffer as ArrayBuffer)).toBe('route,value\r\nBD-CN,Société বাংলা\r\n');
   });
 
   test('problems: the whole file first, then by row in a stable order, rows counted once', () => {

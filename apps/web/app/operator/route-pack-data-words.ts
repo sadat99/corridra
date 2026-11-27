@@ -23,6 +23,7 @@ export const importWords = {
   blankTemplate: 'Download Blank Template',
   notCsv: 'That file is not a CSV.',
   tooBig: 'That file is over 1 MB.',
+  notUtf8: 'That file is not in UTF-8. Use a CSV file saved in UTF-8.',
   // Step 2
   checkingOnly: 'Checking only. Nothing is saved.',
   checking: 'Checking the file…',
@@ -41,6 +42,12 @@ export const importWords = {
   // Outcomes
   tryRest: 'Try the Rest Again',
   notSaved: 'Not saved. Your file is still here. Try again.',
+  // PR 4 per G72: a route changed, none named, and something was already written.
+  changedSome:
+    'A route changed while you were checking. Choose the file again to check it against the current state.',
+  nothingLeft:
+    'Nothing left to save. An earlier try may already have saved these facts; see History.',
+  saveDenied: 'This save was refused. Only the owner can save a route file.',
   changedNoRoute:
     'A route changed while you were checking. Nothing was saved. Choose the file again to check it against the current state.',
   // Shared with the pack dialogs, one copy
@@ -62,7 +69,7 @@ export const importWords = {
     label: string | null,
     message: string,
   ) => {
-    const parts = [row === null ? null : `Row ${num(row)}`, route, label].filter(
+    const parts = [row === null ? null : `Row ${row}`, route, label].filter(
       (part): part is string => part !== null && part !== '',
     );
     return parts.length === 0 ? message : `${parts.join(', ')}: ${message}`;
@@ -81,7 +88,14 @@ export const importWords = {
       : `Saved ${routes(routeCount)}, ${facts(factCount)}.`,
   openRoute: (name: string) => `Open ${name}`,
   partWay: (saved: number, total: number, notSaved: string[]) =>
-    `Saved ${num(saved)} of ${routes(total)}. Not saved: ${notSaved.join(', ')}.`,
+    notSaved.length
+      ? `Saved ${num(saved)} of ${routes(total)}. Not saved: ${notSaved.join(', ')}.`
+      : `Saved ${num(saved)} of ${routes(total)}.`,
+  // PR 4 per G72: what a route got when its facts were written and its pack step was not.
+  factsSavedPackChanged: (route: string) =>
+    `${route}: facts saved. The pack setting was not saved because it changed while you were checking.`,
+  factsSavedReason: (route: string, reason: string) => `${route}: facts saved. ${reason}`,
+  factsSavedPackNotTried: (route: string) => `${route}: facts saved; pack setting not tried.`,
   routeReason: (route: string, reason: string) => `${route}: ${reason}`,
   /** The lines of "Show the changes", in the words of the Save Route Facts summary. */
   changeLines: (added: string[], changed: string[], removed: string[]) => [
@@ -117,6 +131,12 @@ export const historyWords = {
   factsFailed: 'History is not available.',
   packsFailed: 'Pack history is not available.',
   noReason: 'No reason recorded.',
+  /** A pack version with no publish decision: it did not go through review. */
+  notThroughReview: 'Not recorded through review.',
+  loading: 'Loading history…',
+  tryAgain: 'Try Again',
+  factNoun: 'fact versions',
+  packNoun: 'pack versions',
   by: {
     you: 'you',
     teammate: 'a teammate',

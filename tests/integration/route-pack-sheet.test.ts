@@ -34,7 +34,7 @@ import {
   dryRunBody,
   exportFileName,
   nextSaveCommand,
-  notSaved,
+  routeResults,
   saveBody,
   savedFactCount,
   sheetOutcome,
@@ -1423,8 +1423,9 @@ test('PR 4: a save that stopped part way reads as part way with the route not sa
   expect(stopped.status).toBe(409);
   expect(stopped.outcome.kind).toBe('partWay');
   if (stopped.outcome.kind !== 'partWay') return;
-  expect(notSaved(stopped.outcome.report)).toEqual([
-    { route: 'DK-IS', reason: 'Synthetic interruption' },
+  // PR 4 per G72: the facts were written before the pack step stopped, so the route reads "facts saved", not "not saved".
+  expect(routeResults(stopped.outcome.report)).toEqual([
+    { route: 'DK-IS', kind: 'factsOnly', why: 'refused', reason: 'Synthetic interruption' },
   ]);
   expect(savedFactCount(stopped.outcome.report)).toBe(1);
   expect(await contentVersions('DK-IS')).toBe(1);

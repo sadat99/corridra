@@ -153,19 +153,68 @@ const savedOf = (report: SheetReport, route: string) =>
 /** The routes of a report that are done. */
 export const doneRoutes = (report: SheetReport) =>
   report.routes.filter((plan) => routeDone(plan, savedOf(report, plan.route))).map((p) => p.route);
-export type NotSaved = { route: string; reason: string | null };
 /**
- * The routes not saved, in file order: the route the save stopped at with the server's words, and every other one with null (it
- * was not tried, because the save stopped before it).
+ * What one route got from a save answer that did not finish (PR 4 per G72). The save writes every route's facts before any pack
+ * step, so a route may have its facts and not its pack. `why` says what stopped the rest: its route changed after the check, the
+ * server refused its step (`reason` holds the server's words), or the save stopped before it (not tried).
  */
-export function notSaved(report: SheetReport): NotSaved[] {
+export type RouteResult =
+  | { route: string; kind: 'done' }
+  | {
+      route: string;
+      kind: 'factsOnly' | 'nothing';
+      why: 'changed' | 'refused' | 'notTried';
+      reason: string | null;
+    };
+export function routeResults(report: SheetReport): RouteResult[] {
   const stopped = report.errors[0];
-  return report.routes
-    .filter((plan) => !routeDone(plan, savedOf(report, plan.route)))
-    .map((plan) => ({
+  return report.routes.map((plan): RouteResult => {
+    const saved = savedOf(report, plan.route);
+    if (routeDone(plan, saved)) return { route: plan.route, kind: 'done' };
+    const facts = plan.content.changed && (saved?.contentVersion ?? null) !== null;
+    const here = !!stopped && stopped.route === plan.route;
+    const changed =
+      here && !!stopped.code && (changedCodes as readonly string[]).includes(stopped.code);
+    return {
       route: plan.route,
-      reason: stopped && stopped.route === plan.route ? stopped.message : null,
-    }));
+      kind: facts ? 'factsOnly' : 'nothing',
+      why: changed ? 'changed' : here ? 'refused' : 'notTried',
+      reason: here ? stopped.message : null,
+    };
+  });
+}
+/** True when the answer names a changed route without saying which (then the page names none). */
+export const changedUnnamed = (report: SheetReport) => {
+  const first = report.errors[0];
+  return (
+    !!first?.code &&
+    (changedCodes as readonly string[]).includes(first.code) &&
+    first.route === null
+  );
+};
+/**
+ * The success line of a finished save: how many routes and facts, counting facts written by earlier answers of the same save
+ * id; or `nothingLeft` when no answer of this save wrote anything (a second send of a save that had already finished).
+ */
+export function savedSummary(
+  report: SheetReport,
+  factsSoFar: number,
+  wroteBefore: boolean,
+): { kind: 'saved'; routes: number; facts: number } | { kind: 'nothingLeft' } {
+  if (!wroteBefore && (report.saved?.length ?? 0) === 0) return { kind: 'nothingLeft' };
+  return {
+    kind: 'saved',
+    routes: report.routes.length,
+    facts: factsSoFar + savedFactCount(report),
+  };
+}
+/** The text of a chosen file, or null when its bytes are not UTF-8 (then it is refused before any upload). */
+export function decodeSheet(bytes: ArrayBuffer): string | null {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return null;
+  }
 }
 /** The facts a save wrote: added, changed and removed, over the routes whose facts were written by this answer. */
 export function savedFactCount(report: SheetReport): number {
