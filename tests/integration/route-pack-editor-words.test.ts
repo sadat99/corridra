@@ -306,6 +306,9 @@ describe('PR 2c: the words of More, Mark Section Not Applicable and Add Custom F
     expect(words.markRemovedLine(1)).toBe('Mark removed. 1 change not saved.');
     expect(words.fieldAddedLine(3)).toBe('Field added. 3 changes not saved.');
   });
+  test('the line when the last mark is removed and nothing else is staged has no count', () => {
+    expect(words.markRemovedNone).toBe('Mark removed.');
+  });
   test('the menu names carry the route and the section', () => {
     expect(words.moreWords.buttonLabel('Dhaka to Rotterdam')).toBe(
       'More actions for Dhaka to Rotterdam',

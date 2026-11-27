@@ -270,24 +270,6 @@ export function sectionParts(line: SectionLine) {
     line.optionalPending > 0 ? `${line.optionalPending} optional pending` : null,
   ].filter((part): part is string => part !== null);
 }
-/** A section marked Not applicable that still holds a pack setting Core and Pending. Null when it does not. */
-export function markedButOpen(
-  completeness: Completeness,
-  document: ContentDocument | null,
-  section: number,
-  labels: (key: string) => string,
-) {
-  const state = completeness.sections.find((item) => item.section === section);
-  const marked = document?.sectionMarks.some((mark) => mark.section === section) ?? false;
-  if (!state || !marked || !state.pendingLockedCore.length) return null;
-  const [first, ...others] = state.pendingLockedCore;
-  return `This section is marked Not applicable, but ${labels(first!)}${
-    others.length
-      ? ` and ${others.length} more pack ${plural(others.length, 'setting', 'settings')}`
-      : ''
-  } ${plural(state.pendingLockedCore.length, 'is', 'are')} Core and still Pending.`;
-}
-
 // ---- PR 2b: the rows with the unsaved edits on top ----------------------------------------------------------------------------
 
 /** Today as the server reckons it, a UTC day written YYYY-MM-DD. */

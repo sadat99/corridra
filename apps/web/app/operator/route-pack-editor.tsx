@@ -43,6 +43,7 @@ import {
   finishOpenField,
   lockedCorePendingLine,
   markRemovedLine,
+  markRemovedNone,
   noChangeToKeep,
   openFieldNotIncluded,
   restoredLine,
@@ -747,7 +748,7 @@ function RouteBody({
     const after = stageMark(stage, saved, section, null);
     setStage((current) => stageMark(current, saved, section, null));
     const left = stageCount(after);
-    sayStaged(left > 0 ? markRemovedLine(left) : 'Mark removed.');
+    sayStaged(left > 0 ? markRemovedLine(left) : markRemovedNone);
     statusLine.current?.focus();
   };
   // A key this route already has (saved, staged or a row) is refused in the dialog; it is checked again here so a fact is never

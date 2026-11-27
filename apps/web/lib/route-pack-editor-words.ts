@@ -60,6 +60,8 @@ export const markDialogWords = {
   sectionLine: (number: number, name: string) => `Section ${number}, ${name}.`,
 } as const;
 export const markRemovedLine = (n: number) => `Mark removed. ${changesNotSaved(n)}.`;
+/** The line when the last mark is removed and nothing else is staged: no count. */
+export const markRemovedNone = 'Mark removed.';
 export const fieldAddedLine = (n: number) => `Field added. ${changesNotSaved(n)}.`;
 export const customDialogWords = {
   title: 'Add Custom Field',

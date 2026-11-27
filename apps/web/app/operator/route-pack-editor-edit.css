@@ -271,17 +271,6 @@ html:has(.route-bar) {
   display: none;
 }
 
-/* The quiet actions of the route header (More, and Change Pack Status in PR 3): one row that wraps, each 44 px. Empty, it takes
-   no room. */
-.route-editor-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-}
-.route-editor-actions:empty {
-  display: none;
-}
 /* PR 2c: the More menu in the route header, beside Change Pack Status. The button shows the icon and the word and is 44 px high;
    the panel never runs past the viewport; row labels wrap. */
 .route-more {
