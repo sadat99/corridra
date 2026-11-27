@@ -5691,3 +5691,29 @@ CI notes, PR 675 run 45862938526 attempt 1, both passed on one re-run, recorded 
 Not claimed: any install of 2a or 2b, 2c, a signed-in journey pass, native language review (gate stays OPEN). Install of 2a and 2b needs the owner's separate approval, a production Postgres major check (hash pins proven on PG16 only), and an installer change or acceptance of both 0001 and 0002 together, because route_pack_install applies every pending file.
 
 Verification (scribe): `node scripts/authority.mjs stamp` first (auth-b8414d0519e3, matched the brief). `node scripts/v3-context.mjs verify`, prettier and docs tests on touched files; exit codes in the PR body. Full suites not run. Next action: G69 merges on green; the warn-only PR, then 2c; the install only on the owner's word. PR: records PR for branch claude/records-g69-675.
+
+## 27 Nov 2026 - ADR-093 go-live check warns only (conductor, squad run)
+
+Request: owner, first hand in session session_0187kU9tSHgFpneDdBwfinN9, 27 Nov 2026: "confirm warn only". The owner first said "Warn only" first hand to Guardian G68 on 26 Nov. Guardian G69 (session_0187kU9ry9kwDk5ZWeCjyzAB) reviews and merges. Branch claude/bold-edison-gn2iwu from main 8db293d7.
+
+Change (ffec35dc, 8a40cebb):
+- `goLiveCheck` now returns `{ ok: true, warnings }` for two cases: a move to LIMITED or ACTIVE with a Core field Pending (`ROUTE_PACK_GO_LIVE_PENDING_CORE`), and content turning a Core field Pending on a live route (`ROUTE_PACK_CORE_TURNS_PENDING`).
+- It refuses only `ROUTE_PACK_LOCKED_CORE_EMPTIED` (409): a pack version that empties a Filled Locked Core row while the route is LIMITED or ACTIVE before and after the write. Nothing is written on that refusal.
+- Locked Core rows still cannot be Not applicable.
+- `judge` merges warnings, each key once per code. Warnings are returned by appendPack, decide PUBLISH (stored with the command, so replays agree), publishReviewed, createRoutePack, changeRouteStatus and content append and appendBatch.
+- While the module is inactive the payloads are exactly main's: the warnings field is absent.
+- The Add route pack form shows the warning words after the success words.
+- ADR-093 section C and Tests, and the Phase 3 editor spec error codes, are updated (docs commit). The Phases line is left to G69's records PR.
+
+Checks (builder; local PostgreSQL 16, KI-15), all exit 0:
+- integration: route-pack-content, route-pack-install, operations, sourcing-workflow-install, sourcing-route-profile, commercial-readiness-contracts, commercial-missions and global-foundation, 135 tests;
+- typecheck, lint, format:check, test:docs and preservation;
+- design tests 41;
+- build;
+- operator connect-ai-form and p5c-desk, 89 passed.
+
+Shown failing on 8db293d7: 7 integration tests and the new operator spec. Four pins pass on old code by design, because they prove inactive paths are unchanged.
+
+Not verified: the full operator, ux, axe and screenshot evidence for the form line (an existing feedback line gains words), and the full integration suite (CI).
+
+Next: G69 reviews the PR. Then 2c rebases onto the new GoLiveResult shape (warnings in the dry run, the Locked Core refusal) and opens. route_pack_install for 2a still waits for the owner's word after G69 checks the production Postgres major.
