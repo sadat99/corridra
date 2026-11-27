@@ -31,7 +31,7 @@ const spots = {
 } as const satisfies Record<string, Spot>;
 export type SpotKey = keyof typeof spots;
 export type Tone = 'open' | 'soon' | 'ask';
-type Label = { name?: string; y?: number };
+type Label = { name?: string; y?: number; dx?: number; anchor?: 'start' | 'middle' | 'end' };
 
 const toneFill: Record<Tone, string> = {
   open: 'var(--cv-green)',
@@ -152,9 +152,9 @@ export function DotMap({
           <text
             key={key}
             className="hv7-label"
-            x={flags ? s.x + dx : s.lx}
+            x={flags ? s.x + (labels[key]?.dx ?? dx) : s.lx}
             y={labels[key]?.y ?? (flags ? s.y + dy : s.ly)}
-            textAnchor={flags ? anchor : 'middle'}
+            textAnchor={flags ? (labels[key]?.anchor ?? anchor) : 'middle'}
           >
             {labels[key]?.name ?? s.name}
           </text>

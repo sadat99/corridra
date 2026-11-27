@@ -69,7 +69,7 @@ type Door = {
   ticks: readonly string[];
   view: string;
   routes: SpotKey[];
-  labels: Partial<Record<SpotKey, { name?: string; y?: number }>>;
+  labels: Partial<Record<SpotKey, { name?: string; y?: number; dx?: number; anchor?: 'start' | 'middle' | 'end' }>>;
   /** Goods and people come towards Bangladesh: arcs and travelling dots run from the place to it. */
   inbound?: boolean;
 };
@@ -100,7 +100,7 @@ const doors: readonly Door[] = [
     ticks: ['Companies chosen for your goal', 'Meetings booked in order', 'A single plan to follow'],
     view: '330 10 380 250',
     routes: ['CN', 'AU', 'AE'],
-    labels: { CN: {}, AU: {}, AE: {}, BD: {} },
+    labels: { CN: {}, AU: {}, AE: {}, BD: { y: 138, dx: 0, anchor: 'middle' } },
   },
   {
     route: 'other',
