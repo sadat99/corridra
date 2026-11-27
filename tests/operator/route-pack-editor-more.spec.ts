@@ -187,7 +187,12 @@ test.describe('who sees More, and what it holds', () => {
     await open(page, { query: 'route=BD-EU&section=3' });
     const packRows = rows(page).filter({ hasText: 'Pack setting' });
     expect(await packRows.count()).toBeGreaterThan(0);
-    await expect(packRows.getByRole('button')).toHaveCount(0);
+    // PR 3b (spec 8.9) replaces the interim PR 2 rule (8.7, Locked rows read only): no Mark or Not applicable on a pack row,
+    // exactly one button on each and it is its Change.
+    for (const row of await packRows.all()) {
+      await expect(row.getByRole('button')).toHaveCount(1);
+      await expect(row.getByRole('button', { name: /^Change / })).toHaveCount(1);
+    }
     await moreButton(page, route).click();
     const names = await menu(page, route)
       .getByRole('menuitem')

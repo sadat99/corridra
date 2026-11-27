@@ -1,0 +1,166 @@
+/* ADR-093 Phase 3, PR 3b: the pack dialogs and the key list. Tokens only, no inline style, no text-transform. Nothing here fixes a
+   width in px; a long word in any script wraps. Targets are 44 px at least. */
+.route-pack {
+  min-inline-size: 0;
+}
+.route-pack-step,
+.route-pack-keys,
+.route-pack-boxes {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+.route-pack-boxes {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.route-pack-boxes legend {
+  padding: 0;
+  font-weight: 600;
+}
+.route-pack-boxes .ux-check,
+.route-pack-step .ux-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 44px;
+}
+.route-pack-step .ux-check input {
+  flex: none;
+}
+.route-pack-banner:empty {
+  display: none;
+}
+.route-pack-banner {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-inline-start: 2px solid var(--caution);
+  background: var(--caution-surface);
+}
+.route-pack-banner:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.route-pack-banner p {
+  margin: 0;
+}
+.route-pack-warning,
+.route-pack-blocked {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  color: var(--ink);
+}
+.route-pack-warning {
+  border: 1px solid var(--line);
+  border-inline-start: 2px solid var(--caution);
+  background: var(--caution-surface);
+}
+.route-pack-blocked {
+  border-inline-start: 2px solid var(--caution);
+  background: var(--caution-surface);
+}
+.route-pack-warning p,
+.route-pack-blocked span {
+  margin: 0;
+  min-inline-size: 0;
+}
+.route-pack-warning .corridra-icon,
+.route-pack-blocked .corridra-icon {
+  flex: none;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+}
+.route-pack-versions {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+.route-pack-caution {
+  display: grid;
+  gap: var(--space-2);
+}
+.route-pack-fields summary {
+  min-block-size: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.route-pack-field-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-inline-start: var(--space-4);
+}
+.route-pack-key-rows {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.route-pack-key-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  min-block-size: 44px;
+  border-block-end: 1px solid var(--line);
+}
+.route-pack-key {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.route-pack-key-row .text-link {
+  min-block-size: 44px;
+  min-inline-size: 44px;
+}
+/* Stacked on a phone; the input and Add Key share a line from 768px. */
+.route-pack-key-entry {
+  display: grid;
+  gap: var(--space-2);
+}
+.route-pack-key-entry .route-edit-field input {
+  min-block-size: 44px;
+}
+.route-pack-add,
+.route-pack-status-button {
+  min-block-size: 44px;
+}
+/* In the first header line beside More: the same 44 px target, so the line grows by neither button. */
+.route-editor-line .route-pack-status-button {
+  min-height: 44px;
+  padding-block: 0;
+  padding-inline: var(--space-3);
+  flex: none;
+  white-space: nowrap;
+}
+@media (min-width: 768px) {
+  .route-pack-key-entry {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+}
+.route-pack-row-button {
+  min-block-size: 44px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* The first step, locked while its preview is asked for. A plain group: no border, no inset. */
+.route-pack-lock {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}

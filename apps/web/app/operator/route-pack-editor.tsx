@@ -98,6 +98,16 @@ import { RouteMarkDialog } from './route-pack-mark-dialog';
 import { moreButtonOf, RouteMoreMenu } from './route-pack-more-menu';
 import { Say, SaveFactsDialog } from './route-pack-save-dialog';
 import { UnsavedBar } from './route-pack-unsaved-bar';
+import { packRowAction, type SettingKey } from '../../lib/route-pack-editor-pack';
+import { duplicateLine, proposedLine, publishedLine } from './route-pack-pack-words';
+import {
+  ChangePackSettingDialog,
+  ChangePackStatusButton,
+  ChangePackStatusDialog,
+  PackRowButton,
+  RemoveSourcingDialog,
+} from './route-pack-pack-dialogs';
+import type { PackDone } from './route-pack-pack-publish';
 import { packStatusWords, packTones } from './pack-status';
 import {
   standardFieldByKey,
@@ -501,6 +511,35 @@ function RouteBody({
   const statusLine = useRef<HTMLDivElement>(null);
   const [saveOpen, setSaveOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  // ADR-093 Phase 3, PR 3b: the one pack dialog open, if any. A pack change never touches the staged fact edits.
+  const [packDialog, setPackDialog] = useState<
+    | { kind: 'setting'; key: SettingKey; label: string }
+    | { kind: 'status' }
+    | { kind: 'removeSourcing' }
+    | null
+  >(null);
+  const focusStatusSoon = () => window.setTimeout(() => statusLine.current?.focus(), 50);
+  const packDone = (done: PackDone) => {
+    setPackDialog(null);
+    setStatus(
+      done.kind === 'proposed'
+        ? { text: proposedLine(done.version), caution: null }
+        : {
+            text: done.published.duplicate
+              ? duplicateLine(done.published.version)
+              : publishedLine(done.published.version),
+            caution: warningWords(done.published.warnings, labels) || null,
+          },
+    );
+    focusStatusSoon();
+    void reload();
+    onSaved();
+  };
+  const packReload = () => {
+    setPackDialog(null);
+    focusStatusSoon();
+    void reload();
+  };
   // The restore is announced once, after the route is drawn, so the status line is in the page before its words.
   useEffect(() => {
     if (session.restored === 0) return;
@@ -600,6 +639,12 @@ function RouteBody({
     const field = formFieldOf(item, saved, shownDocument);
     const isStaged = !!stage.facts[item.key];
     const editable = isEditable(shownRow, role, field);
+    const packAction = packRowAction(
+      shownRow,
+      role,
+      standardFieldByKey.get(item.key)?.configurationKey,
+      !!pack,
+    );
     // The open answer is this row's when its key is, and only a row that has a field can be open.
     const draft = open && open.key === item.key && field ? open : null;
     const issues = draft && field ? liveIssues(field, draft.draft) : [];
@@ -670,6 +715,18 @@ function RouteBody({
                 </button>
               ) : null}
             </>
+          ) : packAction ? (
+            <PackRowButton
+              kind={packAction.kind}
+              label={v.label}
+              onOpen={() =>
+                setPackDialog(
+                  packAction.kind === 'change'
+                    ? { kind: 'setting', key: packAction.key, label: v.label }
+                    : { kind: 'removeSourcing' },
+                )
+              }
+            />
           ) : undefined
         }
       />
@@ -800,6 +857,9 @@ function RouteBody({
         <span>
           {content || fresh ? `Route facts version ${savedVersion}` : 'No facts saved yet'}
         </span>
+        {owner && pack ? (
+          <ChangePackStatusButton onOpen={() => setPackDialog({ kind: 'status' })} />
+        ) : null}
         {owner ? (
           <RouteMoreMenu
             routeName={routeName}
@@ -938,6 +998,45 @@ function RouteBody({
             onDiscard={discard}
             returnFocusTo={backFromDiscard}
           />
+          <ChangePackSettingDialog
+            open={packDialog?.kind === 'setting'}
+            settingKey={packDialog?.kind === 'setting' ? packDialog.key : 'languages'}
+            label={packDialog?.kind === 'setting' ? packDialog.label : ''}
+            tenant={tenant}
+            routeId={summary.routeId}
+            pack={pack}
+            missionChoices={standardFieldByKey.get('pack.missionTypes')?.allowed ?? []}
+            labelOf={labels}
+            onClose={() => setPackDialog(null)}
+            onDone={packDone}
+            onReload={packReload}
+          />
+          {pack ? (
+            <>
+              <ChangePackStatusDialog
+                open={packDialog?.kind === 'status'}
+                tenant={tenant}
+                routeId={summary.routeId}
+                pack={pack}
+                pendingCoreLabels={completeness.pendingCore.map(labels)}
+                labelOf={labels}
+                statusWords={packStatusWords}
+                onClose={() => setPackDialog(null)}
+                onDone={packDone}
+                onReload={packReload}
+              />
+              <RemoveSourcingDialog
+                open={packDialog?.kind === 'removeSourcing'}
+                tenant={tenant}
+                routeId={summary.routeId}
+                pack={pack}
+                labelOf={labels}
+                onClose={() => setPackDialog(null)}
+                onDone={packDone}
+                onReload={packReload}
+              />
+            </>
+          ) : null}
         </>
       ) : null}
     </>

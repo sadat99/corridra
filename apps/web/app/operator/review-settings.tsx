@@ -52,7 +52,7 @@ const commands = {
 } as const;
 type Command = keyof typeof commands;
 
-const packLanguages = [
+export const packLanguages = [
   ['en', 'English'],
   ['bn', 'Bengali'],
   ['zh', 'Chinese'],
@@ -61,20 +61,21 @@ const packLanguages = [
   ['fr', 'French'],
   ['de', 'German'],
 ] as const;
-const packCurrencies = [
+export const packCurrencies = [
   ['BDT', 'Bangladeshi Taka'],
   ['USD', 'US Dollar'],
   ['EUR', 'Euro'],
   ['CNY', 'Chinese Yuan'],
   ['GBP', 'British Pound'],
 ] as const;
-const packZones = [
+export const packZones = [
   ['Asia/Dhaka', 'Dhaka'],
   ['Europe/Madrid', 'Madrid'],
   ['Asia/Shanghai', 'Shanghai'],
   ['UTC', 'UTC'],
 ] as const;
-const words = (code: string) => {
+// Also read by the pack dialogs of the route pack editor (ADR-093 Phase 3, PR 3b), so both screens offer the same lists.
+export const words = (code: string) => {
   const text = code
     .replace(/[_.-]+/g, ' ')
     .trim()
