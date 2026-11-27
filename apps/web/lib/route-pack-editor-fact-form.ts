@@ -32,6 +32,20 @@ export const refusalWords = {
   notApplicable: 'Say why this does not apply to this route.',
   limit: (count: number, limit: number) =>
     `That is ${count.toLocaleString('en-US')} characters. The limit is ${limit}. Shorten it.`,
+  // ADR-093 Phase 3, PR 2b: the words of the editor's controls (designer copy, spec 8.8).
+  number: 'Use a number such as 12 or 12.5, with at most 5 decimals.',
+  wholeNumber: 'Use a whole number.',
+  decimals: (places: number, code: string) => `Use at most ${places} decimals for ${code}.`,
+  wholeAmount: (code: string) => `Use a whole amount for ${code}.`,
+  pickDate: 'Pick a date.',
+  atLeast: (min: number) => `Write at least ${min} ${min === 1 ? 'character' : 'characters'}.`,
+  /** One entry of a list that is not in the form of the field; `format` is the field's own words from the standard. */
+  entry: (index: number, format?: string) =>
+    `Check entry ${index + 1}.${format?.trim() ? ` ${format.trim().replace(/[.\s]+$/, '')}.` : ''}`,
+  bar: 'Do not use the | sign in an entry. The route file uses it to separate values.',
+  link: 'Give a web address that starts with https://.',
+  observedFuture: 'The observed date cannot be in the future.',
+  validBefore: 'Valid until must be on or after the observed date.',
 } as const;
 /** The help of a row that cannot be set to Pending because its section is marked Not applicable. */
 export const coveredHelp =
@@ -41,7 +55,9 @@ export const lockedCoreHelp = 'An empty list is not the same as does not apply.'
 
 /** The part of a field this file needs: a standard row, or a custom fact's own definition. */
 export type FormField = Pick<StandardField, 'key' | 'type' | 'maxLength'> &
-  Partial<Pick<StandardField, 'label' | 'minLength' | 'maxItems' | 'allowed' | 'itemPattern'>> & {
+  Partial<
+    Pick<StandardField, 'label' | 'minLength' | 'maxItems' | 'allowed' | 'itemPattern' | 'format'>
+  > & {
     part: 'Locked' | 'Content';
     core: boolean;
     custom: boolean;
@@ -102,7 +118,8 @@ export type FactDraft = {
   validUntil: string;
 };
 export type DraftPart = keyof FactDraft | 'form';
-export type Refusal = { field: DraftPart; message: string };
+/** `index` is set for one entry of a list (counted from 0), so the page can focus that entry. */
+export type Refusal = { field: DraftPart; message: string; index?: number };
 export type FactBuilt = { ok: true; fact: ContentFact | null } | { ok: false; refusals: Refusal[] };
 
 const staffKnowledge = 'staff knowledge';
@@ -260,7 +277,7 @@ function valueFrom(field: FormField, draft: FactDraft): ValueResult {
       return (
         tooLong(text, field.maxLength, 'text') ??
         (text.length < min
-          ? refuse('text', `Write at least ${min} ${min === 1 ? 'character' : 'characters'}.`)
+          ? refuse('text', refusalWords.atLeast(min))
           : { value: text, refusals: [] })
       );
     }
@@ -275,10 +292,7 @@ function valueFrom(field: FormField, draft: FactDraft): ValueResult {
         (!field.itemPattern || field.itemPattern.test(text));
       return fits
         ? { value: text, refusals: [] }
-        : refuse(
-            'text',
-            whole ? 'Use a whole number, such as 12.' : 'Use a number, such as 12 or 12.5.',
-          );
+        : refuse('text', whole ? refusalWords.wholeNumber : refusalWords.number);
     }
     case 'money': {
       const code = draft.currency.trim().toUpperCase();
@@ -291,9 +305,7 @@ function valueFrom(field: FormField, draft: FactDraft): ValueResult {
       if (fraction.length > decimals)
         return refuse(
           'amount',
-          decimals === 0
-            ? `Use no decimals for ${code}`
-            : `Use at most ${decimals} decimals for ${code}`,
+          decimals === 0 ? refusalWords.wholeAmount(code) : refusalWords.decimals(decimals, code),
         );
       const minor = `${whole}${fraction.padEnd(decimals, '0')}`.replace(/^0+/, '');
       if (!minor) return refuse('amount', 'Enter an amount above zero.');
@@ -305,9 +317,7 @@ function valueFrom(field: FormField, draft: FactDraft): ValueResult {
     }
     case 'date': {
       const text = draft.text.trim();
-      return isDate(text)
-        ? { value: text, refusals: [] }
-        : refuse('text', 'Write the date as YYYY-MM-DD.');
+      return isDate(text) ? { value: text, refusals: [] } : refuse('text', refusalWords.pickDate);
     }
     case 'choice': {
       const text = draft.text.trim();
@@ -316,29 +326,36 @@ function valueFrom(field: FormField, draft: FactDraft): ValueResult {
         : refuse('text', 'Choose one of the answers.');
     }
     case 'list': {
-      const items = draft.items.map((item) => item.trim()).filter(Boolean);
+      const typed = draft.items.map((item, index) => ({ item: item.trim(), index }));
+      const entries = typed.filter(({ item }) => item);
       const limit = field.maxItems ?? 100;
-      if (items.length === 0) return refuse('items', 'Add at least one entry.');
-      if (items.length > limit) return refuse('items', `Add at most ${limit} entries.`);
-      const long = items.find((item) => item.length > field.maxLength);
-      if (long) return refuse('items', refusalWords.limit(long.length, field.maxLength));
+      const refuseEntry = (index: number, message: string): ValueResult => ({
+        value: undefined,
+        refusals: [{ field: 'items', message, index }],
+      });
+      if (entries.length === 0) return refuse('items', 'Add at least one entry.');
+      if (entries.length > limit) return refuse('items', `Add at most ${limit} entries.`);
+      const long = entries.find(({ item }) => item.length > field.maxLength);
+      if (long)
+        return refuseEntry(long.index, refusalWords.limit(long.item.length, field.maxLength));
+      const bar = entries.find(({ item }) => item.includes('|'));
+      if (bar) return refuseEntry(bar.index, refusalWords.bar);
       const outside = field.allowed
-        ? items.find((item) => !field.allowed!.includes(item))
+        ? entries.find(({ item }) => !field.allowed!.includes(item))
         : undefined;
-      if (outside !== undefined) return refuse('items', 'Choose from the answers offered.');
+      if (outside)
+        return refuseEntry(outside.index, refusalWords.entry(outside.index, field.format));
       const odd = field.itemPattern
-        ? items.find((item) => !field.itemPattern!.test(item))
+        ? entries.find(({ item }) => !field.itemPattern!.test(item))
         : undefined;
-      if (odd !== undefined) return refuse('items', `${odd} is not in the form this field takes.`);
-      return { value: items, refusals: [] };
+      if (odd) return refuseEntry(odd.index, refusalWords.entry(odd.index, field.format));
+      return { value: entries.map(({ item }) => item), refusals: [] };
     }
     case 'link': {
       const text = draft.text.trim();
       if (text.length > field.maxLength)
         return refuse('text', refusalWords.limit(text.length, field.maxLength));
-      return isHttps(text)
-        ? { value: text, refusals: [] }
-        : refuse('text', 'Give a web address that starts with https://.');
+      return isHttps(text) ? { value: text, refusals: [] } : refuse('text', refusalWords.link);
     }
   }
 }
@@ -404,17 +421,17 @@ export function factFromDraft(field: FormField, draft: FactDraft, today: string)
     if (!isDate(observedOn))
       refusals.push({
         field: 'observedOn',
-        message: 'Say when this was observed, written YYYY-MM-DD.',
+        message: refusalWords.pickDate,
       });
     else if (observedOn > today)
-      refusals.push({ field: 'observedOn', message: 'The observed date cannot be in the future.' });
+      refusals.push({ field: 'observedOn', message: refusalWords.observedFuture });
     const validUntil = draft.validUntil.trim();
     if (validUntil && !isDate(validUntil))
-      refusals.push({ field: 'validUntil', message: 'Write the date as YYYY-MM-DD.' });
+      refusals.push({ field: 'validUntil', message: refusalWords.pickDate });
     else if (validUntil && isDate(observedOn) && validUntil < observedOn)
       refusals.push({
         field: 'validUntil',
-        message: 'Valid until must be on or after the observed date.',
+        message: refusalWords.validBefore,
       });
     const filledNote = draft.filledNote.trim();
     fact = {
@@ -434,4 +451,67 @@ export function factFromDraft(field: FormField, draft: FactDraft, today: string)
   if (issues.length)
     return { ok: false, refusals: [{ field: 'form', message: issues[0]!.message }] };
   return { ok: true, fact };
+}
+
+// ---- What the editor draws for a field (PR 2b) -------------------------------------------------------------------------
+
+export type ValueControl = {
+  kind: FactType;
+  /** The `min` of a number control: 0 only for a field whose items must match a whole-day pattern; none for any other number. */
+  numberMin: 0 | null;
+  /** Whole numbers only (the control steps by 1). */
+  whole: boolean;
+  /** A choice: answer rows up to 4 values, a labelled select from 5. Null for any other type. */
+  choiceStyle: 'row' | 'select' | null;
+  /** A list that has allowed values: check boxes instead of typed entries. */
+  boxes: boolean;
+};
+/**
+ * The control a field gets. The standard has one number field, "Days to get a visa" (`travel.visa_lead_time_days`), whose
+ * item pattern is whole days from 0, so only it has a minimum of 0; a custom number field has no pattern and no minimum,
+ * because the standard allows a minus sign and decimals there.
+ */
+export function controlFor(
+  field: Pick<FormField, 'type' | 'itemPattern' | 'allowed'>,
+): ValueControl {
+  const whole = field.type === 'number' && field.itemPattern !== undefined;
+  return {
+    kind: field.type,
+    numberMin: whole ? 0 : null,
+    whole,
+    choiceStyle:
+      field.type === 'choice' ? ((field.allowed?.length ?? 0) >= 5 ? 'select' : 'row') : null,
+    boxes: field.type === 'list' && (field.allowed?.length ?? 0) > 0,
+  };
+}
+/**
+ * The refusals that show as a person types: a text or a note over its limit, and money with more decimals than its currency
+ * has. Every other refusal waits for "Next" or "Keep Change" (`factFromDraft`). Empty when the draft is not Filled or Not
+ * applicable.
+ */
+export function liveIssues(field: FormField, draft: FactDraft): Refusal[] {
+  const refusals: Refusal[] = [];
+  if (draft.answer === 'NOT_APPLICABLE') {
+    const length = draft.note.trim().length;
+    if (length > 1000) refusals.push({ field: 'note', message: refusalWords.limit(length, 1000) });
+    return refusals;
+  }
+  if (draft.answer !== 'FILLED') return refusals;
+  if (field.type === 'text') {
+    const length = draft.text.trim().length;
+    if (length > field.maxLength)
+      refusals.push({ field: 'text', message: refusalWords.limit(length, field.maxLength) });
+  }
+  if (field.type === 'money') {
+    const code = draft.currency.trim().toUpperCase();
+    const decimals = (currencies as Record<string, number | undefined>)[code];
+    const match = /^(\d+)(?:\.(\d*))?$/.exec(draft.amount.trim());
+    if (decimals !== undefined && match && (match[2] ?? '').length > decimals)
+      refusals.push({
+        field: 'amount',
+        message:
+          decimals === 0 ? refusalWords.wholeAmount(code) : refusalWords.decimals(decimals, code),
+      });
+  }
+  return refusals;
 }

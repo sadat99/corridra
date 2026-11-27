@@ -17,6 +17,14 @@ export type MoneyInputProps = {
   error?: string;
   required?: boolean;
   disabled?: boolean;
+  /**
+   * Optional (route pack editor, ADR-093 Phase 3). The words for an amount that has more decimals than its currency; left
+   * out, every other caller keeps the sentence it always had. Giving it also keeps what was typed when the field loses focus
+   * with a problem, so the person can correct it.
+   */
+  decimalsWords?: (places: number, currency: string) => string;
+  /** Optional. Called with the text exactly as typed, before it is read as an amount. */
+  onText?: (raw: string) => void;
 };
 
 export function MoneyInput({
@@ -30,6 +38,8 @@ export function MoneyInput({
   error,
   required,
   disabled,
+  decimalsWords,
+  onText,
 }: MoneyInputProps) {
   const generated = useId();
   const inputId = id ?? `${generated}-input`;
@@ -75,6 +85,7 @@ export function MoneyInput({
         onChange={(event) => {
           const next = event.target.value;
           setText(next);
+          onText?.(next);
           if (!next.trim()) {
             setProblem('');
             onChange(null);
@@ -84,15 +95,21 @@ export function MoneyInput({
             onChange(toMinor(next, currency));
             setProblem('');
           } catch (e) {
+            const typed = /^\s*\d+\.(\d*)\s*$/.exec(next);
             setProblem(
-              places
-                ? `Enter an amount like 100 or 100.${'5'.padEnd(places, '0')}. ${currency} uses ${places} decimal places.`
-                : `Enter a whole amount. ${currency} has no decimal places.`,
+              decimalsWords && typed && typed[1]!.length > places
+                ? decimalsWords(places, currency)
+                : places
+                  ? `Enter an amount like 100 or 100.${'5'.padEnd(places, '0')}. ${currency} uses ${places} decimal places.`
+                  : `Enter a whole amount. ${currency} has no decimal places.`,
             );
             void e;
           }
         }}
-        onBlur={() => setText(null)}
+        onBlur={() => {
+          // With the editor's words, a typed amount with a problem stays on screen to be corrected.
+          if (!(decimalsWords && problem)) setText(null);
+        }}
       />
       {name ? <input type="hidden" name={name} value={value ?? ''} /> : null}
       <p className="ux-kit-preview" id={`${generated}-preview`} aria-live="polite">
