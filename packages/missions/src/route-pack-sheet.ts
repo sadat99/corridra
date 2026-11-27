@@ -175,11 +175,12 @@ export const sheetWords = {
     'This save was started with a different file. Run the dry run again and save the file as a new save.',
 } as const;
 
-const states: Record<string, SheetState> = {
-  filled: 'FILLED',
-  'not applicable': 'NOT_APPLICABLE',
-  pending: 'PENDING',
-};
+// A Map, so a cell naming an object prototype key (constructor, __proto__) is just an unknown word.
+const states = new Map<string, SheetState>([
+  ['filled', 'FILLED'],
+  ['not applicable', 'NOT_APPLICABLE'],
+  ['pending', 'PENDING'],
+]);
 const stateWords: Record<SheetState, string> = {
   FILLED: 'Filled',
   NOT_APPLICABLE: 'Not applicable',
@@ -247,7 +248,7 @@ export function sheetFromCells(rows: { row: number; cells: string[] }[]): {
       issue(sheetWords.noKey);
       continue;
     }
-    const state = states[cell('state').toLowerCase()];
+    const state = states.get(cell('state').toLowerCase());
     if (!state) {
       issue(sheetWords.state);
       continue;
@@ -903,7 +904,7 @@ function exportRoute(
       route,
       sectionName(fact.section ?? 17),
       fact.key,
-      labels[fact.key] ?? fact.label ?? '',
+      (Object.hasOwn(labels, fact.key) ? labels[fact.key] : fact.label) ?? '',
       'Content',
       'Optional',
       fact.type ?? '',
