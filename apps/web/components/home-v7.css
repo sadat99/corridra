@@ -74,9 +74,12 @@
   border: 1px solid var(--cv-line);
   border-radius: 24px;
 }
+/* The one bold word of a headline: solid cobalt with a marigold underline mark (marigold is for marks, never text). */
 .hv7 .hv7-outline {
-  color: transparent;
-  -webkit-text-stroke: 2px var(--cv-brand);
+  color: var(--cv-brand);
+  font-weight: 500;
+  background: linear-gradient(var(--cv-gold), var(--cv-gold)) 0 94% / 100% 0.085em no-repeat;
+  padding-block-end: 0.04em;
 }
 .hv7-btn {
   display: inline-flex;
