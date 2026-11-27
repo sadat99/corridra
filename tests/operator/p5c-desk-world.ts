@@ -184,7 +184,14 @@ export type FactsWorld = {
   /** What each route holds after saves, by route key (the world fills it). */
   written?: Record<string, { version: number; document: ContentDocument }>;
   /** Ids already answered: the body they came with and what was answered. */
-  answered?: Record<string, { body: string; version: number }>;
+  answered?: Record<string, { body: string; version: number }>; /**
+   * ADR-093 Phase 3, PR 3b: the pack of a route as published since the page opened, by route key (the publish world of
+   * route-pack-publish-world.ts fills it, so the next read shows the new version). Left out, each route has its fixed pack.
+   */
+  packs?: Record<
+    string,
+    { status: PackStatus; version: number; configuration: Record<string, unknown> } | null
+  >;
 };
 const lockedCore = {
   missionTypes: ['supplier_discovery'],
@@ -245,12 +252,18 @@ const configurationOf = (full: boolean) => (full ? lockedCore : {});
 function routeView(
   key: string,
   routeId: string,
-  pack: { status: PackStatus; version: number; full: boolean } | null,
+  pack: {
+    status: PackStatus;
+    version: number;
+    full: boolean;
+    configuration?: Record<string, unknown>;
+  } | null,
   content: { version: number; document: ContentDocument } | null,
   readiness: string[] | null,
 ): RouteView {
   const [origin, destination] = key.split('-') as [string, string];
-  const configuration = pack ? (configurationOf(pack.full) as unknown as RouteConfiguration) : null;
+  const shape = pack ? (pack.configuration ?? configurationOf(pack.full)) : null;
+  const configuration = shape as unknown as RouteConfiguration | null;
   return {
     routeId,
     key,
@@ -279,7 +292,7 @@ function routeView(
         }
       : null,
     completeness: deriveCompleteness(
-      pack ? { status: pack.status, configuration: configurationOf(pack.full) } : null,
+      pack ? { status: pack.status, configuration: shape as RouteConfiguration } : null,
       content?.document ?? null,
       new Date().toISOString().slice(0, 10),
     ),
@@ -289,6 +302,13 @@ function routeView(
         : null,
   };
 }
+type PackShape = Parameters<typeof routeView>[2];
+const packOf = (world: FactsWorld, key: string, fixed: PackShape): PackShape => {
+  const published = world.packs?.[key];
+  return published === undefined
+    ? fixed
+    : published && { ...published, full: true, configuration: published.configuration };
+};
 function routeViews(world: FactsWorld, role: string): RouteView[] {
   const reads = role === 'owner' || role === 'admin';
   const done = world.complete === true;
@@ -297,14 +317,15 @@ function routeViews(world: FactsWorld, role: string): RouteView[] {
     routeView(
       'BD-CN',
       routeIds.bdCn,
-      { status: 'ACTIVE', version: 2, full: true },
+      packOf(world, 'BD-CN', { status: 'ACTIVE', version: 2, full: true }),
       written['BD-CN'] ?? { version: 5, document: documentOf(bdCnFacts) },
-      reads ? ['supplier_discovery'] : null,
+      // A pack published since the page opened has no readiness recorded yet.
+      reads ? (world.packs?.['BD-CN'] !== undefined ? [] : ['supplier_discovery']) : null,
     ),
     routeView(
       'BD-EU',
       routeIds.bdEu,
-      { status: 'TESTING', version: 1, full: done },
+      packOf(world, 'BD-EU', { status: 'TESTING', version: 1, full: done }),
       written['BD-EU'] ?? {
         version: 1,
         document: documentOf(
@@ -314,9 +335,12 @@ function routeViews(world: FactsWorld, role: string): RouteView[] {
       },
       reads ? [] : null,
     ),
-    routeView('TW-AU', routeIds.twAu, null, written['TW-AU'] ?? null, null),
+    routeView('TW-AU', routeIds.twAu, packOf(world, 'TW-AU', null), written['TW-AU'] ?? null, null),
   ];
 }
+/** ADR-093 Phase 3, PR 3b: the pack a route has now in this world, for the publish world. */
+export const packNow = (facts: FactsWorld, key: string) =>
+  routeViews(facts, 'owner').find((view) => view.key === key)?.pack ?? null;
 const packHistoryOf = (routeId: string, facts: FactsWorld): PackVersion[] =>
   routeId === routeIds.bdCn
     ? [

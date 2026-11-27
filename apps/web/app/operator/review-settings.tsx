@@ -17,6 +17,7 @@ import { RouteEditorShell, RouteLink, RouteRowFacts, RoutesFactsHead } from './r
 import { leaveRoute, useRoutePackOverview, useRouteAddress } from './route-pack-editor-data';
 import type { RouteSummary } from '../../lib/route-pack-editor-read';
 import { coreListWords, staleListWords } from '../../lib/route-pack-editor-view';
+import { packCurrencies, packLanguages, packZones, words } from '../../lib/route-pack-options';
 import './settings-routes.css';
 type Catalogue = {
   routes: { id: string; origin_market: string; destination_market: string }[];
@@ -51,36 +52,6 @@ const commands = {
   },
 } as const;
 type Command = keyof typeof commands;
-
-const packLanguages = [
-  ['en', 'English'],
-  ['bn', 'Bengali'],
-  ['zh', 'Chinese'],
-  ['es', 'Spanish'],
-  ['ar', 'Arabic'],
-  ['fr', 'French'],
-  ['de', 'German'],
-] as const;
-const packCurrencies = [
-  ['BDT', 'Bangladeshi Taka'],
-  ['USD', 'US Dollar'],
-  ['EUR', 'Euro'],
-  ['CNY', 'Chinese Yuan'],
-  ['GBP', 'British Pound'],
-] as const;
-const packZones = [
-  ['Asia/Dhaka', 'Dhaka'],
-  ['Europe/Madrid', 'Madrid'],
-  ['Asia/Shanghai', 'Shanghai'],
-  ['UTC', 'UTC'],
-] as const;
-const words = (code: string) => {
-  const text = code
-    .replace(/[_.-]+/g, ' ')
-    .trim()
-    .toLowerCase();
-  return text ? text[0].toUpperCase() + text.slice(1) : code;
-};
 
 /**
  * Team desk v4.1 (unit D17): the routes of the workspace, first on the page, each with the state of its newest
