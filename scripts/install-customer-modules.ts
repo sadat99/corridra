@@ -51,6 +51,7 @@ import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-chan
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-migrate';
 import { migrateRoutePack } from '../packages/db/src/route-pack-migrate';
+import { migrateRoutePack2a } from '../packages/db/src/route-pack-2a-migrate';
 import { migrateAiModelPolicyReal } from '../packages/db/src/ai-model-policy-real-migrate';
 import { migrateAiRealRuns } from '../packages/db/src/ai-real-runs-migrate';
 import { migrateOutreachReal } from '../packages/db/src/outreach-real-migrate';
@@ -172,7 +173,7 @@ const v = z
       z.string().trim().min(10).max(500).optional(),
     ),
     // ADR-093 Phase 2a: one person may propose and publish a route pack, record its readiness and release it.
-    ROUTE_PACK_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    ROUTE_PACK_ACTION: z.enum(['unchanged', 'install', 'install_2a']).default('unchanged'),
     SUPPLY_SOURCES_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     SUPPLY_SOURCES_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -943,10 +944,16 @@ try {
     // ADR-093 Phase 2 is never part of the base run. 0001 (2a) replaces app.guard_operations_control() after a hash check so one
     // person may propose and publish a route pack, record its readiness and release it; 0002 (2b) adds the route pack content
     // table. Each adds a marker the service reads. No switch and no gate. Needs the real-use modules installed and the owner's
-    // word. Reached only through field_modules_action=route_pack_install.
+    // word. Reached only through field_modules_action=route_pack_install (2a and 2b) or route_pack_install_2a (2a only).
     if (v.ROUTE_PACK_ACTION === 'install') {
       await migrateRoutePack(pool);
       console.log('Route pack module installed or already current');
+    }
+    if (v.ROUTE_PACK_ACTION === 'install_2a') {
+      await migrateRoutePack2a(pool);
+      console.log(
+        'Route pack publication (2a) installed or already current (content storage 2b not installed)',
+      );
     }
     // ADR-089 is never part of the base run. It replaces app.guard_ai() after a hash check so real workspaces may hold a reviewed
     // model policy only; runs stay sample-only and AI stays off. Needs the real-use modules installed and the owner's word.
