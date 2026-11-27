@@ -103,6 +103,14 @@ const counts = async () =>
        (SELECT count(*) FROM app.configuration_decision)::int decisions`,
     )
   ).rows[0];
+// Events, outbox rows and command (idempotency) rows: a dry run adds none.
+const writes = async () =>
+  (
+    await f.owner.query(
+      `SELECT (SELECT count(*) FROM app.domain_event)::int events,(SELECT count(*) FROM app.outbox)::int outbox,
+       (SELECT count(*) FROM app.operations_command)::int commands`,
+    )
+  ).rows[0];
 const routeId = async (key: string) => {
   const [origin, destination] = key.split('-');
   return (
@@ -208,6 +216,7 @@ beforeEach(async () => {
 
 test('the dry run writes nothing and lists every error with its row, route and key', async () => {
   const before = await counts();
+  const writesBefore = await writes();
   const report = await sheet.dryRun(owner(), {
     rows: rowsOf([
       filled('AR-BR', 'identity.display_name', 'Argentina to Brazil'),
@@ -236,6 +245,7 @@ test('the dry run writes nothing and lists every error with its row, route and k
   expect(report.errors.find((e) => e.row === 7)!.message).toMatch(/Remove the email address/);
   expect(plan(report, 'AR-BR').willBeAdded).toBe(true);
   expect(await counts()).toEqual(before);
+  expect(await writes()).toEqual(writesBefore);
 });
 
 test('a file with any error saves nothing, and the same file saves once the error is fixed', async () => {
@@ -466,11 +476,15 @@ test('on an ACTIVE route a file cannot empty pack.languages: a Filled row withou
     { row: 2, route: 'CL-BO', key: 'pack.languages', message: sheetWords.filledEmpty },
   ]);
   expect(await counts()).toEqual(before);
-  const pending = await save([
-    line({ route: 'CL-BO', field_key: 'pack.languages', state: 'Pending' }),
-  ]);
+  // A Pending row cannot clear a Filled pack setting, and the dry run and the save both say so.
+  const pendingFile = [line({ route: 'CL-BO', field_key: 'pack.languages', state: 'Pending' })];
+  const notCleared = [{ row: 2, key: 'pack.languages', message: sheetWords.lockedPending }];
+  const dry = await sheet.dryRun(owner(), { rows: rowsOf(pendingFile) });
+  expect(plan(dry, 'CL-BO').skipped).toEqual(notCleared);
+  const pending = await save(pendingFile);
   expect(pending.ok).toBe(true);
   expect(plan(pending, 'CL-BO').pack.changed).toBe(false);
+  expect(plan(pending, 'CL-BO').skipped).toEqual(notCleared);
   expect(await counts()).toEqual(before);
   expect((await latestPack('CL-BO')).configuration.languages).toEqual(['en', 'bn']);
 });
@@ -810,6 +824,8 @@ test('formula safety: every risky first character is escaped on export and expor
           ['identity.out_of_scope', '\tTabbed text'],
           ['missions.eligibility_notes', '\rCarriage return text'],
           ['missions.typical_timeline', '\nLine feed text'],
+          ['trade.duty_notes', "'=already quoted"],
+          ['trade.preferences', '  padded value  '],
         ].map(([key, value]) => ({
           key,
           state: 'FILLED',
@@ -835,6 +851,7 @@ test('formula safety: every risky first character is escaped on export and expor
     "'\tTabbed text",
     "'\rCarriage return text",
     "'\nLine feed text",
+    "''=already quoted",
   ])
     expect(cells).toContain(escaped);
   const report = (await (await sheetRequest({ mode: 'dry-run', csv })).json()) as SheetReport;
@@ -845,6 +862,14 @@ test('formula safety: every risky first character is escaped on export and expor
     updated: [],
     removed: [],
   });
+  // A value the editor saved with spaces at its ends comes back trimmed; the saved value is kept and the row says so.
+  expect(plan(report, 'EC-PE').skipped).toEqual([
+    {
+      row: expect.any(Number),
+      key: 'trade.preferences',
+      message: sheetWords.trimKept,
+    },
+  ]);
 });
 
 test('a save that stops after writing for any reason answers 409 with the partial report, and the same file finishes it', async () => {
@@ -855,9 +880,18 @@ test('a save that stops after writing for any reason answers 409 with the partia
   const saveId = randomUUID();
   const real = sheet;
   sheet = interruptedOnce('propose', new Error('connection reset by the database'));
+  const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
   try {
     const response = await sheetRequest({ mode: 'save', csv: csvOf(file), saveId, reason });
     expect(response.status).toBe(409);
+    // Logged once, with the request's correlation id and no personal data or internal message.
+    expect(logged.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      {
+        event: 'route_pack_sheet_save_stopped',
+        correlationId: response.headers.get('x-corridra-request-id'),
+        code: null,
+      },
+    ]);
     const body = await response.json();
     expect(body.error).toBe(sheetWords.savePartly);
     expect(body.report.saved).toEqual([
@@ -869,6 +903,7 @@ test('a save that stops after writing for any reason answers 409 with the partia
     expect(JSON.stringify(body)).not.toContain('connection reset');
   } finally {
     sheet = real;
+    logged.mockRestore();
   }
   const finished = await sheetRequest({ mode: 'save', csv: csvOf(file), saveId, reason });
   expect(finished.status).toBe(201);
@@ -1191,4 +1226,80 @@ test('an expired carried policy reference refuses the pack step of a route that 
   )![0];
   expect(pack.reason).toBe(reasonWithRemovedPolicies(reason, [name]));
   expect(pack.reason).not.toBe(reason);
+});
+
+test('with the switch on and the content marker absent, both actions answer 404 before reading or parsing anything', async () => {
+  const unread = (total: number) => {
+    let pulled = 0;
+    const body = new ReadableStream<Uint8Array>(
+      {
+        pull(controller) {
+          if (pulled >= total) return controller.close();
+          pulled += 65536;
+          controller.enqueue(new Uint8Array(65536).fill(0x20));
+        },
+      },
+      { highWaterMark: 0 },
+    );
+    return { body, pulled: () => pulled };
+  };
+  await f.owner.query(
+    'ALTER FUNCTION app.route_pack_content_installed() RENAME TO route_pack_content_installed_hidden',
+  );
+  try {
+    const malformed = await sheetRequest({ mode: 'dry-run', csv: '"unclosed' });
+    expect(malformed.status).toBe(404);
+    expect((await malformed.json()).error).toBe('Not found');
+    const large = unread(8 * sheetLimits.octets);
+    expect((await sheetRequest(large.body)).status).toBe(404);
+    expect(large.pulled()).toBe(0);
+    const save = unread(65536);
+    expect((await sheetRequest(save.body)).status).toBe(404);
+    expect(save.pulled()).toBe(0);
+    expect((await exportRequest('x'.repeat(200))).status).toBe(404);
+    const many = Array.from({ length: 25 }, (_, i) => `R${i}-X${i}`).join('|');
+    expect((await exportRequest(many)).status).toBe(404);
+    // The service itself answers Not found before it parses its input.
+    await expect(sheet.dryRun(owner(), { rows: 'not rows' })).rejects.toMatchObject({
+      status: 404,
+    });
+    await expect(sheet.save(owner(), { rows: 'not rows' })).rejects.toMatchObject({ status: 404 });
+    await expect(sheet.export(owner(), { routes: [] })).rejects.toMatchObject({ status: 404 });
+  } finally {
+    await f.owner.query(
+      'ALTER FUNCTION app.route_pack_content_installed_hidden() RENAME TO route_pack_content_installed',
+    );
+  }
+  expect((await sheetRequest({ mode: 'dry-run', csv: '"unclosed' })).status).toBe(400);
+});
+
+test('file words that name object prototype keys are ordinary text: refused as a state, a route or a field key', async () => {
+  const report = await sheet.dryRun(owner(), {
+    rows: rowsOf([
+      line({ route: 'AR-BR', field_key: 'identity.summary', state: 'constructor', value: 'x' }),
+      line({ route: 'AR-BR', field_key: 'identity.summary', state: '__proto__', value: 'x' }),
+      filled('__proto__', 'identity.summary', 'Synthetic'),
+      filled('constructor', 'identity.summary', 'Synthetic'),
+      filled('AR-BR', '__proto__', 'Synthetic'),
+      filled('AR-BR', 'constructor', 'Synthetic'),
+      filled('AR-BR', 'section', 'Synthetic', {
+        section: '__proto__',
+        state: 'Not applicable',
+        note: 'none',
+      }),
+    ]),
+  });
+  expect(
+    report.errors
+      .map(({ row, message }) => ({ row, message }))
+      .sort((a, b) => (a.row ?? 0) - (b.row ?? 0)),
+  ).toEqual([
+    { row: 2, message: sheetWords.state },
+    { row: 3, message: sheetWords.state },
+    { row: 4, message: sheetWords.route },
+    { row: 5, message: sheetWords.route },
+    { row: 6, message: routePackWords.unknownKey('__proto__') },
+    { row: 7, message: routePackWords.unknownKey('constructor') },
+    { row: 8, message: routePackWords.sectionName },
+  ]);
 });
