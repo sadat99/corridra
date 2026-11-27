@@ -29,7 +29,6 @@ export function HomeV44Hero() {
       <div className="hv44-hero-map" aria-hidden="true">
         <DotMap
           view="120 10 560 230"
-          fill
           routes={['EU', 'US', 'AU', 'CN', 'AE']}
           pins={['EU', 'US', 'AU', 'CN', 'AE']}
         />

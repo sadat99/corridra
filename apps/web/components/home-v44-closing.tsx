@@ -44,7 +44,7 @@ export function HomeV44Closing({
           </div>
         </div>
         <div className="hv44-closing-map" aria-hidden="true">
-          <DotMap view="360 50 260 140" fill routes={['CN']} pins={['CN']} />
+          <DotMap view="360 50 260 140" routes={['CN']} pins={['CN']} />
         </div>
       </section>
       <StartBar

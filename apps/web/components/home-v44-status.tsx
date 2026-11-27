@@ -30,7 +30,6 @@ export function HomeV44Status() {
         <div className="hv44-status-map" aria-hidden="true">
           <DotMap
             view="300 20 380 220"
-            fill
             routes={['CN', 'EU', 'US', 'AU']}
             pins={['CN', 'EU', 'US', 'AU', 'AE', 'SG']}
             tones={{ CN: 'open', EU: 'open', US: 'open', AU: 'open', AE: 'ask', SG: 'ask' }}

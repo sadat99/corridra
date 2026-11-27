@@ -42,6 +42,8 @@ export function DotMap({
   /** A tone per place: open, soon, ask. */
   tones?: Partial<Record<SpotKey, 'open' | 'soon' | 'ask'>>;
 }) {
+  // Marks keep the same size on screen whatever the zoom of the frame.
+  const k = Math.min(1, Math.max(0.4, Number(view.split(' ')[2]) / 560));
   const all = Array.from(new Set<SpotKey>([...routes, ...pins]));
   return (
     <svg
@@ -59,10 +61,11 @@ export function DotMap({
             <path
               className="hv44-arc"
               pathLength={1}
+              strokeWidth={1.8 * k}
               d={d}
               style={{ animationDelay: `${index * 0.45}s` }}
             />
-            <circle className="hv44-travel" r={3}>
+            <circle className="hv44-travel" r={3 * k}>
               <animateMotion
                 dur="3.6s"
                 begin={`${index * 0.45 + 1.2}s`}
@@ -75,13 +78,13 @@ export function DotMap({
       })}
       {all.map((key) => (
         <g key={key} className="hv44-pin" data-tone={tones[key]}>
-          <circle className="hv44-pin-dot" cx={spots[key].x} cy={spots[key].y} r={5} />
-          <circle className="hv44-pulse" cx={spots[key].x} cy={spots[key].y} r={5} />
+          <circle className="hv44-pin-dot" cx={spots[key].x} cy={spots[key].y} r={5 * k} />
+          <circle className="hv44-pulse" cx={spots[key].x} cy={spots[key].y} r={5 * k} strokeWidth={1.5 * k} />
         </g>
       ))}
       <g className="hv44-pin hv44-pin-home">
-        <circle className="hv44-pin-dot" cx={spots.BD.x} cy={spots.BD.y} r={7} />
-        <circle className="hv44-pulse" cx={spots.BD.x} cy={spots.BD.y} r={7} />
+        <circle className="hv44-pin-dot" cx={spots.BD.x} cy={spots.BD.y} r={7 * k} />
+        <circle className="hv44-pulse" cx={spots.BD.x} cy={spots.BD.y} r={7 * k} strokeWidth={1.5 * k} />
       </g>
     </svg>
   );

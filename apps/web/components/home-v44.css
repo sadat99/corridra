@@ -861,7 +861,6 @@
 .hv43 .hv44-dotmap .hv44-arc {
   fill: none;
   stroke: var(--brand);
-  stroke-width: 1.8;
   stroke-linecap: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
@@ -883,7 +882,6 @@
 .hv43 .hv44-pulse {
   fill: none;
   stroke: var(--brand);
-  stroke-width: 1.5;
   transform-box: fill-box;
   transform-origin: center;
   animation: hv44-pulse 2.4s ease-out infinite;
@@ -954,7 +952,7 @@
 }
 .hv43 .hv44-hero .hv44-pause {
   position: absolute;
-  inset-inline-end: var(--space-4);
+  inset-inline-start: var(--space-4);
   inset-block-end: var(--space-4);
 }
 
@@ -1041,7 +1039,7 @@
   .hv43 .hv44-timeline::before {
     content: '';
     position: absolute;
-    inset-inline: 1.75rem 25%;
+    inset-inline: 1.75rem calc(25% - 1.75rem);
     inset-block-start: 1.7rem;
     block-size: 3px;
     background: var(--brand);
@@ -1362,4 +1360,22 @@
     opacity: 1;
     transform: none;
   }
+}
+
+/* Headings of the new bands match the display headings of the page. */
+.hv43 .hv44-process h2,
+.hv43 .hv44-trust h2,
+.hv43 .hv44-example h2,
+.hv43 .hv44-status h2 {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.hv43 .hv44-process .text-link,
+.hv43 .hv44-trust .text-link {
+  justify-self: start;
+  inline-size: fit-content;
+  margin-block-start: var(--space-3);
 }
