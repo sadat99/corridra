@@ -70,6 +70,8 @@ type Door = {
   view: string;
   routes: SpotKey[];
   labels: Partial<Record<SpotKey, { name?: string; y?: number }>>;
+  /** Goods and people come towards Bangladesh: arcs and travelling dots run from the place to it. */
+  inbound?: boolean;
 };
 const doors: readonly Door[] = [
   {
@@ -80,6 +82,7 @@ const doors: readonly Door[] = [
     view: '430 40 230 130',
     routes: ['CN', 'SG'],
     labels: { CN: {}, SG: {}, BD: {} },
+    inbound: true,
   },
   {
     route: 'sell',
@@ -88,7 +91,7 @@ const doors: readonly Door[] = [
     ticks: ['Buyers matched to your product', 'Introductions, not cold calls', 'Follow-through after'],
     view: '120 20 560 190',
     routes: ['EU', 'UK', 'US'],
-    labels: { EU: { name: 'EU' }, UK: {}, US: { name: 'US' }, BD: {} },
+    labels: { EU: {}, UK: {}, US: {}, BD: {} },
   },
   {
     route: 'delegation',
@@ -162,7 +165,7 @@ export function Choose({ intent, onChoose }: { intent: RouteKey; onChoose: (rout
             </ul>
           </div>
           <div className="hv7-panel-map" aria-hidden="true">
-            <DotMap view={door.view} routes={door.routes} labels={door.labels} />
+            <DotMap view={door.view} routes={door.routes} labels={door.labels} inbound={door.inbound} flags />
           </div>
         </div>
       </div>
@@ -177,24 +180,91 @@ const steps = [
   ['Meetings, then follow-through', 'Booked, tracked, and reported.'],
 ] as const;
 
+// What each step shows on the map (canvas board "Home v9"). The three suppliers and the two meetings are the worked
+// example's invented numbers, not data.
+const candidates = [
+  [556, 78],
+  [584, 82],
+  [577, 100],
+] as const;
+const tag = (x: number, y: number, width: number, text: string, tone: 'plain' | 'gold') => (
+  <g key={text} className="hv7-tag" data-tone={tone}>
+    <rect x={x} y={y} width={width} height={18} rx={9} />
+    <text x={x + width / 2} y={y + 12.5} textAnchor="middle">
+      {text}
+    </text>
+  </g>
+);
+
+function ProcessMap({ step }: { step: number }) {
+  const view = '440 50 200 120';
+  if (step === 1)
+    return <DotMap key={1} view={view} flags labels={{ BD: { name: 'Your request' } }} />;
+  if (step === 2)
+    return (
+      <DotMap
+        key={2}
+        view={view}
+        flags
+        routes={['CN']}
+        labels={{ CN: {}, BD: {} }}
+        extra={
+          <>
+            {candidates.map(([x, y]) => (
+              <circle key={`${x}-${y}`} className="hv7-cand" cx={x} cy={y} r={3.4} />
+            ))}
+            {tag(520, 58, 104, '3 suppliers, sources shown', 'plain')}
+          </>
+        }
+      />
+    );
+  return (
+    <DotMap
+      key={3}
+      view={view}
+      flags
+      routes={['GZ']}
+      labels={{ GZ: {}, BD: {} }}
+      extra={tag(560, 76, 68, '2 meetings', 'gold')}
+    />
+  );
+}
+
 export function Process() {
+  const [step, setStep] = useState(1);
   return (
     <section className="hv7-band" id="process" aria-labelledby="process-title">
       <Eb>How it works</Eb>
       <h2 className="hv7-h2" id="process-title">
         Three steps. One thread.
       </h2>
-      <ol className="hv7-timeline">
-        {steps.map(([title, line], index) => (
-          <li key={title}>
-            <span className="hv7-no" style={{ animationDelay: `${[0.2, 1.2, 2.2][index]}s` }}>
-              {index + 1}
-            </span>
-            <strong>{title}</strong>
-            <span>{line}</span>
-          </li>
-        ))}
-      </ol>
+      <div className="hv7-process">
+        <ol className="hv7-steps-list">
+          {steps.map(([title, line], index) => (
+            <li key={title}>
+              <button
+                type="button"
+                className="hv7-step"
+                aria-pressed={step === index + 1}
+                onClick={() => setStep(index + 1)}
+              >
+                <span className="hv7-no">{index + 1}</span>
+                <span>
+                  <b>{title}</b>
+                  <span>{line}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+        <div className="hv7-process-map" aria-hidden="true">
+          <ProcessMap step={step} />
+        </div>
+      </div>
+      <p className="hv7-caption hv7-caption-l">
+        Pick a step and the map shows what happens on it. Example: a shirt maker in Dhaka buying cotton fabric from
+        China (invented).
+      </p>
     </section>
   );
 }

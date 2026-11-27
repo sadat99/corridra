@@ -299,60 +299,101 @@
   text-align: center;
 }
 
-/* How it works */
-.hv7-timeline {
-  position: relative;
+/* How it works: three steps beside a map that shows what happens on the chosen one (canvas board "Home v9"). */
+.hv7-process {
   display: grid;
-  gap: 32px;
-  margin-block-start: 48px;
+  gap: 28px;
+  margin-block-start: 40px;
 }
-.hv7 .hv7-timeline li {
-  display: block;
-  padding-inline-end: 32px;
+@media (min-width: 56rem) {
+  .hv7-process {
+    grid-template-columns: 1fr 1.3fr;
+    align-items: stretch;
+  }
 }
-.hv7 .hv7-timeline li > strong {
-  display: block;
-  margin-block-start: 22px;
-  font-size: 21px;
-  font-weight: 600;
+.hv7-steps-list {
+  display: grid;
+  gap: 14px;
+  align-content: start;
 }
-.hv7 .hv7-timeline li > span:last-child {
-  display: block;
-  max-inline-size: 280px;
-  margin-block-start: 8px;
-  color: var(--cv-ink-2);
-  font-size: 16px;
-  line-height: 1.55;
-}
-.hv7-no {
-  position: relative;
-  z-index: 1;
+.hv7 .hv7-step {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 56px;
-  block-size: 56px;
-  color: var(--cv-white);
+  align-items: flex-start;
+  gap: 18px;
+  inline-size: 100%;
+  padding: 22px 24px;
+  color: var(--cv-ink);
+  font: inherit;
+  text-align: start;
+  background: var(--cv-white);
+  border: 1.5px solid var(--cv-line);
+  border-radius: 20px;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+}
+.hv7 .hv7-step:hover {
+  border-color: #9db5e8;
+  transform: translateY(-2px);
+}
+.hv7 .hv7-step[aria-pressed='true'] {
+  background: #f3f7fe;
+  border-color: var(--cv-brand);
+  box-shadow: 0 0 0 3px rgba(40, 86, 197, 0.14);
+}
+.hv7 .hv7-step b {
+  display: block;
   font-size: 20px;
   font-weight: 600;
-  background: var(--cv-brand);
-  border-radius: 50%;
 }
-@media (min-width: 48rem) {
-  .hv7-timeline {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0;
+.hv7 .hv7-step span span {
+  display: block;
+  margin-block-start: 6px;
+  color: var(--cv-ink-2);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.hv7-no {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 44px;
+  block-size: 44px;
+  color: var(--cv-ink-3);
+  font-size: 17px;
+  font-weight: 600;
+  background: var(--cv-white);
+  border: 2px solid #c3cbd8;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+.hv7 .hv7-step .hv7-no {
+  margin: 0;
+  color: var(--cv-ink-3);
+  font-size: 17px;
+}
+.hv7 .hv7-step[aria-pressed='true'] .hv7-no {
+  color: var(--cv-white);
+  background: var(--cv-brand);
+  border-color: var(--cv-brand);
+}
+.hv7-process-map {
+  min-block-size: 300px;
+  overflow: hidden;
+  background: var(--cv-tint);
+  border-radius: 28px;
+}
+@media (min-width: 56rem) {
+  .hv7-process-map {
+    min-block-size: 440px;
   }
-  .hv7-timeline::before {
-    content: '';
-    position: absolute;
-    inset-inline-start: 28px;
-    inset-block-start: 27px;
-    inline-size: 66.6%;
-    block-size: 3px;
-    background: var(--cv-brand);
-    transform-origin: left;
-  }
+}
+.hv7 .hv7-caption-l {
+  text-align: start;
 }
 
 /* Route statuses */
@@ -738,6 +779,37 @@
 }
 .hv7-pin-home .hv7-pulse {
   stroke: var(--cv-gold);
+}
+.hv7-flagdefs {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+}
+.hv7-flag-ring {
+  fill: var(--cv-white);
+  stroke: var(--cv-line);
+  stroke-width: 0.8;
+}
+.hv7-cand {
+  fill: var(--cv-gold);
+  stroke: var(--cv-white);
+  stroke-width: 1.2;
+}
+.hv7-tag rect {
+  fill: var(--cv-white);
+  stroke: var(--cv-line);
+}
+.hv7-tag[data-tone='gold'] rect {
+  fill: var(--cv-gold-bg);
+  stroke: none;
+}
+.hv7-tag text {
+  fill: var(--cv-ink);
+  font-size: 9.5px;
+  font-weight: 600;
+}
+.hv7-tag[data-tone='gold'] text {
+  fill: var(--cv-gold-ink);
 }
 .hv7-label {
   fill: var(--cv-ink);
@@ -1178,18 +1250,10 @@
   }
 }
 
-/* Motion: the hero rises once, the timeline line grows once, the numbers pop in. Nothing moves under reduced motion. */
-@media (min-width: 48rem) and (prefers-reduced-motion: no-preference) {
-  .hv7-timeline::before {
-    animation: hv7-grow 2.2s 0.3s cubic-bezier(0.4, 0, 0.2, 1) backwards;
-  }
-}
+/* Motion: the hero rises once, the maps draw once. Nothing moves under reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   .hv7-hero-text {
     animation: hv7-rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
-  }
-  .hv7-no {
-    animation: hv7-pop 0.6s backwards;
   }
   .hv7-panel {
     animation: hv7-rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -1200,24 +1264,6 @@
 }
 :root[data-hv7-paused] .hv7 * {
   animation-play-state: paused !important;
-}
-@keyframes hv7-grow {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-@keyframes hv7-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 @keyframes hv7-rise {
   from {
