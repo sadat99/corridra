@@ -27,8 +27,9 @@ export default function Home() {
   return (
     <PublicShell className="ux-guide-home ac1-home tr-home" translated>
       <LegacyHashRedirect {...(howTrustV43On() ? { deepPages: true } : {})} />
-      {uxSwitchOn('CORRIDRA_UX_HOME_V43') ? (
-        uxSwitchOn('CORRIDRA_UX_HOME_V44') ? (
+      {/* PREVIEW ONLY (owner, 27 Nov 2026: no variables): on branch claude/home-v44 the v4.4 home always shows. Restore the two switch checks before this branch is ever merged. */}
+      {true ? (
+        true ? (
           <HomeV44Page
             whatsapp={supportWhatsappHref()}
             {...(howTrustV43On() ? { summaries: true } : {})}
