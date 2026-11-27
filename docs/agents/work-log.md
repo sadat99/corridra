@@ -5732,6 +5732,28 @@ Follow-up, 27 Nov 2026 (conductor): PR 677 Guardian G69 review fixes. G69's Opus
 - Checks, all exit 0: build, operator connect-ai-form and p5c-desk (89 passed), design tests, typecheck, lint, format:check, and the route-pack-content integration file.
 - Not shown: the replaced spec failing on 8a40cebb. The full operator and ux suites were not run; CI is the gate.
 
+## 27 Nov 2026 - records: PR 677 merged, main 90d3ecf4, go-live warns only, KI-70 (scribe, for Guardian G69)
+
+Request: record PR 677 after merge. Why: the ledger, PLAN_STATUS, the ADR index and ADR-093 Phases still said the warn-only change was not built. Branch claude/records-g69-677 from main 90d3ecf4.
+
+What merged: PR 677 (ADR-093 go-live check warns only), main 90d3ecf4, NOT INSTALLED. Owner decision, first hand in the Route pack session, 27 Nov 2026: "confirm warn only" (first said as "Warn only" to G68 on 26 Nov).
+
+- Review: an Opus Class A review found no blockers and two important findings, both fixed: the warning line cleared itself at 6 s as a success line, and is now a caution line that stays until the next save; and the Phases line edit was reverted from PR 677 so this records PR owns it. A Sonnet delta review was clean.
+- CI: green on head 0d6d9a2c after one re-run of a ux job (KI-70).
+- Deploy: Vercel production deploy dpl_61mrGPQv4TEpTm22VXXqRCxD7vrq READY for 90d3ecf4, verified 27 Nov 2026.
+- Accepted path: ACTIVE to PAUSED with a Filled Locked Core list emptied, then PAUSED to ACTIVE, saves with a `ROUTE_PACK_GO_LIVE_PENDING_CORE` warning. PAUSED is never held back.
+- Unchanged: one refusal stays (409 `ROUTE_PACK_LOCKED_CORE_EMPTIED`); Locked Core rows still cannot be Not applicable; module not installed or switch off gives main's payloads.
+
+Changed files (docs only): docs/V3_LEDGER.md (Resume), docs/PLAN_STATUS.md (ADR-093 row only), docs/adr/README.md (ADR093 line), docs/adr/0093-route-pack-standard.md (Phases owner line only), docs/v3/KNOWN_ISSUES.md (KI-70), docs/v3/history (new archive and manifest), docs/documentation-map.json, this entry. No code, tests, switch or install. The editor spec row and file were not touched (WAITING OWNER).
+
+Guides budget: the ledger Resume lines were shortened to stay within 36 KiB; the exact earlier ledger is archived forward as docs/v3/history/ledger-before-g69-records-677-2026-11-27.md (manifest and documentation map entries added; hashes not refreshed). The relayed "dedupe" note was dropped from the Resume and lives in that archive.
+
+Verification: v3-context verify PASS, authority check PASS, prettier and test:docs in the PR body. Authority stamp auth-3db0d338cd5d before the edits and auth-718071e55cbd after (the ADR, PLAN_STATUS and ledger are authority files).
+
+Not claimed: any install, 2c merged (draft PR 678, in review), Phase 3 approved, a signed-in journey pass, native language review closed (OPEN).
+
+Next action: PR 678 (2c) to merge, then the owner decides the Phase 3 editor design. Install of 2a and 2b needs the owner's separate approval, a production Postgres major check (pins proven on PG16 only), and an installer change or acceptance of both 0001 and 0002 together.
+
 ## 27 Nov 2026 - ADR-093 Phase 2c built: route pack CSV import, apply and export, PR 678 (conductor, squad run)
 
 **Request.** Owner, first hand in session session_0187kU9tSHgFpneDdBwfinN9, 26 Nov 2026: "start phase 2 and finish all a to z, under 68". Guardian G69 (session_0187kU9ry9kwDk5ZWeCjyzAB) reviews and merges. Branch claude/bold-edison-gn2iwu, head 324ff2fb, which merges main 90d3ecf4 (#677). The diff against main is exactly 5 files: the team-control route, foundations, the missions package.json, route-pack-sheet.ts and its test.

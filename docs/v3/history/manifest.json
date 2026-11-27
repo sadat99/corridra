@@ -659,6 +659,14 @@
       "bytes": 10280,
       "sha256": "3f5e15e7bb1d70c6fd8e9c4ea960d6e597b1170cf8dbb6e8a184186d3023ed80",
       "meaning": "Exact active ledger at main c746d078 (PR 675 merged), as written by the 26 Nov records for PR 673 (its Resume line still said main 47ba4b99), before the G69 records for PRs 674 and 675 shortened the G65 answers (1) to (3), (5) and (7), the follow-up list and a superseded clause to keep the always-read guides within 36 KiB. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "90d3ecf4",
+      "archive": "docs/v3/history/ledger-before-g69-records-677-2026-11-27.md",
+      "bytes": 10297,
+      "sha256": "a3358221bfacbd3a4b2e2a7691d22eb13a16f6058acf7a4e956746b2e5266d10",
+      "meaning": "Exact active ledger at main 90d3ecf4 (PR 677 merged), before the 27 Nov 2026 records for PR 677 shortened the G68 session line, the G65 answers pointer, the follow-up pointer and the 23 Nov clean-up and smoke words (the commercial-ready table keeps them) and dropped the relayed dedupe note, to keep the always-read guides within 36 KiB. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
