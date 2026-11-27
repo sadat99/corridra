@@ -160,6 +160,8 @@ export const sheetWords = {
   sourcingAbsent:
     'This route pack has no sourcing profile, so sourcing.profile cannot be Filled. Use Pending or Not applicable.',
   pendingCustom: 'Skipped: a Pending row does not create a custom field.',
+  trimKept:
+    'Only spaces at the start or end of this value differ from the saved one, so the saved value is kept.',
   lockedPending: 'A pack setting cannot be cleared from the sheet. Use the route pack editor.',
   example: 'Remove EXAMPLE ROW from the label first. Example rows are never saved as they are.',
   customType: 'A custom field needs a type: text, number, money, date, choice, list or link.',
@@ -190,9 +192,11 @@ const stateWords: Record<SheetState, string> = {
 const routeShape = /^([A-Z][A-Z0-9]{1,9})-([A-Z][A-Z0-9]{1,9})$/;
 // The export prefixes a cell that a spreadsheet could read as a formula with one apostrophe (csvCell); the import takes it off
 // again and keeps the rest exactly, a leading tab or line break included, so an export imported unchanged changes nothing.
-// A genuine value that starts with an apostrophe and then one of these characters loses the apostrophe. Other cells are
-// trimmed.
-const escapedFormula = /^'[=+\-@\t\r\n]/;
+// A value that already starts with apostrophes and then one of these characters gets one more apostrophe on export
+// (escapedValue), so it too comes back exactly. A genuine typed value that starts with an apostrophe and then one of these
+// characters loses one apostrophe. Other cells are trimmed.
+const escapedFormula = /^'+[=+\-@\t\r\n]/;
+const escapedValue = (cell: string) => (escapedFormula.test(cell) ? "'" + cell : cell);
 const cleanCell = (cell: string | undefined) =>
   cell && escapedFormula.test(cell) ? cell.slice(1) : (cell ?? '').trim();
 const isDate = (value: string) => z.iso.date().safeParse(value).success;
@@ -366,6 +370,15 @@ const factText = (fact: ContentFact) =>
     fact.type,
     fact.allowedValues,
   ]);
+const trimmedValue = (fact: ContentFact): ContentFact => ({
+  ...fact,
+  value:
+    typeof fact.value === 'string'
+      ? fact.value.trim()
+      : Array.isArray(fact.value)
+        ? fact.value.map((item) => item.trim())
+        : fact.value,
+});
 const fieldLabel = (fact: ContentFact) =>
   standardFieldByKey.get(fact.key)?.label ?? fact.label ?? fact.key;
 
@@ -488,8 +501,8 @@ function planRoute(
     else {
       const value = typedValue(type!, row.value);
       if ('message' in value) fail(value.message);
-      else
-        facts.set(key, {
+      else {
+        const fact: ContentFact = {
           key,
           state: 'FILLED',
           value: value.value,
@@ -498,7 +511,18 @@ function planRoute(
           validUntil: optional(row.validUntil),
           note: optional(row.note),
           ...definition,
-        });
+        };
+        // A plain cell is trimmed, so a value saved with spaces at its ends comes back without them: the saved value is
+        // kept and the row says so, rather than showing it as changed.
+        const previous = facts.get(key);
+        if (
+          previous &&
+          factText(previous) !== factText(fact) &&
+          factText(trimmedValue(previous)) === factText(fact)
+        )
+          skipped.push({ row: row.row, key, message: sheetWords.trimKept });
+        else facts.set(key, fact);
+      }
     }
   }
   const document: ContentDocument = {
@@ -827,7 +851,8 @@ export class RoutePackSheetService {
     return { ...result, saved: [...saved.values()] };
   }
   // Every standard field in registry order, Pending ones included, then custom rows by section and key with the workspace's
-  // latest label, then the section marks. Raw cells: the web route writes each through csvCell.
+  // latest label, then the section marks. Plain cells, already apostrophe-safe (escapedValue); the web route writes each
+  // through csvCell.
   async export(ctx: RequestContext, input: unknown): Promise<string[][]> {
     return withTenant(this.pool, ctx, 'missions.read', async ({ db }) => {
       await requireContent(db);
@@ -855,7 +880,7 @@ export class RoutePackSheetService {
           ),
         );
       }
-      return rows;
+      return rows.map((row) => row.map(escapedValue));
     });
   }
 }
