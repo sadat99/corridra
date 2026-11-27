@@ -295,21 +295,7 @@ export function HomeV43({
           </div>
         </Dialog>
       ) : (
-        <HomeV43Brief
-          state={state}
-          dispatch={dispatch}
-          whatsapp={whatsapp}
-          {...(v44
-            ? {
-                map: v44.map({
-                  origin: state.origin,
-                  target: state.target,
-                  pick: false,
-                  dispatch,
-                }),
-              }
-            : {})}
-        />
+        <HomeV43Brief state={state} dispatch={dispatch} whatsapp={whatsapp} />
       )}
       {v44 ? (
         v44.closing({ shown, href, cta, whatsapp })
