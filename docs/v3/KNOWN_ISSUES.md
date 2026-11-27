@@ -456,19 +456,21 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Proof:** the file passes 22 of 22 locally after the change. The failure depends on a random value and was not reproduced locally before the change.
 - **If it recurs:** a new field with a random value was added to the payload; the exact key list fails first and names it.
 
-### KI-68 `home-v43.spec.ts:734` saw one extra link after the dialog closed (26 November 2026, passed on rerun, flake suspected)
+### KI-68 `home-v43.spec.ts:734` saw one extra link after the dialog closed (26 November 2026, passed on rerun; resolved by PR 684 on 27 November 2026, test only)
 
 - **Seen:** PR 665 head 7fb497c1, CI run 45807410068, job `ux (2)`, `tests/ux/home-v43.spec.ts:734`, test "Review Request opens the preview with the exact request link, Escape returns focus, closed it adds no link", failing at line 768: after the dialog closed, one extra `/plan?job=buyers&companyCountry=BD&marketCode=EU&note=...` link was in the recorded list.
 - **Why a flake is suspected:** PR 665 touched no UI; main's `ux (2)` passed; one re-run of the failed job passed. The cause was not reproduced or confirmed. The likely reading, not proved, is that the test read the link list before the closed dialog had finished clearing.
 - **If it recurs:** treat it as a real V43 defect, not a flake. Record the run id and job here, reopen this entry, and inspect the dialog close path before touching the test. Do not add a fixed sleep or loosen the assertion.
+- **Resolved (27 November 2026):** PR 684, squash-merged as 205e1752 (head 23aca521); production deploy dpl_4VVadBXbVg7xBGnhZc4oJv68bF7B READY. Root cause: the platform `<dialog>` closes and returns focus at once, but the `close` event that unmounts the preview contents runs on a later task, so the test could read the link list while the preview link was still mounted. Fix (test only, intent unchanged): `tests/ux/home-v43.spec.ts` now waits with `toHaveCount(before.length)` on `main a[href^="/plan"]` before the exact compare. No fixed sleep; the exact compare stays.
 
-### KI-69 Two flakes on PR 675, a rate window roll-over and an empty string in the home hash test (26 November 2026, both passed on one re-run)
+### KI-69 Two flakes on PR 675, a rate window roll-over and an empty string in the home hash test (26 November 2026, both passed on one re-run; (b) resolved by PR 684 on 27 November 2026)
 
 - **Seen:** PR 675, CI run 45862938526, attempt 1. Both passed on one re-run. Neither is KI-68 (`home-v43.spec.ts:734`).
   - (a) `tests/integration/customer-decision-card-route.test.ts`, the limiter test "sixty exact retries", counted 62. Reading: the rate window rolled over while the test was running, so the count was not the exact sixty.
   - (b) `tests/ux/home-v43-server.spec.ts:325`, "a link with a hash opens what hides it before it takes focus", received an empty string.
 - **Why flakes are suspected:** PR 675 changed neither file nor the decision card route or the home page. The causes were not reproduced or confirmed. Reading (a) is likely, not proved; reading (b) is not known.
 - **If it recurs:** for (a), record the run id and look at the limiter window start before touching the test; do not loosen the count. For (b), treat it as a real defect in the hash link path, not a flake, and do not add a fixed sleep.
+- **(b) resolved (27 November 2026), a real defect:** PR 684, squash-merged as 205e1752 (head 23aca521); production deploy dpl_4VVadBXbVg7xBGnhZc4oJv68bF7B READY. Root cause: `apps/web/components/home-v43-anchors.ts` dispatched `openRoute` outside a React event, so React committed the route block on a later task and the hash target lookup found nothing. Fix: the dispatch is wrapped in `flushSync`. The builder measured 8 failures in 40 runs before and 100 passes in 100 runs after. (a) stays open as written above.
 
 ### KI-70 `del-s3-people-board.spec.ts:933` found the expired-view message twice (27 November 2026, passed on one re-run, cause not established)
 
