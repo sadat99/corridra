@@ -213,7 +213,7 @@ function ProcessMap({ step }: { step: number }) {
             {candidates.map(([x, y]) => (
               <circle key={`${x}-${y}`} className="hv7-cand" cx={x} cy={y} r={3.4} />
             ))}
-            {tag(520, 58, 104, '3 suppliers, sources shown', 'plain')}
+            {tag(504, 58, 136, '3 suppliers, sources shown', 'plain')}
           </>
         }
       />
