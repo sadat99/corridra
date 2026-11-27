@@ -685,6 +685,11 @@ function readSheet(rows: { row: number; cells: string[] }[]) {
   if (octets > sheetLimits.octets) throw new DomainError(sheetWords.octets, 413);
   return sheetFromCells(rows);
 }
+// An error's code for the log: a string or a number only, whatever was thrown (null included).
+function loggedCode(error: unknown): string | number | null {
+  const code = (error as { code?: unknown } | null | undefined)?.code;
+  return typeof code === 'string' || typeof code === 'number' ? code : null;
+}
 // The warnings of a route's content and pack writes, each key once per code.
 function mergedWarnings(warnings: GoLiveWarning[]): GoLiveWarning[] {
   const byCode = new Map<GoLiveWarning['code'], Set<string>>();
@@ -837,7 +842,7 @@ export class RoutePackSheetService {
           JSON.stringify({
             event: 'route_pack_sheet_save_stopped',
             correlationId: ctx.correlationId,
-            code: (error as { code?: unknown }).code ?? null,
+            code: loggedCode(error),
           }),
         );
       const message = reused
