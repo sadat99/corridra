@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
+import { command } from './access-fixture';
 import { changeMemberNow } from './change-member';
 import { bdCnSourcingProfile } from './fixtures/bd-cn-sourcing-profile';
 import { AccessService } from '../../packages/auth/src/access';
@@ -15,7 +16,12 @@ import { CorridorService, initialRouteConfiguration } from '../../packages/missi
 import { OperationsService } from '../../packages/missions/src/operations';
 import { RoutePackContentService } from '../../packages/missions/src/route-pack-content';
 import { RoutePackSheetService } from '../../packages/missions/src/route-pack-sheet';
-import type { PackPreview, PackPublished } from '../../apps/web/lib/route-pack-editor-publish';
+import {
+  packPreviewAnswer,
+  packPublishedAnswer,
+  type PackPreview,
+  type PackPublished,
+} from '../../apps/web/lib/route-pack-editor-publish';
 
 // ADR-093 Phase 3, PR 3a: the pack settings and status of the route pack editor, the team-control action route-pack-publish,
 // previewed and published. The real handler, services and an isolated PostgreSQL with the route pack module installed; only the
@@ -29,6 +35,8 @@ const web = vi.hoisted(() => ({
   contentCalls: [] as string[],
   operationsCalls: [] as string[],
   markerCalls: 0,
+  // Run once just before the next decide command reaches the operations service: a deterministic race.
+  beforeDecide: null as null | (() => Promise<unknown>),
 }));
 let f: Awaited<ReturnType<typeof commercialFixture>>;
 let corridors: CorridorService, operations: OperationsService, content: RoutePackContentService;
@@ -42,8 +50,17 @@ const watched = <T extends object>(service: () => T, calls: () => string[]) =>
         const target = service();
         const value = Reflect.get(target, property, target);
         if (typeof value !== 'function') return value;
-        return (...args: unknown[]) => {
+        return async (...args: unknown[]) => {
           calls().push(String(property));
+          const race = web.beforeDecide;
+          if (
+            property === 'command' &&
+            (args[1] as { action?: string }).action === 'decide' &&
+            race
+          ) {
+            web.beforeDecide = null;
+            await race();
+          }
           return (value as (...a: unknown[]) => unknown).apply(target, args);
         };
       },
@@ -295,6 +312,7 @@ beforeEach(async () => {
   web.contentCalls.length = 0;
   web.operationsCalls.length = 0;
   web.markerCalls = 0;
+  web.beforeDecide = null;
   await fresh();
 });
 
@@ -595,6 +613,7 @@ describe('route-pack-publish, a preview', () => {
       changedKeys: ['languages'],
       baseVersion: 1,
       newVersion: 2,
+      duplicate: false,
       historicalAssignmentsPreserved: 0,
       warnings: [],
       blocked: null,
@@ -961,6 +980,287 @@ describe('route-pack-publish, nothing to change', () => {
       }
     expect(await counts()).toEqual(before);
     expect((await publish(statusChange(routeId, 2, 'LIMITED'))).status).toBe(201);
+  });
+});
+
+describe('route-pack-publish, a proposal under a pack that changed', () => {
+  test('a proposal saved before the one-person install, then a newer pack: the same body is 409 ROUTE_PACK_PACK_CHANGED for preview and publish, nothing written; a new id publishes', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const change = settings(routeId, 2, { languages: ['en', 'fr'] });
+    await beforeTwoA(async () => {
+      expect((await publish(change)).status).toBe(409);
+    });
+    expect(await proposalsOf(routeId)).toHaveLength(1);
+    await appendPack(routeId, 2, 'TESTING');
+    const before = await counts();
+    for (const ask of [preview, publish]) {
+      const refused = await ask(change);
+      expect(refused.status).toBe(409);
+      expect(await asJson(refused)).toMatchObject({
+        code: 'ROUTE_PACK_PACK_CHANGED',
+        error: routePackWords.packChanged,
+      });
+    }
+    expect(await counts()).toEqual(before);
+    expect((await publish({ ...change, commandId: randomUUID(), version: 3 })).status).toBe(201);
+  });
+
+  test('a pack published between the checks and the decision is 409 ROUTE_PACK_PACK_CHANGED, the proposal kept and no pack of its own; a new id publishes', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const change = settings(routeId, 2, { languages: ['en', 'fr'] });
+    web.beforeDecide = () => appendPack(routeId, 2, 'TESTING');
+    const refused = await publish(change);
+    expect(web.beforeDecide).toBeNull();
+    expect(refused.status).toBe(409);
+    expect(await asJson(refused)).toMatchObject({
+      code: 'ROUTE_PACK_PACK_CHANGED',
+      error: routePackWords.packChanged,
+    });
+    expect(await proposalsOf(routeId)).toHaveLength(1);
+    expect(await decisionsOf(routeId)).toEqual([]);
+    // The only pack added is the one published in between.
+    const packs = await packsOf(routeId);
+    expect(packs.map((pack) => pack.version)).toEqual([1, 2]);
+    expect(packs[1]!.configuration.languages).toEqual(['en']);
+    expect((await publish({ ...change, commandId: randomUUID(), version: 3 })).status).toBe(201);
+  });
+});
+
+describe('route-pack-publish, one command id, one request', () => {
+  test('an unpublished proposal is judged against the pack it stands on: the same id with a list left out, Remove sourcing profile or as a status change is 409 COMMAND_REUSED', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING', {
+      ...filledConfiguration(),
+      sourcing: bdCnSourcingProfile,
+    });
+    const change = settings(routeId, 2, { languages: ['en', 'fr'] });
+    await beforeTwoA(async () => {
+      expect((await publish(change)).status).toBe(409);
+      const before = await counts();
+      for (const other of [
+        { ...change, languages: undefined },
+        { ...change, removeSourcingProfile: true },
+        { ...change, languages: undefined, kind: 'status', status: 'TESTING' },
+      ])
+        for (const ask of [preview, publish]) {
+          const refused = await ask(other);
+          expect(refused.status).toBe(409);
+          expect(await asJson(refused)).toMatchObject({ code: 'ROUTE_PACK_COMMAND_REUSED' });
+        }
+      expect(await counts()).toEqual(before);
+    });
+    // The exact body finishes the publish.
+    expect((await publish(change)).status).toBe(201);
+    expect(await packsOf(routeId)).toHaveLength(2);
+  });
+
+  test('a published proposal: the same id sent as the other kind, or to another status, is 409 COMMAND_REUSED; the exact body stays the duplicate', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const settled = settings(routeId, 2, { languages: ['en', 'fr'] });
+    expect((await publish(settled)).status).toBe(201);
+    const moved = statusChange(routeId, 3, 'LIMITED');
+    expect((await publish(moved)).status).toBe(201);
+    const before = await counts();
+    for (const other of [
+      { ...settled, languages: undefined, kind: 'status', status: 'TESTING' },
+      { ...settled, languages: undefined, kind: 'status', status: 'LIMITED' },
+      { ...moved, status: undefined, kind: 'settings' },
+      { ...moved, status: undefined, kind: 'settings', languages: ['en', 'fr'] },
+      { ...moved, status: 'ACTIVE' },
+    ])
+      for (const ask of [preview, publish]) {
+        const refused = await ask(other);
+        expect(refused.status).toBe(409);
+        expect(await asJson(refused)).toMatchObject({ code: 'ROUTE_PACK_COMMAND_REUSED' });
+      }
+    expect(await counts()).toEqual(before);
+    for (const exact of [settled, moved]) {
+      const replay = await publish(exact);
+      expect(replay.status).toBe(200);
+      expect(await asJson(replay)).toMatchObject({ duplicate: true });
+    }
+    // The known limit: the configuration before a published proposal cannot be read, so the same id with its list left out
+    // rebuilds to the same pack and is answered as the duplicate. Nothing is written twice.
+    const limit = await publish({ ...settled, languages: undefined });
+    expect(limit.status).toBe(200);
+    expect(await asJson(limit)).toMatchObject({ version: 2, duplicate: true });
+    expect(await counts()).toEqual(before);
+  });
+});
+
+describe('route-pack-publish, the size of the proposal', () => {
+  test('a change too large to review is 400 ROUTE_PACK_INVALID in plain words for the preview and the publish, with nothing written', async () => {
+    const routeId = await newRoute();
+    const long = (prefix: string, count = 50) =>
+      Array.from({ length: count }, (_, i) => `${prefix}${'x'.repeat(74)}_${i}`);
+    const change = settings(routeId, 1, {
+      missionTypes: ['sourcing'],
+      localities: long('l'),
+      clusters: long('c'),
+      coverage: long('v'),
+    });
+    const body = Buffer.byteLength(JSON.stringify({ mode: 'preview', change }));
+    expect(body).toBeGreaterThan(12000);
+    expect(body).toBeLessThan(16384);
+    const before = await counts();
+    for (const ask of [preview, publish]) {
+      const refused = await ask(change);
+      expect(refused.status).toBe(400);
+      expect(await asJson(refused)).toMatchObject({
+        code: 'ROUTE_PACK_INVALID',
+        error: routePackWords.proposalTooLarge,
+      });
+    }
+    expect(web.operationsCalls).toEqual([]);
+    expect(await counts()).toEqual(before);
+    // Shorter lists fit.
+    const shorter = { ...change, clusters: long('c', 5), coverage: long('v', 5) };
+    expect((await preview(shorter)).status).toBe(200);
+    expect((await publish(shorter)).status).toBe(201);
+  });
+});
+
+describe('route-pack-publish, a preview under a proposal', () => {
+  test('after a publish, the preview of the same change answers the duplicate: its own version, the one before, no changed keys, nothing written', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const change = settings(routeId, 2, { languages: ['en', 'fr'] });
+    expect((await publish(change)).status).toBe(201);
+    // A newer version published since does not change the answer.
+    expect((await publish(settings(routeId, 3, { currencies: ['USD'] }))).status).toBe(201);
+    const before = await counts();
+    const previewed = await preview(change);
+    expect(previewed.status).toBe(200);
+    expect(await asJson(previewed)).toEqual({
+      kind: 'settings',
+      statusFrom: 'TESTING',
+      statusTo: 'TESTING',
+      changedKeys: [],
+      baseVersion: 1,
+      newVersion: 2,
+      duplicate: true,
+      historicalAssignmentsPreserved: 0,
+      warnings: [],
+      blocked: null,
+      onePersonPublication: true,
+      removedPolicies: [],
+    });
+    expect(await counts()).toEqual(before);
+    // The first pack of a route has no version before it.
+    const other = await newRoute();
+    const first = settings(other, 1, { missionTypes: ['sourcing'] });
+    expect((await publish(first)).status).toBe(201);
+    expect(await asJson(await preview(first))).toMatchObject({
+      duplicate: true,
+      statusFrom: null,
+      statusTo: 'DRAFT',
+      baseVersion: null,
+      newVersion: 1,
+      changedKeys: [],
+    });
+  });
+
+  test('a proposal saved but not published, on the pack in force: the preview is not a duplicate and names the proposal version', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const change = settings(routeId, 2, { languages: ['en', 'fr'] });
+    await beforeTwoA(async () => {
+      expect((await publish(change)).status).toBe(409);
+      const before = await counts();
+      const previewed = await preview(change);
+      expect(previewed.status).toBe(200);
+      expect(await asJson(previewed)).toMatchObject({
+        duplicate: false,
+        newVersion: 2,
+        baseVersion: 1,
+        changedKeys: ['languages'],
+        onePersonPublication: false,
+      });
+      expect(await counts()).toEqual(before);
+    });
+  });
+});
+
+describe('route-pack-publish, an expired policy', () => {
+  test('a Paused route drops an expired policy and names it; any other status is 409 ROUTE_PACK_POLICY_EXPIRED; a move to Paused drops it', async () => {
+    const paused = await newRoute();
+    const draft = await newRoute();
+    const policy = await f.communications.command(
+      owner(),
+      command('policy', {
+        jurisdiction: 'DE',
+        channel: 'SYNTHETIC',
+        contactPurpose: 'institutional_introduction',
+        basis: 'Invented policy that expires during the route pack editor publish test',
+        validUntil: new Date(Date.now() + 1500).toISOString(),
+        enabled: true,
+      }),
+    );
+    const withPolicy = { ...filledConfiguration(), jurisdictionPolicyRefs: [policy.id] };
+    await appendPack(paused, 1, 'PAUSED', withPolicy);
+    await appendPack(draft, 1, 'DRAFT', withPolicy);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const label = /^communication policy DE SYNTHETIC institutional_introduction version \d+$/;
+    // Settings on a Paused route: the expired reference goes, by name.
+    const change = settings(paused, 2, { languages: ['en', 'fr'] });
+    const previewed = (await (await preview(change)).json()) as PackPreview;
+    expect(previewed.changedKeys).toEqual(
+      expect.arrayContaining(['languages', 'jurisdictionPolicyRefs']),
+    );
+    expect(previewed.removedPolicies).toEqual([expect.stringMatching(label)]);
+    const published = await publish(change);
+    expect(published.status).toBe(201);
+    expect(((await published.json()) as PackPublished).removedPolicies).toEqual([
+      expect.stringMatching(label),
+    ]);
+    expect((await packsOf(paused))[1]!.configuration.jurisdictionPolicyRefs).toEqual([]);
+    // Any other status keeps the obligation, so it is refused and nothing is written.
+    const before = await counts();
+    for (const ask of [preview, publish]) {
+      const refused = await ask(statusChange(draft, 2, 'TESTING'));
+      expect(refused.status).toBe(409);
+      expect(await asJson(refused)).toMatchObject({ code: 'ROUTE_PACK_POLICY_EXPIRED' });
+    }
+    expect(await counts()).toEqual(before);
+    // A move to Paused drops it and names it.
+    const move = await publish(statusChange(draft, 2, 'PAUSED'));
+    expect(move.status).toBe(201);
+    expect(((await move.json()) as PackPublished).removedPolicies).toEqual([
+      expect.stringMatching(label),
+    ]);
+    expect((await packsOf(draft))[1]!.configuration.jurisdictionPolicyRefs).toEqual([]);
+  });
+
+  test('a policy named only by its id is left out of the preview and the publish answers', () => {
+    const name = 'communication policy DE SYNTHETIC institutional_introduction version 1';
+    const id = randomUUID();
+    expect(
+      packPublishedAnswer({
+        version: 2,
+        duplicate: false,
+        warnings: [],
+        removedPolicies: [name, id],
+      }).removedPolicies,
+    ).toEqual([name]);
+    expect(
+      packPreviewAnswer({
+        kind: 'settings',
+        statusFrom: 'PAUSED',
+        statusTo: 'PAUSED',
+        changedKeys: ['jurisdictionPolicyRefs'],
+        baseVersion: 1,
+        newVersion: 2,
+        duplicate: false,
+        historicalAssignmentsPreserved: 0,
+        warnings: [],
+        blocked: null,
+        onePersonPublication: true,
+        removedPolicies: [id, name],
+      }).removedPolicies,
+    ).toEqual([name]);
   });
 });
 

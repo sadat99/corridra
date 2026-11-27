@@ -29,6 +29,11 @@ export type PackPreview = {
   /** Null for a route with no pack yet. */
   baseVersion: number | null;
   newVersion: number;
+  /**
+   * True when the change is already published under its command id: publishing it again answers 200 duplicate and writes
+   * nothing. Then changedKeys is empty, since the configuration of the pack before it can no longer be read.
+   */
+  duplicate: boolean;
   historicalAssignmentsPreserved: number;
   /** Cautions of the go-live check, never refusals. */
   warnings: GoLiveWarning[];
@@ -62,6 +67,7 @@ export function packPreviewAnswer(result: RoutePackChangePreview): PackPreview {
     changedKeys: [...result.changedKeys],
     baseVersion: result.baseVersion,
     newVersion: result.newVersion,
+    duplicate: result.duplicate,
     historicalAssignmentsPreserved: result.historicalAssignmentsPreserved,
     warnings: copiedWarnings(result.warnings),
     blocked: result.blocked ? { code: result.blocked.code, keys: [...result.blocked.keys] } : null,
