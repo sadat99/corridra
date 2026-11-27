@@ -2,7 +2,7 @@ import { landDots } from '../lib/home-v44-land';
 
 // Home page v4.4 dotted maps: the same world, framed per use, with route arcs from Bangladesh. Decorative: the route
 // is always written in words beside it. The arcs draw once; the dot travelling along each arc and the pulse on each
-// pin are stopped by Pause Motion and by reduced motion (home-v44.css).
+// pin are stopped by Pause Motion and by reduced motion (home-v7.css).
 type Spot = { x: number; y: number };
 const spots = {
   BD: { x: 541, y: 113 },

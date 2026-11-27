@@ -8,7 +8,7 @@ import { useT } from './language-provider';
 
 // Home page v4.4 footer: the Corridra logo, unchanged and large, over the same link groups as the site footer (each
 // destination once), then the privacy line, the copyright and the language. On this page it stands in for the shared
-// footer, which is hidden by home-v44.css while this page is shown; every other page keeps the shared one.
+// footer, which is hidden by home-v7.css while this page is shown; every other page keeps the shared one.
 export function HomeV44Footer() {
   const t = useT();
   return (

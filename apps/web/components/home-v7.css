@@ -22,7 +22,7 @@
     padding-inline: 2rem;
   }
 }
-.hv7-eb {
+.hv7 .hv7-eb {
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -941,4 +941,19 @@
 }
 .hv7-btn-2:hover {
   background: var(--border-subtle);
+}
+
+/* The route sentence ("Bangladesh buys from China") is a shared component; its parts sit on one line here. */
+.hv7-small .hv42-line,
+.hv7-small .hv42-line-head,
+.hv7-small .hv42-line-places {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35em;
+}
+.hv7-small .ux-flagged {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
 }
