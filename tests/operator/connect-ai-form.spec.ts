@@ -1129,6 +1129,39 @@ test('Add route pack with the module active sends only what was set and says wha
   expect(Object.keys(routePackSent[1]!)).not.toContain('effectiveFrom');
 });
 
+test('Add route pack with the module active names the Core fields still Pending after the success words', async ({
+  page,
+}) => {
+  await open(page, {
+    read: () => ({ status: 404, json: { error: 'Not found' } }),
+    catalogue: packCatalogue,
+    routePack: {
+      reviewed: true,
+      answer: () => ({
+        id: id(80),
+        version: 1,
+        proposalId: id(81),
+        duplicate: false,
+        removedRefs: [],
+        removedPolicies: [],
+        warnings: [
+          {
+            code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE',
+            keys: ['payments.norms', 'risks.key_risks'],
+          },
+          { code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] },
+        ],
+      }),
+    },
+  });
+  await page.getByText('Add route pack', { exact: true }).click();
+  const form = await fillRoutePack(page);
+  await form.getByRole('button', { name: 'Save Route Pack' }).click();
+  await expect(routePackFeedback(page)).toHaveText(
+    'Route pack version 1 published. These Core fields are still Pending: Usual payment terms, Main risks for customers. These Core fields are now Pending on a live route: What this route is for.',
+  );
+});
+
 test('Add route pack with the module inactive sends and says what it always did', async ({
   page,
 }) => {
