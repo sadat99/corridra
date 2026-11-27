@@ -1,0 +1,45 @@
+/* The state of a route fact: a shape and its word (UI/UX.v4 visual grammar). Tokens only. Shape and word follow currentColor
+   so forced colours keep both. */
+.ux-fact-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-fact-mark .corridra-icon {
+  flex: none;
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+}
+.ux-fact-mark-shape {
+  flex: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  inline-size: var(--holder-lane-shape);
+  block-size: var(--holder-lane-shape);
+  color: var(--on-brand);
+  background: var(--surface-raised);
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+}
+.ux-fact-mark[data-state='FILLED'] .ux-fact-mark-shape {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+.ux-fact-mark[data-state='NOT_APPLICABLE'] .ux-fact-mark-shape {
+  background: var(--paper);
+  border-style: dashed;
+}
+@media (forced-colors: active) {
+  .ux-fact-mark-shape {
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+  .ux-fact-mark[data-state='FILLED'] .ux-fact-mark-shape {
+    background: CanvasText;
+    color: Canvas;
+  }
+}

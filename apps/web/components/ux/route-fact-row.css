@@ -1,0 +1,99 @@
+/* One route fact (ADR-093 Phase 3). A row of its own at every width: label, value, state, source, each on its own line on a
+   phone, the value under the label. Values wrap (any script) and the row never scrolls sideways. Tokens only. */
+.ux-fact-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--line);
+  min-inline-size: 0;
+}
+/* The doubled class keeps this above the operator pages' own list item rule (a margin under every item). */
+.ux-fact-row.ux-fact-row {
+  margin: 0;
+  padding-inline: 0;
+}
+.ux-fact-body,
+.ux-fact-main,
+.ux-fact-meta {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+.ux-fact-meta {
+  align-content: start;
+  justify-items: start;
+}
+.ux-fact-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ux-fact-value {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.ux-fact-value[hidden] {
+  display: none;
+}
+.ux-fact-value p,
+.ux-fact-value ul {
+  margin: 0;
+}
+.ux-fact-list {
+  padding-inline-start: var(--space-4);
+}
+.ux-fact-quiet {
+  color: var(--text-muted);
+}
+.ux-fact-text[data-full='false'] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: pre-line;
+}
+.ux-fact-text[data-full='true'] {
+  white-space: pre-line;
+}
+.ux-fact-toggle {
+  min-block-size: 44px;
+}
+.ux-fact-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+.ux-fact-note {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+.ux-fact-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-1) var(--space-3);
+}
+.ux-fact-until {
+  color: var(--text-2);
+  font: 500 var(--text-xs) / 1.4 var(--font-mono);
+}
+.ux-fact-pack {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.ux-fact-pack .corridra-icon {
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+}
