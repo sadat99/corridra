@@ -5880,3 +5880,31 @@ Checks at f236a8f0, all exit 0:
 **Open owner items.** Approve the 2a install, then 2b (the exact run needs the owner's separate word; the Guardian first checks the production Postgres major). Approve the Phase 3 design (#672). Fill the BD-CN template (docs/adr/0093/route-pack-template-v1.csv), then the other 7 launch routes. Phase 4 loads each route on the owner's word only.
 
 **Next action.** Owner decides the Phase 3 design and the install order. Verification of this records PR is in its description.
+
+## 27 Nov 2026 - records: PRs 684, 681, 686 merged, main 2882b1c0, ADR-093 2a installed in production (scribe, for Guardian G70)
+
+**Request.** Records for Guardian G70 (session https://claude.ai/code/session_0187kU9vDSpDNbyo18u6oADV): the merges of PRs 684, 681 and 686 and the ADR-093 2a production install. Branch claude/records-g70-2a-install from origin/main 2882b1c0, authority stamp auth-93895e61a706. Docs only, not Class A. No requirement moves to VERIFIED.
+
+**Why.** The ledger still read main 8cb406d3 with all of ADR-093 Phase 2 NOT INSTALLED and the Phase 3 editor WAITING OWNER. Both are now stale.
+
+**Outcome.**
+
+- PR 684 merged as 205e1752 (squash of head 23aca521). KI-69 (b) fixed, a real defect: `apps/web/components/home-v43-anchors.ts` dispatched `openRoute` outside a React event, so React committed the route block on a later task and the hash target lookup found nothing; the dispatch is now wrapped in `flushSync` (builder measured 8 of 40 failures before, 100 of 100 passes after). KI-68 fixed, test only: the platform `<dialog>` closes and returns focus at once but the `close` event that unmounts the preview contents is a later task; `tests/ux/home-v43.spec.ts` now waits `toHaveCount(before.length)` on `main a[href^="/plan"]` before the exact compare. Production deploy dpl_4VVadBXbVg7xBGnhZc4oJv68bF7B READY.
+- PR 681 merged as 80469cd6 (head fb8cf41d): installer choice `route_pack_install_2a` (ADR-093 2a only, without 2b). Deploy dpl_F4MrCKSbqA1oCnouF6CymDs5FZ3g READY.
+- PR 686 merged as 2882b1c0 (head 7acddfab): ADR-093 Phase 3 PR2a, the route pack facts write path, invisible. POST team-control `route-pack-facts` answers 404 like an unknown action while the 2b marker is absent, so it is dormant in production. Two independent Opus reviews, one fix round and an Opus verification. Fixed: (1) an unresolved stage conflict disappeared on re-merge or mirror restore; (2) a replay with a different version was treated as a duplicate; the service now matches id, route, version, reason and document, else 409 ROUTE_PACK_COMMAND_REUSED. Deploy dpl_64VxyYBNL3QKQfabcgNgKoNMT4ce READY.
+- Production install: workflow "Install customer modules" run 46013576406 on main 2882b1c0, apply=yes, field_modules_action=route_pack_install_2a, environment approved by the owner. Log: before "route_pack_migrations: not installed"; "Route pack publication (2a) installed or already current (content storage 2b not installed)"; after "route_pack_migrations: 1 applied"; "Install complete." ADR-093 2a is INSTALLED in production. 2b (content store, migration 0002), the go-live check and 2c remain NOT INSTALLED. Rollback of 2a: a reviewed forward run of rollback/0001_restore_independent_review.sql.
+- Phase 3 editor spec (docs/revamp/specs/route-pack-editor.md) is APPROVED. PR1 (PR 682, dca07ce5) and PR2a (PR 686) are built and merged; PR2b (the visible editor) is in progress in the Phase 3 builder session; then PR2c, PR3, PR4.
+
+**Owner words, first hand, 27 Nov 2026.** To Guardian G69: "approve phase 3 design and 2a install"; "go ahead and run the install". To G70: "ok proceed, run the install when green"; "approved, go ahead" (environment approval); "claude/home-v44 is someone else's who is working on the platform, so u let them work and proceed." The owner deleted branches claude/fix-home-v43-dialog-link, claude/wonderful-brown-upq7u3 (content identical on main) and claude/mockups-how-trust.
+
+**Carried into PR2b (follow-up list).** The save body version must come from stage.baseVersion+1, with a canSave helper. stageFact must parse and trim with contentFact. Noted, no change: the content record id is a global primary key (0002 line 17), so a foreign id reuse answers 409.
+
+**Verification.** G70 receipts as relayed: the three deploys READY and the install log lines above. Checked by this scribe run with gh api REST: PRs 684, 681 and 686 merged with merge commits 205e1752, 80469cd6 and 2882b1c0 and heads 23aca521, fb8cf41d and 7acddfab; run 46013576406 is "Install customer modules", workflow_dispatch on main, head_sha 2882b1c009823a35a71c52f42452215827c73a53, completed, conclusion success (created 2026-11-27T14:10:53Z). This records PR: `node scripts/authority.mjs check` exit 0; `node scripts/v3-context.mjs verify` exit 0; `pnpm test:docs` exit 0; `pnpm exec prettier --check` on the changed files exit 0.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action rewritten for main 2882b1c0, the merges, the 2a install and Phase 3 approval; same owner decisions); docs/v3/history/ledger-before-g70-records-686-2026-11-27.md (exact copy of the ledger at 2882b1c0, 10328 bytes, sha256 35223d9e...ff17e9) with its entries in docs/v3/history/manifest.json and docs/documentation-map.json; docs/PLAN_STATUS.md (editor spec row: CURRENT, APPROVED with the owner quote, matching the spec's own status line; ADR-093 row: 2a installed, Phase 3 approved, PR1 and PR2a merged; the ADR table was re-padded by prettier, whitespace only); docs/v3/KNOWN_ISSUES.md (KI-68 resolved; KI-69 (b) resolved, (a) stays open); this entry. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates stay as the ledger records them. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. The PR2a write path was not exercised in production, because 2b is not installed. The deploy READY states and the install log lines are G70's receipts, not re-read here. No production Postgres major check is recorded here for 2b.
+
+**Next action.** Phase 3 PR2b, then PR2c, PR3, PR4. The 2b install needs the owner's separate approval. Phase 4 loads each route on the owner's word. Native review gate OPEN. Leave claude/home-v44 to its owner.
