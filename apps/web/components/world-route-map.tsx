@@ -190,8 +190,8 @@ function Tag({
   below: boolean;
 }) {
   const mark = markFile[code];
-  const width = (name.length * 7.4 + (mark ? 44 : 24)) * k;
-  const height = 28 * k;
+  const width = (name.length * 8.6 + (mark ? 48 : 26)) * k;
+  const height = 32 * k;
   const cx = at[0];
   const cy = at[1] + (below ? 32 : -32) * k;
   return (
@@ -208,12 +208,12 @@ function Tag({
         <image
           href={`/flags/${mark}.svg`}
           x={cx - width / 2 + 8 * k}
-          y={cy - 7 * k}
-          width={20 * k}
-          height={14 * k}
+          y={cy - 8 * k}
+          width={22 * k}
+          height={16 * k}
         />
       ) : null}
-      <text x={cx - width / 2 + (mark ? 34 : 12) * k} y={cy + 4.2 * k} fontSize={12.5 * k}>
+      <text x={cx - width / 2 + (mark ? 38 : 13) * k} y={cy + 5 * k} fontSize={14.5 * k}>
         {name}
       </text>
     </g>

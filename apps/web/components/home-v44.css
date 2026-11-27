@@ -730,3 +730,13 @@
 .hv43 .hv44-jobs .ac1-job-name {
   color: var(--brand);
 }
+
+/* The Pause Motion control sits on the map, as in the approved page. */
+.hv43 .hv44-frame {
+  position: relative;
+}
+.hv43 .hv44-frame .hv44-pause {
+  position: absolute;
+  inset-block-end: var(--space-3);
+  inset-inline-end: var(--space-3);
+}

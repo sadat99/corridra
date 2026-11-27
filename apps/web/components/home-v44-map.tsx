@@ -41,7 +41,7 @@ export function HomeV44Map({
   const name = (code: PlaceCode) => t(placeName[code]);
   const markets = targetOptions(origin);
   return (
-    <figure className={paused ? 'hv44-route hv44-paused' : 'hv44-route'}>
+    <figure className={paused || !pick ? 'hv44-route hv44-paused' : 'hv44-route'}>
       <div className="hv44-frame">
         {world ? (
           <ZoomRouteMap
@@ -51,8 +51,19 @@ export function HomeV44Map({
             names={{ from: name(origin), to: name(target) }}
           />
         ) : null}
+
+        {pick ? (
+          <button
+            type="button"
+            className="hv44-pause"
+            aria-pressed={paused}
+            onClick={() => setPaused(!paused)}
+          >
+            {t(paused ? 'home.v44.motion.play' : 'home.v44.motion.pause')}
+          </button>
+        ) : null}
       </div>
-      <figcaption className="hv44-caption">
+      <figcaption className="sr-only">
         <span className="label">{t(v43('brief.card'))}</span>
         <span className="hv44-route-words">
           <Flagged code={placeFlag[origin]}>{name(origin)}</Flagged>
@@ -60,14 +71,6 @@ export function HomeV44Map({
           <Flagged code={placeFlag[target]}>{name(target)}</Flagged>
         </span>
       </figcaption>
-      <button
-        type="button"
-        className="hv44-pause"
-        aria-pressed={paused}
-        onClick={() => setPaused(!paused)}
-      >
-        {t(paused ? 'home.v44.motion.play' : 'home.v44.motion.pause')}
-      </button>
       {pick ? (
         <div className="hv44-markets" role="group" aria-label={t(v43('brief.f.to'))}>
           {markets.map((code) => (

@@ -1,10 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { CorridraIcon } from './corridra-icon';
 import { Sentence } from './home-v42-choice';
-import { TalkLink } from './home-talk';
 import { useT } from './language-provider';
 import { PlaceWords } from './place-words';
 import { v43 } from '../lib/home-v43-data';
@@ -115,12 +113,6 @@ export function HomeV44Choice({
           <div className="hv44-pick-map">{map}</div>
         </div>
         <div className="tr-start hv42-start hv44-start">
-          <div className="tr-start-actions">
-            <Link prefetch={false} className="primary-link" href={href} id="home-start">
-              {cta}
-            </Link>
-            <TalkLink href={whatsapp} />
-          </div>
           <ul className="ac1-calm">
             {(['account', 'send', 'stop'] as const).map((name) => (
               <li key={name}>
@@ -130,7 +122,7 @@ export function HomeV44Choice({
             ))}
           </ul>
           <p className="hv43-build">
-            <a className="button-secondary" href="#brief">
+            <a className="button-secondary" href="#brief" id="home-start">
               {t(v43('brief.go'))}
             </a>
             <span className="tr-small">{t(v43('q.note'))}</span>

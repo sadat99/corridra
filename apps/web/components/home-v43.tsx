@@ -211,6 +211,7 @@ export function HomeV43({
       />
       {wide ? (
         <HomeV43Markets
+          routes={false}
           market={state.market}
           direction={state.direction}
           mine={state.intent}
