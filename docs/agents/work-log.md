@@ -5983,4 +5983,4 @@ Checks at f236a8f0, all exit 0:
 
 **Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
 
-**Not verified.** No signed-in journey. PR2c was not exercised in production. ADR-093 2b (content store, migration 0002) is still NOT installed (needs owner approval and a production PG 18 major check); route-pack-facts and route-pack-publish still answer 404 in production. Deploy READY unconfirmed. Native language review gate OPEN.
+**Not verified.** No signed-in journey. PR2c was not exercised in production. ADR-093 2b (content store, migration 0002) is still NOT installed (needs owner approval and a production PG 18 major check); route-pack-facts and route-pack-publish still answer 404 in production. Deploy dpl_Fdctk5MY3RS59stPHo6HuTHyEL6H READY (G72, Vercel list_deployments by sha). Native language review gate OPEN.
