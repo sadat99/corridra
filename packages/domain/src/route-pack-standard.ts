@@ -997,6 +997,7 @@ export const routePackWords = {
   goLivePendingCore: (labels: string) => `These Core fields are still Pending: ${labels}.`,
   coreTurnsPending: (labels: string) =>
     `These Core fields are now Pending on a live route: ${labels}.`,
+  notCleared: 'This does not mean the route is cleared.',
   lockedCoreEmptied: (labels: string) =>
     `The route is live, so these fields cannot be emptied: ${labels}.`,
   notFound: 'Not found',
@@ -1424,6 +1425,12 @@ export function goLiveCheck(input: GoLiveInput): GoLiveResult {
     code: 'ROUTE_PACK_CORE_TURNS_PENDING',
     keys: afterView.pendingCore.filter((key) => !pendingBefore.has(key)),
   });
+}
+// The words of every go-live warning of one save, then that saving does not clear the route; empty without warnings.
+export function goLiveWarningsMessage(warnings: GoLiveWarning[]) {
+  return warnings.length
+    ? [...warnings.map((warning) => goLiveMessage(warning)), routePackWords.notCleared].join(' ')
+    : '';
 }
 // The person-facing words of a go-live warning or refusal, with field labels instead of keys.
 export function goLiveMessage(result: GoLiveWarning | Extract<GoLiveResult, { ok: false }>) {

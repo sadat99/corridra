@@ -29,6 +29,7 @@ import {
   emptyContentDocument,
   goLiveCheck,
   goLiveMessage,
+  goLiveWarningsMessage,
   parseContentDocument,
   reasonWithRemovedPolicies,
   routePackWords,
@@ -438,6 +439,15 @@ describe('Route Pack Standard v1, domain', () => {
       }),
     ).toBe(
       'The route is live, so these fields cannot be emptied: Working languages, Message channels.',
+    );
+    expect(goLiveWarningsMessage([])).toBe('');
+    expect(
+      goLiveWarningsMessage([
+        { code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: ['risks.key_risks'] },
+        { code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] },
+      ]),
+    ).toBe(
+      'These Core fields are still Pending: Main risks for customers. These Core fields are now Pending on a live route: What this route is for. This does not mean the route is cleared.',
     );
   });
 
