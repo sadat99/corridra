@@ -155,7 +155,9 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         headers,
       });
     if (action === 'route-pack-export' || action === 'route-pack-import') {
-      if (!uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM')) throw new DomainError('Not found', 404);
+      // Switch off, or the content module not installed: Not found, before the request is read or parsed.
+      if (!uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM') || !(await s.routePackSheet.available()))
+        throw new DomainError('Not found', 404);
       if (action === 'route-pack-export' && request.method === 'GET') {
         const routes = (new URL(request.url).searchParams.get('routes') ?? '').split('|');
         const rows = await s.routePackSheet.export(ctx, { routes });

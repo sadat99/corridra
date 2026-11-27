@@ -665,11 +665,21 @@ export class RoutePackSheetService {
     private operations: OperationsService,
     private content: RoutePackContentService,
   ) {}
+  // Whether the sheet can run at all: the switch is on and the content module's marker exists. It reads no workspace data,
+  // so the web route asks first and answers Not found before it reads or parses a request, exactly as with the switch off.
+  async available(): Promise<boolean> {
+    const db = await this.pool.connect();
+    try {
+      return await routePackContentActive(db);
+    } finally {
+      db.release();
+    }
+  }
   // The dry run writes nothing. It is the existing preview authority: owner and admin, no fresh authenticator check.
   async dryRun(ctx: RequestContext, input: unknown): Promise<SheetReport> {
-    const sheet = readSheet(z.object({ rows: cellRows }).strict().parse(input).rows);
     return withTenant(this.pool, ctx, 'audit.read', async ({ db }) => {
       await requireContent(db);
+      const sheet = readSheet(z.object({ rows: cellRows }).strict().parse(input).rows);
       return report(
         'dry-run',
         planSheet(sheet, await loadRoutePackState(db, ctx.tenantId), today()),
@@ -679,12 +689,12 @@ export class RoutePackSheetService {
   // Saving plans again against the current state and writes nothing while any error remains. Every step is idempotent by an
   // id derived from saveId, so a save that stopped part way is finished by sending the same file with the same saveId.
   async save(ctx: RequestContext, input: unknown): Promise<SheetReport> {
-    const v = saveInput.parse(input);
-    const sheet = readSheet(v.rows);
     // config.manage needs a fresh authenticator check, so a stale one stops here before anything is written.
-    const planned = await withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
+    const { v, planned } = await withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
       await requireContent(db);
-      return planSheet(sheet, await loadRoutePackState(db, ctx.tenantId), today());
+      const v = saveInput.parse(input);
+      const sheet = readSheet(v.rows);
+      return { v, planned: planSheet(sheet, await loadRoutePackState(db, ctx.tenantId), today()) };
     });
     const result = { ...report('save', planned), saved: [] as NonNullable<SheetReport['saved']> };
     if (!result.ok) return { ...result, saved: undefined };
@@ -810,12 +820,12 @@ export class RoutePackSheetService {
   // Every standard field in registry order, Pending ones included, then custom rows by section and key with the workspace's
   // latest label, then the section marks. Raw cells: the web route writes each through csvCell.
   async export(ctx: RequestContext, input: unknown): Promise<string[][]> {
-    const wanted = [
-      ...new Set(exportInput.parse(input).routes.map((route) => route.trim().toUpperCase())),
-    ];
-    if (wanted.length > sheetLimits.routes) throw new DomainError(sheetWords.exportRoutes, 400);
     return withTenant(this.pool, ctx, 'missions.read', async ({ db }) => {
       await requireContent(db);
+      const wanted = [
+        ...new Set(exportInput.parse(input).routes.map((route) => route.trim().toUpperCase())),
+      ];
+      if (wanted.length > sheetLimits.routes) throw new DomainError(sheetWords.exportRoutes, 400);
       const state = await loadRoutePackState(db, ctx.tenantId);
       const labels = latestCustomLabels(
         [...state.routes].flatMap(([routeKey, route]) => {
