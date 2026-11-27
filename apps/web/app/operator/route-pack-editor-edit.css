@@ -270,3 +270,53 @@ html:has(.route-bar) {
 .route-save-banner:empty {
   display: none;
 }
+
+/* PR 2c: the More menu in the route header, beside Change Pack Status. The button shows the icon and the word and is 44 px high;
+   the panel never runs past the viewport; row labels wrap. */
+.route-more {
+  /* A block of its own, so no line box (and no fractional strut) stands around the button. */
+  display: flex;
+  /* At the end of the first header line where it fits; wraps to its own row when the line is full. */
+  margin-inline-start: auto;
+  min-inline-size: 0;
+}
+.route-more .ux-menu-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  /* The editor lets words break anywhere; the button's own word never does. */
+  flex: none;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.route-more .ux-menu-panel {
+  max-inline-size: calc(100vw - 2 * var(--space-4));
+}
+.route-more .ux-menu-row {
+  min-block-size: 44px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+/* Below 40rem Discard Changes lives in More, so the bar does not wrap to three lines. From 40rem the bar keeps it, and a More
+   that holds only Discard would repeat it, so that menu is hidden. */
+@media (max-width: 39.999rem) {
+  .route-bar-discard {
+    display: none;
+  }
+}
+@media (min-width: 40rem) {
+  .route-more[data-only-discard] {
+    display: none;
+  }
+}
+
+/* The two dialogs of More: the note under the step line and the dialog's own scroll at a phone height. */
+.route-dialog .route-edit-step {
+  margin: 0;
+}
+.route-dialog .route-edit-field {
+  display: grid;
+  gap: var(--space-1);
+}

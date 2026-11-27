@@ -1017,6 +1017,52 @@ test.describe('after a save', () => {
     await expect(editor(page)).not.toContainText('Restored');
   });
 
+  test('a save sent for stage A does not clear a tab copy that now holds stage B', async ({
+    page,
+  }) => {
+    const world = await open(page, { query: 'route=BD-CN&section=1', facts: {} });
+    // As above: one page, so Forward and Back move between the routes while the save is out.
+    await page
+      .getByRole('link', { name: /^Bangladesh to European Union/ })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/route=BD-EU/);
+    await page.goBack();
+    await expect(page).toHaveURL(/route=BD-CN/);
+    await expect(rows(page).first()).toBeVisible();
+    await stageSummary(page, 'Stage A');
+    await reviewAndSave(page);
+    await fillReason(page);
+    world.facts!.saveScript = [{ status: 201, delay: 6000 }];
+    const answered = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/team-control/route-pack-facts') &&
+        response.request().method() === 'POST',
+      { timeout: 15000 },
+    );
+    await saveFacts(page).click();
+    await expect.poll(() => world.saves.length).toBe(1);
+    // While the answer waits: away and back, the copy of stage A comes back, and a new edit makes the copy stage B.
+    await page.goForward();
+    await expect(page).toHaveURL(/route=BD-EU/);
+    await page.goBack();
+    await expect(page).toHaveURL(/route=BD-CN/);
+    await expect(status(page)).toHaveText('Restored 1 change that was not saved.');
+    await keepText(page, summaryLabel, 'Stage B');
+    const copy = () =>
+      page.evaluate(
+        ({ tenant, route }) =>
+          window.sessionStorage.getItem(`corridra:route-pack-stage:${tenant}:${route}`),
+        { tenant: fixtureTenant, route: routeIds.bdCn },
+      );
+    await expect.poll(copy).toContain('Stage B');
+    // The save of stage A lands now; the page that sent it has gone, and what it clears is only a copy of what it sent.
+    await answered;
+    await page.waitForTimeout(500);
+    expect(await copy()).toContain('Stage B');
+    expect(await stageKeys(page)).toHaveLength(1);
+  });
+
   test('a dialog with a long title at 320 keeps Close whole on one line', async ({ page }) => {
     await open(page, { width: 320, height: 568, query: 'route=BD-CN&section=1' });
     await stageSummary(page);

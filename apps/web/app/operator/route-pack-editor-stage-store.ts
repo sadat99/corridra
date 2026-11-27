@@ -33,6 +33,17 @@ export function clearMirror(tenant: string, routeId: string) {
     // The page works without the copy.
   }
 }
+/**
+ * Whether the tab's copy is still the stage that was sent. A save can land after the person left the route and came back to
+ * it, by when the copy holds newer edits; the save clears only a copy of what it sent.
+ */
+export function mirrorMatches(tenant: string, routeId: string, sent: Stage) {
+  try {
+    return window.sessionStorage.getItem(mirrorKey(tenant, routeId)) === serialiseStage(sent);
+  } catch {
+    return false;
+  }
+}
 
 /** The one row that is open for editing: its draft, the step, what the last "Next" or "Keep Change" refused. */
 export type OpenRow = {
