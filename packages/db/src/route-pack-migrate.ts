@@ -8,16 +8,28 @@ import { migrateOnce } from './migration-run';
 // operations guard is already installed (it never installs that module itself), and the SQL refuses unless the guard definition
 // is exactly the one that module installed. It opens no gate. Only top-level .sql files are applied; the rollback directory is
 // never run here. No runtime request receives this owner connection.
-export function migrateRoutePack(pool: DatabasePool) {
-  return migrateOnce(pool, 'migrateRoutePack', () => migrateRoutePackRun(pool));
+// `through` (a four digit prefix such as '0001') stops after that file, so 2a can be installed without 2b. Every source is still
+// loaded and every history row is still verified against its source, so a changed later file stops a partial run too.
+export type RoutePackOptions = { through?: string };
+
+export function migrateRoutePack(pool: DatabasePool, options: RoutePackOptions = {}) {
+  return migrateOnce(pool, 'migrateRoutePack', () => migrateRoutePackRun(pool, options));
 }
 
-async function migrateRoutePackRun(pool: DatabasePool) {
+async function migrateRoutePackRun(pool: DatabasePool, options: RoutePackOptions) {
   const directory = new URL('../route-pack-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();
   for (const name of (await readdir(directory)).filter((name) => name.endsWith('.sql')).sort()) {
     const sql = await readFile(new URL(name, directory), 'utf8');
     sources.set(name, { sql, hash: createHash('sha256').update(sql).digest('hex') });
+  }
+  let last: string | undefined;
+  if (options.through !== undefined) {
+    const through = options.through;
+    last = /^\d{4}$/.test(through)
+      ? [...sources.keys()].find((name) => name.startsWith(`${through}_`))
+      : undefined;
+    if (!last) throw new Error(`Unknown route pack migration to install through: ${through}`);
   }
   const db = await pool.connect();
   try {
@@ -50,6 +62,7 @@ async function migrateRoutePackRun(pool: DatabasePool) {
         throw new Error('Route pack migration history mismatch');
     for (const [name, source] of sources) {
       if (applied.rows.some((row) => row.name === name)) continue;
+      if (last !== undefined && name > last) continue;
       await db.query(source.sql);
       await db.query('INSERT INTO route_pack_migrations.applied(name,sha256) VALUES($1,$2)', [
         name,
