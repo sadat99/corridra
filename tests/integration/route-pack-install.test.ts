@@ -4,7 +4,12 @@ import type { PoolClient } from 'pg';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
-import { migrateRoutePack, routePackThroughFile } from '../../packages/db/src/route-pack-migrate';
+import { migrateRoutePack } from '../../packages/db/src/route-pack-migrate';
+import { migrateRoutePack2a } from '../../packages/db/src/route-pack-2a-migrate';
+import {
+  applyRoutePackMigrations,
+  routePackThroughFile,
+} from '../../packages/db/src/route-pack-apply';
 import { endMigrationRun, startMigrationRun } from '../../packages/db/src/migration-run';
 import { rawContext } from './support';
 
@@ -294,12 +299,11 @@ const registryRows = async () =>
   (await f.owner.query(`SELECT name,sha256 FROM ${registry} ORDER BY name`)).rows;
 const schemaPresent = async () =>
   (await f.owner.query("SELECT to_regnamespace('route_pack_migrations') r")).rows[0].r;
-const only2a = { through: '0001' };
 
 test('2a alone: a fresh database without the real-use modules still refuses and records nothing', async () => {
   await f.close();
   f = await commercialFixture();
-  await expect(migrateRoutePack(f.owner, only2a)).rejects.toThrow(
+  await expect(migrateRoutePack2a(f.owner)).rejects.toThrow(
     'The customer real-use modules are not installed, so route pack publication was not installed. Run the real-use install first.',
   );
   expect(await schemaPresent()).toBeNull();
@@ -309,7 +313,7 @@ test('2a alone: a fresh database without the real-use modules still refuses and 
 
 test('2a alone: an unknown through value is refused and writes nothing', async () => {
   for (const through of ['0003', '0000', '1', '', ' 0001', '0001_one', '0002x', 'abc'])
-    await expect(migrateRoutePack(f.owner, { through })).rejects.toThrow(
+    await expect(applyRoutePackMigrations(f.owner, through)).rejects.toThrow(
       `Unknown route pack migration to install through: ${through}`,
     );
   expect(await schemaPresent()).toBeNull();
@@ -324,7 +328,7 @@ test('2a alone: a drifted guard still refuses and changes nothing', async () => 
   expect(drifted).not.toBe(original.d);
   await f.owner.query(drifted);
   try {
-    await expect(migrateRoutePack(f.owner, only2a)).rejects.toThrow(
+    await expect(migrateRoutePack2a(f.owner)).rejects.toThrow(
       'Route pack prerequisite function differs: app.guard_operations_control',
     );
     expect(await marker()).toBeNull();
@@ -337,7 +341,7 @@ test('2a alone: a drifted guard still refuses and changes nothing', async () => 
 
 test('2a alone applies 0001 only: no 0002 row, no content table, no content marker, and a repeat is a no-op', async () => {
   const before = await functionHashes();
-  await migrateRoutePack(f.owner, only2a);
+  await migrateRoutePack2a(f.owner);
   const after = await functionHashes();
   expect(
     [...after]
@@ -352,7 +356,7 @@ test('2a alone applies 0001 only: no 0002 row, no content table, no content mark
   expect(await contentTable()).toBeNull();
   expect(await contentMarker()).toBeNull();
   const installed = await state();
-  await migrateRoutePack(f.owner, only2a);
+  await migrateRoutePack2a(f.owner);
   expect(await state()).toEqual(installed);
   expect(await functionHashes()).toEqual(after);
 });
@@ -364,7 +368,7 @@ test('2a alone: a changed 0002 source, or a changed 0001 source, stops the 2a ru
     contentFile,
   ]);
   try {
-    await expect(migrateRoutePack(f.owner, only2a)).rejects.toThrow(
+    await expect(migrateRoutePack2a(f.owner)).rejects.toThrow(
       'Route pack migration history mismatch',
     );
   } finally {
@@ -373,7 +377,7 @@ test('2a alone: a changed 0002 source, or a changed 0001 source, stops the 2a ru
   expect(await state()).toEqual(before);
   await f.owner.query(`UPDATE ${registry} SET sha256=repeat('0',64) WHERE name=$1`, [file]);
   try {
-    await expect(migrateRoutePack(f.owner, only2a)).rejects.toThrow(
+    await expect(migrateRoutePack2a(f.owner)).rejects.toThrow(
       'Route pack migration history mismatch',
     );
   } finally {
@@ -404,7 +408,7 @@ test('a later full install verifies the 2a hash, then applies 0002', async () =>
   expect(await marker()).not.toBeNull();
   // 2a alone after both are installed finds nothing to do.
   const installed = await state();
-  await migrateRoutePack(f.owner, only2a);
+  await migrateRoutePack2a(f.owner);
   expect(await state()).toEqual(installed);
 });
 
@@ -422,14 +426,14 @@ test('within one installer run a 2a-only call never makes a later full call skip
   await freshWithRealUse();
   startMigrationRun(f.owner);
   try {
-    await migrateRoutePack(f.owner, only2a);
+    await migrateRoutePack2a(f.owner);
     expect(await registryRows()).toEqual([{ name: file, sha256: sha(`${dir}/${file}`) }]);
     expect(await contentTable()).toBeNull();
     await migrateRoutePack(f.owner);
     expect(await registryRows()).toEqual(bothApplied);
     expect(await contentTable()).not.toBeNull();
     // The reverse order shares nothing either, and a repeat of the same call is still shared.
-    await migrateRoutePack(f.owner, only2a);
+    await migrateRoutePack2a(f.owner);
     await migrateRoutePack(f.owner);
     expect(await registryRows()).toEqual(bothApplied);
   } finally {
@@ -439,14 +443,14 @@ test('within one installer run a 2a-only call never makes a later full call skip
 
 test('through 0002 behaves like the full install', async () => {
   await freshWithRealUse();
-  await migrateRoutePack(f.owner, { through: '0002' });
+  await applyRoutePackMigrations(f.owner, '0002');
   expect(await registryRows()).toEqual(bothApplied);
   expect(await contentTable()).not.toBeNull();
   expect(await contentMarker()).not.toBeNull();
   expect(await marker()).not.toBeNull();
   const installed = await state();
   await migrateRoutePack(f.owner);
-  await migrateRoutePack(f.owner, { through: '0002' });
+  await applyRoutePackMigrations(f.owner, '0002');
   expect(await state()).toEqual(installed);
 }, 180000);
 

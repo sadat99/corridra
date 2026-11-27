@@ -51,6 +51,7 @@ import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-chan
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-migrate';
 import { migrateRoutePack } from '../packages/db/src/route-pack-migrate';
+import { migrateRoutePack2a } from '../packages/db/src/route-pack-2a-migrate';
 import { migrateAiModelPolicyReal } from '../packages/db/src/ai-model-policy-real-migrate';
 import { migrateAiRealRuns } from '../packages/db/src/ai-real-runs-migrate';
 import { migrateOutreachReal } from '../packages/db/src/outreach-real-migrate';
@@ -949,7 +950,7 @@ try {
       console.log('Route pack module installed or already current');
     }
     if (v.ROUTE_PACK_ACTION === 'install_2a') {
-      await migrateRoutePack(pool, { through: '0001' });
+      await migrateRoutePack2a(pool);
       console.log(
         'Route pack publication (2a) installed or already current (content storage 2b not installed)',
       );
