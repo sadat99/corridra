@@ -13,7 +13,20 @@ import { migrateOnce } from './migration-run';
 export type RoutePackOptions = { through?: string };
 
 export function migrateRoutePack(pool: DatabasePool, options: RoutePackOptions = {}) {
-  return migrateOnce(pool, 'migrateRoutePack', () => migrateRoutePackRun(pool, options));
+  // The key carries `through`, so a 2a-only call in one installer run can never make a later full call skip 0002.
+  return migrateOnce(pool, `migrateRoutePack:${options.through ?? 'all'}`, () =>
+    migrateRoutePackRun(pool, options),
+  );
+}
+
+// The one file a `through` value names: exactly four digits and exactly one top-level file with that prefix, else a plain error.
+export function routePackThroughFile(names: string[], through: string) {
+  const matches = /^\d{4}$/.test(through)
+    ? names.filter((name) => name.startsWith(`${through}_`))
+    : [];
+  if (matches.length !== 1)
+    throw new Error(`Unknown route pack migration to install through: ${through}`);
+  return matches[0]!;
 }
 
 async function migrateRoutePackRun(pool: DatabasePool, options: RoutePackOptions) {
@@ -23,14 +36,10 @@ async function migrateRoutePackRun(pool: DatabasePool, options: RoutePackOptions
     const sql = await readFile(new URL(name, directory), 'utf8');
     sources.set(name, { sql, hash: createHash('sha256').update(sql).digest('hex') });
   }
-  let last: string | undefined;
-  if (options.through !== undefined) {
-    const through = options.through;
-    last = /^\d{4}$/.test(through)
-      ? [...sources.keys()].find((name) => name.startsWith(`${through}_`))
-      : undefined;
-    if (!last) throw new Error(`Unknown route pack migration to install through: ${through}`);
-  }
+  const last =
+    options.through === undefined
+      ? undefined
+      : routePackThroughFile([...sources.keys()], options.through);
   const db = await pool.connect();
   try {
     await db.query('BEGIN');

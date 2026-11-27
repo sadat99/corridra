@@ -4,7 +4,8 @@ import type { PoolClient } from 'pg';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
-import { migrateRoutePack } from '../../packages/db/src/route-pack-migrate';
+import { migrateRoutePack, routePackThroughFile } from '../../packages/db/src/route-pack-migrate';
+import { endMigrationRun, startMigrationRun } from '../../packages/db/src/migration-run';
 import { rawContext } from './support';
 
 // ADR-093 Phase 2a, the database side of the install. app.guard_operations_control() is replaced once, hash-guarded, by an
@@ -405,4 +406,59 @@ test('a later full install verifies the 2a hash, then applies 0002', async () =>
   const installed = await state();
   await migrateRoutePack(f.owner, only2a);
   expect(await state()).toEqual(installed);
+});
+
+const freshWithRealUse = async () => {
+  await f.close();
+  f = await commercialFixture();
+  await migrateCustomerRealUse(f.owner);
+};
+const bothApplied = [
+  { name: file, sha256: sha(`${dir}/${file}`) },
+  { name: contentFile, sha256: sha(`${dir}/${contentFile}`) },
+];
+
+test('within one installer run a 2a-only call never makes a later full call skip 0002', async () => {
+  await freshWithRealUse();
+  startMigrationRun(f.owner);
+  try {
+    await migrateRoutePack(f.owner, only2a);
+    expect(await registryRows()).toEqual([{ name: file, sha256: sha(`${dir}/${file}`) }]);
+    expect(await contentTable()).toBeNull();
+    await migrateRoutePack(f.owner);
+    expect(await registryRows()).toEqual(bothApplied);
+    expect(await contentTable()).not.toBeNull();
+    // The reverse order shares nothing either, and a repeat of the same call is still shared.
+    await migrateRoutePack(f.owner, only2a);
+    await migrateRoutePack(f.owner);
+    expect(await registryRows()).toEqual(bothApplied);
+  } finally {
+    endMigrationRun(f.owner);
+  }
+}, 180000);
+
+test('through 0002 behaves like the full install', async () => {
+  await freshWithRealUse();
+  await migrateRoutePack(f.owner, { through: '0002' });
+  expect(await registryRows()).toEqual(bothApplied);
+  expect(await contentTable()).not.toBeNull();
+  expect(await contentMarker()).not.toBeNull();
+  expect(await marker()).not.toBeNull();
+  const installed = await state();
+  await migrateRoutePack(f.owner);
+  await migrateRoutePack(f.owner, { through: '0002' });
+  expect(await state()).toEqual(installed);
+}, 180000);
+
+test('a through value must name exactly one file', () => {
+  const names = ['0001_a.sql', '0002_b.sql'];
+  expect(routePackThroughFile(names, '0001')).toBe('0001_a.sql');
+  expect(routePackThroughFile(names, '0002')).toBe('0002_b.sql');
+  for (const through of ['0003', '001', '0001_a', ''])
+    expect(() => routePackThroughFile(names, through)).toThrow(
+      `Unknown route pack migration to install through: ${through}`,
+    );
+  expect(() => routePackThroughFile([...names, '0001_other.sql'], '0001')).toThrow(
+    'Unknown route pack migration to install through: 0001',
+  );
 });
