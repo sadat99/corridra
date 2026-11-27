@@ -58,7 +58,7 @@ export type CustomPlan =
 /**
  * Step 1 of Add Custom Field: the key, definition and field of a new custom field in `section`, or every refusal in the order
  * of the form. `takenKeys` holds every key the route has, saved or staged (and the keys of custom labels); a label whose key is
- * taken is refused in words and never renamed with a suffix (spec 8.8). A choice or a list needs at least 2 allowed values.
+ * taken is refused in words and never renamed with a suffix (spec 8.8). A choice needs at least 2 allowed values; a list may have none (a free list).
  */
 export function addCustomPlan(input: {
   label: string;
@@ -87,7 +87,7 @@ export function addCustomPlan(input: {
         : [];
   const refusals = [...labelRefusals, ...shared];
   const allowed = new Set(input.allowed.map((value) => value.trim()).filter(Boolean));
-  if ((input.type === 'choice' || input.type === 'list') && allowed.size < 2) {
+  if (input.type === 'choice' && allowed.size < 2) {
     // With no allowed values the only refusal of the shared definition about them is the empty choice, which this replaces.
     const kept =
       allowed.size === 0 ? refusals.filter((refusal) => refusal.field !== 'items') : refusals;

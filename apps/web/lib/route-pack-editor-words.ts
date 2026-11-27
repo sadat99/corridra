@@ -29,13 +29,82 @@ export const leaveWords = (n: number, kept = false) =>
     ? kept
       ? `Leaving this route puts your ${n} unsaved ${many(n, 'change', 'changes')} aside. Your saved facts are not affected.`
       : `Leaving this route removes ${n} ${many(n, 'change', 'changes')} that ${many(n, 'is', 'are')} not saved. Your saved facts are not affected.`
-    : 'Leaving this route removes the answer you are editing, which is not kept yet. Your saved facts are not affected.';
+    : 'Leaving this route removes the answer you are editing. You have not pressed Keep Change on it. Your saved facts are not affected.';
 export const leaveKept = 'Your changes are kept for this tab session.';
 export const pendingClears =
   'Pending clears the saved value from the next version. Earlier versions keep it.';
 export const removeFieldHelp =
   'This field is no longer listed on this route after you save. Earlier versions keep it.';
 export const nothingLeftToSave = 'Nothing is left to save.';
+
+// ---- The More menu and its two dialogs (PR 2c, spec 8.1, 8.6, 8.8) --------------------------------------------------------------
+export const moreWords = {
+  /** The visible word of the button. */
+  button: 'More',
+  buttonLabel: (route: string) => `More actions for ${route}`,
+  addCustom: 'Add Custom Field',
+  mark: 'Mark Section Not Applicable',
+  unmark: 'Unmark Section',
+  discard: 'Discard Changes',
+  markName: (section: string) => `Mark Section Not Applicable, ${section}`,
+  unmarkName: (section: string) => `Unmark Section, ${section}`,
+} as const;
+export const markDialogWords = {
+  title: 'Mark Section Not Applicable',
+  reason: 'Reason',
+  statement:
+    'Every field in this section that is not Filled becomes Not applicable. Filled facts keep their value. Pack settings that are Core stay required.',
+  confirm: 'Mark Not Applicable',
+  cancel: 'Cancel',
+  /** "Section 5, Trade fairs and events." */
+  sectionLine: (number: number, name: string) => `Section ${number}, ${name}.`,
+} as const;
+export const markRemovedLine = (n: number) => `Mark removed. ${changesNotSaved(n)}.`;
+export const fieldAddedLine = (n: number) => `Field added. ${changesNotSaved(n)}.`;
+export const customDialogWords = {
+  title: 'Add Custom Field',
+  step1: 'Step 1 of 2: Define · Next: Value',
+  step2: 'Step 2 of 2: Value',
+  label: 'Label',
+  type: 'Type',
+  allowed: 'Allowed values',
+  allowedHelp: 'One value on each line.',
+  next: 'Next',
+  back: 'Back',
+  cancel: 'Cancel',
+  add: 'Add Field',
+  answer: 'Answer',
+  nothingSaved: 'Nothing is saved until you press Review and Save.',
+  goesIn: (number: number, name: string) => `Goes in section ${number}, ${name}.`,
+  savedAs: (key: string) => `Saved as ${key}`,
+} as const;
+/** The types a custom field may have, in the order of the Type select. */
+export const customTypeOptions = [
+  { value: 'text', label: 'Text' },
+  { value: 'number', label: 'Number' },
+  { value: 'money', label: 'Money' },
+  { value: 'date', label: 'Date' },
+  { value: 'choice', label: 'Choice' },
+  { value: 'list', label: 'List' },
+  { value: 'link', label: 'Link' },
+] as const;
+/**
+ * The line under a section marked Not applicable when Locked Core rows in it are not Filled (spec 8.6): the section word stays
+ * Pending and this says why. One label, or the first label and a count of the others. Labels come from the data.
+ */
+export function lockedCorePendingLine(labels: string[]): Words | null {
+  const first = labels[0];
+  if (first === undefined) return null;
+  const lead = 'This section is marked Not applicable, but ';
+  if (labels.length === 1)
+    return [lead, { label: cut(first, 40) }, ' is a Core pack setting and is still Pending.'];
+  const rest = labels.length - 1;
+  return [
+    lead,
+    { label: cut(first, 40) },
+    ` and ${rest} more pack ${many(rest, 'setting', 'settings')} are Core and still Pending.`,
+  ];
+}
 
 // ---- Labels in a sentence -----------------------------------------------------------------------------------------------------
 /** Pieces of a sentence: plain text, and a label the screen wraps in `<bdi>` because it may be in any script. */

@@ -97,7 +97,7 @@ describe('Add Custom Field, step 1: Define', () => {
     });
   });
 
-  test('refuses a label with no usable letters, and a choice or a list with fewer than 2 allowed values', () => {
+  test('refuses a label with no usable letters, and a choice with fewer than 2 allowed values', () => {
     expect(messages(plan({ label: 'ビザ' }))).toEqual([
       'This name has no letters or numbers the route file can use. Add a word in English letters.',
     ]);
@@ -105,7 +105,10 @@ describe('Add Custom Field, step 1: Define', () => {
     const fewer = 'Add at least 2 allowed values, one per line.';
     expect(messages(plan({ type: 'choice', allowed: [] }))).toEqual([fewer]);
     expect(messages(plan({ type: 'choice', allowed: ['Yes', ' Yes ', ''] }))).toEqual([fewer]);
-    expect(messages(plan({ type: 'list', allowed: ['Spring'] }))).toEqual([fewer]);
+    expect(messages(plan({ type: 'choice', allowed: ['Spring'] }))).toEqual([fewer]);
+    // A list may have no allowed values (a free list), or any number of them.
+    expect(plan({ type: 'list', allowed: [] })).toMatchObject({ ok: true });
+    expect(plan({ type: 'list', allowed: ['Spring'] })).toMatchObject({ ok: true });
     expect(plan({ type: 'list', allowed: ['Spring', 'Autumn'] })).toMatchObject({
       ok: true,
       definition: { type: 'list', allowedValues: ['Spring', 'Autumn'] },
