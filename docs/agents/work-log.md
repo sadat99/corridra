@@ -5834,3 +5834,49 @@ Checks at f236a8f0, all exit 0:
 
 - route-pack-sheet, route-pack-content and revamp-money-screens: 84 tests
 - typecheck, lint, format
+
+## 27 Nov 2026 - records: PR 678 merged, main 8cb406d3, ADR-093 Phase 2 complete, not installed (scribe, for Guardian G69)
+
+**Request.** Records for the merge of PR 678 (ADR-093 2c). Branch claude/records-g69-678 from origin/main 8cb406d3. Docs only, not Class A. No requirement moves to VERIFIED.
+
+**Outcome.**
+
+- Main is 8cb406d3: PR 678, route pack CSV import with dry run first, apply, and formula-safe export, on the existing team control route.
+- Vercel production deploy dpl_4TFddHGYVVKWPmJJLJSpzFuvQbBb is READY for 8cb406d3 (verified 27 Nov 2026).
+- This session on main: 673 2a (47ba4b99), 675 2b (c746d078), 676 records (8db293d7), 677 warn only (90d3ecf4), 679 records (1453a1ca), 678 2c (8cb406d3).
+- ADR-093 Phase 2 code is complete: 2a, 2b, warn only, 2c. All NOT INSTALLED.
+- 2c is dormant in production. CORRIDRA_ROUTE_PACK_FORM is on and the 2b marker is absent, so both actions answer 404 before reading the body, the same as an unknown action. This was fixed in review.
+
+**2c contract.**
+
+- GET route-pack-export (routes=BD-CN or CN-BD): every staff role under missions.read, staff only, no customer surface.
+- POST route-pack-import {mode, csv, saveId?, reason?}. The dry run needs audit.read (owner or admin), no step-up, and writes nothing. Save needs config.manage (owner only) plus a fresh authenticator check on every write step.
+- CSV is UTF-8, at most 1 MiB, 5000 rows and 20 routes. The body cap for these two actions is 2 MiB, streaming; other actions keep 4096.
+- Export is formula safe (a value starting with = + - @ tab CR or LF is prefixed). A value already starting with an apostrophe is escaped, so export then import is exact.
+- A Pending row on a Filled pack setting (Locked row) is reported as skipped: "The pack keeps its current setting; the sheet cannot clear it." It is never dropped silently. Status never changes on import.
+- Apply goes through judgedPacks, judge, appendBatch and publishReviewed with expectedBasePackId.
+
+**Review and CI.**
+
+- Two Opus Class A reviews, no blockers. Findings fixed: marker-absent 404 gate, silent drop of Pending on a Filled pack setting, prototype-key state lookup, apostrophe round trip, log null throw, skip text.
+- CI caught one real tripwire: tests/integration/revamp-money-screens.test.ts pins file-producing routes (M-10). The team-control route was added with a reviewed comment. It was the only CI failure and it was real, so no flake entry is added. KI-70 is intact.
+- Accepted export content: the export is staff only. Standard v1 fields carry no price, quote, markup or contact. A custom money field can hold a route-level cost, and a custom text field or note can hold a phone number (only emails are refused at write). The export reproduces them. Accepted as no new authority, because the overview already shows the same to missions.read.
+
+**Accepted limits for Phase 3.**
+
+- The old form and the sheet cannot clear a list or pack setting. The Phase 3 editor must.
+- An export of 20 full routes can exceed the 1 MiB import cap. The message tells staff to split the file.
+- STEP_UP_REQUIRED on a sheet save is nested in report.errors[0].code.
+- SheetReport uses `updated` for the list and `changed` for the boolean.
+
+**Phase 3 handover.** The Phase 3 editor (spec #672) is WAITING OWNER, not approved. The Route pack session has stopped (rotation) and its worktrees are removed; branch claude/bold-edison-gn2iwu equals main. When the owner approves, launch a fresh builder under the Guardian with the Route pack session handover, which is in the work-log entries of 26 and 27 Nov 2026 (PRs 668, 673, 675, 677, 678). Service APIs: RoutePackContentService (capabilities, overview, history, packHistory, append, appendBatch, goLive, proposalOf, withoutExpiredRefs), publishReviewed, changeRouteStatus, createRoutePack, RoutePackSheetService (available, dryRun, save, export). Domain exports: standardFieldsV1, deriveCompleteness, goLiveCheck, goLiveMessage, goLiveWarningsMessage, carriedConfiguration, blankSheetRows, latestCustomLabels, routePackWords. GoLiveResult is { ok: true, warnings } or { ok: false, code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED', keys }. 409 codes: ROUTE_PACK_PACK_CHANGED, POLICY_EXPIRED, COMMAND_REUSED, CONTENT_CHANGED, CUSTOM_KEY_CONFLICT, NOT_PUBLISHED. 400: ROUTE_PACK_INVALID. The caution feedback kind carries "This does not mean the route is cleared."
+
+**Changed files.** docs/V3_LEDGER.md (Resume and next action rewritten shorter, same owner decisions; stale "2c is draft PR 678 in review" removed); docs/v3/history/ledger-before-g69-records-678-2026-11-27.md (exact copy of the ledger at 8cb406d3, 10303 bytes, sha256 4c64d25d...f6851) with its entries in docs/v3/history/manifest.json and docs/documentation-map.json; docs/PLAN_STATUS.md (ADR-093 row only); docs/adr/README.md (ADR-093 line); docs/adr/0093-route-pack-standard.md (Phases, the 2c line only); this entry. No code, tests, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates stay as the ledger records them. Native language review stays OPEN. The editor spec row in PLAN_STATUS is untouched.
+
+**Not run or claimed.** No install of 2a or 2b. No signed-in journey pass. Native language review is not closed. Phase 3 is not approved and Phase 4 has not started. No production Postgres major check yet (pins proven on PG16 only). route_pack_install applies every pending file, so 0001 and 0002 go together unless the installer is changed.
+
+**Open owner items.** Approve the 2a install, then 2b (the exact run needs the owner's separate word; the Guardian first checks the production Postgres major). Approve the Phase 3 design (#672). Fill the BD-CN template (docs/adr/0093/route-pack-template-v1.csv), then the other 7 launch routes. Phase 4 loads each route on the owner's word only.
+
+**Next action.** Owner decides the Phase 3 design and the install order. Verification of this records PR is in its description.
