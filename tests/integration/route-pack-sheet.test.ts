@@ -103,12 +103,12 @@ const counts = async () =>
        (SELECT count(*) FROM app.configuration_decision)::int decisions`,
     )
   ).rows[0];
-// Events, outbox rows and command (idempotency) rows: a dry run adds none.
+// Events, outbox rows, command (idempotency) rows and audit rows: a dry run adds none.
 const writes = async () =>
   (
     await f.owner.query(
       `SELECT (SELECT count(*) FROM app.domain_event)::int events,(SELECT count(*) FROM app.outbox)::int outbox,
-       (SELECT count(*) FROM app.operations_command)::int commands`,
+       (SELECT count(*) FROM app.operations_command)::int commands,(SELECT count(*) FROM app.audit_event)::int audit`,
     )
   ).rows[0];
 const routeId = async (key: string) => {
@@ -479,6 +479,9 @@ test('on an ACTIVE route a file cannot empty pack.languages: a Filled row withou
   // A Pending row cannot clear a Filled pack setting, and the dry run and the save both say so.
   const pendingFile = [line({ route: 'CL-BO', field_key: 'pack.languages', state: 'Pending' })];
   const notCleared = [{ row: 2, key: 'pack.languages', message: sheetWords.lockedPending }];
+  expect(sheetWords.lockedPending).toBe(
+    'The pack keeps its current setting; the sheet cannot clear it.',
+  );
   const dry = await sheet.dryRun(owner(), { rows: rowsOf(pendingFile) });
   expect(plan(dry, 'CL-BO').skipped).toEqual(notCleared);
   const pending = await save(pendingFile);
@@ -1302,4 +1305,29 @@ test('file words that name object prototype keys are ordinary text: refused as a
     { row: 7, message: routePackWords.unknownKey('constructor') },
     { row: 8, message: routePackWords.sectionName },
   ]);
+});
+
+test('a save interrupted by a thrown null after a write still returns the partial report', async () => {
+  const file = rowsOf([
+    filled('CR-NI', 'identity.display_name', 'Costa Rica to Nicaragua'),
+    line({ route: 'CR-NI', field_key: 'pack.missionTypes', state: 'Filled', value: 'buyers' }),
+  ]);
+  const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  try {
+    const report = await interruptedOnce('propose', null as unknown as Error).save(owner(), {
+      rows: file,
+      saveId: randomUUID(),
+      reason,
+    });
+    expect(report.ok).toBe(false);
+    expect(report.errors).toEqual([
+      { row: null, route: 'CR-NI', key: null, message: sheetWords.saveStopped },
+    ]);
+    expect(report.saved).toEqual([
+      { route: 'CR-NI', routeId: await routeId('CR-NI'), contentVersion: 1, packVersion: null },
+    ]);
+    expect(JSON.parse(String(logged.mock.calls[0]![0]))).toMatchObject({ code: null });
+  } finally {
+    logged.mockRestore();
+  }
 });

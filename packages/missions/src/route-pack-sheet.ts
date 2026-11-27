@@ -162,7 +162,7 @@ export const sheetWords = {
   pendingCustom: 'Skipped: a Pending row does not create a custom field.',
   trimKept:
     'Only spaces at the start or end of this value differ from the saved one, so the saved value is kept.',
-  lockedPending: 'A pack setting cannot be cleared from the sheet. Use the route pack editor.',
+  lockedPending: 'The pack keeps its current setting; the sheet cannot clear it.',
   example: 'Remove EXAMPLE ROW from the label first. Example rows are never saved as they are.',
   customType: 'A custom field needs a type: text, number, money, date, choice, list or link.',
   customChoice: 'A choice field needs its allowed values in the format column, separated by |.',
