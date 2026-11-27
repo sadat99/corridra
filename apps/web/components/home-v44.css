@@ -1379,3 +1379,7 @@
   inline-size: fit-content;
   margin-block-start: var(--space-3);
 }
+
+.hv43 .hv44-closing-text {
+  text-align: start;
+}
