@@ -47,25 +47,25 @@ export function DotMap({
   const all = Array.from(new Set<SpotKey>([...routes, ...pins]));
   return (
     <svg
-      className="hv44-dotmap"
+      className="hv7-dotmap"
       viewBox={view}
       preserveAspectRatio={fill ? 'xMidYMid slice' : 'xMidYMid meet'}
       aria-hidden="true"
       focusable="false"
     >
-      <path className="hv44-land" d={landDots} />
+      <path className="hv7-land" d={landDots} />
       {routes.map((key, index) => {
         const d = arc(spots[key], key === 'CN' ? 0.9 : key === 'US' ? 0.45 : 0.5);
         return (
           <g key={key}>
             <path
-              className="hv44-arc"
+              className="hv7-arc"
               pathLength={1}
               strokeWidth={1.8 * k}
               d={d}
               style={{ animationDelay: `${index * 0.45}s` }}
             />
-            <circle className="hv44-travel" r={3 * k}>
+            <circle className="hv7-travel" r={3 * k}>
               <animateMotion
                 dur="3.6s"
                 begin={`${index * 0.45 + 1.2}s`}
@@ -77,14 +77,14 @@ export function DotMap({
         );
       })}
       {all.map((key) => (
-        <g key={key} className="hv44-pin" data-tone={tones[key]}>
-          <circle className="hv44-pin-dot" cx={spots[key].x} cy={spots[key].y} r={5 * k} />
-          <circle className="hv44-pulse" cx={spots[key].x} cy={spots[key].y} r={5 * k} strokeWidth={1.5 * k} />
+        <g key={key} className="hv7-pin" data-tone={tones[key]}>
+          <circle className="hv7-pin-dot" cx={spots[key].x} cy={spots[key].y} r={5 * k} />
+          <circle className="hv7-pulse" cx={spots[key].x} cy={spots[key].y} r={5 * k} strokeWidth={1.5 * k} />
         </g>
       ))}
-      <g className="hv44-pin hv44-pin-home">
-        <circle className="hv44-pin-dot" cx={spots.BD.x} cy={spots.BD.y} r={7 * k} />
-        <circle className="hv44-pulse" cx={spots.BD.x} cy={spots.BD.y} r={7 * k} strokeWidth={1.5 * k} />
+      <g className="hv7-pin hv7-pin-home">
+        <circle className="hv7-pin-dot" cx={spots.BD.x} cy={spots.BD.y} r={7 * k} />
+        <circle className="hv7-pulse" cx={spots.BD.x} cy={spots.BD.y} r={7 * k} strokeWidth={1.5 * k} />
       </g>
     </svg>
   );

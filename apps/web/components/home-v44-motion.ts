@@ -17,21 +17,21 @@ export function useHomeV44Motion() {
     const watch = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) seen.set(entry.target, entry.isIntersecting);
-        root.setAttribute('data-hv44-hero', [...seen.values()].some(Boolean) ? 'in' : 'out');
+        root.setAttribute('data-hv7-hero', [...seen.values()].some(Boolean) ? 'in' : 'out');
       },
       { threshold: 0 },
     );
     for (const el of spots) watch.observe(el);
     return () => {
       watch.disconnect();
-      root.removeAttribute('data-hv44-hero');
+      root.removeAttribute('data-hv7-hero');
     };
   }, []);
   useEffect(() => {
     if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const targets = Array.from(
-      document.querySelectorAll<HTMLElement>('.hv43 .hv43-band, .hv44-closing'),
+      document.querySelectorAll<HTMLElement>('.hv7-band'),
     );
     const seen = new IntersectionObserver(
       (entries) => {
@@ -44,13 +44,13 @@ export function useHomeV44Motion() {
       { rootMargin: '0px 0px -8% 0px' },
     );
     for (const el of targets) {
-      el.setAttribute('data-hv44-r', '');
+      el.setAttribute('data-hv7-r', '');
       seen.observe(el);
     }
     return () => {
       seen.disconnect();
       for (const el of targets) {
-        el.removeAttribute('data-hv44-r');
+        el.removeAttribute('data-hv7-r');
         el.removeAttribute('data-in');
       }
     };

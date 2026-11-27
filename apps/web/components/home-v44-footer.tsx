@@ -12,8 +12,8 @@ import { useT } from './language-provider';
 export function HomeV44Footer() {
   const t = useT();
   return (
-    <footer className="hv44-footer" aria-label={t('footer.nav')}>
-      <Link prefetch={false} href="/" className="hv44-footer-logo">
+    <footer className="hv7-footer" aria-label={t('footer.nav')}>
+      <Link prefetch={false} href="/" className="hv7-footer-logo">
         <Image
           src="/brand/corridra-lockup-horizontal-cobalt.svg"
           alt="Corridra"
@@ -22,10 +22,10 @@ export function HomeV44Footer() {
           unoptimized
         />
       </Link>
-      <p className="hv44-footer-promise">{t('footer.tagline')}</p>
-      <nav className="hv44-footer-groups" aria-label={t('footer.nav')}>
+      <p className="hv7-footer-promise">{t('footer.tagline')}</p>
+      <nav className="hv7-footer-groups" aria-label={t('footer.nav')}>
         {footerGroups.map((group) => (
-          <div key={group.title} className="hv44-footer-group">
+          <div key={group.title} className="hv7-footer-group">
             <h2>{t(group.title)}</h2>
             <ul>
               {group.links.map((link) => (
@@ -39,7 +39,7 @@ export function HomeV44Footer() {
           </div>
         ))}
       </nav>
-      <div className="hv44-footer-bottom">
+      <div className="hv7-footer-bottom">
         <span>© 2026 Corridra</span>
         <span>{t('footer.private')}</span>
         <LanguageSwitcher />

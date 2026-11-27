@@ -1,0 +1,944 @@
+/* Home page v7 (design approved 27 Nov 2026, canvas "v7"). Loaded only by home-v7.tsx. Every rule is scoped under .hv7 (or
+   a class this page owns) and uses design tokens only: weights 400/500/600, radius tokens, no hex. Arcs draw once; the
+   travelling dots and pulses stop under Pause Motion and under reduced motion. */
+
+.hv7 {
+  --hv7-w: 70rem;
+  color: var(--text-1);
+}
+.hv7 *,
+.hv7 *::before,
+.hv7 *::after {
+  box-sizing: border-box;
+}
+.hv7-band {
+  inline-size: min(var(--hv7-w), 100%);
+  margin-inline: auto;
+  padding: var(--space-16) var(--space-5) 0;
+}
+@media (min-width: 64rem) {
+  .hv7-band {
+    padding-block-start: 7.5rem;
+    padding-inline: 2rem;
+  }
+}
+.hv7-eb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--brand);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.hv7-h2 {
+  margin: var(--space-2) 0 0;
+  font-size: clamp(2rem, 1rem + 2.6vw, 2.875rem);
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+}
+.hv7-h2-s {
+  font-size: clamp(1.75rem, 1rem + 1.8vw, 2.375rem);
+}
+.hv7-sub {
+  max-inline-size: 38rem;
+  margin: var(--space-4) 0 0;
+  color: var(--text-2);
+  font-size: var(--text-lg);
+  line-height: 1.55;
+}
+.hv7-small {
+  margin: var(--space-3) 0 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.hv7-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.hv7-outline {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--brand);
+}
+.hv7-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 3.375rem;
+  padding-inline: 2rem;
+  color: var(--surface-1);
+  font: inherit;
+  font-size: var(--text-base);
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--brand);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 0.25s,
+    background 0.25s;
+}
+.hv7-btn:hover {
+  background: var(--brand-hover);
+  transform: translateY(-2px);
+}
+.hv7-link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  padding: 0;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.hv7-link:hover {
+  text-decoration: underline;
+}
+.hv7 :is(a, button, summary):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+.hv7-noscript {
+  margin: var(--space-4);
+}
+
+/* Hero */
+.hv7-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  min-block-size: min(46rem, 100svh);
+  padding: var(--space-16) var(--space-5);
+  text-align: center;
+  background: linear-gradient(180deg, var(--surface-subtle), var(--surface-0) 92%);
+}
+.hv7-hero-map {
+  position: absolute;
+  inset: 3rem 0 0;
+  z-index: -1;
+  opacity: 0.9;
+}
+.hv7-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 52% 46% at 50% 44%,
+    var(--surface-0) 0,
+    var(--surface-0) 45%,
+    transparent 100%
+  );
+}
+.hv7-hero-text {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-5);
+  max-inline-size: 52rem;
+}
+.hv7-hero h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 1rem + 6vw, 5.75rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+.hv7-hero h1 em {
+  font-style: normal;
+}
+.hv7-lead {
+  max-inline-size: 40rem;
+  margin: 0;
+  color: var(--text-2);
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  line-height: 1.55;
+}
+.hv7-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4) var(--space-6);
+  margin-block-start: var(--space-2);
+}
+.hv7-actions-l {
+  justify-content: flex-start;
+  margin-block-start: var(--space-6);
+}
+.hv7-pause {
+  position: absolute;
+  inset-inline-start: var(--space-4);
+  inset-block-end: var(--space-4);
+  min-block-size: 2.75rem;
+  padding-inline: var(--space-4);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* Route chooser */
+.hv7-choose {
+  margin-block-start: var(--space-4);
+  padding: var(--space-5) var(--space-5) 0;
+  overflow: hidden;
+}
+.hv7-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--surface-subtle);
+  border-radius: 999px;
+}
+.hv7-seg button {
+  min-block-size: 2.75rem;
+  padding-inline: var(--space-5);
+  color: var(--text-1);
+  font: inherit;
+  font-size: var(--text-base);
+  font-weight: 500;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.25s,
+    color 0.25s;
+}
+.hv7-seg button[aria-selected='true'] {
+  font-weight: 600;
+  background: var(--surface-1);
+  box-shadow: 0 1px 4px var(--border-subtle);
+}
+.hv7-panel {
+  display: grid;
+  margin: var(--space-5) calc(var(--space-5) * -1) 0;
+  border-block-start: 1px solid var(--border-subtle);
+}
+@media (min-width: 56rem) {
+  .hv7-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  }
+}
+.hv7-panel-text {
+  display: grid;
+  gap: var(--space-2);
+  align-content: center;
+  padding: var(--space-8) var(--space-5);
+}
+@media (min-width: 56rem) {
+  .hv7-panel-text {
+    padding: 2.25rem 2.5rem;
+  }
+}
+.hv7-panel-lead {
+  margin: 0;
+  font-size: clamp(1.375rem, 1rem + 1vw, 1.875rem);
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+}
+.hv7-panel-map {
+  min-block-size: 18rem;
+  background: var(--surface-subtle);
+}
+@media (min-width: 56rem) {
+  .hv7-panel-map {
+    min-block-size: 23.75rem;
+  }
+}
+.hv7-ticks {
+  display: grid;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.hv7-ticks li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  font-size: var(--text-lg);
+  border-block-start: 1px solid var(--border-subtle);
+}
+.hv7-ticks i {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 1.625rem;
+  block-size: 1.625rem;
+  color: var(--brand);
+  background: var(--surface-subtle);
+  border-radius: 50%;
+}
+.hv7-ticks-l {
+  margin: 0;
+}
+.hv7-ticks-l li:first-child {
+  border-block-start: 0;
+}
+
+/* How it works */
+.hv7-timeline {
+  position: relative;
+  display: grid;
+  gap: var(--space-6);
+  margin: var(--space-8) 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+.hv7-timeline li {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding-inline-end: var(--space-4);
+}
+.hv7-timeline li > strong {
+  margin-block-start: var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.hv7-timeline li > span:last-child {
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.hv7-no {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  color: var(--surface-1);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  background: var(--brand);
+  border-radius: 50%;
+}
+@media (min-width: 48rem) {
+  .hv7-timeline {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .hv7-timeline::before {
+    content: '';
+    position: absolute;
+    inset-inline: 1.75rem calc(25% - 1.75rem);
+    inset-block-start: 1.7rem;
+    block-size: 3px;
+    background: var(--brand);
+    transform-origin: left;
+  }
+}
+
+/* Route statuses */
+.hv7-status {
+  display: grid;
+  gap: var(--space-8);
+}
+@media (min-width: 64rem) {
+  .hv7-status {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+.hv7-status-map {
+  min-block-size: 18rem;
+  overflow: hidden;
+  background: var(--surface-subtle);
+  border-radius: var(--radius-lg);
+}
+.hv7-list {
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+.hv7-list li {
+  border-block-start: 1px solid var(--border-subtle);
+}
+.hv7-list li:first-child {
+  border-block-start: 0;
+}
+.hv7-list a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-block-size: 3.75rem;
+  padding: var(--space-2) var(--space-5);
+  color: var(--text-1);
+  font-size: var(--text-lg);
+  text-decoration: none;
+}
+.hv7-list a:hover {
+  background: var(--surface-subtle);
+}
+.hv7-list a > span {
+  flex: 1;
+  font-weight: 600;
+}
+.hv7-list em {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-style: normal;
+}
+.hv7-dot {
+  flex: none;
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+  background: var(--brand);
+  border-radius: 50%;
+}
+.hv7-dot[data-tone='soon'] {
+  background: var(--accent-marigold);
+}
+.hv7-dot[data-tone='ask'] {
+  background: var(--text-3);
+}
+
+/* Evidence */
+.hv7-trust {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-5);
+}
+@media (min-width: 56rem) {
+  .hv7-trust {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: center;
+    gap: 3.5rem;
+    padding: 3.5rem 4rem;
+  }
+}
+
+/* Worked example */
+.hv7-cards {
+  display: grid;
+  gap: var(--space-5);
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 48rem) {
+  .hv7-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .hv7-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.hv7-cards li {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-6);
+}
+.hv7-cards li > strong {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.25;
+}
+.hv7-cards li > span {
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.hv7-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv7-card-top b {
+  padding: var(--space-1) var(--space-3);
+  color: var(--brand);
+  font-weight: 600;
+  background: var(--surface-subtle);
+  border-radius: 999px;
+}
+.hv7-card-top b[data-who='team'] {
+  color: var(--text-1);
+  background: var(--accent-marigold);
+}
+
+/* Inbound */
+.hv7-inbound {
+  display: grid;
+  gap: var(--space-6);
+  align-items: center;
+  padding: var(--space-8) var(--space-5);
+  background: linear-gradient(120deg, var(--surface-subtle), var(--surface-0));
+  border-radius: var(--radius-lg);
+}
+@media (min-width: 56rem) {
+  .hv7-inbound {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 3rem;
+    padding: 3.5rem 4rem;
+  }
+}
+.hv7-inbound .hv7-link {
+  margin-block-start: var(--space-4);
+}
+.hv7-inbound-map {
+  min-block-size: 12.5rem;
+  overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/* Questions */
+.hv7-faq {
+  display: grid;
+  gap: var(--space-6);
+}
+@media (min-width: 56rem) {
+  .hv7-faq {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+    gap: 3.5rem;
+  }
+}
+.hv7-faq-list {
+  overflow: hidden;
+}
+.hv7-faq-list details {
+  padding: var(--space-5) var(--space-6);
+  border-block-start: 1px solid var(--border-subtle);
+}
+.hv7-faq-list details:first-child {
+  border-block-start: 0;
+}
+.hv7-faq-list summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+.hv7-faq-list summary::-webkit-details-marker {
+  display: none;
+}
+.hv7-faq-list summary::after {
+  content: '+';
+  color: var(--text-2);
+}
+.hv7-faq-list details[open] summary::after {
+  content: '−';
+}
+.hv7-faq-list p {
+  margin: var(--space-3) 0 0;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+/* Close */
+.hv7-closing {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  background: linear-gradient(120deg, var(--surface-subtle), var(--surface-0) 55%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.hv7-closing-text {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+  padding: var(--space-8) var(--space-5);
+  text-align: start;
+}
+.hv7-closing h2 {
+  margin: 0;
+  font-size: clamp(2.25rem, 1rem + 4.2vw, 4.75rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.hv7-closing-text .hv7-small {
+  margin: 0;
+}
+.hv7-closing-map {
+  min-block-size: 12rem;
+}
+@media (min-width: 48rem) {
+  .hv7-closing {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: center;
+    min-block-size: 28rem;
+  }
+  .hv7-closing-text {
+    padding: 4rem;
+  }
+  .hv7-closing-map {
+    block-size: 100%;
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 30%);
+    mask-image: linear-gradient(90deg, transparent, black 30%);
+  }
+}
+
+/* Footer: the page's own, standing in for the shared one on this page only. */
+:root:has(.hv7-hero) .site-shell footer:not(.hv7-footer),
+:root:has(.hv7-hero) .site-header button.top-bar-tool[aria-pressed] {
+  display: none;
+}
+.hv7-footer {
+  display: grid;
+  gap: var(--space-8);
+  inline-size: min(var(--hv7-w), 100%);
+  margin: var(--space-16) auto 0;
+  padding: var(--space-12) var(--space-5) var(--space-8);
+  border-block-start: 1px solid var(--border-subtle);
+}
+.hv7-footer-logo {
+  display: block;
+  max-inline-size: 34rem;
+}
+.hv7-footer-logo img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+.hv7-footer-promise {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-lg);
+}
+.hv7-footer-groups {
+  display: grid;
+  gap: var(--space-6);
+}
+@media (min-width: 48rem) {
+  .hv7-footer-groups {
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  }
+}
+.hv7-footer-group h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.hv7-footer-group ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv7-footer-group a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  color: var(--text-2);
+  text-decoration: none;
+}
+.hv7-footer-group a:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}
+.hv7-footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+
+/* Dotted maps */
+.hv7-dotmap {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+.hv7-land {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.hv7-arc {
+  fill: none;
+  stroke: var(--brand);
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: hv7-draw 1.6s ease-out forwards;
+}
+.hv7-travel {
+  fill: var(--brand);
+}
+.hv7-pin-dot {
+  fill: var(--brand);
+}
+.hv7-pin[data-tone='ask'] .hv7-pin-dot {
+  fill: var(--text-2);
+}
+.hv7-pin-home .hv7-pin-dot {
+  fill: var(--accent-marigold);
+}
+.hv7-pulse {
+  fill: none;
+  stroke: var(--brand);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hv7-pulse 2.4s ease-out infinite;
+}
+.hv7-pin-home .hv7-pulse {
+  stroke: var(--accent-marigold);
+}
+:root[data-hv7-paused] .hv7-travel {
+  display: none;
+}
+:root[data-hv7-paused] .hv7-pulse {
+  animation-play-state: paused;
+}
+@keyframes hv7-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes hv7-pulse {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+
+/* One Start a Request on screen at a time: the header's stays hidden while the hero's or the close's is in view. */
+:root[data-hv7-hero='in'] .site-header .nav-cta {
+  visibility: hidden;
+}
+
+/* The request sheet: four steps, one question each. */
+.ux-dialog:has(.hv7-sheet) {
+  inline-size: min(38rem, calc(100vw - 2rem));
+  max-block-size: calc(100dvh - 2rem);
+  border-radius: var(--radius-lg);
+}
+@media (max-width: 47.99rem) {
+  .ux-dialog:has(.hv7-sheet) {
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin-block-end: 0;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+}
+.hv7-steps {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-1) var(--space-4);
+}
+.hv7-steps-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.hv7-steps-back {
+  min-block-size: 2.75rem;
+  padding: 0;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 500;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.hv7-steps-count {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv7-steps-dots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+.hv7-steps-dots i {
+  block-size: 4px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+}
+.hv7-steps-dots i[data-on] {
+  background: var(--brand);
+}
+.hv7-steps-title {
+  margin: 0;
+  font-size: var(--text-h1);
+  font-weight: 400;
+  line-height: 1.1;
+}
+.hv7-opts {
+  display: grid;
+  overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.hv7-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: 3.25rem;
+  padding: var(--space-2) var(--space-4);
+  color: var(--text-1);
+  font: inherit;
+  text-align: start;
+  background: none;
+  border: 0;
+  border-block-start: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+.hv7-opt:first-child {
+  border-block-start: 0;
+}
+.hv7-opt[aria-checked='true'] {
+  font-weight: 600;
+}
+.hv7-opt-mark {
+  color: var(--brand);
+  font-weight: 600;
+}
+.hv7-opt:focus-visible,
+.hv7-steps-back:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+.hv7-base {
+  margin-block-start: var(--space-4);
+}
+.hv7-steps-sum {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv7-steps-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Motion: each band rises once; the timeline line grows once; steps fade in. Nothing is hidden without script, and
+   nothing moves under reduced motion. */
+.hv7 [data-hv7-r] {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition:
+    opacity 420ms ease-out,
+    transform 420ms ease-out;
+}
+.hv7 [data-hv7-r][data-in] {
+  opacity: 1;
+  transform: none;
+}
+@media (min-width: 48rem) and (prefers-reduced-motion: no-preference) {
+  .hv7-timeline::before {
+    animation: hv7-grow 1.2s ease-out backwards;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hv7-hero-text > * {
+    animation: hv7-rise 0.7s ease-out backwards;
+  }
+  .hv7-hero-text > :nth-child(2) {
+    animation-delay: 0.08s;
+  }
+  .hv7-hero-text > :nth-child(3) {
+    animation-delay: 0.16s;
+  }
+  .hv7-hero-text > :nth-child(4) {
+    animation-delay: 0.24s;
+  }
+  .hv7-panel {
+    animation: hv7-rise 0.45s ease-out;
+  }
+  .hv7-steps-body {
+    animation: hv7-rise 0.3s ease-out;
+  }
+  .hv7-card:hover {
+    transform: translateY(-3px);
+  }
+  .hv7-cards .hv7-card {
+    transition: transform 0.3s;
+  }
+}
+@keyframes hv7-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes hv7-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv7-arc {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .hv7-pulse {
+    animation: none;
+    opacity: 0;
+  }
+  .hv7-travel {
+    display: none;
+  }
+}
+
+/* Help text and the second button inside the request sheet (fields use the site's own .field). */
+.hv7-help {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.hv7-btn-2 {
+  color: var(--text-1);
+  background: var(--surface-subtle);
+}
+.hv7-btn-2:hover {
+  background: var(--border-subtle);
+}
