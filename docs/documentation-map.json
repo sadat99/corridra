@@ -1629,6 +1629,11 @@
       "use": "Exact hashed ledger at 41d18bf5 (main after PR 668), before the 26 Nov 2026 records for PRs 667 and 668 removed two pointer lines; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g69-records-2026-11-26.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at c746d078 (main after PR 675), before the 26 Nov 2026 G69 records shortened several superseded clauses; use the current ledger for live state."
+    },
+    {
       "path": "docs/v3/history/ledger-before-w1-records-2026-11-19.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger at 626d2f8 (the PR 571 merge), before the 19 Nov W1 records recorded merges 560 to 571, the 19 Nov verification and the PR 573 diagnosis; preserves the Guardian 28 Main bullet and the 547 to 559 merge list; use the current ledger for live state."

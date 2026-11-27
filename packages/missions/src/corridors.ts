@@ -210,8 +210,9 @@ export class CorridorService {
   appendPack(ctx: RequestContext, input: unknown) {
     const v = routePack.parse(input);
     return withTenant(this.pool, ctx, 'config.manage', async ({ db, actorId }) => {
-      // ADR-093 2b: the shared go-live check, so the raw corridor-pack command cannot take a route live with Core fields Pending.
-      await assertPackGoLive(db, ctx.tenantId, v);
+      // ADR-093 2b: the shared go-live check, so the raw corridor-pack command cannot empty a Locked Core row of a live route
+      // and says which Core fields are Pending. Its warnings are added only while the module is active.
+      const warnings = await assertPackGoLive(db, ctx.tenantId, v);
       await db.query(
         'INSERT INTO app.corridor_pack_version(id,tenant_id,route_id,version,status,configuration,effective_from,created_by,reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',
         [
@@ -226,7 +227,7 @@ export class CorridorService {
           v.reason,
         ],
       );
-      return { id: v.id, version: v.version };
+      return { id: v.id, version: v.version, ...(warnings ? { warnings } : {}) };
     });
   }
   assign(ctx: RequestContext, input: unknown) {

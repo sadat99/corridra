@@ -461,3 +461,11 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Seen:** PR 665 head 7fb497c1, CI run 45807410068, job `ux (2)`, `tests/ux/home-v43.spec.ts:734`, test "Review Request opens the preview with the exact request link, Escape returns focus, closed it adds no link", failing at line 768: after the dialog closed, one extra `/plan?job=buyers&companyCountry=BD&marketCode=EU&note=...` link was in the recorded list.
 - **Why a flake is suspected:** PR 665 touched no UI; main's `ux (2)` passed; one re-run of the failed job passed. The cause was not reproduced or confirmed. The likely reading, not proved, is that the test read the link list before the closed dialog had finished clearing.
 - **If it recurs:** treat it as a real V43 defect, not a flake. Record the run id and job here, reopen this entry, and inspect the dialog close path before touching the test. Do not add a fixed sleep or loosen the assertion.
+
+### KI-69 Two flakes on PR 675, a rate window roll-over and an empty string in the home hash test (26 November 2026, both passed on one re-run)
+
+- **Seen:** PR 675, CI run 45862938526, attempt 1. Both passed on one re-run. Neither is KI-68 (`home-v43.spec.ts:734`).
+  - (a) `tests/integration/customer-decision-card-route.test.ts`, the limiter test "sixty exact retries", counted 62. Reading: the rate window rolled over while the test was running, so the count was not the exact sixty.
+  - (b) `tests/ux/home-v43-server.spec.ts:325`, "a link with a hash opens what hides it before it takes focus", received an empty string.
+- **Why flakes are suspected:** PR 675 changed neither file nor the decision card route or the home page. The causes were not reproduced or confirmed. Reading (a) is likely, not proved; reading (b) is not known.
+- **If it recurs:** for (a), record the run id and look at the limiter window start before touching the test; do not loosen the count. For (b), treat it as a real defect in the hash link path, not a flake, and do not add a fixed sleep.

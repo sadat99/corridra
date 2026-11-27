@@ -994,10 +994,11 @@ export const routePackWords = {
   proposalTooLarge: 'This route pack is too large to review. Shorten long lists.',
   notPublished:
     'The proposal was saved but not published. Send the same request again to publish it.',
-  goLivePendingCore: (labels: string) =>
-    `The route cannot go live while these Core fields are Pending: ${labels}.`,
+  goLivePendingCore: (labels: string) => `These Core fields are still Pending: ${labels}.`,
   coreTurnsPending: (labels: string) =>
-    `The route is live, so these Core fields cannot become Pending: ${labels}.`,
+    `These Core fields are now Pending on a live route: ${labels}.`,
+  lockedCoreEmptied: (labels: string) =>
+    `The route is live, so these fields cannot be emptied: ${labels}.`,
   notFound: 'Not found',
 } as const;
 
@@ -1373,47 +1374,62 @@ export function deriveCompleteness(
   };
 }
 
-// The one go-live check (ADR-093 C), judged on the pack and content as they are after the write. It refuses exactly three
-// things: a move to LIMITED or ACTIVE while a Core field is Pending, and, on a live route, a content or pack version that turns
-// a Core field Pending. Moving to PAUSED, DRAFT or TESTING is never held back, and a route that was already live with Pending
-// fields keeps working until one of those writes.
+// The one go-live check (ADR-093 C, owner 27 Nov 2026 "confirm warn only"), judged on the pack and content as they are after
+// the write. It refuses one thing: on a route that is LIMITED or ACTIVE and stays so, a pack version that empties a Filled
+// Locked Core row (a pack list such as languages or channels set to []). It warns, and never refuses, of two others: a move
+// to LIMITED or ACTIVE while a Core field is Pending, and, on a live route, a version that turns a Core field Pending. Moving
+// to PAUSED, DRAFT or TESTING is never held back nor warned of.
 export type GoLiveInput = {
   before: { pack: PackView; document: ContentDocument | null };
   after: { pack: PackView; document: ContentDocument | null };
 };
+export const goLiveWarningCodes = [
+  'ROUTE_PACK_GO_LIVE_PENDING_CORE',
+  'ROUTE_PACK_CORE_TURNS_PENDING',
+] as const;
+export type GoLiveWarning = { code: (typeof goLiveWarningCodes)[number]; keys: string[] };
 export type GoLiveResult =
-  | { ok: true }
-  | {
-      ok: false;
-      code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE' | 'ROUTE_PACK_CORE_TURNS_PENDING';
-      keys: string[];
-    };
+  | { ok: true; warnings: GoLiveWarning[] }
+  | { ok: false; code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED'; keys: string[] };
 const isLive = (status: PackStatus | undefined) =>
   (liveStatuses as readonly (PackStatus | undefined)[]).includes(status);
+const passes = (warning?: GoLiveWarning): GoLiveResult => ({
+  ok: true,
+  warnings: warning?.keys.length ? [warning] : [],
+});
 export function goLiveCheck(input: GoLiveInput): GoLiveResult {
   const after = input.after.pack?.status;
-  if (!isLive(after)) return { ok: true };
+  if (!isLive(after)) return passes();
   const today = todayUtc();
-  const pendingAfter = deriveCompleteness(
-    input.after.pack,
-    input.after.document,
-    today,
-  ).pendingCore;
-  if (after !== input.before.pack?.status)
-    return pendingAfter.length
-      ? { ok: false, code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: pendingAfter }
-      : { ok: true };
-  const pendingBefore = new Set(
-    deriveCompleteness(input.before.pack, input.before.document, today).pendingCore,
-  );
-  const turned = pendingAfter.filter((key) => !pendingBefore.has(key));
-  return turned.length
-    ? { ok: false, code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: turned }
-    : { ok: true };
+  const afterView = deriveCompleteness(input.after.pack, input.after.document, today);
+  const beforeView = deriveCompleteness(input.before.pack, input.before.document, today);
+  const before = input.before.pack?.status;
+  // A Locked Core row is Filled or Pending only, and only the pack sets it, so a content version never empties one.
+  if (isLive(before)) {
+    const filledBefore = new Set(
+      beforeView.fields.filter((row) => row.state === 'FILLED').map((row) => row.key),
+    );
+    const emptied = afterView.fields
+      .filter(
+        (row) =>
+          row.part === 'Locked' && row.core && row.state === 'PENDING' && filledBefore.has(row.key),
+      )
+      .map((row) => row.key);
+    if (emptied.length) return { ok: false, code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED', keys: emptied };
+  }
+  if (after !== before)
+    return passes({ code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: afterView.pendingCore });
+  const pendingBefore = new Set(beforeView.pendingCore);
+  return passes({
+    code: 'ROUTE_PACK_CORE_TURNS_PENDING',
+    keys: afterView.pendingCore.filter((key) => !pendingBefore.has(key)),
+  });
 }
-// The person-facing words of a refused go-live check, with field labels instead of keys.
-export function goLiveMessage(result: Extract<GoLiveResult, { ok: false }>) {
+// The person-facing words of a go-live warning or refusal, with field labels instead of keys.
+export function goLiveMessage(result: GoLiveWarning | Extract<GoLiveResult, { ok: false }>) {
   const labels = result.keys.map((key) => standardFieldByKey.get(key)?.label ?? key).join(', ');
+  if (result.code === 'ROUTE_PACK_LOCKED_CORE_EMPTIED')
+    return routePackWords.lockedCoreEmptied(labels);
   return result.code === 'ROUTE_PACK_GO_LIVE_PENDING_CORE'
     ? routePackWords.goLivePendingCore(labels)
     : routePackWords.coreTurnsPending(labels);
