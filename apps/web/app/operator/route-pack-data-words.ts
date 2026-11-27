@@ -41,7 +41,6 @@ export const importWords = {
   // Outcomes
   tryRest: 'Try the Rest Again',
   notSaved: 'Not saved. Your file is still here. Try again.',
-  reasonFallback: 'It could not be saved.',
   changedNoRoute:
     'A route changed while you were checking. Nothing was saved. Choose the file again to check it against the current state.',
   // Shared with the pack dialogs, one copy
@@ -68,7 +67,6 @@ export const importWords = {
     );
     return parts.length === 0 ? message : `${parts.join(', ')}: ${message}`;
   },
-  checkingRows: (count: number) => `Checking ${rowsWord(count)}…`,
   ready: (count: number) => `Ready to save ${routes(count)}.`,
   packSettings: (labels: string[]) => `Pack settings: ${labels.join(', ')}`,
   readinessWarning,

@@ -44,7 +44,7 @@ describe('Import Route Data words', () => {
     );
     expect(importWords.skippedMixed(5)).toBe('5 rows skipped.');
     expect(importWords.saving(3)).toBe('Saving 3 routes…');
-    expect(importWords.checkingRows(1240)).toBe('Checking 1,240 rows…');
+    expect(importWords.checking).toBe('Checking the file…');
     expect(importWords.saved(3, 15)).toBe('Saved 3 routes, 15 facts.');
     expect(importWords.saved(3, 1)).toBe('Saved 3 routes, 1 fact.');
     expect(importWords.saved(3, 0)).toBe('Saved 3 routes. No fact changed.');
