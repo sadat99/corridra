@@ -87,7 +87,8 @@ type State = {
 };
 const reasonWords = 'Give a reason of at least 3 characters.';
 
-function Say({ words }: { words: Words }) {
+/** A sentence of `Words`, each label in `<bdi>` because it may be in any script. */
+export function Say({ words }: { words: Words }) {
   return (
     <>
       {words.map((piece, index) =>

@@ -27,16 +27,21 @@ import {
   sameValue,
   stageCount,
   stageFact,
+  stageMark,
   unstageFact,
   warningWords,
 } from '../../lib/route-pack-editor-stage';
 import type { FactsSaved } from '../../lib/route-pack-editor-write';
+import { canOfferMark } from '../../lib/route-pack-editor-section';
 import {
   cautionLine,
   changeKept,
   changesDiscarded,
   changesNotSaved,
+  fieldAddedLine,
   finishOpenField,
+  lockedCorePendingLine,
+  markRemovedLine,
   noChangeToKeep,
   openFieldNotIncluded,
   restoredLine,
@@ -51,7 +56,6 @@ import {
   formFieldOf,
   gapsLine,
   isEditable,
-  markedButOpen,
   optionalLine,
   overlayCompleteness,
   packChangeLine,
@@ -85,14 +89,18 @@ import {
   type RouteSession,
 } from './route-pack-editor-stage-store';
 import { RouteFactEditor } from './route-pack-fact-editor';
+import { RouteCustomDialog } from './route-pack-custom-dialog';
 import { DiscardDialog, LeaveDialog } from './route-pack-leave-dialogs';
-import { SaveFactsDialog } from './route-pack-save-dialog';
+import { RouteMarkDialog } from './route-pack-mark-dialog';
+import { moreButtonOf, RouteMoreMenu } from './route-pack-more-menu';
+import { Say, SaveFactsDialog } from './route-pack-save-dialog';
 import { UnsavedBar } from './route-pack-unsaved-bar';
 import { packStatusWords, packTones } from './pack-status';
 import {
   standardFieldByKey,
   liveStatuses,
   type ContentDocument,
+  type ContentFact,
   type PackView,
 } from '@corridra/domain/route-pack-standard';
 import './route-pack-editor.css';
@@ -453,9 +461,8 @@ function RouteBody({
   // What the rows show: the saved document with the unsaved edits on top. Which rows there are, their headings and every count of
   // the header stay the saved truth, so nothing moves until it is saved.
   const shownDocument = overlayDocument(saved, stage);
-  const shownRows = new Map(
-    overlayCompleteness(packView, saved, stage, today).fields.map((item) => [item.key, item]),
-  );
+  const shown = overlayCompleteness(packView, saved, stage, today);
+  const shownRows = new Map(shown.fields.map((item) => [item.key, item]));
   const savedFacts = factsByKey(saved);
   const facts = factsByKey(shownDocument);
   const labels = (key: string) =>
@@ -469,6 +476,13 @@ function RouteBody({
     : address.sectionUnknown
       ? 'sections'
       : (address.view ?? defaultView({ pending, stale }));
+  // The section open now, and its mark with the unsaved edits on top (PR 2c: a mark is staged like a fact).
+  const section = view === 'section' ? address.section : null;
+  const markNote =
+    section === null
+      ? null
+      : (shownDocument.sectionMarks.find((mark) => mark.section === section)?.note ?? null);
+  const routeName = `${countryName(summary.origin)} to ${countryName(summary.destination)}`;
   const lastChange = packHistory?.[0];
   const changeWords = lastChange
     ? packChangeLine(lastChange, formatDate(lastChange.effectiveFrom))
@@ -664,13 +678,73 @@ function RouteBody({
     if (open) setOpen(null);
     setSaveOpen(true);
   };
+  const [moreDialog, setMoreDialog] = useState<'mark' | 'custom' | null>(null);
+  const more = useRef<HTMLDivElement>(null);
+  // A dialog opened from a row of More: the row is gone when it closes, so focus goes back to the More button, or to the status
+  // line once the dialog changed something (or when More is not shown).
+  const toStatus = useRef(false);
+  const backFromMore = () => {
+    const button = moreButtonOf(more.current);
+    const target =
+      toStatus.current || !button || button.offsetParent === null ? statusLine.current : button;
+    toStatus.current = false;
+    return target;
+  };
   const discard = () => {
+    toStatus.current = true;
     setStage(discardStage);
     setOpen(null);
     clearMirror(tenant, summary.routeId);
     setDiscardOpen(false);
     setStaging('');
     setStatus({ text: changesDiscarded, caution: null });
+  };
+  // ---- PR 2c: the three actions of More on a section. Each stages like Keep Change does and says so on the status line. ----
+  // An open answer that was changed blocks the menu's actions (it says so and keeps focus there); an untouched one is closed.
+  const openRowBlocks = () => {
+    if (open && isTouched(open)) {
+      setStatus({ text: finishOpenField, caution: null });
+      focusOpenEditor();
+      return true;
+    }
+    if (open) setOpen(null);
+    return false;
+  };
+  const sayStaged = (text: string) => {
+    setStaging('');
+    setStatus({ text, caution: null });
+  };
+  const markSection = (note: string) => {
+    if (section === null) return;
+    const after = stageMark(stage, saved, section, note);
+    setStage((current) => stageMark(current, saved, section, note));
+    toStatus.current = true;
+    sayStaged(after.marks[String(section)] ? changeKept(stageCount(after)) : noChangeToKeep);
+  };
+  const unmarkSection = () => {
+    if (section === null || openRowBlocks()) return;
+    const after = stageMark(stage, saved, section, null);
+    setStage((current) => stageMark(current, saved, section, null));
+    const left = stageCount(after);
+    sayStaged(left > 0 ? markRemovedLine(left) : 'Mark removed.');
+    statusLine.current?.focus();
+  };
+  // A key the route already has is refused in the dialog; it is checked again here so a fact is never overwritten.
+  const takenKeys = new Set([
+    ...savedFacts.keys(),
+    ...Object.keys(stage.facts),
+    ...Object.keys(detail.customLabels),
+    ...completeness.fields.map((item) => item.key),
+  ]);
+  const addCustom = (key: string, fact: ContentFact) => {
+    if (takenKeys.has(key)) return;
+    const after = stageFact(stage, saved, key, fact);
+    setStage((current) => (current.facts[key] ? current : stageFact(current, saved, key, fact)));
+    toStatus.current = true;
+    sayStaged(fieldAddedLine(stageCount(after)));
+  };
+  const openMore = (which: 'mark' | 'custom') => {
+    if (!openRowBlocks()) setMoreDialog(which);
   };
   const saveDone = (result: FactsSaved, document: ContentDocument) => {
     setJustSaved({ version: result.version, document });
@@ -688,6 +762,23 @@ function RouteBody({
   };
   return (
     <>
+      {owner ? (
+        <div className="route-editor-actions">
+          <RouteMoreMenu
+            routeName={routeName}
+            sectionName={section === null ? '' : sectionName(section)}
+            wrapperRef={more}
+            onAddCustom={section === null ? undefined : () => openMore('custom')}
+            onMark={
+              section !== null && markNote === null && canOfferMark(role)
+                ? () => openMore('mark')
+                : undefined
+            }
+            onUnmark={section !== null && markNote !== null ? unmarkSection : undefined}
+            onDiscard={staged > 0 ? () => setDiscardOpen(true) : undefined}
+          />
+        </div>
+      ) : null}
       <p className="route-editor-line">
         {pack ? (
           <>
@@ -765,7 +856,9 @@ function RouteBody({
           route={route}
           section={address.section!}
           row={row}
-          markedOpen={markedButOpen(completeness, saved, address.section!, labels)}
+          shown={shown}
+          markNote={markNote}
+          labels={labels}
         />
       )}
       {owner && staged > 0 ? (
@@ -773,13 +866,33 @@ function RouteBody({
       ) : null}
       {owner ? (
         <>
+          {section !== null ? (
+            <>
+              <RouteMarkDialog
+                open={moreDialog === 'mark'}
+                onClose={() => setMoreDialog(null)}
+                section={{ number: section, name: sectionName(section) }}
+                onStage={markSection}
+                returnFocusTo={backFromMore}
+              />
+              <RouteCustomDialog
+                open={moreDialog === 'custom'}
+                onClose={() => setMoreDialog(null)}
+                section={{ number: section, name: sectionName(section) }}
+                takenKeys={takenKeys}
+                today={today}
+                onAdd={(key, definition, fact) => addCustom(key, { ...fact, ...definition })}
+                returnFocusTo={backFromMore}
+              />
+            </>
+          ) : null}
           <SaveFactsDialog
             open={saveOpen}
             onClose={() => setSaveOpen(false)}
             tenant={tenant}
             routeId={summary.routeId}
             // Plain words in the statement sentence: a flag inside running text breaks its line (designer audit).
-            routeName={`${countryName(summary.origin)} to ${countryName(summary.destination)}`}
+            routeName={routeName}
             stage={stage}
             document={saved}
             savedVersion={savedVersion}
@@ -799,7 +912,7 @@ function RouteBody({
             count={staged}
             onKeep={() => setDiscardOpen(false)}
             onDiscard={discard}
-            returnFocusTo={() => statusLine.current}
+            returnFocusTo={backFromMore}
           />
         </>
       ) : null}
@@ -895,15 +1008,29 @@ function SectionView({
   route,
   section,
   row,
-  markedOpen,
+  shown,
+  markNote,
+  labels,
 }: {
   route: Route;
   section: number;
   row: RowMaker;
-  markedOpen: string | null;
+  /** The completeness with the unsaved edits on top: the section's state, and the custom fields added and not saved yet. */
+  shown: Route['completeness'];
+  /** The note of the section's mark, saved or staged; null when the section is not marked. */
+  markNote: string | null;
+  labels: (key: string) => string;
 }) {
-  const state = route.completeness.sections.find((item) => item.section === section);
-  const rows = route.completeness.fields.filter((item) => item.section === section);
+  const state = shown.sections.find((item) => item.section === section);
+  const saved = route.completeness.fields.filter((item) => item.section === section);
+  const savedKeys = new Set(route.completeness.fields.map((item) => item.key));
+  const added = shown.fields.filter(
+    (item) => item.section === section && item.custom && !savedKeys.has(item.key),
+  );
+  const rows = [...saved, ...added];
+  // A Locked Core row that is not Filled keeps a marked section Pending, and the line says which (spec 8.6).
+  const lockedOpen =
+    markNote !== null && state ? lockedCorePendingLine(state.pendingLockedCore.map(labels)) : null;
   const groups = [
     { name: 'Core fields', rows: rows.filter((item) => item.core) },
     { name: 'Optional fields', rows: rows.filter((item) => !item.core && !item.custom) },
@@ -915,7 +1042,16 @@ function SectionView({
         {section}. {sectionName(section)}
       </h3>
       {state ? <FactMark state={state.state} /> : null}
-      {markedOpen ? <p className="route-editor-quiet">{markedOpen}</p> : null}
+      {markNote !== null ? (
+        <p className="route-editor-quiet">
+          Not applicable: <bdi>{markNote}</bdi>
+        </p>
+      ) : null}
+      {lockedOpen ? (
+        <p className="route-editor-quiet">
+          <Say words={lockedOpen} />
+        </p>
+      ) : null}
       <ShowMoreList limit={8} noun="fields" className="route-editor-rows">
         {groups.flatMap((group) =>
           group.rows.map((item, index) =>
