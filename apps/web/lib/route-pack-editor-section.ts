@@ -52,13 +52,28 @@ export function canOfferMark(role: string, row?: Pick<FieldRow, 'part'> | null):
   return role === 'owner' && row?.part !== 'Locked';
 }
 
+const takenKeyRefusals = (
+  key: string,
+  takenKeys: Iterable<string>,
+  field: Refusal['field'],
+): Refusal[] =>
+  new Set(takenKeys).has(key) ? [{ field, message: sectionRefusalWords.fieldExists(key) }] : [];
+/**
+ * Add Field, step 2 of Add Custom Field: the key is checked again against the keys the route has now, so a fact is never
+ * overwritten. A refusal is a form refusal (step 2 has no Label), in the words of step 1; the dialog stays open and shows it.
+ */
+export const addCustomRefusals = (key: string, takenKeys: Iterable<string>): Refusal[] =>
+  takenKeyRefusals(key, takenKeys, 'form');
+
 export type CustomPlan =
   | { ok: true; key: string; definition: CustomDefinition; field: FormField }
   | { ok: false; refusals: Refusal[] };
 /**
  * Step 1 of Add Custom Field: the key, definition and field of a new custom field in `section`, or every refusal in the order
- * of the form. `takenKeys` holds every key the route has, saved or staged (and the keys of custom labels); a label whose key is
- * taken is refused in words and never renamed with a suffix (spec 8.8). A choice needs at least 2 allowed values; a list may have none (a free list).
+ * of the form. `takenKeys` holds every key this route has, saved or staged, and its row keys; a label whose key is taken is
+ * refused in words and never renamed with a suffix (spec 8.8). A key held only by another route is not taken: one key may be
+ * shared across routes (ADR-093 E), and the server refuses a definition that conflicts. A choice needs at least 2 allowed
+ * values; a list may have none (a free list).
  */
 export function addCustomPlan(input: {
   label: string;
@@ -82,9 +97,7 @@ export function addCustomPlan(input: {
     ? []
     : !usable
       ? [{ field: 'text', message: sectionRefusalWords.noUsableLetters }]
-      : new Set(input.takenKeys).has(key)
-        ? [{ field: 'text', message: sectionRefusalWords.fieldExists(key) }]
-        : [];
+      : takenKeyRefusals(key, input.takenKeys, 'text');
   const refusals = [...labelRefusals, ...shared];
   const allowed = new Set(input.allowed.map((value) => value.trim()).filter(Boolean));
   if (input.type === 'choice' && allowed.size < 2) {

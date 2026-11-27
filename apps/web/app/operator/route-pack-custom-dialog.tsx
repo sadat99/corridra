@@ -21,17 +21,19 @@ import { SourceStep, TextArea, ValueControl } from './route-pack-value-controls'
 // ADR-093 Phase 3, PR 2c: Add Custom Field (spec 8.8), two steps. Step 1 Define asks Label, Type and, for a choice or a list,
 // Allowed values; the section is the section the menu was opened from and is shown as a line. Step 2 Value asks the answer
 // (Filled or Not applicable) with the same value controls as a row. "Add Field" hands the key, the definition and the fact to
-// `onAdd` (the page stages it with stageFact); nothing is saved here. Closing drops what was typed, with no question.
+// `onAdd` (the page stages it with stageFact); nothing is saved here. A refusal from `onAdd` keeps the dialog open and is shown
+// in step 2. Closing drops what was typed, with no question.
 
 export type CustomDialogProps = {
   open: boolean;
   onClose: () => void;
   section: { number: SectionNumber; name: string };
-  /** Every key the route has, saved or staged, and the keys of custom labels: a label whose key is taken is refused. */
+  /** Every key this route has, saved or staged, and its row keys: a label whose key is taken is refused. */
   takenKeys: Iterable<string>;
   /** Today as YYYY-MM-DD, for the dates of the source. */
   today: string;
-  onAdd: (key: string, definition: CustomDefinition, fact: ContentFact) => void;
+  /** Stages the field; the refusals it returns (none when it was staged) keep the dialog open and are shown in step 2. */
+  onAdd: (key: string, definition: CustomDefinition, fact: ContentFact) => Refusal[];
   /** Where focus goes when the row that opened the dialog is gone (the More button, or the status line). */
   returnFocusTo?: () => HTMLElement | null;
 };
@@ -115,8 +117,13 @@ function CustomForm({
       takenKeys,
     });
     if (!plan.ok) return refuse(plan.refusals);
-    const same = defined && JSON.stringify(defined.definition) === JSON.stringify(plan.definition);
-    if (!same) setDraft(emptyDraft(today));
+    // A fix of the Label keeps the value typed in step 2; another type or other allowed values make it a different field.
+    const sameShape =
+      defined &&
+      defined.definition.type === plan.definition.type &&
+      JSON.stringify(defined.definition.allowedValues ?? []) ===
+        JSON.stringify(plan.definition.allowedValues ?? []);
+    if (!sameShape) setDraft(emptyDraft(today));
     setDefined({ key: plan.key, definition: plan.definition, field: plan.field });
     setShown([]);
     setStep(2);
@@ -132,7 +139,8 @@ function CustomForm({
     const built = factFromDraft(defined.field, draft, today);
     if (!built.ok) return refuse(built.refusals);
     if (!built.fact) return;
-    onAdd(defined.key, defined.definition, built.fact);
+    const refused = onAdd(defined.key, defined.definition, built.fact);
+    if (refused.length) return refuse(refused);
     onClose();
   }
   const set = (change: Partial<FactDraft>) => setDraft((current) => ({ ...current, ...change }));

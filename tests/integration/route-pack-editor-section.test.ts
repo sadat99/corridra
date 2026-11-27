@@ -8,6 +8,7 @@ import {
 import { emptyDraft, factFromDraft } from '../../apps/web/lib/route-pack-editor-fact-form';
 import {
   addCustomPlan,
+  addCustomRefusals,
   canOfferMark,
   markNoteIssue,
   sectionRefusalWords,
@@ -116,6 +117,15 @@ describe('Add Custom Field, step 1: Define', () => {
     // The refusals of the shared definition still apply (an allowed value on a text field).
     expect(messages(plan({ type: 'text', allowed: ['Yes', 'No'] }))).toEqual([
       'Only a choice or a list takes allowed values.',
+    ]);
+  });
+});
+
+describe('Add Custom Field, step 2: Add Field', () => {
+  test('refuses a key the route has taken since step 1, in the words of step 1, so the dialog stays open and says so', () => {
+    expect(addCustomRefusals('custom.visa_notes', ['identity.summary'])).toEqual([]);
+    expect(addCustomRefusals('custom.visa_notes', new Set(['custom.visa_notes']))).toEqual([
+      { field: 'form', message: sectionRefusalWords.fieldExists('custom.visa_notes') },
     ]);
   });
 });

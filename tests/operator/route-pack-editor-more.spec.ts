@@ -670,3 +670,93 @@ test.describe('More shares the first line of the route header', () => {
     });
   }
 });
+
+test.describe('a custom key of another route, the opener of Discard and the draft of step 2', () => {
+  test('a key held only by another route can be added on this route: one key may be shared across routes', async ({
+    page,
+  }) => {
+    const route = 'Bangladesh to European Union';
+    // custom.fair_stand_cost is saved on Bangladesh to China only; the workspace's custom labels carry it to every route.
+    const world = await open(page, { query: 'route=BD-EU&section=5' });
+    const before = await savedDocument(page, routeIds.bdEu);
+    expect(before.document.facts.some((fact) => fact.key === 'custom.fair_stand_cost')).toBe(false);
+    await choose(page, 'Add Custom Field', route);
+    const dialog = customDialog(page);
+    // The same meaning as on Bangladesh to China (section 5, Money), so the server keeps one meaning for the key.
+    await dialog.getByRole('textbox', { name: 'Label' }).fill('Fair stand cost');
+    await dialog.getByRole('combobox', { name: 'Type' }).selectOption('money');
+    await dialog.getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(dialog.getByRole('alert')).toHaveCount(0);
+    await expect(dialog.getByText('Step 2 of 2: Value')).toBeFocused();
+    await dialog.getByRole('button', { name: 'Not applicable', exact: true }).click();
+    await dialog.getByRole('textbox', { name: 'Reason' }).fill('No fairs on this route');
+    await dialog.getByRole('button', { name: 'Add Field', exact: true }).click();
+    await expect(dialog).toBeHidden();
+    await expect(status(page)).toHaveText('Field added. 1 change not saved.');
+    await saveAll(page, 1);
+    await expect(saveDialog(page)).toBeHidden();
+    const sent = sentOf(world);
+    expect(sent.document.facts.find((fact) => fact.key === 'custom.fair_stand_cost')).toMatchObject(
+      {
+        label: 'Fair stand cost',
+        section: 5,
+        type: 'money',
+        state: 'NOT_APPLICABLE',
+        note: 'No fairs on this route',
+      },
+    );
+  });
+
+  test('at 1440 Discard Changes from More, then Keep Editing, returns focus to More', async ({
+    page,
+  }) => {
+    await open(page, { query: 'route=BD-CN&section=1' });
+    await stageSummary(page, 'Mine');
+    await choose(page, 'Discard Changes');
+    const dialog = discardDialog(page);
+    await expect(dialog.getByRole('button', { name: 'Keep Editing' })).toBeFocused();
+    await dialog.getByRole('button', { name: 'Keep Editing' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(moreButton(page)).toBeFocused();
+    await expect(bar(page)).toContainText('1 change not saved');
+  });
+
+  test('at 1440 Discard Changes from the bar, then Keep Editing, returns focus to the bar button even when the click did not focus it', async ({
+    page,
+  }) => {
+    await open(page, { query: 'route=BD-CN&section=1' });
+    await stageSummary(page, 'Mine');
+    // Some browsers (Safari) do not focus a button on a click, so the dialog finds no opener to return to.
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    const discard = bar(page).getByRole('button', { name: 'Discard Changes' });
+    await discard.dispatchEvent('click');
+    const dialog = discardDialog(page);
+    await expect(dialog.getByRole('button', { name: 'Keep Editing' })).toBeFocused();
+    await dialog.getByRole('button', { name: 'Keep Editing' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(discard).toBeFocused();
+  });
+
+  test('Back and a fix of the Label only keep the value typed in step 2; a change of type clears it', async ({
+    page,
+  }) => {
+    await open(page, { query: 'route=BD-CN&section=5' });
+    await choose(page, 'Add Custom Field');
+    const dialog = customDialog(page);
+    const label = dialog.getByRole('textbox', { name: 'Label' });
+    const next = dialog.getByRole('button', { name: 'Next', exact: true });
+    const back = dialog.getByRole('button', { name: 'Back', exact: true });
+    await label.fill('Visa notse');
+    await next.click();
+    await dialog.getByRole('textbox').first().fill('On arrival');
+    await back.click();
+    await label.fill('Visa notes');
+    await next.click();
+    await expect(dialog.getByText('Step 2 of 2: Value')).toBeFocused();
+    await expect(dialog.getByRole('textbox').first()).toHaveValue('On arrival');
+    await back.click();
+    await dialog.getByRole('combobox', { name: 'Type' }).selectOption('link');
+    await next.click();
+    await expect(dialog.getByRole('textbox').first()).toHaveValue('');
+  });
+});

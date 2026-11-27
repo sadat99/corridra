@@ -33,7 +33,7 @@ import {
   type Stage,
 } from '../../lib/route-pack-editor-stage';
 import type { FactsSaved } from '../../lib/route-pack-editor-write';
-import { canOfferMark } from '../../lib/route-pack-editor-section';
+import { addCustomRefusals, canOfferMark } from '../../lib/route-pack-editor-section';
 import {
   cautionLine,
   changeKept,
@@ -696,6 +696,21 @@ function RouteBody({
     toStatus.current = false;
     return target;
   };
+  // Discard Changes is opened from the bar or from More; Keep Editing returns focus to the one that opened it, also where a
+  // click does not focus its button (Safari), so the dialog has no opener of its own to return to.
+  const discardFrom = useRef<'bar' | 'more'>('bar');
+  const openDiscard = (from: 'bar' | 'more') => {
+    discardFrom.current = from;
+    setDiscardOpen(true);
+  };
+  const backFromDiscard = () => {
+    const button =
+      discardFrom.current === 'bar'
+        ? document.querySelector<HTMLElement>('.route-bar-discard button')
+        : null;
+    if (!toStatus.current && button && button.offsetParent !== null) return button;
+    return backFromMore();
+  };
   const discard = () => {
     toStatus.current = true;
     setStage(discardStage);
@@ -735,19 +750,22 @@ function RouteBody({
     sayStaged(left > 0 ? markRemovedLine(left) : 'Mark removed.');
     statusLine.current?.focus();
   };
-  // A key the route already has is refused in the dialog; it is checked again here so a fact is never overwritten.
+  // A key this route already has (saved, staged or a row) is refused in the dialog; it is checked again here so a fact is never
+  // overwritten. Keys of other routes are not taken: one key may be shared across routes (ADR-093 E), and the server refuses a
+  // definition that conflicts with theirs (ROUTE_PACK_CUSTOM_KEY_CONFLICT).
   const takenKeys = new Set([
     ...savedFacts.keys(),
     ...Object.keys(stage.facts),
-    ...Object.keys(detail.customLabels),
     ...completeness.fields.map((item) => item.key),
   ]);
   const addCustom = (key: string, fact: ContentFact) => {
-    if (takenKeys.has(key)) return;
+    const refused = addCustomRefusals(key, takenKeys);
+    if (refused.length) return refused;
     const after = stageFact(stage, saved, key, fact);
     setStage((current) => (current.facts[key] ? current : stageFact(current, saved, key, fact)));
     toStatus.current = true;
     sayStaged(fieldAddedLine(stageCount(after)));
+    return [];
   };
   const openMore = (which: 'mark' | 'custom') => {
     if (!openRowBlocks()) setMoreDialog(which);
@@ -793,7 +811,7 @@ function RouteBody({
                 : undefined
             }
             onUnmark={section !== null && markNote !== null ? unmarkSection : undefined}
-            onDiscard={staged > 0 ? () => setDiscardOpen(true) : undefined}
+            onDiscard={staged > 0 ? () => openDiscard('more') : undefined}
           />
         ) : null}
       </div>
@@ -867,7 +885,7 @@ function RouteBody({
         />
       )}
       {owner && staged > 0 ? (
-        <UnsavedBar count={staged} onReview={review} onDiscard={() => setDiscardOpen(true)} />
+        <UnsavedBar count={staged} onReview={review} onDiscard={() => openDiscard('bar')} />
       ) : null}
       {owner ? (
         <>
@@ -917,7 +935,7 @@ function RouteBody({
             count={staged}
             onKeep={() => setDiscardOpen(false)}
             onDiscard={discard}
-            returnFocusTo={backFromMore}
+            returnFocusTo={backFromDiscard}
           />
         </>
       ) : null}
