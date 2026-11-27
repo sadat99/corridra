@@ -469,3 +469,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
   - (b) `tests/ux/home-v43-server.spec.ts:325`, "a link with a hash opens what hides it before it takes focus", received an empty string.
 - **Why flakes are suspected:** PR 675 changed neither file nor the decision card route or the home page. The causes were not reproduced or confirmed. Reading (a) is likely, not proved; reading (b) is not known.
 - **If it recurs:** for (a), record the run id and look at the limiter window start before touching the test; do not loosen the count. For (b), treat it as a real defect in the hash link path, not a flake, and do not add a fixed sleep.
+
+### KI-70 `del-s3-people-board.spec.ts:933` found the expired-view message twice (27 November 2026, passed on one re-run, cause not established)
+
+- **Seen:** PR 677 CI run 45934273732, attempt 1, job `ux (2)`, `tests/ux/del-s3-people-board.spec.ts:933`, test "an application can still be answered once the private participant view has expired", at 1440 px. Strict mode violation: the text "This private view expired. Reload to check access again." resolved to 2 elements. It passed on one re-run.
+- **Why it is not explained:** PR 677 changed no people-board, delegations or participant file. It is not KI-68 (`home-v43.spec.ts:734`) and not KI-69. The cause was not reproduced or confirmed.
+- **If it recurs:** treat the duplicate message element as a real defect in the participant client. Record the run id and job here and reopen this entry. Do not add a fixed sleep or loosen the locator.
