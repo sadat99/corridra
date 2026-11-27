@@ -108,6 +108,7 @@ export function HomeV44Sheet({
             view="120 10 560 230"
             routes={arcs}
             labels={mapLabels}
+            flags
           />
         </div>
         <dl className="hv7-sum">

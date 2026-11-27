@@ -892,24 +892,46 @@
   display: grid;
   block-size: 100%;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   font-family: var(--hv7-font), -apple-system, system-ui, sans-serif;
   color: var(--cv-ink);
 }
 @media (min-width: 56rem) {
   .hv7-sheet-grid {
+    grid-template-rows: none;
     grid-template-columns: 380px minmax(0, 1fr);
   }
 }
 .hv7-side {
-  display: none;
+  display: flex;
   flex-direction: column;
-  padding: 36px 32px;
+  padding: 0;
   background: var(--cv-tint);
   overflow: hidden;
 }
+.hv7-side > :not(.hv7-side-map) {
+  display: none;
+}
+.hv7-side .hv7-side-map {
+  block-size: 132px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
 @media (min-width: 56rem) {
   .hv7-side {
-    display: flex;
+    padding: 36px 32px;
+  }
+  .hv7-side > :not(.hv7-side-map) {
+    display: block;
+  }
+  .hv7-side .hv7-side-map {
+    block-size: 196px;
+    margin-block-start: 22px;
+    background: var(--cv-white);
+    border: 1px solid var(--cv-line);
+    border-radius: 18px;
   }
 }
 .hv7-side .hv7-eb {
