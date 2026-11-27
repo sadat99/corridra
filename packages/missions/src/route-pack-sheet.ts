@@ -29,6 +29,7 @@ import {
   type ContentFact,
   type FactType,
   type GoLiveResult,
+  type GoLiveWarning,
   type PackStatus,
   type PackView,
 } from '@corridra/domain/route-pack-standard';
@@ -83,6 +84,8 @@ export type SheetReport = {
   mode: 'dry-run' | 'save';
   ok: boolean;
   errors: SheetIssue[];
+  // Go-live warnings (ADR-093 C, warn only): a Core field Pending on a route going or staying live. They never block a save.
+  warnings: SheetIssue[];
   routes: SheetRoutePlan[];
   readinessInvalidated: boolean;
   saved?: {
@@ -92,6 +95,8 @@ export type SheetReport = {
     packVersion: number | null;
     // Expired policy references a pack moved to PAUSED no longer carries.
     removedRefs?: string[];
+    // The go-live warnings the content and pack writes returned.
+    warnings?: GoLiveWarning[];
   }[];
 };
 type SheetState = 'FILLED' | 'NOT_APPLICABLE' | 'PENDING';
@@ -368,6 +373,7 @@ function planRoute(
   state: RoutePackState,
   today: string,
   errors: SheetIssue[],
+  warnings: SheetIssue[],
 ): PlannedRoute | null {
   const issue = (row: number | null, key: string | null, message: string) =>
     errors.push({ row, route, key, message });
@@ -508,9 +514,16 @@ function planRoute(
   const newPack: PackView = packChanged ? { status, configuration } : null;
   const goLive = judge(judged, before, { pack: newPack ?? undefined, document });
   const afterPack: PackView = newPack ?? judged[0] ?? null;
-  if (!goLive.ok)
-    for (const key of goLive.keys)
-      issue(firstRow.get(key) ?? null, key, goLiveMessage({ ...goLive, keys: [key] }));
+  // Only emptying a Locked Core row of a live route is refused; a Pending Core field is a warning.
+  for (const found of goLive.ok ? goLive.warnings : [goLive])
+    for (const key of found.keys)
+      (goLive.ok ? warnings : errors).push({
+        row: firstRow.get(key) ?? null,
+        route,
+        key,
+        message: goLiveMessage({ ...found, keys: [key] }),
+        code: found.code,
+      });
   const completeness = deriveCompleteness(afterPack, document, today);
   const old = new Map((before?.facts ?? []).map((fact) => [fact.key, fact]));
   const next = new Map(document.facts.map((fact) => [fact.key, fact]));
@@ -567,13 +580,14 @@ function planSheet(
   sheet: { rows: SheetRow[]; errors: SheetIssue[] },
   state: RoutePackState,
   today: string,
-): { errors: SheetIssue[]; routes: PlannedRoute[] } {
+): { errors: SheetIssue[]; warnings: SheetIssue[]; routes: PlannedRoute[] } {
   const errors = [...sheet.errors];
+  const warnings: SheetIssue[] = [];
   const byRoute = new Map<string, SheetRow[]>();
   for (const row of sheet.rows)
     for (const route of row.routes) byRoute.set(route, [...(byRoute.get(route) ?? []), row]);
   const routes = [...byRoute]
-    .map(([route, rows]) => planRoute(route, rows, state, today, errors))
+    .map(([route, rows]) => planRoute(route, rows, state, today, errors, warnings))
     .filter((plan): plan is PlannedRoute => plan !== null);
   // ADR-093 E: one custom key keeps one meaning across the workspace, judged after the whole file is applied.
   const documents = new Map<string, ContentDocument>(
@@ -598,7 +612,7 @@ function planSheet(
           message: routePackWords.customKeyConflict(conflict.key),
         });
     }
-  return { errors, routes };
+  return { errors, warnings, routes };
 }
 const publicPlan = (p: PlannedRoute): SheetRoutePlan => ({
   route: p.route,
@@ -612,12 +626,13 @@ const publicPlan = (p: PlannedRoute): SheetRoutePlan => ({
 });
 function report(
   mode: SheetReport['mode'],
-  planned: { errors: SheetIssue[]; routes: PlannedRoute[] },
+  planned: { errors: SheetIssue[]; warnings: SheetIssue[]; routes: PlannedRoute[] },
 ): SheetReport {
   return {
     mode,
     ok: planned.errors.length === 0,
     errors: planned.errors,
+    warnings: planned.warnings,
     routes: planned.routes.map(publicPlan),
     readinessInvalidated: planned.routes.some((plan) => plan.pack.changed),
   };
@@ -630,6 +645,13 @@ function readSheet(rows: { row: number; cells: string[] }[]) {
   );
   if (octets > sheetLimits.octets) throw new DomainError(sheetWords.octets, 413);
   return sheetFromCells(rows);
+}
+// The warnings of a route's content and pack writes, each key once per code.
+function mergedWarnings(warnings: GoLiveWarning[]): GoLiveWarning[] {
+  const byCode = new Map<GoLiveWarning['code'], Set<string>>();
+  for (const warning of warnings)
+    byCode.set(warning.code, new Set([...(byCode.get(warning.code) ?? []), ...warning.keys]));
+  return [...byCode].map(([code, keys]) => ({ code, keys: [...keys] }));
 }
 async function requireContent(db: DatabaseClient) {
   if (!(await routePackContentActive(db))) throw new DomainError('Not found', 404);
@@ -670,15 +692,24 @@ export class RoutePackSheetService {
     const progress = (
       plan: PlannedRoute,
       routeId: string,
-      change: { contentVersion?: number; packVersion?: number; removedRefs?: string[] },
-    ) =>
+      change: {
+        contentVersion?: number;
+        packVersion?: number;
+        removedRefs?: string[];
+        warnings?: GoLiveWarning[];
+      },
+    ) => {
+      const seen = saved.get(plan.route);
+      const warnings = mergedWarnings([...(seen?.warnings ?? []), ...(change.warnings ?? [])]);
       saved.set(plan.route, {
         route: plan.route,
         routeId,
-        contentVersion: change.contentVersion ?? saved.get(plan.route)?.contentVersion ?? null,
-        packVersion: change.packVersion ?? saved.get(plan.route)?.packVersion ?? null,
+        contentVersion: change.contentVersion ?? seen?.contentVersion ?? null,
+        packVersion: change.packVersion ?? seen?.packVersion ?? null,
         ...(change.removedRefs?.length ? { removedRefs: change.removedRefs } : {}),
+        ...(warnings.length ? { warnings } : {}),
       });
+    };
     const ids = new Map<string, string>();
     let step: PlannedRoute | null = null;
     try {
@@ -711,7 +742,10 @@ export class RoutePackSheetService {
           })),
         });
         written.items.forEach((item, i) =>
-          progress(changed[i]!, item.routeId, { contentVersion: item.version }),
+          progress(changed[i]!, item.routeId, {
+            contentVersion: item.version,
+            warnings: item.warnings,
+          }),
         );
       }
       for (const plan of planned.routes.filter((p) => p.pack.changed)) {
@@ -735,7 +769,11 @@ export class RoutePackSheetService {
             expectedBasePackId: plan.basePackId,
           },
         );
-        progress(plan, ids.get(plan.route)!, { packVersion: published.version, removedRefs });
+        progress(plan, ids.get(plan.route)!, {
+          packVersion: published.version,
+          removedRefs,
+          warnings: published.warnings,
+        });
       }
     } catch (error) {
       // A refusal of one route's step (its pack changed, it is too large to review) is that route's error in the report, and a

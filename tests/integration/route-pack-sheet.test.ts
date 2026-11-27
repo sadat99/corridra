@@ -396,7 +396,7 @@ test('the template saves nothing from its example rows: a Pending new custom row
   ]);
 });
 
-test('on an ACTIVE route a file that turns a Filled Core field Pending is refused in the dry run and saves nothing', async () => {
+test('on an ACTIVE route a file that turns a Filled Core field Pending saves with a warning in the dry run and the save', async () => {
   expect((await save(coreLines('CL-PE'))).ok).toBe(true);
   const pack = await latestPack('CL-PE');
   expect(pack.status).toBe('DRAFT');
@@ -411,28 +411,68 @@ test('on an ACTIVE route a file that turns a Filled Core field Pending is refuse
   });
   const file = [line({ route: 'CL-PE', field_key: 'identity.summary', state: 'Pending' })];
   const report = await sheet.dryRun(owner(), { rows: rowsOf(file) });
-  expect(report.ok).toBe(false);
+  expect(report.ok).toBe(true);
+  expect(report.errors).toEqual([]);
   expect(plan(report, 'CL-PE').goLive).toEqual({
-    ok: false,
-    code: 'ROUTE_PACK_CORE_TURNS_PENDING',
-    keys: ['identity.summary'],
+    ok: true,
+    warnings: [{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] }],
   });
-  expect(report.errors).toEqual([
+  const warning = {
+    row: 2,
+    route: 'CL-PE',
+    key: 'identity.summary',
+    code: 'ROUTE_PACK_CORE_TURNS_PENDING',
+    message: 'These Core fields are now Pending on a live route: What this route is for.',
+  };
+  expect(report.warnings).toEqual([warning]);
+  const saved = await save(file);
+  expect(saved.ok).toBe(true);
+  expect(saved.warnings).toEqual([warning]);
+  expect(saved.saved).toEqual([
     {
-      row: 2,
       route: 'CL-PE',
-      key: 'identity.summary',
-      message:
-        'The route is live, so these Core fields cannot become Pending: What this route is for.',
+      routeId: await routeId('CL-PE'),
+      contentVersion: 2,
+      packVersion: null,
+      warnings: [{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] }],
     },
   ]);
-  const before = await counts();
-  expect((await save(file)).ok).toBe(false);
-  expect(await counts()).toEqual(before);
-  // Optional fields may still change on the live route, and the status is never taken from the file.
+  expect(fact(await latestDocument('CL-PE'), 'identity.summary')).toBeUndefined();
+  // Optional fields may still change on the live route, with no warning, and the status is never taken from the file.
   const optional = await save([filled('CL-PE', 'market.notes', 'Copper and fruit dominate')]);
   expect(optional.ok).toBe(true);
+  expect(optional.warnings).toEqual([]);
   expect((await latestPack('CL-PE')).status).toBe('ACTIVE');
+});
+
+test('on an ACTIVE route a file cannot empty pack.languages: a Filled row without a value is refused and a Pending row keeps the list', async () => {
+  expect((await save(coreLines('CL-BO'))).ok).toBe(true);
+  const draft = await latestPack('CL-BO');
+  await corridors.appendPack(owner(), {
+    id: randomUUID(),
+    routeId: (await routeId('CL-BO'))!,
+    version: draft.version + 1,
+    status: 'ACTIVE',
+    effectiveFrom: new Date().toISOString(),
+    reason,
+    configuration: draft.configuration,
+  });
+  const before = await counts();
+  const emptied = await save([
+    line({ route: 'CL-BO', field_key: 'pack.languages', state: 'Filled', value: ' | ' }),
+  ]);
+  expect(emptied.ok).toBe(false);
+  expect(emptied.errors).toEqual([
+    { row: 2, route: 'CL-BO', key: 'pack.languages', message: sheetWords.filledEmpty },
+  ]);
+  expect(await counts()).toEqual(before);
+  const pending = await save([
+    line({ route: 'CL-BO', field_key: 'pack.languages', state: 'Pending' }),
+  ]);
+  expect(pending.ok).toBe(true);
+  expect(plan(pending, 'CL-BO').pack.changed).toBe(false);
+  expect(await counts()).toEqual(before);
+  expect((await latestPack('CL-BO')).configuration.languages).toEqual(['en', 'bn']);
 });
 
 test('a file filling pack.languages is judged against the resulting pack', async () => {
@@ -988,7 +1028,7 @@ test('a pack paused after the plan is not un-paused by the save: the pack step i
   expect(pack.status).toBe('PAUSED');
 });
 
-test('the dry run judges go-live against the latest pack, a scheduled one included', async () => {
+test('the dry run judges go-live against the latest pack, a scheduled one included, and warns', async () => {
   expect((await save(coreLines('GT-SV'))).ok).toBe(true);
   const draft = await latestPack('GT-SV');
   await corridors.appendPack(owner(), {
@@ -1003,12 +1043,13 @@ test('the dry run judges go-live against the latest pack, a scheduled one includ
   const report = await sheet.dryRun(owner(), {
     rows: rowsOf([line({ route: 'GT-SV', field_key: 'identity.summary', state: 'Pending' })]),
   });
+  // Judged against the scheduled live pack, so the file warns; it is never refused for this.
   expect(plan(report, 'GT-SV').goLive).toEqual({
-    ok: false,
-    code: 'ROUTE_PACK_CORE_TURNS_PENDING',
-    keys: ['identity.summary'],
+    ok: true,
+    warnings: [{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] }],
   });
-  expect(report.ok).toBe(false);
+  expect(report.ok).toBe(true);
+  expect(report.warnings.map((w) => w.key)).toEqual(['identity.summary']);
 });
 
 test('a pack over the review size limit is a route error in the save report, and nothing is written', async () => {
@@ -1053,7 +1094,7 @@ test('a pack over the review size limit is a route error in the save report, and
   expect((await response.json()).error).toBe(routePackWords.proposalTooLarge);
 });
 
-test('the dry run also judges the pack in force: a live pack with a scheduled pause still refuses a Core field turning Pending', async () => {
+test('the dry run also judges the pack in force: a live pack with a scheduled pause still warns about a Core field turning Pending', async () => {
   expect((await save(coreLines('HN-NI'))).ok).toBe(true);
   const draft = await latestPack('HN-NI');
   const id = (await routeId('HN-NI'))!;
@@ -1074,9 +1115,8 @@ test('the dry run also judges the pack in force: a live pack with a scheduled pa
     rows: rowsOf([line({ route: 'HN-NI', field_key: 'identity.summary', state: 'Pending' })]),
   });
   expect(plan(report, 'HN-NI').goLive).toEqual({
-    ok: false,
-    code: 'ROUTE_PACK_CORE_TURNS_PENDING',
-    keys: ['identity.summary'],
+    ok: true,
+    warnings: [{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] }],
   });
 });
 
