@@ -52,7 +52,10 @@ export function RouteFactRow({
   validUntil?: string | null;
   /** The valid-until day, already formatted, of a fact that has run out. */
   staleSince?: string | null;
-  /** The one button of the row (Edit, or Undo Change), drawn once, in the state line after the stale mark. */
+  /**
+   * The one button of the row (Edit, or Undo Change), drawn once, in the state line right after the state mark: that line always
+   * has room for it, so it never takes a line of its own (after a long stale mark or note it could, by a few pixels of font).
+   */
   action?: ReactNode;
   /** The row is open for editing: its label and Core chip stay, its value and meta are hidden and `editor` is drawn under it. */
   editing?: boolean;
@@ -115,10 +118,10 @@ export function RouteFactRow({
         <div className="ux-fact-meta" hidden={editing === true}>
           <div className="ux-fact-state">
             <FactMark state={state} />
+            {action ? <span className="ux-fact-action">{action}</span> : null}
             {unsaved ? <span className="ux-fact-unsaved">Changed, not saved</span> : null}
             {note ? <span className="ux-fact-note">Not applicable: {note}</span> : null}
             {staleSince ? <StaleMark>Stale since {staleSince}</StaleMark> : null}
-            {action ? <span className="ux-fact-action">{action}</span> : null}
           </div>
           {locked ? (
             <span className="ux-fact-pack">

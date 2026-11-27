@@ -1540,14 +1540,27 @@ test.describe('widths: no sideways scroll, axe clean, targets, the bar never cov
       const measure = async (role: string, route: string) => {
         await open(page, { role, width, query: `route=${route}` });
         await expect(rows(page).first()).toBeVisible();
-        const heights = await editor(page)
+        const found = await editor(page)
           .locator('li.ux-fact-row:visible')
           .evaluateAll((items) =>
-            items.map((item) => Math.round(item.getBoundingClientRect().height)),
+            items.map((item) => {
+              const mark = item.querySelector('.ux-fact-state > .ux-fact-mark');
+              const action = item.querySelector('.ux-fact-state > .ux-fact-action');
+              const [m, a] = [mark?.getBoundingClientRect(), action?.getBoundingClientRect()];
+              return {
+                height: Math.round(item.getBoundingClientRect().height),
+                label:
+                  (item.querySelector('.ux-fact-label') as HTMLElement | null)?.innerText ?? '',
+                // The action stands in the line of the state mark: its middle is within the mark (null: the row has no action).
+                onMarkLine:
+                  m && a ? a.top + a.height / 2 > m.top && a.top + a.height / 2 < m.bottom : null,
+              };
+            }),
           );
         const shell = page.locator('.settings-routes-shell');
         return {
-          heights,
+          heights: found.map((row) => row.height),
+          rows: found,
           region: Math.round((await box(editor(page))).height),
           wide: (await shell.getAttribute('data-wide')) === 'true',
         };
@@ -1562,12 +1575,16 @@ test.describe('widths: no sideways scroll, axe clean, targets, the bar never cov
             .first(),
         ).toBeVisible();
         const without = await measure('admin', route);
-        // Side by side Edit stands in the state line beside the state: a row grows only where that line has to wrap (the stale
-        // row, by 15 px); stacked it may take a line of its own under the value, which is why the stacked budget has room.
+        // Side by side Edit stands in the state line right after the state mark, where the line always has room, so whatever the
+        // font it never takes a line of its own (after a long stale mark it once did, on CI's metrics, by 40 px): a row grows at most
+        // by the button's height over the text line. Stacked it may take a line of its own under the value, which is why the
+        // stacked budget has room.
         if (withEdit.wide)
-          withEdit.heights.forEach((height, index) =>
-            expect(height).toBeLessThanOrEqual(without.heights[index]! + 16),
-          );
+          withEdit.rows.forEach((row, index) => {
+            const where = `${route} at ${width}, row ${index} (${row.label.split('\n')[0]})`;
+            if (row.onMarkLine !== null) expect(row.onMarkLine, where).toBe(true);
+            expect(row.height, where).toBeLessThanOrEqual(without.heights[index]! + 16);
+          });
         test.info().annotations.push({
           type: `region-${route}`,
           description: `${width}: ${withEdit.region} px with Edit (owner), ${without.region} px read only (admin, with its note); ${withEdit.wide ? 'side by side' : 'stacked'}`,

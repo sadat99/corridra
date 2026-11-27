@@ -100,7 +100,8 @@
 .ux-fact-meta[hidden] {
   display: none;
 }
-/* PR 2b: the one button of the row (Edit, Undo Change) stands in the state line after the stale mark, so it adds no row. It is a
+/* PR 2b: the one button of the row (Edit, Undo Change) stands in the state line right after the state mark, where there is always
+   room, so it adds no line of its own whatever the font (the stale mark and a note follow it). It is a
    quiet text button, a 44 px target up to 1439 px and compact (28 px) from 1440 px. */
 .ux-fact-action {
   display: inline-flex;

@@ -93,7 +93,7 @@ describe('RouteFactRow', () => {
       expect(render(ce(RouteFactRow, props))).toBe(html);
     });
 
-  test('the action stands once, in the state line after the stale mark, and adds no row', async () => {
+  test('the action stands once, in the state line right after the state mark and before the stale mark, and adds no row', async () => {
     const { RouteFactRow } = await load('route-fact-row.tsx');
     const html = render(
       ce(RouteFactRow, {
@@ -107,7 +107,10 @@ describe('RouteFactRow', () => {
       html.indexOf('class="ux-fact-source"'),
     );
     expect(state).toContain('Stale since 31 Dec 2025');
-    expect(state.indexOf('Stale since')).toBeLessThan(state.indexOf('ux-fact-action'));
+    // Right after the state mark, where the line always has room: never after a long stale mark, where a font could push it
+    // onto a line of its own.
+    expect(state.indexOf('ux-fact-action')).toBeGreaterThan(state.indexOf('ux-fact-mark'));
+    expect(state.indexOf('ux-fact-action')).toBeLessThan(state.indexOf('Stale since'));
     expect(html).not.toContain('<div class="ux-fact-action">');
   });
 
