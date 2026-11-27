@@ -544,6 +544,24 @@ describe('route-pack-facts, a save that lost a race', () => {
   });
 });
 
+describe('route-pack-facts, a route of another workspace', () => {
+  test('an owner of workspace B posting to B with the route id of workspace A gets Route unavailable (404) and nothing is written', async () => {
+    const routeId = await newRoute();
+    const before = await f.owner.query('SELECT count(*) FROM app.route_pack_content');
+    web.actor = 'other';
+    const refused = await save(item(routeId, 1), { tenant: f.tenantB });
+    expect(refused.status).toBe(404);
+    const answer = await asJson(refused);
+    expect(answer.error).toBe('Route unavailable');
+    expect(JSON.stringify(answer)).not.toContain(routeId);
+    expect(await rows(routeId)).toBe(0);
+    expect(await f.owner.query('SELECT count(*) FROM app.route_pack_content')).toEqual(before);
+    // The owner of workspace A saves it in A.
+    web.actor = 'owner';
+    expect((await save(item(routeId, 1))).status).toBe(201);
+  });
+});
+
 describe('route-pack-facts, one command, one record', () => {
   test('an exact replay is 200 duplicate true with no warnings and no new row; other uses of the id are 409', async () => {
     const routeId = await newRoute();
@@ -566,6 +584,14 @@ describe('route-pack-facts, one command, one record', () => {
     const otherReason = await save({ ...body, reason: 'Synthetic other reason' });
     expect(otherReason.status).toBe(409);
     expect(await asJson(otherReason)).toMatchObject({ code: 'ROUTE_PACK_COMMAND_REUSED' });
+    expect(await rows(routeId)).toBe(2);
+    // The same id, route, reason and document at another version is not a replay: nothing is answered as saved.
+    const otherVersion = await save({ ...body, version: 3 });
+    expect(otherVersion.status).toBe(409);
+    expect(await asJson(otherVersion)).toMatchObject({ code: 'ROUTE_PACK_COMMAND_REUSED' });
+    const earlierVersion = await save({ ...body, version: 1 });
+    expect(earlierVersion.status).toBe(409);
+    expect(await asJson(earlierVersion)).toMatchObject({ code: 'ROUTE_PACK_COMMAND_REUSED' });
     expect(await rows(routeId)).toBe(2);
     // The id belongs to another route's record too.
     const elsewhere = await newRoute();
@@ -590,6 +616,24 @@ describe('route-pack-facts, one command, one record', () => {
     expect((await save(body)).status).toBe(201);
     expect((await save(body)).status).toBe(200);
     expect(await rows(routeId)).toBe(1);
+  });
+});
+
+describe('route-pack-facts, two saves at the same time', () => {
+  test('two saves on the same version: one is 201, the other 409 ROUTE_PACK_CONTENT_CHANGED, and exactly one row is added', async () => {
+    const routeId = await newRoute();
+    expect((await save(item(routeId, 1))).status).toBe(201);
+    const first = item(routeId, 2, document([fact('notes.general', { value: 'First' })]));
+    const second = item(routeId, 2, document([fact('notes.general', { value: 'Second' })]));
+    const answers = await Promise.all([save(first), save(second)]);
+    expect(answers.map((answer) => answer.status).sort()).toEqual([201, 409]);
+    const lost = answers.find((answer) => answer.status === 409)!;
+    expect(await asJson(lost)).toMatchObject({ code: 'ROUTE_PACK_CONTENT_CHANGED' });
+    expect(await rows(routeId)).toBe(2);
+    expect((await viewOf(routeId)).content?.version).toBe(2);
+    // Recovery: the loser sends again on the next version.
+    const loser = answers[0]!.status === 409 ? first : second;
+    expect((await save({ ...loser, id: randomUUID(), version: 3 })).status).toBe(201);
   });
 });
 
