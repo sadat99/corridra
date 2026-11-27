@@ -28,6 +28,7 @@ import type { OperationsService } from './operations';
 import {
   commandStepId,
   warningsOrRefuse,
+  type ExistingProposal,
   type RoutePackContentService,
 } from './route-pack-content';
 
@@ -141,6 +142,21 @@ const decisionResult = z.object({
     )
     .default([]),
 });
+const commandReused = () =>
+  new DomainError(routePackWords.commandReused, 409, 'ROUTE_PACK_COMMAND_REUSED');
+// A retry may reuse the proposal stored under its command id only when it carries the same route, status, reason and
+// configuration.
+function sameProposal(
+  existing: ExistingProposal,
+  input: { routeId: string; status: PackStatus; reason: string; configuration: RouteConfiguration },
+) {
+  return (
+    existing.pack.routeId === input.routeId &&
+    existing.pack.status === input.status &&
+    existing.reason === input.reason &&
+    isDeepStrictEqual(comparable(existing.pack.configuration), comparable(input.configuration))
+  );
+}
 // The one reviewed publish the form, the sheet and the editor share: propose, then decide PUBLISH, by the same person
 // (ADR-093 I). Every step id comes from the command id. A retry with the same command id and the same values reuses the
 // proposal and the decision replays, so nothing is created twice; the same command id with other values is refused.
@@ -171,12 +187,14 @@ export async function publishReviewed(
   let pack: { id: string; version: number };
   if (existing) {
     if (
-      existing.pack.routeId !== input.routeId ||
-      existing.pack.status !== input.status ||
-      existing.reason !== reason ||
-      !isDeepStrictEqual(comparable(existing.pack.configuration), comparable(input.configuration))
+      !sameProposal(existing, {
+        routeId: input.routeId,
+        status: input.status,
+        reason,
+        configuration: input.configuration,
+      })
     )
-      throw new DomainError(routePackWords.commandReused, 409, 'ROUTE_PACK_COMMAND_REUSED');
+      throw commandReused();
     pack = existing.pack;
   } else {
     // Refused here, before the proposal, so a refused publish writes nothing; the decision judges again under the lock.
@@ -356,5 +374,220 @@ export async function createRoutePack(
     removedRefs,
     removedPolicies: removedNames,
     warnings: published.warnings,
+  };
+}
+
+// ADR-093 Phase 3, PR 3a: the pack settings and the status of one route, changed from the route pack editor. A settings change
+// sets only the keys it names and carries every other key, the status and the sourcing block from the current pack (the block
+// goes only on Remove sourcing profile); a status change publishes the current configuration again with a new status. Both
+// publish through publishReviewed; a preview runs the same checks first and writes nothing.
+const packStatus = z.enum(['DRAFT', 'TESTING', 'LIMITED', 'ACTIVE', 'PAUSED']);
+const changeBase = {
+  // The retry key of one change: the same key never creates a second proposal or pack.
+  commandId: z.uuid(),
+  routeId: z.uuid(),
+  // The pack version being written: the version read plus 1.
+  version: z.int().positive(),
+  reason: z.string().trim().min(3).max(500),
+};
+const settingsChange = z
+  .object({
+    kind: z.literal('settings'),
+    ...changeBase,
+    // A key left out is carried from the current pack; a route with no pack needs its mission types.
+    missionTypes: keyList.min(1).optional(),
+    languages: z.array(locale).max(30).optional(),
+    currencies: z.array(currency).max(30).optional(),
+    timeZones: z.array(timeZone).max(30).optional(),
+    localities: keyList.optional(),
+    clusters: keyList.optional(),
+    evidenceTypes: keyList.optional(),
+    sourceCategories: keyList.optional(),
+    coverage: keyList.optional(),
+    requiredCapabilities: keyList.optional(),
+    operatorCapabilities: keyList.optional(),
+    manualChannel: z.boolean().optional(),
+    removeSourcingProfile: z.boolean().default(false),
+  })
+  .strict();
+const statusChange = z
+  .object({ kind: z.literal('status'), ...changeBase, status: packStatus })
+  .strict();
+export const routePackChangeRequest = z
+  .object({
+    mode: z.enum(['preview', 'publish']),
+    change: z.discriminatedUnion('kind', [settingsChange, statusChange]),
+  })
+  .strict();
+export type RoutePackChangeBody = z.input<typeof routePackChangeRequest>;
+export type RoutePackChange = z.infer<typeof routePackChangeRequest>['change'];
+export type RoutePackChangePreview = {
+  kind: RoutePackChange['kind'];
+  statusFrom: PackStatus | null;
+  statusTo: PackStatus;
+  changedKeys: string[];
+  baseVersion: number | null;
+  newVersion: number;
+  historicalAssignmentsPreserved: number;
+  warnings: GoLiveWarning[];
+  // The one refusal of the go-live check, answered here rather than thrown, so the editor can show which rows it names.
+  blocked: { code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED'; keys: string[] } | null;
+  onePersonPublication: boolean;
+  removedPolicies: string[];
+};
+export type RoutePackChangePublished = {
+  version: number;
+  duplicate: boolean;
+  warnings: GoLiveWarning[];
+  removedPolicies: string[];
+};
+const changeWords = {
+  missionTypes: 'Choose at least one mission type.',
+  noChange: 'Nothing changes in this pack. Change a setting or the status first.',
+} as const;
+type PackState = { status: PackStatus; configuration: RouteConfiguration };
+
+// The configuration keys the next pack sets differently from the current one, a key it drops (the sourcing block) included.
+function settingKeysChanged(current: RouteConfiguration | null, next: RouteConfiguration) {
+  const keys = new Set([...Object.keys(current ?? {}), ...Object.keys(next)]) as Set<
+    keyof RouteConfiguration
+  >;
+  return [...keys].filter((key) => !isDeepStrictEqual(current?.[key], next[key]));
+}
+// The status and configuration a change asks for, built on `from`.
+function requestedPack(change: RoutePackChange, from: PackState | null): PackState {
+  if (change.kind === 'status') {
+    if (!from) throw new DomainError('Route unavailable', 404);
+    return { status: change.status, configuration: from.configuration };
+  }
+  const status = from?.status ?? 'DRAFT';
+  const missionTypes = change.missionTypes ?? from?.configuration.missionTypes;
+  if (!missionTypes?.length)
+    throw new DomainError(changeWords.missionTypes, 400, 'ROUTE_PACK_INVALID');
+  return {
+    status,
+    configuration: routePackConfiguration(
+      { ...change, status, missionTypes },
+      from?.configuration ?? null,
+    ),
+  };
+}
+// The checks a preview and a publish share, in this order: the proposal read first, under config.manage, so a person who may
+// not change packs is refused before any route or pack is read; then the route, the pack asked for, expired policies, the
+// reason to record, and the command, version and no-change checks.
+async function prepareRoutePackChange(
+  deps: PublishDeps,
+  ctx: RequestContext,
+  change: RoutePackChange,
+) {
+  const existing = await deps.content.proposalOf(ctx, commandStepId(change.commandId, 'propose'));
+  const {
+    capabilities,
+    routes: [route],
+  } = await deps.content.overview(ctx, { routeIds: [change.routeId] });
+  if (!route) throw new DomainError('Route unavailable', 404);
+  const current = route.pack;
+  // A retry builds on the pack it proposed, so its exact values give exactly that pack again, whatever was published since.
+  const requested = requestedPack(change, existing?.pack ?? current);
+  const { configuration, removedNames } = await deps.content.withoutExpiredRefs(
+    ctx,
+    requested.configuration,
+    requested.status,
+  );
+  const { reason } = await recordedReason(deps, ctx, change.commandId, change.reason, removedNames);
+  const newVersion = (current?.version ?? 0) + 1;
+  if (existing) {
+    if (
+      existing.pack.version !== change.version ||
+      !sameProposal(existing, {
+        routeId: change.routeId,
+        status: requested.status,
+        reason,
+        configuration,
+      })
+    )
+      throw commandReused();
+  } else {
+    if (change.version !== newVersion) throw packChanged();
+    if (
+      current &&
+      current.status === requested.status &&
+      isDeepStrictEqual(comparable(current.configuration), comparable(configuration))
+    )
+      throw new DomainError(changeWords.noChange, 409, 'ROUTE_PACK_NO_CHANGE');
+  }
+  return {
+    current,
+    status: requested.status,
+    configuration,
+    reason,
+    removedNames,
+    newVersion,
+    onePersonPublication: capabilities.onePersonPublication,
+  };
+}
+
+// What publishing the change would do, read only: no proposal and no pack. The proposal read under config.manage comes first, so
+// a preview needs the owner and a fresh authenticator check, as a publish does.
+export async function previewRoutePackChange(
+  deps: PublishDeps,
+  ctx: RequestContext,
+  change: RoutePackChange,
+): Promise<RoutePackChangePreview> {
+  const next = await prepareRoutePackChange(deps, ctx, change);
+  const judged = await deps.content.goLive(ctx, {
+    routeId: change.routeId,
+    pack: { status: next.status, configuration: next.configuration },
+  });
+  let historicalAssignmentsPreserved: number;
+  try {
+    ({ historicalAssignmentsPreserved } = await deps.operations.preview(ctx, {
+      id: commandStepId(change.commandId, 'pack'),
+      routeId: change.routeId,
+      version: next.newVersion,
+      status: next.status,
+      effectiveFrom: new Date().toISOString(),
+      reason: next.reason,
+      configuration: next.configuration,
+    }));
+  } catch (error) {
+    // The pack preview refuses a version that is no longer the next one without a code; it means the pack changed.
+    if (error instanceof DomainError && error.status === 409 && !error.code) throw packChanged();
+    throw error;
+  }
+  return {
+    kind: change.kind,
+    statusFrom: next.current?.status ?? null,
+    statusTo: next.status,
+    changedKeys: settingKeysChanged(next.current?.configuration ?? null, next.configuration),
+    baseVersion: next.current?.version ?? null,
+    newVersion: next.newVersion,
+    historicalAssignmentsPreserved,
+    warnings: judged.ok ? judged.warnings : [],
+    blocked: judged.ok ? null : { code: judged.code, keys: judged.keys },
+    onePersonPublication: next.onePersonPublication,
+    removedPolicies: next.removedNames,
+  };
+}
+// Publishes the change through the reviewed path, refused if a newer pack was published since the one read.
+export async function publishRoutePackChange(
+  deps: PublishDeps,
+  ctx: RequestContext,
+  change: RoutePackChange,
+): Promise<RoutePackChangePublished> {
+  const next = await prepareRoutePackChange(deps, ctx, change);
+  const published = await publishReviewed(deps, ctx, {
+    commandId: change.commandId,
+    routeId: change.routeId,
+    status: next.status,
+    configuration: next.configuration,
+    reason: next.reason,
+    expectedBasePackId: next.current?.id ?? null,
+  });
+  return {
+    version: published.version,
+    duplicate: published.duplicate,
+    warnings: published.warnings,
+    removedPolicies: next.removedNames,
   };
 }
