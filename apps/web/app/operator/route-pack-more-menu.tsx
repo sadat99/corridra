@@ -48,6 +48,7 @@ export function RouteMoreMenu({
     <div className="route-more" data-only-discard={onlyDiscard ? '' : undefined} ref={wrapperRef}>
       <OverflowMenu
         label={moreWords.buttonLabel(routeName)}
+        align="start"
         trigger={
           <>
             <CorridraIcon name="more" />

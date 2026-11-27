@@ -419,6 +419,18 @@ test.describe('Add Custom Field', () => {
     await expect(bar(page)).toHaveCount(0);
     await expect(rows(page).filter({ hasText: 'Visa notes' })).toHaveCount(0);
   });
+
+  test('Undo Change on a field just added puts focus on the status line, not on the page', async ({
+    page,
+  }) => {
+    await open(page, { query: 'route=BD-CN&section=5' });
+    await addTextField(page, 'Visa notes', 'On arrival');
+    await rowOf(page, 'Visa notes')
+      .getByRole('button', { name: 'Undo Change to Visa notes' })
+      .click();
+    await expect(rows(page).filter({ hasText: 'Visa notes' })).toHaveCount(0);
+    await expect(status(page)).toBeFocused();
+  });
 });
 
 test.describe('a failed save keeps the mark and the custom field', () => {
@@ -536,6 +548,31 @@ test.describe('keyboard', () => {
     await expect(moreButton(page)).toBeFocused();
     await expect(bar(page)).toHaveCount(0);
   });
+});
+
+test.describe('the More button keeps its word on one line and its panel stays on screen', () => {
+  for (const width of [320, 1440]) {
+    test(`at ${width} the More button is at least 44 px wide and "More" is on one line`, async ({
+      page,
+    }) => {
+      await open(page, { width, height: 900, query: 'route=BD-CN&section=5' });
+      const button = await box(moreButton(page));
+      expect(button.width).toBeGreaterThanOrEqual(44);
+      const word = moreButton(page).getByText('More', { exact: true });
+      // The word is one line when it is less than two font sizes high (stacked letters would be four lines).
+      const fontSize = await word.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+      expect((await box(word)).height).toBeLessThan(fontSize * 2);
+    });
+  }
+  for (const width of [320, 390, 768, 1024, 1440, 1920]) {
+    test(`at ${width} the open panel lies inside the viewport`, async ({ page }) => {
+      await open(page, { width, height: 900, query: 'route=BD-CN&section=5' });
+      await moreButton(page).click();
+      const panel = await box(menu(page));
+      expect(panel.x).toBeGreaterThanOrEqual(0);
+      expect(panel.x + panel.width).toBeLessThanOrEqual(width);
+    });
+  }
 });
 
 test.describe('widths: no sideways scroll, axe clean, 44 px targets', () => {

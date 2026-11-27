@@ -295,6 +295,10 @@ html:has(.route-bar) {
   gap: var(--space-2);
   min-block-size: 44px;
   min-inline-size: 44px;
+  /* The editor lets words break anywhere; the button's own word never does. */
+  flex: none;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 .route-more .ux-menu-panel {
   max-inline-size: calc(100vw - 2 * var(--space-4));

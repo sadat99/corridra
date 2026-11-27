@@ -514,7 +514,11 @@ function RouteBody({
     const key = focusKey.current;
     if (!key) return;
     focusKey.current = null;
-    document.querySelector<HTMLElement>(`[data-edit-key="${CSS.escape(key)}"]`)?.focus();
+    // A custom field added and not saved has no row once its change is undone: focus goes to the status line, not the page.
+    (
+      document.querySelector<HTMLElement>(`[data-edit-key="${CSS.escape(key)}"]`) ??
+      statusLine.current
+    )?.focus();
   });
   const focusOpenEditor = () =>
     document.querySelector<HTMLElement>('.route-edit .ux-choice')?.focus();
