@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useReducer, useState, type ReactNode } from 'react';
+import { useCallback, useReducer, useState, type Dispatch, type ReactNode } from 'react';
 import { ctaWords } from './home-routes';
 import { HomeShared } from './home-shared';
 import { PlainLimits } from './home-v42-parts';
@@ -19,8 +19,14 @@ import { HomeV43Reveal } from './home-v43-reveal';
 import { HomeV43Solutions } from './home-v43-solutions';
 import { useLanguage } from './language-provider';
 import { placeText } from './place-words';
-import { v43 } from '../lib/home-v43-data';
-import { homeV43Reducer, initialState, sellMarket, viewIntent } from '../lib/home-v43-state';
+import { v43, type PlaceCode } from '../lib/home-v43-data';
+import {
+  homeV43Reducer,
+  initialState,
+  sellMarket,
+  viewIntent,
+  type HomeV43Event,
+} from '../lib/home-v43-state';
 import { routeHref, type RouteKey } from '../lib/home-routes-data';
 import { fill } from '../lib/i18n/fill';
 import { revealThenFocus } from '../lib/ux/anchor-focus';
@@ -35,9 +41,26 @@ import './home-v43-more.css';
 // the people, the questions, the request form, Plain limits and the closing band. All interaction is one pure reducer
 // (lib/home-v43-state.ts). The page sends nothing until /plan. It owns one polite announcement: a door choice or a
 // press inside a widget writes one short message there, and no other region of its own is live.
+/**
+ * Home page v4.4 (owner, 27 Nov 2026, decision 4): what the redesign swaps in while CORRIDRA_UX_HOME_V44 is on. The
+ * hero replaces the v4.3 hero; `map` draws the route of the request (its own base and target) and is placed beside the
+ * route choice and at the top of the request summary. Left out, the page is the v4.3 page.
+ */
+export type HomeV44Slots = {
+  hero: ReactNode;
+  map: (route: {
+    origin: PlaceCode;
+    target: PlaceCode;
+    /** Only the route choice lets a visitor pick the target market from the map; the form has its own list. */
+    pick: boolean;
+    dispatch: Dispatch<HomeV43Event>;
+  }) => ReactNode;
+};
+
 export function HomeV43({
   whatsapp = null,
   summaries,
+  v44,
 }: {
   whatsapp?: string | null;
   /**
@@ -47,6 +70,8 @@ export function HomeV43({
    * home-v43-summarised.tsx, so this module names neither them nor their stylesheet. Off, the page is what it was.
    */
   summaries?: { process: ReactNode; trust: ReactNode };
+  /** CORRIDRA_UX_HOME_V44: the redesign's hero and route map (see `HomeV44Slots`). */
+  v44?: HomeV44Slots;
 }) {
   const { t } = useLanguage();
   const [state, dispatch] = useReducer(homeV43Reducer, initialState);
@@ -83,8 +108,24 @@ export function HomeV43({
       <p id="hv43-announce" className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
       </p>
-      <HomeV43Hero />
-      <HomeV43Choice intent={intent} href={href} cta={cta} whatsapp={whatsapp} onChoose={choose} />
+      {v44 ? v44.hero : <HomeV43Hero />}
+      <HomeV43Choice
+        intent={intent}
+        href={href}
+        cta={cta}
+        whatsapp={whatsapp}
+        onChoose={choose}
+        {...(v44
+          ? {
+              map: v44.map({
+                origin: state.origin,
+                target: state.target,
+                pick: true,
+                dispatch,
+              }),
+            }
+          : {})}
+      />
       <HomeV43Solutions onExplore={choose} onWalk={() => revealThenFocus('route-delegation')} />
       <HomeV43Example
         intent={intent}
@@ -149,7 +190,21 @@ export function HomeV43({
           <PlainLimits />
         </>
       )}
-      <HomeV43Brief state={state} dispatch={dispatch} whatsapp={whatsapp} />
+      <HomeV43Brief
+        state={state}
+        dispatch={dispatch}
+        whatsapp={whatsapp}
+        {...(v44
+          ? {
+              map: v44.map({
+                origin: state.origin,
+                target: state.target,
+                pick: false,
+                dispatch,
+              }),
+            }
+          : {})}
+      />
       <HomeShared shown={shown} href={href} cta={cta} whatsapp={whatsapp} />
     </div>
   );

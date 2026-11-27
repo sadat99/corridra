@@ -1,0 +1,178 @@
+/* Home page v4.4 (owner, 27 Nov 2026, decision 4 "keep mine"). Loaded only by home-v44.tsx, so it ships only while
+   CORRIDRA_UX_HOME_V44 and CORRIDRA_UX_HOME_V43 are both on. Every rule is scoped under .hv43 and uses tokens only
+   (weights 400/500/600, radius tokens, no hex). The one animation draws the route arc once when the route changes:
+   300 ms, started by the visitor's own choice, off under reduced motion. Nothing loops. */
+
+/* Hero: centred, text only. */
+.hv43 .hv44-hero {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  text-align: center;
+}
+@media (min-width: 48rem) {
+  .hv43 .hv44-hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding-block: var(--space-16);
+  }
+}
+.hv43 .hv44-hero-text {
+  justify-items: center;
+  max-inline-size: 48rem;
+}
+.hv43 .hv44-hero .hv43-lead {
+  margin-inline: auto;
+}
+.hv43 .hv44-actions {
+  justify-content: center;
+}
+
+/* Route choice with the map beside the picker from 64 rem. */
+.hv43 .hv44-pick {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (min-width: 64rem) {
+  .hv43 .hv44-pick {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+    gap: var(--space-8);
+  }
+  .hv43 .hv44-pick-map {
+    position: sticky;
+    inset-block-start: var(--space-5);
+  }
+}
+.hv43 .hv44-pick-main,
+.hv43 .hv44-pick-map {
+  min-inline-size: 0;
+}
+.hv43 .hv43-draft .hv44-route {
+  margin-block-end: var(--space-3);
+}
+
+/* The route figure. */
+.hv43 .hv44-route {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.hv43 .hv44-frame {
+  overflow: hidden;
+  aspect-ratio: 2;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.hv43 .hv44-map {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+.hv43 .hv44-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+.hv43 .hv44-route-words {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 500;
+}
+
+/* Map drawing: colours by class, so the SVG carries no colour of its own. */
+.hv43 .hv44-land {
+  fill: var(--surface-1);
+  stroke: var(--border-subtle);
+}
+.hv43 .hv44-from {
+  fill: var(--surface-1);
+  stroke: var(--brand);
+}
+.hv43 .hv44-to {
+  fill: var(--surface-1);
+  stroke: var(--brand);
+}
+.hv43 .hv44-arc-halo {
+  fill: none;
+  stroke: var(--surface-1);
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+.hv43 .hv44-arc {
+  fill: none;
+  stroke: var(--brand);
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  animation: hv44-draw 300ms ease-out both;
+}
+@keyframes hv44-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv43 .hv44-arc {
+    animation: none;
+  }
+}
+.hv43 .hv44-halo {
+  fill: var(--surface-1);
+  opacity: 0.7;
+}
+.hv43 .hv44-pin {
+  fill: var(--brand);
+  stroke: var(--surface-1);
+}
+.hv43 .hv44-pin-to {
+  fill: var(--accent-marigold);
+}
+.hv43 .hv44-dot {
+  fill: var(--accent-marigold);
+  stroke: var(--surface-1);
+}
+.hv43 .hv44-tag rect {
+  fill: var(--surface-1);
+  stroke: var(--border-strong);
+}
+.hv43 .hv44-tag text {
+  fill: var(--text-1);
+  font-family: inherit;
+  font-weight: 500;
+}
+
+/* Target-market chips, shown in the route choice. */
+.hv43 .hv44-markets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.hv43 .hv44-chip {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  padding: var(--space-1) var(--space-3);
+  color: var(--text-1);
+  font: inherit;
+  font-weight: 500;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.hv43 .hv44-chip[aria-pressed='true'] {
+  color: var(--brand);
+  border-color: var(--brand);
+  background: var(--surface-subtle);
+}
+.hv43 .hv44-chip:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

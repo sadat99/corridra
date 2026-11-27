@@ -1,0 +1,20 @@
+'use client';
+
+import { HomeV43 } from './home-v43';
+import { HomeV43ProcessSummary, HomeV43TrustSummary } from './home-v43-summaries';
+import { HomeV44Hero } from './home-v44-hero';
+import { HomeV44Map } from './home-v44-map';
+import './home-v44.css';
+import './how-trust-v43.css';
+
+// The home page v4.4 with CORRIDRA_UX_HOW_TRUST_V43 also on: the same page with the process and trust bands as
+// summaries, as HomeV43Summarised does. A lazy chunk loaded from home-v44-page.tsx only then.
+export function HomeV44Summarised({ whatsapp }: { whatsapp: string | null }) {
+  return (
+    <HomeV43
+      whatsapp={whatsapp}
+      summaries={{ process: <HomeV43ProcessSummary />, trust: <HomeV43TrustSummary /> }}
+      v44={{ hero: <HomeV44Hero />, map: (route) => <HomeV44Map {...route} /> }}
+    />
+  );
+}

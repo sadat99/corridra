@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { CorridraIcon } from './corridra-icon';
 import { doorIcon } from './home-routes';
 import { Sentence } from './home-v42-choice';
@@ -22,12 +23,15 @@ export function HomeV43Choice({
   cta,
   whatsapp,
   onChoose,
+  map,
 }: {
   intent: RouteKey;
   href: string;
   cta: string;
   whatsapp: string | null;
   onChoose: (route: RouteKey) => void;
+  /** Home page v4.4: the route map, beside the doors from 64 rem. Left out, the band is what it was. */
+  map?: ReactNode;
 }) {
   const t = useT();
   const door = (route: RouteKey, big: boolean) => (
@@ -47,6 +51,44 @@ export function HomeV43Choice({
       picked={t('home.tr.selected')}
     />
   );
+  const picker = (
+    <>
+      <fieldset className="tr-doors hv42-doors" id="home-route-group" tabIndex={-1}>
+        <legend id="hv42-question">{t('home.tr.q')}</legend>
+        <p className="tr-note">{t(v43('q.sub'))}</p>
+        <div className="hv42-doors-grid">
+          <div className="hv42-doors-big">
+            {(['china', 'sell'] as const).map((r) => door(r, true))}
+          </div>
+          <div className="hv42-doors-small">
+            {(['delegation', 'other'] as const).map((r) => door(r, false))}
+          </div>
+        </div>
+      </fieldset>
+      <div className="tr-start hv42-start">
+        <div className="tr-start-actions">
+          <Link prefetch={false} className="primary-link" href={href} id="home-start">
+            {cta}
+          </Link>
+          <TalkLink href={whatsapp} />
+        </div>
+        <ul className="ac1-calm">
+          {(['account', 'send', 'stop'] as const).map((name) => (
+            <li key={name}>
+              <CorridraIcon name="check" size={16} />
+              {t(`home.tr.assure.${name}` as MessageKey)}
+            </li>
+          ))}
+        </ul>
+        <p className="hv43-build">
+          <a className="button-secondary" href="#brief">
+            {t(v43('brief.go'))}
+          </a>
+          <span className="tr-small">{t(v43('q.note'))}</span>
+        </p>
+      </div>
+    </>
+  );
   return (
     <section
       className="hv43-band hv43-choose tr-top hv42-choose"
@@ -54,40 +96,14 @@ export function HomeV43Choice({
       aria-labelledby="hv42-question"
     >
       <div id="pick" className="hv43-pick">
-        <fieldset className="tr-doors hv42-doors" id="home-route-group" tabIndex={-1}>
-          <legend id="hv42-question">{t('home.tr.q')}</legend>
-          <p className="tr-note">{t(v43('q.sub'))}</p>
-          <div className="hv42-doors-grid">
-            <div className="hv42-doors-big">
-              {(['china', 'sell'] as const).map((r) => door(r, true))}
-            </div>
-            <div className="hv42-doors-small">
-              {(['delegation', 'other'] as const).map((r) => door(r, false))}
-            </div>
+        {map ? (
+          <div className="hv44-pick">
+            <div className="hv44-pick-main">{picker}</div>
+            <div className="hv44-pick-map">{map}</div>
           </div>
-        </fieldset>
-        <div className="tr-start hv42-start">
-          <div className="tr-start-actions">
-            <Link prefetch={false} className="primary-link" href={href} id="home-start">
-              {cta}
-            </Link>
-            <TalkLink href={whatsapp} />
-          </div>
-          <ul className="ac1-calm">
-            {(['account', 'send', 'stop'] as const).map((name) => (
-              <li key={name}>
-                <CorridraIcon name="check" size={16} />
-                {t(`home.tr.assure.${name}` as MessageKey)}
-              </li>
-            ))}
-          </ul>
-          <p className="hv43-build">
-            <a className="button-secondary" href="#brief">
-              {t(v43('brief.go'))}
-            </a>
-            <span className="tr-small">{t(v43('q.note'))}</span>
-          </p>
-        </div>
+        ) : (
+          picker
+        )}
       </div>
     </section>
   );

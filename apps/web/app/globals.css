@@ -2044,6 +2044,8 @@ summary:hover {
   --ac-cobalt-pressed: #1e4295;
   --ac-porcelain: #f6f8fb;
   --ac-copper: #bf7548;
+  /* Marigold: the accent of the redesign home (owner, 27 Nov 2026, v4.4 decision 3). Marks and dots only, never text on a light ground, never a call-to-action fill. */
+  --ac-marigold: #f0a92b;
   --ac-copper-ink: #85451e;
   --ac-ink: #18283c;
   --ac-paper: #ffffff;
@@ -2099,6 +2101,7 @@ summary:hover {
   /* Copper is editorial ornament only: never warning, verification or small text. */
   --editorial-accent: var(--ac-copper);
   --accent-gold: var(--editorial-accent);
+  --accent-marigold: var(--ac-marigold);
   /* Status colours are independent of the brand. */
   --positive: var(--ac-positive);
   --positive-surface: var(--ac-positive-surface);
