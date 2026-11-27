@@ -375,12 +375,12 @@
 /* ---- Lower sections, to the approved page ---- */
 
 /* How it works and Evidence: three cards each. */
-.hv43 .htv43-summary .htv43-summary-grid {
+.hv43 .hv43-band.htv43-summary .htv43-summary-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
 }
-.hv43 .htv43-summary h2 {
+.hv43 .hv43-band.htv43-summary h2 {
   font-size: var(--text-display);
   font-weight: 500;
   line-height: 1.05;
@@ -411,6 +411,7 @@
   align-content: start;
   gap: var(--space-3);
   padding: var(--space-5);
+  color: var(--text-1);
   font-family: var(--font-heading, inherit);
   font-size: var(--text-title);
   font-weight: 500;
@@ -441,9 +442,9 @@
   grid-column: 1 / -1;
   block-size: 1rem;
   background:
-    radial-gradient(circle at center, var(--brand) 0.2rem, transparent 0.22rem) 0 50% / 16.66% 100%
-      repeat-x,
-    linear-gradient(var(--border-strong), var(--border-strong)) 8% 50% / 84% 1px no-repeat;
+    radial-gradient(circle at center, var(--brand) 0.2rem, transparent 0.22rem) 0 50% / 16.6667%
+      100% repeat-x,
+    linear-gradient(var(--border-strong), var(--border-strong)) 8.3333% 50% / 83.3333% 1px no-repeat;
 }
 
 /* Route statuses. */
@@ -690,4 +691,42 @@
   .hv43 .hv44-jobs .ac1-job {
     transition: none;
   }
+}
+
+/* The three jobs on the close, as cards. */
+.hv43 .hv44-jobs .ac1-job {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  color: var(--text-1);
+  text-decoration: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+}
+.hv43 .hv44-jobs .ac1-job:nth-child(1) {
+  background: color-mix(in srgb, var(--brand) 9%, var(--surface-1));
+}
+.hv43 .hv44-jobs .ac1-job:nth-child(3) {
+  background: color-mix(in srgb, var(--accent-marigold) 14%, var(--surface-1));
+}
+.hv43 .hv44-jobs .ac1-job-words {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.hv43 .hv44-jobs .ac1-job-words strong {
+  font-family: var(--font-heading, inherit);
+  font-size: var(--text-title);
+  font-weight: 500;
+  line-height: 1.15;
+}
+.hv43 .hv44-jobs .ac1-job-text,
+.hv43 .hv44-jobs .ac1-job-route {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.hv43 .hv44-jobs .ac1-job-name {
+  color: var(--brand);
 }
