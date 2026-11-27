@@ -5960,3 +5960,27 @@ Checks at f236a8f0, all exit 0:
 **Not verified.** No signed-in journey. The publish action was not exercised in production (2b not installed). No 2b install or Postgres major check is claimed.
 
 **Next action.** PR2c, PR3b, PR4, F2 as its own change. The 2b install needs the owner's separate approval.
+
+## 27 Nov 2026 - records: PR 693 merged, main 605ccee9, ADR-093 Phase 3 PR2c (scribe, for Guardian G72)
+
+**Request.** Records for Guardian G72 (session https://claude.ai/code/session_0187kU9tpg5kGmsYPezLQUpt): the merge of PR 693, "ADR-093 Phase 3 PR2c: route pack editor More menu, custom fields, section marks". Branch claude/records-693 from origin/main (contains 605ccee); authority stamp auth-cda465667242 at start. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger, register and editor spec read PR2c as in flight or not built. It is merged.
+
+**Outcome (as relayed by G72).**
+
+- PR 693 merged as a squash, 605ccee93ad3492e4295f014f37d1e7d099547da, pinned to head 7bab0da67211b1f9c917e9e8a5373813f77258af. Exact-head CI all green, CodeQL neutral. Production deploy dpl_Fdctk5MY3RS59stPHo6HuTHyEL6H was BUILDING at dispatch; READY is not confirmed by this record.
+- Adds the route pack editor More menu, Add Custom Field, Mark Section Not Applicable and Unmark, Discard narrowed into More, and the mirror clear-only-if-matching follow-up. Dormant in production (404) while the 2b marker is absent.
+- Review: two independent Opus reviews on b14db19 (one major: the custom key check used workspace-wide customLabels; minors), one fix round 7bab0da, Opus delta verification all six VERIFIED, designer audit merge-ready.
+
+**In flight.** PR 694 (Phase 3 PR3b pack dialogs, Class A): fix round pushed at b7922bb, main merge pending, then Opus delta verification.
+
+**Next action.** Merge PR 694 after the main merge, delta verification and exact-head green; then PR4 (Import/Export Route Data UI, History disclosure), F2, the saved-but-not-published server code, the PR2b follow-up list.
+
+**Verification.** G72 receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, node --test tests/documents.test.mjs and prettier --check, results in the PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action, condensed to stay within the 36864-byte guides budget); docs/PLAN_STATUS.md (editor spec row and ADR-093 row); docs/revamp/specs/route-pack-editor.md (Document status line and the PR 2b amendment note); this entry. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. PR2c was not exercised in production. ADR-093 2b (content store, migration 0002) is still NOT installed (needs owner approval and a production PG 18 major check); route-pack-facts and route-pack-publish still answer 404 in production. Deploy READY unconfirmed. Native language review gate OPEN.
