@@ -5908,3 +5908,29 @@ Checks at f236a8f0, all exit 0:
 **Not verified.** No signed-in journey. The PR2a write path was not exercised in production, because 2b is not installed. The deploy READY states and the install log lines are G70's receipts, not re-read here. No production Postgres major check is recorded here for 2b.
 
 **Next action.** Phase 3 PR2b, then PR2c, PR3, PR4. The 2b install needs the owner's separate approval. Phase 4 loads each route on the owner's word. Native review gate OPEN. Leave claude/home-v44 to its owner.
+
+## 27 Nov 2026 - records: PR 689 merged, main 97bc2bbd, ADR-093 Phase 3 PR2b (scribe, for Guardian G71)
+
+**Request.** Records for Guardian G71 (session https://claude.ai/code/session_0187kU9ug1wtFfyKMdnFqfrw): the merge of PR 689, "ADR-093 Phase 3 PR2b: route pack fact editor (visible)". Branch claude/records-689 from origin/main, authority stamp auth-edd9d888d39d. Docs only, not Class A. No requirement moves to VERIFIED.
+
+**Why.** The ledger and register read PR2b as in progress. It is merged.
+
+**Outcome (as relayed by G71).**
+
+- PR 689 merged as a squash, 97bc2bbdf790b30e24e53c09baeab6dcdf6b6989, pinned to head 44ba5b1f2e700c58f4e56dfad31ca3d9db288be9. All CI jobs green on that head (CodeQL neutral). Vercel production deploy dpl_jMboXeENuZ63bKeZuFgEEbNQvQ1p for 97bc2bb READY.
+- Review: two independent Opus corridra-reviewer runs on aeda503 (1 major: a stale restored stage plus a failed re-read could overwrite newer facts; minors: clash controls not locked, post-save version, failed overview refresh, unrecognised 409 words, leave copy), one fix round, an Opus verification (found a dead primary in the clash view and 2 notes), the final delta fixed in 44ba5b1 and Opus-verified. Designer audit: Save statement flags fixed; leave copy amended in spec section 9 ("Leaving this route puts your N unsaved changes aside"); CI layout fix (Edit after the state mark, font-independent assertion); shared .ux-dialog-close flex-shrink 0 and nowrap.
+- Production: the editor write path stays dormant (404) until ADR-093 2b (content store, migration 0002) is installed. That needs the owner's separate approval and a production Postgres major check (production is PG 18.7; pins proven on PG16 only).
+
+**Known follow-ups (from the PR body).** (1) A late 2xx clearMirror can remove a tab copy rewritten by a remount of the same route; fix: clear only when the copy matches the sent stage. (2) A null heading focus ref on clash step > 0 after a non-409 error (harmless). (3) The mirror key has no user, so a second owner on the same tab sees the first owner's restored facts (same tenant only). Deviations are recorded in the PR body: 320 bar three lines, answer row density, two strings not yet in designer copy for PR2c, TW-AU region KI-48.
+
+**In flight.** PR 690, ADR-093 Phase 3 PR3a route-pack-publish action (invisible), draft, CI running. Next: PR2c (More menu, Add Custom Field, Mark Section Not Applicable and Remove mark, Discard into More), PR3b dialogs (amend spec 17A first, including StepUpDialog on Next), then PR4.
+
+**Verification.** G71 receipts as relayed (merge, head, CI, deploy READY); not re-read by this scribe run. This records PR: `node scripts/authority.mjs stamp` gave auth-edd9d888d39d at start; checks listed in the PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action rewritten for main 97bc2bbd; same owner decisions); docs/v3/history/ledger-before-g71-records-689-2026-11-27.md (exact copy of the previous ledger) with entries in docs/v3/history/manifest.json and docs/documentation-map.json; docs/PLAN_STATUS.md (editor spec row and ADR-093 row); this entry. The spec's own status line already names PR2b and was not changed. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. The editor write path was not exercised in production (2b not installed). No 2b install or Postgres major check is claimed.
+
+**Next action.** PR3a (PR 690), PR2c, PR3b, PR4. The 2b install needs the owner's separate approval. Phase 4 loads each route on the owner's word.
