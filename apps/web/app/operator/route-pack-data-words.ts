@@ -83,6 +83,12 @@ export const importWords = {
   partWay: (saved: number, total: number, notSaved: string[]) =>
     `Saved ${num(saved)} of ${routes(total)}. Not saved: ${notSaved.join(', ')}.`,
   routeReason: (route: string, reason: string) => `${route}: ${reason}`,
+  /** The lines of "Show the changes", in the words of the Save Route Facts summary. */
+  changeLines: (added: string[], changed: string[], removed: string[]) => [
+    ...added.map((label) => `Added: ${label}`),
+    ...changed.map((label) => `Changed: ${label}`),
+    ...removed.map((label) => `Removed: ${label}`),
+  ],
   notTried: (route: string) => `${route}: Not tried, because the save stopped before it.`,
   routeChanged: (route: string) =>
     `${route} changed while you were checking. It was not saved. Choose the file again to check it against the current state.`,
@@ -114,10 +120,8 @@ export const historyWords = {
   by: {
     you: 'you',
     teammate: 'a teammate',
-    split: 'one team member, published by another',
   },
+  // A pack row uses the words of the last pack change line (spec 8.1 item 5, packChangeLine), as Guardian G72 ruled.
   factRow: (version: number, dateText: string, whoText: string) =>
     `Version ${num(version)}, ${dateText}, by ${whoText}`,
-  packRow: (version: number, dateText: string, whoText: string) =>
-    `Pack version ${num(version)}, effective ${dateText}, by ${whoText}`,
 } as const;

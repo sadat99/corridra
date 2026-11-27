@@ -80,9 +80,13 @@ describe('Export and History words', () => {
     expect(historyWords.factRow(5, '26 Nov 2026', historyWords.by.you)).toBe(
       'Version 5, 26 Nov 2026, by you',
     );
-    expect(historyWords.packRow(3, '26 Nov 2026', historyWords.by.split)).toBe(
-      'Pack version 3, effective 26 Nov 2026, by one team member, published by another',
+    expect(historyWords.factRow(3, '26 Nov 2026', historyWords.by.teammate)).toBe(
+      'Version 3, 26 Nov 2026, by a teammate',
     );
+    expect(importWords.changeLines(['Working week'], ['Currencies used'], [])).toEqual([
+      'Added: Working week',
+      'Changed: Currencies used',
+    ]);
     expect(historyWords.noReason).toBe('No reason recorded.');
   });
 });

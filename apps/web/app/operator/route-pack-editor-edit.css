@@ -300,14 +300,18 @@ html:has(.route-bar) {
   overflow-wrap: anywhere;
 }
 /* Below 40rem Discard Changes lives in More, so the bar does not wrap to three lines. From 40rem the bar keeps it, and a More
-   that holds only Discard would repeat it, so that menu is hidden. */
+   that holds only Discard would repeat it, so that menu is hidden. PR 4: with Export This Route in More, only the Discard row is
+   hidden there and More stays. */
 @media (max-width: 39.999rem) {
   .route-bar-discard {
     display: none;
   }
 }
 @media (min-width: 40rem) {
-  .route-more[data-only-discard] {
+  .route-more[data-only-discard]:not([data-with-export]) {
+    display: none;
+  }
+  .route-more[data-only-discard] .route-more-discard {
     display: none;
   }
 }

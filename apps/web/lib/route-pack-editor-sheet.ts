@@ -28,7 +28,10 @@ export function fileRefusal(file: {
 export type SheetBody =
   { mode: 'dry-run'; csv: string } | { mode: 'save'; csv: string; saveId: string; reason: string };
 /** The body of a check: the file text only. A check writes nothing and carries no save id. */
-export const dryRunBody = (csv: string): SheetBody => ({ mode: 'dry-run', csv });
+export const dryRunBody = (csv: string): Extract<SheetBody, { mode: 'dry-run' }> => ({
+  mode: 'dry-run',
+  csv,
+});
 export type SaveCommand = { id: string; csv: string };
 /**
  * The save id of the next save. The same file text keeps its id (Try the Rest Again and a send after the authenticator check
@@ -43,7 +46,11 @@ export function nextSaveCommand(
   return previous && previous.csv === csv ? previous : { id: makeId(), csv };
 }
 /** The body of a save, under the id kept for this file and the reason as typed (trimmed, as the server keeps it). */
-export const saveBody = (csv: string, command: SaveCommand, reason: string): SheetBody => ({
+export const saveBody = (
+  csv: string,
+  command: SaveCommand,
+  reason: string,
+): Extract<SheetBody, { mode: 'save' }> => ({
   mode: 'save',
   csv,
   saveId: command.id,

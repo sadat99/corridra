@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type {
+  FactVersion,
   OverviewList,
   OverviewRoute,
   PackVersion,
@@ -117,6 +118,8 @@ export type OverviewData = {
    * stay on screen. A later read or Try Again still shows a failure.
    */
   refresh: () => void;
+  /** ADR-093 Phase 3, PR 4: the one-person module is installed (the list's capabilities), for the import save line. */
+  onePersonPublication: boolean;
 };
 /**
  * The list of routes with their completeness. Asked once `enabled`, and again whenever `refreshKey` changes identity (the
@@ -128,7 +131,11 @@ export function useRoutePackOverview(
   enabled: boolean,
   refreshKey: unknown,
 ): OverviewData {
-  const [result, setResult] = useState<{ state: ReadState; routes: RouteSummary[] }>({
+  const [result, setResult] = useState<{
+    state: ReadState;
+    routes: RouteSummary[];
+    onePersonPublication?: boolean;
+  }>({
     state: 'unknown',
     routes: [],
   });
@@ -142,7 +149,11 @@ export function useRoutePackOverview(
     quiet.current = false;
     if (!enabled) return;
     let live = true;
-    const show = (next: { state: ReadState; routes: RouteSummary[] }) =>
+    const show = (next: {
+      state: ReadState;
+      routes: RouteSummary[];
+      onePersonPublication?: boolean;
+    }) =>
       setResult((shown) =>
         keepShown && next.state !== 'ready' && shown.state === 'ready' ? shown : next,
       );
@@ -154,6 +165,8 @@ export function useRoutePackOverview(
             answer.state === 'ready' && !Array.isArray(answer.body.routes) ? 'error' : answer.state,
           routes:
             answer.state === 'ready' && Array.isArray(answer.body.routes) ? answer.body.routes : [],
+          onePersonPublication:
+            answer.state === 'ready' && answer.body.capabilities?.onePersonPublication === true,
         });
       })
       .catch(() => live && show({ state: 'error', routes: [] }))
@@ -170,7 +183,14 @@ export function useRoutePackOverview(
     quiet.current = true;
     setAttempt((count) => count + 1);
   }, []);
-  return { ...result, retry, retrying, refresh };
+  return {
+    state: result.state,
+    routes: result.routes,
+    onePersonPublication: result.onePersonPublication === true,
+    retry,
+    retrying,
+    refresh,
+  };
 }
 
 type RouteRead = Omit<DetailData, 'retry' | 'retrying' | 'reload'> & { routeId: string | null };
@@ -184,16 +204,24 @@ export async function readRoute(tenant: string, routeId: string): Promise<RouteR
     history.state === 'ready' && Array.isArray(history.body.versions)
       ? history.body.versions
       : null;
+  // PR 4: a role without audit.read is refused the pack history (403) and draws no pack rows; any other miss is a failed read.
+  const packHistoryState: PackHistoryState = packHistory
+    ? 'ready'
+    : history.state === 'denied'
+      ? 'denied'
+      : 'failed';
   return detail.state === 'ready'
-    ? { state: 'ready', detail: detail.body, packHistory, routeId }
+    ? { state: 'ready', detail: detail.body, packHistory, packHistoryState, routeId }
     : {
         state: detail.state === 'denied' ? 'denied' : detail.state === 'off' ? 'off' : 'error',
         detail: null,
         packHistory: null,
+        packHistoryState: 'failed',
         routeId,
       };
 }
 
+export type PackHistoryState = 'ready' | 'denied' | 'failed';
 export type DetailData = {
   /** `off`: the route read answered 404 (the switch is off or the module is gone): never an error, the page falls back. */
   state: 'loading' | 'off' | 'denied' | 'error' | 'ready';
@@ -201,6 +229,8 @@ export type DetailData = {
   detail: OverviewRoute | null;
   /** Newest first. Null when the read failed or the reader may not see it: the page then leaves that one line out. */
   packHistory: PackVersion[] | null;
+  /** PR 4: whether the pack history was read, refused to this role (no pack rows are drawn) or failed. */
+  packHistoryState: PackHistoryState;
   retry: () => void;
   retrying: boolean;
   /**
@@ -222,6 +252,7 @@ export function useRouteDetail(
     state: 'loading',
     detail: null,
     packHistory: null,
+    packHistoryState: 'failed',
     routeId: null,
   });
   const [attempt, setAttempt] = useState(0);
@@ -231,7 +262,17 @@ export function useRouteDetail(
     let live = true;
     readRoute(tenant, routeId)
       .then((answer) => live && setResult(answer))
-      .catch(() => live && setResult({ state: 'error', detail: null, packHistory: null, routeId }))
+      .catch(
+        () =>
+          live &&
+          setResult({
+            state: 'error',
+            detail: null,
+            packHistory: null,
+            packHistoryState: 'failed',
+            routeId,
+          }),
+      )
       .finally(() => live && setRetrying(false));
     return () => {
       live = false;
@@ -263,8 +304,29 @@ export function useRouteDetail(
     state: mine ? result.state : 'loading',
     detail: mine ? result.detail : null,
     packHistory: mine ? result.packHistory : null,
+    packHistoryState: mine ? result.packHistoryState : 'failed',
     retry,
     retrying,
     reload,
   };
+}
+
+/**
+ * ADR-093 Phase 3, PR 4: the fact history of one route, newest first (up to 100), read when History is first opened. Any role
+ * that reads route facts may read it (missions.read).
+ */
+export async function readFactHistory(
+  tenant: string,
+  routeId: string,
+): Promise<{ state: 'ready'; versions: FactVersion[] } | { state: 'failed' }> {
+  try {
+    const answer = await read<{ versions: FactVersion[] }>('route-pack-fact-history', tenant, {
+      routeId,
+    });
+    return answer.state === 'ready' && Array.isArray(answer.body.versions)
+      ? { state: 'ready', versions: answer.body.versions }
+      : { state: 'failed' };
+  } catch {
+    return { state: 'failed' };
+  }
 }

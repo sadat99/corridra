@@ -106,6 +106,14 @@ function RouteList({
     notice: boolean;
     retry: () => void;
     retrying: boolean;
+    /** ADR-093 Phase 3, PR 4: Import Route Data and Export Route Data at the head of the list. */
+    data?: {
+      tenant: string;
+      role: string;
+      routes: RouteSummary[];
+      onePersonPublication: boolean;
+      onImported: () => void;
+    };
   } | null;
 }) {
   return (
@@ -456,6 +464,19 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
           notice: address.routeNotFound,
           retry: overview.retry,
           retrying: overview.retrying,
+          data: {
+            tenant,
+            role,
+            routes: overview.routes,
+            onePersonPublication: overview.onePersonPublication,
+            // A saved file may add routes: the catalogue is read again (and the route facts with it); if that read fails the
+            // facts are still asked again.
+            onImported: () => {
+              void request('mission-catalogue')
+                .then(setCatalogue)
+                .catch(() => overview.refresh());
+            },
+          },
         }
       : null;
   const routeList = <RouteList catalogue={catalogue} failed={catalogueFailed} facts={factsRead} />;
@@ -586,6 +607,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
         openRoute ? (
           <RouteEditorShell
             list={routeList}
+            routes={overview.routes}
             summary={openRoute}
             tenant={tenant}
             role={role}

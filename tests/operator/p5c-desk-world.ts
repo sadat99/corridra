@@ -165,6 +165,8 @@ export type FactsWorld = {
   unreviewedPack?: boolean;
   /** Every Core field of Bangladesh to the European Union is done and none is stale. */
   complete?: boolean;
+  /** ADR-093 Phase 3, PR 4: the one-person module is installed (the overview's capabilities). Default false. */
+  onePerson?: boolean;
   /**
    * ADR-093 Phase 3, PR 2b: the next answers of route-pack-facts, one for each save the page makes. `theirs` is a save that
    * landed first (it becomes the saved document at its version, then the answer is sent). With the script empty the world does
@@ -620,7 +622,10 @@ export async function answerReads(page: Page, given: Partial<World> = {}): Promi
           if (!asked)
             return route.fulfill(
               json({
-                capabilities: factsCapabilities,
+                capabilities: {
+                  ...factsCapabilities,
+                  onePersonPublication: facts.onePerson === true,
+                },
                 routes: views.map((view) => summariseRoute(view, liveStatuses)),
               }),
             );

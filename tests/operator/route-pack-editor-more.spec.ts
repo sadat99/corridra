@@ -147,7 +147,7 @@ async function stageSummary(page: Page, text: string) {
 }
 
 test.describe('who sees More, and what it holds', () => {
-  test('the owner has More on a section view with Add Custom Field and Mark Section Not Applicable; nothing staged, no Discard', async ({
+  test('the owner has More on a section view with Export This Route, Add Custom Field and Mark Section Not Applicable; nothing staged, no Discard', async ({
     page,
   }) => {
     await open(page, { query: 'route=BD-CN&section=5' });
@@ -160,24 +160,40 @@ test.describe('who sees More, and what it holds', () => {
       .evaluateAll((items) =>
         items.map((el) => el.getAttribute('aria-label') ?? el.textContent ?? ''),
       );
-    expect(names).toEqual(['Add Custom Field', markName(5)]);
+    // PR 4 (spec 8.1 and 12.2 as amended, Guardian G72 ruling 2): Export This Route is the first row of More, for every reader.
+    expect(names).toEqual(['Export This Route', 'Add Custom Field', markName(5)]);
     await expect(item(page, markName(5))).toHaveText('Mark Section Not Applicable');
     await axeClean(page);
-    // With nothing staged and no section, More would hold no row, so it is absent (never disabled).
-    await open(page, { query: 'route=BD-CN' });
-    await expect(moreButton(page)).toHaveCount(0);
-    await open(page, { query: 'route=BD-CN&view=sections' });
-    await expect(moreButton(page)).toHaveCount(0);
+    // With nothing staged and no section, More holds only Export This Route (it was absent before PR 4).
+    for (const query of ['route=BD-CN', 'route=BD-CN&view=sections']) {
+      await open(page, { query });
+      await expect(moreButton(page)).toBeVisible();
+      await moreButton(page).click();
+      expect(await menu(page).getByRole('menuitem').allTextContents()).toEqual([
+        'Export This Route',
+      ]);
+      await expect(item(page, 'Discard Changes')).toHaveCount(0);
+    }
   });
 
-  test('the admin has no More, on a section view and in To Do', async ({ page }) => {
-    await open(page, { role: 'admin', query: 'route=BD-CN&section=5' });
-    await expect(moreButton(page)).toHaveCount(0);
-    await expect(editor(page).getByRole('menu')).toHaveCount(0);
-    await open(page, { role: 'admin', query: 'route=BD-CN' });
-    await expect(moreButton(page)).toHaveCount(0);
-    await open(page, { role: 'admin', query: 'route=BD-EU&section=3' });
-    await expect(moreButton(page, 'Bangladesh to European Union')).toHaveCount(0);
+  test("the admin's More holds exactly Export This Route and no write item, on a section view and in To Do", async ({
+    page,
+  }) => {
+    for (const [query, route] of [
+      ['route=BD-CN&section=5', 'Bangladesh to China'],
+      ['route=BD-CN', 'Bangladesh to China'],
+      ['route=BD-EU&section=3', 'Bangladesh to European Union'],
+    ] as const) {
+      await open(page, { role: 'admin', query });
+      await expect(editor(page).getByRole('menu')).toHaveCount(0);
+      await expect(moreButton(page, route)).toBeVisible();
+      await moreButton(page, route).click();
+      expect(await menu(page, route).getByRole('menuitem').allTextContents()).toEqual([
+        'Export This Route',
+      ]);
+      for (const write of ['Add Custom Field', 'Discard Changes'])
+        await expect(item(page, write, route)).toHaveCount(0);
+    }
   });
 
   test('a marked section offers Unmark Section, and a pack setting row never offers Mark or Not applicable', async ({
@@ -199,7 +215,7 @@ test.describe('who sees More, and what it holds', () => {
       .evaluateAll((items) =>
         items.map((el) => el.getAttribute('aria-label') ?? el.textContent ?? ''),
       );
-    expect(names).toEqual(['Add Custom Field', unmarkName(3)]);
+    expect(names).toEqual(['Export This Route', 'Add Custom Field', unmarkName(3)]);
     await expect(menu(page, route).getByRole('menuitem', { name: markName(3) })).toHaveCount(0);
   });
 });
@@ -510,10 +526,11 @@ test.describe('Discard Changes from More', () => {
     await expect(moreButton(page)).toBeVisible();
     await moreButton(page).click();
     const names = await menu(page).getByRole('menuitem').allTextContents();
-    expect(names).toEqual(['Discard Changes']);
+    // PR 4: Export This Route is first; below 40rem Discard Changes stays in More.
+    expect(names).toEqual(['Export This Route', 'Discard Changes']);
   });
 
-  test('at 1440 the bar keeps Discard Changes, More on a section view also offers it, and in To Do the only-Discard More is not shown', async ({
+  test('at 1440 the bar keeps Discard Changes, More on a section view also offers it, and in To Do More keeps only Export This Route', async ({
     page,
   }) => {
     await open(page, { query: 'route=BD-CN&section=1' });
@@ -525,7 +542,12 @@ test.describe('Discard Changes from More', () => {
     await editor(page)
       .getByRole('radio', { name: /^To Do/ })
       .click();
-    await expect(moreButton(page)).toBeHidden();
+    // PR 4: from 40rem the hide rule hides only the Discard row; More stays with Export This Route and Discard is not repeated.
+    await expect(moreButton(page)).toBeVisible();
+    await moreButton(page).click();
+    await expect(item(page, 'Export This Route')).toBeVisible();
+    await expect(item(page, 'Discard Changes')).toBeHidden();
+    await page.keyboard.press('Escape');
     await expect(bar(page).getByRole('button', { name: 'Discard Changes' })).toBeVisible();
   });
 });
@@ -538,11 +560,14 @@ test.describe('keyboard', () => {
     await moreButton(page).focus();
     await page.keyboard.press('Enter');
     await expect(menu(page)).toBeVisible();
-    await expect(item(page, 'Add Custom Field')).toBeFocused();
+    // PR 4: the first row is Export This Route.
+    await expect(item(page, 'Export This Route')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(menu(page)).toBeHidden();
     await expect(moreButton(page)).toBeFocused();
     await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowDown');
+    await expect(item(page, 'Add Custom Field')).toBeFocused();
     await page.keyboard.press('ArrowDown');
     await expect(item(page, markName(5))).toBeFocused();
     await page.keyboard.press('Enter');

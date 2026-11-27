@@ -8,7 +8,7 @@ import { FactMark, StaleMark } from '../../components/ux/fact-mark';
 import { RouteFactRow } from '../../components/ux/route-fact-row';
 import { SegmentedFilter } from '../../components/ux/segmented-filter';
 import { ShowMoreList } from '../../components/ux/show-more';
-import { formatDate, formatUtcDay } from '../../lib/ux/format';
+import { formatUtcDay } from '../../lib/ux/format';
 import type { OverviewRoute, RouteSummary } from '../../lib/route-pack-editor-read';
 import {
   answersFor,
@@ -60,7 +60,6 @@ import {
   isEditable,
   optionalLine,
   overlayCompleteness,
-  packChangeLine,
   progressWords,
   readinessLine,
   sectionLines,
@@ -96,6 +95,10 @@ import { RouteCustomDialog } from './route-pack-custom-dialog';
 import { DiscardDialog, LeaveDialog } from './route-pack-leave-dialogs';
 import { RouteMarkDialog } from './route-pack-mark-dialog';
 import { moreButtonOf, RouteMoreMenu } from './route-pack-more-menu';
+import { RouteDataActions } from './route-pack-data-actions';
+import { RouteDataExportDialog } from './route-pack-export-dialog';
+import { RouteHistory } from './route-pack-history';
+import { exportWords } from './route-pack-data-words';
 import { Say, SaveFactsDialog } from './route-pack-save-dialog';
 import { UnsavedBar } from './route-pack-unsaved-bar';
 import { packRowAction, type SettingKey } from '../../lib/route-pack-editor-pack';
@@ -192,11 +195,20 @@ export function RoutesFactsHead({
   notice,
   retry,
   retrying,
+  data,
 }: {
   state: 'ready' | 'denied' | 'error';
   notice: boolean;
   retry: () => void;
   retrying: boolean;
+  /** PR 4: what Import Route Data and Export Route Data need. Left out, neither is drawn. */
+  data?: {
+    tenant: string;
+    role: string;
+    routes: RouteSummary[];
+    onePersonPublication: boolean;
+    onImported: () => void;
+  };
 }) {
   if (state === 'denied') return <p className="settings-routes-quiet">{denied}</p>;
   if (state === 'error')
@@ -219,6 +231,7 @@ export function RoutesFactsHead({
           {notFoundRoute}
         </p>
       ) : null}
+      {data ? <RouteDataActions {...data} /> : null}
     </>
   );
 }
@@ -230,6 +243,7 @@ const foldWidthRem = 56;
  */
 export function RouteEditorShell({
   list,
+  routes,
   summary,
   tenant,
   role,
@@ -239,6 +253,8 @@ export function RouteEditorShell({
   onSaved,
 }: {
   list: ReactNode;
+  /** PR 4: every route of the list, for Export This Route (the open route ticked). */
+  routes: RouteSummary[];
   summary: RouteSummary;
   tenant: string;
   role: string;
@@ -277,6 +293,7 @@ export function RouteEditorShell({
       <RoutePackEditor
         tenant={tenant}
         role={role}
+        routes={routes}
         summary={summary}
         refreshKey={refreshKey}
         address={address}
@@ -301,6 +318,7 @@ function Skeleton() {
 function RoutePackEditor(props: {
   tenant: string;
   role: string;
+  routes: RouteSummary[];
   summary: RouteSummary;
   refreshKey: unknown;
   address: RouteAddress;
@@ -314,6 +332,7 @@ function RoutePackEditor(props: {
 function RoutePackEditorOf({
   tenant,
   role,
+  routes,
   summary,
   refreshKey,
   address,
@@ -322,6 +341,7 @@ function RoutePackEditorOf({
 }: {
   tenant: string;
   role: string;
+  routes: RouteSummary[];
   summary: RouteSummary;
   refreshKey: unknown;
   address: RouteAddress;
@@ -403,6 +423,8 @@ function RoutePackEditorOf({
           route={route}
           detail={data.detail!}
           packHistory={data.packHistory}
+          packHistoryState={data.packHistoryState}
+          routes={routes}
           role={role}
           tenant={tenant}
           summary={summary}
@@ -434,6 +456,8 @@ function RouteBody({
   route,
   detail,
   packHistory,
+  packHistoryState,
+  routes,
   role,
   tenant,
   summary,
@@ -445,6 +469,8 @@ function RouteBody({
   route: Route;
   detail: OverviewRoute;
   packHistory: DetailData['packHistory'];
+  packHistoryState: DetailData['packHistoryState'];
+  routes: RouteSummary[];
   role: string;
   tenant: string;
   summary: RouteSummary;
@@ -496,10 +522,6 @@ function RouteBody({
       ? null
       : (shownDocument.sectionMarks.find((mark) => mark.section === section)?.note ?? null);
   const routeName = `${countryName(summary.origin)} to ${countryName(summary.destination)}`;
-  const lastChange = packHistory?.[0];
-  const changeWords = lastChange
-    ? packChangeLine(lastChange, formatDate(lastChange.effectiveFrom))
-    : null;
 
   // Messages: one visible status line that takes focus after a save, a discard or a refusal to leave an answer half open, and one
   // hidden status for the small announcements of staging. Both are mounted before their words.
@@ -742,7 +764,7 @@ function RouteBody({
     if (open) setOpen(null);
     setSaveOpen(true);
   };
-  const [moreDialog, setMoreDialog] = useState<'mark' | 'custom' | null>(null);
+  const [moreDialog, setMoreDialog] = useState<'mark' | 'custom' | 'export' | null>(null);
   const more = useRef<HTMLDivElement>(null);
   // A dialog opened from a row of More: the row is gone when it closes, so focus goes back to the More button, or to the status
   // line once the dialog changed something (or when More is not shown).
@@ -860,21 +882,21 @@ function RouteBody({
         {owner && pack ? (
           <ChangePackStatusButton onOpen={() => setPackDialog({ kind: 'status' })} />
         ) : null}
-        {owner ? (
-          <RouteMoreMenu
-            routeName={routeName}
-            sectionName={section === null ? '' : sectionName(section)}
-            wrapperRef={more}
-            onAddCustom={section === null ? undefined : () => openMore('custom')}
-            onMark={
-              section !== null && markNote === null && canOfferMark(role)
-                ? () => openMore('mark')
-                : undefined
-            }
-            onUnmark={section !== null && markNote !== null ? unmarkSection : undefined}
-            onDiscard={staged > 0 ? () => openDiscard('more') : undefined}
-          />
-        ) : null}
+        {/* PR 4: More is drawn for every reader, with Export This Route; the other rows are the owner's. */}
+        <RouteMoreMenu
+          routeName={routeName}
+          sectionName={section === null ? '' : sectionName(section)}
+          wrapperRef={more}
+          onExport={() => setMoreDialog('export')}
+          onAddCustom={owner && section !== null ? () => openMore('custom') : undefined}
+          onMark={
+            owner && section !== null && markNote === null && canOfferMark(role)
+              ? () => openMore('mark')
+              : undefined
+          }
+          onUnmark={owner && section !== null && markNote !== null ? unmarkSection : undefined}
+          onDiscard={owner && staged > 0 ? () => openDiscard('more') : undefined}
+        />
       </div>
       <div className="route-editor-progress">
         <p>{progressWords({ total, pending })}</p>
@@ -893,11 +915,6 @@ function RouteBody({
       ) : null}
       {route.readiness && pack ? (
         <p className="route-editor-quiet">{readinessLine(route.readiness, pack.version)}</p>
-      ) : null}
-      {pack ? (
-        <p className="route-editor-quiet">
-          {changeWords ?? 'The last pack change is not available.'}
-        </p>
       ) : null}
       {owner ? null : <p className="route-editor-quiet">{adminNote}</p>}
       <div className="route-editor-status" role="status" tabIndex={-1} ref={statusLine}>
@@ -945,9 +962,31 @@ function RouteBody({
           labels={labels}
         />
       )}
+      {/* PR 4 (spec 16, Guardian G72 ruling 2): History at the foot, closed; the newest pack row is the last pack change. */}
+      <RouteHistory
+        key={`${summary.routeId}/${savedVersion}/${pack?.version ?? 0}`}
+        tenant={tenant}
+        routeId={summary.routeId}
+        packHistory={packHistory}
+        packState={packHistoryState}
+      />
       {owner && staged > 0 ? (
         <UnsavedBar count={staged} onReview={review} onDiscard={() => openDiscard('bar')} />
       ) : null}
+      <RouteDataExportDialog
+        open={moreDialog === 'export'}
+        onClose={() => setMoreDialog(null)}
+        tenant={tenant}
+        routes={routes}
+        initial={summary.key}
+        onDone={(name, count) => {
+          toStatus.current = true;
+          setMoreDialog(null);
+          setStaging('');
+          setStatus({ text: exportWords.downloaded(name, count), caution: null });
+        }}
+        returnFocusTo={backFromMore}
+      />
       {owner ? (
         <>
           {section !== null ? (

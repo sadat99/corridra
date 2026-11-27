@@ -69,6 +69,12 @@
   align-items: center;
   cursor: pointer;
 }
+/* The disclosure sits in the route region's own grid, so it keeps no margin of its own (the region's 900 px budget). The operator
+   pages give every disclosure a block margin; this longer selector steps over it. */
+.route-history,
+.ux-operator-home .workspace-panel .route-editor details.route-history:not(.ux-journey-disclosure) {
+  margin-block: 0;
+}
 .route-history summary {
   min-block-size: 44px;
   display: flex;
@@ -94,6 +100,32 @@
   font-size: var(--text-sm);
   overflow-wrap: anywhere;
 }
+/* The list head status line is in the page before its words and takes no room while empty. */
+.route-data-status:empty {
+  block-size: 0;
+  margin: 0;
+}
+.route-data-status:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.route-data-file input[type='file']:focus-visible {
+  outline: none;
+}
+.route-data h3,
+.route-data h4,
+.route-history h3 {
+  margin: 0;
+}
+.route-history .route-data {
+  display: grid;
+  gap: var(--space-2);
+}
+.route-data p.route-edit-quiet {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
 /* Actions stack on a phone, as in the pack dialogs. */
 @media (max-width: 39.999rem) {
   .route-data .route-dialog-actions {
@@ -102,6 +134,7 @@
   }
   .route-data-head {
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: flex-start;
   }
 }
