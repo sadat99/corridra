@@ -318,7 +318,7 @@
 
 /* Listen leaves the top bar of this page (owner decision 9, 27 Nov 2026). Scoped to the home with v4.4, so no other
    page changes. */
-.ux-guide-home:has(.hv44-hero) button.top-bar-tool[aria-pressed] {
+:root:has(.hv44-hero) .site-header button.top-bar-tool[aria-pressed] {
   display: none;
 }
 
@@ -334,4 +334,40 @@
 }
 .hv43 .hv43-solutions .hv43-card-actions {
   align-items: flex-start;
+}
+
+/* The start block inside the card: left aligned, one tidy column. */
+.hv43 .hv44-start {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  text-align: start;
+}
+.hv43 .hv44-start .tr-start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+}
+.hv43 .hv44-start .ac1-calm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-2);
+}
+.hv43 .hv44-start .ac1-calm li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.hv43 .hv44-start .hv43-build {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
 }
