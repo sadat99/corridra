@@ -42,6 +42,8 @@ type Options = {
   v41?: boolean;
   query?: string;
   hash?: string;
+  /** Wait for the answer of the route facts list read, and one render after it, before the caller looks at the page. */
+  awaitOverview?: boolean;
 };
 async function open(page: Page, options: Options = {}) {
   const { role = 'owner', width = 1440, height = 900, v41 = true, query = '', hash = '' } = options;
@@ -57,7 +59,20 @@ async function open(page: Page, options: Options = {}) {
     applications: 'on',
   });
   for (const [name, value] of new URLSearchParams(query)) words.set(name, value);
+  const answered = options.awaitOverview
+    ? page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/team-control/route-pack-overview') &&
+          !response.url().includes('routeId='),
+      )
+    : null;
   await page.goto(`${fixture.origin}/operator/settings?${words}${hash ? '#' + hash : ''}`);
+  await answered;
+  // One render after the answer, so what is compared is the page the answer made.
+  if (answered)
+    await page.evaluate(
+      () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+    );
   await expect(page.getByLabel('Workspace status')).toBeAttached();
   await expect(page.getByText('Loading workspace…')).toHaveCount(0);
   return world;
@@ -115,7 +130,11 @@ test.describe('switch off: the page is the one main draws', () => {
   test('module off (the reads answer 404): the Routes block is the markup it was, and a route in the address is ignored', async ({
     page,
   }) => {
-    const world = await open(page, { facts: null, query: 'route=BD-CN&view=sections' });
+    const world = await open(page, {
+      facts: null,
+      query: 'route=BD-CN&view=sections',
+      awaitOverview: true,
+    });
     await expect(routes(page).locator('li')).toHaveCount(3);
     await expect(routes(page).locator('li').first().locator('.settings-route-pack')).toHaveText(
       'Active Pack version 2',
@@ -135,7 +154,7 @@ test.describe('switch off: the page is the one main draws', () => {
   test('module off with no route in the address: the same markup, no error text', async ({
     page,
   }) => {
-    await open(page, { facts: null });
+    await open(page, { facts: null, awaitOverview: true });
     await expect(routes(page).locator('li')).toHaveCount(3);
     expect(await markup(page, '#workspace-settings .settings-routes')).toBe(
       golden('p5c-settings-routes-module-off.golden'),
@@ -170,7 +189,7 @@ test.describe('Routes list', () => {
     );
     // The name is the link, named with the pack and the Core words.
     await expect(rows.nth(0).getByRole('link')).toHaveAccessibleName(
-      `Bangladesh to China, pack Active, Core ${core - pendingCore} of ${core} done, ${staleCore} stale`,
+      `Bangladesh to China, pack Active, Core ${core - pendingCore} of ${core} done, ${staleCore} stale, Live with gaps`,
     );
     await expect(rows.nth(0).getByRole('link')).toHaveAttribute('href', /route=BD-CN/);
     await expect(names(page)).toHaveCount(3);
@@ -226,7 +245,7 @@ test.describe('the route view', () => {
       'Readiness: complete for Supplier discovery on pack version 2.',
     );
     await expect(header).toContainText(
-      'Pack version 2, proposed and published by you, 20 Nov 2026',
+      'Pack version 2, proposed and published by you, effective 20 Nov 2026',
     );
     await expect(header).toContainText('Route facts are shown read only here.');
     // The View choice, with counts from the data.
@@ -496,6 +515,45 @@ test.describe('states', () => {
     await expect(editor(page).getByRole('alert')).toHaveCount(0);
   });
 
+  test('a 404 on the route read is never an error: the list is asked again and, answering 404 too, the page falls back to the plain list', async ({
+    page,
+  }) => {
+    const world = await open(page, {
+      facts: { delayDetail: 600, detail: 404 },
+      query: 'route=BD-CN',
+    });
+    await expect(editor(page).getByRole('heading', { level: 2 })).toBeVisible();
+    // The switch goes off between the list and the route read.
+    world.facts!.overview = 404;
+    await expect(editor(page)).toHaveCount(0);
+    await expect(routes(page).locator('li')).toHaveCount(3);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page.getByText('Route facts are unavailable. Try again.')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Try Again' })).toHaveCount(0);
+    expect(await markup(page, '#workspace-settings .settings-routes')).toBe(
+      golden('p5c-settings-routes-module-off.golden'),
+    );
+  });
+
+  test('a 404 on the route read while the list still answers shows no error either', async ({
+    page,
+  }) => {
+    await open(page, { facts: { detail: 404 }, query: 'route=BD-CN' });
+    await expect(editor(page).getByRole('heading', { level: 2 })).toBeVisible();
+    await expect(editor(page).locator('li.ux-fact-row')).toHaveCount(0);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Try Again' })).toHaveCount(0);
+  });
+
+  test('a pack that did not go through review says so, with its effective date', async ({
+    page,
+  }) => {
+    await open(page, { facts: { unreviewedPack: true }, query: 'route=BD-CN' });
+    await expect(editor(page)).toContainText(
+      'Pack version 2, effective 20 Nov 2026. This change did not go through review, so no proposer is recorded.',
+    );
+  });
+
   test('denied: a role without access to route facts is told so and sees no link or row', async ({
     page,
   }) => {
@@ -542,9 +600,7 @@ test.describe('widths', () => {
       } else {
         await expect(fold.locator('> summary')).toHaveText('Routes: Bangladesh to China');
         await expect(fold).not.toHaveAttribute('open', '');
-        expect((await fold.locator('> summary').boundingBox())!.height).toBeGreaterThanOrEqual(
-          width <= 768 ? 44 : 24,
-        );
+        expect((await fold.locator('> summary').boundingBox())!.height).toBeGreaterThanOrEqual(44);
         await fold.locator('> summary').click();
         await expect(routes(page).locator('li').first()).toBeVisible();
       }
@@ -557,7 +613,8 @@ test.describe('widths', () => {
         type: 'editor-height',
         description: `${width}: ${Math.round(height)} px`,
       });
-      expect(height).toBeLessThanOrEqual(width < 1024 ? 1688 : 900);
+      // Side by side (a region of 56 rem) 900 px, stacked 1688 px.
+      expect(height).toBeLessThanOrEqual(wide ? 900 : 1688);
       await noRepeatedLinks(page);
     });
   }
@@ -576,17 +633,13 @@ test.describe('widths', () => {
       const after = await rows.evaluateAll((items) =>
         items.map((row) => row.getBoundingClientRect().height),
       );
-      const line = await rows
-        .first()
-        .locator('.settings-route-facts')
-        .evaluate((element) => parseFloat(getComputedStyle(element).lineHeight) || 24);
       test.info().annotations.push({
         type: 'row-height',
         description: `${width}: ${before.map(Math.round)} -> ${after.map(Math.round)}`,
       });
-      // From 640 px one more line, its gap and the row padding. On a phone the three facts of a live, stale route may wrap onto two lines, and the name
-      // becomes a 44 px target.
-      const limit = width < 640 ? line * 3 + 30 : line + 24;
+      // Measured on this fixture: from 640 px a row grows by 38 to 43 px (the facts line, its gap and the row padding); on a phone by
+      // 21 to 69 px, the most for the live route with stale facts, whose three facts wrap onto two lines.
+      const limit = width < 640 ? 70 : 44;
       after.forEach((height, index) => expect(height - before[index]!).toBeLessThanOrEqual(limit));
     }
   });

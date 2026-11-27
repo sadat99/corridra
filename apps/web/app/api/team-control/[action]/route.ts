@@ -8,6 +8,7 @@ import { createRoutePack } from '@corridra/missions/route-pack-form';
 import { sheetLimits, sheetWords, type SheetReport } from '@corridra/missions/route-pack-sheet';
 import { csvRows } from '@corridra/delivery/import';
 import { csvCell } from '@corridra/auth/customer-programme-export-csv';
+import { liveStatuses } from '@corridra/domain/route-pack-standard';
 import { answerRoutePackRead, isRoutePackReadAction } from '../../../../lib/route-pack-editor-read';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -217,6 +218,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           ctx,
           action,
           new URL(request.url).searchParams,
+          liveStatuses,
         ),
         { headers },
       );

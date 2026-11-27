@@ -9,6 +9,7 @@ import type { RouteConfiguration } from '../../packages/domain/src/corridors';
 import type { RouteView } from '../../packages/missions/src/route-pack-content';
 import {
   deriveCompleteness,
+  liveStatuses,
   standardFieldsV1,
   type ContentDocument,
   type ContentFact,
@@ -160,6 +161,8 @@ export type FactsWorld = {
   delayDetail?: number;
   /** The next this many one-route reads answer 500, then it answers as `detail` says. */
   failDetail?: number;
+  /** The newest pack of Bangladesh to China did not go through review. */
+  unreviewedPack?: boolean;
   /** Every Core field of Bangladesh to the European Union is done and none is stale. */
   complete?: boolean;
 };
@@ -293,18 +296,13 @@ function routeViews(world: FactsWorld, role: string): RouteView[] {
     routeView('TW-AU', routeIds.twAu, null, null, null),
   ];
 }
-const packHistoryOf = (routeId: string): PackVersion[] =>
+const packHistoryOf = (routeId: string, facts: FactsWorld): PackVersion[] =>
   routeId === routeIds.bdCn
     ? [
         {
-          packId: id(212),
           version: 2,
-          status: 'ACTIVE',
           effectiveFrom: '2026-11-20T09:00:00.000Z',
-          reason: 'Synthetic pack reason',
-          proposalReason: 'Synthetic proposal',
-          decisionReason: 'Synthetic decision',
-          reviewed: true,
+          reviewed: facts.unreviewedPack !== true,
           proposedAndPublishedByYou: true,
           proposedAndPublishedBySame: true,
         },
@@ -312,13 +310,8 @@ const packHistoryOf = (routeId: string): PackVersion[] =>
     : routeId === routeIds.bdEu
       ? [
           {
-            packId: id(211),
             version: 1,
-            status: 'TESTING',
             effectiveFrom: '2026-11-19T09:00:00.000Z',
-            reason: 'Synthetic pack reason',
-            proposalReason: 'Synthetic proposal',
-            decisionReason: 'Synthetic decision',
             reviewed: true,
             proposedAndPublishedByYou: false,
             proposedAndPublishedBySame: false,
@@ -496,7 +489,10 @@ export async function answerReads(page: Page, given: Partial<World> = {}): Promi
           if (code !== 200) return refusal(code);
           if (!asked)
             return route.fulfill(
-              json({ capabilities: factsCapabilities, routes: views.map(summariseRoute) }),
+              json({
+                capabilities: factsCapabilities,
+                routes: views.map((view) => summariseRoute(view, liveStatuses)),
+              }),
             );
           const found = views.find((view) => view.routeId === asked);
           return route.fulfill(
@@ -514,7 +510,7 @@ export async function answerReads(page: Page, given: Partial<World> = {}): Promi
       if (path.endsWith('/route-pack-pack-history')) {
         const code = facts.packHistory ?? 200;
         if (code !== 200) return refusal(code);
-        return route.fulfill(json({ versions: packHistoryOf(asked ?? '') }));
+        return route.fulfill(json({ versions: packHistoryOf(asked ?? '', facts) }));
       }
     }
     if (path === '/api/workspace/research') return route.fulfill(json({ organisations: [] }));

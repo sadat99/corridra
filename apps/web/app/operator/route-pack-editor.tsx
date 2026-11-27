@@ -52,6 +52,38 @@ const notFoundSection = 'That section was not found.';
 const denied = 'You do not have access to route facts.';
 const unavailable = 'Route facts are unavailable. Try again.';
 
+/**
+ * The name of a route in the Routes list, as a link to ?route=KEY. A plain click opens the route by `history.pushState` (so Back
+ * and Forward work) and moves focus to the route name; a click with a modifier key, or a middle click, is left to the browser.
+ */
+export function RouteLink({
+  routeKey,
+  current,
+  label,
+  children,
+}: {
+  routeKey: string;
+  current: boolean;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      className="settings-route-name"
+      href={addressFor(window.location.href, { route: routeKey })}
+      aria-current={current ? 'true' : undefined}
+      aria-label={label}
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        event.preventDefault();
+        goTo({ route: routeKey }, routeHeading);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
 /** The facts of one row of the Routes list: Core words, stale words and Live with gaps, only the ones that hold. */
 export function RouteRowFacts({ summary }: { summary: RouteSummary }) {
   const core = coreListWords(summary.core);
@@ -124,6 +156,7 @@ export function RouteEditorShell({
   role,
   refreshKey,
   address,
+  onGone,
 }: {
   list: ReactNode;
   summary: RouteSummary;
@@ -131,6 +164,8 @@ export function RouteEditorShell({
   role: string;
   refreshKey: unknown;
   address: RouteAddress;
+  /** The route read answered 404: ask the list again, which then answers 404 too and the page falls back to the plain list. */
+  onGone: () => void;
 }) {
   const shell = useRef<HTMLDivElement>(null);
   const [wide, setWide] = useState(false);
@@ -163,6 +198,7 @@ export function RouteEditorShell({
         summary={summary}
         refreshKey={refreshKey}
         address={address}
+        onGone={onGone}
       />
     </div>
   );
@@ -185,14 +221,21 @@ function RoutePackEditor({
   summary,
   refreshKey,
   address,
+  onGone,
 }: {
   tenant: string;
   role: string;
   summary: RouteSummary;
   refreshKey: unknown;
   address: RouteAddress;
+  onGone: () => void;
 }) {
   const data = useRouteDetail(tenant, summary.routeId, refreshKey);
+  // A 404 is never shown as an error: the list is asked again and falls back quietly if it answers 404 as well.
+  const gone = data.state === 'off';
+  useEffect(() => {
+    if (gone) onGone();
+  }, [gone, onGone]);
   // Focus moves to the heading of the route or the section a person clicked, never on a deep link, Back or Forward.
   useEffect(() => {
     const target = takePendingFocus();
@@ -211,7 +254,7 @@ function RoutePackEditor({
           </p>
           <Skeleton />
         </>
-      ) : data.state === 'denied' ? (
+      ) : gone ? null : data.state === 'denied' ? (
         <p className="route-editor-quiet">{denied}</p>
       ) : data.state === 'error' ? (
         <div className="settings-routes-error">

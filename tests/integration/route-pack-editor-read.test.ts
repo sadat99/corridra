@@ -270,11 +270,23 @@ describe('route-pack-overview, one route', () => {
     const text = JSON.stringify(body);
     expect(text).not.toContain('createdBy');
     expect(text).not.toContain(f.users.owner.id);
+    // Only what the page draws: no record id, no free staff text, no pack id in readiness.
+    expect(Object.keys(body.route!.pack!).sort()).toEqual(['configuration', 'status', 'version']);
+    expect(Object.keys(body.route!.content!).sort()).toEqual(['document', 'version']);
+    expect(Object.keys(body.route!).sort()).toEqual([
+      'completeness',
+      'content',
+      'destination',
+      'key',
+      'origin',
+      'pack',
+      'readiness',
+      'routeId',
+    ]);
+    expect(text).not.toContain(reason);
+    expect(text).not.toContain('"reason"');
     // The owner reads readiness for the pack in force: none recorded yet.
-    expect(body.route?.readiness).toEqual({
-      packId: body.route?.pack?.id,
-      completeMissionTypes: [],
-    });
+    expect(body.route?.readiness).toEqual({ completeMissionTypes: [] });
   });
 
   test('a route of no workspace we can read answers null, and another workspace gets no data', async () => {
@@ -331,15 +343,16 @@ describe('route-pack-fact-history and route-pack-pack-history', () => {
     expect(answer.status).toBe(200);
     const body = (await answer.json()) as { versions: PackVersion[] };
     expect(body.versions).toHaveLength(1);
-    expect(body.versions[0]).toMatchObject({
+    // Only what the line "last pack change" needs: no pack id, status or reason text.
+    expect(body.versions[0]).toEqual({
       version: 1,
-      status: 'TESTING',
+      effectiveFrom: expect.any(String),
       reviewed: true,
       proposedAndPublishedByYou: true,
       proposedAndPublishedBySame: true,
     });
     const text = JSON.stringify(body);
-    for (const word of ['publishedBy"', 'proposedBy"', f.users.owner.id])
+    for (const word of ['publishedBy"', 'proposedBy"', f.users.owner.id, reason, '"reason"'])
       expect(text).not.toContain(word);
     // The admin did neither step: not by you, still by one person.
     web.actor = 'reviewer';
@@ -357,10 +370,7 @@ describe('roles', () => {
   test('an admin reads the overview, readiness and pack history', async () => {
     web.actor = 'reviewer';
     const body = (await overview(withPack)) as OverviewRoute;
-    expect(body.route?.readiness).toEqual({
-      packId: body.route?.pack?.id,
-      completeMissionTypes: [],
-    });
+    expect(body.route?.readiness).toEqual({ completeMissionTypes: [] });
     expect((await read('route-pack-pack-history', `routeId=${withPack}`)).status).toBe(200);
   });
 

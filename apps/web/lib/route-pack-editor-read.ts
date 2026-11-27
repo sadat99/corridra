@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import type { RequestContext } from '@corridra/db';
-import { liveStatuses, type PackStatus } from '@corridra/domain/route-pack-standard';
+import type { PackStatus } from '@corridra/domain/route-pack-standard';
 import type { Capabilities, RouteView } from '@corridra/missions/route-pack-content';
 
+// Types only come from the @corridra packages (they are erased), so a test runner that does not transform package specifiers can
+// load this file. The one value it needs from the standard, which pack statuses are live, is passed in by the caller.
 // ADR-093 Phase 3, PR 1 (read only): what the three read actions of the route pack editor answer. The content service is passed
 // in, so this file holds only the projections and the response types; the handler in api/team-control/[action]/route.ts checks
 // the switch and the 2b marker first, then calls here. Client files import the types from here with `import type` only.
@@ -32,9 +34,17 @@ export type RouteSummary = {
   liveWithGaps: boolean;
 };
 export type OverviewList = { capabilities: Capabilities; routes: RouteSummary[] };
-export type RouteDetail = Omit<RouteView, 'pack' | 'content'> & {
-  pack: Omit<NonNullable<RouteView['pack']>, 'createdBy'> | null;
-  content: Omit<NonNullable<RouteView['content']>, 'createdBy'> | null;
+/**
+ * One route in full, with only what the page draws: no record id, no actor, no free staff text (the reasons stay in the
+ * database and the history reads), and readiness without its pack id.
+ */
+export type RouteDetail = Pick<
+  RouteView,
+  'routeId' | 'key' | 'origin' | 'destination' | 'completeness'
+> & {
+  pack: Pick<NonNullable<RouteView['pack']>, 'version' | 'status' | 'configuration'> | null;
+  content: Pick<NonNullable<RouteView['content']>, 'version' | 'document'> | null;
+  readiness: { completeMissionTypes: string[] } | null;
 };
 export type OverviewRoute = {
   capabilities: Capabilities;
@@ -50,14 +60,11 @@ export type FactVersion = {
   createdByYou: boolean;
   reason: string;
 };
+/** One pack version for the line "last pack change": its number, its effective date and who did the two steps, in words only. */
 export type PackVersion = {
-  packId: string;
   version: number;
-  status: PackStatus;
   effectiveFrom: string;
-  reason: string;
-  proposalReason: string | null;
-  decisionReason: string | null;
+  /** The pack went through propose and decide (the 2b reviewed path). */
   reviewed: boolean;
   proposedAndPublishedByYou: boolean;
   /** One person proposed and published it (not necessarily the reader). */
@@ -91,7 +98,7 @@ export type RoutePackReadService = {
 
 const routeId = z.uuid();
 
-export function summariseRoute(route: RouteView): RouteSummary {
+export function summariseRoute(route: RouteView, live: readonly PackStatus[]): RouteSummary {
   const { completeness, pack, content } = route;
   const total = completeness.fields.filter((row) => row.core).length;
   const pending = completeness.pendingCore.length;
@@ -104,20 +111,23 @@ export function summariseRoute(route: RouteView): RouteSummary {
     facts: content ? { version: content.version } : null,
     core: { total, pending, stale: completeness.staleCore.length },
     optionalPending: completeness.pendingOptionalCount,
-    liveWithGaps:
-      !!pack && (liveStatuses as readonly PackStatus[]).includes(pack.status) && pending > 0,
+    liveWithGaps: !!pack && live.includes(pack.status) && pending > 0,
   };
 }
 export function routeDetail(route: RouteView): RouteDetail {
-  const { pack, content, ...rest } = route;
-  // createdBy is a staff identifier the page has no use for.
-  const withoutActor = <T extends { createdBy: string }>(row: T | null) => {
-    if (!row) return null;
-    const { createdBy: _actor, ...kept } = row;
-    void _actor;
-    return kept;
+  const { routeId, key, origin, destination, completeness, pack, content, readiness } = route;
+  return {
+    routeId,
+    key,
+    origin,
+    destination,
+    completeness,
+    pack: pack
+      ? { version: pack.version, status: pack.status, configuration: pack.configuration }
+      : null,
+    content: content ? { version: content.version, document: content.document } : null,
+    readiness: readiness ? { completeMissionTypes: readiness.completeMissionTypes } : null,
   };
-  return { ...rest, pack: withoutActor(pack), content: withoutActor(content) };
 }
 
 /**
@@ -129,6 +139,8 @@ export async function answerRoutePackRead(
   ctx: RequestContext,
   action: RoutePackReadAction,
   query: URLSearchParams,
+  /** The pack statuses that are live (the standard's `liveStatuses`). */
+  live: readonly PackStatus[],
 ) {
   if (action === 'route-pack-overview') {
     const asked = query.get('routeId');
@@ -136,7 +148,7 @@ export async function answerRoutePackRead(
       const overview = await service.overview(ctx);
       return {
         capabilities: overview.capabilities,
-        routes: overview.routes.map(summariseRoute),
+        routes: overview.routes.map((route) => summariseRoute(route, live)),
       } satisfies OverviewList;
     }
     const overview = await service.overview(ctx, { routeIds: [routeId.parse(asked)] });
@@ -166,13 +178,8 @@ export async function answerRoutePackRead(
   const versions = await service.packHistory(ctx, { routeId: wanted });
   return {
     versions: versions.map((row): PackVersion => ({
-      packId: row.packId,
       version: row.version,
-      status: row.status,
       effectiveFrom: row.effectiveFrom,
-      reason: row.reason,
-      proposalReason: row.proposalReason,
-      decisionReason: row.decisionReason,
       reviewed: row.reviewed,
       proposedAndPublishedByYou: row.proposedAndPublishedByYou,
       proposedAndPublishedBySame: row.proposedBy !== null && row.proposedBy === row.publishedBy,

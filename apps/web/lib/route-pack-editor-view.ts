@@ -96,7 +96,7 @@ export const humanKey = (key: string) => {
   return text ? text[0]!.toUpperCase() + text.slice(1) : key;
 };
 export const readinessLine = (
-  readiness: { packId: string; completeMissionTypes: string[] },
+  readiness: { completeMissionTypes: string[] },
   packVersion: number,
 ) =>
   readiness.completeMissionTypes.length
@@ -104,7 +104,8 @@ export const readinessLine = (
     : `Readiness: not recorded for pack version ${packVersion}.`;
 /**
  * The last pack change, from the newest entry of the pack history. The services return actor ids and no names, so the words
- * are "you", "a teammate", or two people. Null when the pack was not proposed through review.
+ * are "you", "a teammate", or two people. The date is the pack's effective date, and says so. A pack that did not go through
+ * review has no proposer to name, and the line says that.
  */
 export function packChangeLine(
   entry: Pick<
@@ -113,13 +114,14 @@ export function packChangeLine(
   >,
   date: string,
 ) {
-  if (!entry.reviewed) return null;
+  if (!entry.reviewed)
+    return `Pack version ${entry.version}, effective ${date}. This change did not go through review, so no proposer is recorded.`;
   const who = entry.proposedAndPublishedByYou
     ? 'proposed and published by you'
     : entry.proposedAndPublishedBySame
       ? 'proposed and published by a teammate'
       : 'proposed by one team member, published by another';
-  return `Pack version ${entry.version}, ${who}, ${date}`;
+  return `Pack version ${entry.version}, ${who}, effective ${date}`;
 }
 
 // What a field row shows.

@@ -143,7 +143,8 @@ export function useRoutePackOverview(
 }
 
 export type DetailData = {
-  state: 'loading' | 'denied' | 'error' | 'ready';
+  /** `off`: the route read answered 404 (the switch is off or the module is gone): never an error, the page falls back. */
+  state: 'loading' | 'off' | 'denied' | 'error' | 'ready';
   /** Null while it loads, or when the route is not in this workspace. */
   detail: OverviewRoute | null;
   /** Newest first. Null when the read failed or the reader may not see it: the page then leaves that one line out. */
@@ -182,7 +183,8 @@ export function useRouteDetail(
           detail.state === 'ready'
             ? { state: 'ready', detail: detail.body, packHistory, routeId }
             : {
-                state: detail.state === 'denied' ? 'denied' : 'error',
+                state:
+                  detail.state === 'denied' ? 'denied' : detail.state === 'off' ? 'off' : 'error',
                 detail: null,
                 packHistory: null,
                 routeId,

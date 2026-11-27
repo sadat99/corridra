@@ -13,10 +13,10 @@ import { ShowMoreList } from '../../components/ux/show-more';
 import { CountryName, countryName } from './country-name';
 import { useOperatorFlags } from './operator-flags';
 import { packStatuses, packTones } from './pack-status';
-import { RouteEditorShell, RouteRowFacts, RoutesFactsHead } from './route-pack-editor';
-import { goTo, leaveRoute, useRoutePackOverview, useRouteAddress } from './route-pack-editor-data';
+import { RouteEditorShell, RouteLink, RouteRowFacts, RoutesFactsHead } from './route-pack-editor';
+import { leaveRoute, useRoutePackOverview, useRouteAddress } from './route-pack-editor-data';
 import type { RouteSummary } from '../../lib/route-pack-editor-read';
-import { addressFor, coreListWords, staleListWords } from '../../lib/route-pack-editor-view';
+import { coreListWords, staleListWords } from '../../lib/route-pack-editor-view';
 import './settings-routes.css';
 type Catalogue = {
   routes: { id: string; origin_market: string; destination_market: string }[];
@@ -148,29 +148,23 @@ function RouteList({
             return (
               <li key={route.id}>
                 {summary ? (
-                  <a
-                    className="settings-route-name"
-                    href={addressFor(window.location.href, { route: summary.key })}
-                    aria-current={facts?.openKey === summary.key ? 'true' : undefined}
-                    aria-label={[
+                  <RouteLink
+                    routeKey={summary.key}
+                    current={facts?.openKey === summary.key}
+                    label={[
                       `${countryName(route.origin_market)} to ${countryName(route.destination_market)}`,
                       pack
                         ? `pack ${packStatuses.find(([value]) => value === pack.status)?.[1] ?? words(pack.status)}`
                         : 'No pack yet',
                       coreListWords(summary.core),
                       staleListWords(summary.core.stale),
+                      summary.liveWithGaps ? 'Live with gaps' : null,
                     ]
                       .filter(Boolean)
                       .join(', ')}
-                    onClick={(event) => {
-                      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0)
-                        return;
-                      event.preventDefault();
-                      goTo({ route: summary.key }, 'route-pack-editor-heading');
-                    }}
                   >
                     {name}
-                  </a>
+                  </RouteLink>
                 ) : (
                   <span className="settings-route-name">{name}</span>
                 )}
@@ -596,6 +590,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
             role={role}
             refreshKey={catalogue}
             address={address}
+            onGone={overview.retry}
           />
         ) : (
           routeList

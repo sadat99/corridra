@@ -203,31 +203,33 @@ describe('words come from the numbers given, never typed ones', () => {
   });
 
   test('readiness and the last pack change in words, from what the services say', () => {
-    expect(readinessLine({ packId: 'p', completeMissionTypes: [] }, 3)).toBe(
+    expect(readinessLine({ completeMissionTypes: [] }, 3)).toBe(
       'Readiness: not recorded for pack version 3.',
     );
-    expect(
-      readinessLine({ packId: 'p', completeMissionTypes: ['supplier_discovery', 'sourcing'] }, 3),
-    ).toBe('Readiness: complete for Supplier discovery, Sourcing on pack version 3.');
+    expect(readinessLine({ completeMissionTypes: ['supplier_discovery', 'sourcing'] }, 3)).toBe(
+      'Readiness: complete for Supplier discovery, Sourcing on pack version 3.',
+    );
     const base = { version: 3, reviewed: true };
     expect(
       packChangeLine(
         { ...base, proposedAndPublishedByYou: true, proposedAndPublishedBySame: true },
         '26 Nov 2026',
       ),
-    ).toBe('Pack version 3, proposed and published by you, 26 Nov 2026');
+    ).toBe('Pack version 3, proposed and published by you, effective 26 Nov 2026');
     expect(
       packChangeLine(
         { ...base, proposedAndPublishedByYou: false, proposedAndPublishedBySame: true },
         '26 Nov 2026',
       ),
-    ).toBe('Pack version 3, proposed and published by a teammate, 26 Nov 2026');
+    ).toBe('Pack version 3, proposed and published by a teammate, effective 26 Nov 2026');
     expect(
       packChangeLine(
         { ...base, proposedAndPublishedByYou: false, proposedAndPublishedBySame: false },
         '26 Nov 2026',
       ),
-    ).toBe('Pack version 3, proposed by one team member, published by another, 26 Nov 2026');
+    ).toBe(
+      'Pack version 3, proposed by one team member, published by another, effective 26 Nov 2026',
+    );
     expect(
       packChangeLine(
         {
@@ -238,7 +240,9 @@ describe('words come from the numbers given, never typed ones', () => {
         },
         '26 Nov 2026',
       ),
-    ).toBeNull();
+    ).toBe(
+      'Pack version 3, effective 26 Nov 2026. This change did not go through review, so no proposer is recorded.',
+    );
   });
 
   test('no em dash and no typed number reaches any helper sentence', () => {
@@ -247,7 +251,7 @@ describe('words come from the numbers given, never typed ones', () => {
       gapsLine('Active', 2),
       staleLine(2),
       optionalLine(2) ?? '',
-      readinessLine({ packId: 'p', completeMissionTypes: [] }, 1),
+      readinessLine({ completeMissionTypes: [] }, 1),
     ];
     for (const sentence of sentences) expect(sentence).not.toContain(String.fromCharCode(0x2014));
   });
