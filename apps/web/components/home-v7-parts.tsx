@@ -27,9 +27,9 @@ export function Hero() {
   const [paused, setPaused] = useState(false);
   useEffect(() => {
     const root = document.documentElement;
-    if (paused) root.setAttribute('data-hv44-paused', '');
-    else root.removeAttribute('data-hv44-paused');
-    return () => root.removeAttribute('data-hv44-paused');
+    if (paused) root.setAttribute('data-hv7-paused', '');
+    else root.removeAttribute('data-hv7-paused');
+    return () => root.removeAttribute('data-hv7-paused');
   }, [paused]);
   const [first = '', ...rest] = t(v43('hero.title.b')).split(' ');
   return (
