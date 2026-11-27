@@ -780,6 +780,19 @@
 .hv7-pin-home .hv7-pulse {
   stroke: var(--cv-gold);
 }
+.hv7-pulse-f {
+  animation-name: hv7-pulse-f;
+}
+@keyframes hv7-pulse-f {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
 .hv7-flagdefs {
   position: absolute;
   inline-size: 0;

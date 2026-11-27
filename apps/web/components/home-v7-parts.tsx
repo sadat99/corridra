@@ -79,7 +79,7 @@ const doors: readonly Door[] = [
     tab: 'Buy from China',
     title: 'Buy from China, from checked suppliers.',
     ticks: ['Suppliers checked first', 'Meetings set up for you', 'Follow-through after'],
-    view: '430 40 230 130',
+    view: '410 30 270 150',
     routes: ['CN', 'SG'],
     labels: { CN: {}, SG: {}, BD: {} },
     inbound: true,
@@ -183,9 +183,9 @@ const steps = [
 // What each step shows on the map (canvas board "Home v9"). The three suppliers and the two meetings are the worked
 // example's invented numbers, not data.
 const candidates = [
-  [556, 78],
-  [584, 82],
-  [577, 100],
+  [546, 72],
+  [592, 74],
+  [602, 96],
 ] as const;
 const tag = (x: number, y: number, width: number, text: string, tone: 'plain' | 'gold') => (
   <g key={text} className="hv7-tag" data-tone={tone}>
@@ -197,7 +197,7 @@ const tag = (x: number, y: number, width: number, text: string, tone: 'plain' | 
 );
 
 function ProcessMap({ step }: { step: number }) {
-  const view = '440 50 200 120';
+  const view = '420 40 260 140';
   if (step === 1)
     return <DotMap key={1} view={view} flags labels={{ BD: { name: 'Your request' } }} />;
   if (step === 2)
@@ -213,7 +213,7 @@ function ProcessMap({ step }: { step: number }) {
             {candidates.map(([x, y]) => (
               <circle key={`${x}-${y}`} className="hv7-cand" cx={x} cy={y} r={3.4} />
             ))}
-            {tag(504, 58, 136, '3 suppliers, sources shown', 'plain')}
+            {tag(507, 146, 136, '3 suppliers, sources shown', 'plain')}
           </>
         }
       />
@@ -225,7 +225,7 @@ function ProcessMap({ step }: { step: number }) {
       flags
       routes={['GZ']}
       labels={{ GZ: {}, BD: {} }}
-      extra={tag(560, 76, 68, '2 meetings', 'gold')}
+      extra={tag(604, 105, 68, '2 meetings', 'gold')}
     />
   );
 }
