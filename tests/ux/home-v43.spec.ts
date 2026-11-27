@@ -765,6 +765,9 @@ test('Review Request opens the preview with the exact request link, Escape retur
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(page.locator('#brief-start')).toBeFocused();
+  // The browser closes the dialog and returns focus at once, but its close event, which lets the page drop the
+  // dialog's contents, arrives as a later task (KI-68). Wait for that settled state, then compare the exact list.
+  await expect(page.locator('main a[href^="/plan"]')).toHaveCount(before.length);
   expect(await plan()).toEqual(before);
   // Help: no job and no pair, the visitor's own words only.
   await page.getByRole('button', { name: 'I Need Help Scoping This' }).click();
