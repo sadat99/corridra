@@ -28,6 +28,7 @@ import {
   deriveCompleteness,
   emptyContentDocument,
   goLiveCheck,
+  goLiveMessage,
   parseContentDocument,
   reasonWithRemovedPolicies,
   routePackWords,
@@ -43,6 +44,7 @@ import { OperationsService, readinessDimensions } from '../../packages/missions/
 import {
   assertPackGoLive,
   commandStepId,
+  judge,
   RoutePackContentService,
 } from '../../packages/missions/src/route-pack-content';
 import {
@@ -367,7 +369,7 @@ describe('Route Pack Standard v1, domain', () => {
     expect(deriveCompleteness(null, null, today).pendingCore).toEqual(coreKeysV1);
   });
 
-  test('the go-live check refuses exactly the three ADR C writes', () => {
+  test('the go-live check refuses one write, a live route losing a Locked Core value, and warns of the two others', () => {
     const full = parseContentDocument(coreDocument());
     const missing = parseContentDocument(coreDocument(['risks.key_risks']));
     const pack = (status: PackStatus, extra: Partial<RouteConfiguration> = {}) => ({
@@ -375,32 +377,103 @@ describe('Route Pack Standard v1, domain', () => {
       configuration: liveConfiguration(extra),
     });
     const draft = { pack: pack('DRAFT'), document: missing };
+    // A move to live with a Core field Pending passes and says which.
     expect(goLiveCheck({ before: draft, after: { ...draft, pack: pack('ACTIVE') } })).toEqual({
-      ok: false,
-      code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE',
-      keys: ['risks.key_risks'],
+      ok: true,
+      warnings: [{ code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: ['risks.key_risks'] }],
+    });
+    expect(
+      goLiveCheck({ before: draft, after: { ...draft, pack: pack('LIMITED', { languages: [] }) } }),
+    ).toEqual({
+      ok: true,
+      warnings: [
+        { code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: ['pack.languages', 'risks.key_risks'] },
+      ],
     });
     expect(goLiveCheck({ before: draft, after: { pack: pack('ACTIVE'), document: full } })).toEqual(
-      { ok: true },
+      { ok: true, warnings: [] },
     );
     expect(goLiveCheck({ before: draft, after: { ...draft, pack: pack('TESTING') } })).toEqual({
       ok: true,
+      warnings: [],
     });
+    // On a live route, content that turns a Core field Pending passes and says which.
     const live = { pack: pack('ACTIVE'), document: full };
-    expect(goLiveCheck({ before: live, after: { ...live, document: missing } })).toMatchObject({
-      ok: false,
-      code: 'ROUTE_PACK_CORE_TURNS_PENDING',
-      keys: ['risks.key_risks'],
+    expect(goLiveCheck({ before: live, after: { ...live, document: missing } })).toEqual({
+      ok: true,
+      warnings: [{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['risks.key_risks'] }],
     });
+    // A pack that empties a Locked Core row of a route that stays live is the one refusal, also from ACTIVE to LIMITED.
     expect(
       goLiveCheck({ before: live, after: { ...live, pack: pack('ACTIVE', { channels: [] }) } }),
-    ).toMatchObject({ ok: false, keys: ['pack.channels'] });
+    ).toEqual({ ok: false, code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED', keys: ['pack.channels'] });
+    expect(
+      goLiveCheck({
+        before: live,
+        after: { document: missing, pack: pack('LIMITED', { languages: [], channels: [] }) },
+      }),
+    ).toEqual({
+      ok: false,
+      code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED',
+      keys: ['pack.languages', 'pack.channels'],
+    });
     expect(
       goLiveCheck({ before: live, after: { ...live, pack: pack('PAUSED', { languages: [] }) } }),
-    ).toEqual({ ok: true });
-    // Already live with a Pending field: a write that turns nothing else Pending passes.
-    const legacy = { pack: pack('ACTIVE'), document: missing };
-    expect(goLiveCheck({ before: legacy, after: legacy })).toEqual({ ok: true });
+    ).toEqual({ ok: true, warnings: [] });
+    // Already live with a Pending field: a write that turns nothing else Pending passes without a warning, and a Locked
+    // Core row that was already empty is not emptied by it.
+    const legacy = { pack: pack('ACTIVE', { languages: [] }), document: missing };
+    expect(goLiveCheck({ before: legacy, after: legacy })).toEqual({ ok: true, warnings: [] });
+    expect(
+      goLiveMessage({ code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: ['risks.key_risks'] }),
+    ).toBe('These Core fields are still Pending: Main risks for customers.');
+    expect(
+      goLiveMessage({ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] }),
+    ).toBe('These Core fields are now Pending on a live route: What this route is for.');
+    expect(
+      goLiveMessage({
+        ok: false,
+        code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED',
+        keys: ['pack.languages', 'pack.channels'],
+      }),
+    ).toBe(
+      'The route is live, so these fields cannot be emptied: Working languages, Message channels.',
+    );
+  });
+
+  test('every judged pack is checked: the first refusal wins, warnings merge with each key once per code', () => {
+    const full = parseContentDocument(coreDocument());
+    const missing = parseContentDocument(coreDocument(['risks.key_risks']));
+    const missingTwo = parseContentDocument(coreDocument(['risks.key_risks', 'payments.norms']));
+    const pack = (status: PackStatus, extra: Partial<RouteConfiguration> = {}) => ({
+      status,
+      configuration: liveConfiguration(extra),
+    });
+    // Two live packs that both see the same field turn Pending give one warning naming it once.
+    expect(judge([pack('ACTIVE'), pack('LIMITED')], full, { document: missing })).toEqual({
+      ok: true,
+      warnings: [{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['risks.key_risks'] }],
+    });
+    // A live latest pack and a DRAFT in force: each code once, its keys merged without repeats.
+    expect(
+      judge([pack('ACTIVE'), pack('DRAFT')], missing, {
+        pack: pack('ACTIVE'),
+        document: missingTwo,
+      }),
+    ).toEqual({
+      ok: true,
+      warnings: [
+        { code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['payments.norms'] },
+        { code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: ['payments.norms', 'risks.key_risks'] },
+      ],
+    });
+    expect(
+      judge([pack('DRAFT'), pack('LIMITED')], full, {
+        pack: pack('ACTIVE', { timeZones: [] }),
+        document: full,
+      }),
+    ).toEqual({ ok: false, code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED', keys: ['pack.timeZones'] });
+    expect(judge([null], null, { document: missing })).toEqual({ ok: true, warnings: [] });
   });
 
   test('carry-over keeps every key the form does not set, and drops sourcing only when asked', () => {
@@ -683,16 +756,18 @@ describe('route pack content on the database', () => {
     const routeId = await newRoute();
     await appendPack(routeId, 1, 'DRAFT', { ...draftConfiguration(), localities: ['dhaka'] });
     expect(await goLiveUnderHeldLock(routeId)).toBe('returned');
-    // DRAFT to ACTIVE with every Core field Pending is not held back before the install.
-    await appendPack(routeId, 2, 'ACTIVE', draftConfiguration());
+    // DRAFT to ACTIVE with every Core field Pending is not held back before the install, and answers as on main.
+    const raw = await appendPack(routeId, 2, 'ACTIVE', draftConfiguration());
+    expect(Object.keys(raw)).toEqual(['id', 'version']);
     // The form writes through appendPack with exactly the configuration it always wrote, dropping unset keys as before.
-    await createRoutePack(deps(), owner(), {
+    const legacyForm = await createRoutePack(deps(), owner(), {
       ...formInput(routeId, 3, 'ACTIVE'),
       languages: undefined,
       timeZones: undefined,
       missionTypes: ['sourcing'],
       currencies: ['EUR'],
     });
+    expect(Object.keys(legacyForm)).toEqual(['id', 'version']);
     const stored = await latestPack(routeId);
     expect(stored.status).toBe('ACTIVE');
     expect(stored.text).toBe(
@@ -754,18 +829,22 @@ describe('route pack content on the database', () => {
     const routeId = await newRoute();
     await appendPack(routeId, 1, 'DRAFT', draftConfiguration());
     expect(await goLiveUnderHeldLock(routeId)).toBe('returned');
-    await appendPack(routeId, 2, 'LIMITED', draftConfiguration());
-    await createRoutePack(deps(), owner(), {
+    expect(Object.keys(await appendPack(routeId, 2, 'LIMITED', draftConfiguration()))).toEqual([
+      'id',
+      'version',
+    ]);
+    const legacyForm = await createRoutePack(deps(), owner(), {
       ...formInput(routeId, 3, 'ACTIVE'),
       languages: undefined,
       timeZones: undefined,
       currencies: ['EUR'],
     });
+    expect(Object.keys(legacyForm)).toEqual(['id', 'version']);
     expect((await latestPack(routeId)).text).toBe(
       (await f.owner.query('SELECT $1::jsonb::text t', [expectedLegacyForm(['EUR'])])).rows[0].t,
     );
     const decide = await proposeAndDecide(routeId, 'ACTIVE', draftConfiguration());
-    await decide();
+    expect(Object.keys(await decide())).toEqual(['id', 'action']);
     expect((await latestPack(routeId)).version).toBe(4);
     await expect(content.overview(owner())).rejects.toMatchObject({ status: 404 });
     // Switched on, the same check now waits for the corridor lock.
@@ -940,7 +1019,7 @@ describe('route pack content on the database', () => {
     expect(view.routes.find((r) => r.routeId === first)?.readiness).toBeNull();
   });
 
-  test('DRAFT to ACTIVE with a Core field Pending is refused on all four pack paths and passes once it is Filled or Not applicable', async () => {
+  test('DRAFT to ACTIVE with a Core field Pending goes live with a warning on all four pack paths, and none once it is Filled or Not applicable', async () => {
     formSwitch(true);
     const routes = [await newRoute(), await newRoute(), await newRoute(), await newRoute()];
     for (const routeId of routes) {
@@ -948,22 +1027,32 @@ describe('route pack content on the database', () => {
       await saveContent(routeId, coreDocument(['payments.norms']));
     }
     const [raw, form, publish, statusChange] = routes as [string, string, string, string];
-    const refused = { status: 409, code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE' };
-    await expect(appendPack(raw, 2, 'ACTIVE', liveConfiguration())).rejects.toMatchObject(refused);
-    await expect(appendPack(raw, 2, 'ACTIVE', liveConfiguration())).rejects.toThrow(
-      'The route cannot go live while these Core fields are Pending: Usual payment terms.',
-    );
-    await expect(
-      createRoutePack(deps(), owner(), formInput(form, 2, 'ACTIVE', { commandId: randomUUID() })),
-    ).rejects.toMatchObject(refused);
+    const pending = [{ code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: ['payments.norms'] }];
+    const rawPack = await appendPack(raw, 2, 'ACTIVE', liveConfiguration());
+    expect(rawPack).toEqual({ id: rawPack.id, version: 2, warnings: pending });
+    expect(rawPack.warnings?.map(goLiveMessage)).toEqual([
+      'These Core fields are still Pending: Usual payment terms.',
+    ]);
+    const formPublish = formInput(form, 2, 'ACTIVE');
+    const published = await createRoutePack(deps(), owner(), formPublish);
+    expect(published).toMatchObject({ version: 2, duplicate: false, warnings: pending });
+    // A double click replays the decision, and with it the same warnings.
+    expect(await createRoutePack(deps(), owner(), formPublish)).toEqual({
+      ...published,
+      duplicate: true,
+    });
     const decidePublish = await proposeAndDecide(
       publish,
       'ACTIVE',
       liveConfiguration({ localities: ['dhaka'] }),
     );
-    await expect(decidePublish()).rejects.toMatchObject(refused);
+    expect(await decidePublish()).toMatchObject({ action: 'decide', warnings: pending });
     const change = { commandId: randomUUID(), routeId: statusChange, status: 'ACTIVE', reason };
-    await expect(changeRouteStatus(deps(), owner(), change)).rejects.toMatchObject(refused);
+    expect(await changeRouteStatus(deps(), owner(), change)).toMatchObject({
+      version: 2,
+      duplicate: false,
+      warnings: pending,
+    });
     // The status change takes no configuration, so nothing edited can ride along.
     await expect(
       changeRouteStatus(deps(), owner(), {
@@ -972,28 +1061,6 @@ describe('route pack content on the database', () => {
         configuration: liveConfiguration({ localities: ['dhaka'] }),
       }),
     ).rejects.toBeInstanceOf(ZodError);
-    for (const routeId of routes) expect((await latestPack(routeId)).status).toBe('DRAFT');
-    // Filled on two routes, Not applicable on the other two: every path now passes.
-    for (const [i, routeId] of routes.entries())
-      await saveContent(
-        routeId,
-        coreDocument(
-          ['payments.norms'],
-          [
-            i % 2
-              ? notApplicable('payments.norms')
-              : filled('payments.norms', 'Deposit then balance'),
-          ],
-        ),
-      );
-    await appendPack(raw, 2, 'ACTIVE', liveConfiguration());
-    const published = await createRoutePack(deps(), owner(), formInput(form, 2, 'ACTIVE'));
-    expect(published).toMatchObject({ version: 2, duplicate: false });
-    await decidePublish();
-    expect(await changeRouteStatus(deps(), owner(), change)).toMatchObject({
-      version: 2,
-      duplicate: false,
-    });
     for (const routeId of routes) expect((await latestPack(routeId)).status).toBe('ACTIVE');
     // The status change published the configuration unchanged, as a reviewed proposal and decision.
     expect((await packVersions(statusChange)).map((p) => p.configuration)).toEqual([
@@ -1008,37 +1075,133 @@ describe('route pack content on the database', () => {
       proposedAndPublishedByYou: true,
     });
     expect(history[1]).toMatchObject({ version: 1, reviewed: false, proposedBy: null });
+    // Filled on two routes, Not applicable on the other two, then paused: going live again warns of nothing on every path.
+    for (const [i, routeId] of routes.entries()) {
+      const saved = await saveContent(
+        routeId,
+        coreDocument(
+          ['payments.norms'],
+          [
+            i % 2
+              ? notApplicable('payments.norms')
+              : filled('payments.norms', 'Deposit then balance'),
+          ],
+        ),
+      );
+      expect(saved.warnings).toEqual([]);
+      await appendPack(routeId, 3, 'PAUSED', liveConfiguration());
+    }
+    expect((await appendPack(raw, 4, 'ACTIVE', liveConfiguration())).warnings).toEqual([]);
+    expect((await createRoutePack(deps(), owner(), formInput(form, 4, 'ACTIVE'))).warnings).toEqual(
+      [],
+    );
+    const decideAgain = await proposeAndDecide(publish, 'ACTIVE', liveConfiguration());
+    expect(await decideAgain()).toMatchObject({ action: 'decide', warnings: [] });
+    expect(
+      (await changeRouteStatus(deps(), owner(), { ...change, commandId: randomUUID() })).warnings,
+    ).toEqual([]);
+    for (const routeId of routes) expect((await latestPack(routeId)).version).toBe(4);
   });
 
-  test('on a live route, content or a pack that turns a Core field Pending is refused; PAUSED is always allowed', async () => {
+  test('on a live route, content that turns a Core field Pending is saved with a warning; a pack emptying a Locked Core row is refused on every pack path and writes nothing; PAUSED is always allowed', async () => {
     formSwitch(true);
     const routeId = await newRoute();
     await appendPack(routeId, 1, 'DRAFT', liveConfiguration());
     await saveContent(routeId, coreDocument());
     await appendPack(routeId, 2, 'ACTIVE', liveConfiguration());
-    const turns = { status: 409, code: 'ROUTE_PACK_CORE_TURNS_PENDING' };
-    await expect(saveContent(routeId, coreDocument(['identity.summary']))).rejects.toMatchObject(
-      turns,
-    );
-    // Filled to Not applicable is not Pending.
-    await saveContent(
+    const turned = [{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] }];
+    const saved = await saveContent(routeId, coreDocument(['identity.summary']));
+    expect(saved).toMatchObject({ version: 2, duplicate: false, warnings: turned });
+    expect(saved.warnings.map(goLiveMessage)).toEqual([
+      'These Core fields are now Pending on a live route: What this route is for.',
+    ]);
+    // The batch save carries the warnings per item; Filled to Not applicable is not Pending, so it warns of nothing.
+    const batch = await content.appendBatch(owner(), {
+      items: [
+        {
+          id: randomUUID(),
+          routeId,
+          version: 3,
+          document: coreDocument(
+            ['identity.summary', 'payments.norms'],
+            [notApplicable('identity.summary')],
+          ),
+          reason,
+        },
+      ],
+    });
+    expect(batch.items).toEqual([
+      expect.objectContaining({
+        version: 3,
+        warnings: [{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['payments.norms'] }],
+      }),
+    ]);
+    const done = await saveContent(
       routeId,
       coreDocument(['identity.summary'], [notApplicable('identity.summary')]),
     );
+    expect(done.warnings).toEqual([]);
+    // A retried save wrote nothing now, so it warns of nothing.
+    const retry = { id: randomUUID(), routeId, version: 5, document: coreDocument(), reason };
+    expect((await content.append(owner(), retry)).warnings).toEqual([]);
+    expect(await content.append(owner(), retry)).toMatchObject({ duplicate: true, warnings: [] });
+    // A Locked Core row still cannot be marked Not applicable.
+    await expect(
+      saveContent(routeId, coreDocument([], [notApplicable('pack.languages')])),
+    ).rejects.toMatchObject({ status: 400, code: 'ROUTE_PACK_INVALID' });
+    const emptied = { status: 409, code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED' };
     await expect(
       appendPack(routeId, 3, 'ACTIVE', liveConfiguration({ languages: [] })),
-    ).rejects.toMatchObject(turns);
+    ).rejects.toMatchObject(emptied);
     await expect(
       appendPack(routeId, 3, 'ACTIVE', liveConfiguration({ channels: [] })),
-    ).rejects.toThrow(
-      'The route is live, so these Core fields cannot become Pending: Message channels.',
-    );
+    ).rejects.toThrow('The route is live, so these fields cannot be emptied: Message channels.');
     await expect(
       createRoutePack(deps(), owner(), formInput(routeId, 3, 'ACTIVE', { languages: [] })),
-    ).rejects.toMatchObject(turns);
+    ).rejects.toMatchObject(emptied);
+    await expect(
+      publishReviewed(deps(), owner(), {
+        commandId: randomUUID(),
+        routeId,
+        status: 'LIMITED',
+        configuration: liveConfiguration({ channels: [] }),
+        reason,
+      }),
+    ).rejects.toMatchObject(emptied);
+    const proposals = async () =>
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM app.configuration_proposal WHERE route_id=$1',
+          [routeId],
+        )
+      ).rows[0].n as number;
+    // The form and the reviewed publish are refused before any proposal; a proposal made by hand is refused at the decision.
+    expect(await proposals()).toBe(0);
+    const decide = await proposeAndDecide(routeId, 'ACTIVE', liveConfiguration({ languages: [] }));
+    await expect(decide()).rejects.toMatchObject(emptied);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM app.configuration_decision d JOIN app.configuration_proposal p ON p.id=d.proposal_id WHERE p.route_id=$1',
+          [routeId],
+        )
+      ).rows[0].n,
+    ).toBe(0);
     expect((await latestPack(routeId)).version).toBe(2);
-    await appendPack(routeId, 3, 'PAUSED', liveConfiguration({ languages: [], channels: [] }));
+    expect(
+      (await appendPack(routeId, 3, 'PAUSED', liveConfiguration({ languages: [], channels: [] })))
+        .warnings,
+    ).toEqual([]);
     expect((await latestPack(routeId)).status).toBe('PAUSED');
+    // From PAUSED the route is not live, so going live with them still empty is a warning, not a refusal.
+    expect(
+      await appendPack(routeId, 4, 'ACTIVE', liveConfiguration({ languages: [], channels: [] })),
+    ).toMatchObject({
+      version: 4,
+      warnings: [
+        { code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: ['pack.languages', 'pack.channels'] },
+      ],
+    });
   });
 
   test('a route already ACTIVE with Pending Core fields before the install keeps working and is listed', async () => {
@@ -1158,7 +1321,7 @@ describe('route pack content on the database', () => {
     expect(after.localities).toEqual(['dhaka']);
   });
 
-  test('a route whose latest pack is live but scheduled counts as live; content still names the pack in force', async () => {
+  test('a route whose latest pack is live but scheduled counts as live: content warns, emptying a Locked Core row is refused; content still names the pack in force', async () => {
     formSwitch(true);
     const routeId = await newRoute();
     const inForce = await appendPack(routeId, 1, 'DRAFT', liveConfiguration());
@@ -1175,13 +1338,14 @@ describe('route pack content on the database', () => {
         configuration,
       });
     await scheduled(2, 1, liveConfiguration());
-    const turns = { status: 409, code: 'ROUTE_PACK_CORE_TURNS_PENDING' };
-    await expect(saveContent(routeId, coreDocument(['identity.summary']))).rejects.toMatchObject(
-      turns,
-    );
-    await expect(scheduled(3, 2, liveConfiguration({ languages: [] }))).rejects.toMatchObject(
-      turns,
-    );
+    expect((await saveContent(routeId, coreDocument(['identity.summary']))).warnings).toEqual([
+      { code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] },
+    ]);
+    await expect(scheduled(3, 2, liveConfiguration({ languages: [] }))).rejects.toMatchObject({
+      status: 409,
+      code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED',
+    });
+    expect((await latestPack(routeId)).version).toBe(2);
     const saved = await saveContent(
       routeId,
       coreDocument(['identity.summary'], [notApplicable('identity.summary')]),
@@ -1189,7 +1353,7 @@ describe('route pack content on the database', () => {
     expect(saved.packId).toBe(inForce.id);
   });
 
-  test('a scheduled DRAFT alone never holds back a write; a route not live with a Core field Pending still cannot go live', async () => {
+  test('a scheduled DRAFT alone never holds back a write; a route not live with a Core field Pending goes live with a warning', async () => {
     formSwitch(false);
     const legacy = await newRoute();
     await appendPack(legacy, 1, 'LIMITED', liveConfiguration());
@@ -1206,21 +1370,21 @@ describe('route pack content on the database', () => {
       });
     // Live in force with Core fields Pending from before the install, and a DRAFT scheduled after it.
     await later(legacy, 2, 'DRAFT', 30);
-    expect((await later(legacy, 3, 'LIMITED', 31)).version).toBe(3);
+    expect(await later(legacy, 3, 'LIMITED', 31)).toMatchObject({ version: 3, warnings: [] });
     // Core filled: a LIMITED version over a scheduled DRAFT passes.
     const filledRoute = await newRoute();
     await saveContent(filledRoute, coreDocument());
     await appendPack(filledRoute, 1, 'DRAFT', liveConfiguration());
     await later(filledRoute, 2, 'DRAFT', 30);
-    expect((await later(filledRoute, 3, 'LIMITED', 31)).version).toBe(3);
-    // Not live and a Core field Pending: still refused.
+    expect(await later(filledRoute, 3, 'LIMITED', 31)).toMatchObject({ version: 3, warnings: [] });
+    // Not live and a Core field Pending: it goes live and says which field is Pending.
     const pending = await newRoute();
     await saveContent(pending, coreDocument(['risks.key_risks']));
     await appendPack(pending, 1, 'DRAFT', liveConfiguration());
     await later(pending, 2, 'DRAFT', 30);
-    await expect(later(pending, 3, 'LIMITED', 31)).rejects.toMatchObject({
-      status: 409,
-      code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE',
+    expect(await later(pending, 3, 'LIMITED', 31)).toMatchObject({
+      version: 3,
+      warnings: [{ code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys: ['risks.key_risks'] }],
     });
   });
 
@@ -1393,16 +1557,21 @@ describe('route pack content on the database', () => {
       configuration: liveConfiguration(),
     });
     const missing = coreDocument(['identity.summary']);
-    await expect(saveContent(routeId, missing)).rejects.toMatchObject({
-      status: 409,
-      code: 'ROUTE_PACK_CORE_TURNS_PENDING',
-    });
-    expect(await content.goLive(owner(), { routeId, document: missing })).toMatchObject({
-      ok: false,
-      code: 'ROUTE_PACK_CORE_TURNS_PENDING',
-      keys: ['identity.summary'],
+    const turned = [{ code: 'ROUTE_PACK_CORE_TURNS_PENDING', keys: ['identity.summary'] }];
+    // The what-if answers the same as the save, and writes nothing.
+    expect(await content.goLive(owner(), { routeId, document: missing })).toEqual({
+      ok: true,
+      warnings: turned,
     });
     expect(await contentRows(routeId)).toBe(1);
+    expect((await saveContent(routeId, missing)).warnings).toEqual(turned);
+    expect(await contentRows(routeId)).toBe(2);
+    expect(
+      await content.goLive(owner(), {
+        routeId,
+        pack: { status: 'ACTIVE', configuration: liveConfiguration({ currencies: [] }) },
+      }),
+    ).toEqual({ ok: false, code: 'ROUTE_PACK_LOCKED_CORE_EMPTIED', keys: ['pack.currencies'] });
   });
 
   test('an expired policy reference refuses a live publish in plain words and writes nothing', async () => {

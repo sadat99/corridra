@@ -19,6 +19,7 @@ import {
   type Completeness,
   type ContentDocument,
   type GoLiveResult,
+  type GoLiveWarning,
   type PackView,
   type PackStatus,
 } from '@corridra/domain/route-pack-standard';
@@ -82,20 +83,27 @@ export function judgedPacks(
     .filter((pack, index) => packs.findIndex((other) => other.id === pack.id) === index)
     .map((pack) => ({ status: pack.status, configuration: pack.configuration }));
 }
-// The go-live check against every judged pack; the first refusal wins. With no new pack, each judged pack stays as it is.
+// The go-live check against every judged pack; the first refusal wins, else the warnings of every judged pack, each key once
+// per code. With no new pack, each judged pack stays as it is.
 export function judge(
   packs: PackView[],
   before: ContentDocument | null,
   after: { pack?: PackView; document: ContentDocument | null },
 ): GoLiveResult {
+  const warned = new Map<GoLiveWarning['code'], Set<string>>();
   for (const pack of packs) {
     const result = goLiveCheck({
       before: { pack, document: before },
       after: { pack: after.pack === undefined ? pack : after.pack, document: after.document },
     });
     if (!result.ok) return result;
+    for (const warning of result.warnings)
+      warned.set(warning.code, new Set([...(warned.get(warning.code) ?? []), ...warning.keys]));
   }
-  return { ok: true };
+  return {
+    ok: true,
+    warnings: [...warned].map(([code, keys]) => ({ code, keys: [...keys] })),
+  };
 }
 async function latestDocument(db: DatabaseClient, tenantId: string, routeId: string) {
   const row = (
@@ -106,21 +114,24 @@ async function latestDocument(db: DatabaseClient, tenantId: string, routeId: str
   ).rows[0];
   return row ? parseContentDocument(row.document) : null;
 }
-function refuse(result: GoLiveResult) {
+// Throws the one refusal; otherwise the warnings, which never hold a write back.
+export function warningsOrRefuse(result: GoLiveResult): GoLiveWarning[] {
   if (!result.ok) throw new DomainError(goLiveMessage(result), 409, result.code);
+  return result.warnings;
 }
 // Called by every path that writes a pack version, inside its transaction and before the insert: appendPack (so the raw
-// corridor-pack command too), the reviewed publish and so the guided form and the status change.
+// corridor-pack command too), the reviewed publish and so the guided form and the status change. Returns the warnings, or
+// undefined while the module is inactive, so a caller then answers exactly as before.
 export async function assertPackGoLive(
   db: DatabaseClient,
   tenantId: string,
   pack: { routeId: string; status: PackStatus; configuration: RouteConfiguration },
-): Promise<void> {
-  if (!(await routePackContentActive(db))) return;
+): Promise<GoLiveWarning[] | undefined> {
+  if (!(await routePackContentActive(db))) return undefined;
   await lockCorridor(db, tenantId);
   const packs = await packsOf(db, tenantId, pack.routeId);
   const document = await latestDocument(db, tenantId, pack.routeId);
-  refuse(
+  return warningsOrRefuse(
     judge(packs, document, {
       pack: { status: pack.status, configuration: pack.configuration },
       document,
@@ -192,6 +203,8 @@ export type ContentAppendResult = {
   version: number;
   packId: string | null;
   duplicate: boolean;
+  // The go-live warnings of this save; a retried save wrote nothing now, so it carries none.
+  warnings: GoLiveWarning[];
 };
 export type Capabilities = {
   routePackForm: boolean;
@@ -524,6 +537,7 @@ export class RoutePackContentService {
                     version: row.version,
                     packId: row.pack_id,
                     duplicate: true,
+                    warnings: [],
                   },
                 ]
               : [],
@@ -555,7 +569,7 @@ export class RoutePackContentService {
       for (const item of items) {
         // Content names the pack in force (the database checks the same); the go-live check judges it and the latest pack.
         const pack = state.packs.get(item.routeId);
-        refuse(
+        const warnings = warningsOrRefuse(
           judge(
             judgedPacks(pack, state.latestPacks.get(item.routeId)),
             state.contents.get(item.routeId)?.document ?? null,
@@ -581,6 +595,7 @@ export class RoutePackContentService {
           version: item.version,
           packId: pack?.id ?? null,
           duplicate: false,
+          warnings,
         });
       }
       return { items: results };

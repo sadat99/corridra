@@ -15,16 +15,21 @@ import {
 } from '@corridra/domain/corridors';
 import {
   carriedConfiguration,
-  goLiveMessage,
+  goLiveWarningCodes,
   reasonWithRemovedPolicies,
   recordsRemovedPolicies,
   routePackWords,
+  type GoLiveWarning,
   type PackStatus,
   type SheetLockedKey,
 } from '@corridra/domain/route-pack-standard';
 import type { CorridorService } from './corridors';
 import type { OperationsService } from './operations';
-import { commandStepId, type RoutePackContentService } from './route-pack-content';
+import {
+  commandStepId,
+  warningsOrRefuse,
+  type RoutePackContentService,
+} from './route-pack-content';
 
 // createRoutePack (commercial readiness program, 5.2, CQ-66). Takes guided form input and builds the
 // existing reviewed route pack command on the server. The person never types JSON. Review stays
@@ -125,6 +130,17 @@ const packChanged = () =>
 // A plain copy for comparing with a stored proposal: no undefined keys, and the same canonical values the proposal stores.
 const comparable = (configuration: RouteConfiguration) =>
   JSON.parse(JSON.stringify(routeConfiguration.parse(configuration))) as unknown;
+// The go-live warnings a PUBLISH decision keeps with its command result; a decision recorded before them carries none.
+const decisionResult = z.object({
+  warnings: z
+    .array(
+      z.object({
+        code: z.enum(goLiveWarningCodes),
+        keys: z.array(z.string()),
+      }),
+    )
+    .default([]),
+});
 // The one reviewed publish the form, the sheet and the editor share: propose, then decide PUBLISH, by the same person
 // (ADR-093 I). Every step id comes from the command id. A retry with the same command id and the same values reuses the
 // proposal and the decision replays, so nothing is created twice; the same command id with other values is refused.
@@ -141,7 +157,13 @@ export async function publishReviewed(
     effectiveFrom?: string;
     expectedBasePackId?: string | null;
   },
-): Promise<{ proposalId: string; packId: string; version: number; duplicate: boolean }> {
+): Promise<{
+  proposalId: string;
+  packId: string;
+  version: number;
+  duplicate: boolean;
+  warnings: GoLiveWarning[];
+}> {
   const proposalId = commandStepId(input.commandId, 'propose');
   const decisionId = commandStepId(input.commandId, 'decide');
   const reason = input.reason.trim();
@@ -157,11 +179,13 @@ export async function publishReviewed(
       throw new DomainError(routePackWords.commandReused, 409, 'ROUTE_PACK_COMMAND_REUSED');
     pack = existing.pack;
   } else {
-    const check = await deps.content.goLive(ctx, {
-      routeId: input.routeId,
-      pack: { status: input.status, configuration: input.configuration },
-    });
-    if (!check.ok) throw new DomainError(goLiveMessage(check), 409, check.code);
+    // Refused here, before the proposal, so a refused publish writes nothing; the decision judges again under the lock.
+    warningsOrRefuse(
+      await deps.content.goLive(ctx, {
+        routeId: input.routeId,
+        pack: { status: input.status, configuration: input.configuration },
+      }),
+    );
     const [route] = (await deps.content.overview(ctx, { routeIds: [input.routeId] })).routes;
     if (!route) throw new DomainError('Route unavailable', 404);
     const basePackId = route.pack?.id ?? null;
@@ -195,8 +219,9 @@ export async function publishReviewed(
     (await deps.content.packHistory(ctx, { routeId: input.routeId })).some(
       (published) => published.packId === pack.id,
     );
+  let decided: unknown;
   try {
-    await deps.operations.command(ctx, {
+    decided = await deps.operations.command(ctx, {
       id: decisionId,
       action: 'decide',
       proposalId,
@@ -214,7 +239,13 @@ export async function publishReviewed(
       );
     throw error;
   }
-  return { proposalId, packId: pack.id, version: pack.version, duplicate: publishedBefore };
+  return {
+    proposalId,
+    packId: pack.id,
+    version: pack.version,
+    duplicate: publishedBefore,
+    warnings: decisionResult.parse(decided).warnings,
+  };
 }
 
 // The reason a publish records: a PAUSED publish that dropped expired policies says so, the same for the proposal, the
@@ -324,5 +355,6 @@ export async function createRoutePack(
     duplicate: published.duplicate,
     removedRefs,
     removedPolicies: removedNames,
+    warnings: published.warnings,
   };
 }
