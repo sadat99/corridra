@@ -73,9 +73,11 @@ export function stageMark(
 ): Stage {
   const name = String(section);
   const base = stage.marks[name] ? stage.marks[name].base : markOf(document, section);
+  // The schema trims a note when it is saved, so the note is trimmed before it is compared and kept.
+  const mine = note === null ? null : note.trim();
   const marks = { ...stage.marks };
-  if (base === note) delete marks[name];
-  else marks[name] = { base, mine: note };
+  if (base === mine) delete marks[name];
+  else marks[name] = { base, mine };
   return { ...stage, marks };
 }
 /** Drops one staged fact edit, as Discard on a row would. */
@@ -173,55 +175,106 @@ export type Conflict =
     }
   | { kind: 'mark'; key: string; base: string | null; mine: string | null; theirs: string | null };
 export type Choice = 'mine' | 'theirs';
-export const conflictId = (conflict: Conflict) => `${conflict.kind}:${conflict.key}`;
+export const conflictId = (conflict: { kind: 'fact' | 'mark'; key: string }) =>
+  `${conflict.kind}:${conflict.key}`;
+/** One edit named by its kind and key (a fact key, or a section number for a mark). */
+export type MergeNote = { kind: 'fact' | 'mark'; key: string };
 
 /**
  * Three-way merge of a stage onto the document that is saved now (`theirs`, at `theirsVersion`). For each edit: theirs equal
- * to base means mine applies; mine equal to theirs means the edit is already saved and is dropped; anything else is a conflict
- * (this includes one side removing what the other changed, and both sides adding the same custom key differently). The
- * returned stage is made on `theirsVersion` and keeps mine for every conflict until `resolve` is given a choice.
+ * to base means mine applies (`merged`); mine equal to theirs means the edit is already saved and is dropped (`dropped`);
+ * anything else is a conflict (this includes one side removing what the other changed, and both sides adding the same custom
+ * key differently).
+ *
+ * Every edit keeps the base it was first staged with, so a conflict stays a conflict however often the stage is merged again
+ * or restored from its mirror: it ends only when `resolve` is given a choice for its key. While any conflict is open the stage
+ * also keeps its old version, so a restored stage is still seen to be behind and asks again. With none open, the stage is made
+ * on `theirsVersion`. `merged` and `dropped` let the page list what went through without asking (spec 9.2).
  */
 export function mergeStage(
   stage: Stage,
   theirs: ContentDocument | null,
   theirsVersion: number,
-): { stage: Stage; conflicts: Conflict[] } {
+): { stage: Stage; conflicts: Conflict[]; merged: MergeNote[]; dropped: MergeNote[] } {
   const conflicts: Conflict[] = [];
+  const merged: MergeNote[] = [];
+  const dropped: MergeNote[] = [];
   const facts: Stage['facts'] = {};
   for (const key of Object.keys(stage.facts)) {
-    const { base, mine } = stage.facts[key]!;
+    const edit = stage.facts[key]!;
     const now = factOf(theirs, key);
-    if (sameValue(mine, now)) continue;
-    facts[key] = { base: now, mine };
-    if (!sameValue(base, now)) conflicts.push({ kind: 'fact', key, base, mine, theirs: now });
+    if (sameValue(edit.mine, now)) {
+      dropped.push({ kind: 'fact', key });
+      continue;
+    }
+    facts[key] = edit;
+    if (sameValue(edit.base, now)) merged.push({ kind: 'fact', key });
+    else conflicts.push({ kind: 'fact', key, base: edit.base, mine: edit.mine, theirs: now });
   }
   const marks: Stage['marks'] = {};
   for (const name of Object.keys(stage.marks)) {
-    const { base, mine } = stage.marks[name]!;
+    const edit = stage.marks[name]!;
     const now = markOf(theirs, Number(name));
-    if (mine === now) continue;
-    marks[name] = { base: now, mine };
-    if (base !== now) conflicts.push({ kind: 'mark', key: name, base, mine, theirs: now });
+    if (edit.mine === now) {
+      dropped.push({ kind: 'mark', key: name });
+      continue;
+    }
+    marks[name] = edit;
+    if (edit.base === now) merged.push({ kind: 'mark', key: name });
+    else conflicts.push({ kind: 'mark', key: name, base: edit.base, mine: edit.mine, theirs: now });
   }
-  return { stage: { v: 1, baseVersion: theirsVersion, facts, marks }, conflicts };
+  return {
+    stage: {
+      v: 1,
+      baseVersion: conflicts.length ? stage.baseVersion : theirsVersion,
+      facts,
+      marks,
+    },
+    conflicts,
+    merged,
+    dropped,
+  };
 }
 /**
- * Applies the person's choices to a merged stage. "Use theirs" drops the edit (the stage is made on theirs, so the saved value
- * stays); "Keep mine" and a conflict with no choice yet keep the edit.
+ * Applies the person's choices to a merged stage. "Use theirs" drops the edit (the saved value stays). "Keep mine" keeps it and
+ * moves its base to what is saved now, so the conflict is over. A conflict with no choice is left exactly as it is and its id
+ * is listed in `missing`: the page must not offer "Save With These Choices" while `missing` is not empty. Once nothing is
+ * missing, the stage is made on `theirsVersion`.
  */
 export function resolve(
   stage: Stage,
   conflicts: Conflict[],
   choices: Record<string, Choice | undefined>,
-): Stage {
+  theirsVersion: number,
+): { stage: Stage; missing: string[] } {
   const facts = { ...stage.facts };
   const marks = { ...stage.marks };
+  const missing: string[] = [];
   for (const conflict of conflicts) {
-    if (choices[conflictId(conflict)] !== 'theirs') continue;
-    if (conflict.kind === 'fact') delete facts[conflict.key];
-    else delete marks[conflict.key];
+    const choice = choices[conflictId(conflict)];
+    if (choice !== 'mine' && choice !== 'theirs') {
+      missing.push(conflictId(conflict));
+      continue;
+    }
+    if (conflict.kind === 'fact') {
+      const edit = facts[conflict.key];
+      if (choice === 'theirs' || !edit) delete facts[conflict.key];
+      else facts[conflict.key] = { base: conflict.theirs, mine: edit.mine };
+    } else {
+      const edit = marks[conflict.key];
+      if (choice === 'theirs' || !edit) delete marks[conflict.key];
+      else marks[conflict.key] = { base: conflict.theirs, mine: edit.mine };
+    }
   }
-  return { ...stage, facts, marks };
+  return {
+    stage: {
+      ...stage,
+      baseVersion: missing.length ? stage.baseVersion : theirsVersion,
+      facts,
+      marks,
+    },
+    missing,
+  };
 }
 
 // ---- The copy kept in sessionStorage (a convenience only) --------------------------------------------------------------
@@ -270,8 +323,10 @@ export function parseStage(text: unknown): Stage | null {
     if (!isRecord(edit) || !/^([1-9]|1[0-7])$/.test(name)) return null;
     const { base, mine } = edit;
     const text = (value: unknown) => value === null || typeof value === 'string';
-    if (!text(base) || !text(mine) || base === mine) return null;
-    marks[name] = { base: base as string | null, mine: mine as string | null };
+    if (!text(base) || !text(mine)) return null;
+    const trimmed = (value: unknown) => (typeof value === 'string' ? value.trim() : null);
+    if (trimmed(base) === trimmed(mine)) return null;
+    marks[name] = { base: trimmed(base), mine: trimmed(mine) };
   }
   return { v: 1, baseVersion, facts, marks };
 }

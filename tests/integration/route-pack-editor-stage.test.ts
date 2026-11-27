@@ -115,6 +115,36 @@ describe('staging', () => {
     expect(stageCount(stage)).toBe(0);
   });
 
+  test('a mark note is trimmed before it is compared and kept, as the schema trims it when saved', () => {
+    const saved = doc([], [{ section: 5, note: 'Not part of this route' }]);
+    // The same note with spaces round it is no edit.
+    expect(stageCount(stageMark(emptyStage(1), saved, 5, '  Not part of this route \n'))).toBe(0);
+    // A new note is kept trimmed, so applying and comparing agree with what the server stores.
+    const stage = stageMark(emptyStage(1), saved, 7, '  Nothing is bought here  ');
+    expect(stage.marks['7']).toEqual({ base: null, mine: 'Nothing is bought here' });
+    expect(applyStage(saved, stage).sectionMarks).toContainEqual({
+      section: 7,
+      note: 'Nothing is bought here',
+    });
+    // Staged first with spaces, then written without: still one edit that changes nothing more.
+    expect(stageCount(stageMark(stage, saved, 7, 'Nothing is bought here'))).toBe(1);
+    // A mirrored copy with untrimmed notes is read trimmed, and an edit that only differs in spaces is refused as no edit.
+    const text = JSON.stringify({
+      v: 1,
+      baseVersion: 1,
+      facts: {},
+      marks: { '7': { base: null, mine: '  Spaced  ' } },
+    });
+    expect(parseStage(text)!.marks['7']).toEqual({ base: null, mine: 'Spaced' });
+    const same = JSON.stringify({
+      v: 1,
+      baseVersion: 1,
+      facts: {},
+      marks: { '7': { base: 'Note', mine: ' Note ' } },
+    });
+    expect(parseStage(same)).toBeNull();
+  });
+
   test('stageCount counts facts and marks; discard and unstageFact clear them and keep the version', () => {
     const saved = doc([fact(optionalKey)]);
     let stage = stageFact(emptyStage(3), saved, optionalKey, fact(optionalKey, 'New'));
@@ -205,12 +235,15 @@ const stageOf = (
 
 describe('mergeStage', () => {
   const baseDoc = doc([fact(optionalKey, 'Base'), fact('notes.general', 'Base')]);
+  const idOf = (conflict: { kind: 'fact' | 'mark'; key: string }) => conflictId(conflict);
 
-  test('theirs equal to base: mine applies without asking, and the stage moves to the new version', () => {
+  test('theirs equal to base: mine applies without asking, it is listed as merged, and the stage moves to the new version', () => {
     const stage = stageOf(baseDoc, { [optionalKey]: fact(optionalKey, 'Mine') });
     const theirs = doc([fact(optionalKey, 'Base'), fact('notes.general', 'Theirs')]);
-    const { stage: merged, conflicts } = mergeStage(stage, theirs, 3);
+    const { stage: merged, conflicts, merged: went, dropped } = mergeStage(stage, theirs, 3);
     expect(conflicts).toEqual([]);
+    expect(went).toEqual([{ kind: 'fact', key: optionalKey }]);
+    expect(dropped).toEqual([]);
     expect(merged.baseVersion).toBe(3);
     expect(merged.facts[optionalKey]).toEqual({
       base: fact(optionalKey, 'Base'),
@@ -222,14 +255,16 @@ describe('mergeStage', () => {
     expect(result.facts.find((item) => item.key === 'notes.general')!.value).toBe('Theirs');
   });
 
-  test('both changed to the same thing: the edit is already saved and is dropped', () => {
+  test('both changed to the same thing: the edit is already saved, it is dropped and listed as dropped', () => {
     const stage = stageOf(baseDoc, { [optionalKey]: fact(optionalKey, 'Same') });
-    const { stage: merged, conflicts } = mergeStage(stage, doc([fact(optionalKey, 'Same')]), 3);
-    expect(conflicts).toEqual([]);
-    expect(stageCount(merged)).toBe(0);
+    const result = mergeStage(stage, doc([fact(optionalKey, 'Same')]), 3);
+    expect(result.conflicts).toEqual([]);
+    expect(result.merged).toEqual([]);
+    expect(result.dropped).toEqual([{ kind: 'fact', key: optionalKey }]);
+    expect(stageCount(result.stage)).toBe(0);
   });
 
-  test('both changed differently: a conflict with base, mine and theirs; mine is kept until a choice is made', () => {
+  test('both changed differently: a conflict with base, mine and theirs; the edit keeps its own base and mine stays in the document', () => {
     const stage = stageOf(baseDoc, { [optionalKey]: fact(optionalKey, 'Mine') });
     const theirs = doc([fact(optionalKey, 'Theirs')]);
     const { stage: merged, conflicts } = mergeStage(stage, theirs, 3);
@@ -242,50 +277,107 @@ describe('mergeStage', () => {
         theirs: fact(optionalKey, 'Theirs'),
       },
     ]);
+    // The stage is not rebased while the conflict is open: base and version are as they were.
+    expect(merged.facts[optionalKey]!.base).toEqual(fact(optionalKey, 'Base'));
+    expect(merged.baseVersion).toBe(2);
     expect(applyStage(theirs, merged).facts[0]!.value).toBe('Mine');
-    // Keep mine: the edit stays, made on theirs. Use theirs: the edit goes and their value stays.
-    const keep = resolve(merged, conflicts, { [conflictId(conflicts[0]!)]: 'mine' });
-    expect(applyStage(theirs, keep).facts[0]!.value).toBe('Mine');
-    const use = resolve(merged, conflicts, { [conflictId(conflicts[0]!)]: 'theirs' });
-    expect(stageCount(use)).toBe(0);
-    expect(applyStage(theirs, use).facts[0]!.value).toBe('Theirs');
-    // No choice yet keeps mine; nothing is lost.
-    expect(resolve(merged, conflicts, {})).toEqual(merged);
+  });
+
+  test('an open conflict survives merging again and a restore from the mirror: the same conflicts, the old version', () => {
+    const stage = stageOf(baseDoc, { [optionalKey]: fact(optionalKey, 'Mine') });
+    const theirs = doc([fact(optionalKey, 'Theirs')]);
+    const once = mergeStage(stage, theirs, 3);
+    const twice = mergeStage(once.stage, theirs, 3);
+    expect(twice.conflicts).toEqual(once.conflicts);
+    expect(twice.stage).toEqual(once.stage);
+    // The mirror holds the stage as it was after the first merge; restored, it still asks.
+    const restored = parseStage(serialiseStage(once.stage))!;
+    expect(restored.baseVersion).toBeLessThan(3);
+    const again = mergeStage(restored, theirs, 3);
+    expect(again.conflicts).toEqual(once.conflicts);
+    expect(again.stage.facts[optionalKey]!.base).toEqual(fact(optionalKey, 'Base'));
+    // A third save lands: the conflict is judged against the newest document, and is still against the original base.
+    const newest = doc([fact(optionalKey, 'Newest')]);
+    const third = mergeStage(restored, newest, 4);
+    expect(third.conflicts).toHaveLength(1);
+    expect(third.conflicts[0]).toMatchObject({
+      base: fact(optionalKey, 'Base'),
+      theirs: fact(optionalKey, 'Newest'),
+    });
+  });
+
+  test('resolve: Keep mine ends the conflict for good, Use theirs drops the edit, and the version moves on once nothing is open', () => {
+    const stage = stageOf(baseDoc, { [optionalKey]: fact(optionalKey, 'Mine') });
+    const theirs = doc([fact(optionalKey, 'Theirs')]);
+    const { stage: merged, conflicts } = mergeStage(stage, theirs, 3);
+    const id = idOf(conflicts[0]!);
+    const keep = resolve(merged, conflicts, { [id]: 'mine' }, 3);
+    expect(keep.missing).toEqual([]);
+    expect(keep.stage.baseVersion).toBe(3);
+    expect(applyStage(theirs, keep.stage).facts[0]!.value).toBe('Mine');
+    // Merged again onto the same document: mine applies cleanly, the conflict does not come back.
+    const after = mergeStage(keep.stage, theirs, 3);
+    expect(after.conflicts).toEqual([]);
+    expect(after.merged).toEqual([{ kind: 'fact', key: optionalKey }]);
+    const use = resolve(merged, conflicts, { [id]: 'theirs' }, 3);
+    expect(use.missing).toEqual([]);
+    expect(stageCount(use.stage)).toBe(0);
+    expect(applyStage(theirs, use.stage).facts[0]!.value).toBe('Theirs');
+  });
+
+  test('resolve with a choice missing does not keep mine in silence: the key is reported, the conflict stays open and so does the version', () => {
+    const stage = stageOf(baseDoc, {
+      [optionalKey]: fact(optionalKey, 'Mine'),
+      'notes.general': fact('notes.general', 'Mine too'),
+    });
+    const theirs = doc([fact(optionalKey, 'Theirs'), fact('notes.general', 'Theirs too')]);
+    const { stage: merged, conflicts } = mergeStage(stage, theirs, 3);
+    expect(conflicts).toHaveLength(2);
+    const none = resolve(merged, conflicts, {}, 3);
+    expect(none.missing.sort()).toEqual(conflicts.map(idOf).sort());
+    expect(none.stage).toEqual(merged);
+    expect(none.stage.baseVersion).toBe(2);
+    // One answered: the other is still missing, still open, and merging again returns just that one.
+    const half = resolve(merged, conflicts, { [idOf(conflicts[0]!)]: 'mine' }, 3);
+    expect(half.missing).toEqual([idOf(conflicts[1]!)]);
+    expect(half.stage.baseVersion).toBe(2);
+    const reopened = mergeStage(half.stage, theirs, 3);
+    expect(reopened.conflicts.map(idOf)).toEqual([idOf(conflicts[1]!)]);
+    // A value that is not a choice is not a choice.
+    const odd = resolve(merged, conflicts, { [idOf(conflicts[0]!)]: 'both' as 'mine' }, 3);
+    expect(odd.missing).toContain(idOf(conflicts[0]!));
   });
 
   test('theirs changed what I did not touch: nothing to merge, nothing staged', () => {
-    const { stage: merged, conflicts } = mergeStage(
-      emptyStage(2),
-      doc([fact(optionalKey, 'Theirs')]),
-      3,
-    );
-    expect(conflicts).toEqual([]);
-    expect(merged).toEqual({ v: 1, baseVersion: 3, facts: {}, marks: {} });
+    const result = mergeStage(emptyStage(2), doc([fact(optionalKey, 'Theirs')]), 3);
+    expect(result.conflicts).toEqual([]);
+    expect(result.merged).toEqual([]);
+    expect(result.dropped).toEqual([]);
+    expect(result.stage).toEqual({ v: 1, baseVersion: 3, facts: {}, marks: {} });
   });
 
   test('one side removed, the other changed: a conflict either way round', () => {
     // I removed a fact (Pending), they changed it.
     const mineRemoved = stageOf(baseDoc, { [optionalKey]: null });
-    const changed = mergeStage(mineRemoved, doc([fact(optionalKey, 'Theirs')]), 3);
+    const theirsChanged = doc([fact(optionalKey, 'Theirs')]);
+    const changed = mergeStage(mineRemoved, theirsChanged, 3);
     expect(changed.conflicts).toHaveLength(1);
     expect(changed.conflicts[0]).toMatchObject({ mine: null, theirs: fact(optionalKey, 'Theirs') });
-    const useTheirs = resolve(changed.stage, changed.conflicts, {
-      [conflictId(changed.conflicts[0]!)]: 'theirs',
-    });
-    expect(applyStage(doc([fact(optionalKey, 'Theirs')]), useTheirs).facts).toHaveLength(1);
-    const keepMine = resolve(changed.stage, changed.conflicts, {
-      [conflictId(changed.conflicts[0]!)]: 'mine',
-    });
-    expect(applyStage(doc([fact(optionalKey, 'Theirs')]), keepMine).facts).toEqual([]);
+    const id = idOf(changed.conflicts[0]!);
+    const useTheirs = resolve(changed.stage, changed.conflicts, { [id]: 'theirs' }, 3);
+    expect(applyStage(theirsChanged, useTheirs.stage).facts).toHaveLength(1);
+    const keepMine = resolve(changed.stage, changed.conflicts, { [id]: 'mine' }, 3);
+    expect(applyStage(theirsChanged, keepMine.stage).facts).toEqual([]);
     // I changed it, they removed it.
     const mineChanged = stageOf(baseDoc, { [optionalKey]: fact(optionalKey, 'Mine') });
     const gone = mergeStage(mineChanged, doc(), 3);
     expect(gone.conflicts[0]).toMatchObject({ mine: fact(optionalKey, 'Mine'), theirs: null });
     expect(applyStage(doc(), gone.stage).facts).toEqual([fact(optionalKey, 'Mine')]);
-    const takeTheirs = resolve(gone.stage, gone.conflicts, {
-      [conflictId(gone.conflicts[0]!)]: 'theirs',
-    });
-    expect(applyStage(doc(), takeTheirs).facts).toEqual([]);
+    const goneId = idOf(gone.conflicts[0]!);
+    const takeTheirs = resolve(gone.stage, gone.conflicts, { [goneId]: 'theirs' }, 3);
+    expect(applyStage(doc(), takeTheirs.stage).facts).toEqual([]);
+    const keepMineAfterRemoval = resolve(gone.stage, gone.conflicts, { [goneId]: 'mine' }, 3);
+    expect(mergeStage(keepMineAfterRemoval.stage, doc(), 3).conflicts).toEqual([]);
     // Both removed: it is already saved, so there is nothing to ask.
     expect(mergeStage(mineRemoved, doc(), 3).conflicts).toEqual([]);
     expect(stageCount(mergeStage(mineRemoved, doc(), 3).stage)).toBe(0);
@@ -303,9 +395,10 @@ describe('mergeStage', () => {
     const same = mergeStage(stage, doc([custom('custom.dock_rules', 'Mine')]), 3);
     expect(same.conflicts).toEqual([]);
     expect(stageCount(same.stage)).toBe(0);
+    expect(same.dropped).toEqual([{ kind: 'fact', key: 'custom.dock_rules' }]);
   });
 
-  test('section marks merge the same way', () => {
+  test('section marks merge the same way, and an open mark conflict also survives a second merge', () => {
     const saved = doc([], [{ section: 5, note: 'Base note' }]);
     // I changed the note of 5 and added 7; they changed 5 differently and added 7 the same.
     const stage = stageOf(saved, {}, { 5: 'My note', 7: 'Same note' });
@@ -316,13 +409,22 @@ describe('mergeStage', () => {
         { section: 7, note: 'Same note' },
       ],
     );
-    const { stage: merged, conflicts } = mergeStage(stage, theirs, 3);
+    const { stage: merged, conflicts, dropped } = mergeStage(stage, theirs, 3);
     expect(conflicts).toEqual([
       { kind: 'mark', key: '5', base: 'Base note', mine: 'My note', theirs: 'Their note' },
     ]);
+    expect(dropped).toEqual([{ kind: 'mark', key: '7' }]);
     expect(Object.keys(merged.marks)).toEqual(['5']);
-    const use = resolve(merged, conflicts, { 'mark:5': 'theirs' });
-    expect(applyStage(theirs, use).sectionMarks).toEqual(theirs.sectionMarks);
+    expect(merged.marks['5']!.base).toBe('Base note');
+    expect(mergeStage(merged, theirs, 3).conflicts).toEqual(conflicts);
+    const use = resolve(merged, conflicts, { 'mark:5': 'theirs' }, 3);
+    expect(applyStage(theirs, use.stage).sectionMarks).toEqual(theirs.sectionMarks);
+    const keep = resolve(merged, conflicts, { 'mark:5': 'mine' }, 3);
+    expect(applyStage(theirs, keep.stage).sectionMarks).toContainEqual({
+      section: 5,
+      note: 'My note',
+    });
+    expect(mergeStage(keep.stage, theirs, 3).conflicts).toEqual([]);
     // They unmarked a section I marked differently.
     const removed = mergeStage(stage, doc(), 3);
     expect(removed.conflicts.map(conflictId)).toEqual(['mark:5']);
@@ -330,16 +432,19 @@ describe('mergeStage', () => {
     const unmark = stageOf(saved, {}, { 5: null });
     const clean = mergeStage(unmark, saved, 3);
     expect(clean.conflicts).toEqual([]);
+    expect(clean.merged).toEqual([{ kind: 'mark', key: '5' }]);
     expect(applyStage(saved, clean.stage).sectionMarks).toEqual([]);
   });
 
-  test('merging twice onto the same theirs changes nothing more (the rebased stage is stable)', () => {
+  test('merging with no open conflict twice changes nothing more', () => {
     const stage = stageOf(baseDoc, { [optionalKey]: fact(optionalKey, 'Mine') });
-    const theirs = doc([fact(optionalKey, 'Theirs')]);
+    const theirs = doc([fact(optionalKey, 'Base'), fact('notes.general', 'Theirs')]);
     const once = mergeStage(stage, theirs, 3);
     const twice = mergeStage(once.stage, theirs, 3);
     expect(twice.stage).toEqual(once.stage);
     expect(twice.conflicts).toEqual([]);
+    expect(once.merged).toEqual([{ kind: 'fact', key: optionalKey }]);
+    expect(twice.merged).toEqual(once.merged);
   });
 });
 
