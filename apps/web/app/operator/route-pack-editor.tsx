@@ -536,9 +536,8 @@ function RouteBody({
     if (!open || !field) return;
     const built = factFromDraft(field, open.draft, today);
     if (!built.ok) {
-      const first = built.refusals[0]!.field;
       const early = ['text', 'items', 'currency', 'amount', 'note', 'form', 'filledNote'].includes(
-        first,
+        built.refusals[0]?.field ?? 'form',
       );
       if (step === 'next' && !early) {
         setOpen({ ...open, step: 2, shown: [] });
@@ -580,8 +579,9 @@ function RouteBody({
     const field = formFieldOf(item, saved, shownDocument);
     const isStaged = !!stage.facts[item.key];
     const editable = isEditable(shownRow, role, field);
-    const editing = !!open && open.key === item.key && !!field;
-    const live2 = editing && field ? liveIssues(field, open!.draft) : [];
+    // The open answer is this row's when its key is, and only a row that has a field can be open.
+    const draft = open && open.key === item.key && field ? open : null;
+    const issues = draft && field ? liveIssues(field, draft.draft) : [];
     return (
       <RouteFactRow
         key={item.key}
@@ -598,9 +598,9 @@ function RouteBody({
         staleSince={shownRow.stale && v.validUntil ? formatUtcDay(v.validUntil) : null}
         heading={heading}
         unsaved={isStaged}
-        editing={editing}
+        editing={!!draft}
         editor={
-          editing && field && open ? (
+          draft && field ? (
             <RouteFactEditor
               label={v.label}
               field={field}
@@ -608,17 +608,19 @@ function RouteBody({
               covered={shownRow.coveredBySection && !field.custom}
               savedFilled={!!facts.get(item.key)}
               open={{
-                ...open,
+                ...draft,
                 shown: [
-                  ...live2,
-                  ...open.shown.filter((refusal) => !live2.some((l) => l.field === refusal.field)),
+                  ...issues,
+                  ...draft.shown.filter(
+                    (refusal) => !issues.some((l) => l.field === refusal.field),
+                  ),
                 ],
               }}
               today={today}
-              caution={cautionFor(field, open.draft)}
-              onChange={(draft) => setOpen({ ...open, draft, shown: [] })}
+              caution={cautionFor(field, draft.draft)}
+              onChange={(changed) => setOpen({ ...draft, draft: changed, shown: [] })}
               onNext={() => attempt(item, 'next')}
-              onBack={() => setOpen({ ...open, step: 1, shown: [] })}
+              onBack={() => setOpen({ ...draft, step: 1, shown: [] })}
               onKeep={() => attempt(item, 'keep')}
               onCancel={() => close(item.key, '')}
             />

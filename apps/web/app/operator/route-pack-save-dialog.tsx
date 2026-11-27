@@ -11,7 +11,9 @@ import {
   applyStage,
   canSave,
   cautionKeys,
+  isBehind,
   mergeStage,
+  openConflictIds,
   prepareSave,
   resolve,
   stageCount,
@@ -24,7 +26,6 @@ import {
   nextCommand,
   outcomeWords,
   type Command,
-  type FactsOutcome,
   type FactsSaved,
 } from '../../lib/route-pack-editor-write';
 import {
@@ -119,7 +120,7 @@ export type SaveProps = {
 
 function SaveInner(props: SaveProps & { onClose: () => void }) {
   const { tenant, routeId, pack, labelOf, onStage, reload } = props;
-  const behind = stageCount(props.stage) > 0 && props.stage.baseVersion < props.savedVersion;
+  const behind = isBehind(props.stage, props.savedVersion);
   const [shown, setShown] = useState(true);
   const [s, patch] = useReducer(
     (state: State, change: Partial<State>) => ({ ...state, ...change }),
@@ -207,9 +208,7 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
         ? reasonWords
         : null;
   const locked = s.busy !== null;
-  const openChoices = s.conflicts.filter(
-    (conflict) => s.choices[`${conflict.kind}:${conflict.key}`] === undefined,
-  );
+  const openChoices = openConflictIds(s.work.stage, s.conflicts, s.choices);
 
   async function save() {
     let command = s.command;
@@ -235,7 +234,7 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
     }
     patch({ busy: 'saving', error: null, command });
     const result = await sendFacts(tenant, prepared.body);
-    if (result.outcome === 'saved' && result.saved) {
+    if (result.outcome === 'saved') {
       props.onSaved(result.saved, prepared.body.document);
       setShown(false);
       return;
@@ -244,15 +243,14 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
       await check(s.work, s.checks, s.reason);
       return;
     }
-    const outcome = result.outcome as Exclude<FactsOutcome, 'saved' | 'conflict'>;
     patch({
       busy: null,
-      error: outcomeWords(outcome, result.error, (key) => {
+      error: outcomeWords(result.outcome, result.error, (key) => {
         const label = labelOf(key, null);
         return label === key ? null : label;
       }),
       // The id belonged to a body the server refused to repeat: the next send is a new command.
-      ...(outcome === 'commandReused' ? { command: null } : {}),
+      ...(result.outcome === 'commandReused' ? { command: null } : {}),
     });
   }
 
@@ -412,7 +410,7 @@ function SaveInner(props: SaveProps & { onClose: () => void }) {
                   type="button"
                   className="primary-link"
                   onClick={() => {
-                    onStage(resolved!.stage);
+                    if (resolved) onStage(resolved.stage);
                     leave();
                   }}
                 >

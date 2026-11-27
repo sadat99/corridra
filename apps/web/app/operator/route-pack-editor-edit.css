@@ -180,7 +180,6 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-1) var(--space-4);
   box-sizing: border-box;
   min-block-size: var(--route-bar-h);
@@ -191,34 +190,49 @@
   background: var(--surface-raised);
   box-shadow: var(--shadow-2);
 }
+/* The count, then Discard Changes, then the primary, which is last. Each takes the line it needs: on a phone the count and the
+   link share the first line and the primary has the second, on a wide region all three stand on one line, and with larger text
+   they wrap one by one. */
 .route-bar-count {
-  flex: 1 1 8rem;
+  flex: 1 1 6rem;
   margin: 0;
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
-.route-bar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-1) var(--space-4);
+/* Discard Changes is a quiet text link in the bar, 44 px high and as wide as its words. */
+.route-bar-discard {
+  flex: 0 0 auto;
 }
-.route-bar .primary-link {
+.route-bar-discard .text-link {
   min-block-size: 44px;
+  margin: 0;
+  padding-inline: var(--space-2);
+  font-size: var(--text-sm);
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+}
+.route-editor .route-bar > button.primary-link {
+  flex: 1 1 12rem;
+  max-inline-size: 100%;
+  min-block-size: 44px;
+  margin-block-start: 0 !important;
   border: 0;
   cursor: pointer;
   justify-content: center;
 }
-.route-bar .text-link {
-  min-block-size: 44px;
+@media (min-width: 40rem) {
+  .route-editor .route-bar > button.primary-link {
+    flex: 0 0 auto;
+  }
 }
+
 /* While the bar is there the page keeps room for it above the bottom edge, so a control that takes focus (Tab, Shift Tab, a
-   refusal) is scrolled clear of it and never stands under it. A phone bar can take three lines, a wide one is one. */
+   refusal) is scrolled clear of it and never stands under it. A phone bar takes two lines, a wide one is one. */
 html:has(.route-bar) {
-  scroll-padding-block-end: 10rem;
+  scroll-padding-block-end: 8rem;
 }
-@media (min-width: 30rem) {
+@media (min-width: 40rem) {
   html:has(.route-bar) {
     scroll-padding-block-end: 5.5rem;
   }

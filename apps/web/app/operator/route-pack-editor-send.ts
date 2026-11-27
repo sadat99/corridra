@@ -11,13 +11,13 @@ import {
 // opens the authenticator check in place and the same body (the same command id) is sent once more after the code is accepted.
 // The refused send wrote nothing (the check is made before any change), so sending it again cannot save twice. A check that is
 // closed without a code comes back as `stepUp`, and the page keeps its dialog, its reason and every edit.
-export type SendResult = {
-  outcome: FactsOutcome;
-  /** Set for `saved`. */
-  saved: FactsSaved | null;
-  /** The server's own words of a refusal, when it sent any. */
-  error: string | null;
-};
+export type SendResult =
+  | { outcome: 'saved'; saved: FactsSaved }
+  | {
+      outcome: Exclude<FactsOutcome, 'saved'>;
+      /** The server's own words of a refusal, when it sent any. */
+      error: string | null;
+    };
 export async function sendFacts(tenant: string, body: FactsSaveBody): Promise<SendResult> {
   try {
     const response = await sendWithStepUp(() =>
@@ -37,10 +37,10 @@ export async function sendFacts(tenant: string, body: FactsSaveBody): Promise<Se
     const code = typeof record.code === 'string' ? record.code : null;
     const error = typeof record.error === 'string' ? record.error : null;
     const outcome = factsOutcome(response.status, code);
-    if (outcome !== 'saved') return { outcome, saved: null, error };
+    if (outcome !== 'saved') return { outcome, error };
     // A save with an answer this page cannot read is not claimed as saved.
     if (typeof record.version !== 'number' || !Number.isInteger(record.version))
-      return { outcome: 'offline', saved: null, error: null };
+      return { outcome: 'offline', error: null };
     return {
       outcome,
       saved: {
@@ -48,9 +48,8 @@ export async function sendFacts(tenant: string, body: FactsSaveBody): Promise<Se
         duplicate: record.duplicate === true,
         warnings: Array.isArray(record.warnings) ? (record.warnings as FactsSaved['warnings']) : [],
       },
-      error: null,
     };
   } catch {
-    return { outcome: 'offline', saved: null, error: null };
+    return { outcome: 'offline', error: null };
   }
 }
