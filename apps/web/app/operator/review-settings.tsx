@@ -12,6 +12,11 @@ import { StatusBadge } from '../../components/access-state';
 import { ShowMoreList } from '../../components/ux/show-more';
 import { CountryName, countryName } from './country-name';
 import { useOperatorFlags } from './operator-flags';
+import { packStatuses, packTones } from './pack-status';
+import { RouteEditorShell, RouteRowFacts, RoutesFactsHead } from './route-pack-editor';
+import { goTo, leaveRoute, useRoutePackOverview, useRouteAddress } from './route-pack-editor-data';
+import type { RouteSummary } from '../../lib/route-pack-editor-read';
+import { addressFor, coreListWords, staleListWords } from '../../lib/route-pack-editor-view';
 import './settings-routes.css';
 type Catalogue = {
   routes: { id: string; origin_market: string; destination_market: string }[];
@@ -47,13 +52,6 @@ const commands = {
 } as const;
 type Command = keyof typeof commands;
 
-const packStatuses = [
-  ['DRAFT', 'Draft, not used yet'],
-  ['TESTING', 'Testing'],
-  ['LIMITED', 'Limited use'],
-  ['ACTIVE', 'Active'],
-  ['PAUSED', 'Paused'],
-] as const;
 const packLanguages = [
   ['en', 'English'],
   ['bn', 'Bengali'],
@@ -84,22 +82,35 @@ const words = (code: string) => {
   return text ? text[0].toUpperCase() + text.slice(1) : code;
 };
 
-const packTones = {
-  DRAFT: 'neutral',
-  TESTING: 'info',
-  LIMITED: 'info',
-  ACTIVE: 'positive',
-  PAUSED: 'caution',
-} as const;
 /**
  * Team desk v4.1 (unit D17): the routes of the workspace, first on the page, each with the state of its newest
  * pack. Read only, from the catalogue the page already loads. A route without a pack says so and nothing more:
  * route and qualification stay two steps (decision 3), so no line here ties one to the other.
  */
-function RouteList({ catalogue, failed }: { catalogue: Catalogue | null; failed: boolean }) {
+function RouteList({
+  catalogue,
+  failed,
+  facts,
+}: {
+  catalogue: Catalogue | null;
+  failed: boolean;
+  /**
+   * ADR-093 Phase 3: what the route facts read gave, when it gave anything. Left out (the switch is off, the module is not
+   * installed, or the answer has not come), the list is exactly what it was.
+   */
+  facts?: {
+    state: 'ready' | 'denied' | 'error';
+    routes: RouteSummary[];
+    openKey: string | null;
+    notice: boolean;
+    retry: () => void;
+    retrying: boolean;
+  } | null;
+}) {
   return (
     <div className="settings-routes">
       <h2 id="settings-routes-heading">Routes</h2>
+      {facts ? <RoutesFactsHead {...facts} /> : null}
       {!catalogue ? (
         <p className="ux-panel-empty">
           {failed
@@ -119,16 +130,50 @@ function RouteList({ catalogue, failed }: { catalogue: Catalogue | null; failed:
                 (newest, item) => (!newest || item.version > newest.version ? item : newest),
                 null,
               );
+            // A route is a link only while the facts read answered for it; otherwise the name is the plain text it was.
+            const summary =
+              facts?.state === 'ready'
+                ? facts.routes.find((item) => item.routeId === route.id)
+                : undefined;
+            const name = (
+              <>
+                <CountryName code={route.origin_market} size="row" />{' '}
+                {/* "to" stays with its destination when the row wraps on a narrow screen. */}
+                <span className="settings-route-end">
+                  <span className="settings-route-to">to</span>{' '}
+                  <CountryName code={route.destination_market} size="row" />
+                </span>
+              </>
+            );
             return (
               <li key={route.id}>
-                <span className="settings-route-name">
-                  <CountryName code={route.origin_market} size="row" />{' '}
-                  {/* "to" stays with its destination when the row wraps on a narrow screen. */}
-                  <span className="settings-route-end">
-                    <span className="settings-route-to">to</span>{' '}
-                    <CountryName code={route.destination_market} size="row" />
-                  </span>
-                </span>
+                {summary ? (
+                  <a
+                    className="settings-route-name"
+                    href={addressFor(window.location.href, { route: summary.key })}
+                    aria-current={facts?.openKey === summary.key ? 'true' : undefined}
+                    aria-label={[
+                      `${countryName(route.origin_market)} to ${countryName(route.destination_market)}`,
+                      pack
+                        ? `pack ${packStatuses.find(([value]) => value === pack.status)?.[1] ?? words(pack.status)}`
+                        : 'No pack yet',
+                      coreListWords(summary.core),
+                      staleListWords(summary.core.stale),
+                    ]
+                      .filter(Boolean)
+                      .join(', ')}
+                    onClick={(event) => {
+                      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0)
+                        return;
+                      event.preventDefault();
+                      goTo({ route: summary.key }, 'route-pack-editor-heading');
+                    }}
+                  >
+                    {name}
+                  </a>
+                ) : (
+                  <span className="settings-route-name">{name}</span>
+                )}
                 <span className="settings-route-pack">
                   {pack ? (
                     <>
@@ -144,6 +189,7 @@ function RouteList({ catalogue, failed }: { catalogue: Catalogue | null; failed:
                     <StatusBadge tone="unknown">No pack yet</StatusBadge>
                   )}
                 </span>
+                {summary ? <RouteRowFacts summary={summary} /> : null}
               </li>
             );
           })}
@@ -393,6 +439,31 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
     [catalogueFailed, setCatalogueFailed] = useState(false);
   // Team desk v4.1 (unit D17): routes first with their pack state; the page title and purpose line say the rest.
   const { teamDeskV41: deskV41 } = useOperatorFlags();
+  // ADR-093 Phase 3: the facts of each route, asked once the catalogue is here and again whenever it is read again. Only 200
+  // changes the page: 404 (the switch is off or the module is not installed) and the wait for an answer leave it as it was.
+  const overview = useRoutePackOverview(tenant, deskV41 && !!catalogue, catalogue);
+  const address = useRouteAddress();
+  const openRoute =
+    overview.state === 'ready' && address.route
+      ? overview.routes.find((item) => item.key === address.route)
+      : undefined;
+  const unknownRoute = overview.state === 'ready' && !!address.route && !openRoute;
+  useEffect(() => {
+    // A route key this workspace does not have: the address is cleaned and the list says so once.
+    if (unknownRoute) leaveRoute();
+  }, [unknownRoute]);
+  const factsRead =
+    overview.state === 'ready' || overview.state === 'denied' || overview.state === 'error'
+      ? {
+          state: overview.state,
+          routes: overview.routes,
+          openKey: openRoute?.key ?? null,
+          notice: address.routeNotFound,
+          retry: overview.retry,
+          retrying: overview.retrying,
+        }
+      : null;
+  const routeList = <RouteList catalogue={catalogue} failed={catalogueFailed} facts={factsRead} />;
   // Section numbers follow what is drawn. With Connect AI off they are what they always were (Advanced 04, references 05,
   // whether or not Add route pack is shown as 03); with it on it takes the next number and the later sections move up one
   // only when Add route pack is also shown, so no number repeats.
@@ -517,7 +588,18 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
       aria-label="Corridor and policy settings"
     >
       {deskV41 ? (
-        <RouteList catalogue={catalogue} failed={catalogueFailed} />
+        openRoute ? (
+          <RouteEditorShell
+            list={routeList}
+            summary={openRoute}
+            tenant={tenant}
+            role={role}
+            refreshKey={catalogue}
+            address={address}
+          />
+        ) : (
+          routeList
+        )
       ) : (
         <>
           <PanelHeading

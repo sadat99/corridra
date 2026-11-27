@@ -4,12 +4,25 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1);
-  padding-block: var(--space-3);
+  padding-block: var(--space-2);
   border-block-end: 1px solid var(--border);
   min-inline-size: 0;
 }
-.ux-fact-row > * {
+/* The doubled class keeps this above the operator pages' own list item rule (a margin under every item). */
+.ux-fact-row.ux-fact-row {
+  margin: 0;
+  padding-inline: 0;
+}
+.ux-fact-body,
+.ux-fact-main,
+.ux-fact-meta {
+  display: grid;
+  gap: var(--space-1);
   min-inline-size: 0;
+}
+.ux-fact-meta {
+  align-content: start;
+  justify-items: start;
 }
 .ux-fact-label {
   display: flex;
@@ -25,6 +38,9 @@
   gap: var(--space-1);
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
+}
+.ux-fact-value[hidden] {
+  display: none;
 }
 .ux-fact-value p,
 .ux-fact-value ul {
@@ -80,4 +96,14 @@
 .ux-fact-pack .corridra-icon {
   inline-size: var(--space-4);
   block-size: var(--space-4);
+}
+
+/* From 64 rem of window the words about the fact (state, source, pack setting) stand beside the label and value, so a row is
+   two lines, not four. Still no table: every part is a line of words in reading order. */
+@media (min-width: 64rem) {
+  .ux-fact-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 15rem);
+    column-gap: var(--space-4);
+    align-items: start;
+  }
 }

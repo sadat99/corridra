@@ -64,53 +64,65 @@ export function RouteFactRow({
   return (
     <li className="ux-fact-row" data-state={state} hidden={hidden}>
       {heading}
-      <span className="ux-fact-label" dir="auto">
-        {label}
-        {core ? <StatusBadge tone="neutral">Core</StatusBadge> : null}
-      </span>
-      <div className="ux-fact-value" id={valueId} dir="auto">
-        {value.kind === 'empty' ? (
-          <p className="ux-fact-quiet">{packNote ?? 'Not filled yet'}</p>
-        ) : value.kind === 'text' ? (
-          <p className="ux-fact-text" data-full={full ? 'true' : 'false'}>
-            {value.text}
-          </p>
-        ) : (
-          <ul className="ux-fact-list" data-full={full ? 'true' : 'false'}>
-            {(full ? value.items : value.items.slice(0, longList)).map((item, index) => (
-              <li key={`${index}-${item}`}>{item}</li>
-            ))}
-          </ul>
-        )}
-        {long ? (
-          <button
-            type="button"
-            className="text-link ux-fact-toggle"
-            aria-expanded={full}
-            aria-controls={valueId}
-            onClick={() => setFull((current) => !current)}
+      <div className="ux-fact-body">
+        <div className="ux-fact-main">
+          <span className="ux-fact-label" dir="auto">
+            {label}
+            {core ? <StatusBadge tone="neutral">Core</StatusBadge> : null}
+          </span>
+          {/* A fact marked Not applicable has no value to wait for: its reason is shown beside its state. */}
+          <div
+            className="ux-fact-value"
+            id={valueId}
+            dir="auto"
+            hidden={value.kind === 'empty' && state === 'NOT_APPLICABLE'}
           >
-            {full ? 'Show Less' : 'Show Full Value'}
-          </button>
-        ) : null}
+            {value.kind === 'empty' ? (
+              <p className="ux-fact-quiet">{packNote ?? 'Not filled yet'}</p>
+            ) : value.kind === 'text' ? (
+              <p className="ux-fact-text" data-full={full ? 'true' : 'false'}>
+                {value.text}
+              </p>
+            ) : (
+              <ul className="ux-fact-list" data-full={full ? 'true' : 'false'}>
+                {(full ? value.items : value.items.slice(0, longList)).map((item, index) => (
+                  <li key={`${index}-${item}`}>{item}</li>
+                ))}
+              </ul>
+            )}
+            {long ? (
+              <button
+                type="button"
+                className="text-link ux-fact-toggle"
+                aria-expanded={full}
+                aria-controls={valueId}
+                onClick={() => setFull((current) => !current)}
+              >
+                {full ? 'Show Less' : 'Show Full Value'}
+              </button>
+            ) : null}
+          </div>
+        </div>
+        <div className="ux-fact-meta">
+          <div className="ux-fact-state">
+            <FactMark state={state} />
+            {note ? <span className="ux-fact-note">Not applicable: {note}</span> : null}
+            {staleSince ? <StaleMark>Stale since {staleSince}</StaleMark> : null}
+          </div>
+          {locked ? (
+            <span className="ux-fact-pack">
+              <CorridraIcon name="lock" />
+              Pack setting
+            </span>
+          ) : source ? (
+            <span className="ux-fact-source">
+              <SourceStamp source={source} date={observed ?? undefined} />
+              {validUntil ? <span className="ux-fact-until">Valid until {validUntil}</span> : null}
+            </span>
+          ) : null}
+          {action ? <div className="ux-fact-action">{action}</div> : null}
+        </div>
       </div>
-      <div className="ux-fact-state">
-        <FactMark state={state} />
-        {note ? <span className="ux-fact-note">Not applicable: {note}</span> : null}
-        {staleSince ? <StaleMark>Stale since {staleSince}</StaleMark> : null}
-      </div>
-      {locked ? (
-        <span className="ux-fact-pack">
-          <CorridraIcon name="lock" />
-          Pack setting
-        </span>
-      ) : source ? (
-        <span className="ux-fact-source">
-          <SourceStamp source={source} date={observed ?? undefined} />
-          {validUntil ? <span className="ux-fact-until">Valid until {validUntil}</span> : null}
-        </span>
-      ) : null}
-      {action ? <div className="ux-fact-action">{action}</div> : null}
     </li>
   );
 }

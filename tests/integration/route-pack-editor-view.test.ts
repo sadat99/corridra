@@ -249,7 +249,7 @@ describe('words come from the numbers given, never typed ones', () => {
       optionalLine(2) ?? '',
       readinessLine({ packId: 'p', completeMissionTypes: [] }, 1),
     ];
-    for (const sentence of sentences) expect(sentence).not.toContain('—');
+    for (const sentence of sentences) expect(sentence).not.toContain(String.fromCharCode(0x2014));
   });
 });
 
