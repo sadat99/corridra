@@ -293,3 +293,61 @@ describe('no em dash anywhere', () => {
     for (const text of strings) expect(text).not.toContain(String.fromCharCode(0x2014));
   });
 });
+
+describe('PR 2c: the words of More, Mark Section Not Applicable and Add Custom Field', () => {
+  test('the leave line of an open draft with nothing staged is the designer copy', () => {
+    expect(words.leaveWords(0)).toBe(
+      'Leaving this route removes the answer you are editing. You have not pressed Keep Change on it. Your saved facts are not affected.',
+    );
+    expect(words.leaveWords(0, true)).toBe(words.leaveWords(0));
+  });
+  test('the status lines are built with the count of changes', () => {
+    expect(words.markRemovedLine(3)).toBe('Mark removed. 3 changes not saved.');
+    expect(words.markRemovedLine(1)).toBe('Mark removed. 1 change not saved.');
+    expect(words.fieldAddedLine(3)).toBe('Field added. 3 changes not saved.');
+  });
+  test('the line when the last mark is removed and nothing else is staged has no count', () => {
+    expect(words.markRemovedNone).toBe('Mark removed.');
+  });
+  test('the menu names carry the route and the section', () => {
+    expect(words.moreWords.buttonLabel('Dhaka to Rotterdam')).toBe(
+      'More actions for Dhaka to Rotterdam',
+    );
+    expect(words.moreWords.markName('Trade fairs and events')).toBe(
+      'Mark Section Not Applicable, Trade fairs and events',
+    );
+    expect(words.moreWords.unmarkName('Trade fairs and events')).toBe(
+      'Unmark Section, Trade fairs and events',
+    );
+    expect(words.customDialogWords.goesIn(5, 'Trade fairs and events')).toBe(
+      'Goes in section 5, Trade fairs and events.',
+    );
+    expect(words.customDialogWords.savedAs('custom.visa_notes')).toBe('Saved as custom.visa_notes');
+  });
+  test('the Locked Core line says one label, or the first and a count of the others', () => {
+    const line = (labels: string[]) => {
+      const made = words.lockedCorePendingLine(labels);
+      return made && words.plain(made);
+    };
+    expect(line([])).toBeNull();
+    expect(line(['Working languages'])).toBe(
+      'This section is marked Not applicable, but Working languages is a Core pack setting and is still Pending.',
+    );
+    expect(line(['Working languages', 'Currency'])).toBe(
+      'This section is marked Not applicable, but Working languages and 1 more pack setting are Core and still Pending.',
+    );
+    expect(line(['Working languages', 'Currency', 'Time zone'])).toBe(
+      'This section is marked Not applicable, but Working languages and 2 more pack settings are Core and still Pending.',
+    );
+  });
+  test('no em dash in the new words', () => {
+    const text = JSON.stringify([
+      words.moreWords,
+      words.markDialogWords,
+      words.customDialogWords,
+      words.customTypeOptions,
+      words.leaveWords(0),
+    ]);
+    expect(text).not.toContain(String.fromCharCode(0x2014));
+  });
+});

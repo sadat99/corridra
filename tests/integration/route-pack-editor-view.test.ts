@@ -20,7 +20,6 @@ import {
   overlayCompleteness,
   todayUtc,
   gapsLine,
-  markedButOpen,
   optionalLine,
   packChangeLine,
   parseAddress,
@@ -358,21 +357,6 @@ describe('sections', () => {
         optionalPending: 0,
       }),
     ).toEqual([]);
-  });
-
-  test('a section marked Not applicable that still holds a pack setting Core and Pending says which', () => {
-    const marked = routePackSections.find((section) =>
-      standardFieldsV1.some(
-        (field) => field.section === section.number && field.part === 'Locked' && field.core,
-      ),
-    )!;
-    const document = documentOf([], [{ section: marked.number, note: 'Not part of this route' }]);
-    const completeness = deriveCompleteness(draft, document, today);
-    const sentence = markedButOpen(completeness, document, marked.number, (key) => `Label ${key}`);
-    expect(sentence).toMatch(
-      /^This section is marked Not applicable, but Label .+ Core and still Pending\.$/,
-    );
-    expect(markedButOpen(completeness, null, marked.number, (key) => key)).toBeNull();
   });
 });
 
