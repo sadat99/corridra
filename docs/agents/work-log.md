@@ -5934,3 +5934,29 @@ Checks at f236a8f0, all exit 0:
 **Not verified.** No signed-in journey. The editor write path was not exercised in production (2b not installed). No 2b install or Postgres major check is claimed.
 
 **Next action.** PR3a (PR 690), PR2c, PR3b, PR4. The 2b install needs the owner's separate approval. Phase 4 loads each route on the owner's word.
+
+## 27 Nov 2026 - records: PR 690 merged, main 4e225bf0, ADR-093 Phase 3 PR3a (scribe, for Guardian G71)
+
+**Request.** Records for Guardian G71 (session https://claude.ai/code/session_0187kU9ug1wtFfyKMdnFqfrw): the merge of PR 690, "ADR-093 Phase 3 PR3a: route pack publish action (invisible)". Branch claude/records-690 from origin/main; authority stamp auth-e7ba6def769f at start. Docs only, not Class A. No requirement moves to VERIFIED.
+
+**Why.** The ledger and register read PR3a as a draft in CI. It is merged.
+
+**Outcome (as relayed by G71).**
+
+- PR 690 merged as a squash, 4e225bf06928828619db448c5c933129c3898a17, pinned to head 5baf4e8831fbdffe2b9d85bc91ebf239648750c2. All CI green, CodeQL neutral. Vercel production deploy dpl_9axNtqabGLwfdKZJbGuGsFKMJW6Y READY.
+- Adds the team-control POST action route-pack-publish (preview and publish of a pack settings or status change) in packages/missions/src/route-pack-form.ts, apps/web/lib/route-pack-editor-publish.ts, route.ts and tests/integration/route-pack-editor-publish.test.ts. Dormant in production (404) until ADR-093 2b is installed. config.manage needs a fresh authenticator for preview and publish.
+- Review: two independent Opus reviewers on 88318a1, one fix round (0ef289e), Opus verification; 52/52 publish suite, 225/225 regression, red-on-old 51/52, three ordering mutations red. createRoutePack, changeRouteStatus and guidedRoutePack byte-identical to 13bb957.
+
+**Known follow-up F2.** After publish, the same command id with a list left out, or removeSourcingProfile on a base without a block, answers 200 duplicate (nothing written twice). The fix needs a base-pack configuration read in route-pack-content.ts and is its own change.
+
+**In flight.** Builder C on PR2c (claude/route-pack-editor-pr2c); Builder D on PR3b pack dialogs (claude/route-pack-editor-pr3b; first commit amends spec 17A with the PR3a contract). Then PR4.
+
+**Verification.** G71 receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, node --test tests/documents.test.mjs and prettier --check, results in the PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action, condensed to stay within the 36864-byte guides budget; owner decision lines unchanged); docs/PLAN_STATUS.md (editor spec row and ADR-093 row); this entry. The spec's own status line was not changed. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. The publish action was not exercised in production (2b not installed). No 2b install or Postgres major check is claimed.
+
+**Next action.** PR2c, PR3b, PR4, F2 as its own change. The 2b install needs the owner's separate approval.
