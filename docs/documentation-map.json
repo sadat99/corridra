@@ -1644,6 +1644,11 @@
       "use": "Exact hashed ledger at 8cb406d3 (main after PR 678), before the 27 Nov 2026 records for PR 678 shortened the Resume and next action lines; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g70-records-686-2026-11-27.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 2882b1c0 (main after PR 686), before the 27 Nov 2026 G70 records for PRs 684, 681, 686 and the ADR-093 2a install shortened the Resume and next action lines; use the current ledger for live state."
+    },
+    {
       "path": "docs/v3/history/ledger-before-w1-records-2026-11-19.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger at 626d2f8 (the PR 571 merge), before the 19 Nov W1 records recorded merges 560 to 571, the 19 Nov verification and the PR 573 diagnosis; preserves the Guardian 28 Main bullet and the 547 to 559 merge list; use the current ledger for live state."
