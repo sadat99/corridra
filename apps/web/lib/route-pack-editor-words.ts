@@ -42,6 +42,7 @@ export const moreWords = {
   /** The visible word of the button. */
   button: 'More',
   buttonLabel: (route: string) => `More actions for ${route}`,
+  exportRoute: 'Export This Route',
   addCustom: 'Add Custom Field',
   mark: 'Mark Section Not Applicable',
   unmark: 'Unmark Section',
