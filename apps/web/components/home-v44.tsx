@@ -1,8 +1,10 @@
 'use client';
 
 import { HomeV43 } from './home-v43';
+import { HomeV44Choice } from './home-v44-choice';
 import { HomeV44Hero } from './home-v44-hero';
 import { HomeV44Map } from './home-v44-map';
+import { HomeV44Strip } from './home-v44-strip';
 import './home-v44.css';
 
 // The home page v4.4, shown only while CORRIDRA_UX_HOME_V44 and CORRIDRA_UX_HOME_V43 are both exactly "true" (owner,
@@ -14,7 +16,12 @@ export function HomeV44({ whatsapp }: { whatsapp: string | null }) {
   return (
     <HomeV43
       whatsapp={whatsapp}
-      v44={{ hero: <HomeV44Hero />, map: (route) => <HomeV44Map {...route} /> }}
+      v44={{
+        hero: <HomeV44Hero whatsapp={whatsapp} />,
+        choice: (props) => <HomeV44Choice {...props} />,
+        strip: <HomeV44Strip />,
+        map: (route) => <HomeV44Map {...route} />,
+      }}
     />
   );
 }

@@ -48,6 +48,17 @@ import './home-v43-more.css';
  */
 export type HomeV44Slots = {
   hero: ReactNode;
+  /** The route choice as tabs (same ids and words as the v4.3 doors). */
+  choice: (props: {
+    intent: RouteKey;
+    href: string;
+    cta: string;
+    whatsapp: string | null;
+    onChoose: (route: RouteKey) => void;
+    map: ReactNode;
+  }) => ReactNode;
+  /** A still row of route statuses under the route choice. */
+  strip: ReactNode;
   map: (route: {
     origin: PlaceCode;
     target: PlaceCode;
@@ -109,23 +120,27 @@ export function HomeV43({
         {announcement}
       </p>
       {v44 ? v44.hero : <HomeV43Hero />}
-      <HomeV43Choice
-        intent={intent}
-        href={href}
-        cta={cta}
-        whatsapp={whatsapp}
-        onChoose={choose}
-        {...(v44
-          ? {
-              map: v44.map({
-                origin: state.origin,
-                target: state.target,
-                pick: true,
-                dispatch,
-              }),
-            }
-          : {})}
-      />
+      {v44 ? (
+        <>
+          {v44.choice({
+            intent,
+            href,
+            cta,
+            whatsapp,
+            onChoose: choose,
+            map: v44.map({ origin: state.origin, target: state.target, pick: true, dispatch }),
+          })}
+          {v44.strip}
+        </>
+      ) : (
+        <HomeV43Choice
+          intent={intent}
+          href={href}
+          cta={cta}
+          whatsapp={whatsapp}
+          onChoose={choose}
+        />
+      )}
       <HomeV43Solutions onExplore={choose} onWalk={() => revealThenFocus('route-delegation')} />
       <HomeV43Example
         intent={intent}

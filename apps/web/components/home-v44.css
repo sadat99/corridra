@@ -176,3 +176,162 @@
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
+
+/* ---- Redesign to the approved page (27 Nov 2026) ---- */
+
+/* The soft arc behind the hero, and the outlined first word. */
+.hv43 .hv44-hero {
+  position: relative;
+  isolation: isolate;
+  margin-block-end: var(--space-8);
+  padding-block: var(--space-12) var(--space-16);
+  background: linear-gradient(180deg, var(--surface-subtle), var(--surface-0) 85%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 50% / 14%;
+}
+@media (min-width: 64rem) {
+  .hv43 .hv44-hero {
+    padding-block: var(--space-16) var(--space-20, 6rem);
+  }
+}
+.hv43 .hv44-hero h1 {
+  font-size: clamp(2.25rem, 1rem + 5vw, 5rem);
+  line-height: 1.04;
+}
+.hv43 .hv44-hero h1 em {
+  display: inline;
+  color: var(--text-1);
+}
+.hv43 .hv44-outline {
+  color: transparent;
+  -webkit-text-stroke: 0.025em var(--brand);
+}
+.hv43 .hv44-hero .hv43-actions {
+  gap: var(--space-3) var(--space-4);
+}
+
+/* The route choice card. */
+.hv43 .hv44-card {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+@media (min-width: 48rem) {
+  .hv43 .hv44-card {
+    padding: var(--space-8);
+  }
+}
+.hv43 .hv44-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+.hv43 .hv44-card-head h2 {
+  margin: 0;
+  font-size: var(--text-h1);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.hv43 .hv44-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.hv43 .hv44-tab {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  padding: var(--space-1) var(--space-4);
+  color: var(--text-1);
+  font: inherit;
+  font-weight: 500;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+.hv43 .hv44-tab[aria-selected='true'] {
+  color: var(--surface-1);
+  background: var(--brand);
+  border-color: var(--brand);
+}
+.hv43 .hv44-tab:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.hv43 .hv44-panel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+.hv43 .hv44-panel-title {
+  margin: 0;
+  font-size: var(--text-h1);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.hv43 .hv44-panel-text {
+  max-inline-size: 44ch;
+  margin: 0;
+  color: var(--text-2);
+  line-height: var(--leading-reading);
+}
+.hv43 .hv44-get {
+  display: grid;
+  gap: var(--space-1);
+}
+.hv43 .hv44-start {
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+@media (min-width: 64rem) {
+  .hv43 .hv44-pick {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+}
+
+/* The route statuses, one still row. */
+.hv43 .hv44-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: var(--space-4) 0;
+  list-style: none;
+  border-block: 1px solid var(--border-subtle);
+}
+.hv43 .hv44-strip li {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-weight: 500;
+}
+.hv43 .hv44-strip strong {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+/* Listen leaves the top bar of this page (owner decision 9, 27 Nov 2026). Scoped to the home with v4.4, so no other
+   page changes. */
+.ux-guide-home:has(.hv44-hero) button.top-bar-tool[aria-pressed] {
+  display: none;
+}
+
+/* Sections below: larger headings and rounder cards, to the approved page. */
+.hv43 .hv43-head h2 {
+  font-size: var(--text-display);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.hv43 .hv43-card {
+  border-radius: var(--radius-lg);
+}
+.hv43 .hv43-solutions .hv43-card-actions {
+  align-items: flex-start;
+}
