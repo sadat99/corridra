@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Inter } from 'next/font/google';
 import { useEffect, useReducer, useState } from 'react';
 import { ctaWords } from './home-routes';
 import { useAnchorReveal } from './home-v43-anchors';
@@ -27,6 +28,9 @@ import './home-v7.css';
 function isBriefId(id: string) {
   return id === 'brief' || id.startsWith('home-brief');
 }
+
+// Inter is the page's text face (canvas board); Newsreader for headings comes from the site's own variable.
+const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--hv7-font', display: 'swap' });
 
 export function HomeV7({ whatsapp = null }: { whatsapp?: string | null }) {
   const { t } = useLanguage();
@@ -58,7 +62,7 @@ export function HomeV7({ whatsapp = null }: { whatsapp?: string | null }) {
   const cta = t(ctaWords[shown]);
   const choose = (route: RouteKey) => dispatch({ type: 'door', route });
   return (
-    <div className="hv7">
+    <div className={`hv7 ${inter.variable}`}>
       <noscript>
         <p className="hv7-noscript">
           {t(v43('noscript.lead'))}{' '}
@@ -77,7 +81,7 @@ export function HomeV7({ whatsapp = null }: { whatsapp?: string | null }) {
       <Process />
       <Status />
       <Trust />
-      <Example onFull={() => revealThenFocus(`route-${intent}`)} />
+      <Example />
       {state.open ? (
         <div className="hv42 hv43">
           <HomeV43Reveal
