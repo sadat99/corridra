@@ -1416,6 +1416,12 @@ test.describe('widths: no sideways scroll, axe clean, targets, the bar never cov
       // Bangladesh to China is the route PR 1 measured (859 px side by side); Taiwan to Australia has eight To Do rows.
       for (const route of ['BD-CN', 'TW-AU']) {
         const withEdit = await measure('owner', route);
+        // What is measured is the owner's route with its Edit buttons.
+        await expect(
+          editor(page)
+            .getByRole('button', { name: /^Edit / })
+            .first(),
+        ).toBeVisible();
         const without = await measure('admin', route);
         // Side by side Edit stands in the state line beside the state: a row grows only where that line has to wrap (the stale
         // row, by 15 px); stacked it may take a line of its own under the value, which is why the stacked budget has room.
