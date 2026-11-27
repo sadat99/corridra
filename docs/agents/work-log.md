@@ -5731,3 +5731,34 @@ Follow-up, 27 Nov 2026 (conductor): PR 677 Guardian G69 review fixes. G69's Opus
   - Screenshots at 390, 768 and 1440 px were taken locally under work/route-pack-caution (not committed).
 - Checks, all exit 0: build, operator connect-ai-form and p5c-desk (89 passed), design tests, typecheck, lint, format:check, and the route-pack-content integration file.
 - Not shown: the replaced spec failing on 8a40cebb. The full operator and ux suites were not run; CI is the gate.
+
+## 27 Nov 2026 - ADR-093 Phase 2c built: route pack CSV import, apply and export, PR 678 (conductor, squad run)
+
+**Request.** Owner, first hand in session session_0187kU9tSHgFpneDdBwfinN9, 26 Nov 2026: "start phase 2 and finish all a to z, under 68". Guardian G69 (session_0187kU9ry9kwDk5ZWeCjyzAB) reviews and merges. Branch claude/bold-edison-gn2iwu, head 324ff2fb, which merges main 90d3ecf4 (#677). The diff against main is exactly 5 files: the team-control route, foundations, the missions package.json, route-pack-sheet.ts and its test.
+
+**Built.** RoutePackSheetService:
+
+- `dryRun` (audit.read, no step-up) writes nothing.
+- `save` (config.manage plus step-up) runs route, then content in one appendBatch, then publishReviewed with expectedBasePackId.
+- `export` (missions.read, at most 20 routes) is formula safe. Every cell goes through csvCell, and import strips the escape, so export then import gives no change.
+
+Behaviour:
+
+- Go-live is warn only. The dry run reports warnings; the only refusal kept is ROUTE_PACK_LOCKED_CORE_EMPTIED.
+- Status is carried forward, never taken from the file. Keys not in the sheet carry forward. Expired policy refs are dropped only on PAUSED, and the reason records them.
+- The same saveId resumes a save; a partial save reports `saved`.
+- Two team-control actions answer 404 while CORRIDRA_ROUTE_PACK_FORM is off. The import has a streaming 2 MiB body cap; the other actions keep 4096.
+
+No migration, no visible change, nothing installed, no switch touched.
+
+**Reviews.** Two Class A reviews found 0 blocking. Their should-fix items were fixed in two rounds: money range, streaming cap, formula coverage for every risky character, partial-save reporting, expected base, command reuse, latest and in-force pack judging, and expired refs. Every fix was shown failing on old code.
+
+**Checks.**
+
+- Verifier at 318a744: 196/196 and build.
+- At a777ba7b: 104/104 focused, plus typecheck, lint, format, docs, preservation and build, all exit 0.
+- After merging main at 324ff2fb: typecheck and lint exit 0.
+
+**Not verified.** The integration suites on the merged head (local Postgres gone; CI is the gate). Full operator and ux suites (no visible change).
+
+**Next.** G69 reviews and merges 678. Then Phase 3, the editor screen (spec #672). route_pack_install for 2a still waits for the owner's word after G69 checks the production Postgres major.
