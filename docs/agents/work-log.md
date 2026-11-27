@@ -5791,7 +5791,7 @@ Follow-up, 27 Nov 2026 (conductor): PR 678 Guardian G69 review fixes. G69's Opus
 
 - 1a9e994b: with the switch on and the 2b marker absent, which is production today, both actions answer 404 before any body read or parse, the same as with the switch off.
 - d3b1a5bd: a Pending row on a Filled pack setting is listed as skipped in plain words in the dry run and the save, never dropped silently. It is a skipped note rather than an error, so a fresh template can still be loaded over a route that has data.
-- a742ddbf: state words are a Map, so "constructor" and "**proto**" are refused.
+- a742ddbf: state words are a Map, so `constructor` and `__proto__` are refused.
 - fe454cee: the M-10 file-route pin adds `app/api/team-control/[action]/route.ts`. CI on 781d56f5 failed on this tripwire.
 
 **Optional fixes**
@@ -5821,3 +5821,16 @@ Not run: the browser, e2e and operator specs found by the same grep.
 
 - Note 8: an export of 20 full routes can exceed the 1 MiB import cap. The import message says to split the file.
 - Note 10: STEP_UP_REQUIRED on a sheet save comes back nested in `report.errors[0].code`, not as the top-level error.
+
+Follow-up 2, 27 Nov 2026 (conductor): PR 678 G69 delta review fixes.
+
+- 8cf9c782: a thrown null after a write still returns the partial report, and the logged code is a string or a number only.
+- f236a8f0: the Pending pack-row note now reads "The pack keeps its current setting; the sheet cannot clear it." It names no screen that does not exist.
+- f236a8f0 also adds a null-throw test, and the dry-run test now counts `app.audit_event`. A dry run writes no audit rows today; this pins the actual behaviour.
+- `__proto__` wording fixed above.
+- 2 of the 30 tests fail on 5003c0a2.
+
+Checks at f236a8f0, all exit 0:
+
+- route-pack-sheet, route-pack-content and revamp-money-screens: 84 tests
+- typecheck, lint, format
