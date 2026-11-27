@@ -160,6 +160,7 @@ export const sheetWords = {
   sourcingAbsent:
     'This route pack has no sourcing profile, so sourcing.profile cannot be Filled. Use Pending or Not applicable.',
   pendingCustom: 'Skipped: a Pending row does not create a custom field.',
+  lockedPending: 'A pack setting cannot be cleared from the sheet. Use the route pack editor.',
   example: 'Remove EXAMPLE ROW from the label first. Example rows are never saved as they are.',
   customType: 'A custom field needs a type: text, number, money, date, choice, list or link.',
   customChoice: 'A choice field needs its allowed values in the format column, separated by |.',
@@ -431,9 +432,16 @@ function planRoute(
     if (field?.part === 'Locked') {
       // Locked rows ignore source and date cells: the pack's reason records why. sourcing.profile is a state row only, in
       // every state; the block itself enters through the pack (ADR-083).
+      const current = field.configurationKey
+        ? pack?.configuration[field.configurationKey]
+        : pack?.configuration.sourcing;
+      const packFilled = Array.isArray(current) ? current.length > 0 : current !== undefined;
       if (!field.configurationKey && row.value) fail(sheetWords.sourcingValue);
-      else if (row.state === 'PENDING') facts.delete(key);
-      else if (row.state === 'NOT_APPLICABLE') notApplicable();
+      else if (row.state === 'PENDING') {
+        facts.delete(key);
+        // Pending never clears what the pack holds; the row says so instead of passing silently.
+        if (packFilled) skipped.push({ row: row.row, key, message: sheetWords.lockedPending });
+      } else if (row.state === 'NOT_APPLICABLE') notApplicable();
       else if (field.configurationKey) {
         const items = listItems(row.value);
         const outside = items.find((item) => field.allowed && !field.allowed.includes(item));
