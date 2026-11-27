@@ -4,6 +4,7 @@ import { HomeV43 } from './home-v43';
 import { HomeV43ProcessSummary, HomeV43TrustSummary } from './home-v43-summaries';
 import { HomeV44Choice } from './home-v44-choice';
 import { HomeV44Closing } from './home-v44-closing';
+import { HomeV44Footer } from './home-v44-footer';
 import { HomeV44Hero } from './home-v44-hero';
 import { HomeV44Map } from './home-v44-map';
 import { HomeV44Status } from './home-v44-status';
@@ -23,6 +24,7 @@ export function HomeV44Summarised({ whatsapp }: { whatsapp: string | null }) {
         choice: (props) => <HomeV44Choice {...props} />,
         strip: <HomeV44Strip />,
         status: <HomeV44Status />,
+        footer: <HomeV44Footer />,
         closing: (props) => <HomeV44Closing {...props} />,
         map: (route) => <HomeV44Map {...route} />,
       }}

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useReducer, useState, type Dispatch, type ReactNode } from 'react';
+import { useCallback, useEffect, useReducer, useState, type Dispatch, type ReactNode } from 'react';
 import { ctaWords, type Shown } from './home-routes';
 import { HomeShared } from './home-shared';
 import { PlainLimits } from './home-v42-parts';
@@ -19,7 +19,7 @@ import { HomeV43Reveal } from './home-v43-reveal';
 import { HomeV43Solutions } from './home-v43-solutions';
 import { useLanguage } from './language-provider';
 import { placeText } from './place-words';
-import { v43, type PlaceCode } from '../lib/home-v43-data';
+import { hashId, v43, type PlaceCode } from '../lib/home-v43-data';
 import {
   homeV43Reducer,
   initialState,
@@ -29,7 +29,8 @@ import {
 } from '../lib/home-v43-state';
 import { routeHref, type RouteKey } from '../lib/home-routes-data';
 import { fill } from '../lib/i18n/fill';
-import { revealThenFocus } from '../lib/ux/anchor-focus';
+import { onAnchor, revealThenFocus } from '../lib/ux/anchor-focus';
+import { Dialog } from './ux/dialog';
 import './home-v42.css';
 import './home-v43.css';
 import './home-v43-more.css';
@@ -59,6 +60,8 @@ export type HomeV44Slots = {
   }) => ReactNode;
   /** A still row of route statuses under the route choice. */
   strip: ReactNode;
+  /** The page's own footer (the shared one is hidden on this page). */
+  footer: ReactNode;
   /** The route statuses as a list, after the evidence. */
   status: ReactNode;
   /** The close of the page, light, with the three jobs as cards. */
@@ -76,6 +79,11 @@ export type HomeV44Slots = {
     dispatch: Dispatch<HomeV43Event>;
   }) => ReactNode;
 };
+
+function isBriefHash() {
+  const id = hashId(window.location.hash);
+  return id === 'brief' || id.startsWith('home-brief');
+}
 
 export function HomeV43({
   whatsapp = null,
@@ -97,6 +105,31 @@ export function HomeV43({
   const [state, dispatch] = useReducer(homeV43Reducer, initialState);
   const [announcement, setAnnouncement] = useState('');
   useAnchorReveal(dispatch);
+  // Home page v4.4: the request form is a sheet. Any link to it (the #brief hash, the request form's own ids, an action
+  // on the page) opens the sheet; closing it clears the hash so the same link works again.
+  const [sheet, setSheet] = useState(false);
+  const sheetOn = v44 !== undefined;
+  useEffect(() => {
+    if (!sheetOn) return;
+    const isBrief = (id: string) => id === 'brief' || id.startsWith('home-brief');
+    const stop = onAnchor((id) => {
+      if (isBrief(id)) setSheet(true);
+    });
+    const fromHash = () => {
+      if (isBrief(hashId(window.location.hash))) setSheet(true);
+    };
+    window.addEventListener('hashchange', fromHash);
+    fromHash();
+    return () => {
+      stop();
+      window.removeEventListener('hashchange', fromHash);
+    };
+  }, [sheetOn]);
+  const closeSheet = () => {
+    setSheet(false);
+    if (isBriefHash())
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+  };
   // Cleared first and set on the next frame, so the same message said twice is spoken twice.
   const announce = useCallback((text: string) => {
     setAnnouncement('');
@@ -241,26 +274,49 @@ export function HomeV43({
           <PlainLimits />
         </>
       )}
-      <HomeV43Brief
-        state={state}
-        dispatch={dispatch}
-        whatsapp={whatsapp}
-        {...(v44
-          ? {
-              map: v44.map({
-                origin: state.origin,
-                target: state.target,
-                pick: false,
-                dispatch,
-              }),
-            }
-          : {})}
-      />
+      {v44 ? (
+        <Dialog open={sheet} onClose={closeSheet} title={t(v43('brief.eyebrow'))} keepMounted>
+          <div className="hv44-sheet">
+            <HomeV43Brief
+              state={state}
+              dispatch={dispatch}
+              whatsapp={whatsapp}
+              {...(v44
+                ? {
+                    map: v44.map({
+                      origin: state.origin,
+                      target: state.target,
+                      pick: false,
+                      dispatch,
+                    }),
+                  }
+                : {})}
+            />
+          </div>
+        </Dialog>
+      ) : (
+        <HomeV43Brief
+          state={state}
+          dispatch={dispatch}
+          whatsapp={whatsapp}
+          {...(v44
+            ? {
+                map: v44.map({
+                  origin: state.origin,
+                  target: state.target,
+                  pick: false,
+                  dispatch,
+                }),
+              }
+            : {})}
+        />
+      )}
       {v44 ? (
         v44.closing({ shown, href, cta, whatsapp })
       ) : (
         <HomeShared shown={shown} href={href} cta={cta} whatsapp={whatsapp} />
       )}
+      {v44 ? v44.footer : null}
     </div>
   );
 }

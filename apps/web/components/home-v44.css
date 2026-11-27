@@ -763,3 +763,82 @@
 .hv43 .hv44-jobs .ac1-job-icon {
   margin-block-start: var(--space-1);
 }
+
+/* ---- The request form as a sheet, and the page's own footer ---- */
+.ux-dialog:has(.hv44-sheet) {
+  inline-size: min(72rem, calc(100vw - 2rem));
+  max-block-size: calc(100dvh - 2rem);
+  border-radius: var(--radius-lg);
+}
+.hv43 .hv44-sheet .hv43-band {
+  padding-block: var(--space-3) var(--space-5);
+}
+.hv43 .hv44-sheet .hv43-head h2 {
+  font-size: var(--text-h1);
+}
+
+/* The shared footer gives way to the page's own, on this page only. */
+:root:has(.hv44-hero) .site-shell footer:not(.hv44-footer) {
+  display: none;
+}
+.hv43 .hv44-footer {
+  display: grid;
+  gap: var(--space-8);
+  padding-block: var(--space-12) var(--space-8);
+  border-block-start: 1px solid var(--border-subtle);
+}
+.hv43 .hv44-footer-logo {
+  display: block;
+  max-inline-size: 64rem;
+}
+.hv43 .hv44-footer-logo img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+.hv43 .hv44-footer-promise {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-lg);
+}
+.hv43 .hv44-footer-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6, 1.5rem) var(--space-5);
+}
+@media (min-width: 64rem) {
+  .hv43 .hv44-footer-groups {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.hv43 .hv44-footer-group h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.hv43 .hv44-footer-group ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv43 .hv44-footer-group a {
+  color: var(--text-2);
+  text-decoration: none;
+}
+.hv43 .hv44-footer-group a:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}
+.hv43 .hv44-footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-5);
+  padding-block-start: var(--space-4);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  border-block-start: 1px solid var(--border-subtle);
+}
