@@ -350,6 +350,7 @@ const packHistoryOf = (routeId: string, facts: FactsWorld): PackVersion[] =>
           reviewed: facts.unreviewedPack !== true,
           proposedAndPublishedByYou: true,
           proposedAndPublishedBySame: true,
+          reason: facts.unreviewedPack === true ? null : 'Sample pack change for the route editor',
         },
       ]
     : routeId === routeIds.bdEu
@@ -360,6 +361,7 @@ const packHistoryOf = (routeId: string, facts: FactsWorld): PackVersion[] =>
             reviewed: true,
             proposedAndPublishedByYou: false,
             proposedAndPublishedBySame: false,
+            reason: null,
           },
         ]
       : [];
