@@ -106,6 +106,10 @@
   background: var(--ac-positive-surface);
   color: var(--ac-ink);
 }
+.ux-kit-feedback[data-kind='caution'] {
+  background: var(--ac-warning-surface);
+  color: var(--ac-ink);
+}
 .ux-kit-feedback[data-kind='error'] {
   background: var(--ac-critical-surface);
   color: var(--ac-ink);

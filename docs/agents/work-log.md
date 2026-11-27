@@ -5719,3 +5719,15 @@ Shown failing on 8db293d7: 7 integration tests and the new operator spec. Four p
 Not verified: the full operator, ux, axe and screenshot evidence for the form line (an existing feedback line gains words), and the full integration suite (CI).
 
 Next: G69 reviews the PR. Then 2c rebases onto the new GoLiveResult shape (warnings in the dry run, the Locked Core refusal) and opens. route_pack_install for 2a still waits for the owner's word after G69 checks the production Postgres major.
+
+Follow-up, 27 Nov 2026 (conductor): PR 677 Guardian G69 review fixes. G69's Opus review found 0 blocking issues.
+
+- f90227c0: the ADR-093 Phases owner line is back to main's text, so the claim above that the Phases line is left to G69's records PR is true again. Section C now states the PAUSED rule plainly: a route moved to PAUSED may have a Locked Core row emptied, and moving it back to live only warns.
+- b0c44a83 and 9d600336: a publish with warnings now shows a caution line that stays until the next save, instead of a success line that cleared after 6 s.
+  - The shared feedback gains a `caution` kind on the existing `--ac-warning-surface` token, with role="status". No new class is added.
+  - The words end with "This does not mean the route is cleared."
+  - The operator spec checks the words, the caution kind, a focused axe pass, and that the line persists past 6.5 s.
+  - The spec now feeds a warning code the server can send from a pack write.
+  - Screenshots at 390, 768 and 1440 px were taken locally under work/route-pack-caution (not committed).
+- Checks, all exit 0: build, operator connect-ai-form and p5c-desk (89 passed), design tests, typecheck, lint, format:check, and the route-pack-content integration file.
+- Not shown: the replaced spec failing on 8a40cebb. The full operator and ux suites were not run; CI is the gate.
