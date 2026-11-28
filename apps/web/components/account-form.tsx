@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { operatorSignInPage } from '../lib/workspace-navigation';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { accountClient } from '../lib/neon-auth-client';
@@ -42,12 +43,18 @@ export function AccountForm({
   mode,
   codeSignIn = false,
   returnToEmailPages = false,
+  windowDesign = false,
 }: {
   mode: AccountFormMode;
   /** Set by the server from CORRIDRA_CUSTOMER_CODE_SIGNIN. Off keeps the form exactly as it was. */
   codeSignIn?: boolean;
   /** Set by the server from CORRIDRA_PULSE_ENABLED. Off keeps `/plan` as the only kept destination. */
   returnToEmailPages?: boolean;
+  /**
+   * Set by the server from CORRIDRA_UX_ACCESS_WINDOW_V11: the window carries Sign in, Create account and Team access
+   * itself, so the form leaves out its own copies of them. Off keeps the earlier links exactly.
+   */
+  windowDesign?: boolean;
 }) {
   const router = useRouter();
   const query = useSearchParams();
@@ -244,6 +251,12 @@ export function AccountForm({
             : 'Enter the email address you used to sign up and the six-digit code from your email. '}
           You do not need a verification link. If you need another code, request one below. If this
           address already has a verified account, no code is sent: sign in, or reset your password.
+        </p>
+      )}
+      {mode === 'signup' && !windowDesign && (
+        <p>
+          Already have an account? Sign in, or reset your password. Signing up again with the same
+          address does not create a second account and no code is sent.
         </p>
       )}
       {mode === 'signup' && (
@@ -480,17 +493,47 @@ export function AccountForm({
           Request a New Code
         </button>
       )}
-      {mode === 'signin' && (
+      {mode === 'signin' && windowDesign && (
         <Link prefetch={false} className="text-link" href={accessPath('/verify-email')}>
           Verify Your Email
         </Link>
       )}
-      {mode === 'verify' && (
+      {mode === 'signin' && !windowDesign && (
+        <>
+          <details className="access-more account-more">
+            <summary>More ways in</summary>
+            <ul className="account-more-links">
+              <li>
+                <Link prefetch={false} className="text-link" href={accessPath('/signup')}>
+                  Create an Account
+                </Link>
+              </li>
+              <li>
+                <Link prefetch={false} className="text-link" href={accessPath('/verify-email')}>
+                  Verify Your Email
+                </Link>
+              </li>
+              <li>
+                <a className="text-link" href={operatorSignInPage}>
+                  Invited Operator Sign-in
+                </a>
+              </li>
+            </ul>
+          </details>
+          <p className="access-signin-row">
+            <span>New here?</span>
+            <Link prefetch={false} className="text-link" href="/plan">
+              Start a Request
+            </Link>
+          </p>
+        </>
+      )}
+      {(mode === 'verify' || (mode === 'signup' && !windowDesign)) && (
         <Link prefetch={false} className="text-link" href={accessPath('/forgot-password')}>
           Forgot Your Password?
         </Link>
       )}
-      {mode !== 'signin' && mode !== 'signup' && (
+      {mode !== 'signin' && !(windowDesign && mode === 'signup') && (
         <Link prefetch={false} className="text-link" href={accessPath('/signin')}>
           Back to Sign-in
         </Link>

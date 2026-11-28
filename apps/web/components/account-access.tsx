@@ -1,13 +1,26 @@
 import { AccountWindow } from './account-window';
+import { AccessState } from './access-state';
+import { AccessOptions } from './access-options';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { readNeonAuthConfig } from '@corridra/config';
 import { AccountForm, type AccountFormMode } from './account-form';
+import { AccountAccessBefore } from './account-access-before';
 import { PendingRequestNotice } from './pending-request-notice';
 import { realUseEnabled } from '@corridra/auth/customer-production';
-import { emailReturnPagesOn } from '../lib/ux-switches';
+import { accessHelp } from '../lib/access-doors';
+import { emailReturnPagesOn, uxSwitchOn } from '../lib/ux-switches';
 import '../app/access/access.css';
+
+/**
+ * The customer account pages: sign-in, email check and password reset. While CORRIDRA_UX_ACCESS_WINDOW_V11 is on (live
+ * by default) they open in the two-pane window of the owner's canvas board v11; set to "false", they are the earlier
+ * pages exactly. Without the account provider no form is drawn: the window says sign-in is not switched on here yet
+ * and offers a request without an account.
+ */
 export function AccountAccess({ title, mode }: { title: string; mode: AccountFormMode }) {
+  if (!uxSwitchOn('CORRIDRA_UX_ACCESS_WINDOW_V11'))
+    return <AccountAccessBefore title={title} mode={mode} />;
   const config = readNeonAuthConfig();
   const lead =
     mode === 'forgot' || mode === 'reset'
@@ -32,29 +45,47 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
             mode={mode}
             codeSignIn={mode === 'signin' && process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true'}
             returnToEmailPages={emailReturnPagesOn()}
+            windowDesign
           />
         </Suspense>
+      ) : mode === 'signin' ? (
+        <>
+          <AccessState
+            kind="unavailable"
+            actions={
+              <Link prefetch={false} className="primary-link" href="/plan">
+                Start a Request Without an Account
+              </Link>
+            }
+          >
+            <p>
+              Customer sign-in is not switched on here yet. You can still start a request without an
+              account. Team members sign in separately.
+            </p>
+          </AccessState>
+          <AccessOptions {...accessHelp.signInFallback} />
+        </>
       ) : (
-        <form className="operator-form" aria-describedby="aw-off">
-          <label className="field">
-            Email
-            <input type="email" disabled placeholder="name@company.com" />
-          </label>
-          <button className="primary-link" type="button" disabled>
-            Continue
-          </button>
-          <p id="aw-off" className="aw-off">
-            Customer sign-in is not switched on here yet. You can still send a request.
-          </p>
-        </form>
+        <AccessState kind="unavailable">
+          <p>Account access is not available yet.</p>
+          <Link prefetch={false} className="text-link" href="/plan">
+            {realUseEnabled()
+              ? 'Start a Request Without an Account'
+              : 'Prepare an Example Request Without an Account'}
+          </Link>
+        </AccessState>
       )}
-      {mode === 'signin' && (
+      {config && mode === 'signin' && (
         <div className="aw-noacc">
           <span>
             <b>No account yet?</b>
             You can still send a request first and create the account after.
           </span>
-          <Link prefetch={false} className="aw-ghost" href="/start">
+          <Link
+            prefetch={false}
+            className="aw-ghost"
+            href={uxSwitchOn('CORRIDRA_UX_START_V13') ? '/start' : '/plan'}
+          >
             Start a request
           </Link>
         </div>
