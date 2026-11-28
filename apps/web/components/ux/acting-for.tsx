@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import { activeWorkspaces } from '../../lib/workspace-choice';
 import { ActingForMenu } from './acting-for-menu';
 
 /**
@@ -8,18 +7,14 @@ import { ActingForMenu } from './acting-for-menu';
  * Choosing grants nothing; the request page and its API repeat the identity and role checks.
  */
 async function ActingForList() {
-  let rows;
+  // Loaded here, as the closed-account gate loads its reads, so the frame itself carries no server-only import.
+  let workspaces;
   try {
-    // Loaded here, as the closed-account gate does, so the frame itself carries no server-only import.
-    const { foundations } = await import('../../lib/foundations');
-    const s = foundations();
-    if (!s) return null;
-    await s.ready;
-    rows = await s.customerWorkspaces.list();
+    const { actingForWorkspaces } = await import('../../lib/acting-for-workspaces');
+    workspaces = await actingForWorkspaces();
   } catch {
     return null;
   }
-  const workspaces = activeWorkspaces(rows).map((w) => ({ id: w.id, name: w.name, role: w.role }));
   return workspaces.length === 0 ? null : <ActingForMenu workspaces={workspaces} />;
 }
 
