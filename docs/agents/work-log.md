@@ -6044,7 +6044,7 @@ Checks at f236a8f0, all exit 0:
 
 - PR 699 squash-merged 28 Nov 2026 as 2223e060fbad345975565c20451b7e3a6bbcc880 by Guardian G73 from exact head 3f3ee3e4. 24 checks green; mergeable clean. Builder C (Sonnet). Opus review MERGE-READY yes; no blocking or should-fix findings.
 - Contents: the TW-AU browser test checks all 17 sections for a stray Change; packOutcome and factsOutcome read tooLarge from the 400 code ROUTE_PACK_TOO_LARGE, any 413, or (pack only) the old words; the status Review step is 790 px, was 849, at 1440x900 with no inner scroll (it scrolls inside the dialog at 320x568 by design); "Now: none" is replaced by "Current setting: ...", "Current setting: nothing is set" and "Current status: Active" (spec 8.9 and the Status step updated).
-- deploy dpl_9hj51wLesTz2XNaD1uPifjQFMxrv
+- deploy dpl_9hj51wLesTz2XNaD1uPifjQFMxrv READY (confirmed by G73)
 - Open: the server half is in progress on claude/route-pack-followups-server (F2 base-pack read, ROUTE_PACK_NOT_PUBLISHED, mirror key without user, plan fingerprint ROUTE_PACK_PLAN_CHANGED, earlier facts named on a second Try the Rest Again, server emits ROUTE_PACK_TOO_LARGE).
 
 **Next action.** Finish and merge the server half. Owner items unchanged: 2b install approval (production Postgres major check first); BD-CN template and the 7 other launch routes; Phase 4 per route on the owner's word.
