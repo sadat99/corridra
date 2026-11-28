@@ -9,7 +9,6 @@ import {
   listOptions,
   manualOf,
   nextPackCommand,
-  notPublishedWords,
   packFingerprint,
   packKeyPattern,
   packOutcome,
@@ -174,25 +173,17 @@ describe('packOutcome: every status and code', () => {
     ['preview', 404, null, null, true, 'notFound'],
     ['publish', 500, null, null, true, 'offline'],
     ['publish', 0, null, null, true, 'offline'],
-    [
-      'publish',
-      409,
-      'ROUTE_PACK_POLICY_EXPIRED',
-      `Expired. ${notPublishedWords}`,
-      true,
-      'savedNotPublished',
-    ],
-    ['publish', 403, null, `Refused. ${notPublishedWords}`, false, 'proposed'],
+    // Follow-up per G73: the page knows a saved proposal by its code, whatever the words say.
+    ['publish', 409, 'ROUTE_PACK_NOT_PUBLISHED', 'Expired.', true, 'savedNotPublished'],
+    ['publish', 403, 'ROUTE_PACK_NOT_PUBLISHED', 'Refused.', false, 'proposed'],
+    ['publish', 409, null, `Refused. ${routePackWords.notPublished}`, true, 'invalid'],
     // A preview never says a proposal was saved.
-    ['preview', 409, null, `Refused. ${notPublishedWords}`, true, 'invalid'],
+    ['preview', 409, 'ROUTE_PACK_NOT_PUBLISHED', 'Refused.', true, 'invalid'],
   ];
   test.each(cases)('%s %i %s', (mode, status, code, error, onePerson, outcome) => {
     expect(packOutcome(mode as 'preview' | 'publish', status, code, error, onePerson)).toBe(
       outcome,
     );
-  });
-  test('the saved-not-published words are the domain words', () => {
-    expect(notPublishedWords).toBe(routePackWords.notPublished);
   });
 });
 

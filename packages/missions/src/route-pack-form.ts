@@ -220,7 +220,7 @@ export async function publishReviewed(
     });
     // The proposal table keeps at most 8192 octets; say so plainly instead of meeting the database refusal.
     if (storedTextOctets(proposed) > proposalOctetBudget)
-      throw new DomainError(routePackWords.proposalTooLarge, 400, 'ROUTE_PACK_INVALID');
+      throw new DomainError(routePackWords.proposalTooLarge, 400, 'ROUTE_PACK_TOO_LARGE');
     await deps.operations.command(ctx, {
       id: proposalId,
       action: 'propose',
@@ -249,13 +249,18 @@ export async function publishReviewed(
   } catch (error) {
     // Propose and decide are two transactions: a refused decision leaves the proposal, so say so and how to finish. Any
     // other failure keeps its own status and log.
-    if (error instanceof DomainError)
-      throw new DomainError(
-        `${error.message} ${routePackWords.notPublished}`,
-        error.status,
-        error.code,
-      );
-    throw error;
+    if (!(error instanceof DomainError)) throw error;
+    // The decision refuses, without a code, a pack published after the base was read: that is the pack changed, for every
+    // caller that named the pack it read.
+    if (error.status === 409 && !error.code && input.expectedBasePackId !== undefined) {
+      const [route] = (await deps.content.overview(ctx, { routeIds: [input.routeId] })).routes;
+      if ((route?.pack?.id ?? null) !== input.expectedBasePackId) throw packChanged();
+    }
+    const words = `${error.message} ${routePackWords.notPublished}`;
+    // A stale authenticator check keeps its code, so the page asks for the check again and the same command id finishes.
+    if (error.status === 401) throw new DomainError(words, error.status, error.code);
+    // Follow-up per G73: one code for a saved proposal whose publish was refused, so the page never reads the words.
+    throw new DomainError(words, error.status, 'ROUTE_PACK_NOT_PUBLISHED');
   }
   return {
     proposalId,
@@ -475,34 +480,27 @@ function requestedPack(change: RoutePackChange, from: PackState | null): PackSta
   };
 }
 // The proposal already stored under the command id, judged against the pack in force. An unpublished proposal must stand on
-// that pack, else the pack changed since; the change is then judged against it, its base. A published proposal's base is an
-// older pack whose configuration no read returns, only its status: the change is rebuilt on the proposed pack, and its kind is
-// told from the status, since a settings change keeps the base status and a status change to the same status is refused as
-// no change. Known limit: after publish, the same command id with a list left out, or with Remove sourcing profile on a base
-// that had no sourcing block, rebuilds to the same pack and answers as a duplicate; nothing is written twice.
+// that pack, else the pack changed since; the change is then judged against it, its base. A published proposal is judged
+// against the base pack it was proposed on, read with it: the change is rebuilt on that base, and its kind is told from the
+// base status, since a settings change keeps the base status and a status change to the same status is refused as no change.
 async function proposalStanding(
   deps: PublishDeps,
   ctx: RequestContext,
   change: RoutePackChange,
   existing: ExistingProposal,
   current: (PackState & { id: string }) | null,
-): Promise<{ published: false } | { published: true; baseStatus: PackStatus | null }> {
+): Promise<{ published: false } | { published: true; base: PackState | null }> {
   if (existing.pack.routeId !== change.routeId) throw commandReused();
   const history = await deps.content.packHistory(ctx, { routeId: change.routeId });
   if (!history.some((pack) => pack.packId === existing.pack.id)) {
     if (existing.basePackId !== (current?.id ?? null)) throw packChanged();
     return { published: false };
   }
-  const base =
-    existing.basePackId === null
-      ? null
-      : history.find((pack) => pack.packId === existing.basePackId);
-  // A base older than the history reaches leaves the kind untold; the rebuild still judges the values.
-  if (base !== undefined) {
-    const wasStatusChange = base !== null && base.status !== existing.pack.status;
-    if ((change.kind === 'status') !== wasStatusChange) throw commandReused();
-  }
-  return { published: true, baseStatus: base?.status ?? null };
+  // A base named but not found leaves nothing to rebuild on, so the change cannot be proven the same.
+  if (existing.basePackId !== null && !existing.base) throw commandReused();
+  const wasStatusChange = existing.base !== null && existing.base.status !== existing.pack.status;
+  if ((change.kind === 'status') !== wasStatusChange) throw commandReused();
+  return { published: true, base: existing.base };
 }
 // The checks a preview and a publish share, in this order: the proposal read first, under config.manage (so the owner with a
 // fresh authenticator check), so a person who may not change packs is refused before any route or pack is read; then the route,
@@ -522,7 +520,7 @@ async function prepareRoutePackChange(
   const current = route.pack;
   const standing = existing && (await proposalStanding(deps, ctx, change, existing, current));
   const duplicate = standing ? standing.published : false;
-  const requested = requestedPack(change, existing && duplicate ? existing.pack : current);
+  const requested = requestedPack(change, standing && standing.published ? standing.base : current);
   const { configuration, removedNames } = await deps.content.withoutExpiredRefs(
     ctx,
     requested.configuration,
@@ -554,7 +552,7 @@ async function prepareRoutePackChange(
     current,
     duplicate,
     // A published proposal answers for its own pack and the version before it.
-    statusFrom: standing?.published ? standing.baseStatus : (current?.status ?? null),
+    statusFrom: standing?.published ? (standing.base?.status ?? null) : (current?.status ?? null),
     baseVersion:
       existing && duplicate
         ? existing.basePackId === null
@@ -587,7 +585,7 @@ async function assignmentsPreserved(
 
 // What publishing the change would do, read only: no proposal and no pack. The proposal read under config.manage comes first, so
 // a preview needs the owner and a fresh authenticator check, as a publish does. A change already published under its command id
-// answers as the duplicate it is, with no changed keys: the configuration of its base can no longer be read.
+// answers as the duplicate it is, with no changed keys, as spec 17A says (kept by Guardian G73).
 export async function previewRoutePackChange(
   deps: PublishDeps,
   ctx: RequestContext,
@@ -623,7 +621,7 @@ export async function previewRoutePackChange(
       blocked: null,
     };
   if (storedTextOctets(proposed) > proposalOctetBudget)
-    throw new DomainError(routePackWords.proposalTooLarge, 400, 'ROUTE_PACK_INVALID');
+    throw new DomainError(routePackWords.proposalTooLarge, 400, 'ROUTE_PACK_TOO_LARGE');
   const judged = await deps.content.goLive(ctx, {
     routeId: change.routeId,
     pack: { status: next.status, configuration: next.configuration },
@@ -643,26 +641,14 @@ export async function publishRoutePackChange(
   change: RoutePackChange,
 ): Promise<RoutePackChangePublished> {
   const next = await prepareRoutePackChange(deps, ctx, change);
-  const basePackId = next.current?.id ?? null;
-  let published: Awaited<ReturnType<typeof publishReviewed>>;
-  try {
-    published = await publishReviewed(deps, ctx, {
-      commandId: change.commandId,
-      routeId: change.routeId,
-      status: next.status,
-      configuration: next.configuration,
-      reason: next.reason,
-      expectedBasePackId: basePackId,
-    });
-  } catch (error) {
-    // The decision refuses, without a code, a pack published after the base was read here. Any other refusal without a code
-    // (the independent reviewer before the one-person install) keeps its own words.
-    if (error instanceof DomainError && error.status === 409 && !error.code) {
-      const [route] = (await deps.content.overview(ctx, { routeIds: [change.routeId] })).routes;
-      if ((route?.pack?.id ?? null) !== basePackId) throw packChanged();
-    }
-    throw error;
-  }
+  const published = await publishReviewed(deps, ctx, {
+    commandId: change.commandId,
+    routeId: change.routeId,
+    status: next.status,
+    configuration: next.configuration,
+    reason: next.reason,
+    expectedBasePackId: next.current?.id ?? null,
+  });
   return {
     version: published.version,
     duplicate: published.duplicate,

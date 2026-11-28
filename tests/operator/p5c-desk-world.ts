@@ -22,6 +22,8 @@ const now = new Date().toISOString();
 const later = new Date(Date.now() + 200 * 86400000).toISOString();
 
 export const routeIds = { bdCn: id(101), bdEu: id(102), twAu: id(103) };
+// The list's opaque key of the signed-in person (follow-up per G73): the editor names its sessionStorage copy with it.
+export const stageScope = 'SyntheticStageScope0001';
 export const catalogue = {
   routes: [
     { id: routeIds.bdCn, origin_market: 'BD', destination_market: 'CN' },
@@ -629,6 +631,7 @@ export async function answerReads(page: Page, given: Partial<World> = {}): Promi
                   ...factsCapabilities,
                   onePersonPublication: facts.onePerson === true,
                 },
+                stageScope,
                 routes: views.map((view) => summariseRoute(view, liveStatuses)),
               }),
             );

@@ -1427,7 +1427,7 @@ describe('route pack content on the database', () => {
     };
     await expect(publishReviewed(flaky, owner(), first)).rejects.toMatchObject({
       status: 409,
-      code: 'FORCED',
+      code: 'ROUTE_PACK_NOT_PUBLISHED',
       message: `Forced refusal between propose and decide ${routePackWords.notPublished}`,
     });
     expect(await packVersions(routeId)).toHaveLength(1);
@@ -1450,6 +1450,39 @@ describe('route pack content on the database', () => {
       version: 2,
       duplicate: true,
     });
+  });
+
+  test('the proposal read names its base pack, status and configuration, and none for the first pack; another workspace is refused (follow-up per G73)', async () => {
+    formSwitch(true);
+    const routeId = await newRoute();
+    const firstCommand = randomUUID();
+    const firstConfiguration = liveConfiguration();
+    await publishReviewed(deps(), owner(), {
+      commandId: firstCommand,
+      routeId,
+      status: 'DRAFT',
+      configuration: firstConfiguration,
+      reason,
+    });
+    const first = await content.proposalOf(owner(), commandStepId(firstCommand, 'propose'));
+    expect(first).toMatchObject({ basePackId: null, base: null });
+    const nextCommand = randomUUID();
+    await publishReviewed(deps(), owner(), {
+      commandId: nextCommand,
+      routeId,
+      status: 'TESTING',
+      configuration: liveConfiguration({ localities: ['gazipur'] }),
+      reason,
+    });
+    const next = await content.proposalOf(owner(), commandStepId(nextCommand, 'propose'));
+    expect(next?.basePackId).toBe(first?.pack.id);
+    expect(next?.base).toEqual({ status: 'DRAFT', configuration: firstConfiguration });
+    await expect(
+      content.proposalOf(
+        { ...f.users.other.ctx, tenantId: f.tenantA },
+        commandStepId(nextCommand, 'propose'),
+      ),
+    ).rejects.toMatchObject({ status: 403 });
   });
 
   test('a decision that fails for a reason other than a refusal keeps its own error', async () => {
@@ -1539,7 +1572,7 @@ describe('route pack content on the database', () => {
       }),
     ).rejects.toMatchObject({
       status: 400,
-      code: 'ROUTE_PACK_INVALID',
+      code: 'ROUTE_PACK_TOO_LARGE',
       message: routePackWords.proposalTooLarge,
     });
     expect(

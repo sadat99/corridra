@@ -194,6 +194,9 @@ const goLiveInput = z
 
 export type ExistingProposal = {
   basePackId: string | null;
+  // The pack the proposal was built on, read with it, so a replay is rebuilt on that pack; null for a route's first pack, or
+  // when the base row is not found.
+  base: { status: PackStatus; configuration: RouteConfiguration } | null;
   reason: string;
   pack: z.infer<typeof routePack>;
 };
@@ -328,6 +331,34 @@ export async function loadRoutePackState(db: DatabaseClient, tenantId: string) {
       ]),
     ),
   };
+}
+// The content records with these ids (a save's derived step ids, at most one per route of a file), read inside the caller's
+// transaction, so the sheet can tell a continued save from a first send and name the facts an earlier answer wrote.
+export async function contentRecordsById(db: DatabaseClient, tenantId: string, ids: string[]) {
+  if (!ids.length) return [];
+  const rows = (
+    await db.query<{ id: string; route_id: string; version: number; document: unknown }>(
+      'SELECT id,route_id,version,document FROM app.route_pack_content WHERE tenant_id=$1 AND id=ANY($2::uuid[])',
+      [tenantId, ids],
+    )
+  ).rows;
+  return rows.map((row) => ({
+    id: row.id,
+    routeId: row.route_id,
+    version: row.version,
+    document: parseContentDocument(row.document),
+  }));
+}
+// The ids among these that name a published pack of any version (a save's derived pack ids, at most one per route of a file),
+// read inside the caller's transaction, so a save whose pack a teammate has since replaced is still known as continued.
+export async function packIdsWritten(db: DatabaseClient, tenantId: string, ids: string[]) {
+  if (!ids.length) return [];
+  return (
+    await db.query<{ id: string }>(
+      'SELECT id FROM app.corridor_pack_version WHERE tenant_id=$1 AND id=ANY($2::uuid[])',
+      [tenantId, ids],
+    )
+  ).rows.map((row) => row.id);
 }
 const today = () => new Date().toISOString().slice(0, 10);
 const notFound = () => new DomainError(routePackWords.notFound, 404);
@@ -621,14 +652,24 @@ export class RoutePackContentService {
     const proposalId = z.uuid().parse(id);
     return withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
       const row = (
-        await db.query<{ base_pack_id: string | null; proposed_pack: unknown; reason: string }>(
-          'SELECT base_pack_id,proposed_pack,reason FROM app.configuration_proposal WHERE tenant_id=$1 AND id=$2',
+        await db.query<{
+          base_pack_id: string | null;
+          proposed_pack: unknown;
+          reason: string;
+          base_status: PackStatus | null;
+          base_configuration: RouteConfiguration | null;
+        }>(
+          'SELECT q.base_pack_id,q.proposed_pack,q.reason,b.status AS base_status,b.configuration AS base_configuration FROM app.configuration_proposal q LEFT JOIN app.corridor_pack_version b ON b.tenant_id=q.tenant_id AND b.id=q.base_pack_id WHERE q.tenant_id=$1 AND q.id=$2',
           [ctx.tenantId, proposalId],
         )
       ).rows[0];
       return row
         ? {
             basePackId: row.base_pack_id,
+            base:
+              row.base_status && row.base_configuration
+                ? { status: row.base_status, configuration: row.base_configuration }
+                : null,
             reason: row.reason,
             pack: routePack.parse(row.proposed_pack),
           }

@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { routePackContentOctetBudget } from '@corridra/domain/route-pack-standard';
@@ -42,6 +42,8 @@ const sheetRequest = z
     csv: z.string(),
     saveId: z.uuid().optional(),
     reason: z.string().optional(),
+    // Follow-up per G73: the check's plan fingerprint; the sheet service requires it on a save, so a save without one is 400.
+    planFingerprint: z.string().optional(),
   })
   .strict();
 const sheetBodyOctets = 2 * sheetLimits.octets;
@@ -69,6 +71,13 @@ const sheetRefusal = (report: SheetReport) =>
 async function routePackModuleOn(s: { routePackSheet: { available(): Promise<boolean> } }) {
   return uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM') && (await s.routePackSheet.available());
 }
+// Follow-up per G73: the key the route pack editor names its sessionStorage copy with, one per person and workspace. Keyed
+// under AUTH_SECRET with a purpose label, so it is opaque and no actor id leaves the server.
+const stageScopeOf = (secret: string, tenantId: string, userId: string) =>
+  createHmac('sha256', secret)
+    .update(`corridra:route-pack-stage:v1:${tenantId}:${userId}`)
+    .digest('base64url')
+    .slice(0, 22);
 // Reads at most `limit` octets, stopping as soon as the body passes it; a client-supplied Content-Length is not trusted.
 async function boundedBody(request: Request, limit: number) {
   const reader = request.body?.getReader();
@@ -215,6 +224,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           rows,
           saveId: v.saveId,
           reason: v.reason,
+          planFingerprint: v.planFingerprint,
         });
         if (report.ok) return Response.json(report, { status: 201, headers });
         return Response.json(
@@ -239,6 +249,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           action,
           new URL(request.url).searchParams,
           liveStatuses,
+          () => stageScopeOf(s.config.AUTH_SECRET, tenantId, identity.userId),
         ),
         { headers },
       );

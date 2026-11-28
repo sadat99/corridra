@@ -35,13 +35,21 @@ export type SheetWorld = {
    */
   manyRoutes?: number;
   /** Every body sent to route-pack-import, in order. */
-  bodies: Array<{ mode: string; csv: string; saveId?: string; reason?: string }>;
+  bodies: Array<{
+    mode: string;
+    csv: string;
+    saveId?: string;
+    reason?: string;
+    planFingerprint?: string;
+  }>;
   /** The routes query word of every export, in order. */
   exports: string[];
   /** The routeId of every fact history read, in order. */
   factReads: string[];
 };
 export const exportName = 'route-packs-2026-11-27.csv';
+/** The plan fingerprint of a clean check (follow-up per G73): a save sends it back. */
+export const checkedFingerprint = 'SyntheticPlanFingerprintOfTheCleanCheck0001';
 /** The export file: a byte order mark, then text with characters beyond ASCII, which must arrive byte for byte. */
 export const exportText = '\uFEFFroute,value\r\nBD-CN,Société বাংলা\r\n';
 const markets = [
@@ -87,6 +95,7 @@ export function cleanReport(): SheetReport {
     errors: [],
     warnings: [],
     readinessInvalidated: true,
+    planFingerprint: checkedFingerprint,
     routes: [
       plan('BD-CN', {
         pack: { changed: true, changedFields: ['languages'], status: 'ACTIVE', nextVersion: 3 },

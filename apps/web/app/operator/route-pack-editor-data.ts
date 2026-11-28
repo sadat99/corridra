@@ -120,6 +120,8 @@ export type OverviewData = {
   refresh: () => void;
   /** ADR-093 Phase 3, PR 4: the one-person module is installed (the list's capabilities), for the import save line. */
   onePersonPublication: boolean;
+  /** Follow-up per G73: the list's opaque key of the signed-in person, naming the editor's sessionStorage copy; null unread. */
+  stageScope: string | null;
 };
 /**
  * The list of routes with their completeness. Asked once `enabled`, and again whenever `refreshKey` changes identity (the
@@ -135,6 +137,7 @@ export function useRoutePackOverview(
     state: ReadState;
     routes: RouteSummary[];
     onePersonPublication?: boolean;
+    stageScope?: string | null;
   }>({
     state: 'unknown',
     routes: [],
@@ -153,6 +156,7 @@ export function useRoutePackOverview(
       state: ReadState;
       routes: RouteSummary[];
       onePersonPublication?: boolean;
+      stageScope?: string | null;
     }) =>
       setResult((shown) =>
         keepShown && next.state !== 'ready' && shown.state === 'ready' ? shown : next,
@@ -167,6 +171,10 @@ export function useRoutePackOverview(
             answer.state === 'ready' && Array.isArray(answer.body.routes) ? answer.body.routes : [],
           onePersonPublication:
             answer.state === 'ready' && answer.body.capabilities?.onePersonPublication === true,
+          stageScope:
+            answer.state === 'ready' && typeof answer.body.stageScope === 'string'
+              ? answer.body.stageScope
+              : null,
         });
       })
       .catch(() => live && show({ state: 'error', routes: [] }))
@@ -187,6 +195,7 @@ export function useRoutePackOverview(
     state: result.state,
     routes: result.routes,
     onePersonPublication: result.onePersonPublication === true,
+    stageScope: result.stageScope ?? null,
     retry,
     retrying,
     refresh,

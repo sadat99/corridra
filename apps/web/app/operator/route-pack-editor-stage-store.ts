@@ -13,7 +13,12 @@ import type { FactDraft, Refusal } from '../../lib/route-pack-editor-fact-form';
 // section, and mirrored to sessionStorage as a convenience only. Everything touching the storage is in try/catch: the editor
 // works the same without it. The mirror holds the edits and the version they were made on, never the reason, and the key is
 // removed when nothing is staged. Nothing here runs unless the editor is drawn, so with the switch off no key is ever written.
-export const mirrorKey = (tenant: string, routeId: string) =>
+// Follow-up per G73: the key carries the list's stageScope (an opaque key of the signed-in person), so another person in the
+// same tab never gets the edits back; with no scope there is no copy. A copy under the earlier key without a person is removed,
+// never restored.
+export const mirrorKey = (tenant: string, scope: string, routeId: string) =>
+  `corridra:route-pack-stage:v2:${tenant}:${scope}:${routeId}`;
+const legacyMirrorKey = (tenant: string, routeId: string) =>
   `corridra:route-pack-stage:${tenant}:${routeId}`;
 function readMirror(key: string): Stage | null {
   try {
@@ -24,11 +29,12 @@ function readMirror(key: string): Stage | null {
   }
 }
 /** Whether a copy of the edits is in the tab's storage now (so "Your changes are kept for this tab session" is true). */
-export const isMirrored = (tenant: string, routeId: string) =>
-  readMirror(mirrorKey(tenant, routeId)) !== null;
-export function clearMirror(tenant: string, routeId: string) {
+export const isMirrored = (tenant: string, scope: string | null, routeId: string) =>
+  scope !== null && readMirror(mirrorKey(tenant, scope, routeId)) !== null;
+export function clearMirror(tenant: string, scope: string | null, routeId: string) {
+  if (scope === null) return;
   try {
-    window.sessionStorage.removeItem(mirrorKey(tenant, routeId));
+    window.sessionStorage.removeItem(mirrorKey(tenant, scope, routeId));
   } catch {
     // The page works without the copy.
   }
@@ -37,9 +43,12 @@ export function clearMirror(tenant: string, routeId: string) {
  * Whether the tab's copy is still the stage that was sent. A save can land after the person left the route and came back to
  * it, by when the copy holds newer edits; the save clears only a copy of what it sent.
  */
-export function mirrorMatches(tenant: string, routeId: string, sent: Stage) {
+export function mirrorMatches(tenant: string, scope: string | null, routeId: string, sent: Stage) {
+  if (scope === null) return false;
   try {
-    return window.sessionStorage.getItem(mirrorKey(tenant, routeId)) === serialiseStage(sent);
+    return (
+      window.sessionStorage.getItem(mirrorKey(tenant, scope, routeId)) === serialiseStage(sent)
+    );
   } catch {
     return false;
   }
@@ -74,14 +83,16 @@ export type RouteSession = {
  */
 export function useRouteSession(
   tenant: string,
+  /** The list's stageScope; null (not read) means no copy is read or written. */
+  scope: string | null,
   routeId: string,
   savedVersion: number | null,
   /** Only the owner edits: for anyone else nothing is read from or written to the tab's storage. */
-  enabled: boolean,
+  owner: boolean,
 ): RouteSession {
+  const key = owner && scope !== null ? mirrorKey(tenant, scope, routeId) : null;
   const [raw, setRaw] = useState<{ stage: Stage; restored: number }>(() => {
-    const stage =
-      typeof window === 'undefined' || !enabled ? null : readMirror(mirrorKey(tenant, routeId));
+    const stage = typeof window === 'undefined' || key === null ? null : readMirror(key);
     return stage ? { stage, restored: stageCount(stage) } : { stage: emptyStage(0), restored: 0 };
   });
   const [open, setOpen] = useState<OpenRow | null>(null);
@@ -103,18 +114,25 @@ export function useRouteSession(
       }),
     [savedVersion],
   );
+  // A copy under the earlier key, which named no person, is removed when the route is drawn and never restored.
+  useEffect(() => {
+    try {
+      window.sessionStorage.removeItem(legacyMirrorKey(tenant, routeId));
+    } catch {
+      // The page works without the copy.
+    }
+  }, [tenant, routeId]);
   // The copy: written once the route is read, removed when nothing is staged.
   const text = stageCount(stage) > 0 ? serialiseStage(stage) : null;
   useEffect(() => {
-    if (!enabled || savedVersion === null) return;
+    if (key === null || savedVersion === null) return;
     try {
-      const key = mirrorKey(tenant, routeId);
       if (text) window.sessionStorage.setItem(key, text);
       else window.sessionStorage.removeItem(key);
     } catch {
       // The page works without the copy.
     }
-  }, [enabled, tenant, routeId, savedVersion, text]);
+  }, [key, savedVersion, text]);
   // The browser asks before the tab closes only while something is staged.
   const staged = text !== null;
   useEffect(() => {

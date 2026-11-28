@@ -248,6 +248,7 @@ export function RouteEditorShell({
   routes,
   summary,
   tenant,
+  stageScope,
   role,
   refreshKey,
   address,
@@ -259,6 +260,8 @@ export function RouteEditorShell({
   routes: RouteSummary[];
   summary: RouteSummary;
   tenant: string;
+  /** The list's opaque key of the signed-in person, naming the sessionStorage copy of unsaved edits (follow-up per G73). */
+  stageScope: string | null;
   role: string;
   refreshKey: unknown;
   address: RouteAddress;
@@ -294,6 +297,7 @@ export function RouteEditorShell({
       </details>
       <RoutePackEditor
         tenant={tenant}
+        stageScope={stageScope}
         role={role}
         routes={routes}
         summary={summary}
@@ -319,6 +323,7 @@ function Skeleton() {
 
 function RoutePackEditor(props: {
   tenant: string;
+  stageScope: string | null;
   role: string;
   routes: RouteSummary[];
   summary: RouteSummary;
@@ -328,11 +333,17 @@ function RoutePackEditor(props: {
   onSaved: () => void;
 }) {
   // One editor per route: the unsaved edits, the open row and the leave question belong to the route and start fresh with it.
-  return <RoutePackEditorOf key={`${props.tenant}/${props.summary.routeId}`} {...props} />;
+  return (
+    <RoutePackEditorOf
+      key={`${props.tenant}/${props.stageScope ?? ''}/${props.summary.routeId}`}
+      {...props}
+    />
+  );
 }
 
 function RoutePackEditorOf({
   tenant,
+  stageScope,
   role,
   routes,
   summary,
@@ -342,6 +353,7 @@ function RoutePackEditorOf({
   onSaved,
 }: {
   tenant: string;
+  stageScope: string | null;
   role: string;
   routes: RouteSummary[];
   summary: RouteSummary;
@@ -365,6 +377,7 @@ function RoutePackEditorOf({
   const owner = role === 'owner';
   const session = useRouteSession(
     tenant,
+    stageScope,
     summary.routeId,
     route ? (route.content?.version ?? 0) : null,
     owner,
@@ -429,6 +442,7 @@ function RoutePackEditorOf({
           routes={routes}
           role={role}
           tenant={tenant}
+          stageScope={stageScope}
           summary={summary}
           address={address}
           session={session}
@@ -439,7 +453,7 @@ function RoutePackEditorOf({
       <LeaveDialog
         open={leaving !== null}
         count={stageCount(session.stage)}
-        kept={leaving !== null && isMirrored(tenant, summary.routeId)}
+        kept={leaving !== null && isMirrored(tenant, stageScope, summary.routeId)}
         onKeep={() => setLeaving(null)}
         onLeave={() => {
           const go = leaving;
@@ -462,6 +476,7 @@ function RouteBody({
   routes,
   role,
   tenant,
+  stageScope,
   summary,
   address,
   session,
@@ -475,6 +490,7 @@ function RouteBody({
   routes: RouteSummary[];
   role: string;
   tenant: string;
+  stageScope: string | null;
   summary: RouteSummary;
   address: RouteAddress;
   session: RouteSession;
@@ -797,7 +813,7 @@ function RouteBody({
     toStatus.current = true;
     setStage(discardStage);
     setOpen(null);
-    clearMirror(tenant, summary.routeId);
+    clearMirror(tenant, stageScope, summary.routeId);
     setDiscardOpen(false);
     setStaging('');
     setStatus({ text: changesDiscarded, caution: null });
@@ -857,7 +873,8 @@ function RouteBody({
     setStage(() => emptyStage(result.version));
     setOpen(null);
     // Only a copy of what was sent: edits made since (on this route again, after leaving it) keep their copy.
-    if (mirrorMatches(tenant, summary.routeId, sent)) clearMirror(tenant, summary.routeId);
+    if (mirrorMatches(tenant, stageScope, summary.routeId, sent))
+      clearMirror(tenant, stageScope, summary.routeId);
     // The dialog closes itself (it was told to), so focus is returned by the dialog to the status line.
     setStaging('');
     setStatus({

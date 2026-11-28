@@ -10,6 +10,7 @@ import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-
 import { migrateSourcingWorkflow } from '../../packages/db/src/sourcing-workflow-migrate';
 import { migrateRoutePack } from '../../packages/db/src/route-pack-migrate';
 import { countryCodes } from '../../packages/domain/src/countries';
+import { DomainError } from '../../packages/domain/src/index';
 import { initialRoutes, type RouteConfiguration } from '../../packages/domain/src/corridors';
 import { routePackWords, type PackStatus } from '../../packages/domain/src/route-pack-standard';
 import { CorridorService, initialRouteConfiguration } from '../../packages/missions/src/corridors';
@@ -921,10 +922,57 @@ describe('route-pack-publish, before the one-person install', () => {
       expect(await asJson(previewed)).toMatchObject({ onePersonPublication: false });
       const refused = await publish(change);
       expect(refused.status).toBe(409);
-      expect((await asJson(refused)).error).toBe(`${reviewerWords} ${routePackWords.notPublished}`);
+      expect(await asJson(refused)).toMatchObject({
+        code: 'ROUTE_PACK_NOT_PUBLISHED',
+        error: `${reviewerWords} ${routePackWords.notPublished}`,
+      });
       expect(await proposalsOf(routeId)).toHaveLength(1);
       expect(await packsOf(routeId)).toHaveLength(1);
     });
+    const finished = await publish(change);
+    expect(finished.status).toBe(201);
+    expect(await asJson(finished)).toMatchObject({ version: 2, duplicate: false });
+    expect(await packsOf(routeId)).toHaveLength(2);
+    expect(await proposalsOf(routeId)).toHaveLength(1);
+  });
+});
+
+describe('route-pack-publish, a decision refused after the proposal (follow-up per G73)', () => {
+  test('with one person publishing, a refused decision is 409 ROUTE_PACK_NOT_PUBLISHED with the proposal kept; the same command id publishes once', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const change = settings(routeId, 2, { languages: ['en', 'fr'] });
+    web.beforeDecide = async () => {
+      throw new DomainError('Forced refusal of the decision', 409);
+    };
+    const refused = await publish(change);
+    expect(web.beforeDecide).toBeNull();
+    expect(refused.status).toBe(409);
+    expect(await asJson(refused)).toMatchObject({
+      code: 'ROUTE_PACK_NOT_PUBLISHED',
+      error: `Forced refusal of the decision ${routePackWords.notPublished}`,
+    });
+    expect(await proposalsOf(routeId)).toHaveLength(1);
+    expect(await packsOf(routeId)).toHaveLength(1);
+    const finished = await publish(change);
+    expect(finished.status).toBe(201);
+    expect(await asJson(finished)).toMatchObject({ version: 2, duplicate: false });
+    expect(await packsOf(routeId)).toHaveLength(2);
+    expect(await proposalsOf(routeId)).toHaveLength(1);
+    expect(await decisionsOf(routeId)).toHaveLength(1);
+  });
+
+  test('a stale authenticator check between the proposal and the decision stays 401 STEP_UP_REQUIRED; after a fresh one the same body publishes once', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const change = settings(routeId, 2, { languages: ['en', 'fr'] });
+    web.beforeDecide = expired;
+    const refused = await publish(change);
+    expect(web.beforeDecide).toBeNull();
+    expect(refused.status).toBe(401);
+    expect(await asJson(refused)).toMatchObject({ code: 'STEP_UP_REQUIRED' });
+    expect(await packsOf(routeId)).toHaveLength(1);
+    await fresh();
     const finished = await publish(change);
     expect(finished.status).toBe(201);
     expect(await asJson(finished)).toMatchObject({ version: 2, duplicate: false });
@@ -1082,17 +1130,82 @@ describe('route-pack-publish, one command id, one request', () => {
       expect(replay.status).toBe(200);
       expect(await asJson(replay)).toMatchObject({ duplicate: true });
     }
-    // The known limit: the configuration before a published proposal cannot be read, so the same id with its list left out
-    // rebuilds to the same pack and is answered as the duplicate. Nothing is written twice.
-    const limit = await publish({ ...settled, languages: undefined });
-    expect(limit.status).toBe(200);
-    expect(await asJson(limit)).toMatchObject({ version: 2, duplicate: true });
+    // Follow-up per G73 (F2): the replay is rebuilt on the pack it was proposed on, so the same id with its list left out no
+    // longer rebuilds to the published pack and is refused, with nothing written.
+    for (const ask of [preview, publish]) {
+      const refused = await ask({ ...settled, languages: undefined });
+      expect(refused.status).toBe(409);
+      expect(await asJson(refused)).toMatchObject({ code: 'ROUTE_PACK_COMMAND_REUSED' });
+    }
     expect(await counts()).toEqual(before);
   });
 });
 
+describe('route-pack-publish, a replay rebuilt on its base pack (follow-up per G73)', () => {
+  test('after publish, the same id with a list left out is 409 COMMAND_REUSED for the preview and the publish, nothing written; the exact body is the duplicate and a new id publishes', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const settled = settings(routeId, 2, { languages: ['en', 'fr'] });
+    expect((await publish(settled)).status).toBe(201);
+    const before = await counts();
+    for (const ask of [preview, publish]) {
+      const refused = await ask({ ...settled, languages: undefined });
+      expect(refused.status).toBe(409);
+      expect(await asJson(refused)).toMatchObject({
+        code: 'ROUTE_PACK_COMMAND_REUSED',
+        error: routePackWords.commandReused,
+      });
+    }
+    expect(await counts()).toEqual(before);
+    const replay = await publish(settled);
+    expect(replay.status).toBe(200);
+    expect(await asJson(replay)).toMatchObject({ version: 2, duplicate: true });
+    expect(await counts()).toEqual(before);
+    // Recovery: the next change under a new command id publishes the next version.
+    const next = await publish({
+      ...settled,
+      commandId: randomUUID(),
+      version: 3,
+      languages: ['en', 'fr', 'de'],
+    });
+    expect(next.status).toBe(201);
+    expect(await asJson(next)).toMatchObject({ version: 3, duplicate: false });
+  });
+
+  test('after Remove sourcing profile is published, the same id without it is 409 COMMAND_REUSED; on a base without a block the same pack stays the duplicate', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING', {
+      ...filledConfiguration(),
+      sourcing: bdCnSourcingProfile,
+    });
+    const remove = settings(routeId, 2, { languages: ['en', 'fr'], removeSourcingProfile: true });
+    expect((await publish(remove)).status).toBe(201);
+    const before = await counts();
+    for (const ask of [preview, publish]) {
+      const refused = await ask({ ...remove, removeSourcingProfile: false });
+      expect(refused.status).toBe(409);
+      expect(await asJson(refused)).toMatchObject({ code: 'ROUTE_PACK_COMMAND_REUSED' });
+    }
+    expect(await counts()).toEqual(before);
+    expect((await publish(remove)).status).toBe(200);
+    // A base with no sourcing block rebuilds to the very pack published: nothing differs, so it is the duplicate it is.
+    const bare = await newRoute();
+    await appendPack(bare, 1, 'TESTING');
+    const plain = settings(bare, 2, { languages: ['en', 'fr'] });
+    expect((await publish(plain)).status).toBe(201);
+    const same = await publish({ ...plain, removeSourcingProfile: true });
+    expect(same.status).toBe(200);
+    expect(await asJson(same)).toMatchObject({ version: 2, duplicate: true });
+    // A status change replayed after publish still reads its base status and stays the duplicate.
+    const move = statusChange(bare, 3, 'LIMITED');
+    expect((await publish(move)).status).toBe(201);
+    expect(await asJson(await publish(move))).toMatchObject({ version: 3, duplicate: true });
+    expect(await packsOf(bare)).toHaveLength(3);
+  });
+});
+
 describe('route-pack-publish, the size of the proposal', () => {
-  test('a change too large to review is 400 ROUTE_PACK_INVALID in plain words for the preview and the publish, with nothing written', async () => {
+  test('a change too large to review is 400 ROUTE_PACK_TOO_LARGE in plain words for the preview and the publish, with nothing written', async () => {
     const routeId = await newRoute();
     const long = (prefix: string, count = 50) =>
       Array.from({ length: count }, (_, i) => `${prefix}${'x'.repeat(74)}_${i}`);
@@ -1110,7 +1223,7 @@ describe('route-pack-publish, the size of the proposal', () => {
       const refused = await ask(change);
       expect(refused.status).toBe(400);
       expect(await asJson(refused)).toMatchObject({
-        code: 'ROUTE_PACK_INVALID',
+        code: 'ROUTE_PACK_TOO_LARGE',
         error: routePackWords.proposalTooLarge,
       });
     }

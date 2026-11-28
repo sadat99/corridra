@@ -5,6 +5,7 @@ import { fixtureTenant, startP5cFixture } from './p5c-desk-fixture';
 import { answerReads, routeIds, type FactsWorld, type World } from './p5c-desk-world';
 import {
   answerSheet,
+  checkedFingerprint,
   cleanReport,
   exportName,
   exportText,
@@ -197,6 +198,8 @@ test.describe('Import Route Data: the owner', () => {
       csv: text,
       saveId: expect.stringMatching(uuid),
       reason: reasonText,
+      // Follow-up per G73: the fingerprint of the check that showed the plan.
+      planFingerprint: checkedFingerprint,
     });
     await expect(dialog.getByRole('link', { name: 'Open Bangladesh to China' })).toBeVisible();
     await dialog.locator('.route-dialog-actions').getByRole('button', { name: 'Close' }).click();
@@ -483,6 +486,99 @@ test.describe('Import Route Data: the save answers', () => {
     const saves = sheet.bodies.filter((body) => body.mode === 'save');
     expect(saves).toHaveLength(2);
     expect(saves[1]).toEqual(saves[0]);
+    // Follow-up per G73: each send carries the fingerprint of the check that showed the plan.
+    expect(saves[0]!.planFingerprint).toBe(checkedFingerprint);
+  });
+
+  test('follow-up per G73: a route changed after the check, refused before anything was written, says nothing was saved and offers Choose Another File', async ({
+    page,
+  }) => {
+    const { sheet } = await open(page, {
+      sheet: {
+        saveScript: [
+          {
+            status: 409,
+            body: {
+              error:
+                'A route changed while you were checking. Nothing was saved. Choose the file again to check it against the current state.',
+              code: 'ROUTE_PACK_PLAN_CHANGED',
+            },
+          },
+        ],
+      },
+    });
+    await toSave(page);
+    await reasonBox(page).fill(reasonText);
+    await button(importDialog(page), 'Save All Routes').click();
+    const alert = importDialog(page).getByRole('alert');
+    await expect(alert).toHaveText(
+      'A route changed while you were checking. Nothing was saved. Choose the file again to check it against the current state.',
+    );
+    await expect(alert).toBeFocused();
+    await expect(button(importDialog(page), 'Try the Rest Again')).toHaveCount(0);
+    const saves = sheet.bodies.filter((body) => body.mode === 'save');
+    expect(saves).toHaveLength(1);
+    expect(saves[0]!.planFingerprint).toBe(checkedFingerprint);
+    await button(importDialog(page), 'Choose Another File').click();
+    await expect(importDialog(page).getByText('Step 1 of 4: Choose a file')).toBeVisible();
+    await axeClean(page);
+  });
+
+  test('follow-up per G73: two part-way answers in a row; after the second Try the Rest Again the route still reads facts saved with the server reason', async ({
+    page,
+  }) => {
+    const report = cleanReport();
+    const refusedPack = {
+      row: null,
+      route: 'BD-CN',
+      key: null,
+      message: 'The pack step was refused.',
+    };
+    const first = {
+      ...report,
+      mode: 'save',
+      ok: false,
+      errors: [refusedPack],
+      saved: [
+        { route: 'BD-CN', routeId: 'a', contentVersion: 6, packVersion: null },
+        { route: 'CN-BD', routeId: 'b', contentVersion: 1, packVersion: null },
+      ],
+    };
+    // The second send plans again: the facts are already saved, so no route's plan changes them, and the answer still names
+    // the facts the first answer wrote.
+    const second = {
+      ...first,
+      routes: report.routes.map((item) => ({
+        ...item,
+        willBeAdded: false,
+        content: { ...item.content, changed: false, added: [], updated: [] },
+      })),
+      saved: [{ route: 'BD-CN', routeId: 'a', contentVersion: 6, packVersion: null }],
+    };
+    const { sheet } = await open(page, {
+      sheet: {
+        report,
+        saveScript: [
+          { status: 409, body: { error: 'Stopped', report: first } },
+          { status: 409, body: { error: 'Stopped', report: second } },
+        ],
+      },
+    });
+    await toSave(page);
+    await reasonBox(page).fill(reasonText);
+    await button(importDialog(page), 'Save All Routes').click();
+    const items = importDialog(page).locator('ul.route-data-problems > li');
+    await expect(items).toHaveText([
+      'Bangladesh to China: facts saved. The pack step was refused.',
+    ]);
+    await button(importDialog(page), 'Try the Rest Again').click();
+    await expect.poll(() => sheet.bodies.filter((body) => body.mode === 'save').length).toBe(2);
+    await expect(importDialog(page).getByRole('alert')).toHaveText('Saved 1 of 2 routes.');
+    await expect(items).toHaveText([
+      'Bangladesh to China: facts saved. The pack step was refused.',
+    ]);
+    await expect(importDialog(page)).not.toContainText('Not saved');
+    await expect(button(importDialog(page), 'Try the Rest Again')).toBeVisible();
   });
 
   test('a route changed meanwhile after an earlier route saved: the earlier route, the changed one and a later Not tried one, with Try the Rest Again', async ({
