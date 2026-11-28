@@ -416,6 +416,19 @@
   font-family: inherit;
   cursor: pointer;
 }
+.aw-interest summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px;
+  cursor: pointer;
+}
+.aw-interest-body > p {
+  margin-block: 0 12px;
+  color: var(--cv-ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
 .aw-interest-body {
   margin-block-start: 14px;
   text-align: start;

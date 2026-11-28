@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useT } from './language-provider';
+import { SiteFooterV44 } from './site-footer-v44';
 import { SiteFooterView } from './site-footer-view';
 import { signedInShellFor } from '../lib/ux/shells';
 import { isBarePublicPage } from '../lib/ux/bare-pages';
@@ -11,8 +12,6 @@ import { isQuiet } from './use-signed-in';
 
 // Home page v4.3: the pack footer and its stylesheet load only while the switch is on, so an off build ships neither.
 const SiteFooterPack = dynamic(() => import('./site-footer-pack').then((m) => m.SiteFooterPack));
-// Home page v4.4: the home page's footer on every page, loaded only while its switch is on.
-const SiteFooterV44 = dynamic(() => import('./site-footer-v44').then((m) => m.SiteFooterV44));
 
 /**
  * Chooses the footer for the page. `shells` is CORRIDRA_UX_SHELLS_V2, read on the server, the same switch the

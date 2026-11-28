@@ -41,11 +41,19 @@ export default async function Page() {
       initial="team"
       teamReturn="/operator"
       helperReturn="/contributor"
+      interestHeading={interest.heading}
       interestForm={
         offerInterest ? (
-          <HelperInterestForm copy={interest}>
-            <CountryOptions />
-          </HelperInterestForm>
+          <>
+            <p>{interest.lead}</p>
+            <p>{interest.notice}</p>
+            <HelperInterestForm copy={interest}>
+              <CountryOptions />
+            </HelperInterestForm>
+            <Link prefetch={false} className="aw-link" href={interest.privacy.href}>
+              {interest.privacy.text}
+            </Link>
+          </>
         ) : undefined
       }
     />

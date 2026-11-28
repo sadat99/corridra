@@ -39,6 +39,7 @@ export function WorkAccess({
   helperReturn,
   hint,
   interestForm,
+  interestHeading,
 }: {
   initial: WorkTab;
   teamReturn: string;
@@ -47,9 +48,10 @@ export function WorkAccess({
   hint?: ReactNode;
   /** The helper interest form, already built on the server, or nothing when it is not offered. */
   interestForm?: ReactNode;
+  /** The words on the line that opens the interest form. */
+  interestHeading?: string;
 }) {
   const [tab, setTab] = useState<WorkTab>(initial);
-  const [interestOpen, setInterestOpen] = useState(false);
   const w = words[tab];
   return (
     <main
@@ -104,18 +106,11 @@ export function WorkAccess({
               First time? Set up access
             </Link>
           </p>
-          {tab === 'helper' && interestForm && (
-            <div className="aw-interest">
-              <button
-                type="button"
-                className="aw-link"
-                aria-expanded={interestOpen}
-                onClick={() => setInterestOpen((open) => !open)}
-              >
-                Not invited yet? Tell us you are interested
-              </button>
-              {interestOpen && <div className="aw-interest-body">{interestForm}</div>}
-            </div>
+          {interestForm && (
+            <details className="aw-interest">
+              <summary className="aw-link">{interestHeading}</summary>
+              <div className="aw-interest-body">{interestForm}</div>
+            </details>
           )}
           <p className="aw-foot">
             Customer?{' '}

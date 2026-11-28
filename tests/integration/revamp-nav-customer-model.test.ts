@@ -117,15 +117,15 @@ describe('the customer navigation model', () => {
     expect(hrefs(customerAvatarItems(all))).toContain('/account/notifications');
   });
 
-  it('Home and Companies keep the message key the sidebar always used; the new words have none', () => {
+  it('Home and Companies keep the message key the sidebar always used; the new words have English-only home.v44 keys', () => {
     const tabs = customerTabs({ companies: true, move: false });
     const keys = Object.fromEntries(tabs.map((tab) => [tab.key, tab.labelKey]));
     expect(keys).toEqual({
       home: 'wse.nav.home',
-      requests: undefined,
+      requests: 'home.v44.nav.work',
       companies: 'wse.nav.companies',
-      delegations: undefined,
-      more: undefined,
+      delegations: 'home.v44.nav.delegations',
+      more: 'home.v44.nav.more',
     });
   });
 
