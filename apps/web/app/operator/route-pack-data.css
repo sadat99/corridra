@@ -1,0 +1,154 @@
+/* ADR-093 Phase 3, PR 4: Import, Export and History. Tokens only, no inline style, no text-transform. A long word in any
+   script wraps. Targets are 44 px at least. The banner, warning and boxes come from route-pack-pack.css. */
+.route-data-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-1) var(--space-4);
+}
+.route-data-head .text-link {
+  min-block-size: 44px;
+  min-inline-size: 44px;
+}
+.route-data {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+/* The file control: a visible label around a hidden input, so the ring follows the input's focus. */
+.route-data-file {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  cursor: pointer;
+}
+.route-data-file input[type='file'] {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+.route-data-file:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.route-data-problems {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  min-inline-size: 0;
+}
+.route-data-problems li {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.route-data-routes {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.route-data-route {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--line);
+}
+.route-data-route h4 {
+  margin: 0;
+}
+.route-data-route summary {
+  min-block-size: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+/* The disclosure sits in the route region's own grid, so it keeps no margin of its own (the region's 900 px budget). The operator
+   pages give every disclosure a block margin; this longer selector steps over it. */
+.route-history,
+.ux-operator-home .workspace-panel .route-editor details.route-history:not(.ux-journey-disclosure) {
+  margin-block: 0;
+}
+.route-history summary {
+  min-block-size: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.route-history ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.route-history li {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.route-history-reason {
+  display: block;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+/* The list head status line is in the page before its words and takes no room while empty. */
+.route-data-status:empty {
+  block-size: 0;
+  margin: 0;
+}
+.route-history-failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+.route-history-failed .text-link {
+  min-block-size: 44px;
+}
+.route-data-done:focus-visible,
+.route-data h3:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.route-data-status:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.route-data-file input[type='file']:focus-visible {
+  outline: none;
+}
+.route-data h3,
+.route-data h4,
+.route-history h3 {
+  margin: 0;
+}
+.route-history .route-data {
+  display: grid;
+  gap: var(--space-2);
+}
+.route-data p.route-edit-quiet {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+/* Actions stack on a phone, as in the pack dialogs. */
+@media (max-width: 39.999rem) {
+  .route-data .route-dialog-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .route-data-head {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+}

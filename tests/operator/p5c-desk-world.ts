@@ -165,6 +165,8 @@ export type FactsWorld = {
   unreviewedPack?: boolean;
   /** Every Core field of Bangladesh to the European Union is done and none is stale. */
   complete?: boolean;
+  /** ADR-093 Phase 3, PR 4: the one-person module is installed (the overview's capabilities). Default false. */
+  onePerson?: boolean;
   /**
    * ADR-093 Phase 3, PR 2b: the next answers of route-pack-facts, one for each save the page makes. `theirs` is a save that
    * landed first (it becomes the saved document at its version, then the answer is sent). With the script empty the world does
@@ -338,6 +340,9 @@ function routeViews(world: FactsWorld, role: string): RouteView[] {
     routeView('TW-AU', routeIds.twAu, packOf(world, 'TW-AU', null), written['TW-AU'] ?? null, null),
   ];
 }
+/** ADR-093 Phase 3, PR 4: the route summaries the overview list answers, for the sheet world. */
+export const routeSummaries = (facts: FactsWorld, role: string) =>
+  routeViews(facts, role).map((view) => summariseRoute(view, liveStatuses));
 /** ADR-093 Phase 3, PR 3b: the pack a route has now in this world, for the publish world. */
 export const packNow = (facts: FactsWorld, key: string) =>
   routeViews(facts, 'owner').find((view) => view.key === key)?.pack ?? null;
@@ -350,6 +355,7 @@ const packHistoryOf = (routeId: string, facts: FactsWorld): PackVersion[] =>
           reviewed: facts.unreviewedPack !== true,
           proposedAndPublishedByYou: true,
           proposedAndPublishedBySame: true,
+          reason: facts.unreviewedPack === true ? null : 'Sample pack change for the route editor',
         },
       ]
     : routeId === routeIds.bdEu
@@ -360,6 +366,7 @@ const packHistoryOf = (routeId: string, facts: FactsWorld): PackVersion[] =>
             reviewed: true,
             proposedAndPublishedByYou: false,
             proposedAndPublishedBySame: false,
+            reason: null,
           },
         ]
       : [];
@@ -618,7 +625,10 @@ export async function answerReads(page: Page, given: Partial<World> = {}): Promi
           if (!asked)
             return route.fulfill(
               json({
-                capabilities: factsCapabilities,
+                capabilities: {
+                  ...factsCapabilities,
+                  onePersonPublication: facts.onePerson === true,
+                },
                 routes: views.map((view) => summariseRoute(view, liveStatuses)),
               }),
             );

@@ -69,6 +69,8 @@ export type PackVersion = {
   proposedAndPublishedByYou: boolean;
   /** One person proposed and published it (not necessarily the reader). */
   proposedAndPublishedBySame: boolean;
+  /** The stored publish decision reason, verbatim; null when no publish decision is recorded (PR 4, Guardian G72). */
+  reason: string | null;
 };
 
 /** The three reads of RoutePackContentService, the only part of it this file uses. */
@@ -89,9 +91,10 @@ export type RoutePackReadService = {
     ctx: RequestContext,
     input: { routeId: string },
   ): Promise<
-    (Omit<PackVersion, 'proposedAndPublishedBySame'> & {
+    (Omit<PackVersion, 'proposedAndPublishedBySame' | 'reason'> & {
       publishedBy: string;
       proposedBy: string | null;
+      decisionReason: string | null;
     })[]
   >;
 };
@@ -183,6 +186,7 @@ export async function answerRoutePackRead(
       reviewed: row.reviewed,
       proposedAndPublishedByYou: row.proposedAndPublishedByYou,
       proposedAndPublishedBySame: row.proposedBy !== null && row.proposedBy === row.publishedBy,
+      reason: row.decisionReason ?? null,
     })),
   };
 }

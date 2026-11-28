@@ -29,6 +29,17 @@ import {
   type SheetReport,
 } from '../../packages/missions/src/route-pack-sheet';
 import { bdCnSourcingProfile } from './fixtures/bd-cn-sourcing-profile';
+import {
+  checkOutcome,
+  dryRunBody,
+  exportFileName,
+  nextSaveCommand,
+  routeResults,
+  saveBody,
+  savedFactCount,
+  sheetOutcome,
+  type SaveCommand,
+} from '../../apps/web/lib/route-pack-editor-sheet';
 
 // ADR-093 Phase 2c: the route pack sheet. The real handler, services and an isolated PostgreSQL with the route pack module
 // installed; only the session provider and the switch reader are replaced. Red on the code before 2c: the sheet service and
@@ -1330,4 +1341,216 @@ test('a save interrupted by a thrown null after a write still returns the partia
   } finally {
     logged.mockRestore();
   }
+});
+
+// ---- ADR-093 Phase 3, PR 4: the page's bodies and readings through the real handler. Red before PR 4: the library did not exist.
+const pageCheck = async (csv: string) => {
+  const response = await sheetRequest(dryRunBody(csv));
+  return { status: response.status, outcome: checkOutcome(response.status, await response.json()) };
+};
+const pageSave = async (csv: string, command: SaveCommand) => {
+  const response = await sheetRequest(saveBody(csv, command, `  ${reason}  `));
+  const json = await response.json();
+  return { status: response.status, json, outcome: sheetOutcome(response.status, json) };
+};
+const contentVersions = async (key: string) =>
+  (
+    await f.owner.query('SELECT count(*)::int n FROM app.route_pack_content WHERE route_id=$1', [
+      await routeId(key),
+    ])
+  ).rows[0].n as number;
+
+test('PR 4: the page bodies pass the server schema; one save id per file text, and sending it again adds nothing', async () => {
+  const csv = csvOf([filled('NO-SE', 'identity.display_name', 'Norway to Sweden')]);
+  const check = await pageCheck(csv);
+  expect(check.status).toBe(200);
+  expect(check.outcome.kind).toBe('report');
+  const command = nextSaveCommand(null, csv, randomUUID);
+  const first = await pageSave(csv, command);
+  expect(first.status).toBe(201);
+  expect(first.outcome.kind).toBe('saved');
+  if (first.outcome.kind === 'saved') expect(savedFactCount(first.outcome.report)).toBe(1);
+  const before = await counts();
+  const kept = nextSaveCommand(command, csv, randomUUID);
+  expect(kept.id).toBe(command.id);
+  const again = await pageSave(csv, kept);
+  expect(again.status).toBe(201);
+  expect(await counts()).toEqual(before);
+  // One word more than the schema knows is refused, so the page can only send what the server reads.
+  const extra = await sheetRequest({ ...dryRunBody(csv), routes: 'NO-SE' });
+  expect(extra.status).toBe(400);
+  // A file the server refuses as a whole is a file problem in its own words.
+  const malformed = await pageCheck('"unclosed');
+  expect(malformed.status).toBe(400);
+  expect(malformed.outcome.kind).toBe('fileProblem');
+});
+
+test('PR 4: an export decoded as the browser reads it and checked again changes nothing', async () => {
+  expect(
+    (await save([...coreLines('FI-EE'), filled('FI-EE', 'identity.origin_scope', '=SUM(1)')])).ok,
+  ).toBe(true);
+  const response = await exportRequest('FI-EE');
+  expect(response.status).toBe(200);
+  expect(exportFileName(response.headers.get('content-disposition'))).toBe(
+    `route-packs-${new Date().toISOString().slice(0, 10)}.csv`,
+  );
+  const csv = new TextDecoder('utf-8').decode(await response.arrayBuffer());
+  const check = await pageCheck(csv);
+  expect(check.outcome.kind).toBe('report');
+  if (check.outcome.kind !== 'report') return;
+  expect(check.outcome.report.errors).toEqual([]);
+  expect(check.outcome.report.routes.length).toBeGreaterThan(0);
+  for (const plan of check.outcome.report.routes) {
+    expect(plan.content.changed).toBe(false);
+    expect(plan.pack.changed).toBe(false);
+  }
+});
+
+test('PR 4: a save that stopped part way reads as part way with the route not saved, and the same body finishes it once', async () => {
+  const csv = csvOf([
+    filled('DK-IS', 'identity.display_name', 'Denmark to Iceland'),
+    line({ route: 'DK-IS', field_key: 'pack.missionTypes', state: 'Filled', value: 'buyers' }),
+  ]);
+  const command = nextSaveCommand(null, csv, randomUUID);
+  const real = sheet;
+  sheet = interruptedOnce('propose', new DomainError('Synthetic interruption', 503));
+  let stopped;
+  try {
+    stopped = await pageSave(csv, command);
+  } finally {
+    sheet = real;
+  }
+  expect(stopped.status).toBe(409);
+  expect(stopped.outcome.kind).toBe('partWay');
+  if (stopped.outcome.kind !== 'partWay') return;
+  // PR 4 per G72: the facts were written before the pack step stopped, so the route reads "facts saved", not "not saved".
+  expect(routeResults(stopped.outcome.report)).toEqual([
+    { route: 'DK-IS', kind: 'factsOnly', why: 'refused', reason: 'Synthetic interruption' },
+  ]);
+  expect(savedFactCount(stopped.outcome.report)).toBe(1);
+  expect(await contentVersions('DK-IS')).toBe(1);
+  const finished = await pageSave(csv, nextSaveCommand(command, csv, randomUUID));
+  expect(finished.status).toBe(201);
+  expect(finished.outcome.kind).toBe('saved');
+  expect(await contentVersions('DK-IS')).toBe(1);
+  expect((await latestPack('DK-IS')).version).toBe(1);
+});
+
+test('PR 4: a pack changed between the plan and its step reads as that route changed', async () => {
+  expect((await save(coreLines('PT-ES'))).ok).toBe(true);
+  const id = (await routeId('PT-ES'))!;
+  const draft = await latestPack('PT-ES');
+  const racing = new Proxy(content, {
+    get(target, property) {
+      if (property === 'appendBatch')
+        return async (
+          ctx: Parameters<RoutePackContentService['appendBatch']>[0],
+          input: unknown,
+        ) => {
+          const written = await target.appendBatch(ctx, input);
+          await corridors.appendPack(owner(), {
+            id: randomUUID(),
+            routeId: id,
+            version: draft.version + 1,
+            status: 'PAUSED',
+            effectiveFrom: new Date().toISOString(),
+            reason,
+            configuration: draft.configuration,
+          });
+          return written;
+        };
+      const value = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  const csv = csvOf([
+    filled('PT-ES', 'market.notes', 'Cork and textiles'),
+    line({ route: 'PT-ES', field_key: 'pack.languages', state: 'Filled', value: 'es' }),
+  ]);
+  const real = sheet;
+  sheet = new RoutePackSheetService(f.runtime, corridors, operations, racing);
+  let raced;
+  try {
+    raced = await pageSave(csv, nextSaveCommand(null, csv, randomUUID));
+  } finally {
+    sheet = real;
+  }
+  expect(raced.status).toBe(409);
+  expect(raced.outcome).toMatchObject({ kind: 'routeChanged', route: 'PT-ES' });
+});
+
+test('PR 4: a change made between the check and the save is not a conflict; the file value wins and History keeps both', async () => {
+  expect((await save([filled('MA-TN', 'market.notes', 'First notes')])).ok).toBe(true);
+  const id = (await routeId('MA-TN'))!;
+  const csv = csvOf([filled('MA-TN', 'market.notes', 'Notes from the file')]);
+  const check = await pageCheck(csv);
+  expect(check.outcome.kind).toBe('report');
+  // Someone saves the same route's facts after the check.
+  const [view] = (await content.overview(owner(), { routeIds: [id] })).routes;
+  await content.append(owner(), {
+    id: randomUUID(),
+    routeId: id,
+    version: view!.content!.version + 1,
+    document: {
+      standardVersion: 1,
+      sectionMarks: [],
+      facts: [
+        {
+          key: 'market.notes',
+          state: 'FILLED',
+          value: 'Notes saved in between',
+          source: 'staff knowledge',
+          observedOn: observed,
+        },
+      ],
+    },
+    reason: 'Saved between the check and the save',
+  });
+  const saved = await pageSave(csv, nextSaveCommand(null, csv, randomUUID));
+  expect(saved.status).toBe(201);
+  expect(saved.outcome.kind).toBe('saved');
+  expect(fact(await latestDocument('MA-TN'), 'market.notes')).toMatchObject({
+    value: 'Notes from the file',
+  });
+  const history = await content.history(owner(), { routeId: id });
+  expect(history.map((row) => row.reason)).toEqual([
+    reason,
+    'Saved between the check and the save',
+    reason,
+  ]);
+});
+
+test('PR 4: the admin checks and is refused the save; a stale authenticator reads as the check to ask again', async () => {
+  await changeMemberNow(new AccessService(f.runtime), owner(), {
+    userId: f.users.viewer.id,
+    role: 'admin',
+    revoked: false,
+  });
+  const csv = csvOf([filled('SN-ML', 'identity.display_name', 'Senegal to Mali')]);
+  web.actor = 'viewer';
+  expect((await pageCheck(csv)).status).toBe(200);
+  const before = await counts();
+  const denied = await pageSave(csv, nextSaveCommand(null, csv, randomUUID));
+  expect(denied.status).toBe(403);
+  expect(denied.outcome).toEqual({ kind: 'denied' });
+  web.actor = 'owner';
+  await f.owner.query("UPDATE identity.assurance SET verified_at=now()-interval '1 hour'");
+  const stale = await pageSave(csv, nextSaveCommand(null, csv, randomUUID));
+  expect(stale.status).toBe(401);
+  expect(stale.outcome).toEqual({ kind: 'stepUp' });
+  expect(await counts()).toEqual(before);
+});
+
+test('PR 4: a member of another workspace is refused the check, the save and the export', async () => {
+  const csv = csvOf([filled('NO-SE', 'identity.display_name', 'Norway to Sweden')]);
+  web.actor = 'other';
+  const before = await counts();
+  expect((await pageCheck(csv)).status).toBe(403);
+  const save = await pageSave(csv, nextSaveCommand(null, csv, randomUUID));
+  expect(save.status).toBe(403);
+  expect(JSON.stringify(save.json)).not.toContain('Norway');
+  const exported = await exportRequest('NO-SE');
+  expect(exported.status).toBe(403);
+  expect(await exported.text()).not.toContain('identity.display_name');
+  expect(await counts()).toEqual(before);
 });
