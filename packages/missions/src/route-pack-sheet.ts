@@ -669,7 +669,7 @@ function planSheet(
 // and the first send of a save compares it with the plan it makes again, so a route changed after the check is refused, not
 // overwritten. Completeness, go-live and skipped rows are left out: they follow from the rest or only describe it, and the
 // date alone never changes it.
-export function planFingerprint(routes: PlannedRoute[]): string {
+function planFingerprint(routes: PlannedRoute[]): string {
   const keys = (changes: FieldChange[]) => changes.map((change) => change.key);
   const plan = [...routes]
     .sort((a, b) => (a.route < b.route ? -1 : a.route > b.route ? 1 : 0))
