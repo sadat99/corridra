@@ -68,7 +68,7 @@ export function factsOutcome(status: number, code?: string | null): FactsOutcome
     // Any other 409 is a refusal the server explains (a go-live check, for one): its words are shown, never "Try again".
     return 'invalid';
   }
-  if (status === 400) return 'invalid';
+  if (status === 400) return code === 'ROUTE_PACK_TOO_LARGE' ? 'tooLarge' : 'invalid';
   if (status === 413) return 'tooLarge';
   if (status === 401) return code === stepUpRequired ? 'stepUp' : 'signedOut';
   if (status === 403) return 'denied';

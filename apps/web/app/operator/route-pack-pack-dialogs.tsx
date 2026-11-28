@@ -113,7 +113,9 @@ export function ChangePackSettingDialog(
       ? manualOf(configuration?.channels as string[] | undefined)
         ? packWords.manualYes
         : packWords.manualNo
-      : join(current);
+      : current.length
+        ? join(current)
+        : null;
 
   const stepOne = (
     <div className="route-pack-step">
