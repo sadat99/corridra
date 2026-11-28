@@ -250,8 +250,17 @@ function RoutePackForm({
     };
   }, [tenant, onShownChange]);
   if (!available) return null;
-  const nextVersion =
-    Math.max(0, ...catalogue.packs.filter((p) => p.route_id === routeId).map((p) => p.version)) + 1;
+  const routePacks = catalogue.packs.filter((p) => p.route_id === routeId);
+  const nextVersion = Math.max(0, ...routePacks.map((p) => p.version)) + 1;
+  // The manual box shows the chosen route's current channel; a route with no pack yet starts manual.
+  const currentPack = routePacks.reduce<(typeof routePacks)[number] | null>(
+    (latest, p) => (!latest || p.version > latest.version ? p : latest),
+    null,
+  );
+  const currentChannels = (currentPack?.configuration as { channels?: unknown } | null)?.channels;
+  const manualDefault = currentPack
+    ? Array.isArray(currentChannels) && currentChannels.includes('MANUAL')
+    : true;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -345,7 +354,10 @@ function RoutePackForm({
               name="route"
               required
               value={routeId}
-              onChange={(event) => setRouteId(event.target.value)}
+              onChange={(event) => {
+                setRouteId(event.target.value);
+                setChannelTouched(false);
+              }}
             >
               <option value="">Choose a route</option>
               {catalogue.routes.map((route) => (
@@ -410,7 +422,13 @@ function RoutePackForm({
             ))}
           </fieldset>
           <label className="ux-check">
-            <input type="checkbox" name="manualChannel" onChange={() => setChannelTouched(true)} />{' '}
+            <input
+              key={routeId}
+              type="checkbox"
+              name="manualChannel"
+              defaultChecked={manualDefault}
+              onChange={() => setChannelTouched(true)}
+            />{' '}
             The team contacts companies by hand (manual channel)
           </label>
           <label className="field">

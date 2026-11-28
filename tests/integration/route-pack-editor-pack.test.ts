@@ -296,6 +296,7 @@ describe('the row actions and the lists', () => {
     expect(sameAsPack({ kind: 'channel', manual: true }, configuration, 'ACTIVE')).toBe(true);
     expect(sameAsPack({ kind: 'status', status: 'ACTIVE' }, configuration, 'ACTIVE')).toBe(true);
     expect(manualOf(['SYNTHETIC'])).toBe(false);
+    expect(manualOf(undefined)).toBe(true);
   });
 });
 

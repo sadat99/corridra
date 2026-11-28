@@ -53,7 +53,7 @@ export const legacyGuidedRoutePack = z
     languages: z.array(locale).max(30).default([]),
     currencies: z.array(currency).max(30).default([]),
     timeZones: z.array(timeZone).max(30).default([]),
-    manualChannel: z.boolean().default(false),
+    manualChannel: z.boolean().default(true),
     // ADR-083 S1. Optional and carried unchanged into the reviewed pack; absent means the pack is exactly as before.
     sourcing: sourcingProfile.optional(),
   })
@@ -110,7 +110,7 @@ const formListKeys = [
 ] as const satisfies readonly SheetLockedKey[];
 
 // With no current pack this is exactly the configuration the form always wrote: every key it does not set is empty, null or
-// true, and the channel is SYNTHETIC unless the manual channel is chosen.
+// true, and the channel is MANUAL unless the manual box is unticked (then SYNTHETIC, sample messages only).
 export function routePackConfiguration(
   v: z.infer<typeof guidedRoutePack>,
   current: RouteConfiguration | null = null,
@@ -118,7 +118,7 @@ export function routePackConfiguration(
   const set: Partial<Pick<RouteConfiguration, SheetLockedKey>> = { missionTypes: v.missionTypes };
   for (const key of formListKeys) if (v[key] !== undefined) Object.assign(set, { [key]: v[key] });
   if (v.manualChannel !== undefined || !current)
-    set.channels = v.manualChannel ? ['MANUAL'] : ['SYNTHETIC'];
+    set.channels = (v.manualChannel ?? true) ? ['MANUAL'] : ['SYNTHETIC'];
   const configuration = carriedConfiguration(current, set, {
     removeSourcing: v.removeSourcingProfile,
   });

@@ -82,8 +82,8 @@ export async function answerPublish(
     let status: string = pack?.status ?? 'DRAFT';
     if (change.kind === 'status') status = String(change.status);
     for (const list of listKeys) if (Array.isArray(change[list])) next[list] = change[list];
-    if (typeof change.manualChannel === 'boolean')
-      next.channels = [change.manualChannel ? 'MANUAL' : 'SYNTHETIC'];
+    if (typeof change.manualChannel === 'boolean' || !pack)
+      next.channels = [change.manualChannel === false ? 'SYNTHETIC' : 'MANUAL'];
     if (change.removeSourcingProfile === true) delete next.sourcing;
     const changedKeys = [...new Set([...Object.keys(before), ...Object.keys(next)])].filter(
       (name) => JSON.stringify(before[name]) !== JSON.stringify(next[name]),

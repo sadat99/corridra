@@ -702,7 +702,7 @@ describe('route-pack-publish, a settings change', () => {
     expect(pack).toMatchObject({ version: 1, status: 'DRAFT' });
     expect(pack!.configuration).toMatchObject({
       missionTypes: ['sourcing'],
-      channels: ['SYNTHETIC'],
+      channels: ['MANUAL'],
       languages: [],
     });
   });
@@ -1015,7 +1015,7 @@ describe('route-pack-publish, nothing to change', () => {
     const before = await counts();
     for (const change of [
       settings(routeId, 2, {}),
-      settings(routeId, 2, { languages: ['en'], manualChannel: false }),
+      settings(routeId, 2, { languages: ['en'], manualChannel: true }),
       statusChange(routeId, 2, 'TESTING'),
     ])
       for (const ask of [preview, publish]) {
