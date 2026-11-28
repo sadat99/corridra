@@ -6008,3 +6008,28 @@ Checks at f236a8f0, all exit 0:
 **Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
 
 **Not verified.** No signed-in journey. PR3b was not exercised in production. ADR-093 2b (content store, migration 0002) is still NOT installed (needs owner approval and a production PG 18 major check); route-pack-facts and route-pack-publish still answer 404 in production.
+
+## 28 Nov 2026 - records: PR 697 merged, main b2c9ad32, ADR-093 Phase 3 PR4 (scribe, for Guardian G73)
+
+**Request.** Records for the merge of PR 697, "ADR-093 Phase 3 PR4: Import Route Data, Export Route Data, History disclosure". Branch claude/records-697 from origin/main (b2c9ad3); authority stamp auth-ef7f7926ac75 was confirmed at 160a793 in the brief. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger, register and editor spec read PR4 as not built. It is merged, which completes ADR-093 Phase 3.
+
+**Outcome (as relayed by G73).**
+
+- PR 697 squash-merged 28 Nov 2026 as b2c9ad32cd8a7b235b2e56b1854098bf77a58b9f by Guardian G73, exact head b36a649ccc6a3d4a6da81c8d0caa0c09434c107e. All 24 check runs green (browser 1-3, integration 1-3, operator 1-6, ux 1-3, checks, verification, validate, changes, CodeQL); mergeable clean. Builder E (Opus).
+- Route: two independent Opus reviews plus a designer audit on 3d9ece7; G72 fix list M1-M4 and m1-m13; one Opus delta verification on 3d9ece7..b36a649: MERGE-READY yes, every item PASS.
+- Builder local evidence at the head: build exit 0; full test:operator 2632 passed, 32 skipped, 0 failed; BD-CN region budget owner 883 / admin 899 of 900 px side by side at 1440 and 1920.
+- Only server-side change: pack-history read gains one field `reason` (decisionReason verbatim), same audit.read owner/admin gate. No new server action, schema or migration. Import and export reuse route-pack-import and route-pack-export. Residual risk accepted by G72: check-then-save race (file value wins, both versions kept in History).
+- Production deployment dpl_C4tPKo5oJd8TupU6dZt5H1pPowif for b2c9ad3: READY (confirmed by G73 before merge of this records PR).
+- ADR-093 Phase 3 is complete (PR2a, 2b, 2c, 3a, 3b, 4). Phase 4 not started.
+
+**Next action.** Small follow-up batch (Builder C, Sonnet): F2 base-pack configuration read in route-pack-content.ts (a same-id publish with an omitted list is refused); dedicated server code for saved-but-not-published; PR2b mirror key without user; PR3b minors (TW-AU browser test covers only section 3 and mission types; tooLarge relies on exact server words); server-side plan fingerprint so import save refuses a changed state; designer nits (status Review taller than 900 px, "Now: none" wording); a second "Try the Rest Again" after a refused pack step does not name facts saved by the earlier answer. Owner items: 2b install approval; BD-CN template and the 7 other launch routes; Phase 4 per route on the owner's word.
+
+**Verification.** G73 and builder receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, prettier@3.9.10 --check; results in the final report and PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action; older lines shortened to stay within the 12 KiB cap and the 36864-byte guides budget, no owner decision or gate removed); docs/PLAN_STATUS.md (editor spec row and ADR-093 row); docs/revamp/specs/route-pack-editor.md (Document status line only); this entry. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line and closed gate: ADR-093 2b (migration 0002) NOT installed (needs the owner's separate approval and a production PG 18.7 major check; pins proven on PG16); route-pack-facts, route-pack-publish and import save dormant (404) in production; native language review gate OPEN.
+
+**Not verified.** No signed-in live journey pass. PR4 was not exercised in production.
