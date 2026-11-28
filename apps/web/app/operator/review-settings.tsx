@@ -410,7 +410,12 @@ function RoutePackForm({
             ))}
           </fieldset>
           <label className="ux-check">
-            <input type="checkbox" name="manualChannel" onChange={() => setChannelTouched(true)} />{' '}
+            <input
+              type="checkbox"
+              name="manualChannel"
+              defaultChecked
+              onChange={() => setChannelTouched(true)}
+            />{' '}
             The team contacts companies by hand (manual channel)
           </label>
           <label className="field">

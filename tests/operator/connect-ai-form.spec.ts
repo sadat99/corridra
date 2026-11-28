@@ -1121,10 +1121,10 @@ test('Add route pack with the module active sends only what was set and says wha
   });
   form = await fillRoutePack(page);
   await form.locator('input[name="languages"][value="en"]').check();
-  await form.locator('input[name="manualChannel"]').check();
+  await form.locator('input[name="manualChannel"]').uncheck();
   await form.getByRole('button', { name: 'Save Route Pack' }).click();
   await expect(routePackFeedback(page)).toHaveText('Already saved. Nothing changed.');
-  expect(routePackSent[1]).toMatchObject({ languages: ['en'], manualChannel: true });
+  expect(routePackSent[1]).toMatchObject({ languages: ['en'], manualChannel: false });
   expect(Object.keys(routePackSent[1]!)).not.toContain('currencies');
   expect(Object.keys(routePackSent[1]!)).not.toContain('effectiveFrom');
 });
@@ -1215,6 +1215,6 @@ test('Add route pack with the module inactive sends and says what it always did'
     languages: [],
     currencies: [],
     timeZones: [],
-    manualChannel: false,
+    manualChannel: true,
   });
 });

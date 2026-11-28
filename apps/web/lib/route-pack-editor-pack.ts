@@ -266,8 +266,9 @@ export function listOptions(
       .map((value) => [value, value] as [string, string]),
   ];
 }
-/** True when the pack contacts companies by hand (the channel MANUAL). */
-export const manualOf = (channels: readonly string[] | undefined) => !!channels?.includes('MANUAL');
+/** True when the pack contacts companies by hand (the channel MANUAL). A route with no pack yet counts as manual, the default. */
+export const manualOf = (channels: readonly string[] | undefined) =>
+  channels === undefined ? true : channels.includes('MANUAL');
 /** True when an edit sets nothing new against the pack as read (Next stays off, with its reason). */
 export function sameAsPack(
   edit: PackEdit,
