@@ -255,7 +255,7 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
         url.searchParams.get('returnTo') === '/plan' &&
         !url.searchParams.has('token'),
     );
-    await page.getByRole('link', { name: 'Sign in', exact: true }).click();
+    await page.getByRole('link', { name: 'Back to Sign-in', exact: true }).click();
     await expect(page).toHaveURL(
       (url) => url.pathname === '/signin' && url.searchParams.get('returnTo') === '/plan',
     );
