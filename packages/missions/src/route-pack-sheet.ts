@@ -918,7 +918,8 @@ export class RoutePackSheetService {
         );
       // Follow-up per G73: a route whose facts an earlier answer of this save id wrote, and that has nothing to write now, is
       // named with that facts version, so a second part-way answer still says its facts are saved. A save id used for another
-      // file names none.
+      // file names none. Follow-up per G74: only while that record is still the route's latest facts version in the state the
+      // plan loaded (its base, one below nextVersion); a newer version this save did not write names nothing for that route.
       if (!reused)
         for (const plan of planned.routes) {
           const record = earlier.find(
@@ -927,6 +928,7 @@ export class RoutePackSheetService {
           if (
             !plan.content.changed &&
             record &&
+            record.version === plan.content.nextVersion - 1 &&
             isDeepStrictEqual(record.document, plan.document) &&
             (saved.get(plan.route)?.contentVersion ?? null) === null
           )
