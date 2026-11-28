@@ -118,12 +118,6 @@ export function publishBody(
 
 // ---- What an answer means -----------------------------------------------------------------------------------------------
 /**
- * The last words of a refusal that came after the proposal was saved (routePackWords.notPublished of the domain, pinned to it
- * by a test): propose and decide are two steps, so the server says the proposal stays.
- */
-export const notPublishedWords =
-  'The proposal was saved but not published. Send the same request again to publish it.';
-/**
  * The server's words when the proposal of a publish is too large to review (routePackWords.proposalTooLarge, pinned by a test).
  * A preview is sized with the short internal reason and a publish with the typed one, so near the limit a preview can pass and
  * the publish be refused with these words: the page then says the change is too large, not that it is invalid.
@@ -160,7 +154,8 @@ export function packOutcome(
   onePersonPublication: boolean,
 ): PackOutcome {
   if (status === 200 || status === 201) return mode === 'preview' ? 'previewed' : 'published';
-  if (mode === 'publish' && error && error.trim().endsWith(notPublishedWords))
+  // Propose and decide are two steps: the server names a saved proposal whose publish was refused by its own code.
+  if (mode === 'publish' && code === 'ROUTE_PACK_NOT_PUBLISHED')
     return onePersonPublication ? 'savedNotPublished' : 'proposed';
   if (status === 409) {
     if (code === 'ROUTE_PACK_PACK_CHANGED') return 'stale';

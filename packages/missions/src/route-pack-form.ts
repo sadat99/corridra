@@ -220,7 +220,7 @@ export async function publishReviewed(
     });
     // The proposal table keeps at most 8192 octets; say so plainly instead of meeting the database refusal.
     if (storedTextOctets(proposed) > proposalOctetBudget)
-      throw new DomainError(routePackWords.proposalTooLarge, 400, 'ROUTE_PACK_INVALID');
+      throw new DomainError(routePackWords.proposalTooLarge, 400, 'ROUTE_PACK_TOO_LARGE');
     await deps.operations.command(ctx, {
       id: proposalId,
       action: 'propose',
@@ -249,13 +249,18 @@ export async function publishReviewed(
   } catch (error) {
     // Propose and decide are two transactions: a refused decision leaves the proposal, so say so and how to finish. Any
     // other failure keeps its own status and log.
-    if (error instanceof DomainError)
-      throw new DomainError(
-        `${error.message} ${routePackWords.notPublished}`,
-        error.status,
-        error.code,
-      );
-    throw error;
+    if (!(error instanceof DomainError)) throw error;
+    // The decision refuses, without a code, a pack published after the base was read: that is the pack changed, for every
+    // caller that named the pack it read.
+    if (error.status === 409 && !error.code && input.expectedBasePackId !== undefined) {
+      const [route] = (await deps.content.overview(ctx, { routeIds: [input.routeId] })).routes;
+      if ((route?.pack?.id ?? null) !== input.expectedBasePackId) throw packChanged();
+    }
+    const words = `${error.message} ${routePackWords.notPublished}`;
+    // A stale authenticator check keeps its code, so the page asks for the check again and the same command id finishes.
+    if (error.status === 401) throw new DomainError(words, error.status, error.code);
+    // Follow-up per G73: one code for a saved proposal whose publish was refused, so the page never reads the words.
+    throw new DomainError(words, error.status, 'ROUTE_PACK_NOT_PUBLISHED');
   }
   return {
     proposalId,
@@ -616,7 +621,7 @@ export async function previewRoutePackChange(
       blocked: null,
     };
   if (storedTextOctets(proposed) > proposalOctetBudget)
-    throw new DomainError(routePackWords.proposalTooLarge, 400, 'ROUTE_PACK_INVALID');
+    throw new DomainError(routePackWords.proposalTooLarge, 400, 'ROUTE_PACK_TOO_LARGE');
   const judged = await deps.content.goLive(ctx, {
     routeId: change.routeId,
     pack: { status: next.status, configuration: next.configuration },
@@ -636,26 +641,14 @@ export async function publishRoutePackChange(
   change: RoutePackChange,
 ): Promise<RoutePackChangePublished> {
   const next = await prepareRoutePackChange(deps, ctx, change);
-  const basePackId = next.current?.id ?? null;
-  let published: Awaited<ReturnType<typeof publishReviewed>>;
-  try {
-    published = await publishReviewed(deps, ctx, {
-      commandId: change.commandId,
-      routeId: change.routeId,
-      status: next.status,
-      configuration: next.configuration,
-      reason: next.reason,
-      expectedBasePackId: basePackId,
-    });
-  } catch (error) {
-    // The decision refuses, without a code, a pack published after the base was read here. Any other refusal without a code
-    // (the independent reviewer before the one-person install) keeps its own words.
-    if (error instanceof DomainError && error.status === 409 && !error.code) {
-      const [route] = (await deps.content.overview(ctx, { routeIds: [change.routeId] })).routes;
-      if ((route?.pack?.id ?? null) !== basePackId) throw packChanged();
-    }
-    throw error;
-  }
+  const published = await publishReviewed(deps, ctx, {
+    commandId: change.commandId,
+    routeId: change.routeId,
+    status: next.status,
+    configuration: next.configuration,
+    reason: next.reason,
+    expectedBasePackId: next.current?.id ?? null,
+  });
   return {
     version: published.version,
     duplicate: published.duplicate,

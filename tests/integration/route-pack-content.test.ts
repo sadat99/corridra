@@ -1427,7 +1427,7 @@ describe('route pack content on the database', () => {
     };
     await expect(publishReviewed(flaky, owner(), first)).rejects.toMatchObject({
       status: 409,
-      code: 'FORCED',
+      code: 'ROUTE_PACK_NOT_PUBLISHED',
       message: `Forced refusal between propose and decide ${routePackWords.notPublished}`,
     });
     expect(await packVersions(routeId)).toHaveLength(1);
@@ -1572,7 +1572,7 @@ describe('route pack content on the database', () => {
       }),
     ).rejects.toMatchObject({
       status: 400,
-      code: 'ROUTE_PACK_INVALID',
+      code: 'ROUTE_PACK_TOO_LARGE',
       message: routePackWords.proposalTooLarge,
     });
     expect(

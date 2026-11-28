@@ -307,11 +307,10 @@ test.describe('Change Pack Setting', () => {
     const { publish } = await open(page);
     await openLanguages(page);
     await toReview(page);
-    const notPublished =
-      'The proposal was saved but not published. Send the same request again to publish it.';
+    // Follow-up per G73: the page knows this case by the code alone, not by the ending of the server's words.
     publish.script = [
-      { status: 409, code: 'ROUTE_PACK_POLICY_EXPIRED', error: `Expired. ${notPublished}` },
-      { status: 409, code: 'ROUTE_PACK_POLICY_EXPIRED', error: `Expired. ${notPublished}` },
+      { status: 409, code: 'ROUTE_PACK_NOT_PUBLISHED', error: 'Expired policy.' },
+      { status: 409, code: 'ROUTE_PACK_NOT_PUBLISHED', error: 'Expired policy.' },
     ];
     await reason(page).fill(reasonText);
     await settingDialog(page).getByRole('button', { name: 'Publish Pack Change' }).click();
@@ -401,6 +400,7 @@ test.describe('Change Pack Setting', () => {
     publish.script = [
       {
         status: 403,
+        code: 'ROUTE_PACK_NOT_PUBLISHED',
         error:
           'A second owner must decide. The proposal was saved but not published. Send the same request again to publish it.',
       },

@@ -10,6 +10,7 @@ import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-
 import { migrateSourcingWorkflow } from '../../packages/db/src/sourcing-workflow-migrate';
 import { migrateRoutePack } from '../../packages/db/src/route-pack-migrate';
 import { countryCodes } from '../../packages/domain/src/countries';
+import { DomainError } from '../../packages/domain/src/index';
 import { initialRoutes, type RouteConfiguration } from '../../packages/domain/src/corridors';
 import { routePackWords, type PackStatus } from '../../packages/domain/src/route-pack-standard';
 import { CorridorService, initialRouteConfiguration } from '../../packages/missions/src/corridors';
@@ -921,10 +922,57 @@ describe('route-pack-publish, before the one-person install', () => {
       expect(await asJson(previewed)).toMatchObject({ onePersonPublication: false });
       const refused = await publish(change);
       expect(refused.status).toBe(409);
-      expect((await asJson(refused)).error).toBe(`${reviewerWords} ${routePackWords.notPublished}`);
+      expect(await asJson(refused)).toMatchObject({
+        code: 'ROUTE_PACK_NOT_PUBLISHED',
+        error: `${reviewerWords} ${routePackWords.notPublished}`,
+      });
       expect(await proposalsOf(routeId)).toHaveLength(1);
       expect(await packsOf(routeId)).toHaveLength(1);
     });
+    const finished = await publish(change);
+    expect(finished.status).toBe(201);
+    expect(await asJson(finished)).toMatchObject({ version: 2, duplicate: false });
+    expect(await packsOf(routeId)).toHaveLength(2);
+    expect(await proposalsOf(routeId)).toHaveLength(1);
+  });
+});
+
+describe('route-pack-publish, a decision refused after the proposal (follow-up per G73)', () => {
+  test('with one person publishing, a refused decision is 409 ROUTE_PACK_NOT_PUBLISHED with the proposal kept; the same command id publishes once', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const change = settings(routeId, 2, { languages: ['en', 'fr'] });
+    web.beforeDecide = async () => {
+      throw new DomainError('Forced refusal of the decision', 409);
+    };
+    const refused = await publish(change);
+    expect(web.beforeDecide).toBeNull();
+    expect(refused.status).toBe(409);
+    expect(await asJson(refused)).toMatchObject({
+      code: 'ROUTE_PACK_NOT_PUBLISHED',
+      error: `Forced refusal of the decision ${routePackWords.notPublished}`,
+    });
+    expect(await proposalsOf(routeId)).toHaveLength(1);
+    expect(await packsOf(routeId)).toHaveLength(1);
+    const finished = await publish(change);
+    expect(finished.status).toBe(201);
+    expect(await asJson(finished)).toMatchObject({ version: 2, duplicate: false });
+    expect(await packsOf(routeId)).toHaveLength(2);
+    expect(await proposalsOf(routeId)).toHaveLength(1);
+    expect(await decisionsOf(routeId)).toHaveLength(1);
+  });
+
+  test('a stale authenticator check between the proposal and the decision stays 401 STEP_UP_REQUIRED; after a fresh one the same body publishes once', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const change = settings(routeId, 2, { languages: ['en', 'fr'] });
+    web.beforeDecide = expired;
+    const refused = await publish(change);
+    expect(web.beforeDecide).toBeNull();
+    expect(refused.status).toBe(401);
+    expect(await asJson(refused)).toMatchObject({ code: 'STEP_UP_REQUIRED' });
+    expect(await packsOf(routeId)).toHaveLength(1);
+    await fresh();
     const finished = await publish(change);
     expect(finished.status).toBe(201);
     expect(await asJson(finished)).toMatchObject({ version: 2, duplicate: false });
@@ -1157,7 +1205,7 @@ describe('route-pack-publish, a replay rebuilt on its base pack (follow-up per G
 });
 
 describe('route-pack-publish, the size of the proposal', () => {
-  test('a change too large to review is 400 ROUTE_PACK_INVALID in plain words for the preview and the publish, with nothing written', async () => {
+  test('a change too large to review is 400 ROUTE_PACK_TOO_LARGE in plain words for the preview and the publish, with nothing written', async () => {
     const routeId = await newRoute();
     const long = (prefix: string, count = 50) =>
       Array.from({ length: count }, (_, i) => `${prefix}${'x'.repeat(74)}_${i}`);
@@ -1175,7 +1223,7 @@ describe('route-pack-publish, the size of the proposal', () => {
       const refused = await ask(change);
       expect(refused.status).toBe(400);
       expect(await asJson(refused)).toMatchObject({
-        code: 'ROUTE_PACK_INVALID',
+        code: 'ROUTE_PACK_TOO_LARGE',
         error: routePackWords.proposalTooLarge,
       });
     }

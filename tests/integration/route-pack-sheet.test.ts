@@ -1077,6 +1077,65 @@ test('a pack paused after the plan is not un-paused by the save: the pack step i
   expect(pack.status).toBe('PAUSED');
 });
 
+test('a pack published between the proposal and the decision refuses that route as changed, with its code (follow-up per G73)', async () => {
+  expect((await save(coreLines('GT-BZ'))).ok).toBe(true);
+  const id = (await routeId('GT-BZ'))!;
+  const draft = await latestPack('GT-BZ');
+  let race = true;
+  // Someone publishes a pack after this save proposed its own and before the decision.
+  const racing = new Proxy(operations, {
+    get(target, property) {
+      if (property === 'command')
+        return async (
+          ctx: Parameters<OperationsService['command']>[0],
+          input: { action?: string },
+        ) => {
+          if (race && input.action === 'decide') {
+            race = false;
+            await corridors.appendPack(owner(), {
+              id: randomUUID(),
+              routeId: id,
+              version: draft.version + 1,
+              status: draft.status,
+              effectiveFrom: new Date().toISOString(),
+              reason,
+              configuration: draft.configuration,
+            });
+          }
+          return target.command(ctx, input);
+        };
+      const value = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  const report = await new RoutePackSheetService(f.runtime, corridors, racing, content).save(
+    owner(),
+    {
+      rows: rowsOf([
+        filled('GT-BZ', 'market.notes', 'Coffee and sugar'),
+        line({ route: 'GT-BZ', field_key: 'pack.languages', state: 'Filled', value: 'es' }),
+      ]),
+      saveId: randomUUID(),
+      reason,
+    },
+  );
+  expect(race).toBe(false);
+  expect(report.ok).toBe(false);
+  expect(report.errors).toEqual([
+    {
+      row: null,
+      route: 'GT-BZ',
+      key: null,
+      code: 'ROUTE_PACK_PACK_CHANGED',
+      message: routePackWords.packChanged,
+    },
+  ]);
+  expect(report.saved).toEqual([
+    { route: 'GT-BZ', routeId: id, contentVersion: 2, packVersion: null },
+  ]);
+  expect((await latestPack('GT-BZ')).version).toBe(draft.version + 1);
+});
+
 test('the dry run judges go-live against the latest pack, a scheduled one included, and warns', async () => {
   expect((await save(coreLines('GT-SV'))).ok).toBe(true);
   const draft = await latestPack('GT-SV');
@@ -1128,7 +1187,7 @@ test('a pack over the review size limit is a route error in the save report, and
       row: null,
       route: 'SV-HN',
       key: null,
-      code: 'ROUTE_PACK_INVALID',
+      code: 'ROUTE_PACK_TOO_LARGE',
       message: routePackWords.proposalTooLarge,
     },
   ]);
