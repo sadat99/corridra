@@ -6105,3 +6105,27 @@ Checks at f236a8f0, all exit 0:
 **Preserved.** Native language review gate OPEN; Phase 4 not started; real-operation gates unchanged; every owner decision line kept.
 
 **Not verified.** Merge and CI of 703 and 704; any signed-in production journey.
+
+## 28 Nov 2026 - records: PRs 703 and 704 merged (scribe, for Guardian G75)
+
+**Request.** Records after Guardian G75 (took over from G74, session_0187kU9uxwC9xBAxVLyticyz, on 28 Nov) merged PRs 703 and 704. Branch claude/g75-records-704 from origin/main 0fbeeff6e0238ec5537a6935906599f0dab42661; authority stamp auth-c99509d88ec1. Docs only. No requirement moves to VERIFIED.
+
+**Why.** Close the record of the two open PRs listed in the G74 rotation entry.
+
+**Outcome (as relayed by G75).**
+
+- PR 703 merged as 1dc5ee94501b67f652e9e92732af4c8bb10e64c8. Production deploy dpl_DbZvbqHLk42Tt9ci8aL6frgd9ojw READY.
+- PR 705 (records) is 7cc9933d. Deploy dpl_AoY15wEQK8rXDa5M4AxGMkHU8Qvs READY.
+- PR 704 merged as 0fbeeff6e0238ec5537a6935906599f0dab42661, squash at exact head abcc4fb57202785688f7b96b2829507ddd8d3e7f. Class A. An address naming a dashboard tab by #dash-* opens that tab via ?tab=. Opus reviewer READY, 0 blocking. Checks: 23 success, plus CodeQL neutral (a configuration warning only: the security.yml analyze config was not found on the PR ref). The CodeQL review thread is resolved and outdated. Production deploy dpl_GzXry32xNwRF5XnfEyPFkoJ5mZAU READY.
+- The follow-up "#dash-money is never opened" (PR 645) is closed in code by PR 704. It is not listed in the current ledger; older ledger snapshots are frozen.
+- The remote branch claude/dash-money-address could not be deleted (the session's deletion was denied). Added to the owner branch-cleanup item in the ledger.
+
+**Next action.** The owner's filled route sheet (8 routes, 568 rows, not in the repository): dry run, save only on the owner's word, Phase 4 per route only on the owner's word. Then L1 Bangla (Class B, native review gate OPEN). Signed-in production check of the route pack editor still NOT VERIFIED.
+
+**Verification.** G75 receipts as relayed; not re-read by this scribe run. This PR: node scripts/authority.mjs stamp, node scripts/v3-context.mjs verify, node --test tests/documents.test.mjs, prettier@3.9.10 --check; exit codes in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (first Resume bullet, next action, owner items; size shrank); docs/PLAN_STATUS.md (ADR-093 row: 703 and 704 added); this entry. No code, tests, ADR text, switch or install.
+
+**Preserved.** Native language review gate OPEN; Phase 4 not started; real-operation gates unchanged; every owner decision line kept.
+
+**Not verified.** Any signed-in production journey; the route pack editor in production.
