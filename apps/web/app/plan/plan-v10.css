@@ -1,0 +1,372 @@
+/* The request page in the home page's design (owner canvas board v10, 28 Nov 2026): a two-pane window with the request
+   taking shape on the left and one question at a time on the right. Loaded by intake.tsx after plan-v4.css. Tokens
+   only (--cv-*); weights 400/500/600. The form keeps its own markup and logic; this file only changes how it looks. */
+.guide-plan-head {
+  max-inline-size: 62.5rem;
+  margin-inline: auto;
+}
+.pv-window {
+  display: grid;
+  grid-template-columns: minmax(0, 23.75rem) minmax(0, 1fr);
+  inline-size: min(62.5rem, 100%);
+  margin-inline: auto;
+  background: var(--cv-white);
+  border: 1px solid var(--cv-line);
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(20, 36, 56, 0.12);
+}
+.pv-window > .ux-brief-summary {
+  display: none;
+}
+.pv-side {
+  display: flex;
+  flex-direction: column;
+  padding: 36px 32px;
+  background: var(--cv-tint);
+}
+.pv-eb {
+  margin: 0;
+  color: var(--cv-brand);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.pv-side-h {
+  margin: 10px 0 0;
+  font-family: var(--font-newsreader), serif;
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+.pv-map {
+  block-size: 200px;
+  margin-block-start: 22px;
+  background: var(--cv-white);
+  border: 1px solid var(--cv-line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.pv-map svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+.pv-sum {
+  margin: 22px 0 0;
+}
+.pv-sum div {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 12px 0;
+  border-block-start: 1px solid var(--cv-line);
+  font-size: 15px;
+}
+.pv-sum dt {
+  flex: none;
+  inline-size: 70px;
+  color: var(--cv-ink-3);
+}
+.pv-sum dd {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.pv-sum dd[data-mute] {
+  color: var(--cv-ink-3);
+  font-weight: 400;
+}
+.pv-main {
+  min-inline-size: 0;
+  padding: 36px 48px;
+}
+.pv-main .intake-form {
+  display: grid;
+  gap: 18px;
+  max-inline-size: none;
+}
+.pv-main .intake-form > h2 {
+  margin: 0;
+  font-family: var(--font-newsreader), serif;
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+}
+.pv-main .plan-progress-line {
+  display: none;
+}
+/* The steps row. */
+.pv-steps {
+  display: flex;
+  align-items: center;
+}
+.pv-step-wrap {
+  display: flex;
+  flex: 1;
+  align-items: center;
+}
+.pv-step-wrap:last-child {
+  flex: none;
+}
+.pv-step {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--cv-ink-3);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.pv-step:disabled {
+  cursor: default;
+}
+.pv-step-dot {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 30px;
+  block-size: 30px;
+  background: var(--cv-white);
+  border: 2px solid var(--cv-rail);
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 600;
+}
+.pv-step[data-state='done'] .pv-step-dot {
+  background: var(--cv-brand);
+  border-color: var(--cv-brand);
+  color: var(--cv-white);
+}
+.pv-step[data-state='now'] {
+  color: var(--cv-ink);
+  font-weight: 600;
+}
+.pv-step[data-state='now'] .pv-step-dot {
+  border-color: var(--cv-brand);
+  color: var(--cv-brand);
+  box-shadow: 0 0 0 4px rgba(40, 86, 197, 0.16);
+}
+.pv-step-line {
+  flex: 1;
+  block-size: 2px;
+  margin-inline: 12px;
+  background: var(--cv-line);
+}
+.pv-step-line[data-done] {
+  background: var(--cv-brand);
+}
+/* Choices as cards and pills. */
+.pv-main .guide-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.pv-main .guide-options-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.pv-main .choice {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-block-size: 56px;
+  padding: 14px 18px;
+  background: var(--cv-white);
+  border: 1.5px solid var(--cv-line);
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.pv-main .choice:hover {
+  transform: translateY(-2px);
+  border-color: var(--cv-rail);
+}
+.pv-main .choice:has(input:checked) {
+  background: var(--cv-tint);
+  border-color: var(--cv-brand);
+  box-shadow: 0 0 0 3px rgba(40, 86, 197, 0.14);
+}
+.pv-main .guide-options-row .choice {
+  min-block-size: 44px;
+  padding: 0 20px;
+  border-radius: 99px;
+}
+/* The fields. */
+.pv-main .field input,
+.pv-main .field select,
+.pv-main .field textarea {
+  min-block-size: 56px;
+  padding: 0 18px;
+  background: var(--cv-white);
+  border: 1.5px solid var(--cv-line);
+  border-radius: 14px;
+  color: var(--cv-ink);
+  font: inherit;
+}
+.pv-main .field textarea {
+  padding: 16px 18px;
+}
+.pv-main .field input:focus-visible,
+.pv-main .field select:focus-visible,
+.pv-main .field textarea:focus-visible {
+  border-color: var(--cv-brand);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(40, 86, 197, 0.14);
+}
+/* The action row: Back as a quiet link, the one primary action as a pill. */
+.pv-main .plan-action-bar {
+  padding-block-start: 18px;
+  border-block-start: 1px solid var(--cv-hair);
+}
+.pv-main .plan-action-row {
+  align-items: center;
+  justify-content: space-between;
+}
+.pv-main .plan-action-row .primary-link {
+  min-block-size: 54px;
+  padding-inline: 34px;
+  background: var(--cv-brand);
+  border: 0;
+  border-radius: 99px;
+  color: var(--cv-white);
+  font-weight: 600;
+}
+.pv-main .plan-action-row .button-secondary {
+  background: none;
+  border: 0;
+  color: var(--cv-brand);
+  font-weight: 600;
+}
+/* Saved screen: the badge, the chips and the steps that follow. */
+.pv-saved {
+  display: inline-flex;
+  align-items: center;
+  align-self: start;
+  padding: 7px 14px;
+  background: var(--cv-green-bg);
+  border-radius: 99px;
+  color: var(--cv-green-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.pv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-block: 14px;
+}
+.pv-chips span {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 40px;
+  padding: 0 16px;
+  background: var(--cv-tint);
+  border: 1px solid var(--cv-line);
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.pv-chips .pv-chip-plain {
+  background: var(--cv-white);
+  font-weight: 500;
+}
+.pv-chips em {
+  color: var(--cv-ink-3);
+  font-style: normal;
+}
+.pv-timeline {
+  display: grid;
+  margin: 0 0 18px;
+  padding: 8px 22px;
+  border: 1px solid var(--cv-line);
+  border-radius: 20px;
+  list-style: none;
+}
+.pv-timeline li {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding-block: 14px;
+}
+.pv-timeline li + li {
+  border-block-start: 1px solid var(--cv-hair);
+}
+.pv-tl-dot {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 30px;
+  block-size: 30px;
+  background: var(--cv-white);
+  border: 2px solid var(--cv-rail);
+  border-radius: 50%;
+  color: var(--cv-ink-3);
+  font-size: 13px;
+  font-weight: 600;
+}
+.pv-timeline b {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+}
+.pv-timeline li > span:last-child > span {
+  color: var(--cv-ink-3);
+  font-size: 14px;
+}
+.pv-timeline li[data-state='done'] .pv-tl-dot {
+  background: var(--cv-green);
+  border-color: var(--cv-green);
+  color: var(--cv-white);
+}
+.pv-timeline li[data-state='now'] .pv-tl-dot {
+  border-color: var(--cv-brand);
+  color: var(--cv-brand);
+  box-shadow: 0 0 0 4px rgba(40, 86, 197, 0.16);
+}
+.pv-timeline li[data-state='now'] b {
+  color: var(--cv-brand);
+}
+@media (max-width: 52rem) {
+  .pv-window {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 24px;
+  }
+  .pv-side {
+    padding: 24px;
+  }
+  .pv-map,
+  .pv-sum {
+    display: none;
+  }
+  .pv-main {
+    padding: 24px;
+  }
+  .pv-main .guide-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pv-step-name {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pv-main .choice {
+    transition: none;
+  }
+}

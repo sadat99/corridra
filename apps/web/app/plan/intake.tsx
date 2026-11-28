@@ -8,6 +8,10 @@ import { PlanActionBar } from './plan-action-bar';
 import { PlanContactNote } from './plan-contact-note';
 import { PlanJobFold } from './plan-job-fold';
 import { PlanProgress } from './plan-progress';
+import { PlanReceived } from './plan-received';
+import { PlanSide } from './plan-side';
+import { PlanStepper } from './plan-stepper';
+import './plan-v10.css';
 import { objectiveForJob, selectedPicture, pictures } from '../../lib/first-question';
 import { FirstQuestion } from '../../components/mr/first-question';
 import { Flagged, placeMark } from '../../components/ux/flag';
@@ -1088,6 +1092,28 @@ function IntakeForm({
     countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
       ? 1
       : 0);
+  // The words the left pane and the saved screen show for the answers still in this tab.
+  const goalWords = chosenJob ? say(jobWord(chosenJob.key)) : '';
+  const companyName = countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
+    ? (regionNames.of(draft.companyCountry) ?? '')
+    : '';
+  const marketName =
+    draft.marketCode === 'EU'
+      ? say('form.where.eu')
+      : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
+        ? (regionNames.of(draft.marketCode) ?? '')
+        : '';
+  const answersKept = [
+    draft.job,
+    draft.companyCountry,
+    draft.marketCode,
+    draft.whenNeeded,
+    draft.offer,
+    draft.notes,
+    draft.name,
+    draft.company,
+    draft.email,
+  ].filter((value) => String(value).trim() !== '').length;
   return (
     // Without real use (a preview or local copy) everything entered here is made up, and the page says so.
     <div className="ux-intake-layout" data-madeup-panel={realMode ? undefined : ''}>
@@ -1142,11 +1168,26 @@ function IntakeForm({
           </p>
         )}
       </div>
-      <div className="guide-plan-body">
-        <div className="guide-plan-main">
+      <div className="guide-plan-body pv-window">
+        <PlanSide
+          goal={goalWords}
+          company={companyName}
+          market={marketName}
+          marketCode={draft.marketCode}
+          when={draft.whenNeeded}
+          note={draft.notes}
+        />
+        <div className="guide-plan-main pv-main">
           {realMode && pendingReady && (
             <section className="receipt-saved" aria-labelledby="pending-request-title">
-              <h2 id="pending-request-title">{say('form.pending.title')}</h2>
+              <PlanReceived
+                goal={goalWords}
+                company={companyName}
+                market={marketName}
+                answers={answersKept}
+                signedIn={!!account}
+              />
+              <h2 id="pending-request-title">Your request is saved.</h2>
               {translated ? (
                 <p>
                   {say('form.pending.sameDevice')}
@@ -1268,6 +1309,7 @@ function IntakeForm({
                 listLabel={say('form.step.journey')}
                 progressLabel={say('form.step.progress')}
               />
+              <PlanStepper names={stepNames} current={step} onGo={(index) => move(index)} />
               <h2 ref={heading} tabIndex={-1} className={step === 0 ? 'sr-only' : undefined}>
                 {say(titles[step])}
               </h2>
