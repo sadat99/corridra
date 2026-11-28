@@ -19,7 +19,7 @@
 }
 .aw-window {
   display: grid;
-  grid-template-columns: minmax(0, 23.75rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, min(23.75rem, 36%)) minmax(0, 1fr);
   inline-size: min(62.5rem, 100%);
   margin-inline: auto;
   background: var(--cv-white);
@@ -155,7 +155,7 @@
   display: flex;
   flex-direction: column;
   min-inline-size: 0;
-  padding: 40px 56px;
+  padding: 40px min(56px, 6vw);
 }
 .aw-switch {
   display: flex;
@@ -632,4 +632,17 @@
 .aw .aw-row,
 .aw .aw-noacc {
   flex-wrap: wrap;
+}
+
+/* The unavailable state's actions wrap with the text instead of running out of the window. */
+.aw .ux-state-actions {
+  flex-wrap: wrap;
+}
+.aw .ux-state-actions a,
+.aw .ux-state-actions button {
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+}
+.aw .ux-state {
+  padding: 14px 16px;
 }

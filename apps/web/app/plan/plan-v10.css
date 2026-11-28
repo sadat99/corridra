@@ -11,7 +11,7 @@
   display: grid;
   align-items: stretch;
   gap: 0;
-  grid-template-columns: minmax(0, 23.75rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, min(23.75rem, 36%)) minmax(0, 1fr);
   inline-size: min(62.5rem, 100%);
   margin-inline: auto;
   background: var(--cv-white);
@@ -37,7 +37,7 @@
 }
 .pv-eb {
   margin: 0;
-  color: var(--cv-brand);
+  color: var(--cv-ink);
   font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -71,13 +71,16 @@
   display: flex;
   gap: 12px;
   align-items: baseline;
+  flex-wrap: wrap;
   padding: 12px 0;
   border-block-start: 1px solid var(--cv-line);
   font-size: var(--text-sm);
 }
 .pv-sum dt {
   flex: none;
-  inline-size: 70px;
+  inline-size: 5.5rem;
+  max-inline-size: 40%;
+  overflow-wrap: anywhere;
   color: var(--cv-ink-3);
 }
 .pv-sum dd {
@@ -113,17 +116,30 @@
   line-height: 1.06;
   letter-spacing: -0.02em;
 }
-.pv-main .plan-progress-line {
-  display: none;
+/* The progress words ("Step 1 of 5: Goal · Next: Where") show on a phone, where the steps row has no names; from 52 rem
+   the row says the same, so the words stay for screen readers only. */
+@media (min-width: 52.0625rem) {
+  .pv-main .plan-progress-line {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 /* The steps row. */
 .pv-steps {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 4px 0;
 }
 .pv-step-wrap {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
+  min-inline-size: 0;
   align-items: center;
 }
 .pv-step-wrap:last-child {
@@ -133,7 +149,12 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  max-inline-size: 100%;
   padding: 0;
+  overflow-wrap: anywhere;
+  text-align: start;
   background: none;
   border: 0;
   color: var(--cv-ink-3);
@@ -172,6 +193,7 @@
 }
 .pv-step-line {
   flex: 1;
+  min-inline-size: 8px;
   block-size: 2px;
   margin-inline: 12px;
   background: var(--cv-line);
@@ -204,9 +226,9 @@
   font-weight: 500;
   cursor: pointer;
   transition:
-    transform 0.2s,
-    border-color 0.2s,
-    box-shadow 0.2s;
+    transform var(--dur),
+    border-color var(--dur),
+    box-shadow var(--dur);
 }
 .pv-main .choice:hover {
   transform: translateY(-2px);
@@ -382,6 +404,9 @@
   }
   .pv-step-name {
     display: none;
+  }
+  .pv-step {
+    justify-content: center;
   }
 }
 @media (prefers-reduced-motion: reduce) {

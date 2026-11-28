@@ -37,21 +37,27 @@ export function SiteFooterV44({
   const preview = isQuiet(pathname);
   const compact = pathname === '/plan';
   const doors = accessDoors && !workspace && !compact && !preview && !who;
+  // One copy of each link. On a phone each group is a native disclosure (closed, so the page keeps its length); from
+  // 701 px every group shows open and its summary is hidden, as in the footer before. Where the browser cannot force a
+  // closed group open the groups stay collapsible at every width.
   const groups = (
     <nav className="hv7-footer-nav" aria-label={t('footer.nav')}>
       {footerGroups.map((group) => (
-        <div key={group.title} className="hv7-footer-group">
-          <h2>{t(group.title)}</h2>
-          <ul>
-            {group.links.map(({ href, key, testKey }) => (
-              <li key={href}>
-                <Link prefetch={false} href={accessDoors ? (doorFor[href] ?? href) : href}>
-                  {t(!realUse && testKey ? testKey : key)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <details key={group.title} className="hv7-footer-group">
+          <summary>{t(group.title)}</summary>
+          <div>
+            <h2>{t(group.title)}</h2>
+            <ul>
+              {group.links.map(({ href, key, testKey }) => (
+                <li key={href}>
+                  <Link prefetch={false} href={accessDoors ? (doorFor[href] ?? href) : href}>
+                    {t(!realUse && testKey ? testKey : key)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </details>
       ))}
     </nav>
   );

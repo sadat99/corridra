@@ -110,9 +110,9 @@ for (const width of [320, 390, 768]) {
       return box.bottom <= window.innerHeight && !!top && link.contains(top);
     });
     expect(clear).toBe(true);
-    // Reaching another destination takes the drawer: open it, choose Requests.
+    // Reaching another destination takes the drawer: open it, choose My Work (account v18, was Requests).
     await menu.click();
-    await mainLinks(page).filter({ hasText: 'Requests' }).click();
+    await mainLinks(page).filter({ hasText: 'My Work' }).click();
     await expect(page).toHaveURL(/\/account\?view=work/);
   });
 }
@@ -197,12 +197,18 @@ test('CX-03 the phone drawer follows the chosen language as the sidebar does, an
     .first()
     .click();
   const links = mainLinks(page);
+  // Home keeps the word it always had in the chosen language.
   await expect(links.nth(0)).toHaveText('হোম');
-  await expect(links.nth(1)).toHaveText('আমার কাজ');
-  await expect(links.nth(3)).toHaveText('ফলাফল');
-  // Meetings has no reviewed translation, so it stays English and says so.
-  await expect(links.nth(2)).toHaveText('Meetings');
-  await expect(links.nth(2).locator('[lang="en"]')).toHaveCount(1);
+  // My Work, Delegations and More are new words with no reviewed translation yet (native review is open): each goes
+  // through the catalogue (home.v44.nav.*), stays English and says so.
+  for (const [index, word] of [
+    [1, 'My Work'],
+    [2, 'Delegations'],
+    [3, 'More'],
+  ] as const) {
+    await expect(links.nth(index)).toHaveText(word);
+    await expect(links.nth(index).locator('[lang="en"]')).toHaveCount(1);
+  }
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(sidebar(page).getByRole('link').nth(0)).toHaveText('হোম');
 });
@@ -246,14 +252,14 @@ test('CX-03 the language control is the top bar sheet: the languages in their ow
   await expect(trigger).toContainText('ES');
 });
 
-test('W1-A2 Listen and the language code are in the customer header from 360 px, and in the drawer under it', async ({
+test('W1-A2 the language code is in the customer header from 360 px, and in the drawer under it; Listen is not in the signed-in menus (account v18)', async ({
   page,
 }) => {
   const barTools = header(page).locator('.ux-bar-topbar');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/account');
   await expect(barTools.getByRole('button', { name: /Language/ })).toBeVisible();
-  await expect(barTools.getByRole('button', { name: 'Listen to This Page' })).toBeVisible();
+  await expect(barTools.getByRole('button', { name: 'Listen to This Page' })).toHaveCount(0);
   for (const button of await barTools.getByRole('button').all())
     expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
   expect(
@@ -266,11 +272,9 @@ test('W1-A2 Listen and the language code are in the customer header from 360 px,
   const drawer = page.getByRole('dialog', { name: 'Customer navigation' });
   const language = drawer.getByRole('button', { name: /Language/ });
   await expect(language).toBeVisible();
-  // Listen too, where the browser can read the page aloud (it can here).
-  const listen = drawer.getByRole('button', { name: 'Listen to This Page' });
-  await expect(listen).toBeVisible();
-  await expect(listen).toContainText('Listen');
-  // They are a group of their own above the choices, not choices themselves.
+  // No Listen in the signed-in drawer either (customer-account-v18.md): the public header offers it.
+  await expect(drawer.getByRole('button', { name: 'Listen to This Page' })).toHaveCount(0);
+  // The language is a group of its own above the choices, not a choice itself.
   const first = await drawer.getByRole('link', { name: 'New Request' }).boundingBox();
   expect((await language.boundingBox())!.y).toBeLessThan(first!.y);
   expect(
@@ -695,7 +699,9 @@ test('W7 on a phone the avatar menu holds the same three controls, and they work
   );
 });
 
-test('reading aloud started from Help can be stopped from Help again', async ({ page }) => {
+test('reading aloud started from the public header can be stopped there again, and the signed-in Help menu offers no Listen (account v18)', async ({
+  page,
+}) => {
   // A browser voice that keeps speaking until it is cancelled, so the test sees the state between.
   await page.addInitScript(() => {
     const synth = window.speechSynthesis;
@@ -710,18 +716,21 @@ test('reading aloud started from Help can be stopped from Help again', async ({ 
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  const trigger = header(page).getByRole('button', { name: 'Help and accessibility' });
-  await trigger.click();
-  const menu = page.getByRole('menu', { name: 'Help and accessibility' });
-  await menu.getByRole('menuitemcheckbox', { name: 'Listen to This Page' }).click();
+  await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
+  await expect(
+    page
+      .getByRole('menu', { name: 'Help and accessibility' })
+      .getByRole('menuitemcheckbox', { name: 'Listen to This Page' }),
+  ).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.goto('/how-it-works');
   const speech = () =>
     page.evaluate(
       () => (window as unknown as { __speech: { speak: number; cancel: number } }).__speech,
     );
+  await page.locator('header').getByRole('button', { name: 'Listen to This Page' }).first().click();
   expect((await speech()).speak).toBe(1);
-  await trigger.click();
-  const stop = menu.getByRole('menuitemcheckbox', { name: 'Stop Reading' });
-  await expect(stop).toHaveAttribute('aria-checked', 'true');
+  const stop = page.locator('header').getByRole('button', { name: 'Stop Reading' }).first();
   const cancelledBefore = (await speech()).cancel;
   await stop.click();
   expect((await speech()).cancel).toBe(cancelledBefore + 1);
@@ -875,11 +884,11 @@ test('CX-02 every destination the customer menus reached before is still reachab
     page.getByRole('menu', { name: 'Help and accessibility' }).getByRole('menuitem'),
   ))
     if (href) reached.add(href);
-  // Home, Requests, Reports, Account, New Request, the website, the privacy notice and Help's How It Works.
+  // Home, My Work, Account, New Request, the website, the privacy notice and Help's How It Works. Results is a tab inside
+  // My Work now (account v18), so it is checked on the tab row below, not on the menus.
   for (const old of [
     '/account',
     '/account?view=work',
-    '/account?view=results',
     '/account?view=more',
     '/',
     '/privacy',
@@ -889,6 +898,13 @@ test('CX-02 every destination the customer menus reached before is still reachab
   expect(
     ['/plan', '/account?view=work#customer-workspaces'].some((href) => reached.has(href)),
   ).toBe(true);
+  await page.goto('/account?view=work');
+  const tabRow = page.getByRole('navigation', { name: 'My Work sections' });
+  const sections = await hrefsOf(tabRow.getByRole('link'));
+  for (const old of ['/account?view=results', '/account/meetings'])
+    expect(sections.includes(old), `${old} is no longer reachable from the My Work tabs`).toBe(
+      true,
+    );
   // All tools stays linked from the Account page where the navigation switch is on (checked in
   // tests/integration/revamp-nav-customer-model.test.ts); this server has that switch off.
 });

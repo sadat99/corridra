@@ -550,7 +550,8 @@ test.describe('positive: Pages', () => {
     await mount(page);
     await openDialog(page);
     await page.getByRole('button', { name: 'Requests', exact: true }).click();
-    expect(await options(page).locator('strong').allInnerTexts()).toEqual(['Requests']);
+    // The Requests scope lists the page the navigation now calls My Work (account v18).
+    expect(await options(page).locator('strong').allInnerTexts()).toEqual(['My Work']);
     await page.getByRole('button', { name: 'Companies', exact: true }).click();
     expect(await options(page).locator('strong').allInnerTexts()).toEqual(['Companies']);
   });
@@ -597,7 +598,7 @@ test.describe('keyboard', () => {
     await field(page).press('ArrowUp');
     await field(page).press('ArrowUp');
     await field(page).press('ArrowUp');
-    expect(await selectedLabel(page)).toBe('Requests');
+    expect(await selectedLabel(page)).toBe('My Work');
     await expect(field(page)).toHaveAttribute(
       'aria-activedescendant',
       (await dialogOf(page).locator('[aria-selected="true"]').getAttribute('id'))!,
