@@ -399,3 +399,19 @@
 .pv-side {
   overflow: hidden;
 }
+
+/* A message above the window (a failed save, a notice) reads as a clear bar, not loose text. */
+.guide-status:not([hidden]) {
+  inline-size: min(62.5rem, 100%);
+  margin: 0 auto 16px;
+  padding: 14px 20px;
+  background: var(--cv-tint);
+  border: 1px solid var(--cv-line);
+  border-radius: 14px;
+  color: var(--cv-ink);
+  font-size: 15px;
+  font-weight: 500;
+}
+.pv-main h2:focus {
+  outline: none;
+}

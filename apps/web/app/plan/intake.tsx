@@ -452,6 +452,10 @@ function IntakeForm({
     if (finished) document.querySelector('.pv-window')?.scrollIntoView({ block: 'start' });
   }, [finished]);
   useEffect(() => {
+    // A message (for example a save that failed) is brought into view so a submit never looks silent.
+    if (message && !finished) document.querySelector('.guide-status')?.scrollIntoView({ block: 'center' });
+  }, [message, finished]);
+  useEffect(() => {
     Promise.resolve().then(() => {
       try {
         let restored = false;
