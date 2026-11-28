@@ -1909,6 +1909,11 @@
       "use": "Owner decision 5 Nov 2026: customer area redesign, one desktop screen per page (CX-01 to CX-07)"
     },
     {
+      "path": "docs/revamp/specs/customer-account-v18.md",
+      "classification": "Current guide/contract",
+      "use": "Owner canvas Home_V18_Account of 28 Nov 2026: Home, My Work, Companies, Delegations and More, the Acting for switcher, My Businesses and the Delegations page; live by default with an off switch (CORRIDRA_UX_ACCOUNT_V18)"
+    },
+    {
       "path": "docs/revamp/specs/navigation-v1.md",
       "classification": "Current guide/contract",
       "use": "Owner decision 4 Nov 2026: left navigation, page length budget and 1 to 3 fields per form step (L-01 to L-06)"

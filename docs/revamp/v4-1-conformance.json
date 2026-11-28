@@ -198,8 +198,46 @@
       "notes": ""
     },
     {
+      "route": "/account/businesses",
+      "file": "apps/web/app/account/businesses/page.tsx",
+      "wave": "B",
+      "decisions": {
+        "L1": "not_assessed",
+        "L2": "not_assessed",
+        "L3": "not_assessed",
+        "L4": "n/a",
+        "L5": "n/a",
+        "L6": "n/a",
+        "L7": "n/a",
+        "L8": "n/a",
+        "L9": "n/a",
+        "L10": "not_assessed"
+      },
+      "evidence": [],
+      "notes": ""
+    },
+    {
       "route": "/account/companies",
       "file": "apps/web/app/account/companies/page.tsx",
+      "wave": "B",
+      "decisions": {
+        "L1": "not_assessed",
+        "L2": "not_assessed",
+        "L3": "not_assessed",
+        "L4": "n/a",
+        "L5": "n/a",
+        "L6": "n/a",
+        "L7": "n/a",
+        "L8": "n/a",
+        "L9": "n/a",
+        "L10": "not_assessed"
+      },
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "route": "/account/delegation-hub",
+      "file": "apps/web/app/account/delegation-hub/page.tsx",
       "wave": "B",
       "decisions": {
         "L1": "not_assessed",
@@ -1649,6 +1687,25 @@
         "apps/web/components/public-page.tsx"
       ],
       "notes": "V4.1-A: the route label is a RouteLine with a flag before each place, words unchanged. No choice set on the page. Place names in sentences and link words stay unmarked."
+    },
+    {
+      "route": "/start",
+      "file": "apps/web/app/start/page.tsx",
+      "wave": "A",
+      "decisions": {
+        "L1": "not_assessed",
+        "L2": "not_assessed",
+        "L3": "not_assessed",
+        "L4": "n/a",
+        "L5": "n/a",
+        "L6": "n/a",
+        "L7": "n/a",
+        "L8": "n/a",
+        "L9": "n/a",
+        "L10": "not_assessed"
+      },
+      "evidence": [],
+      "notes": ""
     },
     {
       "route": "/trade-missions",
