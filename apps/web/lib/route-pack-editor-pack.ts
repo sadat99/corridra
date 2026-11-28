@@ -123,6 +123,11 @@ export function publishBody(
  * the publish be refused with these words: the page then says the change is too large, not that it is invalid.
  */
 export const proposalTooLargeWords = 'This route pack is too large to review. Shorten long lists.';
+/**
+ * The code a refusal for size carries. The page keys on it (and on 413), so a change of the server's words never turns a size
+ * refusal into "invalid"; the words above stay as the fallback for an answer with only the generic invalid code.
+ */
+export const packTooLargeCode = 'ROUTE_PACK_TOO_LARGE';
 export type PackOutcome =
   /** 200 to a preview. */
   | 'previewed'
@@ -164,7 +169,10 @@ export function packOutcome(
     if (code === 'ROUTE_PACK_LOCKED_CORE_EMPTIED') return 'blocked';
     return 'invalid';
   }
-  if (status === 400) return error?.trim() === proposalTooLargeWords ? 'tooLarge' : 'invalid';
+  if (status === 400)
+    return code === packTooLargeCode || error?.trim() === proposalTooLargeWords
+      ? 'tooLarge'
+      : 'invalid';
   if (status === 413) return 'tooLarge';
   if (status === 401) return code === 'STEP_UP_REQUIRED' ? 'stepUp' : 'signedOut';
   if (status === 403) return 'denied';

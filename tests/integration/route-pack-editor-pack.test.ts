@@ -14,6 +14,7 @@ import {
   packOutcome,
   packRowAction,
   proposalTooLargeWords,
+  packTooLargeCode,
   previewBody,
   previewReason,
   publishBody,
@@ -23,7 +24,12 @@ import {
   type PackEdit,
   type PackOutcome,
 } from '../../apps/web/lib/route-pack-editor-pack';
-import { keyIssueWords, packWords } from '../../apps/web/app/operator/route-pack-pack-words';
+import {
+  keyIssueWords,
+  nowStatus,
+  nowValue,
+  packWords,
+} from '../../apps/web/app/operator/route-pack-pack-words';
 
 // ADR-093 Phase 3, PR 3b: the page's side of route-pack-publish. Pure: no network, no page. Every body the page builds is
 // parsed by the server's own schema, so the two cannot drift apart.
@@ -316,6 +322,19 @@ describe('PR 3b review fixes', () => {
       'invalid',
     );
   });
+  test('too large is keyed on the status and the code, so other words of the server still read as too large', () => {
+    expect(packOutcome('publish', 400, packTooLargeCode, 'Different words entirely.', true)).toBe(
+      'tooLarge',
+    );
+    expect(packOutcome('preview', 400, packTooLargeCode, null, true)).toBe('tooLarge');
+    expect(packOutcome('publish', 413, null, 'Different words entirely.', true)).toBe('tooLarge');
+    // The same code on another status is not claimed as too large.
+    expect(packOutcome('publish', 409, packTooLargeCode, 'x', true)).toBe('invalid');
+    // The words stay a fallback for a server that sends the generic invalid code.
+    expect(packOutcome('publish', 400, 'ROUTE_PACK_INVALID', proposalTooLargeWords, true)).toBe(
+      'tooLarge',
+    );
+  });
 });
 
 describe('words', () => {
@@ -323,5 +342,13 @@ describe('words', () => {
     const all = JSON.stringify(packWords);
     expect(all).not.toContain(String.fromCharCode(0x2014));
     expect(all).not.toContain(previewReason);
+  });
+  test('the current setting and the current status read as plain words', () => {
+    expect(nowStatus('Active')).toBe('Current status: Active');
+    expect(nowValue('English, Chinese')).toBe('Current setting: English, Chinese');
+    // An empty list is said as nothing set, never as the list word "none".
+    expect(nowValue(null)).toBe('Current setting: nothing is set');
+    expect(nowValue(null)).not.toContain('none');
+    expect(nowValue('Not by hand')).toBe('Current setting: Not by hand');
   });
 });

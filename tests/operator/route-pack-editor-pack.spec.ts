@@ -142,6 +142,23 @@ test.describe('who sees the pack controls', () => {
 });
 
 test.describe('Change Pack Setting', () => {
+  test('the first step says the current setting in plain words, and an empty list is nothing set', async ({
+    page,
+  }) => {
+    await open(page);
+    await openLanguages(page);
+    await expect(settingDialog(page).getByText(/^Current setting: .+/)).toBeVisible();
+    await expect(settingDialog(page)).not.toContainText('Now:');
+    await expect(settingDialog(page)).not.toContainText('Current setting: none');
+    await page.keyboard.press('Escape');
+    // A route with no pack has no mission types yet.
+    await open(page, { route: 'TW-AU' });
+    const missions = lockedFields.find((item) => item.configurationKey === 'missionTypes')!;
+    await section(page, missions.section);
+    await button(page, `Change ${missions.label}`).click();
+    await expect(settingDialog(page).getByText('Current setting: nothing is set')).toBeVisible();
+    await expect(settingDialog(page)).not.toContainText('Now: none');
+  });
   test('a route with no pack offers Change only on Mission types, which starts pack version 1 as Draft', async ({
     page,
   }) => {
@@ -149,10 +166,19 @@ test.describe('Change Pack Setting', () => {
     await expect(button(page, 'Change Pack Status')).toHaveCount(0);
     await section(page, 3);
     await expect(editor(page).getByText(labelOfConfig('languages'))).toBeVisible();
-    await expect(editor(page).getByRole('button', { name: /^Change / })).toHaveCount(0);
     const missions = lockedFields.find((item) => item.configurationKey === 'missionTypes')!;
+    // Every section the standard has: none but the one holding Mission types shows a Change.
+    const sections = [...new Set(standardFieldsV1.map((field) => field.section))];
+    expect(sections.length).toBeGreaterThan(1);
+    for (const number of sections) {
+      await section(page, number);
+      await expect(editor(page).locator('li.ux-fact-row').first()).toBeVisible();
+      await expect(
+        editor(page).getByRole('button', { name: /^Change / }),
+        `section ${number}`,
+      ).toHaveCount(number === missions.section ? 1 : 0);
+    }
     await section(page, missions.section);
-    await expect(editor(page).getByRole('button', { name: /^Change / })).toHaveCount(1);
     await button(page, `Change ${missions.label}`).click();
     await expect(
       settingDialog(page).getByText('This starts the pack as Draft, not used yet.'),
@@ -497,6 +523,46 @@ test.describe('Change Pack Setting', () => {
 });
 
 test.describe('Change Pack Status and Remove Sourcing Profile', () => {
+  test('the Review step with eight Pending Core keys fits the dialog without scrolling, with room to spare', async ({
+    page,
+  }) => {
+    const keys = standardFieldsV1
+      .filter((field) => field.core)
+      .slice(0, 8)
+      .map((field) => field.key);
+    for (const [width, height] of [
+      [1440, 900],
+      [320, 568],
+    ] as const) {
+      await open(page, {
+        width,
+        height,
+        publish: { warnings: [{ code: 'ROUTE_PACK_GO_LIVE_PENDING_CORE', keys }] },
+      });
+      await button(page, 'Change Pack Status').click();
+      const d = statusDialog(page);
+      await d.getByRole('button', { name: /^Limited use/ }).click();
+      await d.getByRole('button', { name: 'Next', exact: true }).click();
+      await expect(d.getByText('Step 2 of 2: Review')).toBeVisible();
+      await expect(d.getByText(/^These Core fields are still Pending/)).toBeVisible();
+      const measured = await d.evaluate((element) => ({
+        scroll: element.scrollHeight,
+        client: element.clientHeight,
+        height: Math.round(element.getBoundingClientRect().height),
+      }));
+      test.info().annotations.push({
+        type: `review-${width}`,
+        description: `${measured.height} px high, scroll ${measured.scroll} of ${measured.client}`,
+      });
+      // The desktop budget: no scroll inside the dialog, and room for a longer blocked line under the 868 px cap. A 568 px high
+      // phone cannot hold the step by design (it scrolls inside the dialog), so there it only has to stay inside the screen.
+      if (width === 1440) {
+        expect(measured.scroll, `${width}x${height}`).toBeLessThanOrEqual(measured.client);
+        expect(measured.height).toBeLessThanOrEqual(800);
+      } else expect(measured.height).toBeLessThanOrEqual(height);
+      await noSidewaysScroll(page);
+    }
+  });
   test('five choices, Now cannot be chosen, Pending Core only warns, and the status body is sent', async ({
     page,
   }) => {
@@ -505,7 +571,7 @@ test.describe('Change Pack Status and Remove Sourcing Profile', () => {
     });
     await button(page, 'Change Pack Status').click();
     const d = statusDialog(page);
-    await expect(d.getByText('Now: Active.')).toBeVisible();
+    await expect(d.getByText('Current status: Active')).toBeVisible();
     for (const word of ['Draft, not used yet', 'Testing', 'Limited use', 'Paused'])
       await expect(d.getByRole('button', { name: new RegExp(`^${word}`) })).toBeEnabled();
     await expect(d.getByRole('button', { name: /^Active/ })).toBeDisabled();

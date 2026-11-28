@@ -68,8 +68,10 @@ export const packWords = {
   now: 'Now',
 } as const;
 
-export const nowStatus = (status: string) => `Now: ${status}.`;
-export const nowValue = (value: string) => `Now: ${value}`;
+export const nowStatus = (status: string) => `Current status: ${status}`;
+/** The line over a setting's first step; null is an empty list, said as nothing set (never as the list word none). */
+export const nowValue = (value: string | null) =>
+  `Current setting: ${value === null ? 'nothing is set' : value}`;
 export const basedOn = (version: number) => `Based on pack version ${version}`;
 export const becomes = (version: number) =>
   version === 1 ? 'This starts pack version 1' : `Becomes pack version ${version}`;
