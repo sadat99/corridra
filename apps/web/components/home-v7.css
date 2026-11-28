@@ -4,7 +4,11 @@
 
 .hv7 {
   --hv7-w: 70rem;
-  font-family: var(--hv7-font), -apple-system, system-ui, sans-serif;
+  font-family:
+    var(--font-inter),
+    -apple-system,
+    system-ui,
+    sans-serif;
   color: var(--cv-ink);
   background: var(--cv-page);
   -webkit-font-smoothing: antialiased;
@@ -909,7 +913,11 @@
   block-size: 100%;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
-  font-family: var(--hv7-font), -apple-system, system-ui, sans-serif;
+  font-family:
+    var(--font-inter),
+    -apple-system,
+    system-ui,
+    sans-serif;
   color: var(--cv-ink);
 }
 @media (min-width: 56rem) {

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import './comfort.css';
 import { readNeonAuthConfig } from '@corridra/config';
@@ -75,12 +76,22 @@ const notoSansBengali = localFont({
     },
   ],
 });
+// Inter is the text face of the 28 November 2026 canvas designs (the home, the account and work sign-in windows). It is
+// declared here once, as every face is, and never preloaded: the browser fetches it only on a page that uses it.
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-inter',
+  display: 'swap',
+  preload: false,
+});
 const fontVariables = [
   newsreader.variable,
   geist.variable,
   geistMono.variable,
   notoSerifBengali.variable,
   notoSansBengali.variable,
+  inter.variable,
 ].join(' ');
 
 export const metadata: Metadata = {

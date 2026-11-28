@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Inter } from 'next/font/google';
 import { useState, type ReactNode } from 'react';
 import { OperatorSignin } from '../app/operator/signin/signin-form';
 import './account-window.css';
@@ -9,7 +8,6 @@ import './account-window.css';
 // The work sign-in (owner canvas board v12, 28 Nov 2026): one window for the Corridra team and for field helpers. Both
 // sign in with the same work password and authenticator through the same form; the switch only chooses the words and
 // where the person goes after signing in. A customer account does not grant work access, and the page says so.
-const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--aw-font', display: 'swap' });
 
 export type WorkTab = 'team' | 'helper';
 
@@ -47,7 +45,7 @@ export function WorkAccess({
   const [interestOpen, setInterestOpen] = useState(false);
   const w = words[tab];
   return (
-    <main id="main" lang="en" dir="ltr" tabIndex={-1} className={`operator-page aw ${inter.variable}`}>
+    <main id="main" lang="en" dir="ltr" tabIndex={-1} className="operator-page aw">
       <div className="aw-window">
         <aside className="aw-side" aria-label="About work access">
           <p className="aw-eb">Work access</p>
@@ -55,7 +53,14 @@ export function WorkAccess({
           <div className="aw-ring" aria-hidden="true">
             <svg viewBox="0 0 210 210" width="210" height="210">
               <circle cx="105" cy="105" r="92" className="aw-ring-track" />
-              <circle cx="105" cy="105" r="92" className="aw-ring-run" pathLength="1" transform="rotate(-90 105 105)" />
+              <circle
+                cx="105"
+                cy="105"
+                r="92"
+                className="aw-ring-run"
+                pathLength="1"
+                transform="rotate(-90 105 105)"
+              />
             </svg>
             <span>
               <small>Authenticator</small>
@@ -111,7 +116,10 @@ export function WorkAccess({
             </div>
           )}
           <p className="aw-foot">
-            Customer? <Link prefetch={false} href="/signin">Customer sign-in</Link>
+            Customer?{' '}
+            <Link prefetch={false} href="/signin">
+              Customer sign-in
+            </Link>
           </p>
         </div>
       </div>

@@ -1,7 +1,11 @@
 /* Sign in and create account (owner canvas board v11, 28 Nov 2026). Loaded only by account-window.tsx. Own type and the
    --cv-* tokens; weights 400/500/600. The cards slide in once; the status dot pulses and stops under reduced motion. */
 .aw {
-  font-family: var(--aw-font), -apple-system, system-ui, sans-serif;
+  font-family:
+    var(--font-inter),
+    -apple-system,
+    system-ui,
+    sans-serif;
   color: var(--cv-ink);
   background: var(--cv-page);
   -webkit-font-smoothing: antialiased;

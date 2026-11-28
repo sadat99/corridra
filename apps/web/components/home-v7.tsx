@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Inter } from 'next/font/google';
 import { useEffect, useReducer, useState } from 'react';
 import { ctaWords } from './home-routes';
 import { useAnchorReveal } from './home-v43-anchors';
@@ -9,7 +8,17 @@ import { HomeV43Reveal } from './home-v43-reveal';
 import { FlagDefs } from './home-v7-flags';
 import { HomeV44Footer } from './home-v44-footer';
 import { HomeV44Sheet } from './home-v44-sheet';
-import { Choose, Closing, Example, Faq, Hero, Inbound, Process, Status, Trust } from './home-v7-parts';
+import {
+  Choose,
+  Closing,
+  Example,
+  Faq,
+  Hero,
+  Inbound,
+  Process,
+  Status,
+  Trust,
+} from './home-v7-parts';
 import { useLanguage } from './language-provider';
 import { Dialog } from './ux/dialog';
 import { hashId, v43 } from '../lib/home-v43-data';
@@ -29,9 +38,6 @@ import './home-v7.css';
 function isBriefId(id: string) {
   return id === 'brief' || id.startsWith('home-brief');
 }
-
-// Inter is the page's text face (canvas board); Newsreader for headings comes from the site's own variable.
-const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--hv7-font', display: 'swap' });
 
 export function HomeV7({ whatsapp = null }: { whatsapp?: string | null }) {
   const { t } = useLanguage();
@@ -63,7 +69,7 @@ export function HomeV7({ whatsapp = null }: { whatsapp?: string | null }) {
   const cta = t(ctaWords[shown]);
   const choose = (route: RouteKey) => dispatch({ type: 'door', route });
   return (
-    <div className={`hv7 ${inter.variable}`}>
+    <div className="hv7">
       <noscript>
         <p className="hv7-noscript">
           {t(v43('noscript.lead'))}{' '}
@@ -108,7 +114,12 @@ export function HomeV7({ whatsapp = null }: { whatsapp?: string | null }) {
       <Faq />
       <Dialog open={sheet} onClose={closeSheet} title={t(v43('brief.eyebrow'))} keepMounted>
         <div className="hv7-sheet">
-          <HomeV44Sheet state={state} dispatch={dispatch} whatsapp={whatsapp} onCancel={closeSheet} />
+          <HomeV44Sheet
+            state={state}
+            dispatch={dispatch}
+            whatsapp={whatsapp}
+            onCancel={closeSheet}
+          />
         </div>
       </Dialog>
       <Closing shown={shown} href={href} cta={cta} />
