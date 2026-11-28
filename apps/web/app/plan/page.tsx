@@ -17,6 +17,7 @@ export default function Page() {
           realMode={realUseEnabled()}
           codeSignIn={process.env.CORRIDRA_CUSTOMER_CODE_SIGNIN === 'true'}
           firstQuestion={uxSwitchOn('CORRIDRA_UX_FIRSTQ')}
+          windowDesign={uxSwitchOn('CORRIDRA_UX_PLAN_V10')}
         />
       </section>
     </FormMain>

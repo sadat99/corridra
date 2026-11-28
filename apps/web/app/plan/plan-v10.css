@@ -1,7 +1,9 @@
 /* The request page in the home page's design (owner canvas board v10, 28 Nov 2026): a two-pane window with the request
-   taking shape on the left and one question at a time on the right. Loaded by intake.tsx after plan-v4.css. Tokens
-   only (--cv-*); weights 400/500/600. The form keeps its own markup and logic; this file only changes how it looks. */
-.guide-plan-head {
+   taking shape on the left and one question at a time on the right. Loaded by intake.tsx after plan-v4.css. Every rule
+   is scoped to the window (`.pv-*` or `[data-plan-v10]`), so with CORRIDRA_UX_PLAN_V10 set to "false" the request page
+   is drawn as before. Tokens only (--cv-*); weights 400/500/600. The form keeps its own markup and logic; this file
+   only changes how it looks. */
+.guide-plan:has([data-plan-v10]) .guide-plan-head {
   max-inline-size: 62.5rem;
   margin-inline: auto;
 }
@@ -401,7 +403,7 @@
 }
 
 /* A message above the window (a failed save, a notice) reads as a clear bar, not loose text. */
-.guide-status:not([hidden]) {
+[data-plan-v10] .guide-status:not([hidden]) {
   inline-size: min(62.5rem, 100%);
   margin: 0 auto 16px;
   padding: 14px 20px;

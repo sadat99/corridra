@@ -365,6 +365,11 @@ type IntakeProps = {
   codeSignIn?: boolean;
   /** From CORRIDRA_UX_FIRSTQ on the server. The first question is five pictures; every job type stays selectable. Off is the page as it was. */
   firstQuestion?: boolean;
+  /**
+   * From CORRIDRA_UX_PLAN_V10 on the server (live by default): the request page is the two-pane window of the owner's
+   * canvas board v10. Off is the page as it was. Same fields, checks and payload either way.
+   */
+  windowDesign?: boolean;
 };
 export function Intake(props: IntakeProps = {}) {
   return props.realMode && !props.privateSubmission ? (
@@ -385,6 +390,7 @@ function IntakeForm({
   realMode = false,
   codeSignIn = false,
   firstQuestion = false,
+  windowDesign = false,
   navigate = missingNavigation,
 }: IntakeProps & { navigate?: (path: string) => void }) {
   const privateMode = privateSubmission !== undefined;
@@ -449,12 +455,14 @@ function IntakeForm({
     focusField = useRef(''),
     budgetDetails = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
-    if (finished) document.querySelector('.pv-window')?.scrollIntoView({ block: 'start' });
-  }, [finished]);
+    if (windowDesign && finished)
+      document.querySelector('.pv-window')?.scrollIntoView({ block: 'start' });
+  }, [windowDesign, finished]);
   useEffect(() => {
     // A message (for example a save that failed) is brought into view so a submit never looks silent.
-    if (message && !finished) document.querySelector('.guide-status')?.scrollIntoView({ block: 'center' });
-  }, [message, finished]);
+    if (windowDesign && message && !finished)
+      document.querySelector('.guide-status')?.scrollIntoView({ block: 'center' });
+  }, [windowDesign, message, finished]);
   useEffect(() => {
     Promise.resolve().then(() => {
       try {
@@ -1123,7 +1131,11 @@ function IntakeForm({
   ].filter((value) => String(value).trim() !== '').length;
   return (
     // Without real use (a preview or local copy) everything entered here is made up, and the page says so.
-    <div className="ux-intake-layout" data-madeup-panel={realMode ? undefined : ''}>
+    <div
+      className="ux-intake-layout"
+      data-madeup-panel={realMode ? undefined : ''}
+      data-plan-v10={windowDesign ? '' : undefined}
+    >
       <div className="guide-plan-top">
         {/* UI/UX.v4 (owner 2a, 18 Nov 2026): the "Your Request" callout box is gone. Real mode keeps its one useful
             line in the page heading and the privacy line under the choices; the sample notice keeps its availability
@@ -1175,17 +1187,19 @@ function IntakeForm({
           </p>
         )}
       </div>
-      <div className="guide-plan-body pv-window">
-        <PlanSide
-          goal={goalWords}
-          company={companyName}
-          market={marketName}
-          marketCode={draft.marketCode}
-          when={draft.whenNeeded}
-          note={draft.notes}
-        />
-        <div className="guide-plan-main pv-main">
-          {!realMode && finished && (
+      <div className={windowDesign ? 'guide-plan-body pv-window' : 'guide-plan-body'}>
+        {windowDesign && (
+          <PlanSide
+            goal={goalWords}
+            company={companyName}
+            market={marketName}
+            marketCode={draft.marketCode}
+            when={draft.whenNeeded}
+            note={draft.notes}
+          />
+        )}
+        <div className={windowDesign ? 'guide-plan-main pv-main' : 'guide-plan-main'}>
+          {windowDesign && !realMode && finished && (
             <section className="receipt-saved" aria-labelledby="test-request-title">
               <PlanReceived
                 test
@@ -1201,14 +1215,20 @@ function IntakeForm({
           )}
           {realMode && pendingReady && (
             <section className="receipt-saved" aria-labelledby="pending-request-title">
-              <PlanReceived
-                goal={goalWords}
-                company={companyName}
-                market={marketName}
-                answers={answersKept}
-                signedIn={!!account}
-              />
-              <h2 id="pending-request-title">Your request is saved.</h2>
+              {windowDesign ? (
+                <>
+                  <PlanReceived
+                    goal={goalWords}
+                    company={companyName}
+                    market={marketName}
+                    answers={answersKept}
+                    signedIn={!!account}
+                  />
+                  <h2 id="pending-request-title">Your request is saved.</h2>
+                </>
+              ) : (
+                <h2 id="pending-request-title">{say('form.pending.title')}</h2>
+              )}
               {translated ? (
                 <p>
                   {say('form.pending.sameDevice')}
@@ -1330,7 +1350,9 @@ function IntakeForm({
                 listLabel={say('form.step.journey')}
                 progressLabel={say('form.step.progress')}
               />
-              <PlanStepper names={stepNames} current={step} onGo={(index) => move(index)} />
+              {windowDesign && (
+                <PlanStepper names={stepNames} current={step} onGo={(index) => move(index)} />
+              )}
               <h2 ref={heading} tabIndex={-1} className={step === 0 ? 'sr-only' : undefined}>
                 {say(titles[step])}
               </h2>
@@ -1977,6 +1999,83 @@ function IntakeForm({
             )}
           </section>
         </div>
+        {!windowDesign && !finished && (
+          <aside
+            className="ux-brief-summary"
+            aria-label={realMode ? say('form.side.realLabel') : say('form.side.sampleLabel')}
+          >
+            {/* B2a (D-006): the wide-screen heading sits inside the panel, so the panel is one sticky box. */}
+            <details className="ux-brief-details">
+              <summary>
+                <span>
+                  <span className="plan-summary-heading">
+                    {realMode ? say('form.side.realHeading') : say('form.side.sampleHeading')}
+                  </span>
+                  <span className="ux-brief-count">{english(`, ${chosenCount} of 3 chosen`)}</span>
+                </span>
+              </summary>
+              <p className="plan-summary-heading ux-brief-heading">
+                {realMode ? say('form.side.realHeading') : say('form.side.sampleHeading')}
+              </p>
+              <dl>
+                <div>
+                  <dt>{say('form.side.objective')}</dt>
+                  <dd>{chosenJob ? say(jobWord(chosenJob.key)) : say('form.side.notChosen')}</dd>
+                </div>
+                <div>
+                  <dt>{say('form.side.country')}</dt>
+                  <dd>
+                    {countryCodes.includes(
+                      draft.companyCountry as (typeof countryCodes)[number],
+                    ) ? (
+                      <Flagged code={placeMark(draft.companyCountry)}>
+                        {regionNames.of(draft.companyCountry)}
+                      </Flagged>
+                    ) : (
+                      say('form.side.notChosen')
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{say('form.side.market')}</dt>
+                  <dd>
+                    {draft.marketCode === 'EU' ? (
+                      <Flagged code="eu">{say('form.where.eu')}</Flagged>
+                    ) : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number]) ? (
+                      <Flagged code={placeMark(draft.marketCode)}>
+                        {regionNames.of(draft.marketCode)}
+                      </Flagged>
+                    ) : (
+                      say('form.side.notChosen')
+                    )}
+                  </dd>
+                </div>
+                {/* The budget row shows only once a budget is given; most jobs never ask for one (CQ-49). */}
+                <div hidden={!draft.budgetAmount}>
+                  <dt>{say('form.side.budget')}</dt>
+                  <dd>
+                    {!draft.budgetAmount ? (
+                      say('form.side.notSupplied')
+                    ) : !translated ? (
+                      `${draft.budgetAmount} ${draft.currency || say('form.side.noCurrency')}`
+                    ) : draft.currency ? (
+                      english(`${draft.budgetAmount} ${draft.currency}`)
+                    ) : (
+                      <>
+                        {english(draft.budgetAmount)} {say('form.side.noCurrency')}
+                      </>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                {englishIsland(
+                  'Nothing is sent until you check it. Nothing here is an offer, a quote or a promise.',
+                )}
+              </p>
+            </details>
+          </aside>
+        )}
       </div>
     </div>
   );
