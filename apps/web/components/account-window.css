@@ -500,3 +500,15 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Spacing under the form: raised so the page's own paragraph rules cannot flatten it. */
+.aw .aw-main .aw-row {
+  margin-block: 18px 0;
+}
+.aw .aw-main .aw-foot {
+  margin-block: 24px 0;
+  padding-block: 18px 0;
+}
+.aw .aw-main .aw-interest {
+  margin-block: 18px 0;
+}
