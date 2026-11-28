@@ -6129,3 +6129,26 @@ Checks at f236a8f0, all exit 0:
 **Preserved.** Native language review gate OPEN; Phase 4 not started; real-operation gates unchanged; every owner decision line kept.
 
 **Not verified.** Any signed-in production journey; the route pack editor in production.
+
+## 28 Nov 2026 - records: PR 707 merged, route sheet overlay handed to the owner (scribe, for Guardian G75)
+
+**Request.** Records after Guardian G75 merged PR 707. Branch claude/g75-records-707 from origin/main f51cfe09aec79d96b915397babdeb72301bbedbe; authority stamp auth-1550f0e2be4a (unchanged). Docs only. No requirement moves to VERIFIED.
+
+**Why.** Owner, first hand, 28 Nov 2026, to G75: "no current list. all must be updated"; "there shouldnt be anything synthetic, all must be real"; "make manual the default"; "whatever data we got, seed them 100% correctly. i dont have time to do now manually".
+
+**Outcome (as relayed by G75).**
+
+- PR 707 squash-merged at exact head ecd35e1 as f51cfe09. Production deploy dpl_BqsrW7P4P6ixXysfSophHfeczNxF READY. Checks all success, plus CodeQL neutral (the usual configuration notice). An independent Opus reviewer said READY with 0 blocking; its one should-fix (the manual box shows the chosen route's current channel) is fixed in ecd35e1.
+- Change: a new route's message channel defaults to MANUAL (starting routes, guided form, editor with no pack). Unticking still gives SYNTHETIC. Stored packs are unchanged. The seed reason is now "Starting route, not yet reviewed".
+- Route sheet: the owner's researched 8-route package (568 rows, 195 Filled, 373 Pending) passed the package check and a dry run of the real RoutePackSheetService on a LOCAL test database (0 errors). The facts are AI-researched and are not verified. The full file must not be imported over existing routes, because Pending rows delete facts (route-pack-sheet.ts:488-490). A 195-row overlay (reconciled-import.csv, MANUAL only, all lists replaced per the owner) was prepared and is not in the repository. The owner was told to import it in the editor. Saving needs a signed-in owner with a fresh authenticator check. No reviewed non-editor save path exists, and building one would bypass config.manage, so none was built.
+- Production save NOT DONE. Production dry run NOT EXECUTED. Signed-in production check of the route pack editor NOT VERIFIED.
+
+**Next action.** The owner imports reconciled-import.csv in the editor, runs Check, then Save. G75 then compares the result. Phase 4 per route only on the owner's word. Then L1 Bangla (Class B, native review gate OPEN).
+
+**Verification.** G75 receipts as relayed; not re-read by this scribe run. This PR: node scripts/authority.mjs stamp, node scripts/v3-context.mjs verify, node --test tests/documents.test.mjs, prettier@3.9.10 --check; exit codes in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (first Resume bullet: main, deploy, PR 707; next action rewritten; small net growth); this entry. docs/PLAN_STATUS.md untouched (no row tracks PR 707). No code, tests, ADR text, switch or install.
+
+**Preserved.** Native language review gate OPEN; Phase 4 not started; real-operation gates unchanged; every owner decision line kept.
+
+**Not verified.** Any signed-in production journey; the route pack editor in production; the AI-researched route facts.
