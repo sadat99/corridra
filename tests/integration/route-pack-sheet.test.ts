@@ -21,7 +21,10 @@ import {
 } from '../../packages/domain/src/route-pack-standard';
 import { CorridorService, initialRouteConfiguration } from '../../packages/missions/src/corridors';
 import { OperationsService } from '../../packages/missions/src/operations';
-import { RoutePackContentService } from '../../packages/missions/src/route-pack-content';
+import {
+  commandStepId,
+  RoutePackContentService,
+} from '../../packages/missions/src/route-pack-content';
 import {
   RoutePackSheetService,
   sheetLimits,
@@ -1218,6 +1221,83 @@ test('follow-up per G73: a second part-way answer still names the facts the firs
   expect(again.saved).toEqual([]);
   expect(await contentVersions('HN-CR')).toBe(2);
   expect((await latestPack('HN-CR')).version).toBe(2);
+});
+
+test('follow-up per G73: a pack only save that stopped part way finishes after a teammate publishes a newer pack on a route it already saved, and writes nothing twice', async () => {
+  expect((await save(coreLines('LT-LV'))).ok).toBe(true);
+  expect((await save(coreLines('LV-EE'))).ok).toBe(true);
+  const first = (await routeId('LT-LV'))!;
+  const second = (await routeId('LV-EE'))!;
+  const saveId = randomUUID();
+  // Only the decision of the second route's pack step is refused, until the cause is fixed.
+  const refusedProposal = commandStepId(commandStepId(saveId, 'LV-EE', 'pack'), 'propose');
+  let refuse = true;
+  const refusing = new Proxy(operations, {
+    get(target, property) {
+      if (property === 'command')
+        return async (
+          ctx: Parameters<OperationsService['command']>[0],
+          input: { action?: string; proposalId?: string },
+        ) => {
+          if (refuse && input.action === 'decide' && input.proposalId === refusedProposal)
+            throw new DomainError('Synthetic refusal of the decision', 409, 'FORCED');
+          return target.command(ctx, input);
+        };
+      const value = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  const refused = new RoutePackSheetService(f.runtime, corridors, refusing, content);
+  const rows = rowsOf([
+    line({ route: 'LT-LV', field_key: 'pack.languages', state: 'Filled', value: 'lt' }),
+    line({ route: 'LV-EE', field_key: 'pack.languages', state: 'Filled', value: 'lv' }),
+  ]);
+  const body = { rows, saveId, reason, planFingerprint: await printOf(rows) };
+  const report = await refused.save(owner(), body);
+  expect(plan(report, 'LT-LV').content.changed).toBe(false);
+  expect(plan(report, 'LV-EE').content.changed).toBe(false);
+  expect(report.ok).toBe(false);
+  expect(report.errors).toEqual([
+    {
+      row: null,
+      route: 'LV-EE',
+      key: null,
+      code: 'ROUTE_PACK_NOT_PUBLISHED',
+      message: `Synthetic refusal of the decision ${routePackWords.notPublished}`,
+    },
+  ]);
+  expect(report.saved).toEqual([
+    { route: 'LT-LV', routeId: first, contentVersion: null, packVersion: 2 },
+  ]);
+  // A teammate then publishes a newer pack on the route this save already wrote.
+  const ours = await latestPack('LT-LV');
+  await corridors.appendPack(owner(), {
+    id: randomUUID(),
+    routeId: first,
+    version: ours.version + 1,
+    status: ours.status,
+    effectiveFrom: new Date().toISOString(),
+    reason: 'Published by a teammate after the first answer',
+    configuration: { ...ours.configuration, languages: ['en'] },
+  });
+  const before = await counts();
+  refuse = false;
+  // Try the Rest Again: the same file and save id continue the save, so the plan is not compared with the check.
+  const finished = await refused.save(owner(), body);
+  expect(finished.errors).toEqual([]);
+  expect(finished.ok).toBe(true);
+  expect(finished.saved).toEqual([
+    { route: 'LT-LV', routeId: first, contentVersion: null, packVersion: 2 },
+    { route: 'LV-EE', routeId: second, contentVersion: null, packVersion: 2 },
+  ]);
+  // Only the second route's decision and its pack are new; the first route keeps the teammate's pack.
+  expect(await counts()).toEqual({
+    ...before,
+    packs: before.packs + 1,
+    decisions: before.decisions + 1,
+  });
+  expect((await latestPack('LT-LV')).version).toBe(ours.version + 1);
+  expect((await latestPack('LV-EE')).configuration.languages).toEqual(['lv']);
 });
 
 test('the dry run judges go-live against the latest pack, a scheduled one included, and warns', async () => {

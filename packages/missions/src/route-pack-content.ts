@@ -349,6 +349,17 @@ export async function contentRecordsById(db: DatabaseClient, tenantId: string, i
     document: parseContentDocument(row.document),
   }));
 }
+// The ids among these that name a published pack of any version (a save's derived pack ids, at most one per route of a file),
+// read inside the caller's transaction, so a save whose pack a teammate has since replaced is still known as continued.
+export async function packIdsWritten(db: DatabaseClient, tenantId: string, ids: string[]) {
+  if (!ids.length) return [];
+  return (
+    await db.query<{ id: string }>(
+      'SELECT id FROM app.corridor_pack_version WHERE tenant_id=$1 AND id=ANY($2::uuid[])',
+      [tenantId, ids],
+    )
+  ).rows.map((row) => row.id);
+}
 const today = () => new Date().toISOString().slice(0, 10);
 const notFound = () => new DomainError(routePackWords.notFound, 404);
 

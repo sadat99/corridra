@@ -44,6 +44,7 @@ import {
   judge,
   judgedPacks,
   loadRoutePackState,
+  packIdsWritten,
   routePackContentActive,
   type RoutePackContentService,
 } from './route-pack-content';
@@ -789,15 +790,22 @@ export class RoutePackSheetService {
           ctx.tenantId,
           planned.routes.map((plan) => commandStepId(v.saveId, plan.route, 'content')),
         );
+        // A pack this save published counts in any version, so a newer pack a teammate published since does not hide it.
         const continuing =
           earlier.length > 0 ||
           planned.routes.some(
             (plan) =>
-              state.routes.get(plan.route)?.id === commandStepId(v.saveId, plan.route, 'route') ||
-              (plan.routeId !== null &&
-                state.latestPacks.get(plan.routeId)?.id ===
-                  commandStepId(commandStepId(v.saveId, plan.route, 'pack'), 'pack')),
-          );
+              state.routes.get(plan.route)?.id === commandStepId(v.saveId, plan.route, 'route'),
+          ) ||
+          (
+            await packIdsWritten(
+              db,
+              ctx.tenantId,
+              planned.routes.map((plan) =>
+                commandStepId(commandStepId(v.saveId, plan.route, 'pack'), 'pack'),
+              ),
+            )
+          ).length > 0;
         if (!continuing && planFingerprint(planned.routes) !== v.planFingerprint)
           throw new DomainError(sheetWords.planChanged, 409, 'ROUTE_PACK_PLAN_CHANGED');
         return { v, planned, earlier };
