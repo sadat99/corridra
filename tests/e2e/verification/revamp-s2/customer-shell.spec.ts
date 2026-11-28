@@ -922,7 +922,10 @@ test('the Meetings tab opens a real page: it says what it is for, has no Coming 
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account?view=work');
-  await page.getByRole('navigation', { name: 'My Work sections' }).getByRole('link', { name: 'Meetings' }).click();
+  await page
+    .getByRole('navigation', { name: 'My Work sections' })
+    .getByRole('link', { name: 'Meetings' })
+    .click();
   await expect(page).toHaveURL(/\/account\/meetings$/);
   await expect(page.locator('main h1')).toHaveText('Meetings');
   await expect(sidebar(page).getByRole('link', { name: 'My Work' })).toHaveAttribute(

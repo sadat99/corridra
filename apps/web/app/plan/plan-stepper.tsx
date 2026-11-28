@@ -27,7 +27,9 @@ export function PlanStepper({
             <span className="pv-step-dot">{index < current ? '✓' : index + 1}</span>
             <span className="pv-step-name">{name}</span>
           </button>
-          {index < names.length - 1 && <i className="pv-step-line" data-done={index < current ? '' : undefined} />}
+          {index < names.length - 1 && (
+            <i className="pv-step-line" data-done={index < current ? '' : undefined} />
+          )}
         </div>
       ))}
     </div>

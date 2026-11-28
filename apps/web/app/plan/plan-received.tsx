@@ -25,15 +25,19 @@ export function PlanReceived({
         { title: 'We review it', note: 'Then we propose next steps', state: 'next' },
       ] as const)
     : ([
-    { title: 'Request saved', note: 'Just now', state: 'done' },
-    {
-      title: signedIn ? 'Verify your email' : 'Create your account',
-      note: signedIn ? 'One quick code' : 'Your request will be waiting in it',
-      state: 'now',
-    },
-    { title: signedIn ? 'Sign in on this device' : 'Verify your email', note: 'Use this same device and browser', state: 'next' },
-    { title: 'We review it', note: 'Then we propose next steps', state: 'next' },
-  ] as const);
+        { title: 'Request saved', note: 'Just now', state: 'done' },
+        {
+          title: signedIn ? 'Verify your email' : 'Create your account',
+          note: signedIn ? 'One quick code' : 'Your request will be waiting in it',
+          state: 'now',
+        },
+        {
+          title: signedIn ? 'Sign in on this device' : 'Verify your email',
+          note: 'Use this same device and browser',
+          state: 'next',
+        },
+        { title: 'We review it', note: 'Then we propose next steps', state: 'next' },
+      ] as const);
   return (
     <>
       <span className="pv-saved">✓ Saved</span>

@@ -30,9 +30,7 @@ export function useHomeV44Motion() {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const targets = Array.from(
-      document.querySelectorAll<HTMLElement>('.hv7-band'),
-    );
+    const targets = Array.from(document.querySelectorAll<HTMLElement>('.hv7-band'));
     const seen = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {

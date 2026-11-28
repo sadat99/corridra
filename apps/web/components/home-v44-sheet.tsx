@@ -25,14 +25,25 @@ const goalHint: Record<GoalKey, string> = {
   delegation: 'A trip with booked meetings',
   other: 'Describe it in your own words',
 };
-const timingHint = ['The fastest pace', 'Time to compare', 'A longer plan', 'No deadline yet'] as const;
+const timingHint = [
+  'The fastest pace',
+  'Time to compare',
+  'A longer plan',
+  'No deadline yet',
+] as const;
 const lead = {
   china: 'Suppliers are checked before anyone is contacted.',
   sell: 'Buyers are matched to your product first.',
   delegation: 'One plan, with meetings booked in order.',
   other: 'Tell us in your own words next.',
 } as const;
-const spotOf: Partial<Record<string, SpotKey>> = { CN: 'CN', GB: 'UK', EU: 'EU', US: 'US', AU: 'AU' };
+const spotOf: Partial<Record<string, SpotKey>> = {
+  CN: 'CN',
+  GB: 'UK',
+  EU: 'EU',
+  US: 'US',
+  AU: 'AU',
+};
 const routeSpots: Record<'china' | 'sell' | 'delegation' | 'other', SpotKey[]> = {
   china: ['CN'],
   sell: ['EU', 'US'],
@@ -67,7 +78,9 @@ export function HomeV44Sheet({
   const review = step === stepNames.length;
   const title = review
     ? 'Check your request.'
-    : ['What do you want to do?', 'Which market?', 'When do you need it?', 'Anything to add?'][step];
+    : ['What do you want to do?', 'Which market?', 'When do you need it?', 'Anything to add?'][
+        step
+      ];
   const sub = [
     'Pick the closest one. You can change it later.',
     'Where should we look first?',
@@ -104,12 +117,7 @@ export function HomeV44Sheet({
         <p className="hv7-eb">Your request</p>
         <p className="hv7-side-h">Taking shape as you choose.</p>
         <div className="hv7-side-map" aria-hidden="true">
-          <DotMap
-            view="90 0 620 250"
-            routes={arcs}
-            labels={mapLabels}
-            flags
-          />
+          <DotMap view="90 0 620 250" routes={arcs} labels={mapLabels} flags />
         </div>
         <dl className="hv7-sum">
           {rows.map(([name, value]) => (
@@ -140,7 +148,13 @@ export function HomeV44Sheet({
           </h2>
           <p className="hv7-q-sub">{sub}</p>
           {step === 0 ? (
-            <div className="hv7-grid" role="radiogroup" aria-label={title} id="home-brief-job" tabIndex={-1}>
+            <div
+              className="hv7-grid"
+              role="radiogroup"
+              aria-label={title}
+              id="home-brief-job"
+              tabIndex={-1}
+            >
               {briefGoals.map((key) =>
                 card(state.goal === key, jobOf(key), goalHint[key], () =>
                   dispatch({ type: 'brief', field: 'goal', value: key }),
@@ -177,7 +191,9 @@ export function HomeV44Sheet({
                 rows={6}
                 value={state.need}
                 placeholder={placeText(t(v43(`brief.job.${state.goal}.hint`)), t)}
-                onChange={(event) => dispatch({ type: 'brief', field: 'need', value: event.target.value })}
+                onChange={(event) =>
+                  dispatch({ type: 'brief', field: 'need', value: event.target.value })
+                }
               />
               <p className="hv7-help">{t('home.b3.br.need.help')}</p>
             </div>

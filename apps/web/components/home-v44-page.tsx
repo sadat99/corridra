@@ -6,11 +6,6 @@ import dynamic from 'next/dynamic';
 // from here. The `summaries` argument is kept so the page's caller is unchanged: the approved page is the one page.
 const HomeV7 = dynamic(() => import('./home-v7').then((m) => m.HomeV7));
 
-export function HomeV44Page({
-  whatsapp,
-}: {
-  whatsapp: string | null;
-  summaries?: boolean;
-}) {
+export function HomeV44Page({ whatsapp }: { whatsapp: string | null; summaries?: boolean }) {
   return <HomeV7 whatsapp={whatsapp} />;
 }

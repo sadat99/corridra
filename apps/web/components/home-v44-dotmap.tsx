@@ -19,15 +19,105 @@ type Spot = {
   cy: number;
 };
 const spots = {
-  BD: { x: 541, y: 113, name: 'Bangladesh', flag: 'bd', lx: 541, ly: 135, f: [-17, 5, 'end'], cx: 541, cy: 113 },
-  CN: { x: 568, y: 90, name: 'China', flag: 'cn', lx: 568, ly: 76, f: [0, -14, 'middle'], cx: 554.5, cy: 70 },
-  GZ: { x: 586, y: 114, name: 'Guangzhou', flag: 'cn', lx: 586, ly: 131, f: [0, 18, 'middle'], cx: 560, cy: 100 },
-  AE: { x: 468, y: 112, name: 'UAE', flag: 'ae', lx: 468, ly: 134, f: [0, 19, 'middle'], cx: 504.5, cy: 76 },
-  EU: { x: 386, y: 62, name: 'Europe', flag: 'eu', lx: 380, ly: 46, f: [13, 5, 'start'], cx: 460.5, cy: -7 },
-  UK: { x: 350, y: 50, name: 'UK', flag: 'uk', lx: 357, ly: 40, f: [-13, 5, 'end'], cx: 449, cy: -13 },
-  US: { x: 164, y: 82, name: 'United States', flag: 'us', lx: 164, ly: 68, f: [0, -14, 'middle'], cx: 352.5, cy: -73 },
-  AU: { x: 628, y: 210, name: 'Australia', flag: 'au', lx: 628, ly: 232, f: [0, 19, 'middle'], cx: 584.5, cy: 116 },
-  SG: { x: 607, y: 157, name: 'Singapore', flag: 'sg', lx: 607, ly: 143, f: [0, -14, 'middle'], cx: 574, cy: 95 },
+  BD: {
+    x: 541,
+    y: 113,
+    name: 'Bangladesh',
+    flag: 'bd',
+    lx: 541,
+    ly: 135,
+    f: [-17, 5, 'end'],
+    cx: 541,
+    cy: 113,
+  },
+  CN: {
+    x: 568,
+    y: 90,
+    name: 'China',
+    flag: 'cn',
+    lx: 568,
+    ly: 76,
+    f: [0, -14, 'middle'],
+    cx: 554.5,
+    cy: 70,
+  },
+  GZ: {
+    x: 586,
+    y: 114,
+    name: 'Guangzhou',
+    flag: 'cn',
+    lx: 586,
+    ly: 131,
+    f: [0, 18, 'middle'],
+    cx: 560,
+    cy: 100,
+  },
+  AE: {
+    x: 468,
+    y: 112,
+    name: 'UAE',
+    flag: 'ae',
+    lx: 468,
+    ly: 134,
+    f: [0, 19, 'middle'],
+    cx: 504.5,
+    cy: 76,
+  },
+  EU: {
+    x: 386,
+    y: 62,
+    name: 'Europe',
+    flag: 'eu',
+    lx: 380,
+    ly: 46,
+    f: [13, 5, 'start'],
+    cx: 460.5,
+    cy: -7,
+  },
+  UK: {
+    x: 350,
+    y: 50,
+    name: 'UK',
+    flag: 'uk',
+    lx: 357,
+    ly: 40,
+    f: [-13, 5, 'end'],
+    cx: 449,
+    cy: -13,
+  },
+  US: {
+    x: 164,
+    y: 82,
+    name: 'United States',
+    flag: 'us',
+    lx: 164,
+    ly: 68,
+    f: [0, -14, 'middle'],
+    cx: 352.5,
+    cy: -73,
+  },
+  AU: {
+    x: 628,
+    y: 210,
+    name: 'Australia',
+    flag: 'au',
+    lx: 628,
+    ly: 232,
+    f: [0, 19, 'middle'],
+    cx: 584.5,
+    cy: 116,
+  },
+  SG: {
+    x: 607,
+    y: 157,
+    name: 'Singapore',
+    flag: 'sg',
+    lx: 607,
+    ly: 143,
+    f: [0, -14, 'middle'],
+    cx: 574,
+    cy: 95,
+  },
 } as const satisfies Record<string, Spot>;
 export type SpotKey = keyof typeof spots;
 export type Tone = 'open' | 'soon' | 'ask';
@@ -137,7 +227,12 @@ export function DotMap({
               style={{ animationDelay: `${index * 0.3}s` }}
             />
             <circle className="hv7-travel" r={3}>
-              <animateMotion dur="3.4s" begin={`${1.2 + index * 0.3}s`} repeatCount="indefinite" path={d} />
+              <animateMotion
+                dur="3.4s"
+                begin={`${1.2 + index * 0.3}s`}
+                repeatCount="indefinite"
+                path={d}
+              />
             </circle>
           </g>
         );

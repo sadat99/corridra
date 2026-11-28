@@ -5,7 +5,13 @@ import { customerTabs } from '../../apps/web/lib/ux/customer-navigation';
 describe('customer account v18 navigation', () => {
   it('lists Home, My Work, Companies, Delegations and More in that order', () => {
     const tabs = customerTabs({ companies: true, move: false });
-    expect(tabs.map((t) => t.label)).toEqual(['Home', 'My Work', 'Companies', 'Delegations', 'More']);
+    expect(tabs.map((t) => t.label)).toEqual([
+      'Home',
+      'My Work',
+      'Companies',
+      'Delegations',
+      'More',
+    ]);
     expect(tabs.map((t) => t.href)).toEqual([
       '/account',
       '/account?view=work',

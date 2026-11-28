@@ -12,11 +12,28 @@ export function MyWorkTabs({ current, meetings }: { current: MyWorkTab; meetings
     <SegmentLinks
       label="My Work sections"
       segments={[
-        { id: 'requests', label: 'Requests', href: '/account?view=work', current: current === 'requests' },
+        {
+          id: 'requests',
+          label: 'Requests',
+          href: '/account?view=work',
+          current: current === 'requests',
+        },
         ...(meetings
-          ? [{ id: 'meetings', label: 'Meetings', href: '/account/meetings', current: current === 'meetings' }]
+          ? [
+              {
+                id: 'meetings',
+                label: 'Meetings',
+                href: '/account/meetings',
+                current: current === 'meetings',
+              },
+            ]
           : []),
-        { id: 'results', label: 'Results', href: '/account?view=results', current: current === 'results' },
+        {
+          id: 'results',
+          label: 'Results',
+          href: '/account?view=results',
+          current: current === 'results',
+        },
       ]}
     />
   );

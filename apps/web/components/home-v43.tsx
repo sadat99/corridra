@@ -164,9 +164,7 @@ export function HomeV43({
       </p>
       {v44 ? v44.hero : <HomeV43Hero />}
       {v44 ? (
-        <>
-          {v44.choice({ intent, href, cta, whatsapp, onChoose: choose })}
-        </>
+        <>{v44.choice({ intent, href, cta, whatsapp, onChoose: choose })}</>
       ) : (
         <HomeV43Choice
           intent={intent}

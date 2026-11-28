@@ -43,8 +43,8 @@ export function Hero() {
           partners.
         </h1>
         <p className="hv7-lead">
-          Source from China, meet buyers abroad, or organise a business delegation. Corridra checks who fits, sets up
-          meetings, and follows through.
+          Source from China, meet buyers abroad, or organise a business delegation. Corridra checks
+          who fits, sets up meetings, and follows through.
         </p>
         <div className="hv7-actions">
           <a className="hv7-btn" href="#brief" id="home-start" data-start-action>
@@ -55,7 +55,12 @@ export function Hero() {
           </a>
         </div>
       </div>
-      <button type="button" className="hv7-pause" aria-pressed={paused} onClick={() => setPaused(!paused)}>
+      <button
+        type="button"
+        className="hv7-pause"
+        aria-pressed={paused}
+        onClick={() => setPaused(!paused)}
+      >
         {t(paused ? 'home.v44.motion.play' : 'home.v44.motion.pause')}
       </button>
     </section>
@@ -69,7 +74,9 @@ type Door = {
   ticks: readonly string[];
   view: string;
   routes: SpotKey[];
-  labels: Partial<Record<SpotKey, { name?: string; y?: number; dx?: number; anchor?: 'start' | 'middle' | 'end' }>>;
+  labels: Partial<
+    Record<SpotKey, { name?: string; y?: number; dx?: number; anchor?: 'start' | 'middle' | 'end' }>
+  >;
   /** Goods and people come towards Bangladesh: arcs and travelling dots run from the place to it. */
   inbound?: boolean;
 };
@@ -88,7 +95,11 @@ const doors: readonly Door[] = [
     route: 'sell',
     tab: 'Sell abroad',
     title: 'Sell abroad, to buyers who fit.',
-    ticks: ['Buyers matched to your product', 'Introductions, not cold calls', 'Follow-through after'],
+    ticks: [
+      'Buyers matched to your product',
+      'Introductions, not cold calls',
+      'Follow-through after',
+    ],
     view: '90 0 620 250',
     routes: ['EU', 'UK', 'US'],
     labels: { EU: {}, UK: {}, US: {}, BD: {} },
@@ -97,7 +108,11 @@ const doors: readonly Door[] = [
     route: 'delegation',
     tab: 'Business delegation',
     title: 'Take a business delegation.',
-    ticks: ['Companies chosen for your goal', 'Meetings booked in order', 'A single plan to follow'],
+    ticks: [
+      'Companies chosen for your goal',
+      'Meetings booked in order',
+      'A single plan to follow',
+    ],
     view: '330 10 380 250',
     routes: ['CN', 'AU', 'AE'],
     labels: { CN: {}, AU: {}, AE: {}, BD: { y: 138, dx: 0, anchor: 'middle' } },
@@ -113,7 +128,13 @@ const doors: readonly Door[] = [
   },
 ];
 
-export function Choose({ intent, onChoose }: { intent: RouteKey; onChoose: (route: RouteKey) => void }) {
+export function Choose({
+  intent,
+  onChoose,
+}: {
+  intent: RouteKey;
+  onChoose: (route: RouteKey) => void;
+}) {
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
   const move = (event: KeyboardEvent, index: number) => {
     const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
@@ -152,7 +173,13 @@ export function Choose({ intent, onChoose }: { intent: RouteKey; onChoose: (rout
             ))}
           </div>
         </div>
-        <div className="hv7-panel" id="hv7-panel" key={door.route} role="tabpanel" aria-labelledby={`hv7-tab-${door.route}`}>
+        <div
+          className="hv7-panel"
+          id="hv7-panel"
+          key={door.route}
+          role="tabpanel"
+          aria-labelledby={`hv7-tab-${door.route}`}
+        >
           <div className="hv7-panel-text">
             <p className="hv7-panel-title">{door.title}</p>
             <ul className="hv7-ticks">
@@ -165,7 +192,13 @@ export function Choose({ intent, onChoose }: { intent: RouteKey; onChoose: (rout
             </ul>
           </div>
           <div className="hv7-panel-map" aria-hidden="true">
-            <DotMap view={door.view} routes={door.routes} labels={door.labels} inbound={door.inbound} flags />
+            <DotMap
+              view={door.view}
+              routes={door.routes}
+              labels={door.labels}
+              inbound={door.inbound}
+              flags
+            />
           </div>
         </div>
       </div>
@@ -261,8 +294,8 @@ export function Process() {
         </div>
       </div>
       <p className="hv7-caption hv7-caption-l">
-        Pick a step and the map shows what happens on it. Example: a shirt maker in Dhaka buying cotton fabric from
-        China (invented).
+        Pick a step and the map shows what happens on it. Example: a shirt maker in Dhaka buying
+        cotton fabric from China (invented).
       </p>
     </section>
   );
@@ -321,14 +354,16 @@ export function Trust() {
           </h2>
         </div>
         <ul className="hv7-ticks hv7-ticks-l">
-          {['Sources are shown with every result', 'Money and history are exact', 'Nothing is sent until reviewed'].map(
-            (line) => (
-              <li key={line}>
-                <Check />
-                {line}
-              </li>
-            ),
-          )}
+          {[
+            'Sources are shown with every result',
+            'Money and history are exact',
+            'Nothing is sent until reviewed',
+          ].map((line) => (
+            <li key={line}>
+              <Check />
+              {line}
+            </li>
+          ))}
         </ul>
       </div>
     </section>
@@ -337,9 +372,21 @@ export function Trust() {
 
 const story = [
   ['you', 'You', 'Day 1', 'Send the request', 'Cotton fabric, Guangzhou, within a month.'],
-  ['team', 'Corridra', 'Day 2', 'Checks who fits', 'Three suppliers shortlisted, each with its sources.'],
+  [
+    'team',
+    'Corridra',
+    'Day 2',
+    'Checks who fits',
+    'Three suppliers shortlisted, each with its sources.',
+  ],
   ['you', 'You', 'Day 4', 'Choose and approve', 'You pick two. Nothing is sent before you say so.'],
-  ['team', 'Corridra', 'Week 2', 'Meetings booked', 'Two meetings in Guangzhou, with a plan to follow.'],
+  [
+    'team',
+    'Corridra',
+    'Week 2',
+    'Meetings booked',
+    'Two meetings in Guangzhou, with a plan to follow.',
+  ],
 ] as const;
 
 export function Example() {
@@ -350,7 +397,8 @@ export function Example() {
         One request, start to meeting.
       </h2>
       <p className="hv7-sub">
-        Mina Textiles, a shirt maker in Dhaka, needs cotton fabric from China. Here is what happens, and who does what.
+        Mina Textiles, a shirt maker in Dhaka, needs cotton fabric from China. Here is what happens,
+        and who does what.
       </p>
       <ol className="hv7-cards">
         {story.map(([who, label, when, title, line]) => (
@@ -378,7 +426,8 @@ export function Inbound({ onInbound }: { onInbound: () => void }) {
             Inbound buyers and delegations.
           </h2>
           <p className="hv7-inbound-text">
-            Companies from abroad who want to meet Bangladeshi partners. Same checks, same follow-through.
+            Companies from abroad who want to meet Bangladeshi partners. Same checks, same
+            follow-through.
           </p>
           <button type="button" className="hv7-link hv7-link-b" onClick={onInbound}>
             Read about inbound →
@@ -393,7 +442,10 @@ export function Inbound({ onInbound }: { onInbound: () => void }) {
 }
 
 const faq = [
-  ['Do I need an account?', 'No. Start a request first. An account comes later, only if you want one.'],
+  [
+    'Do I need an account?',
+    'No. Start a request first. An account comes later, only if you want one.',
+  ],
   ['What does it cost?', 'faq.3.a'],
   ['Who sees my request?', 'faq.6.a'],
   ['What happens after I send it?', 'faq.8.a'],
@@ -442,7 +494,9 @@ export function Closing({ shown, href, cta }: { shown: Shown; href: string; cta:
               <a className="hv7-btn" href="#brief" id="final-start" data-start-action>
                 Start a request
               </a>
-              <p className="hv7-closing-note">Takes about two minutes. Nothing is sent until reviewed.</p>
+              <p className="hv7-closing-note">
+                Takes about two minutes. Nothing is sent until reviewed.
+              </p>
             </div>
           </div>
           <div className="hv7-closing-map" aria-hidden="true">
