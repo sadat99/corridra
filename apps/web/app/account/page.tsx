@@ -62,6 +62,7 @@ import { ShowEverything } from '../../components/ux/journey-note';
 import { JourneyScoped } from '../../components/ux/journey-scoped';
 import { readJourneyReportScope } from '../../lib/work-items/journey-scope-server';
 import './calm-lists.css';
+import '../../components/ux/row-list.css';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
@@ -395,12 +396,45 @@ export default async function Page({
       )}
       {view === 'more' && (
         <div id="more" tabIndex={-1} className="ux-account-groups ux-account-settings">
-          {uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18') && customerWorkspacesEnabled() && (
-            <p>
-              <Link prefetch={false} className="text-link ux-action" href="/account/businesses">
-                My Businesses
-              </Link>
-            </p>
+          {uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18') && (
+            <nav aria-label="More" className="ux-rows">
+              <ul>
+                {customerWorkspacesEnabled() && (
+                  <li className="ux-row">
+                    <Link prefetch={false} className="ux-row-link" href="/account/businesses">
+                      <span className="ux-row-title">My Businesses</span>
+                      <span className="ux-row-cell">Your team, company profile and plan.</span>
+                    </Link>
+                  </li>
+                )}
+                {customerBillingEnabled() && (
+                  <li className="ux-row">
+                    <Link prefetch={false} className="ux-row-link" href="/account/billing">
+                      <span className="ux-row-title">Plan and Invoices</span>
+                      <span className="ux-row-cell">Your plan and the invoices for it.</span>
+                    </Link>
+                  </li>
+                )}
+                <li className="ux-row">
+                  <Link prefetch={false} className="ux-row-link" href="/account/notifications">
+                    <span className="ux-row-title">Notifications</span>
+                    <span className="ux-row-cell">Choose which emails you get.</span>
+                  </Link>
+                </li>
+                <li className="ux-row">
+                  <Link prefetch={false} className="ux-row-link" href="/account/all-tools">
+                    <span className="ux-row-title">All Tools</span>
+                    <span className="ux-row-cell">Every page in your account.</span>
+                  </Link>
+                </li>
+                <li className="ux-row">
+                  <Link prefetch={false} className="ux-row-link" href="/how-it-works">
+                    <span className="ux-row-title">Help and Support</span>
+                    <span className="ux-row-cell">How Corridra works and how to reach us.</span>
+                  </Link>
+                </li>
+              </ul>
+            </nav>
           )}
           <AccountSettings
             profile={

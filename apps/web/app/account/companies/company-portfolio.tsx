@@ -274,7 +274,7 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
     >
       <p>
         {realCustomerInput()
-          ? 'Your submitted information. These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.'
+          ? 'These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.'
           : 'Sample data only. These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.'}{' '}
       </p>
       {status === 'loading' && <p role="status">Checking approved companies…</p>}
@@ -347,6 +347,8 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
                 <tr>
                   <th scope="col">Company</th>
                   <th scope="col">Country</th>
+                  <th scope="col">Fit</th>
+                  <th scope="col">Evidence</th>
                   <th scope="col">Approved Reports</th>
                   {serviceRequestsEnabled && (
                     <th scope="col">
@@ -365,6 +367,8 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
                         name={placeName(company.contexts[0].country)}
                       />
                     </td>
+                    <td>{company.contexts[0].fit ?? 'Not supplied'}</td>
+                    <td>{company.contexts[0].verification}</td>
                     <td>
                       <p>
                         {company.contexts.length} approved{' '}
