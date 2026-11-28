@@ -1223,6 +1223,67 @@ test('follow-up per G73: a second part-way answer still names the facts the firs
   expect((await latestPack('HN-CR')).version).toBe(2);
 });
 
+test('follow-up per G74: a second part-way answer does not name facts this save wrote once a newer facts version is current, even with the same facts', async () => {
+  expect((await save(coreLines('SV-NI'))).ok).toBe(true);
+  expect((await save([filled('SV-NI', 'market.notes', 'Coffee and cotton')])).ok).toBe(true);
+  const id = (await routeId('SV-NI'))!;
+  const refusing = new Proxy(operations, {
+    get(target, property) {
+      if (property === 'command')
+        return async (
+          ctx: Parameters<OperationsService['command']>[0],
+          input: { action?: string },
+        ) => {
+          if (input.action === 'decide')
+            throw new DomainError('Synthetic refusal of the decision', 409, 'FORCED');
+          return target.command(ctx, input);
+        };
+      const value = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  const refused = new RoutePackSheetService(f.runtime, corridors, refusing, content);
+  const rows = rowsOf([
+    filled('SV-NI', 'market.notes', 'Coffee and sugar'),
+    line({ route: 'SV-NI', field_key: 'pack.languages', state: 'Filled', value: 'es' }),
+  ]);
+  const body = { rows, saveId: randomUUID(), reason, planFingerprint: await printOf(rows) };
+  const first = await refused.save(owner(), body);
+  expect(first.saved).toEqual([
+    { route: 'SV-NI', routeId: id, contentVersion: 3, packVersion: null },
+  ]);
+  // Others then write v4 with other facts and v5 with the same facts this save wrote as v3.
+  const ours = await latestDocument('SV-NI');
+  const [view] = (await content.overview(owner(), { routeIds: [id] })).routes;
+  expect(view!.content!.version).toBe(3);
+  await content.append(owner(), {
+    id: randomUUID(),
+    routeId: id,
+    version: 4,
+    document: {
+      ...ours,
+      facts: ours.facts.map((item: { key: string }) =>
+        item.key === 'market.notes' ? { ...item, value: 'Notes saved by a teammate' } : item,
+      ),
+    },
+    reason: 'Saved by a teammate after the first answer',
+  });
+  await content.append(owner(), {
+    id: randomUUID(),
+    routeId: id,
+    version: 5,
+    document: ours,
+    reason: 'Saved again by a teammate',
+  });
+  const second = await refused.save(owner(), body);
+  expect(plan(second, 'SV-NI').content.changed).toBe(false);
+  expect(second.ok).toBe(false);
+  expect(second.errors).toMatchObject([{ route: 'SV-NI', code: 'ROUTE_PACK_NOT_PUBLISHED' }]);
+  // Version 3 is no longer the route's current facts, and this save did not write version 5, so the route is not named.
+  expect(second.saved).toEqual([]);
+  expect(await contentVersions('SV-NI')).toBe(5);
+});
+
 test('follow-up per G73: a pack only save that stopped part way finishes after a teammate publishes a newer pack on a route it already saved, and writes nothing twice', async () => {
   expect((await save(coreLines('LT-LV'))).ok).toBe(true);
   expect((await save(coreLines('LV-EE'))).ok).toBe(true);
