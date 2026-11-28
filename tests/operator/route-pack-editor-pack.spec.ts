@@ -425,7 +425,7 @@ test.describe('Change Pack Setting', () => {
     ).toHaveCount(0);
     publish.script = [
       {
-        status: 403,
+        status: 409,
         code: 'ROUTE_PACK_NOT_PUBLISHED',
         error:
           'A second owner must decide. The proposal was saved but not published. Send the same request again to publish it.',
