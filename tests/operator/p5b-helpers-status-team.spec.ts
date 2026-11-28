@@ -704,7 +704,7 @@ test('Status: #dash-money shows no money to a role that cannot open Operations o
     for (const path of ['/operator/operations#dash-money', '/operator/dashboard#dash-money']) {
       await page.goto(`${fixture.origin}${path}`);
       await settled(page);
-      await expect(page).toHaveURL(new RegExp(`${path.replace(/[/#]/g, '\\$&')}$`));
+      await expect(page).toHaveURL(`${fixture.origin}${path}`);
       await expect(page.locator('#ops-dashboard')).toHaveCount(0);
       await expect(page.locator('.ops-money')).toHaveCount(0);
       await expect(page.getByRole('tab', { name: 'Money' })).toHaveCount(0);
