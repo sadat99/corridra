@@ -58,7 +58,7 @@ let fontClass = '';
 const fixtureEnv = `<script>
 const q=new URLSearchParams(location.search),real=q.get('mode')==='real';
 globalThis.fixtureEnv={CORRIDRA_UX_FIRSTQ:q.get('fq')==='1'?'true':'',CORRIDRA_LANGUAGES_FORM:q.get('form')||'',
-CORRIDRA_CUSTOMER_CODE_SIGNIN:q.get('code')==='1'?'true':'',DATA_ENVIRONMENT:real?'real':'synthetic',
+CORRIDRA_CUSTOMER_CODE_SIGNIN:q.get('code')==='1'?'true':'',CORRIDRA_UX_PLAN_V10:q.get('v10')==='off'?'false':'',DATA_ENVIRONMENT:real?'real':'synthetic',
 CORRIDRA_REAL_USE_ENABLED:real?'true':''};
 </script>`;
 
@@ -461,7 +461,9 @@ async function compareWithBaseline(
   await open(page, language, `${query}&view=base`);
   const before = await walk(page, mode);
   const now = await page.context().newPage();
-  await open(now, language, query);
+  // The comparison is with the form before the language work, which is the earlier request page: the request window of
+  // 28 Nov 2026 (CORRIDRA_UX_PLAN_V10, live by default) is set to "false" here, as the switch's off state is that page.
+  await open(now, language, `${query}&v10=off`);
   const after = await walk(now, mode);
   expect(after.map((state) => state.name)).toEqual(before.map((state) => state.name));
   for (const [index, state] of after.entries()) {
@@ -979,7 +981,9 @@ test.describe('with the form released', () => {
     await form.locator('details summary').click();
     await form.locator('#brief-budgetAmount').fill('12.30');
     await form.locator('details select').selectOption('CNY');
-    await expect(page.locator('aside.pv-side dd [lang="en"]')).toHaveText('12.30 CNY');
+    await expect(
+      page.locator('aside.pv-side dd [lang="en"]').filter({ hasText: '12.30 CNY' }),
+    ).toHaveText('12.30 CNY');
     // Each English part against itself with the region English, which is the English form's styling.
     const parts = await page.locator('#main').evaluate((main) => {
       const elements = Array.from(main.querySelectorAll('[lang="en"], [lang="en"] *'));
@@ -999,7 +1003,12 @@ test.describe('with the form released', () => {
       }));
     });
     expect(parts.length).toBeGreaterThan(4);
-    expect(parts.filter((part) => part.english === 'anywhere manual')).toHaveLength(1);
+    // The amount in the left pane is the one English part that wraps anywhere on its own account. The left pane's own
+    // words (home.v44.*, English until native review) are English islands inside the same breaking box, so only the part
+    // with a figure in it is counted.
+    expect(
+      parts.filter((part) => part.english === 'anywhere manual' && /\d/.test(part.text ?? '')),
+    ).toHaveLength(1);
     for (const part of parts) expect(part.translated, part.text).toBe(part.english);
     await expect(page.locator('#main')).toHaveAttribute('lang', 'de');
   });

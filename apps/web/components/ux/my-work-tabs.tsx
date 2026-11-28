@@ -1,4 +1,5 @@
 import { SegmentLinks } from './sub-tabs';
+import './my-work-tabs.css';
 
 export type MyWorkTab = 'requests' | 'meetings' | 'results';
 
@@ -9,32 +10,34 @@ export type MyWorkTab = 'requests' | 'meetings' | 'results';
  */
 export function MyWorkTabs({ current, meetings }: { current: MyWorkTab; meetings: boolean }) {
   return (
-    <SegmentLinks
-      label="My Work sections"
-      segments={[
-        {
-          id: 'requests',
-          label: 'Requests',
-          href: '/account?view=work',
-          current: current === 'requests',
-        },
-        ...(meetings
-          ? [
-              {
-                id: 'meetings',
-                label: 'Meetings',
-                href: '/account/meetings',
-                current: current === 'meetings',
-              },
-            ]
-          : []),
-        {
-          id: 'results',
-          label: 'Results',
-          href: '/account?view=results',
-          current: current === 'results',
-        },
-      ]}
-    />
+    <div className="ux-my-work-tabs">
+      <SegmentLinks
+        label="My Work sections"
+        segments={[
+          {
+            id: 'requests',
+            label: 'Requests',
+            href: '/account?view=work',
+            current: current === 'requests',
+          },
+          ...(meetings
+            ? [
+                {
+                  id: 'meetings',
+                  label: 'Meetings',
+                  href: '/account/meetings',
+                  current: current === 'meetings',
+                },
+              ]
+            : []),
+          {
+            id: 'results',
+            label: 'Results',
+            href: '/account?view=results',
+            current: current === 'results',
+          },
+        ]}
+      />
+    </div>
   );
 }

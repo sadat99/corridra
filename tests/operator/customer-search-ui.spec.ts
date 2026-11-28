@@ -101,6 +101,7 @@ store.setCustomerBilling(on('billing'));
 store.setCustomerNotificationSettings(on('settings'));
 store.setCustomerOrganisationProfiles(on('profiles'));
 store.setCustomerProblemReports(on('problems'));
+store.setCustomerAccountV18(on('v18'));
 const words={navLabel:'Navigation',menuLabel:'Menu',closeLabel:'Close menu',collapseLabel:'Collapse menu',expandLabel:'Expand menu'};
 const tabs=customerTabs({companies:on('companies'),move:flags.get('move')==='on'});
 const items=tabs.map(t=>({key:t.key,label:t.label,href:t.href,icon:t.icon}));
@@ -1483,7 +1484,10 @@ test.describe('header geometry (M4)', () => {
     const rows: number[] = [];
     for (const centre of boxes.map((rect) => rect.centre).sort((a, b) => a - b))
       if (!rows.some((row) => Math.abs(row - centre) < 20)) rows.push(centre);
-    expect(rows, 'rows of tools').toHaveLength(2);
+    // Two rows before account v18; the signed-in header has no Listen now, so the tools can fit on one row. The limit is
+    // the title's: at most two lines.
+    expect(rows.length, 'rows of tools').toBeGreaterThanOrEqual(1);
+    expect(rows.length, 'rows of tools').toBeLessThanOrEqual(2);
     // Measured: two rows of tools at 200% text make the header 329 px high.
     const HEIGHT_TWO_ROWS = 329;
     expect((await headerNumbers(page)).header.height).toBeLessThanOrEqual(HEIGHT_TWO_ROWS);

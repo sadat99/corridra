@@ -44,7 +44,7 @@ if (process.env.LANGUAGE_FREEZE_WRITE === '1')
  * native review stays OPEN and each language shows these words in English. The lists are lib/i18n/home-v43-words*.ts.
  * Second deliberate exception (owner, 28 Nov 2026, home page v4.4 and the account and request windows): 56 new English-only
  * `home.v44.*` keys (the Pause Motion control, the request sheet, the worked example, the closing, the three account
- * navigation words, the request page's left pane and saved screen), so every number rose by 56 (1214 to 1268 and so on).
+ * navigation words, the request page's left pane and saved screen), so every number rose by 56 (1214 to 1270 and so on).
  * Additions only: the freeze gained 56 lines, none changed or went. Native review stays OPEN; no translation is claimed.
  */
 const untranslated: Record<OtherLocale, number> = {

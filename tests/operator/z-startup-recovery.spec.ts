@@ -183,9 +183,7 @@ test('UX-01 startup outage stays denied and a fresh document retry rechecks real
     ).toBe(401);
     await page.goto(`http://127.0.0.1:3300/contributor?workspace=${seed.tenantId}`);
     // B6a (D-054): a signed-out helper lands on the helper sign-in, never the staff one, with the same return.
-    await expect(
-      page.getByRole('heading', { name: 'Sign in to your assigned tasks.', exact: true }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Helper sign-in.', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Use your helper work account' })).toBeVisible();
     await expect(page.getByRole('main')).not.toContainText(/OPERATOR ACCESS|operator account/i);
     expect(new URL(page.url()).pathname).toBe('/contributor/signin');

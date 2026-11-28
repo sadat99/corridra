@@ -1,0 +1,12 @@
+/* My Work tabs (customer account v18). On a pointer-sized screen the row drops its track padding, so the pages it sits on
+   keep their length budgets; the segments keep their 44 px height. */
+@media (min-width: 64.0625rem) {
+  .ux-my-work-tabs .ux-desk-segments ul {
+    padding: 0;
+  }
+}
+@media (min-width: 64.0625rem) {
+  .ux-my-work-tabs {
+    margin-block-end: calc(var(--space-3) * -1);
+  }
+}

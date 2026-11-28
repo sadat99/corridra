@@ -86,7 +86,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
             className="aw-ghost"
             href={uxSwitchOn('CORRIDRA_UX_START_V13') ? '/start' : '/plan'}
           >
-            Start a request
+            Start a Request
           </Link>
         </div>
       )}

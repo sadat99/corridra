@@ -3,9 +3,12 @@
   "/about": {},
   "/access/customer": {},
   "/access/link": {},
-  "/access/team": {},
+  "/access/team": {
+    "pillControls": 18
+  },
   "/account": {
-    "redirectsTo:/signin": 1
+    "redirectsTo:/signin": 1,
+    "pillControls": 12
   },
   "/account/all-tools": {
     "unavailable": 6
@@ -20,15 +23,22 @@
     "unavailable": 6
   },
   "/account/problem-reports": {
-    "redirectsTo:/signin": 1
+    "redirectsTo:/signin": 1,
+    "pillControls": 12
   },
   "/account/problem-reports/new": {
-    "redirectsTo:/signin": 1
+    "redirectsTo:/signin": 1,
+    "pillControls": 12
   },
   "/account/companies": {},
   "/account/billing": {},
+  "/account/businesses": {
+    "pillControls": 12,
+    "redirectsTo:/signin": 1
+  },
   "/account/delegations": {},
   "/account/delegations/organise": {},
+  "/account/delegation-hub": {},
   "/account/profile": {},
   "/account/service-requests": {},
   "/account/service-requests/new": {
@@ -82,14 +92,21 @@
   "/operator/supply/do-not-contact": {
     "unavailable": 6
   },
-  "/plan": {},
+  "/plan": {
+    "pillControls": 6
+  },
   "/privacy": {},
   "/programme": {},
   "/reset-password": {},
   "/sell": {},
-  "/signin": {},
-  "/signup": {},
+  "/signin": {
+    "pillControls": 12
+  },
+  "/signup": {
+    "pillControls": 12
+  },
   "/source": {},
+  "/start": {},
   "/trade-missions": {},
   "/trust": {},
   "/verify-email": {},

@@ -218,7 +218,7 @@
   justify-content: space-between;
   gap: 4px 24px;
   margin-block-start: 0;
-  padding-block: 8px;
+  padding-block: 0;
   color: var(--cv-ink-2);
   font-size: var(--text-sm);
 }
@@ -313,5 +313,13 @@
 @media (min-width: 64rem) {
   .hv7-footer[data-compact] .hv7-footer-top {
     grid-template-columns: 1fr;
+  }
+}
+
+/* On a pointer-sized screen the quiet line inside a workspace is a little lower (24 px, the minimum there), so the
+   signed-in pages keep their length budgets; under 1025 px every link keeps its 44 px target. */
+@media (min-width: 64.0625rem) {
+  .hv7-footer-quiet a {
+    min-block-size: 24px;
   }
 }

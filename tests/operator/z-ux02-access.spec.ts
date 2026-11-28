@@ -204,8 +204,8 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
     expect(calls.filter((call) => call.path.includes('verify-email'))).toHaveLength(1);
     // Submission-first account access keeps a permitted destination across every identity stage.
     await page.goto('http://127.0.0.1:3401/signin?returnTo=%2Fplan');
-    await page.getByText('More ways in', { exact: true }).click();
-    await page.getByRole('link', { name: 'Create an Account', exact: true }).click();
+    // The sign-in window (owner canvas board v11) carries Create account as its own switch, where "More ways in" held it.
+    await page.getByRole('link', { name: 'Create account', exact: true }).click();
     await expect(page).toHaveURL(
       (url) => url.pathname === '/signup' && url.searchParams.get('returnTo') === '/plan',
     );
@@ -255,15 +255,15 @@ test('UX-02 customer account forms validate, submit once and show non-disclosing
         url.searchParams.get('returnTo') === '/plan' &&
         !url.searchParams.has('token'),
     );
-    await page.getByRole('link', { name: 'Back to Sign-in', exact: true }).click();
+    await page.getByRole('link', { name: 'Sign in', exact: true }).click();
     await expect(page).toHaveURL(
       (url) => url.pathname === '/signin' && url.searchParams.get('returnTo') === '/plan',
     );
     await page.goto('http://127.0.0.1:3401/signin?returnTo=https%3A%2F%2Fexample.invalid');
-    await page.getByText('More ways in', { exact: true }).click();
-    await expect(
-      page.getByRole('link', { name: 'Create an Account', exact: true }),
-    ).toHaveAttribute('href', '/signup');
+    await expect(page.getByRole('link', { name: 'Create account', exact: true })).toHaveAttribute(
+      'href',
+      '/signup',
+    );
   } finally {
     server.kill('SIGTERM');
   }

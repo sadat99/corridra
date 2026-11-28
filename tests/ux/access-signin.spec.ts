@@ -76,22 +76,17 @@ test('the other ways in keep every destination: the window switch, the form link
     'href',
     '/forgot-password',
   );
-  await expect(form.getByRole('link', { name: 'Start a Request', exact: true })).toHaveAttribute(
-    'href',
-    '/plan',
-  );
-  // The one "Not a customer?" line replaces the older "Not a Customer?" disclosure (owner board screen 03 and the
-  // owner's 18 November "unsolicited redundancy"): both other doors stay one tap away, and the disclosure is gone.
+  // "New here?" is the window's own strip under the form: Start a Request goes to the start page (CORRIDRA_UX_START_V13,
+  // live by default), where sending a request without an account is one of the three ways.
+  await expect(
+    page.locator('main .aw-noacc').getByRole('link', { name: 'Start a Request', exact: true }),
+  ).toHaveAttribute('href', '/start');
+  // The "Not a customer?" line is the window's last lines: the team sign-in and the private link door stay one tap
+  // away, and the older disclosure is gone.
   await expect(page.getByText('Not a Customer?', { exact: true })).toHaveCount(0);
-  const line = page.getByRole('navigation', { name: 'Not a customer?' });
-  await expect(line.getByRole('link', { name: 'Team and Network Access' })).toHaveAttribute(
-    'href',
-    '/access/team',
-  );
-  await expect(line.getByRole('link', { name: 'Private Link Access' })).toHaveAttribute(
-    'href',
-    '/access/link',
-  );
+  await expect(
+    page.locator('main .aw-foot').getByRole('link', { name: 'Private Link Access' }),
+  ).toHaveAttribute('href', '/access/link');
 });
 
 test('a return address is carried to the other ways in', async ({ page }) => {

@@ -11,6 +11,7 @@ import { PlanProgress } from './plan-progress';
 import { PlanReceived } from './plan-received';
 import { PlanSide } from './plan-side';
 import { PlanStepper } from './plan-stepper';
+import { usePlanWords } from './plan-words';
 import './plan-v10.css';
 import { objectiveForJob, selectedPicture, pictures } from '../../lib/first-question';
 import { FirstQuestion } from '../../components/mr/first-question';
@@ -45,7 +46,7 @@ import { currencies } from '@corridra/domain/currencies';
 import { intakeExperience } from '@corridra/domain/experience';
 import { originalAmountToMinor } from '@corridra/domain/locale';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
-import { useLanguage, useT } from '../../components/language-provider';
+import { useLanguage } from '../../components/language-provider';
 import { LanguageSheetExtra } from '../../components/ux/language-sheet-slot';
 import { subscribeToHash } from '../../lib/address-store';
 import {
@@ -408,7 +409,7 @@ function IntakeForm({
     wsa,
   } = useFormWords();
   // The language button exists only when more than one language is offered (language-sheet.tsx).
-  const t = useT();
+  const { word } = usePlanWords();
   const languageChip = useLanguage().offered.length > 1;
   const draftStorageKey =
     privateSubmission?.draftStorageKey ??
@@ -1212,8 +1213,8 @@ function IntakeForm({
                 answers={answersKept}
                 signedIn={false}
               />
-              <h2 id="test-request-title">{t('home.v44.plan.saved.title')}</h2>
-              <p>{message}</p>
+              <h2 id="test-request-title">{word('home.v44.plan.saved.title')}</h2>
+              <p>{english(message)}</p>
             </section>
           )}
           {realMode && pendingReady && (
@@ -1227,7 +1228,7 @@ function IntakeForm({
                     answers={answersKept}
                     signedIn={!!account}
                   />
-                  <h2 id="pending-request-title">{t('home.v44.plan.saved.title')}</h2>
+                  <h2 id="pending-request-title">{word('home.v44.plan.saved.title')}</h2>
                 </>
               ) : (
                 <h2 id="pending-request-title">{say('form.pending.title')}</h2>

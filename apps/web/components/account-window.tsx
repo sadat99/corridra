@@ -107,6 +107,11 @@ export function AccountWindow({
           {children}
           <p className="aw-foot">
             Team member? <a href={operatorSignInPage}>Team access</a>
+            <br />
+            Opening a private link?{' '}
+            <Link prefetch={false} href="/access/link">
+              Private Link Access
+            </Link>
           </p>
         </div>
       </div>
