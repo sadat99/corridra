@@ -388,6 +388,13 @@ export default async function Page({
       )}
       {view === 'more' && (
         <div id="more" tabIndex={-1} className="ux-account-groups ux-account-settings">
+          {uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18') && customerWorkspacesEnabled() && (
+            <p>
+              <Link prefetch={false} className="text-link ux-action" href="/account/businesses">
+                My Businesses
+              </Link>
+            </p>
+          )}
           <AccountSettings
             profile={
               <section

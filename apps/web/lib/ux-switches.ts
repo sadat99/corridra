@@ -75,10 +75,14 @@ export const uxSwitchNames = [
   // Journey modes (owner approved 23 Nov 2026): the Journey switcher in the signed-in sidebar and one journey at a time on Home,
   // Requests and Meetings. Off unless exactly "true", and it also needs CORRIDRA_UX_SHELLS_V2 and CORRIDRA_UX_MOVE. Presentation only.
   'CORRIDRA_UX_JOURNEY_MODES',
+  // Customer account v18 (owner approved the canvas Home_V18_Account, 28 Nov 2026): Home, My Work, Companies, Delegations and More, the Acting for switcher and the My businesses page. Presentation over existing pages; anything without a server yet is shown as Coming soon.
+  'CORRIDRA_UX_ACCOUNT_V18',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 
 export function uxSwitchOn(name: UxSwitchName, env: NodeJS.ProcessEnv = process.env): boolean {
+  // Preview-only: the claude/home-v44 branch preview shows the v18 account. Remove before any merge to main.
+  if (name === 'CORRIDRA_UX_ACCOUNT_V18' && env.VERCEL_GIT_COMMIT_REF === 'claude/home-v44') return true;
   return env[name] === 'true';
 }
 

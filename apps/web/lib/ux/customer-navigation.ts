@@ -11,7 +11,14 @@ import type { MessageKey } from '../i18n/messages';
 import { activeWorkspaces } from '../workspace-choice';
 import { journeyScopedHref, type JourneyMode } from './journey-mode';
 
-export type CustomerTabKey = 'home' | 'requests' | 'companies' | 'meetings' | 'reports';
+export type CustomerTabKey =
+  | 'home'
+  | 'requests'
+  | 'companies'
+  | 'meetings'
+  | 'reports'
+  | 'delegations'
+  | 'more';
 export type CustomerTab = {
   key: CustomerTabKey;
   label: string;
@@ -85,8 +92,23 @@ export function customerTabs({
   companies,
   move,
   journey,
-}: Pick<CustomerNavigationInput, 'companies' | 'move'> & { journey?: JourneyMode }): CustomerTab[] {
+  v18,
+}: Pick<CustomerNavigationInput, 'companies' | 'move'> & {
+  journey?: JourneyMode;
+  /** Customer account v18: Home, My Work, Companies, Delegations, More (meetings and results live inside My Work). */
+  v18?: boolean;
+}): CustomerTab[] {
   const mode = journey ?? 'all';
+  if (v18)
+    return [
+      { key: 'home', label: 'Home', href: move ? journeyScopedHref('home', mode) : '/account', icon: 'home', labelKey: 'wse.nav.home' },
+      { key: 'requests', label: 'My Work', href: journeyScopedHref('requests', mode), icon: 'work' },
+      ...(companies
+        ? [{ key: 'companies' as const, label: 'Companies', href: '/account/companies', icon: 'company', labelKey: 'wse.nav.companies' as const }]
+        : []),
+      { key: 'delegations', label: 'Delegations', href: '/account/delegation-hub', icon: 'trip' },
+      { key: 'more', label: 'More', href: '/account?view=more', icon: 'more' },
+    ];
   return [
     {
       key: 'home',

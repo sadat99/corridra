@@ -154,19 +154,30 @@ function CustomerFrame({
   // Home is Your Move only with both the navigation and the Move switches, exactly as the old list decided.
   const companies = customerCompaniesEnabled();
   const homeIsMove = plainNames && move;
+  const v18 = uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18');
   const tabs = mode
-    ? customerTabs({ companies, move: homeIsMove, journey: mode })
-    : customerTabs({ companies, move: homeIsMove });
+    ? customerTabs({ companies, move: homeIsMove, journey: mode, v18 })
+    : customerTabs({ companies, move: homeIsMove, v18 });
   const here: CustomerTabKey | null =
     tab === 'home' || tab === 'move'
       ? 'home'
       : tab === 'work'
         ? 'requests'
         : tab === 'results'
-          ? 'reports'
-          : tab === 'companies' || tab === 'meetings'
-            ? tab
-            : null;
+          ? v18
+            ? 'requests'
+            : 'reports'
+          : tab === 'meetings'
+            ? v18
+              ? 'requests'
+              : 'meetings'
+            : tab === 'companies'
+              ? tab
+              : tab === 'more'
+                ? 'more'
+                : tab === 'delegations'
+                  ? 'delegations'
+                  : null;
   const items: CustomerSideItem[] = tabs.map((item) => ({
     key: item.key,
     // Meetings is a new word with no reviewed translation yet, so it is marked as English.
