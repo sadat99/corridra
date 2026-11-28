@@ -8,6 +8,11 @@ import { PlanActionBar } from './plan-action-bar';
 import { PlanContactNote } from './plan-contact-note';
 import { PlanJobFold } from './plan-job-fold';
 import { PlanProgress } from './plan-progress';
+import { PlanReceived } from './plan-received';
+import { PlanSide } from './plan-side';
+import { PlanStepper } from './plan-stepper';
+import { usePlanWords } from './plan-words';
+import './plan-v10.css';
 import { objectiveForJob, selectedPicture, pictures } from '../../lib/first-question';
 import { FirstQuestion } from '../../components/mr/first-question';
 import { Flagged, placeMark } from '../../components/ux/flag';
@@ -361,6 +366,11 @@ type IntakeProps = {
   codeSignIn?: boolean;
   /** From CORRIDRA_UX_FIRSTQ on the server. The first question is five pictures; every job type stays selectable. Off is the page as it was. */
   firstQuestion?: boolean;
+  /**
+   * From CORRIDRA_UX_PLAN_V10 on the server (live by default): the request page is the two-pane window of the owner's
+   * canvas board v10. Off is the page as it was. Same fields, checks and payload either way.
+   */
+  windowDesign?: boolean;
 };
 export function Intake(props: IntakeProps = {}) {
   return props.realMode && !props.privateSubmission ? (
@@ -381,6 +391,7 @@ function IntakeForm({
   realMode = false,
   codeSignIn = false,
   firstQuestion = false,
+  windowDesign = false,
   navigate = missingNavigation,
 }: IntakeProps & { navigate?: (path: string) => void }) {
   const privateMode = privateSubmission !== undefined;
@@ -398,6 +409,7 @@ function IntakeForm({
     wsa,
   } = useFormWords();
   // The language button exists only when more than one language is offered (language-sheet.tsx).
+  const { word } = usePlanWords();
   const languageChip = useLanguage().offered.length > 1;
   const draftStorageKey =
     privateSubmission?.draftStorageKey ??
@@ -444,6 +456,15 @@ function IntakeForm({
     // A field to focus after an error opened its fold (a fold's own error replaces the summary focus).
     focusField = useRef(''),
     budgetDetails = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (windowDesign && finished)
+      document.querySelector('.pv-window')?.scrollIntoView({ block: 'start' });
+  }, [windowDesign, finished]);
+  useEffect(() => {
+    // A message (for example a save that failed) is brought into view so a submit never looks silent.
+    if (windowDesign && message && !finished)
+      document.querySelector('.guide-status')?.scrollIntoView({ block: 'center' });
+  }, [windowDesign, message, finished]);
   useEffect(() => {
     Promise.resolve().then(() => {
       try {
@@ -1088,9 +1109,35 @@ function IntakeForm({
     countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
       ? 1
       : 0);
+  // The words the left pane and the saved screen show for the answers still in this tab.
+  const goalWords = chosenJob ? say(jobWord(chosenJob.key)) : '';
+  const companyName = countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
+    ? (regionNames.of(draft.companyCountry) ?? '')
+    : '';
+  const marketName =
+    draft.marketCode === 'EU'
+      ? say('form.where.eu')
+      : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
+        ? (regionNames.of(draft.marketCode) ?? '')
+        : '';
+  const answersKept = [
+    draft.job,
+    draft.companyCountry,
+    draft.marketCode,
+    draft.whenNeeded,
+    draft.offer,
+    draft.notes,
+    draft.name,
+    draft.company,
+    draft.email,
+  ].filter((value) => String(value).trim() !== '').length;
   return (
     // Without real use (a preview or local copy) everything entered here is made up, and the page says so.
-    <div className="ux-intake-layout" data-madeup-panel={realMode ? undefined : ''}>
+    <div
+      className="ux-intake-layout"
+      data-madeup-panel={realMode ? undefined : ''}
+      data-plan-v10={windowDesign ? '' : undefined}
+    >
       <div className="guide-plan-top">
         {/* UI/UX.v4 (owner 2a, 18 Nov 2026): the "Your Request" callout box is gone. Real mode keeps its one useful
             line in the page heading and the privacy line under the choices; the sample notice keeps its availability
@@ -1142,11 +1189,50 @@ function IntakeForm({
           </p>
         )}
       </div>
-      <div className="guide-plan-body">
-        <div className="guide-plan-main">
+      <div className={windowDesign ? 'guide-plan-body pv-window' : 'guide-plan-body'}>
+        {windowDesign && (
+          <PlanSide
+            goal={goalWords}
+            company={companyName}
+            companyCode={draft.companyCountry}
+            market={marketName}
+            marketCode={draft.marketCode}
+            when={draft.whenNeeded}
+            note={draft.notes}
+            budget={draft.budgetAmount ? `${draft.budgetAmount} ${draft.currency}`.trim() : ''}
+          />
+        )}
+        <div className={windowDesign ? 'guide-plan-main pv-main' : 'guide-plan-main'}>
+          {windowDesign && !realMode && finished && (
+            <section className="receipt-saved" aria-labelledby="test-request-title">
+              <PlanReceived
+                test
+                goal={goalWords}
+                company={companyName}
+                market={marketName}
+                answers={answersKept}
+                signedIn={false}
+              />
+              <h2 id="test-request-title">{word('home.v44.plan.saved.title')}</h2>
+              <p>{english(message)}</p>
+            </section>
+          )}
           {realMode && pendingReady && (
             <section className="receipt-saved" aria-labelledby="pending-request-title">
-              <h2 id="pending-request-title">{say('form.pending.title')}</h2>
+              {windowDesign ? (
+                <>
+                  <PlanReceived
+                    goal={goalWords}
+                    company={companyName}
+                    market={marketName}
+                    answers={answersKept}
+                    signedIn={!!account}
+                  />
+                  <h2 id="pending-request-title">{word('home.v44.plan.saved.title')}</h2>
+                </>
+              ) : (
+                <h2 id="pending-request-title">{say('form.pending.title')}</h2>
+              )}
               {translated ? (
                 <p>
                   {say('form.pending.sameDevice')}
@@ -1268,6 +1354,9 @@ function IntakeForm({
                 listLabel={say('form.step.journey')}
                 progressLabel={say('form.step.progress')}
               />
+              {windowDesign && (
+                <PlanStepper names={stepNames} current={step} onGo={(index) => move(index)} />
+              )}
               <h2 ref={heading} tabIndex={-1} className={step === 0 ? 'sr-only' : undefined}>
                 {say(titles[step])}
               </h2>
@@ -1662,6 +1751,11 @@ function IntakeForm({
                   <PlanContactNote realMode={realMode} account={account} />
                 </>
               )}
+              {windowDesign && (
+                <p className="guide-hint plan-promise-line">
+                  {englishIsland('Nothing here is an offer, a quote or a promise.')}
+                </p>
+              )}
               <PlanActionBar
                 waiting={step === 0 && nothingChosen}
                 note={
@@ -1914,7 +2008,7 @@ function IntakeForm({
             )}
           </section>
         </div>
-        {!finished && (
+        {!windowDesign && !finished && (
           <aside
             className="ux-brief-summary"
             aria-label={realMode ? say('form.side.realLabel') : say('form.side.sampleLabel')}

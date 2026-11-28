@@ -36,6 +36,8 @@ type Props = {
   serviceRequestsEnabled?: boolean;
   /** The one action of the empty state (the page passes a link to the company profiles when they are on). */
   emptyAction?: ReactNode;
+  /** CORRIDRA_UX_ACCOUNT_V18 (live by default): the Fit and Evidence columns. False is the earlier table and words. */
+  v18?: boolean;
 };
 const uuid = (s: unknown): s is string =>
   typeof s === 'string' &&
@@ -110,7 +112,13 @@ function validPage(value: unknown): value is Page {
 export function CompanyPortfolio(props: Props) {
   return <ScopedPortfolio key={props.issuer + ':' + props.subject} {...props} />;
 }
-function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, emptyAction }: Props) {
+function ScopedPortfolio({
+  subject,
+  issuer,
+  serviceRequestsEnabled = false,
+  emptyAction,
+  v18 = true,
+}: Props) {
   const [rows, setRows] = useState<Company[]>([]),
     [next, setNext] = useState<string | null>(null),
     [scopes, setScopes] = useState(0),
@@ -274,7 +282,7 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
     >
       <p>
         {realCustomerInput()
-          ? 'Your submitted information. These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.'
+          ? `${v18 ? '' : 'Your submitted information. '}These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.`
           : 'Sample data only. These companies come from your saved, approved mission reports. Each mission keeps its own qualification and commercial purpose. Open its report for current approved commercial detail.'}{' '}
       </p>
       {status === 'loading' && <p role="status">Checking approved companies…</p>}
@@ -347,6 +355,8 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
                 <tr>
                   <th scope="col">Company</th>
                   <th scope="col">Country</th>
+                  {v18 && <th scope="col">Fit</th>}
+                  {v18 && <th scope="col">Evidence</th>}
                   <th scope="col">Approved Reports</th>
                   {serviceRequestsEnabled && (
                     <th scope="col">
@@ -365,6 +375,8 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false, empt
                         name={placeName(company.contexts[0].country)}
                       />
                     </td>
+                    {v18 && <td>{company.contexts[0].fit ?? 'Not supplied'}</td>}
+                    {v18 && <td>{company.contexts[0].verification}</td>}
                     <td>
                       <p>
                         {company.contexts.length} approved{' '}

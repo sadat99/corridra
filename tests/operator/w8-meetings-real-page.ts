@@ -84,6 +84,8 @@ const stubs: Record<string, string> = {
   '@corridra/auth/customer-notifications': `export const customerNotificationsEnabled=()=>false;export const customerNotificationWithdrawalEnabled=()=>false;`,
   // The closed-account gate asks the server probe whether Report a Problem is offered; here it is not, and no database is read.
   'lib/problem-reports-offered': `export const problemReportsOffered=async()=>false;`,
+  // Acting for (customer account v18) reads the person's businesses on the server; here there are none, so it draws nothing.
+  'lib/acting-for-workspaces': `export const actingForWorkspaces=async()=>[];`,
   '@corridra/auth/customer-organisation-profiles': `export const customerOrganisationProfilesEnabled=()=>false;`,
   // The sidebar's Groups (Programmes and Registrations) are off here, so the frame is the one the budget was set on.
   '@corridra/auth/customer-programmes': `export const customerProgrammesEnabled=()=>false;`,

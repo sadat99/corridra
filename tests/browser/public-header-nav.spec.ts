@@ -295,7 +295,7 @@ test('N6 the phone menu keeps focus inside, makes the page inert, closes on Esca
   await page.goto('/');
   await menu(page).click();
   await expect(page.locator('main')).toHaveAttribute('inert', '');
-  await expect(page.locator('footer.guide-footer')).toHaveAttribute('inert', '');
+  await expect(page.locator('footer[data-footer="v44"]')).toHaveAttribute('inert', '');
   // Forty Tabs go round the sheet more than once and never leave the header.
   for (let index = 0; index < 40; index += 1) {
     await page.keyboard.press('Tab');

@@ -39,6 +39,10 @@ html[data-contrast='more'] {
   --ac-border-strong: color-mix(in srgb, var(--ac-ink) 68%, var(--ac-paper));
   /* Cobalt toward navy: still cobalt, and white on it is 8.16 to 1 or better. */
   --brand: color-mix(in srgb, var(--ac-cobalt) 75%, var(--ac-navy));
+  /* The canvas windows and the footer of the home v4.4 design (the --cv-* names) follow the same stronger choice. */
+  --cv-brand: var(--brand);
+  --cv-ink-2: color-mix(in srgb, var(--cv-ink) 94%, var(--cv-white));
+  --cv-ink-3: color-mix(in srgb, var(--cv-ink) 88%, var(--cv-white));
   --action: var(--brand);
   --selected: var(--brand);
   --focus: var(--brand);
@@ -150,6 +154,9 @@ html[data-contrast='more'] :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) .pr
     --ac-border-strong: color-mix(in srgb, var(--ac-ink) 68%, var(--ac-paper));
     /* Cobalt toward navy: still cobalt, and white on it is 8.16 to 1 or better. */
     --brand: color-mix(in srgb, var(--ac-cobalt) 75%, var(--ac-navy));
+    --cv-brand: var(--brand);
+    --cv-ink-2: color-mix(in srgb, var(--cv-ink) 94%, var(--cv-white));
+    --cv-ink-3: color-mix(in srgb, var(--cv-ink) 88%, var(--cv-white));
     --action: var(--brand);
     --selected: var(--brand);
     --focus: var(--brand);

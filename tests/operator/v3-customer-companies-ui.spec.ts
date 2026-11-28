@@ -137,7 +137,10 @@ test('approved company context preserves original qualification and opens the ex
   await page.getByText(context.missionTitle, { exact: true }).click();
   await expect(page.getByText('Uncertainty: ' + context.uncertainty)).toBeVisible();
   await expect(page.getByText('Evidence gaps: ' + context.gaps)).toBeVisible();
-  await expect(page.getByText(context.verification, { exact: true })).toBeVisible();
+  // The Evidence column of the table says the same words, so the opened detail is the paragraph (account v18).
+  await expect(
+    page.getByText(context.verification, { exact: true }).and(page.locator('p')),
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open approved commercial report' })).toHaveAttribute(
     'href',
     '/account/missions/' + resource,
@@ -308,7 +311,10 @@ test('company continuity supports keyboard,axe and original script at mobile,tab
     await expect(page.getByRole('rowheader', { name: context.company })).toBeVisible();
     await page.getByText(context.missionTitle, { exact: true }).focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByText(context.verification, { exact: true })).toBeVisible();
+    // The Evidence column of the table says the same words, so the opened detail is the paragraph (account v18).
+    await expect(
+      page.getByText(context.verification, { exact: true }).and(page.locator('p')),
+    ).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

@@ -43,12 +43,18 @@ export function AccountForm({
   mode,
   codeSignIn = false,
   returnToEmailPages = false,
+  windowDesign = false,
 }: {
   mode: AccountFormMode;
   /** Set by the server from CORRIDRA_CUSTOMER_CODE_SIGNIN. Off keeps the form exactly as it was. */
   codeSignIn?: boolean;
   /** Set by the server from CORRIDRA_PULSE_ENABLED. Off keeps `/plan` as the only kept destination. */
   returnToEmailPages?: boolean;
+  /**
+   * Set by the server from CORRIDRA_UX_ACCESS_WINDOW_V11: the window carries Sign in, Create account and Team access
+   * itself, so the form leaves out its own copies of them. Off keeps the earlier links exactly.
+   */
+  windowDesign?: boolean;
 }) {
   const router = useRouter();
   const query = useSearchParams();
@@ -247,7 +253,7 @@ export function AccountForm({
           address already has a verified account, no code is sent: sign in, or reset your password.
         </p>
       )}
-      {mode === 'signup' && (
+      {mode === 'signup' && !windowDesign && (
         <p>
           Already have an account? Sign in, or reset your password. Signing up again with the same
           address does not create a second account and no code is sent.
@@ -487,7 +493,12 @@ export function AccountForm({
           Request a New Code
         </button>
       )}
-      {mode === 'signin' && (
+      {mode === 'signin' && windowDesign && (
+        <Link prefetch={false} className="text-link" href={accessPath('/verify-email')}>
+          Verify Your Email
+        </Link>
+      )}
+      {mode === 'signin' && !windowDesign && (
         <>
           <details className="access-more account-more">
             <summary>More ways in</summary>
@@ -517,12 +528,12 @@ export function AccountForm({
           </p>
         </>
       )}
-      {(mode === 'signup' || mode === 'verify') && (
+      {(mode === 'verify' || (mode === 'signup' && !windowDesign)) && (
         <Link prefetch={false} className="text-link" href={accessPath('/forgot-password')}>
           Forgot Your Password?
         </Link>
       )}
-      {mode !== 'signin' && (
+      {mode !== 'signin' && !(windowDesign && mode === 'signup') && (
         <Link prefetch={false} className="text-link" href={accessPath('/signin')}>
           Back to Sign-in
         </Link>

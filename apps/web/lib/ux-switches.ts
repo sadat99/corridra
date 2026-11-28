@@ -1,8 +1,13 @@
 /**
- * The switches that gate the UX update. Each is "on" only when the setting is exactly "true", and
- * each is off by default, so with every one unset a page is byte for byte what it was before.
- * Reading goes through here so the names stay in one place; the plain-language description of each
- * lives in `owner-switches.ts` (a test fails when a name is read but not described).
+ * The switches that gate the UX update. Reading goes through here so the names stay in one place; the plain-language
+ * description of each lives in `owner-switches.ts` (a test fails when a name is read but not described).
+ *
+ * Two rules, by date. Every switch listed before 28 November 2026 is "on" only when the setting is exactly "true" and is
+ * off by default, so with every one unset a page is byte for byte what it was before. From 28 November 2026 a new
+ * design ships live and keeps an off switch (owner, 28 Nov 2026: "dont hesitate about "live user will see" etc, we
+ * will always update this way, like live, no by switching on/off, although we will keep switch, in case we ever
+ * need."): the names in `liveByDefaultSwitches` are on unless the setting is exactly "false", and "false" returns the
+ * surface to exactly what it was before that design. Only a name added to that list follows the new rule.
  */
 export const uxSwitchNames = [
   'CORRIDRA_UX_NAV',
@@ -40,6 +45,8 @@ export const uxSwitchNames = [
   'CORRIDRA_UX_HOME_V42',
   // Home page v4.3 (owner, 26 Nov 2026, via the Guardian: "update as per attachment 100% correctly"): the light hero with a photo, one page of contextual examples and the pack footer. On only when exactly "true" and wins over V42; read at build time, so a change needs a redeploy. Presentation only.
   'CORRIDRA_UX_HOME_V43',
+  // Home page v4.4 (owner, 27 Nov 2026, decision 4 "keep mine"): the redesigned home of the canvas board. It refines the v4.3 home, so it takes effect only while CORRIDRA_UX_HOME_V43 is also on. Live by default (liveByDefaultSwitches); exactly "false" shows the v4.3 home unchanged. Read at build time, so a change needs a redeploy. Presentation only.
+  'CORRIDRA_UX_HOME_V44',
   // One job per page for the home, /how-it-works and /trust (owner, 26 Nov 2026, first hand to Guardian G66: "yes to all three, build it"): the home shows a short summary of the process and of trust, each linking to its page, and the two pages carry the full process and the full proof. Takes effect only while CORRIDRA_UX_HOME_V43 is also on; read at build time, so a change needs a redeploy. Presentation only.
   'CORRIDRA_UX_HOW_TRUST_V43',
   'CORRIDRA_NOTIFICATIONS_V2',
@@ -73,11 +80,35 @@ export const uxSwitchNames = [
   // Journey modes (owner approved 23 Nov 2026): the Journey switcher in the signed-in sidebar and one journey at a time on Home,
   // Requests and Meetings. Off unless exactly "true", and it also needs CORRIDRA_UX_SHELLS_V2 and CORRIDRA_UX_MOVE. Presentation only.
   'CORRIDRA_UX_JOURNEY_MODES',
+  // Customer account v18 (owner approved the canvas Home_V18_Account, 28 Nov 2026): Home, My Work, Companies, Delegations and More, the Acting for switcher, My Businesses and the Delegations page. Live by default; exactly "false" restores the account navigation, sidebar and pages of before. Presentation over existing pages.
+  'CORRIDRA_UX_ACCOUNT_V18',
+  // Sign-in and create-account window (owner canvas board v11, 28 Nov 2026): /signin, /signup, /verify-email, /forgot-password and /reset-password in one two-pane window. Live by default; exactly "false" restores the earlier account pages. Presentation only.
+  'CORRIDRA_UX_ACCESS_WINDOW_V11',
+  // Work sign-in window (owner canvas board v12, 28 Nov 2026): /operator/signin, /contributor/signin and /access/team as one window for the team and helpers. Live by default; exactly "false" restores the earlier pages. Presentation only.
+  'CORRIDRA_UX_WORK_SIGNIN_V12',
+  // Request page window (owner canvas board v10, 28 Nov 2026): /plan as a two-pane window with the request taking shape on the left. Live by default; exactly "false" restores the earlier request page. Same fields and payload either way.
+  'CORRIDRA_UX_PLAN_V10',
+  // The /start choice page (owner canvas board v13, 28 Nov 2026): create an account, sign in or send without one. Live by default; exactly "false" removes the page (as before) and its links go to /plan again.
+  'CORRIDRA_UX_START_V13',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 
+/**
+ * The new designs of 28 November 2026 and later: on unless the setting is exactly "false" (see the rule above). Every
+ * other switch keeps "on only when exactly true". Each name here is described in `owner-switches.ts` as
+ * `flagDefaultOn`, and a test checks that the two lists agree.
+ */
+export const liveByDefaultSwitches: ReadonlySet<UxSwitchName> = new Set<UxSwitchName>([
+  'CORRIDRA_UX_HOME_V44',
+  'CORRIDRA_UX_ACCOUNT_V18',
+  'CORRIDRA_UX_ACCESS_WINDOW_V11',
+  'CORRIDRA_UX_WORK_SIGNIN_V12',
+  'CORRIDRA_UX_PLAN_V10',
+  'CORRIDRA_UX_START_V13',
+]);
+
 export function uxSwitchOn(name: UxSwitchName, env: NodeJS.ProcessEnv = process.env): boolean {
-  return env[name] === 'true';
+  return liveByDefaultSwitches.has(name) ? env[name] !== 'false' : env[name] === 'true';
 }
 
 /**

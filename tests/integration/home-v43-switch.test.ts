@@ -62,6 +62,7 @@ describe('the switch', () => {
     const { HomeRoutes } = await load('components/home-routes.tsx');
     const { HomeV42Page } = await load('components/home-v42-page.tsx');
     const { HomeV43Page } = await load('components/home-v43-page.tsx');
+    const { HomeV44Page } = await load('components/home-v44-page.tsx');
     const branch = () => {
       const page = Home() as { props: { children: { type: unknown }[] } };
       expect(page).not.toBeInstanceOf(Promise);
@@ -77,7 +78,14 @@ describe('the switch', () => {
       }
       vi.stubEnv('CORRIDRA_UX_HOME_V42', v42 as string);
       vi.stubEnv('CORRIDRA_UX_HOME_V43', 'true');
-      expect(branch(), `${String(v42)} true`).toBe(HomeV43Page);
+      // Home v4.4 is live by default inside v4.3 (owner, 28 Nov 2026); exactly "false" keeps the v4.3 page.
+      vi.stubEnv('CORRIDRA_UX_HOME_V44', 'false');
+      expect(branch(), `${String(v42)} true, v4.4 false`).toBe(HomeV43Page);
+      for (const v44 of [undefined, 'true', 'FALSE', ''] as const) {
+        vi.stubEnv('CORRIDRA_UX_HOME_V44', v44 as string);
+        expect(branch(), `${String(v42)} true, v4.4 ${String(v44)}`).toBe(HomeV44Page);
+      }
+      vi.unstubAllEnvs();
     }
     vi.unstubAllEnvs();
     const page = readFileSync(resolve('apps/web/app/page.tsx'), 'utf8');

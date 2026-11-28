@@ -256,6 +256,7 @@ test('one owned icon family: Meridian line, no stray inline icons, no sparkle', 
     'components/site-header.tsx',
     'components/corridor-map.tsx',
     'components/world-route-map.tsx',
+    'components/home-v44-dotmap.tsx', // the world map of the home and the request page (a map, allowed by this rule)
     'components/corridor.tsx',
     'app/operator/today.tsx', // decorative empty-state drawing; scheduled for the Signal reference package
   ]);

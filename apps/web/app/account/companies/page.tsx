@@ -10,6 +10,7 @@ import { CustomerShell } from '../../../components/customer-shell';
 import { neonAuth } from '../../../lib/neon-auth';
 import { companyProfilesTitle } from '../../../lib/workspace-choice';
 import { CompanyPortfolio } from './company-portfolio';
+import { uxSwitchOn } from '../../../lib/ux-switches';
 import { CompaniesShared } from '../../../components/ux/journey-note';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -59,6 +60,7 @@ export default async function Page() {
         subject={session.data.user.id}
         issuer={issuer}
         serviceRequestsEnabled={customerServiceRequestsEnabled()}
+        v18={uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18')}
         emptyAction={
           customerOrganisationProfilesEnabled() ? (
             <Link className="button button-secondary" prefetch={false} href="/account/profile">

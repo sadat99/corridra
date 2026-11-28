@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { AccessCard, AccessPage, accessDoorMetadata } from '../../../components/access-page';
 import { HelperInterestForm } from '../../../components/helper-interest-form';
+import { WorkAccess } from '../../../components/work-access';
 import { helperInterestCopy as interest, teamDoorPage as page } from '../../../lib/access-doors';
 import { foundations } from '../../../lib/foundations';
+import { uxSwitchOn } from '../../../lib/ux-switches';
 import { CountryOptions } from '../../operator/country-options';
 import { helperInterestEnabled } from '@corridra/auth/helper-interest';
 
@@ -26,8 +28,40 @@ export function generateMetadata() {
   return accessDoorMetadata('team', page.title, page.lead);
 }
 
+/**
+ * The work sign-in for the team and for field helpers: one window, one form (owner canvas board v12), live by default.
+ * With CORRIDRA_UX_WORK_SIGNIN_V12 set to "false" the page is the earlier Team and Network Access door exactly.
+ */
 export default async function Page() {
   const offerInterest = await interestOffered();
+  if (!uxSwitchOn('CORRIDRA_UX_WORK_SIGNIN_V12'))
+    return <TeamDoorBefore offerInterest={offerInterest} />;
+  return (
+    <WorkAccess
+      initial="team"
+      teamReturn="/operator"
+      helperReturn="/contributor"
+      interestHeading={interest.heading}
+      interestForm={
+        offerInterest ? (
+          <>
+            <p>{interest.lead}</p>
+            <p>{interest.notice}</p>
+            <HelperInterestForm copy={interest}>
+              <CountryOptions />
+            </HelperInterestForm>
+            <Link prefetch={false} className="aw-link" href={interest.privacy.href}>
+              {interest.privacy.text}
+            </Link>
+          </>
+        ) : undefined
+      }
+    />
+  );
+}
+
+/** The Team and Network Access door as it was before the work sign-in window, unchanged. */
+function TeamDoorBefore({ offerInterest }: { offerInterest: boolean }) {
   return (
     <AccessPage id="team" eyebrow={page.eyebrow} title={page.title} lead={page.lead}>
       <p>{page.note}</p>

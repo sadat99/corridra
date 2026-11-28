@@ -165,7 +165,7 @@ test('UX-06 discovery preserves keyboard and content at all required widths and 
 
 // On a phone the footer's link groups are disclosures (opening one is one tap); from 701 px every group is open.
 const openFooterGroups = async (page: import('@playwright/test').Page) => {
-  for (const summary of await page.locator('footer details.guide-footer-details > summary').all())
+  for (const summary of await page.locator('footer details.hv7-footer-group > summary').all())
     if (
       (await summary.isVisible()) &&
       !(await summary.evaluate((node) => (node.parentElement as HTMLDetailsElement).open))
@@ -173,30 +173,24 @@ const openFooterGroups = async (page: import('@playwright/test').Page) => {
       await summary.click();
 };
 
-test('footer keeps four links in each of four groups, collapsed on a phone except Buy Abroad and open from 701 px, at every width', async ({
+test('footer keeps four links in each of four groups, collapsed on a phone and open from 701 px, at every width', async ({
   page,
 }) => {
   for (const width of [1440, 1000, 768, 701, 700, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/');
     const footer = page.locator('footer');
-    const groups = footer.locator('details.guide-footer-details');
+    const groups = footer.locator('details.hv7-footer-group');
     await expect(groups, `four link groups at ${width}px`).toHaveCount(4);
-    // Option B (owner decision, 12 Nov 2026): Buy Abroad starts open; no other group does.
-    await expect(groups.first(), `Buy Abroad starts open at ${width}px`).toHaveAttribute(
-      'open',
-      '',
-    );
-    for (const group of (await groups.all()).slice(1))
-      await expect(group, `no other group starts open at ${width}px`).not.toHaveAttribute(
-        'open',
-        '',
-      );
+    // The footer of every page (home v4.4, 28 Nov 2026): no group starts open, so a phone page keeps its length; from
+    // 701 px the groups show open without the attribute.
+    for (const group of await groups.all())
+      await expect(group, `no group starts open at ${width}px`).not.toHaveAttribute('open', '');
     const nav = footer.getByRole('navigation', { name: 'Footer', exact: true });
     if (width <= 700) {
       for (const group of await groups.all())
         await expect(group.locator('summary'), `${width}px`).toBeVisible();
-      for (const group of (await groups.all()).slice(1))
+      for (const group of await groups.all())
         await expect(group.getByRole('link').first(), `${width}px`).toBeHidden();
       await openFooterGroups(page);
     } else {

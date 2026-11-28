@@ -34,6 +34,7 @@ export function HomeV43Markets({
   onDirection,
   onUse,
   announce,
+  routes = true,
 }: {
   market: ExplorerMarket;
   direction: Direction;
@@ -42,6 +43,8 @@ export function HomeV43Markets({
   onDirection: (direction: Direction) => void;
   onUse: () => void;
   announce: (text: string) => void;
+  /** Home page v4.4 draws the route statuses itself, once, so it turns this copy off. */
+  routes?: boolean;
 }) {
   const t = useT();
   const record = routeRecord(market, direction);
@@ -147,15 +150,17 @@ export function HomeV43Markets({
           {t(v43('mk.dossier'))}
         </Link>
       </section>
-      <RoutesSection
-        mine={mine === 'delegation' ? null : mine}
-        flags
-        links={false}
-        readyLead={t('home.b3.rs.ready')}
-        v42
-        limits={false}
-        allRoutes={false}
-      />
+      {routes ? (
+        <RoutesSection
+          mine={mine === 'delegation' ? null : mine}
+          flags
+          links={false}
+          readyLead={t('home.b3.rs.ready')}
+          v42
+          limits={false}
+          allRoutes={false}
+        />
+      ) : null}
     </>
   );
 }

@@ -9,6 +9,7 @@ import { readNeonAuthConfig } from '@corridra/config';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { foundations } from '../../../../lib/foundations';
 import { PrivateRequestIntake } from '../private-request-intake';
+import { uxSwitchOn } from '../../../../lib/ux-switches';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -75,6 +76,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         workspaceId={id.data}
         realMode={realMode}
         workspaceName={name}
+        windowDesign={uxSwitchOn('CORRIDRA_UX_PLAN_V10')}
       />
     </CustomerShell>
   );

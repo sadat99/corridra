@@ -161,13 +161,18 @@ test('helper sign-in fails closed without configuration, collects nothing and is
   await page.goto('/contributor/signin?next=' + encodeURIComponent('/operator#ops-center'));
   await expect(main.locator('input, form')).toHaveCount(0);
 });
-test('the helper door on the team page opens helper sign-in as a new page', async ({ page }) => {
+// The work sign-in is one window (owner canvas board v12, 28 Nov 2026): the Field helper tab on the team page is the
+// helper sign-in, and the helper address itself is still a page of its own that opens on that tab.
+test('the helper door on the team page is the helper sign-in, and its own address opens as a new page', async ({
+  page,
+}) => {
   await page.goto('/access/team');
-  const door = page.getByRole('link', { name: 'Open Helper Tasks', exact: true });
-  await expect(door).toHaveAttribute('href', '/contributor/signin');
-  await page.evaluate(() => Object.assign(window, { beforeSignIn: true }));
-  await door.click();
+  const tab = page.getByRole('button', { name: 'Field helper', exact: true });
+  await expect(tab).toHaveAttribute('aria-pressed', 'false');
+  await tab.click();
+  await expect(tab).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Helper sign-in.');
+  await page.goto('/contributor/signin');
   await expect(page).toHaveURL(/\/contributor\/signin$/);
-  expect(await page.evaluate(() => 'beforeSignIn' in window)).toBe(false);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });

@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { readNeonAuthConfig } from '@corridra/config';
 import { AccountAccess } from '../../components/account-access';
 import { accountAccessPath, accountReturnTo } from '../../lib/account-return';
-import { emailReturnPagesOn } from '../../lib/ux-switches';
+import { emailReturnPagesOn, uxSwitchOn } from '../../lib/ux-switches';
 import { AccessOptions } from '../../components/access-options';
 import { accessHelp } from '../../lib/access-doors';
 export const dynamic = 'force-dynamic';
@@ -38,6 +38,9 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Qu
   }
   if (readNeonAuthConfig()) return <AccountAccess title="Sign in." mode="signin" />;
   if (process.env.CORRIDRA_FOUNDATIONS_ENABLED === 'true') redirect('/operator/signin');
+  // No customer sign-in here: never a form that cannot work. The window says so and offers a request without an account.
+  if (uxSwitchOn('CORRIDRA_UX_ACCESS_WINDOW_V11'))
+    return <AccountAccess title="Sign-in is coming soon." mode="signin" />;
   return (
     <PublicShell>
       <section className="guide-page-hero">

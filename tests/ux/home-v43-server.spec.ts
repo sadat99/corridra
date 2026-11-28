@@ -34,6 +34,8 @@ test.beforeAll(async () => {
     NEXT_TELEMETRY_DISABLED: '1',
     CORRIDRA_UX_HOME_V42: 'true',
     CORRIDRA_UX_HOME_V43: 'true',
+    // This spec is about the page of before home v4.4, which is live by default since 28 Nov 2026; exactly "false" gives it.
+    CORRIDRA_UX_HOME_V44: 'false',
     CORRIDRA_NEXT_DIST_DIR: distDir,
     CORRIDRA_LANGUAGES_REVIEWED: 'ar,bn',
     CORRIDRA_LANGUAGES_PAGES: 'ar,bn',

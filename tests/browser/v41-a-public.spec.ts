@@ -319,26 +319,23 @@ async function openPlan(page: Page, companyCountry: string, marketCode: string) 
   await expect(page.locator('.plan-progress-line')).toContainText('of 5');
 }
 
-test('L6 plan: "Your request" is a flat navy panel with white words and no gradient', async ({
+// The request page is the two-pane window of 28 Nov 2026 (owner canvas board v10): the "Your request" panel is a flat
+// light tint panel with dark words, and it keeps the rule that matters here, no gradient and no blur.
+test('L6 plan: "Your request" is a flat tint panel with no gradient or blur and no violation', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/plan');
-  const panel = page.locator('aside.ux-brief-summary');
+  const panel = page.locator('aside.pv-side');
   await expect(panel).toBeVisible();
   const style = await look(panel);
-  expect(style.fill).toBe(await token(page, '--brand-deep'));
+  expect(style.fill).toBe(await token(page, '--cv-tint'));
   expect(style.image).toBe('none');
   expect(await panel.evaluate((el) => getComputedStyle(el).backdropFilter)).toBe('none');
-  const white = await token(page, '--on-brand');
-  for (const part of ['.ux-brief-heading', 'dt', 'dd', 'details > p'])
-    for (const el of await panel.locator(part).all())
-      if (await el.isVisible())
-        expect(await el.evaluate((node) => getComputedStyle(node).color), part).toBe(white);
   await expect(panel.locator('dd').first()).toHaveText('Not chosen yet');
-  expect(
-    (await new AxeBuilder({ page }).include('aside.ux-brief-summary').analyze()).violations,
-  ).toEqual([]);
+  expect((await new AxeBuilder({ page }).include('aside.pv-side').analyze()).violations).toEqual(
+    [],
+  );
 });
 
 test('L1 plan: the place names in "Your request" carry their flag, and a place with no flag shows its name only', async ({
@@ -346,7 +343,7 @@ test('L1 plan: the place names in "Your request" carry their flag, and a place w
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openPlan(page, 'BD', 'EU');
-  const values = page.locator('aside.ux-brief-summary dd');
+  const values = page.locator('aside.pv-side dd');
   const country = values.nth(1);
   await expect(country).toHaveText('Bangladesh');
   await expect(country.locator('.ux-flagged img.ux-flag')).toHaveAttribute('data-flag', 'bd');
@@ -355,14 +352,14 @@ test('L1 plan: the place names in "Your request" carry their flag, and a place w
   expect((await market.innerText()).trim().length).toBeGreaterThan(1);
   await expect(values.nth(0).locator('img.ux-flag')).toHaveCount(0);
   // A flag is decorative beside its written name: a screen reader hears the name once.
-  for (const flag of await page.locator('aside.ux-brief-summary img.ux-flag').all())
+  for (const flag of await page.locator('aside.pv-side img.ux-flag').all())
     await expect(flag).toHaveAttribute('alt', '');
 });
 
 test('L1 plan: a market outside the nine flags shows its name with no flag', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openPlan(page, 'BD', 'JP');
-  const market = page.locator('aside.ux-brief-summary dd').nth(2);
+  const market = page.locator('aside.pv-side dd').nth(2);
   await expect(market).toHaveText('Japan');
   await expect(market.locator('img')).toHaveCount(0);
 });

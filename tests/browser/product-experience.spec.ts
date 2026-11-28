@@ -93,9 +93,9 @@ test('job-first navigation exposes machinery and commercial trips with real entr
   isMobile,
 }) => {
   await page.goto('/');
-  // On a phone the footer's link groups are disclosures (Buy Abroad starts open): open any closed group, then one
+  // On a phone the footer's link groups are disclosures (every group starts closed): open any closed group, then one
   // tap. From 701 px they are open.
-  for (const details of await page.locator('footer details.guide-footer-details').all())
+  for (const details of await page.locator('footer details.hv7-footer-group').all())
     if (
       (await details.locator('summary').isVisible()) &&
       (await details.getAttribute('open')) === null

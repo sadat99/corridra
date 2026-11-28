@@ -75,7 +75,8 @@ test('on desktop Continue sits in the flow and the summary speaks in words', asy
   await page.goto('/plan');
   const bar = page.locator('.plan-action-bar');
   expect(await bar.evaluate((el) => getComputedStyle(el).position)).not.toBe('fixed');
-  await expect(page.locator('.ux-brief-summary')).toContainText('Not chosen yet');
+  // The left pane of the window (owner canvas board v10) speaks in words: every empty answer says so.
+  await expect(page.locator('aside.pv-side')).toContainText('Not chosen yet');
 });
 
 // G29 round 1 (C1): a job error forces the exact job open, even after the person closed it.

@@ -107,7 +107,7 @@ test('the home doors choose a route by pointer and keyboard, and the routes page
 
 // On a phone the footer's link groups are disclosures (opening one is one tap); from 701 px every group is open.
 const openFooterGroups = async (page: import('@playwright/test').Page) => {
-  for (const summary of await page.locator('footer details.guide-footer-details > summary').all())
+  for (const summary of await page.locator('footer details.hv7-footer-group > summary').all())
     if (
       (await summary.isVisible()) &&
       !(await summary.evaluate((node) => (node.parentElement as HTMLDetailsElement).open))

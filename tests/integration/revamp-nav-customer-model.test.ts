@@ -48,19 +48,19 @@ const hrefs = (entries: readonly MenuEntry[]) =>
   entries.flatMap((entry) => (entry.kind === 'link' ? [entry.href] : []));
 
 describe('the customer navigation model', () => {
-  it('the tabs are exactly Home, Requests, Companies, Meetings, Reports, in that order', () => {
+  it('the tabs are exactly Home, My Work, Companies, Delegations, More, in that order', () => {
     expect(customerTabs({ companies: true, move: true }).map((tab) => tab.label)).toEqual([
       'Home',
-      'Requests',
+      'My Work',
       'Companies',
-      'Meetings',
-      'Reports',
+      'Delegations',
+      'More',
     ]);
   });
 
   it('Companies appears only where the approved-companies module is on, and Home follows Your Move', () => {
     const off = customerTabs({ companies: false, move: false });
-    expect(off.map((tab) => tab.label)).toEqual(['Home', 'Requests', 'Meetings', 'Reports']);
+    expect(off.map((tab) => tab.label)).toEqual(['Home', 'My Work', 'Delegations', 'More']);
     expect(off[0]!.href).toBe('/account');
     expect(customerTabs({ companies: true, move: true })[0]!.href).toBe('/account/move');
   });
@@ -117,15 +117,15 @@ describe('the customer navigation model', () => {
     expect(hrefs(customerAvatarItems(all))).toContain('/account/notifications');
   });
 
-  it('the four named tabs carry the message key the sidebar always used, and Meetings, a new word, has none', () => {
+  it('Home and Companies keep the message key the sidebar always used; the new words have English-only home.v44 keys', () => {
     const tabs = customerTabs({ companies: true, move: false });
     const keys = Object.fromEntries(tabs.map((tab) => [tab.key, tab.labelKey]));
     expect(keys).toEqual({
       home: 'wse.nav.home',
-      requests: 'wse.nav.work',
+      requests: 'home.v44.nav.work',
       companies: 'wse.nav.companies',
-      meetings: undefined,
-      reports: 'wse.nav.results',
+      delegations: 'home.v44.nav.delegations',
+      more: 'home.v44.nav.more',
     });
   });
 

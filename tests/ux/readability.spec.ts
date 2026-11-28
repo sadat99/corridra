@@ -26,7 +26,7 @@ import { gateRoutes } from './static-routes';
 // redirect to sign-in or as unavailable, and is recorded that way.
 //
 // What is read. Prose inside the site header (`header.site-header`, public and signed-in), any `nav` and
-// the site footer (`footer.guide-footer` or `footer.site-footer`) is left out. Headers and footers that
+// the site footer (`footer.guide-footer`, `footer.site-footer` or `footer[data-footer="v44"]`) is left out. Headers and footers that
 // belong to the page content, such as a page lead or a phase header, are read. The site footer is the
 // same on every page, so it is read once, on the home, under its own key.
 //
@@ -45,8 +45,11 @@ const routes = gateRoutes();
 const footerKey = '/#footer';
 
 /** The site header, any navigation and the site footer: the chrome around the page, not its prose. */
-const chromeSelector = 'header.site-header, nav, footer.guide-footer, footer.site-footer';
-const footerSelector = 'footer.guide-footer, footer.site-footer';
+// The footer of every page (home v4.4, 28 Nov 2026) is `footer[data-footer="v44"]`; the two earlier ones stay named for the
+// switch-off case.
+const chromeSelector =
+  'header.site-header, nav, footer.guide-footer, footer.site-footer, footer[data-footer="v44"]';
+const footerSelector = 'footer.guide-footer, footer.site-footer, footer[data-footer="v44"]';
 const proseSelector =
   'p, li, dd, figcaption, [role="alert"], [role="status"], .guide-hint, .field-hint';
 const minBlockWords = 5;

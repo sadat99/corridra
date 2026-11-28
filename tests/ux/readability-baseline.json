@@ -54,6 +54,9 @@
     "sentences": 3,
     "words": 16
   },
+  "/account/businesses": {
+    "redirectsTo": "/signin"
+  },
   "/account/companies": {
     "grade": 0,
     "hard": 0,
@@ -74,6 +77,13 @@
     "long": 0,
     "sentences": 3,
     "words": 16
+  },
+  "/account/delegation-hub": {
+    "grade": 6.5,
+    "hard": 2,
+    "long": 1,
+    "sentences": 7,
+    "words": 66
   },
   "/account/meetings": {
     "unavailable": true
@@ -155,13 +165,6 @@
     "long": 0,
     "sentences": 8,
     "words": 63
-  },
-  "/contributor/signin": {
-    "grade": 6.4,
-    "hard": 0,
-    "long": 0,
-    "sentences": 2,
-    "words": 12
   },
   "/contributor/signin": {
     "grade": 10.9,
@@ -383,6 +386,13 @@
     "long": 0,
     "sentences": 9,
     "words": 76
+  },
+  "/start": {
+    "grade": 2.1,
+    "hard": 0,
+    "long": 0,
+    "sentences": 5,
+    "words": 29
   },
   "/trade-missions": {
     "grade": 5.3,

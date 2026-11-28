@@ -35,7 +35,12 @@ function pendingValue(raw: string, workspaceId: string, realMode = false): Pendi
   return v as Pending;
 }
 export function PrivateRequestIntake(
-  scope: PrivateRequestScope & { realMode?: boolean; workspaceName?: string },
+  scope: PrivateRequestScope & {
+    realMode?: boolean;
+    workspaceName?: string;
+    /** From CORRIDRA_UX_PLAN_V10 on the server: the form is drawn in the request window. */
+    windowDesign?: boolean;
+  },
 ) {
   return (
     <ScopedIntake
@@ -44,7 +49,14 @@ export function PrivateRequestIntake(
     />
   );
 }
-function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean; workspaceName?: string }) {
+function ScopedIntake(
+  scope: PrivateRequestScope & {
+    realMode?: boolean;
+    workspaceName?: string;
+    /** From CORRIDRA_UX_PLAN_V10 on the server: the form is drawn in the request window. */
+    windowDesign?: boolean;
+  },
+) {
   const keys = privateRequestStorageKeys(scope);
   const [loaded, setLoaded] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
@@ -329,6 +341,7 @@ function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean; workspa
           <Intake
             key={generation}
             realMode={scope.realMode}
+            windowDesign={scope.windowDesign}
             privateSubmission={{ draftStorageKey: keys.draft, submit }}
           />
         </div>

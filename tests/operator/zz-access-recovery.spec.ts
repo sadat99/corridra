@@ -59,7 +59,8 @@ test('pending invitation guidance is conditional; operator recovery handles inte
   await expect(page.getByLabel('Email', { exact: true })).toHaveValue(
     'synthetic-recovery@example.invalid',
   );
-  await page.getByRole('link', { name: 'Forgot operator password?' }).click();
+  // The work window words the recovery link "Forgot password?" (owner canvas board v12, 28 Nov 2026).
+  await page.getByRole('link', { name: 'Forgot password?' }).click();
   await expect(page.getByRole('heading', { name: 'Reset your operator password.' })).toBeVisible();
   await expect(page.getByRole('form', { name: 'Operator password recovery' })).toHaveAttribute(
     'method',

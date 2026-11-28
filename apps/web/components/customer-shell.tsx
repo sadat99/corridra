@@ -5,6 +5,7 @@ import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { uxSwitchOn } from '../lib/ux-switches';
+import { ActingFor } from './ux/acting-for';
 import { journeyModesOn } from '../lib/ux/journey-modes-on';
 import type { JourneyMode } from '../lib/ux/journey-mode';
 import { JourneyModeProvider } from './ux/journey-mode-context';
@@ -154,23 +155,40 @@ function CustomerFrame({
   // Home is Your Move only with both the navigation and the Move switches, exactly as the old list decided.
   const companies = customerCompaniesEnabled();
   const homeIsMove = plainNames && move;
+  // Customer account v18 (live by default): set to "false", the earlier five destinations and no Acting for.
+  const v18 = uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18');
   const tabs = mode
-    ? customerTabs({ companies, move: homeIsMove, journey: mode })
-    : customerTabs({ companies, move: homeIsMove });
+    ? customerTabs({ companies, move: homeIsMove, journey: mode, v18 })
+    : customerTabs({ companies, move: homeIsMove, v18 });
   const here: CustomerTabKey | null =
     tab === 'home' || tab === 'move'
       ? 'home'
       : tab === 'work'
         ? 'requests'
-        : tab === 'results'
-          ? 'reports'
-          : tab === 'companies' || tab === 'meetings'
-            ? tab
-            : null;
+        : !v18
+          ? tab === 'results'
+            ? 'reports'
+            : tab === 'companies' || tab === 'meetings'
+              ? tab
+              : null
+          : tab === 'results' || tab === 'meetings'
+            ? 'requests'
+            : tab === 'companies' || tab === 'more' || tab === 'delegations'
+              ? tab
+              : null;
   const items: CustomerSideItem[] = tabs.map((item) => ({
     key: item.key,
-    // Meetings is a new word with no reviewed translation yet, so it is marked as English.
-    label: item.labelKey ? <T k={item.labelKey} /> : <span lang="en">{item.label}</span>,
+    // A word with no reviewed translation yet (Meetings, and the home.v44 words of account v18) is marked as English.
+    label:
+      item.labelKey && !item.labelKey.startsWith('home.v44.') ? (
+        <T k={item.labelKey} />
+      ) : item.labelKey ? (
+        <span lang="en">
+          <T k={item.labelKey} />
+        </span>
+      ) : (
+        <span lang="en">{item.label}</span>
+      ),
     href: item.href,
     icon: item.icon,
     count: item.key === 'home' && here === 'home' ? count : undefined,
@@ -213,12 +231,14 @@ function CustomerFrame({
         organisationProfiles={customerOrganisationProfilesEnabled()}
         companies={companies}
         move={homeIsMove}
+        accountV18={v18}
         text={
           real
             ? 'Your work stays private to the people given access.'
             : 'Preview workspace: use made-up names and details here.'
         }
       />
+      {v18 ? <ActingFor /> : null}
       {/* Streams after the frame: the identity is for the header's Search only and nothing waits for it. */}
       <Suspense fallback={null}>
         <CustomerBarIdentity />

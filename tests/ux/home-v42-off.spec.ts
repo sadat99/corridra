@@ -16,7 +16,7 @@ function normalise(html: string): string {
     if (start < 0 || end < 0) throw new Error(`no <${tag}> in the home page`);
     return html.slice(start, end + tag.length + 3);
   };
-  return [part('main'), part('footer')]
+  return [part('main')]
     .join('\n')
     .replace(/\/_next\/static\/[^"')\s]+/g, '/_next/static/HASH')
     .replace(/\?dpl=[^"'&\s]+/g, '');
@@ -27,12 +27,18 @@ test('with the switch off the home page main and footer are exactly those of mai
 }) => {
   const response = await request.get('/');
   expect(response.ok()).toBe(true);
-  const now = normalise(await response.text());
+  const html = await response.text();
+  const now = normalise(html);
+  // The footer of every page is the home v4.4 footer since 28 Nov 2026 (live by default), so only the main of the
+  // recorded page is compared byte for byte; the recorded footer of main a054c51c is what CORRIDRA_UX_HOME_V44=false
+  // gives, and the new one is named here.
+  expect(html).toContain('data-footer="v44"');
   if (process.env.HOME_OFF_FIXTURE_WRITE === '1') writeFileSync(fixture, now + '\n');
   // The one change made on purpose since that capture (audit row public-customer-10, team desk v4.1 later fixes): the
   // section actions are quiet text links, so #home-start is the one primary in main. Each edit must apply exactly once,
   // so any other difference still fails.
-  let expected = readFileSync(fixture, 'utf8');
+  const recorded = readFileSync(fixture, 'utf8');
+  let expected = recorded.slice(0, recorded.indexOf('\n<footer')) + '\n';
   for (const [before, after] of [
     [
       '<a class="primary-link" id="brief-start" href="/plan">',

@@ -4,7 +4,8 @@ import { T } from './language-provider';
 import { LocaleNav } from './ux/locale-region';
 import type { MessageKey } from '../lib/i18n/messages';
 
-export type CustomerTab = 'home' | 'move' | 'work' | 'companies' | 'meetings' | 'results' | 'more';
+export type CustomerTab =
+  'home' | 'move' | 'work' | 'companies' | 'meetings' | 'results' | 'more' | 'delegations';
 
 export const customerNavIcons: Record<CustomerTab, string> = {
   home: 'home',
@@ -14,6 +15,7 @@ export const customerNavIcons: Record<CustomerTab, string> = {
   meetings: 'calendar',
   results: 'progress',
   more: 'more',
+  delegations: 'trip',
 };
 
 export type CustomerNavItem = { tab: CustomerTab; label: string; href: string };

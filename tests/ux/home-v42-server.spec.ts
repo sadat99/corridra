@@ -27,6 +27,8 @@ test.beforeAll(async () => {
     ...process.env,
     NEXT_TELEMETRY_DISABLED: '1',
     CORRIDRA_UX_HOME_V42: 'true',
+    // This spec is about the page of before home v4.4, which is live by default since 28 Nov 2026; exactly "false" gives it.
+    CORRIDRA_UX_HOME_V44: 'false',
     CORRIDRA_NEXT_DIST_DIR: distDir,
   };
   // `next build` adds its output's type folder to the app's tsconfig.json; that file is tracked, so it is put back.

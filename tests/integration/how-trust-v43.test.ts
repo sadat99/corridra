@@ -143,11 +143,17 @@ describe('with the switch off, the pages are what they were', () => {
       const page = Home() as { props: { children: { type: unknown; props: object }[] } };
       return page.props.children[1]!;
     };
+    const { HomeV44Page } = await load('components/home-v44-page.tsx');
     vi.stubEnv('CORRIDRA_UX_HOME_V43', 'true');
+    // Home v4.4 is live by default inside v4.3 (owner, 28 Nov 2026); exactly "false" keeps the v4.3 page.
+    expect(props().type).toBe(HomeV44Page);
+    vi.stubEnv('CORRIDRA_UX_HOME_V44', 'false');
     expect(props().type).toBe(HomeV43Page);
     expect(Object.keys(props().props)).not.toContain('summaries');
     vi.stubEnv('CORRIDRA_UX_HOW_TRUST_V43', 'true');
     expect(props().props).toMatchObject({ summaries: true });
+    vi.stubEnv('CORRIDRA_UX_HOME_V44', '');
+    expect(props().type).toBe(HomeV44Page);
   });
 
   it('old home anchors go to the pages that now hold them, only with the switch on', async () => {

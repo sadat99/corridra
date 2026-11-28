@@ -58,11 +58,11 @@
 }
 /* Wrapping and hyphenation are inherited, so an English part inside a translated line would take them too. It gets
    back what it has in the English form: no hyphenation, and no break inside a word, except in the summary values,
-   which break anywhere in the English form as well. */
+   which break anywhere in the English form as well (and so do the words of the left pane of the request window). */
 .ux-intake-page:not(:lang(en)) [lang='en'] {
   hyphens: manual;
 }
-.ux-intake-page:not(:lang(en)) [lang='en']:not(.ux-brief-summary dd *) {
+.ux-intake-page:not(:lang(en)) [lang='en']:not(.ux-brief-summary dd *, .pv-side *) {
   overflow-wrap: normal;
 }
 /* The Bengali guidance holds the test address, one long token. It may break at any width, so that opening the guidance

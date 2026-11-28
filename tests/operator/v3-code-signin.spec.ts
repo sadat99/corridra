@@ -304,13 +304,13 @@ test('create account keeps the name rule and its actions inside the form', async
           return Array.from(node.querySelectorAll(':scope > a, :scope > button'))
             .map((el) => ({ el, r: el.getBoundingClientRect() }))
             .filter(({ r }) => r.width > 0)
-            .filter(
-              ({ r }) =>
-                r.left < box.left - 0.5 ||
-                r.right > box.right + 0.5 ||
-                Math.abs(r.left - left) > 0.5 ||
-                Math.abs(r.right - right) > 0.5,
-            )
+            .filter(({ el, r }) => {
+              if (r.left < box.left - 0.5 || r.right > box.right + 0.5) return true;
+              // A button fills the column of the fields. Since the sign-in window (owner canvas board v11, 28 Nov 2026)
+              // the text links under it are centred, so they must lie inside the fields' column, not fill it.
+              if (el.matches('.text-link')) return r.left < left - 0.5 || r.right > right + 0.5;
+              return Math.abs(r.left - left) > 0.5 || Math.abs(r.right - right) > 0.5;
+            })
             .map(
               ({ el, r }) =>
                 `${el.textContent} ${Math.round(r.left)}-${Math.round(r.right)} fields ${Math.round(left)}-${Math.round(right)}`,

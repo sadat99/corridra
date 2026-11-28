@@ -3,6 +3,7 @@ import '../components/home-routes.css';
 import { HomeRoutes } from '../components/home-routes';
 import { HomeV42Page } from '../components/home-v42-page';
 import { HomeV43Page } from '../components/home-v43-page';
+import { HomeV44Page } from '../components/home-v44-page';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
@@ -20,16 +21,24 @@ import { uxSwitchOn } from '../lib/ux-switches';
 // Home page v4.3 (owner, 26 Nov 2026, via the Guardian: "update as per attachment 100% correctly"): only while
 // CORRIDRA_UX_HOME_V43 is exactly "true" the page is the v4.3 composition (docs/revamp/specs/ui-ux-v4-3.md), loaded by
 // HomeV43Page only then. With CORRIDRA_UX_HOW_TRUST_V43 also on (owner, 26 Nov 2026, first hand to Guardian G66: "yes to
-// all three, build it") the home keeps summaries of the process and of trust. It wins over V42; with it off the page is the V42 or the legacy home, byte for byte.
+// all three, build it") the home keeps summaries of the process and of trust. Home page v4.4 (owner, 27 Nov 2026): only while CORRIDRA_UX_HOME_V44 is also exactly "true" the v4.3 page gets the
+// redesign hero and the route map (HomeV44Page). It wins over V42; with it off the page is the V42 or the legacy home, byte for byte.
 export default function Home() {
   return (
     <PublicShell className="ux-guide-home ac1-home tr-home" translated>
       <LegacyHashRedirect {...(howTrustV43On() ? { deepPages: true } : {})} />
       {uxSwitchOn('CORRIDRA_UX_HOME_V43') ? (
-        <HomeV43Page
-          whatsapp={supportWhatsappHref()}
-          {...(howTrustV43On() ? { summaries: true } : {})}
-        />
+        uxSwitchOn('CORRIDRA_UX_HOME_V44') ? (
+          <HomeV44Page
+            whatsapp={supportWhatsappHref()}
+            {...(howTrustV43On() ? { summaries: true } : {})}
+          />
+        ) : (
+          <HomeV43Page
+            whatsapp={supportWhatsappHref()}
+            {...(howTrustV43On() ? { summaries: true } : {})}
+          />
+        )
       ) : uxSwitchOn('CORRIDRA_UX_HOME_V42') ? (
         <HomeV42Page whatsapp={supportWhatsappHref()} />
       ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState, type Dispatch } from 'react';
+import { useId, useState, type Dispatch, type ReactNode } from 'react';
 import { TalkLink } from './home-talk';
 import { HomeV43Review } from './home-v43-review';
 import { RouteSummary } from './home-v43-route-summary';
@@ -30,10 +30,13 @@ export function HomeV43Brief({
   state,
   dispatch,
   whatsapp,
+  map,
 }: {
   state: HomeV43State;
   dispatch: Dispatch<HomeV43Event>;
   whatsapp: string | null;
+  /** Home page v4.4: the route map, drawn from the request's own base and target, at the top of the summary card. */
+  map?: ReactNode;
 }) {
   const t = useT();
   const ids = useId();
@@ -173,6 +176,7 @@ export function HomeV43Brief({
           </div>
         </form>
         <aside className="hv43-draft" aria-labelledby={`${ids}-card`}>
+          {map}
           <p className="label" id={`${ids}-card`}>
             {t(v43('brief.card'))}
           </p>

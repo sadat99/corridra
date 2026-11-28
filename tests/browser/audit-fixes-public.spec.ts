@@ -40,13 +40,14 @@ test.describe('33: the receipt check is never covered by the summary', () => {
         .first()
         .evaluate((element) => element.getBoundingClientRect().bottom);
       expect(covered.top).toBeGreaterThanOrEqual(headerBottom);
-      // The request recap stays sticky beside the form: the receipt check is layered above it, not unstuck.
+      // The left pane of the request window (owner canvas board v10) is part of the page flow beside the form, so it is
+      // never layered above the receipt check: it is neither fixed nor sticky.
       expect(
         await page
-          .locator('.ux-brief-summary')
+          .locator('aside.pv-side')
           .first()
           .evaluate((element) => getComputedStyle(element).position),
-      ).toBe('sticky');
+      ).toBe('static');
       await shot(page, `33-plan-receipt-${width}`);
     });
   }
@@ -57,7 +58,7 @@ test.describe('33: the receipt check is never covered by the summary', () => {
 async function quietFooter(page: Page) {
   await page.waitForLoadState('networkidle');
   await page.evaluate(() => {
-    const full = document.querySelector('footer.guide-footer');
+    const full = document.querySelector('footer[data-footer="v44"]');
     if (!full) return;
     const quiet = document.createElement('footer');
     quiet.className = 'site-footer';
@@ -109,7 +110,7 @@ test.describe('35: the corner dock keeps clear of the quiet footer', () => {
       await page.setViewportSize({ width, height: 844 });
       await page.goto('/about');
       await page.evaluate(() => document.fonts.ready);
-      heights[width] = (await page.locator('footer.guide-footer').boundingBox())!.height;
+      heights[width] = (await page.locator('footer[data-footer="v44"]').boundingBox())!.height;
     }
     test.info().annotations.push({ type: 'footer-heights', description: JSON.stringify(heights) });
     expect(heights[390]).toBeLessThanOrEqual(844);

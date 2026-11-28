@@ -218,6 +218,12 @@ const text = (fg: string, backgrounds: string[]): Pair[] =>
   backgrounds.map((bg) => ({ fg, bg, min: 7 }));
 const pairs: Pair[] = [
   ...textColours.flatMap((fg) => text(fg, lights)),
+  // The canvas windows and the home v4.4 footer (the --cv-* names) follow the same choice.
+  ...['--cv-ink-2', '--cv-ink-3', '--cv-brand'].flatMap((fg) =>
+    text(fg, ['--cv-white', '--cv-page', '--cv-tint']),
+  ),
+  ...text('--cv-ink-2', ['--cv-seg']),
+  ...text('--cv-ink-3', ['--cv-seg']),
   ...text('--on-action', ['--action', '--action-hover', '--action-pressed']),
   ...text('--on-brand', ['--brand', '--brand-hover', '--brand-deep']),
   ...text('--paper', ['--accent', '--brand-hover']),

@@ -1,0 +1,325 @@
+/* The footer on every page (owner, 28 Nov 2026, home v4.4): the home page's footer, moved out of the home stylesheet so
+   every page carries it. Loaded only by site-footer-v44.tsx. */
+.hv7-footer {
+  display: block;
+  margin: 48px clamp(1.25rem, 4.1vw, 56px) 0;
+  padding: 32px 0 24px;
+  border-block-start: 1px solid var(--cv-line);
+}
+.hv7-footer-top {
+  display: grid;
+  gap: 32px;
+}
+@media (min-width: 64rem) {
+  .hv7-footer-top {
+    grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr;
+  }
+}
+.hv7-footer-nav {
+  display: grid;
+  gap: 0 32px;
+}
+@media (min-width: 43.8125rem) {
+  .hv7-footer-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 48rem) {
+  .hv7-footer-nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .hv7-footer-nav {
+    display: contents;
+  }
+}
+.hv7-footer-logo {
+  display: flex;
+  align-items: center;
+  min-block-size: 44px;
+  max-inline-size: 220px;
+}
+.hv7-footer-logo img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+.hv7-footer-promise {
+  max-inline-size: 260px;
+  margin: 12px 0 0;
+  color: var(--cv-ink-3);
+  line-height: 1.5;
+}
+.hv7-footer-group > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: 44px;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+.hv7-footer-group > summary::-webkit-details-marker {
+  display: none;
+}
+.hv7-footer-group > summary::after {
+  content: '+';
+  color: var(--cv-ink-3);
+  font-size: var(--text-lg);
+  font-weight: 400;
+}
+.hv7-footer-group[open] > summary::after {
+  content: '\2212';
+}
+.hv7-footer-group h2 {
+  display: none;
+  margin: 0;
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 2.1;
+}
+.hv7-footer-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv7-footer-group a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: var(--cv-ink-2);
+  line-height: 1.5;
+  text-decoration: none;
+}
+.hv7-footer-group a:hover {
+  color: var(--cv-brand);
+  text-decoration: underline;
+}
+@supports selector(::details-content) {
+  @media (min-width: 43.8125rem) {
+    .hv7-footer-group > summary {
+      display: none;
+    }
+    .hv7-footer-group::details-content {
+      content-visibility: visible;
+    }
+    .hv7-footer-group h2 {
+      display: block;
+    }
+  }
+}
+.hv7-footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-block-start: 28px;
+  color: var(--cv-ink-3);
+  font-size: var(--text-xs);
+}
+
+.hv7-footer {
+  font-family: var(--font-ui);
+  color: var(--cv-ink);
+  background: var(--cv-page);
+}
+.hv7-footer-brand {
+  min-inline-size: 0;
+}
+.hv7-footer-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  margin-block-start: 16px;
+}
+.hv7-footer-actions p {
+  margin: 0;
+  color: var(--cv-ink-2);
+  font-size: var(--text-sm);
+}
+.hv7-footer a {
+  color: var(--cv-brand);
+}
+.hv7-footer-group a {
+  color: var(--cv-ink-2);
+}
+.hv7-footer-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px;
+  padding: 0 24px;
+  border: 1.5px solid var(--cv-line);
+  border-radius: var(--radius-sm);
+  background: var(--cv-white);
+  color: var(--cv-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+.hv7-footer-access {
+  margin-block-start: 16px;
+}
+.hv7-footer-access[data-pending='true'] {
+  visibility: hidden;
+}
+.hv7-footer-access h2 {
+  margin: 0;
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.hv7-footer-access ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hv7-footer-access a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.hv7-footer-trust {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-block-start: 28px;
+  color: var(--cv-ink-2);
+  font-size: var(--text-sm);
+}
+.hv7-footer-trust a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  font-weight: 600;
+}
+.hv7-footer-fold > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: var(--cv-ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+.hv7-footer-fold .hv7-footer-nav {
+  display: grid;
+  gap: 8px 32px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+}
+.hv7-footer-quiet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 24px;
+  margin-block-start: 0;
+  padding-block: 0;
+  color: var(--cv-ink-2);
+  font-size: var(--text-sm);
+}
+.hv7-footer-quiet a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  font-weight: 600;
+}
+@media (max-width: 40rem) {
+  .hv7-footer {
+    margin-block-start: 40px;
+  }
+  .hv7-footer-quiet {
+    margin-block-start: 0;
+  }
+}
+.hv7-footer-actions p a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  text-decoration: underline;
+}
+
+/* Large text: words break rather than run out of their box, the legend chips wrap, and the band keeps clear of the edge. */
+.hv7-footer {
+  margin-inline: min(clamp(1.25rem, 4.1vw, 56px), 5vw);
+  overflow-wrap: anywhere;
+}
+.hv7-footer-top > *,
+.hv7-footer-trust > * {
+  min-inline-size: 0;
+}
+.hv7-footer .guide-tag {
+  max-inline-size: 100%;
+  white-space: normal;
+}
+
+.hv7-footer-group a,
+.hv7-footer-group > summary,
+.hv7-footer-access a,
+.hv7-footer-trust a {
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.hv7-footer-start {
+  background: var(--cv-brand);
+  border-color: var(--cv-brand);
+  color: var(--cv-white);
+}
+.hv7-footer .hv7-footer-start {
+  color: var(--cv-white);
+}
+@media (max-width: 43.75rem) {
+  .hv7-footer-routes {
+    display: none;
+  }
+}
+
+/* The request page keeps its length: the footer there is one band, the logo and the actions in a row, the link groups
+   folded into one disclosure, and the trust legend and the last line under them. */
+.hv7-footer[data-compact] {
+  margin-block-start: 24px;
+  padding-block: 16px 12px;
+}
+.hv7-footer[data-compact] .hv7-footer-promise {
+  display: none;
+}
+.hv7-footer[data-compact] .hv7-footer-top {
+  gap: 4px 24px;
+}
+.hv7-footer[data-compact] .hv7-footer-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 24px;
+}
+.hv7-footer[data-compact] .hv7-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin-block-start: 0;
+}
+.hv7-footer[data-compact] .hv7-footer-trust {
+  margin-block-start: 8px;
+}
+.hv7-footer[data-compact] .hv7-footer-bottom {
+  margin-block-start: 8px;
+}
+@media (min-width: 64rem) {
+  .hv7-footer[data-compact] .hv7-footer-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* On a pointer-sized screen the quiet line inside a workspace is a little lower (24 px, the minimum there), so the
+   signed-in pages keep their length budgets; under 1025 px every link keeps its 44 px target. */
+@media (min-width: 64.0625rem) {
+  .hv7-footer-quiet a {
+    min-block-size: 24px;
+  }
+}

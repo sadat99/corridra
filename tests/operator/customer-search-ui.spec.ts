@@ -101,6 +101,7 @@ store.setCustomerBilling(on('billing'));
 store.setCustomerNotificationSettings(on('settings'));
 store.setCustomerOrganisationProfiles(on('profiles'));
 store.setCustomerProblemReports(on('problems'));
+store.setCustomerAccountV18(on('v18'));
 const words={navLabel:'Navigation',menuLabel:'Menu',closeLabel:'Close menu',collapseLabel:'Collapse menu',expandLabel:'Expand menu'};
 const tabs=customerTabs({companies:on('companies'),move:flags.get('move')==='on'});
 const items=tabs.map(t=>({key:t.key,label:t.label,href:t.href,icon:t.icon}));
@@ -479,7 +480,7 @@ test.describe('positive: Pages', () => {
     ).toBeVisible();
     await expect(options(page)).toHaveCount(6);
     const labels = await options(page).locator('strong').allInnerTexts();
-    expect(labels).toEqual(['Home', 'Requests', 'Companies', 'Meetings', 'Reports', 'New Request']);
+    expect(labels).toEqual(['Home', 'My Work', 'Companies', 'Delegations', 'More', 'New Request']);
     await expect(dialogOf(page)).toContainText(
       'Type at least 2 letters to search your Requests and Companies.',
     );
@@ -493,9 +494,9 @@ test.describe('positive: Pages', () => {
     await openDialog(page);
     expect(await options(page).locator('strong').allInnerTexts()).toEqual([
       'Home',
-      'Requests',
-      'Meetings',
-      'Reports',
+      'My Work',
+      'Delegations',
+      'More',
       'New Request',
     ]);
     await field(page).click();
@@ -550,7 +551,8 @@ test.describe('positive: Pages', () => {
     await mount(page);
     await openDialog(page);
     await page.getByRole('button', { name: 'Requests', exact: true }).click();
-    expect(await options(page).locator('strong').allInnerTexts()).toEqual(['Requests']);
+    // The Requests scope lists the page the navigation now calls My Work (account v18).
+    expect(await options(page).locator('strong').allInnerTexts()).toEqual(['My Work']);
     await page.getByRole('button', { name: 'Companies', exact: true }).click();
     expect(await options(page).locator('strong').allInnerTexts()).toEqual(['Companies']);
   });
@@ -583,7 +585,7 @@ test.describe('keyboard', () => {
   test('P4: Up and Down stop at the ends, Enter opens the selected row', async ({ page }) => {
     await mount(page);
     await openDialog(page);
-    const labels = ['Home', 'Requests', 'Companies', 'Meetings', 'Reports', 'New Request'];
+    const labels = ['Home', 'My Work', 'Companies', 'Delegations', 'More', 'New Request'];
     expect(await selectedLabel(page)).toBe('Home');
     await page.keyboard.press('ArrowUp');
     expect(await selectedLabel(page)).toBe('Home');
@@ -597,7 +599,7 @@ test.describe('keyboard', () => {
     await field(page).press('ArrowUp');
     await field(page).press('ArrowUp');
     await field(page).press('ArrowUp');
-    expect(await selectedLabel(page)).toBe('Requests');
+    expect(await selectedLabel(page)).toBe('My Work');
     await expect(field(page)).toHaveAttribute(
       'aria-activedescendant',
       (await dialogOf(page).locator('[aria-selected="true"]').getAttribute('id'))!,
@@ -1482,7 +1484,10 @@ test.describe('header geometry (M4)', () => {
     const rows: number[] = [];
     for (const centre of boxes.map((rect) => rect.centre).sort((a, b) => a - b))
       if (!rows.some((row) => Math.abs(row - centre) < 20)) rows.push(centre);
-    expect(rows, 'rows of tools').toHaveLength(2);
+    // Two rows before account v18; the signed-in header has no Listen now, so the tools can fit on one row. The limit is
+    // the title's: at most two lines.
+    expect(rows.length, 'rows of tools').toBeGreaterThanOrEqual(1);
+    expect(rows.length, 'rows of tools').toBeLessThanOrEqual(2);
     // Measured: two rows of tools at 200% text make the header 329 px high.
     const HEIGHT_TWO_ROWS = 329;
     expect((await headerNumbers(page)).header.height).toBeLessThanOrEqual(HEIGHT_TWO_ROWS);

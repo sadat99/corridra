@@ -10,6 +10,7 @@ export function SiteFooter() {
       accessDoors={uxSwitchOn('CORRIDRA_UX_ACCESS_DOORS')}
       homeV42={uxSwitchOn('CORRIDRA_UX_HOME_V42')}
       {...(uxSwitchOn('CORRIDRA_UX_HOME_V43') ? { homeV43: true } : {})}
+      homeV44={uxSwitchOn('CORRIDRA_UX_HOME_V44')}
     />
   );
 }

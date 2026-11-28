@@ -134,7 +134,9 @@ test('with no network an installed Corridra says so, and shows nothing private',
     expect(body).not.toMatch(/Workspace|Requests|Sign Out|Companies|Sign In/i);
     // The shared chrome is not shown here: no link that cannot work, and no reading of who is signed in.
     // The page may be served at any address, so the page itself hides it rather than relying on the address.
-    const chrome = page.locator('.site-header, .guide-footer, .site-footer, .corner-dock');
+    const chrome = page.locator(
+      '.site-header, .guide-footer, .site-footer, .hv7-footer, .corner-dock',
+    );
     for (let index = 0, count = await chrome.count(); index < count; index++)
       await expect(chrome.nth(index)).toBeHidden();
     // Back online, Try Again loads the address that was asked for, and the offline page is gone.

@@ -39,10 +39,12 @@ describe('P3 the pages are the shell pages and nothing more', () => {
   test('with every module on the pages are the tabs, New Request, workspaces, account and help links', () => {
     expect(labels(everything)).toEqual([
       'Home',
-      'Requests',
+      'My Work',
       'Companies',
+      'Delegations',
+      'More',
       'Meetings',
-      'Reports',
+      'Results',
       'New Request',
       'Manage Workspaces',
       'Account',
@@ -90,10 +92,10 @@ describe('P3 the pages are the shell pages and nothing more', () => {
     expect(new Set(pages.map((p) => p.key)).size).toBe(pages.length);
     expect(customerTabs(everything).map((t) => t.label)).toEqual([
       'Home',
-      'Requests',
+      'My Work',
       'Companies',
-      'Meetings',
-      'Reports',
+      'Delegations',
+      'More',
     ]);
   });
   test('Home follows the move switch and New Request follows the workspace', () => {
@@ -138,16 +140,16 @@ describe('P3 finding pages', () => {
   test('nothing typed lists the tabs and New Request under All', () => {
     expect(pagesFor(pages, 'all', '').map((p) => p.label)).toEqual([
       'Home',
-      'Requests',
+      'My Work',
       'Companies',
-      'Meetings',
-      'Reports',
+      'Delegations',
+      'More',
       'New Request',
     ]);
   });
   test('nothing typed lists every page under Pages and only the own tab under Requests or Companies', () => {
     expect(pagesFor(pages, 'pages', '')).toHaveLength(pages.length);
-    expect(pagesFor(pages, 'requests', '').map((p) => p.label)).toEqual(['Requests']);
+    expect(pagesFor(pages, 'requests', '').map((p) => p.label)).toEqual(['My Work']);
     expect(pagesFor(pages, 'companies', '').map((p) => p.label)).toEqual(['Companies']);
   });
   test('a one-letter or symbol-only query counts as nothing typed', () => {

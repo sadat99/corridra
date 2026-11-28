@@ -64,6 +64,7 @@ import {
   readCustomerNotificationSettings,
   readCustomerOrganisationProfiles,
   readCustomerProblemReports,
+  readCustomerAccountV18,
   readServerCustomerBilling,
   readServerCustomerIdentity,
   readServerCustomerCompanies,
@@ -71,6 +72,7 @@ import {
   readServerCustomerNotificationSettings,
   readServerCustomerOrganisationProfiles,
   readServerCustomerProblemReports,
+  readServerCustomerAccountV18,
   subscribeCustomerNote,
 } from './customer-bar-store';
 import { useWorkspaces } from './customer-bar';
@@ -245,6 +247,8 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     readServerCustomerOrganisationProfiles,
   );
   const problemReports = useFlag(readCustomerProblemReports, readServerCustomerProblemReports);
+  // Customer account v18, as the shell said: its destinations, or the earlier ones.
+  const v18 = useFlag(readCustomerAccountV18, readServerCustomerAccountV18);
   // Who the page was drawn for; sent back as the rejection-only identity headers, never the words.
   const identity = useFlag(readCustomerIdentity, readServerCustomerIdentity);
   const workspaces = useWorkspaces(open && onAccount);
@@ -263,6 +267,7 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
         notificationSettings,
         organisationProfiles,
         problemReports,
+        v18,
         workspaces: list,
         currentWorkspaceId: (current ?? (offered.length === 1 ? offered[0] : undefined))?.id,
       },
@@ -277,6 +282,7 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     notificationSettings,
     organisationProfiles,
     problemReports,
+    v18,
   ]);
 
   // Every open starts clean: no words, scope All, no answer, nothing selected.

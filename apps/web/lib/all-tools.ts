@@ -181,6 +181,14 @@ export type ExcludedPage = { route: string; why: string };
 export const excludedPages: readonly ExcludedPage[] = [
   { route: '/account/all-tools', why: 'This is the list itself.' },
   {
+    route: '/account/delegation-hub',
+    why: 'It is the Delegations destination of the account navigation (account v18), so a second link here would repeat the menu. It is a page of the navigation, not a tool behind one.',
+  },
+  {
+    route: '/account/businesses',
+    why: 'It opens from the Acting for switcher in the account bar (account v18), which lists the businesses a person can act for. Without the switcher there is nothing to open.',
+  },
+  {
     route: '/account/meetings',
     why: 'It opens from the Meetings tab of the customer navigation. The page exists only with the shells switch, so a link here would lead nowhere without it.',
   },
