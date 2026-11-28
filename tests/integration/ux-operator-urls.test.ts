@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   addressDestination,
+  dashboardTabAddress,
   fragmentFor,
   operatorPlaceFor,
   operatorSectionPath,
@@ -482,5 +483,50 @@ describe('signing in again from the workspace comes back to the same workspace a
   it('no Link or router call in the web app reaches sign-in through a variable, spread, alias or router', () => {
     // The syntax tree guard (sign-in-navigation-guard.ts) sees what the regex scan above cannot.
     expect(signInNavigationFindingsIn('apps/web')).toEqual([]);
+  });
+});
+
+describe('an address that names a dashboard tab by its # part', () => {
+  const move = (href: string, deskV41: boolean) => dashboardTabAddress(new URL(href), deskV41);
+  const origin = 'https://corridra.invalid';
+  it('with team desk v4.1 on, opens the page that holds the tab, with the tab in ?tab=', () => {
+    expect(move(`${origin}/operator/operations#dash-money`, true)).toEqual({
+      href: `${origin}/operator/dashboard?tab=dash-money`,
+      section: 'ops-dashboard',
+    });
+    expect(move(`${origin}/operator/dashboard#dash-money`, true)?.href).toBe(
+      `${origin}/operator/dashboard?tab=dash-money`,
+    );
+    expect(move(`${origin}/operator/dashboard#dash-summary`, true)?.href).toBe(
+      `${origin}/operator/operations?tab=dash-summary`,
+    );
+    // The # part wins over a ?tab= already there; other words are kept.
+    expect(
+      move(`${origin}/operator/operations?workspace=w&tab=dash-records#dash-money`, true)?.href,
+    ).toBe(`${origin}/operator/dashboard?workspace=w&tab=dash-money`);
+    // The workspace home names its page by the # part.
+    expect(move(`${origin}/operator#dash-records`, true)?.href).toBe(
+      `${origin}/operator?tab=dash-records#workspace-operations`,
+    );
+  });
+  it('with the switch off, names Money only, on the page the address is on', () => {
+    expect(move(`${origin}/operator/operations#dash-money`, false)?.href).toBe(
+      `${origin}/operator/operations?tab=dash-money`,
+    );
+    expect(move(`${origin}/operator/health#dash-money`, false)?.href).toBe(
+      `${origin}/operator/dashboard?tab=dash-money`,
+    );
+    expect(move(`${origin}/operator/dashboard#dash-summary`, false)).toBeNull();
+  });
+  it('leaves every other address alone, so a moved address is never moved again', () => {
+    for (const href of [
+      `${origin}/operator/dashboard?tab=dash-money`,
+      `${origin}/operator?tab=dash-records#workspace-operations`,
+      `${origin}/operator/operations#ops-dashboard`,
+      `${origin}/operator/operations#%E0%A4%A`,
+      `${origin}/operator/owner#dash-money`,
+      `${origin}/operator/unknown-word#dash-money`,
+    ])
+      expect(move(href, true), href).toBeNull();
   });
 });

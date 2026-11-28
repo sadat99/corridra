@@ -619,6 +619,101 @@ test('Status, switch off: an address that names a tab opens that tab where it is
   await expect(page).toHaveURL(/\/operator\/operations\?tab=dash-money$/);
 });
 
+/** Waits until the workspace has read the address and loaded, and no further page load is under way. */
+async function settled(page: Page) {
+  await expect(page.getByLabel('Workspace status')).toBeAttached();
+  await expect(page.getByText('Loading workspace…')).toHaveCount(0);
+  await page.waitForLoadState('load');
+}
+
+test('Status, switch on: #dash-money on Operations opens Dashboard with Money', async ({
+  page,
+}) => {
+  await open(page, '/operator/health', { v41: true });
+  await page.goto(`${fixture.origin}/operator/operations#dash-money`);
+  await expect(page).toHaveURL(/\/operator\/dashboard\?tab=dash-money$/);
+  await expect(segments(page).locator('[aria-current="page"]')).toHaveText('Dashboard');
+  await expect(page.locator('#ops-dashboard .ops-money').first()).toBeVisible();
+  await expect(page.locator('#ops-dashboard [data-desk-section="dash-summary"]')).toHaveCount(0);
+});
+
+test('Status, switch on: #dash-money on Dashboard selects Money', async ({ page }) => {
+  await open(page, '/operator/health', { v41: true });
+  await page.goto(`${fixture.origin}/operator/dashboard#dash-money`);
+  await expect(page).toHaveURL(/\/operator\/dashboard\?tab=dash-money$/);
+  await expect(segments(page).locator('[aria-current="page"]')).toHaveText('Dashboard');
+  await expect(page.locator('#ops-dashboard .ops-money').first()).toBeVisible();
+});
+
+test('Status, switch on: #dash-summary on Dashboard opens Operations with Summary', async ({
+  page,
+}) => {
+  await open(page, '/operator/health', { v41: true });
+  await page.goto(`${fixture.origin}/operator/dashboard#dash-summary`);
+  await expect(page).toHaveURL(/\/operator\/operations\?tab=dash-summary$/);
+  await expect(segments(page).locator('[aria-current="page"]')).toHaveText('Operations');
+  await expect(page.locator('#ops-dashboard [data-desk-section="dash-summary"]')).toBeVisible();
+  await expect(page.locator('#ops-dashboard .operations-metrics').first()).toBeVisible();
+  await expect(page.locator('#ops-dashboard .ops-money')).toHaveCount(0);
+});
+
+test('Status, switch on: a # tab wins over ?tab= and the address is moved once', async ({
+  page,
+}) => {
+  await open(page, '/operator/health', { v41: true });
+  let loads = 0;
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) loads += 1;
+  });
+  await page.goto(`${fixture.origin}/operator/operations?tab=dash-records#dash-money`);
+  await expect(page).toHaveURL(/\/operator\/dashboard\?tab=dash-money$/);
+  await expect(page.locator('#ops-dashboard .ops-money').first()).toBeVisible();
+  await settled(page);
+  // The address as typed, then the page that holds the tab: no further move.
+  expect(loads).toBe(2);
+  // The workspace home names no page: the tab's page is named by its # part.
+  loads = 0;
+  await page.goto(`${fixture.origin}/operator#dash-records`);
+  await expect(page).toHaveURL(/\/operator\?tab=dash-records#workspace-operations$/);
+  await expect(page.locator('#ops-dashboard [data-desk-section="dash-records"]')).toHaveAttribute(
+    'open',
+    '',
+  );
+  await settled(page);
+  expect(loads).toBe(2);
+});
+
+test('Status, switch off: #dash-money opens the Money tab where it is', async ({ page }) => {
+  await open(page, '/operator/health', { v41: false });
+  await page.goto(`${fixture.origin}/operator/operations#dash-money`);
+  await expect(page).toHaveURL(/\/operator\/operations\?tab=dash-money$/);
+  await expect(page.getByRole('tab', { name: 'Money' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#ops-dashboard .ops-money').first()).toBeVisible();
+});
+
+test('Status: #dash-money shows no money to a role that cannot open Operations or Dashboard', async ({
+  page,
+}) => {
+  // A reviewer has neither page today, so no address may show the money to one.
+  for (const v41 of [true, false]) {
+    await open(page, '/operator/health', { v41, role: 'reviewer' });
+    const reads: string[] = [];
+    page.on('request', (request) => {
+      if (/\/api\/workspace\/operations-/.test(request.url())) reads.push(request.url());
+    });
+    for (const path of ['/operator/operations#dash-money', '/operator/dashboard#dash-money']) {
+      await page.goto(`${fixture.origin}${path}`);
+      await settled(page);
+      await expect(page).toHaveURL(`${fixture.origin}${path}`);
+      await expect(page.locator('#ops-dashboard')).toHaveCount(0);
+      await expect(page.locator('.ops-money')).toHaveCount(0);
+      await expect(page.getByRole('tab', { name: 'Money' })).toHaveCount(0);
+      await expect(page.getByText('12500')).toHaveCount(0);
+    }
+    expect(reads).toEqual([]);
+  }
+});
+
 test('Status: counts carry plain labels and place names carry their marks with the switch on', async ({
   page,
 }) => {
