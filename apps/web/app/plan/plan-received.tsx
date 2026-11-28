@@ -1,7 +1,6 @@
 'use client';
 
-import { useT } from '../../components/language-provider';
-import { fill } from '../../lib/i18n/fill';
+import { usePlanWords } from './plan-words';
 
 // What the person sees once the request is saved and the account steps remain (owner canvas board v10, 28 Nov 2026).
 // It names the route and goal from the answers still in this tab and lists the steps that follow. Nothing is read from
@@ -21,23 +20,23 @@ export function PlanReceived({
   signedIn: boolean;
   test?: boolean;
 }) {
-  const t = useT();
+  const { word } = usePlanWords();
   const saved = {
-    title: t('home.v44.plan.saved.s1'),
-    note: t('home.v44.plan.saved.s1.note'),
+    title: word('home.v44.plan.saved.s1'),
+    note: word('home.v44.plan.saved.s1.note'),
     state: 'done',
   } as const;
   const review = {
-    title: t('home.v44.plan.saved.review'),
-    note: t('home.v44.plan.saved.review.note'),
+    title: word('home.v44.plan.saved.review'),
+    note: word('home.v44.plan.saved.review.note'),
     state: 'next',
   } as const;
   const steps = test
     ? ([
         saved,
         {
-          title: t('home.v44.plan.saved.receipt'),
-          note: t('home.v44.plan.saved.receipt.note'),
+          title: word('home.v44.plan.saved.receipt'),
+          note: word('home.v44.plan.saved.receipt.note'),
           state: 'now',
         },
         review,
@@ -45,34 +44,36 @@ export function PlanReceived({
     : ([
         saved,
         {
-          title: signedIn ? t('home.v44.plan.saved.verify') : t('home.v44.plan.saved.account'),
+          title: signedIn
+            ? word('home.v44.plan.saved.verify')
+            : word('home.v44.plan.saved.account'),
           note: signedIn
-            ? t('home.v44.plan.saved.verify.note')
-            : t('home.v44.plan.saved.account.note'),
+            ? word('home.v44.plan.saved.verify.note')
+            : word('home.v44.plan.saved.account.note'),
           state: 'now',
         },
         {
-          title: signedIn ? t('home.v44.plan.saved.device') : t('home.v44.plan.saved.verify'),
-          note: t('home.v44.plan.saved.device.note'),
+          title: signedIn ? word('home.v44.plan.saved.device') : word('home.v44.plan.saved.verify'),
+          note: word('home.v44.plan.saved.device.note'),
           state: 'next',
         },
         review,
       ] as const);
   return (
     <>
-      <span className="pv-saved">✓ {t('home.v44.plan.saved.chip')}</span>
+      <span className="pv-saved">✓ {word('home.v44.plan.saved.chip')}</span>
       <div className="pv-chips">
         {company && <span>{company}</span>}
         {company && market && <em aria-hidden="true">→</em>}
         {market && <span>{market}</span>}
         {goal && <span className="pv-chip-plain">{goal}</span>}
         <span className="pv-chip-plain">
-          {fill(t('home.v44.plan.saved.answers'), { amount: answers })}
+          {word('home.v44.plan.saved.answers', { amount: answers })}
         </span>
       </div>
       <ol className="pv-timeline">
         {steps.map((step, index) => (
-          <li key={step.title} data-state={step.state}>
+          <li key={index} data-state={step.state}>
             <span className="pv-tl-dot" aria-hidden="true">
               {step.state === 'done' ? '✓' : index + 1}
             </span>

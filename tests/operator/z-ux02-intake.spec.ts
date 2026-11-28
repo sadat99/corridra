@@ -84,7 +84,8 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
       .getByLabel('Budget basis, such as total equipment budget', { exact: true })
       .fill('Original synthetic equipment quote');
     await page.reload();
-    await expect(page.getByRole('complementary', { name: 'Your example request' })).toContainText(
+    // The left pane of the request window (owner canvas board v10) shows the amount with the currency it was typed in.
+    await expect(page.getByRole('complementary', { name: 'Your request so far' })).toContainText(
       '1.234 BHD',
     );
     await expect(page.getByLabel('Your offer or requirement')).toHaveValue(

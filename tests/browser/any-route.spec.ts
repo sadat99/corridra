@@ -29,7 +29,7 @@ test('any pair of countries shows on the world map with an honest, non-operating
   // The plan link keeps both countries.
   await atlas.getByRole('link', { name: 'Plan a Mission on This Route' }).click();
   await expect(page).toHaveURL('/plan?companyCountry=JP&marketCode=KE&job=sourcing');
-  const summary = page.getByRole('complementary', { name: 'Your example request' });
+  const summary = page.getByRole('complementary', { name: 'Your request so far' });
   await expect(summary).toContainText('Japan');
   await expect(summary).toContainText('Kenya');
 });

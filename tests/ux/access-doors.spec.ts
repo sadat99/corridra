@@ -17,7 +17,10 @@ const pages = [
   },
   {
     path: '/access/team',
-    h1: 'Sign in to team or field work.',
+    // The work sign-in window (owner canvas board v12, 28 Nov 2026) names the page "Team sign-in."; the page's title
+    // and its share card keep the door's own words.
+    h1: 'Team sign-in.',
+    og: 'Sign in to team or field work.',
     title: 'Team and Network Access | Corridra',
     max390: 1550,
     max1440: 1100,
@@ -101,13 +104,26 @@ for (const entry of pages) {
     test('names the page and sets robots from the switch', async ({ page }) => {
       await page.goto(entry.path);
       await expect(page).toHaveTitle(entry.title);
-      await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', entry.h1);
+      await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+        'content',
+        'og' in entry ? entry.og : entry.h1,
+      );
       const on = process.env.CORRIDRA_UX_ACCESS_DOORS === 'true';
       const robots = (await page.locator('meta[name="robots"]').getAttribute('content')) ?? '';
       expect(robots.includes('noindex')).toBe(!on);
       // The customer door shows the single "Not a customer?" line instead of the bar (owner board, screen 03, and the
       // owner's 18 November "unsolicited redundancy"). The other two doors keep the bar.
       const customerDoor = entry.path === '/access/customer';
+      if (entry.path === '/access/team') {
+        // The work sign-in window ends with one line to the customer sign-in instead of the bar (owner canvas board v12).
+        const foot = page.locator('main .aw-foot');
+        await expect(foot).toContainText('Customer?');
+        await expect(foot.getByRole('link', { name: 'Customer sign-in' })).toHaveAttribute(
+          'href',
+          '/signin',
+        );
+        return;
+      }
       const nav = page.getByRole('navigation', {
         name: customerDoor ? 'Not a customer?' : 'Not what you need?',
       });
@@ -127,22 +143,28 @@ for (const entry of pages) {
 }
 
 test('the three pages link to each other and write actions in Title Case', async ({ page }) => {
+  // The team page is the work sign-in window (owner canvas board v12): it leads to the customer sign-in by its last line,
+  // and the other two doors lead on from the customer page. Its actions are written in Title Case.
   await page.goto('/access/team');
-  const bar = page.getByRole('navigation', { name: 'Not what you need?' });
-  await expect(bar.getByRole('link', { name: 'Customer Access' })).toHaveAttribute(
+  await expect(
+    page.locator('main .aw-foot').getByRole('link', { name: 'Customer sign-in' }),
+  ).toHaveAttribute('href', '/signin');
+  await page.goto('/access/customer');
+  const bar = page.getByRole('navigation', { name: 'Not a customer?' });
+  await expect(bar.getByRole('link', { name: 'Team and Network Access' })).toHaveAttribute(
     'href',
-    '/access/customer',
+    '/access/team',
   );
   await expect(bar.getByRole('link', { name: 'Private Link Access' })).toHaveAttribute(
     'href',
     '/access/link',
   );
-  for (const entry of pages.filter((p) => p.path === '/access/team')) {
-    await page.goto(entry.path);
-    const labels = await page.locator('main .button, main .button-secondary').allInnerTexts();
-    expect(labels.length).toBeGreaterThan(0);
-    for (const label of labels) expect(label.trim()).toMatch(/^[A-Z]/);
-  }
+  await page.goto('/access/team');
+  const labels = await page
+    .locator('main .primary-link, main .aw-switch button, main .aw-link')
+    .allInnerTexts();
+  expect(labels.length).toBeGreaterThan(0);
+  for (const label of labels) expect(label.trim()).toMatch(/^[A-Z]/);
   await page.goto('/access/link');
   // The role cards and the help text of the private link door carry no link and no form; the one field on the page is
   // the paste field, which is not a form (a form would put the link in an address).

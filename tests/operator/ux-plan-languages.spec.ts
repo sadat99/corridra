@@ -388,7 +388,9 @@ function allowed(html: string) {
   // W1-C (owner 2a, 18 Nov 2026): the callout box is gone. The sample notice is one block, "plan-sample-note".
   const noticeTest =
     /<div class="plan-sample-note"[^>]*>[\s\S]*?<\/details>(?:<p[^>]*>[\s\S]*?<\/p>)?<\/div>/;
-  const summaryTest = /<aside class="ux-brief-summary"[^>]*>[\s\S]*?<\/aside>/;
+  // The request page is the two-pane window of 28 Nov 2026 (owner canvas board v10): its summary is the left pane, which
+  // follows the answers; the earlier summary column is what the plan switch set to "false" gives.
+  const summaryTest = /<aside class="(?:ux-brief-summary|pv-side)"[^>]*>[\s\S]*?<\/aside>/;
   const notice = html.match(noticeTest)?.[0] ?? '';
   const summary = html.match(summaryTest)?.[0] ?? '';
   const rest = html.replace(noticeTest, '<aside:notice/>').replace(summaryTest, '<aside:summary/>');
@@ -435,7 +437,9 @@ function withoutAside(aria: string) {
       let end = i + 1;
       while (end < lines.length && lines[end]!.length - lines[end]!.trimStart().length > indent)
         end++;
-      const summary = /^\s*- complementary "Your (example )?request"/.test(line);
+      const summary = /^\s*- complementary "Your (example request|request|request so far)"/.test(
+        line,
+      );
       // The sample notice is no longer a landmark (owner 2a, 18 Nov 2026), so only the summary is dropped.
       if (summary) {
         dropped++;
@@ -975,7 +979,7 @@ test.describe('with the form released', () => {
     await form.locator('details summary').click();
     await form.locator('#brief-budgetAmount').fill('12.30');
     await form.locator('details select').selectOption('CNY');
-    await expect(page.locator('.ux-brief-summary dd [lang="en"]')).toHaveText('12.30 CNY');
+    await expect(page.locator('aside.pv-side dd [lang="en"]')).toHaveText('12.30 CNY');
     // Each English part against itself with the region English, which is the English form's styling.
     const parts = await page.locator('#main').evaluate((main) => {
       const elements = Array.from(main.querySelectorAll('[lang="en"], [lang="en"] *'));

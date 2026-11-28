@@ -81,12 +81,13 @@ test.describe('choosing a journey on each page', () => {
       await expect(summary(page)).toHaveAccessibleName(/^Journey, Sourcing/);
       await expect(page).toHaveURL(at(lands));
       expect(await journeyCookie(page)).toBe('source');
-      // The sidebar's Home and Requests now open the chosen journey; Groups are not drawn in Sourcing.
+      // The sidebar's Home and My Work (Requests before account v18) now open the chosen journey; Groups are not drawn in
+      // Sourcing.
       await expect(nav(page).getByRole('link', { name: 'Home', exact: true })).toHaveAttribute(
         'href',
         '/account/move?journey=source',
       );
-      await expect(nav(page).getByRole('link', { name: /^Requests/ })).toHaveAttribute(
+      await expect(nav(page).getByRole('link', { name: /^My Work/ })).toHaveAttribute(
         'href',
         '/account?view=work&work=source',
       );
@@ -138,7 +139,7 @@ test('a link to Home in Selling wins over a cookie that says Sourcing, on the pa
     'href',
     '/account/move?journey=sell',
   );
-  await expect(nav(page).getByRole('link', { name: /^Requests/ })).toHaveAttribute(
+  await expect(nav(page).getByRole('link', { name: /^My Work/ })).toHaveAttribute(
     'href',
     '/account?view=work&work=sell',
   );

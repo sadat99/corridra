@@ -18,9 +18,10 @@ test('footer: promise, actions and link columns keep their normal-size layout', 
   page,
 }) => {
   // Drawn columns of the footer at 100%, equal on main (the footer boxes were identical in the comparison against main).
+  // The footer of every page (home v4.4): each group is one column of links, and the actions are one column too.
   const expected: Record<number, { lists: number[]; actions: number[] }> = {
-    320: { lists: [2, 2, 2, 2], actions: [2] },
-    390: { lists: [2, 2, 2, 2], actions: [2] },
+    320: { lists: [1, 1, 1, 1], actions: [1] },
+    390: { lists: [1, 1, 1, 1], actions: [1] },
     768: { lists: [1, 1, 1, 1], actions: [1] },
     1024: { lists: [1, 1, 1, 1], actions: [1] },
     1280: { lists: [1, 1, 1, 1], actions: [1] },
@@ -36,8 +37,8 @@ test('footer: promise, actions and link columns keep their normal-size layout', 
           (el) => el.getBoundingClientRect().width > 2,
         );
       return {
-        lists: drawn('.guide-footer-group ul').map(columns),
-        actions: drawn('.guide-footer-actions').map(columns),
+        lists: drawn('.hv7-footer-group ul').map(columns),
+        actions: drawn('.hv7-footer-actions').map(columns),
         sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       };
     });

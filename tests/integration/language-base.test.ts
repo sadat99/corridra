@@ -42,18 +42,18 @@ if (process.env.LANGUAGE_FREEZE_WRITE === '1')
  * additions only (the English freeze gained 311 lines, none changed or went; two keys of the first cut, mk.every and
  * people.full, were unused and are gone before release). No translation is written or claimed;
  * native review stays OPEN and each language shows these words in English. The lists are lib/i18n/home-v43-words*.ts.
- * Second deliberate exception (owner, 28 Nov 2026, home page v4.4 and the account and request windows): 55 new English-only
+ * Second deliberate exception (owner, 28 Nov 2026, home page v4.4 and the account and request windows): 56 new English-only
  * `home.v44.*` keys (the Pause Motion control, the request sheet, the worked example, the closing, the three account
- * navigation words, the request page's left pane and saved screen), so every number rose by 55 (1214 to 1268 and so on).
- * Additions only: the freeze gained 55 lines, none changed or went. Native review stays OPEN; no translation is claimed.
+ * navigation words, the request page's left pane and saved screen), so every number rose by 56 (1214 to 1268 and so on).
+ * Additions only: the freeze gained 56 lines, none changed or went. Native review stays OPEN; no translation is claimed.
  */
 const untranslated: Record<OtherLocale, number> = {
-  bn: 1269, // L1
-  zh: 1269, // L2
-  es: 1274, // L3
-  ar: 1289, // L4
-  fr: 1295, // L5
-  de: 1291, // L6
+  bn: 1270, // L1
+  zh: 1270, // L2
+  es: 1275, // L3
+  ar: 1290, // L4
+  fr: 1296, // L5
+  de: 1292, // L6
 };
 
 describe('English is frozen', () => {
@@ -148,13 +148,13 @@ describe('a translated page carries no note', () => {
 // `home.v43.*` keys, so every line moved again; no language file changed. Home page v4.4 (owner, 28 Nov 2026) added 55
 // English-only `home.v44.*` keys, so every line moved once more; no language file changed.
 const catalogueHash: Record<(typeof localeCodes)[number], string> = {
-  en: '9a64bf68f89f6c58',
-  bn: '70060e2b81221abf',
-  zh: 'c027bb6598b40adb',
-  es: '44411054701bbc6f',
-  ar: '22749e1fa2c5ed26',
-  fr: 'cbfa367309eaa9f4',
-  de: 'e28f10f31a9df6d5',
+  en: '9aa1e8bcfa2209d5',
+  bn: 'f05d22ccb35a5b4c',
+  zh: '59ef61e7aea2c1c4',
+  es: '6eae901d46f0b416',
+  ar: 'ebb4928d121f7894',
+  fr: '01ad530f2c70835f',
+  de: 'e08412955de3626a',
 };
 
 describe('each catalogue is exactly the recorded one', () => {

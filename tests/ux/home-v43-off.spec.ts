@@ -60,5 +60,8 @@ test('with the switch off the request page keeps its compact footer and the publ
 }) => {
   const html = await (await request.get('/plan')).text();
   expect(html).not.toMatch(named);
-  expect(html).toContain('guide-footer-compact');
+  // The footer of every page is the home v4.4 footer since 28 Nov 2026 (live by default); on the request page it is
+  // the compact one, with the groups folded. The compact footer of before is what CORRIDRA_UX_HOME_V44=false gives.
+  expect(html).toContain('data-footer="v44"');
+  expect(html).toContain('data-compact');
 });

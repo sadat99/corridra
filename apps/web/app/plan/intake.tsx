@@ -1193,10 +1193,12 @@ function IntakeForm({
           <PlanSide
             goal={goalWords}
             company={companyName}
+            companyCode={draft.companyCountry}
             market={marketName}
             marketCode={draft.marketCode}
             when={draft.whenNeeded}
             note={draft.notes}
+            budget={draft.budgetAmount ? `${draft.budgetAmount} ${draft.currency}`.trim() : ''}
           />
         )}
         <div className={windowDesign ? 'guide-plan-main pv-main' : 'guide-plan-main'}>

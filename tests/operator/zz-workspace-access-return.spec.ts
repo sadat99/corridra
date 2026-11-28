@@ -695,7 +695,7 @@ test('helper sign-in uses helper words and its return lands on the task page, ne
     await test.step('the page shows helper words and only the work account fields', async () => {
       await page.goto('/contributor/signin');
       await expect(
-        page.getByRole('heading', { name: 'Sign in to your assigned tasks.', exact: true }),
+        page.getByRole('heading', { name: 'Helper sign-in.', exact: true }),
       ).toBeVisible();
       await expect(page.getByRole('form', { name: 'Helper sign-in' })).toBeVisible();
       await expect(
@@ -704,7 +704,7 @@ test('helper sign-in uses helper words and its return lands on the task page, ne
       await expect(main.getByLabel('Email', { exact: true })).toBeVisible();
       await expect(main.getByLabel('Password', { exact: true })).toBeVisible();
       await expect(main.locator('input')).toHaveCount(2);
-      await expect(main.getByRole('link', { name: 'Forgot your work password?' })).toHaveAttribute(
+      await expect(main.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute(
         'href',
         '/operator/forgot-password?for=helper',
       );

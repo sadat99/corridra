@@ -92,7 +92,7 @@ async function stub(page: Page, pending: boolean) {
 test('with the switch off the request page offers no code sign-in link', async ({ page }) => {
   await stub(page, true);
   await page.goto(origin + '/plan?switch=off');
-  await expect(page.getByRole('heading', { name: 'Finish your request.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your request is saved.' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Sign in and continue' })).toBeVisible();
   await expect(page.getByRole('link', { name: label })).toHaveCount(0);
   await expect(page.locator('a[href*="method=code"]')).toHaveCount(0);
@@ -103,7 +103,7 @@ test('with the switch on, a person who is not signed in can ask for a code to se
 }) => {
   await stub(page, true);
   await page.goto(origin + '/plan');
-  const pendingPanel = page.getByRole('region', { name: 'Finish your request.' });
+  const pendingPanel = page.getByRole('region', { name: 'Your request is saved.' });
   await expect(pendingPanel).toBeVisible();
   await expect(pendingPanel.getByRole('link', { name: label })).toHaveAttribute(
     'href',
@@ -148,7 +148,7 @@ test('a signed-in person is not offered the link', async ({ page }) => {
   await stub(page, true);
   await page.goto(origin + '/plan?as=person');
   // The account is known once the pending panel offers to activate it instead of signing in.
-  const pendingPanel = page.getByRole('region', { name: 'Finish your request.' });
+  const pendingPanel = page.getByRole('region', { name: 'Your request is saved.' });
   await expect(pendingPanel.getByRole('link', { name: 'Activate your account' })).toBeVisible();
   await expect(page.getByRole('link', { name: label })).toHaveCount(0);
   await expect(page.locator('a[href*="method=code"]')).toHaveCount(0);

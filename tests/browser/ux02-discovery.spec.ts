@@ -77,7 +77,8 @@ test('UX-02 saved draft choices survive reload and take precedence over entry su
   await expect(page.getByLabel('Your offer or requirement')).toHaveValue(
     '原始机器要求。 কাল্পনিক পরীক্ষামূলক তথ্য।',
   );
-  const summary = page.getByRole('complementary', { name: 'Your example request' });
+  // The left pane of the request window (owner canvas board v10) follows the answers kept in this tab.
+  const summary = page.getByRole('complementary', { name: 'Your request so far' });
   await expect(summary).toContainText('Procure machinery');
   await expect(summary).toContainText('Japan');
   await expect(summary).toContainText('Kenya');
@@ -147,7 +148,7 @@ test('UX-02 route pages show their sections in full and account recovery keeps i
       route === '/signin'
         ? 'Team members sign in separately'
         : route === '/signup'
-          ? 'Create your account to send and follow requests.'
+          ? 'To send and follow requests.'
           : ['/forgot-password', '/reset-password'].includes(route)
             ? 'It does not change a team password.'
             : 'missions shared with you.',

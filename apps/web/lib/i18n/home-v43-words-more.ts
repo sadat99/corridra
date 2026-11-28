@@ -262,6 +262,7 @@ export const homeV43MoreEn = {
   'home.v44.plan.side.market': 'Market',
   'home.v44.plan.side.when': 'When',
   'home.v44.plan.side.note': 'Note',
+  'home.v44.plan.side.budget': 'Budget',
   'home.v44.plan.side.empty': 'Not chosen yet',
   'home.v44.plan.saved.title': 'Your request is saved.',
   'home.v44.plan.saved.chip': 'Saved',

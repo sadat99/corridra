@@ -148,13 +148,13 @@ for (const size of [
   }) => {
     await page.setViewportSize(size);
     await openSaved(page, 2);
-    await expect(page.locator('.ux-brief-summary')).toBeVisible();
+    await expect(page.locator('aside.pv-side')).toBeVisible();
     const height = await page.evaluate(() => document.documentElement.scrollHeight);
     for (let y = 0; y <= height; y += 40) {
       await page.evaluate((top) => window.scrollTo(0, top), y);
       const overlap = await page.evaluate(() => {
-        // The sticky summary box a person sees, against the receipt check, at every scroll position.
-        const summary = document.querySelector('.ux-brief-summary')!.getBoundingClientRect();
+        // The left pane a person sees, against the receipt check, at every scroll position.
+        const summary = document.querySelector('aside.pv-side')!.getBoundingClientRect();
         const receipt = document.querySelector('#receipt-check')!.getBoundingClientRect();
         if (!receipt.height || !summary.height) return 0;
         const wide = Math.min(summary.right, receipt.right) - Math.max(summary.left, receipt.left);

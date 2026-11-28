@@ -3,10 +3,12 @@ import { expect, test, type Page } from '@playwright/test';
 import { configuredServer } from './access-server';
 
 // W1-B: /signin is one calm form (owner board, screen 03). With customer sign-in configured: the one primary button,
-// Sign In, sits in the first screen at 390 and 1440; the other ways in (Create an Account, Verify Your Email, the
-// invited operator sign-in) sit in one closed "More ways in" disclosure; a failed sign-in shows an icon, the words and
-// a red field edge without saying whether the address has an account; the password can be shown; and the form still
-// sends the same two fields to the same place. Measured on the production build.
+// Sign In, sits in the first screen at 390 and 1440; the other ways in (Create account, Verify Your Email, Team access)
+// stay one tap away; a failed sign-in shows an icon, the words and a red field edge without saying whether the address
+// has an account; the password can be shown; and the form still sends the same two fields to the same place. Measured
+// on the production build. Since 28 Nov 2026 the page is the sign-in window (owner canvas board v11,
+// CORRIDRA_UX_ACCESS_WINDOW_V11): Sign in and Create account are the window's own switch, Verify Your Email is the
+// form's one text link, and Team access is the window's last line, where "More ways in" was a closed disclosure.
 const door = configuredServer(3113);
 const base = door.base;
 
@@ -26,15 +28,14 @@ for (const width of [390, 1440]) {
   }) => {
     const height = await open(page, width);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sign in.');
-    await expect(page.locator('main')).toContainText(
-      'See your requests and the missions shared with you.',
-    );
+    await expect(page.locator('main')).toContainText('See every request you have sent');
     const submit = page.locator('main form button.primary-link');
     await expect(submit).toHaveText('Sign In');
     const box = (await submit.boundingBox())!;
     expect(box.y + box.height).toBeLessThanOrEqual(height);
-    // Down from five full-width actions in the form (Sign In, Forgot, Create, Verify, Invited Operator) to one.
-    await expect(page.locator('main form.operator-form > :is(a, button)')).toHaveCount(1);
+    // One primary action in the form; the other ways in are quiet text links, not buttons.
+    await expect(page.locator('main form.operator-form button.primary-link')).toHaveCount(1);
+    await expect(page.locator('main form.operator-form a.text-link').first()).toBeVisible();
     await expect(
       page.locator('main .button, main .button-secondary, main .primary-link'),
     ).toHaveCount(1);
@@ -54,27 +55,21 @@ for (const width of [390, 1440]) {
   });
 }
 
-test('More ways in is one closed disclosure and keeps every destination', async ({ page }) => {
+test('the other ways in keep every destination: the window switch, the form link and the last line', async ({
+  page,
+}) => {
   await open(page, 390);
-  const more = page.locator('main form details.account-more');
-  await expect(more).toHaveCount(1);
-  expect(await more.evaluate((node) => (node as HTMLDetailsElement).open)).toBe(false);
-  await expect(more.locator('summary')).toHaveText('More ways in');
-  const ways: Array<[string, string]> = [
-    ['Create an Account', '/signup'],
-    ['Verify Your Email', '/verify-email'],
-    ['Invited Operator Sign-in', '/operator/signin'],
+  // There is no "More ways in" disclosure any more: every way in is in view.
+  await expect(page.locator('main details.account-more')).toHaveCount(0);
+  const ways: Array<[string, string, string]> = [
+    ['nav.aw-switch', 'Create account', '/signup'],
+    ['main form', 'Verify Your Email', '/verify-email'],
+    ['main .aw-foot', 'Team access', '/operator/signin'],
   ];
-  // Closed, the links are in the page but not in the accessibility tree, so they are found by their text.
-  for (const [name, href] of ways)
-    await expect(more.locator('a', { hasText: new RegExp(`^${name}$`) })).toHaveAttribute(
-      'href',
-      href,
-    );
-  await more.locator('summary').click();
-  for (const [name, href] of ways) {
-    await expect(more.getByRole('link', { name, exact: true })).toBeVisible();
-    await expect(more.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
+  for (const [area, name, href] of ways) {
+    const link = page.locator(area).getByRole('link', { name, exact: true });
+    await expect(link, name).toBeVisible();
+    await expect(link, name).toHaveAttribute('href', href);
   }
   const form = page.locator('main form');
   await expect(form.getByRole('link', { name: 'Forgot Your Password?' })).toHaveAttribute(
@@ -99,17 +94,14 @@ test('More ways in is one closed disclosure and keeps every destination', async 
   );
 });
 
-test('a return address is carried to the links in More ways in', async ({ page }) => {
+test('a return address is carried to the other ways in', async ({ page }) => {
   await page.goto(`${base}/signin?returnTo=%2Fplan`);
-  const more = page.locator('main form details.account-more');
-  await expect(more.locator('a', { hasText: /^Create an Account$/ })).toHaveAttribute(
-    'href',
-    '/signup?returnTo=%2Fplan',
-  );
-  await expect(more.locator('a', { hasText: /^Verify Your Email$/ })).toHaveAttribute(
-    'href',
-    '/verify-email?returnTo=%2Fplan',
-  );
+  await expect(
+    page.locator('nav.aw-switch').getByRole('link', { name: 'Create account', exact: true }),
+  ).toHaveAttribute('href', '/signup?returnTo=%2Fplan');
+  await expect(
+    page.locator('main form').getByRole('link', { name: 'Verify Your Email', exact: true }),
+  ).toHaveAttribute('href', '/verify-email?returnTo=%2Fplan');
 });
 
 test('Show and Hide change only how the password is drawn', async ({ page }) => {
@@ -198,7 +190,7 @@ for (const status of [429, 500, 'abort'] as const) {
   });
 }
 
-test('a 403 shows the mismatch sentence, and Verify Your Email stays in More ways in', async ({
+test('a 403 shows the mismatch sentence, and Verify Your Email stays one tap away', async ({
   page,
 }) => {
   await failWith(page, 403);
@@ -207,11 +199,7 @@ test('a 403 shows the mismatch sentence, and Verify Your Email stays in More way
     'aria-invalid',
     'true',
   );
-  const more = page.locator('main form details.account-more');
-  expect(await more.evaluate((node) => (node as HTMLDetailsElement).open)).toBe(false);
-  await more.locator('summary').click();
-  await expect(more.getByRole('link', { name: 'Verify Your Email', exact: true })).toHaveAttribute(
-    'href',
-    '/verify-email',
-  );
+  await expect(
+    page.locator('main form').getByRole('link', { name: 'Verify Your Email', exact: true }),
+  ).toHaveAttribute('href', '/verify-email');
 });

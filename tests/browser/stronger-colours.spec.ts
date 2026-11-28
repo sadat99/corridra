@@ -134,7 +134,7 @@ test('the effect really changes the page: darker secondary text, a clearer line,
   expect(await read()).toEqual(before);
 });
 
-test('keyboard focus is a thick ring in the stronger colour, and white on the navy footer', async ({
+test('keyboard focus is a thick ring in the stronger colour, in the footer too (the footer is on the light surface since home v4.4)', async ({
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem('corridra.contrast', 'more'));
@@ -152,10 +152,11 @@ test('keyboard focus is a thick ring in the stronger colour, and white on the na
   );
   expect(onPage?.width).toBe('3px');
   expect(brand).not.toBe('');
-  const inFooter = await ring('.guide-footer a');
+  // The footer of every page (home v4.4, 28 Nov 2026) is no longer a navy band: its ring is the same thick ring in the
+  // same stronger colour as on the page, where the navy footer's was white.
+  const inFooter = await ring('footer[data-footer="v44"] a');
   expect(inFooter?.width).toBe('3px');
-  expect(inFooter?.colour).toBe('rgb(255, 255, 255)');
-  expect(onPage?.colour).not.toBe(inFooter?.colour);
+  expect(inFooter?.colour).toBe(onPage?.colour);
 });
 
 test('the choice is never sent to a server: no cookie and no request carries it', async ({
@@ -178,8 +179,10 @@ test('the choice is never sent to a server: no cookie and no request carries it'
 // the quote reaction and the calculator result. The ring there is white with a navy edge. Since UI/UX.v4.1 L4 (23
 // November 2026) the hero band holds the headline only; the doors and the first action sit below it on the light
 // surface and are measured there.
-const navyRegions = '.guide-footer, .guide-band, .tr-hero, .tr-navy, .tr-reaction, .tr-result';
-const navyEdges = ['.tr-navy .primary-link', '.guide-footer .guide-footer-actions .primary-link'];
+// The footer left the navy regions on 28 Nov 2026 (home v4.4: the footer of every page is on the light surface); its own
+// ring is measured in the test after this loop.
+const navyRegions = '.guide-band, .tr-hero, .tr-navy, .tr-reaction, .tr-result';
+const navyEdges = ['.tr-navy .primary-link'];
 // The home's first action left the navy band with the doors (UI/UX.v4.1 L4). It is still measured, where it now is.
 const heroPrimary = '#hero .tr-start .primary-link';
 
@@ -204,8 +207,9 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
         if (path === '/') {
           // The elements the finding named are really among those measured, so this cannot pass by measuring nothing.
           const names = rings.map((row) => row.element).join('\n');
-          expect(names).toMatch(/guide-footer-actions|primary-link/);
-          expect(names).toMatch(/^a.*primary-link/m);
+          // The navy regions of the home no longer hold an action filled control (the footer, which did, is on the
+          // light surface since home v4.4); the quiet link under the legend is among those measured.
+          expect(names).toMatch(/tr-light-link/);
           // UI/UX.v4.1 L4 (23 November 2026): the doors sit below the navy band, on the light surface. They are
           // measured there, in the hero section, and are really among the elements measured.
           const { rings: heroRings } = await measureColours(page, '#hero');
@@ -223,6 +227,24 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
         }
       }
       expect(found.length).toBeGreaterThan(50);
+    });
+  }
+}
+
+for (const way of ['the saved choice', 'the device setting'] as const) {
+  for (const width of widths) {
+    test(`with ${way} the focus ring of every focusable element in the footer reaches 3 to 1 on the light surface, at ${width}`, async ({
+      page,
+    }) => {
+      if (way === 'the saved choice')
+        await page.addInitScript(() => localStorage.setItem('corridra.contrast', 'more'));
+      else await page.emulateMedia({ contrast: 'more' });
+      for (const path of pages) {
+        await open(page, path, width);
+        const { rings } = await measureColours(page, 'footer[data-footer="v44"]');
+        expect(rings.length, `${path} has focusable elements in the footer`).toBeGreaterThan(5);
+        expect(weakRings(rings), `${path} at ${width}`).toEqual([]);
+      }
     });
   }
 }
@@ -265,9 +287,15 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
     else await page.emulateMedia({ contrast: 'more' });
     await open(page, '/', 1440);
     const { edges } = await measureColours(page, navyRegions, navyEdges);
-    expect(edges.map((row) => row.element).join('\n')).toMatch(/primary-link/);
-    expect(weakEdges(edges)).toEqual([]);
-    for (const row of edges) expect(row.backdrop, row.element).toBe('rgb(20 36 56)');
+    // No action filled control sits on navy any more: the footer's Start a Request is on the light surface since
+    // home v4.4, where it is measured below with the hero's, under the same two limits.
+    expect(edges).toHaveLength(0);
+    const { edges: footerEdges } = await measureColours(page, 'footer[data-footer="v44"]', [
+      'footer[data-footer="v44"] .hv7-footer-start',
+    ]);
+    expect(footerEdges).toHaveLength(1);
+    expect(weakEdges(footerEdges)).toEqual([]);
+    expect(footerEdges[0].backdrop).not.toBe('rgb(20 36 56)');
     // The hero's first action, on the light surface: the same two limits, and it is really the element measured.
     const { edges: heroEdges } = await measureColours(page, '#hero', [heroPrimary]);
     expect(heroEdges).toHaveLength(1);
@@ -284,7 +312,7 @@ test('without the white edge the same controls are only 1.91 to 1 on navy, so th
   await open(page, '/', 1440);
   await page.addStyleTag({
     content:
-      "html[data-contrast='more'] :is(.tr-navy .primary-link, .guide-footer .guide-footer-actions .primary-link) { border-color: var(--action) !important; }",
+      "html[data-contrast='more'] :is(.tr-navy .primary-link) { border-color: var(--action) !important; }",
   });
   const { edges } = await measureColours(page, navyRegions, navyEdges);
   expect(weakEdges(edges)).toHaveLength(edges.length);
