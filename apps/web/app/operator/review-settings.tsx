@@ -52,7 +52,7 @@ const commands = {
 } as const;
 type Command = keyof typeof commands;
 
-const packLanguages = [
+export const packLanguages = [
   ['en', 'English'],
   ['bn', 'Bengali'],
   ['zh', 'Chinese'],
@@ -61,20 +61,21 @@ const packLanguages = [
   ['fr', 'French'],
   ['de', 'German'],
 ] as const;
-const packCurrencies = [
+export const packCurrencies = [
   ['BDT', 'Bangladeshi Taka'],
   ['USD', 'US Dollar'],
   ['EUR', 'Euro'],
   ['CNY', 'Chinese Yuan'],
   ['GBP', 'British Pound'],
 ] as const;
-const packZones = [
+export const packZones = [
   ['Asia/Dhaka', 'Dhaka'],
   ['Europe/Madrid', 'Madrid'],
   ['Asia/Shanghai', 'Shanghai'],
   ['UTC', 'UTC'],
 ] as const;
-const words = (code: string) => {
+// Also read by the pack dialogs of the route pack editor (ADR-093 Phase 3, PR 3b), so both screens offer the same lists.
+export const words = (code: string) => {
   const text = code
     .replace(/[_.-]+/g, ' ')
     .trim()
@@ -105,6 +106,14 @@ function RouteList({
     notice: boolean;
     retry: () => void;
     retrying: boolean;
+    /** ADR-093 Phase 3, PR 4: Import Route Data and Export Route Data at the head of the list. */
+    data?: {
+      tenant: string;
+      role: string;
+      routes: RouteSummary[];
+      onePersonPublication: boolean;
+      onImported: () => void;
+    };
   } | null;
 }) {
   return (
@@ -241,8 +250,17 @@ function RoutePackForm({
     };
   }, [tenant, onShownChange]);
   if (!available) return null;
-  const nextVersion =
-    Math.max(0, ...catalogue.packs.filter((p) => p.route_id === routeId).map((p) => p.version)) + 1;
+  const routePacks = catalogue.packs.filter((p) => p.route_id === routeId);
+  const nextVersion = Math.max(0, ...routePacks.map((p) => p.version)) + 1;
+  // The manual box shows the chosen route's current channel; a route with no pack yet starts manual.
+  const currentPack = routePacks.reduce<(typeof routePacks)[number] | null>(
+    (latest, p) => (!latest || p.version > latest.version ? p : latest),
+    null,
+  );
+  const currentChannels = (currentPack?.configuration as { channels?: unknown } | null)?.channels;
+  const manualDefault = currentPack
+    ? Array.isArray(currentChannels) && currentChannels.includes('MANUAL')
+    : true;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -336,7 +354,10 @@ function RoutePackForm({
               name="route"
               required
               value={routeId}
-              onChange={(event) => setRouteId(event.target.value)}
+              onChange={(event) => {
+                setRouteId(event.target.value);
+                setChannelTouched(false);
+              }}
             >
               <option value="">Choose a route</option>
               {catalogue.routes.map((route) => (
@@ -401,7 +422,13 @@ function RoutePackForm({
             ))}
           </fieldset>
           <label className="ux-check">
-            <input type="checkbox" name="manualChannel" onChange={() => setChannelTouched(true)} />{' '}
+            <input
+              key={routeId}
+              type="checkbox"
+              name="manualChannel"
+              defaultChecked={manualDefault}
+              onChange={() => setChannelTouched(true)}
+            />{' '}
             The team contacts companies by hand (manual channel)
           </label>
           <label className="field">
@@ -455,6 +482,24 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
           notice: address.routeNotFound,
           retry: overview.retry,
           retrying: overview.retrying,
+          data: {
+            tenant,
+            role,
+            routes: overview.routes,
+            onePersonPublication: overview.onePersonPublication,
+            // A saved file may add routes: the catalogue is read again (and the route facts with it); if that read fails the
+            // facts are still asked again.
+            onImported: () => {
+              // Both reads are quiet (refresh first): a failed answer keeps the list, so the open import dialog, its file and
+              // its save id stay on the page (spec 12.1).
+              void request('mission-catalogue')
+                .then((value) => {
+                  overview.refresh();
+                  setCatalogue(value);
+                })
+                .catch(() => overview.refresh());
+            },
+          },
         }
       : null;
   const routeList = <RouteList catalogue={catalogue} failed={catalogueFailed} facts={factsRead} />;
@@ -585,12 +630,15 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
         openRoute ? (
           <RouteEditorShell
             list={routeList}
+            routes={overview.routes}
             summary={openRoute}
             tenant={tenant}
+            stageScope={overview.stageScope}
             role={role}
             refreshKey={catalogue}
             address={address}
             onGone={overview.retry}
+            onSaved={overview.refresh}
           />
         ) : (
           routeList

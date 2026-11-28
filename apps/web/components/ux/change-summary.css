@@ -1,0 +1,25 @@
+/* A change summary: a count line and a list of changes in words. Tokens only; no colour, no icon. Lines wrap in any script. */
+.ux-change-summary {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.ux-change-summary p {
+  margin: 0;
+}
+.ux-change-counts {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ux-change-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+.ux-change-lines > li {
+  margin: 0;
+  padding: 0;
+  overflow-wrap: anywhere;
+}

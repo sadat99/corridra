@@ -5880,3 +5880,275 @@ Checks at f236a8f0, all exit 0:
 **Open owner items.** Approve the 2a install, then 2b (the exact run needs the owner's separate word; the Guardian first checks the production Postgres major). Approve the Phase 3 design (#672). Fill the BD-CN template (docs/adr/0093/route-pack-template-v1.csv), then the other 7 launch routes. Phase 4 loads each route on the owner's word only.
 
 **Next action.** Owner decides the Phase 3 design and the install order. Verification of this records PR is in its description.
+
+## 27 Nov 2026 - records: PRs 684, 681, 686 merged, main 2882b1c0, ADR-093 2a installed in production (scribe, for Guardian G70)
+
+**Request.** Records for Guardian G70 (session https://claude.ai/code/session_0187kU9vDSpDNbyo18u6oADV): the merges of PRs 684, 681 and 686 and the ADR-093 2a production install. Branch claude/records-g70-2a-install from origin/main 2882b1c0, authority stamp auth-93895e61a706. Docs only, not Class A. No requirement moves to VERIFIED.
+
+**Why.** The ledger still read main 8cb406d3 with all of ADR-093 Phase 2 NOT INSTALLED and the Phase 3 editor WAITING OWNER. Both are now stale.
+
+**Outcome.**
+
+- PR 684 merged as 205e1752 (squash of head 23aca521). KI-69 (b) fixed, a real defect: `apps/web/components/home-v43-anchors.ts` dispatched `openRoute` outside a React event, so React committed the route block on a later task and the hash target lookup found nothing; the dispatch is now wrapped in `flushSync` (builder measured 8 of 40 failures before, 100 of 100 passes after). KI-68 fixed, test only: the platform `<dialog>` closes and returns focus at once but the `close` event that unmounts the preview contents is a later task; `tests/ux/home-v43.spec.ts` now waits `toHaveCount(before.length)` on `main a[href^="/plan"]` before the exact compare. Production deploy dpl_4VVadBXbVg7xBGnhZc4oJv68bF7B READY.
+- PR 681 merged as 80469cd6 (head fb8cf41d): installer choice `route_pack_install_2a` (ADR-093 2a only, without 2b). Deploy dpl_F4MrCKSbqA1oCnouF6CymDs5FZ3g READY.
+- PR 686 merged as 2882b1c0 (head 7acddfab): ADR-093 Phase 3 PR2a, the route pack facts write path, invisible. POST team-control `route-pack-facts` answers 404 like an unknown action while the 2b marker is absent, so it is dormant in production. Two independent Opus reviews, one fix round and an Opus verification. Fixed: (1) an unresolved stage conflict disappeared on re-merge or mirror restore; (2) a replay with a different version was treated as a duplicate; the service now matches id, route, version, reason and document, else 409 ROUTE_PACK_COMMAND_REUSED. Deploy dpl_64VxyYBNL3QKQfabcgNgKoNMT4ce READY.
+- Production install: workflow "Install customer modules" run 46013576406 on main 2882b1c0, apply=yes, field_modules_action=route_pack_install_2a, environment approved by the owner. Log: before "route_pack_migrations: not installed"; "Route pack publication (2a) installed or already current (content storage 2b not installed)"; after "route_pack_migrations: 1 applied"; "Install complete." ADR-093 2a is INSTALLED in production. 2b (content store, migration 0002), the go-live check and 2c remain NOT INSTALLED. Rollback of 2a: a reviewed forward run of rollback/0001_restore_independent_review.sql.
+- Phase 3 editor spec (docs/revamp/specs/route-pack-editor.md) is APPROVED. PR1 (PR 682, dca07ce5) and PR2a (PR 686) are built and merged; PR2b (the visible editor) is in progress in the Phase 3 builder session; then PR2c, PR3, PR4.
+
+**Owner words, first hand, 27 Nov 2026.** To Guardian G69: "approve phase 3 design and 2a install"; "go ahead and run the install". To G70: "ok proceed, run the install when green"; "approved, go ahead" (environment approval); "claude/home-v44 is someone else's who is working on the platform, so u let them work and proceed." The owner deleted branches claude/fix-home-v43-dialog-link, claude/wonderful-brown-upq7u3 (content identical on main) and claude/mockups-how-trust.
+
+**Carried into PR2b (follow-up list).** The save body version must come from stage.baseVersion+1, with a canSave helper. stageFact must parse and trim with contentFact. Noted, no change: the content record id is a global primary key (0002 line 17), so a foreign id reuse answers 409.
+
+**Verification.** G70 receipts as relayed: the three deploys READY and the install log lines above. Checked by this scribe run with gh api REST: PRs 684, 681 and 686 merged with merge commits 205e1752, 80469cd6 and 2882b1c0 and heads 23aca521, fb8cf41d and 7acddfab; run 46013576406 is "Install customer modules", workflow_dispatch on main, head_sha 2882b1c009823a35a71c52f42452215827c73a53, completed, conclusion success (created 2026-11-27T14:10:53Z). This records PR: `node scripts/authority.mjs check` exit 0; `node scripts/v3-context.mjs verify` exit 0; `pnpm test:docs` exit 0; `pnpm exec prettier --check` on the changed files exit 0.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action rewritten for main 2882b1c0, the merges, the 2a install and Phase 3 approval; same owner decisions); docs/v3/history/ledger-before-g70-records-686-2026-11-27.md (exact copy of the ledger at 2882b1c0, 10328 bytes, sha256 35223d9e...ff17e9) with its entries in docs/v3/history/manifest.json and docs/documentation-map.json; docs/PLAN_STATUS.md (editor spec row: CURRENT, APPROVED with the owner quote, matching the spec's own status line; ADR-093 row: 2a installed, Phase 3 approved, PR1 and PR2a merged; the ADR table was re-padded by prettier, whitespace only); docs/v3/KNOWN_ISSUES.md (KI-68 resolved; KI-69 (b) resolved, (a) stays open); this entry. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates stay as the ledger records them. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. The PR2a write path was not exercised in production, because 2b is not installed. The deploy READY states and the install log lines are G70's receipts, not re-read here. No production Postgres major check is recorded here for 2b.
+
+**Next action.** Phase 3 PR2b, then PR2c, PR3, PR4. The 2b install needs the owner's separate approval. Phase 4 loads each route on the owner's word. Native review gate OPEN. Leave claude/home-v44 to its owner.
+
+## 27 Nov 2026 - records: PR 689 merged, main 97bc2bbd, ADR-093 Phase 3 PR2b (scribe, for Guardian G71)
+
+**Request.** Records for Guardian G71 (session https://claude.ai/code/session_0187kU9ug1wtFfyKMdnFqfrw): the merge of PR 689, "ADR-093 Phase 3 PR2b: route pack fact editor (visible)". Branch claude/records-689 from origin/main, authority stamp auth-edd9d888d39d. Docs only, not Class A. No requirement moves to VERIFIED.
+
+**Why.** The ledger and register read PR2b as in progress. It is merged.
+
+**Outcome (as relayed by G71).**
+
+- PR 689 merged as a squash, 97bc2bbdf790b30e24e53c09baeab6dcdf6b6989, pinned to head 44ba5b1f2e700c58f4e56dfad31ca3d9db288be9. All CI jobs green on that head (CodeQL neutral). Vercel production deploy dpl_jMboXeENuZ63bKeZuFgEEbNQvQ1p for 97bc2bb READY.
+- Review: two independent Opus corridra-reviewer runs on aeda503 (1 major: a stale restored stage plus a failed re-read could overwrite newer facts; minors: clash controls not locked, post-save version, failed overview refresh, unrecognised 409 words, leave copy), one fix round, an Opus verification (found a dead primary in the clash view and 2 notes), the final delta fixed in 44ba5b1 and Opus-verified. Designer audit: Save statement flags fixed; leave copy amended in spec section 9 ("Leaving this route puts your N unsaved changes aside"); CI layout fix (Edit after the state mark, font-independent assertion); shared .ux-dialog-close flex-shrink 0 and nowrap.
+- Production: the editor write path stays dormant (404) until ADR-093 2b (content store, migration 0002) is installed. That needs the owner's separate approval and a production Postgres major check (production is PG 18.7; pins proven on PG16 only).
+
+**Known follow-ups (from the PR body).** (1) A late 2xx clearMirror can remove a tab copy rewritten by a remount of the same route; fix: clear only when the copy matches the sent stage. (2) A null heading focus ref on clash step > 0 after a non-409 error (harmless). (3) The mirror key has no user, so a second owner on the same tab sees the first owner's restored facts (same tenant only). Deviations are recorded in the PR body: 320 bar three lines, answer row density, two strings not yet in designer copy for PR2c, TW-AU region KI-48.
+
+**In flight.** PR 690, ADR-093 Phase 3 PR3a route-pack-publish action (invisible), draft, CI running. Next: PR2c (More menu, Add Custom Field, Mark Section Not Applicable and Remove mark, Discard into More), PR3b dialogs (amend spec 17A first, including StepUpDialog on Next), then PR4.
+
+**Verification.** G71 receipts as relayed (merge, head, CI, deploy READY); not re-read by this scribe run. This records PR: `node scripts/authority.mjs stamp` gave auth-edd9d888d39d at start; checks listed in the PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action rewritten for main 97bc2bbd; same owner decisions); docs/v3/history/ledger-before-g71-records-689-2026-11-27.md (exact copy of the previous ledger) with entries in docs/v3/history/manifest.json and docs/documentation-map.json; docs/PLAN_STATUS.md (editor spec row and ADR-093 row); this entry. The spec's own status line already names PR2b and was not changed. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. The editor write path was not exercised in production (2b not installed). No 2b install or Postgres major check is claimed.
+
+**Next action.** PR3a (PR 690), PR2c, PR3b, PR4. The 2b install needs the owner's separate approval. Phase 4 loads each route on the owner's word.
+
+## 27 Nov 2026 - records: PR 690 merged, main 4e225bf0, ADR-093 Phase 3 PR3a (scribe, for Guardian G71)
+
+**Request.** Records for Guardian G71 (session https://claude.ai/code/session_0187kU9ug1wtFfyKMdnFqfrw): the merge of PR 690, "ADR-093 Phase 3 PR3a: route pack publish action (invisible)". Branch claude/records-690 from origin/main; authority stamp auth-e7ba6def769f at start. Docs only, not Class A. No requirement moves to VERIFIED.
+
+**Why.** The ledger and register read PR3a as a draft in CI. It is merged.
+
+**Outcome (as relayed by G71).**
+
+- PR 690 merged as a squash, 4e225bf06928828619db448c5c933129c3898a17, pinned to head 5baf4e8831fbdffe2b9d85bc91ebf239648750c2. All CI green, CodeQL neutral. Vercel production deploy dpl_9axNtqabGLwfdKZJbGuGsFKMJW6Y READY.
+- Adds the team-control POST action route-pack-publish (preview and publish of a pack settings or status change) in packages/missions/src/route-pack-form.ts, apps/web/lib/route-pack-editor-publish.ts, route.ts and tests/integration/route-pack-editor-publish.test.ts. Dormant in production (404) until ADR-093 2b is installed. config.manage needs a fresh authenticator for preview and publish.
+- Review: two independent Opus reviewers on 88318a1, one fix round (0ef289e), Opus verification; 52/52 publish suite, 225/225 regression, red-on-old 51/52, three ordering mutations red. createRoutePack, changeRouteStatus and guidedRoutePack byte-identical to 13bb957.
+
+**Known follow-up F2.** After publish, the same command id with a list left out, or removeSourcingProfile on a base without a block, answers 200 duplicate (nothing written twice). The fix needs a base-pack configuration read in route-pack-content.ts and is its own change.
+
+**In flight.** Builder C on PR2c (claude/route-pack-editor-pr2c); Builder D on PR3b pack dialogs (claude/route-pack-editor-pr3b; first commit amends spec 17A with the PR3a contract). Then PR4.
+
+**Verification.** G71 receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, node --test tests/documents.test.mjs and prettier --check, results in the PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action, condensed to stay within the 36864-byte guides budget; owner decision lines unchanged); docs/PLAN_STATUS.md (editor spec row and ADR-093 row); this entry. The spec's own status line was not changed. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. The publish action was not exercised in production (2b not installed). No 2b install or Postgres major check is claimed.
+
+**Next action.** PR2c, PR3b, PR4, F2 as its own change. The 2b install needs the owner's separate approval.
+
+## 27 Nov 2026 - records: PR 693 merged, main 605ccee9, ADR-093 Phase 3 PR2c (scribe, for Guardian G72)
+
+**Request.** Records for Guardian G72 (session https://claude.ai/code/session_0187kU9tpg5kGmsYPezLQUpt): the merge of PR 693, "ADR-093 Phase 3 PR2c: route pack editor More menu, custom fields, section marks". Branch claude/records-693 from origin/main (contains 605ccee); authority stamp auth-cda465667242 at start. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger, register and editor spec read PR2c as in flight or not built. It is merged.
+
+**Outcome (as relayed by G72).**
+
+- PR 693 merged as a squash, 605ccee93ad3492e4295f014f37d1e7d099547da, pinned to head 7bab0da67211b1f9c917e9e8a5373813f77258af. Exact-head CI all green, CodeQL neutral. Production deploy dpl_Fdctk5MY3RS59stPHo6HuTHyEL6H was BUILDING at dispatch; READY is not confirmed by this record.
+- Adds the route pack editor More menu, Add Custom Field, Mark Section Not Applicable and Unmark, Discard narrowed into More, and the mirror clear-only-if-matching follow-up. Dormant in production (404) while the 2b marker is absent.
+- Review: two independent Opus reviews on b14db19 (one major: the custom key check used workspace-wide customLabels; minors), one fix round 7bab0da, Opus delta verification all six VERIFIED, designer audit merge-ready.
+
+**In flight.** PR 694 (Phase 3 PR3b pack dialogs, Class A): fix round pushed at b7922bb, main merge pending, then Opus delta verification.
+
+**Next action.** Merge PR 694 after the main merge, delta verification and exact-head green; then PR4 (Import/Export Route Data UI, History disclosure), F2, the saved-but-not-published server code, the PR2b follow-up list.
+
+**Verification.** G72 receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, node --test tests/documents.test.mjs and prettier --check, results in the PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action, condensed to stay within the 36864-byte guides budget); docs/PLAN_STATUS.md (editor spec row and ADR-093 row); docs/revamp/specs/route-pack-editor.md (Document status line and the PR 2b amendment note); this entry. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. PR2c was not exercised in production. ADR-093 2b (content store, migration 0002) is still NOT installed (needs owner approval and a production PG 18 major check); route-pack-facts and route-pack-publish still answer 404 in production. Deploy dpl_Fdctk5MY3RS59stPHo6HuTHyEL6H READY (G72, Vercel list_deployments by sha). Native language review gate OPEN.
+
+## 27 Nov 2026 - records: PR 694 merged, main 17ee69f2, ADR-093 Phase 3 PR3b (scribe, for Guardian G72)
+
+**Request.** Records for Guardian G72 (session https://claude.ai/code/session_0187kU9tpg5kGmsYPezLQUpt): the merge of PR 694, "ADR-093 Phase 3 PR3b: route pack editor pack dialogs" (Change Pack Setting, Change Pack Status, Remove Sourcing Profile, Publish; locked key list controls; Class A). Branch claude/records-694 from origin/main (contains 17ee69f); authority stamp auth-7469a8b91055 at start. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger, register and editor spec read PR3b as open. It is merged.
+
+**Outcome (as relayed by G72).**
+
+- PR 694 merged 27 Nov 2026 as a squash, 17ee69f242f32bfe7aa295d63ceb28adc6a7c81a, from exact head 6837e94dbc43943dc9d17c598445007013374e4c. All CI green, CodeQL neutral. Production deploy dpl_9HjM6JDDTgHXEEvcv7U5hYuyomCd READY (G72, Vercel list_deployments by sha).
+- Route: two independent Opus reviews on e8c9af7 (one major: a pack-less route offered Change on every Locked row; minors); fix round b7922bb plus spec section 8.9 amendment 9c1bd68; main merges 49ec3c2 (PR 693) and 6837e94 (PR 695); test adjustments 8fdbff5 (44 px scoped to the header Change Pack Status) and 33bd8ad (more.spec: per pack row exactly one Change, Guardian ruling); Opus delta verification e8c9af7..33bd8ad, all items VERIFIED.
+- Dormant in production (404) while the 2b marker is absent.
+
+**Follow-up minors.** The TW-AU browser test checks only section 3 and mission types for a stray Change (other sections unit-tested only). The tooLarge outcome relies on exact server words (pinned by an integration test).
+
+**Next action.** PR4 (Import/Export Route Data UI, History disclosure); F2 (base-pack read in route-pack-content.ts so a same-id publish with an omitted list is refused); server code for saved-but-not-published; the PR2b follow-up list (mirror key without user); the two PR3b minors. Owner items: 2b install approval, BD-CN template and the 7 other launch routes; Phase 4 only on the owner's word.
+
+**Verification.** G72 receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, node --test tests/documents.test.mjs and prettier@3.9.10 --check, results in the PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action, condensed to stay within the 36864-byte guides budget); docs/PLAN_STATUS.md (editor spec row and ADR-093 row); docs/revamp/specs/route-pack-editor.md (Document status line and the PR 3b amendment note); this entry. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line in the ledger. Real-operation gates as recorded. Native language review gate stays OPEN.
+
+**Not verified.** No signed-in journey. PR3b was not exercised in production. ADR-093 2b (content store, migration 0002) is still NOT installed (needs owner approval and a production PG 18 major check); route-pack-facts and route-pack-publish still answer 404 in production.
+
+## 28 Nov 2026 - records: PR 697 merged, main b2c9ad32, ADR-093 Phase 3 PR4 (scribe, for Guardian G73)
+
+**Request.** Records for the merge of PR 697, "ADR-093 Phase 3 PR4: Import Route Data, Export Route Data, History disclosure". Branch claude/records-697 from origin/main (b2c9ad3); authority stamp auth-ef7f7926ac75 was confirmed at 160a793 in the brief. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger, register and editor spec read PR4 as not built. It is merged, which completes ADR-093 Phase 3.
+
+**Outcome (as relayed by G73).**
+
+- PR 697 squash-merged 28 Nov 2026 as b2c9ad32cd8a7b235b2e56b1854098bf77a58b9f by Guardian G73, exact head b36a649ccc6a3d4a6da81c8d0caa0c09434c107e. All 24 check runs green (browser 1-3, integration 1-3, operator 1-6, ux 1-3, checks, verification, validate, changes, CodeQL); mergeable clean. Builder E (Opus).
+- Route: two independent Opus reviews plus a designer audit on 3d9ece7; G72 fix list M1-M4 and m1-m13; one Opus delta verification on 3d9ece7..b36a649: MERGE-READY yes, every item PASS.
+- Builder local evidence at the head: build exit 0; full test:operator 2632 passed, 32 skipped, 0 failed; BD-CN region budget owner 883 / admin 899 of 900 px side by side at 1440 and 1920.
+- Only server-side change: pack-history read gains one field `reason` (decisionReason verbatim), same audit.read owner/admin gate. No new server action, schema or migration. Import and export reuse route-pack-import and route-pack-export. Residual risk accepted by G72: check-then-save race (file value wins, both versions kept in History).
+- Production deployment dpl_C4tPKo5oJd8TupU6dZt5H1pPowif for b2c9ad3: READY (confirmed by G73 before merge of this records PR).
+- ADR-093 Phase 3 is complete (PR2a, 2b, 2c, 3a, 3b, 4). Phase 4 not started.
+
+**Next action.** Small follow-up batch (Builder C, Sonnet): F2 base-pack configuration read in route-pack-content.ts (a same-id publish with an omitted list is refused); dedicated server code for saved-but-not-published; PR2b mirror key without user; PR3b minors (TW-AU browser test covers only section 3 and mission types; tooLarge relies on exact server words); server-side plan fingerprint so import save refuses a changed state; designer nits (status Review taller than 900 px, "Now: none" wording); a second "Try the Rest Again" after a refused pack step does not name facts saved by the earlier answer. Owner items: 2b install approval; BD-CN template and the 7 other launch routes; Phase 4 per route on the owner's word.
+
+**Verification.** G73 and builder receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, prettier@3.9.10 --check; results in the final report and PR body.
+
+**Changed files.** docs/V3_LEDGER.md (Resume first bullet and next action; older lines shortened to stay within the 12 KiB cap and the 36864-byte guides budget, no owner decision or gate removed); docs/PLAN_STATUS.md (editor spec row and ADR-093 row); docs/revamp/specs/route-pack-editor.md (Document status line only); this entry. No code, tests, ADR, switch or install.
+
+**Preserved.** Every owner decision line and closed gate: ADR-093 2b (migration 0002) NOT installed (needs the owner's separate approval and a production PG 18.7 major check; pins proven on PG16); route-pack-facts, route-pack-publish and import save dormant (404) in production; native language review gate OPEN.
+
+**Not verified.** No signed-in live journey pass. PR4 was not exercised in production.
+
+## 28 Nov 2026 - records: PR 699 merged, main 2223e060, ADR-093 follow-ups UI half (scribe, for Guardian G73)
+
+**Request.** Records for the merge of PR 699, "ADR-093 follow-ups: TW-AU every section, tooLarge on status and code, Review step height, plain Current setting words". Branch claude/records-699 from origin/main (2223e06); authority stamp auth-c92a91cb8b33 was confirmed at 143b75a in the brief. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger named the whole follow-up batch as the next action. The UI half is merged; the server half is still open.
+
+**Outcome (as relayed by G73).**
+
+- PR 699 squash-merged 28 Nov 2026 as 2223e060fbad345975565c20451b7e3a6bbcc880 by Guardian G73 from exact head 3f3ee3e4. 24 checks green; mergeable clean. Builder C (Sonnet). Opus review MERGE-READY yes; no blocking or should-fix findings.
+- Contents: the TW-AU browser test checks all 17 sections for a stray Change; packOutcome and factsOutcome read tooLarge from the 400 code ROUTE_PACK_TOO_LARGE, any 413, or (pack only) the old words; the status Review step is 790 px, was 849, at 1440x900 with no inner scroll (it scrolls inside the dialog at 320x568 by design); "Now: none" is replaced by "Current setting: ...", "Current setting: nothing is set" and "Current status: Active" (spec 8.9 and the Status step updated).
+- deploy dpl_9hj51wLesTz2XNaD1uPifjQFMxrv READY (confirmed by G73)
+- Open: the server half is in progress on claude/route-pack-followups-server (F2 base-pack read, ROUTE_PACK_NOT_PUBLISHED, mirror key without user, plan fingerprint ROUTE_PACK_PLAN_CHANGED, earlier facts named on a second Try the Rest Again, server emits ROUTE_PACK_TOO_LARGE).
+
+**Next action.** Finish and merge the server half. Owner items unchanged: 2b install approval (production Postgres major check first); BD-CN template and the 7 other launch routes; Phase 4 per route on the owner's word.
+
+**Verification.** G73 and builder receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, node --test tests/documents.test.mjs, prettier@3.9.10 --check; results in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (first Resume bullet and next action); docs/PLAN_STATUS.md (ADR-093 row); docs/adr/README.md (ADR-093 row only, which still said design only and nothing built, installed or live; now matches PLAN_STATUS); this entry. No code, tests, ADR text, switch or install.
+
+**Preserved.** Closed gates: ADR-093 2b (migration 0002) NOT installed; route-pack-facts, route-pack-publish and import save dormant (404) in production; native language review gate OPEN; Phase 4 closed.
+
+**Not verified.** No signed-in live journey pass. PR 699 was not exercised in production.
+
+## 28 Nov 2026 - records: PR 701 merged, main 005758b1, ADR-093 2b installed (scribe, for Guardian G74)
+
+**Request.** Records for PR 701 (ADR-093 follow-ups, server half) and the ADR-093 2b install. Branch claude/modest-curie-fqwimu from origin/main 005758b; authority stamp auth-5b96590aca1c. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger said the server half was open and 2b NOT INSTALLED (dormant, 404).
+
+**Outcome (as relayed by G74, session_0187kU9uxwC9xBAxVLyticyz).**
+
+- PR 701 merged as 005758b101f87a90b07c508b5f150253b5bd2fde from head a3c55803244c0d4757038d70c68f77e307dde341. 24 checks green on that head (browser 1-3, integration 1-3, operator 1-6, ux 1-3, verification, validate, checks, changes, CodeQL analyses; CodeQL neutral). Deploy dpl_Uk8MRKwniEijBz1iHAhqEbMeToMi READY (Vercel list_deployments by sha).
+- Scope: F2 base-pack replay (409 ROUTE_PACK_COMMAND_REUSED, exact replay 200 duplicate); ROUTE_PACK_NOT_PUBLISHED (409), pack moved 409 ROUTE_PACK_PACK_CHANGED, 401 keeps STEP_UP_REQUIRED; stageScope keyed hash (AUTH_SECRET) and sessionStorage key v2, legacy key removed and never restored; planFingerprint required on save, first send only, 409 ROUTE_PACK_PLAN_CHANGED; earlier facts named on a later part-way answer; server 400 ROUTE_PACK_TOO_LARGE. No migration, schema change, switch or env var.
+- Review: one independent Opus corridra-reviewer on 6980731: 0 blocking, READY, all 8 builder deviations accepted. Two non-blocking findings fixed before merge by an Opus builder: (1) continued-save detection finds this save's derived pack ids in any version (packIdsWritten, tenant-scoped id=ANY lookup); red-first test failed on 6980731 with the PLAN_CHANGED throw at route-pack-sheet.ts:802, then passed (b8f6366); (2) ROUTE_PACK_NOT_PUBLISHED is 409 per spec, operator mock 403 to 409 (a3c5580). Builder checks: route-pack integration 4 files 161 passed; route-pack-editor-pack.spec.ts 30 passed; typecheck, lint 0; test:docs 138/138; v3-context verify PASS. G74 read the fix delta.
+- Open minor follow-up (review finding 3): a part-way answer may name an earlier facts version of the same save id when others later rewrote the document (still true, "facts saved", not the current version number).
+- 2b INSTALLED 28 Nov 2026: Install customer modules run 46109912348 on 005758b, apply=yes, field_modules_action=route_pack_install, approved by the owner (first hand to G74: "dispatch installation if ready, i will approve", then "apprvd"). Log: "route_pack_migrations: 1 applied" before, "Route pack module installed or already current", "route_pack_migrations: 2 applied" after; conclusion success. PG 18.7 check: 0002 has no version-specific hash pins (the only pins were in 0001, applied on PG 18.7 on 27 Nov); the migrator applies in one transaction under an advisory lock. Rollback: rollback/0002_hide_route_pack_content.sql (hides the module, keeps the rows).
+- Effect: with CORRIDRA_ROUTE_PACK_FORM on, route-pack-facts, route-pack-publish and import save are no longer dormant; the go-live check acts on every pack path.
+
+**Next action.** Signed-in production check of the route pack editor (owner or a signed-in session), then the owner's BD-CN template and 7 launch routes, Phase 4 per route on the owner's word, then native review.
+
+**Verification.** G74 and builder receipts as relayed; not re-read by this scribe run. This PR: node scripts/authority.mjs stamp, node scripts/v3-context.mjs verify, node --test tests/documents.test.mjs, prettier@3.9.10 --check; exit codes in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (first Resume bullet and next action, size not grown); docs/PLAN_STATUS.md (ADR-093 row and route pack editor spec row); docs/adr/README.md (ADR-093 row); this entry. No code, tests, ADR text, switch or install.
+
+**Preserved.** 2c wording unchanged (listed NOT INSTALLED); native language review gate OPEN; Phase 4 not started, per route only on the owner's word; BD-CN template and 7 other launch routes: owner.
+
+**Not verified.** No signed-in production journey: signed-out probes are refused 401/403 before the module gate, so they cannot show it.
+
+## 28 Nov 2026 - records: G74 rotation, PRs 703 and 704 open, route sheet handed to the owner (scribe, for Guardian G75)
+
+**Request.** Records before Guardian G74 rotates to G75 (session_0187kU9uxwC9xBAxVLyticyz). Branch claude/modest-curie-fqwimu from origin/main 31358080ffef3434c5ed1867ac8b9d8ed9da1d53; authority stamp auth-4e835991807d. Docs only. No requirement moves to VERIFIED.
+
+**Why.** Owner first hand to G74: "proceed with next batch" (batch picked by corridra-authority: route-pack facts-version follow-up, #dash-money, then L1 Bangla); later "rotate and update documentations".
+
+**Outcome (as relayed by G74).**
+
+- PR 703 OPEN, draft, branch claude/route-pack-current-facts, head 6ef2f32604cae15285d30d41a41885679e7fac36. A part-way import answer names earlier facts only while this save's record is still the route's latest facts version (ruling G74; review finding 3 on PR 701). One condition in packages/missions/src/route-pack-sheet.ts, new integration test (red first: expected [SV-NI contentVersion 3] to equal []), spec 12.1 sentence "Follow-up per G74". Local: route-pack integration 3 files 106 passed; typecheck, lint, test:docs 0. Guardian read the diff (nextVersion is latest plus one). CI at rotation: 20 of 22 green, operator (6) and verification still running. Not merged.
+- PR 704 OPEN, draft, branch claude/dash-money-address, head abcc4fb57202785688f7b96b2829507ddd8d3e7f. An address naming a dashboard tab by `#dash-*` (follow-up "#dash-money is never opened", PR 645) moves once to `?tab=` on the page holding the tab, only for a role that may open it; switch off handles only #dash-money; no change to the Money panel, financeAvailable, roles, server or API. Red first: 5 cases failed on main, the reviewer denial case passed on main (guard). Independent Opus corridra-reviewer: READY, 0 blocking, 2 notes (switch-off #dash-money from other pages moves to Dashboard, intended; encoded #dash%2Dmoney not moved, harmless). CodeQL raised 1 high alert (incomplete escaping, tests/operator/p5b-helpers-status-team.spec.ts:707, a hand-built RegExp); fixed in abcc4fb by an exact toHaveURL string; CI re-running at rotation; the CodeQL review thread is to be resolved once the alert clears. Not merged.
+- Route pack template: G74 gave the owner the full 8-route sheet (568 rows: 71 standard fields x BD-CN, CN-BD, BD-EU, EU-BD, BD-GB, GB-BD, BD-US, US-BD, example custom rows left out) built from docs/adr/0093/route-pack-template-v1.csv, with fill rules and an OpenAI prompt. Owner: "get me the full template sheet, which i will populate by open ai 100% correctly, validly, completely, then share the populate file with u". The sheet files are not in the repository.
+- Drift fixed: docs/PLAN_STATUS.md Journey modes row said "Not built" and the ledger's 23 Nov bullet said "(spec, approved, not built)"; PR 623 built it (merged ebc7e83f, 24 Nov, behind CORRIDRA_UX_JOURNEY_MODES, off; no signed-in pass recorded). Both now say so.
+- Open, needs owner: v4.3 designer item 15 conflicts with the v4.2 one-line demand sentence rule (do not build).
+
+**Next action.** G75 merges 703 then 704 on exact-head green (704 after its CodeQL thread is resolved) and records. Then the owner's filled route sheet: import dry run (writes nothing), fix errors with the owner, save only on the owner's word; going live per route is a separate owner word (Phase 4). Then L1 Bangla (Class B; about 1214 untranslated bn keys per tests/integration/language-base.test.ts; home.v42 and v4.3 words stay English; native review gate OPEN). Signed-in production check of the route pack editor still NOT VERIFIED.
+
+**Verification.** G74 receipts as relayed; not re-read by this scribe run. This PR: node scripts/authority.mjs stamp, check, node scripts/v3-context.mjs verify, node --test tests/documents.test.mjs, prettier@3.9.10 --check; exit codes in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (23 Nov bullet and next action, size not grown); docs/PLAN_STATUS.md (Journey modes row); this entry. No code, tests, ADR text, switch or install.
+
+**Preserved.** Native language review gate OPEN; Phase 4 not started; real-operation gates unchanged; every owner decision line kept.
+
+**Not verified.** Merge and CI of 703 and 704; any signed-in production journey.
+
+## 28 Nov 2026 - records: PRs 703 and 704 merged (scribe, for Guardian G75)
+
+**Request.** Records after Guardian G75 (took over from G74, session_0187kU9uxwC9xBAxVLyticyz, on 28 Nov) merged PRs 703 and 704. Branch claude/g75-records-704 from origin/main 0fbeeff6e0238ec5537a6935906599f0dab42661; authority stamp auth-c99509d88ec1. Docs only. No requirement moves to VERIFIED.
+
+**Why.** Close the record of the two open PRs listed in the G74 rotation entry.
+
+**Outcome (as relayed by G75).**
+
+- PR 703 merged as 1dc5ee94501b67f652e9e92732af4c8bb10e64c8. Production deploy dpl_DbZvbqHLk42Tt9ci8aL6frgd9ojw READY.
+- PR 705 (records) is 7cc9933d. Deploy dpl_AoY15wEQK8rXDa5M4AxGMkHU8Qvs READY.
+- PR 704 merged as 0fbeeff6e0238ec5537a6935906599f0dab42661, squash at exact head abcc4fb57202785688f7b96b2829507ddd8d3e7f. Class A. An address naming a dashboard tab by #dash-* opens that tab via ?tab=. Opus reviewer READY, 0 blocking. Checks: 23 success, plus CodeQL neutral (a configuration warning only: the security.yml analyze config was not found on the PR ref). The CodeQL review thread is resolved and outdated. Production deploy dpl_GzXry32xNwRF5XnfEyPFkoJ5mZAU READY.
+- The follow-up "#dash-money is never opened" (PR 645) is closed in code by PR 704. It is not listed in the current ledger; older ledger snapshots are frozen.
+- The remote branch claude/dash-money-address could not be deleted (the session's deletion was denied). Added to the owner branch-cleanup item in the ledger.
+
+**Next action.** The owner's filled route sheet (8 routes, 568 rows, not in the repository): dry run, save only on the owner's word, Phase 4 per route only on the owner's word. Then L1 Bangla (Class B, native review gate OPEN). Signed-in production check of the route pack editor still NOT VERIFIED.
+
+**Verification.** G75 receipts as relayed; not re-read by this scribe run. This PR: node scripts/authority.mjs stamp, node scripts/v3-context.mjs verify, node --test tests/documents.test.mjs, prettier@3.9.10 --check; exit codes in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (first Resume bullet, next action, owner items; size shrank); docs/PLAN_STATUS.md (ADR-093 row: 703 and 704 added); this entry. No code, tests, ADR text, switch or install.
+
+**Preserved.** Native language review gate OPEN; Phase 4 not started; real-operation gates unchanged; every owner decision line kept.
+
+**Not verified.** Any signed-in production journey; the route pack editor in production.
+
+## 28 Nov 2026 - records: PR 707 merged, route sheet overlay handed to the owner (scribe, for Guardian G75)
+
+**Request.** Records after Guardian G75 merged PR 707. Branch claude/g75-records-707 from origin/main f51cfe09aec79d96b915397babdeb72301bbedbe; authority stamp auth-1550f0e2be4a (unchanged). Docs only. No requirement moves to VERIFIED.
+
+**Why.** Owner, first hand, 28 Nov 2026, to G75: "no current list. all must be updated"; "there shouldnt be anything synthetic, all must be real"; "make manual the default"; "whatever data we got, seed them 100% correctly. i dont have time to do now manually".
+
+**Outcome (as relayed by G75).**
+
+- PR 707 squash-merged at exact head ecd35e1 as f51cfe09. Production deploy dpl_BqsrW7P4P6ixXysfSophHfeczNxF READY. Checks all success, plus CodeQL neutral (the usual configuration notice). An independent Opus reviewer said READY with 0 blocking; its one should-fix (the manual box shows the chosen route's current channel) is fixed in ecd35e1.
+- Change: a new route's message channel defaults to MANUAL (starting routes, guided form, editor with no pack). Unticking still gives SYNTHETIC. Stored packs are unchanged. The seed reason is now "Starting route, not yet reviewed".
+- Route sheet: the owner's researched 8-route package (568 rows, 195 Filled, 373 Pending) passed the package check and a dry run of the real RoutePackSheetService on a LOCAL test database (0 errors). The facts are AI-researched and are not verified. The full file must not be imported over existing routes, because Pending rows delete facts (route-pack-sheet.ts:488-490). A 195-row overlay (reconciled-import.csv, MANUAL only, all lists replaced per the owner) was prepared and is not in the repository. The owner was told to import it in the editor. Saving needs a signed-in owner with a fresh authenticator check. No reviewed non-editor save path exists, and building one would bypass config.manage, so none was built.
+- Production save NOT DONE. Production dry run NOT EXECUTED. Signed-in production check of the route pack editor NOT VERIFIED.
+
+**Next action.** The owner imports reconciled-import.csv in the editor, runs Check, then Save. G75 then compares the result. Phase 4 per route only on the owner's word. Then L1 Bangla (Class B, native review gate OPEN).
+
+**Verification.** G75 receipts as relayed; not re-read by this scribe run. This PR: node scripts/authority.mjs stamp, node scripts/v3-context.mjs verify, node --test tests/documents.test.mjs, prettier@3.9.10 --check; exit codes in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (first Resume bullet: main, deploy, PR 707; next action rewritten; small net growth); this entry. docs/PLAN_STATUS.md untouched (no row tracks PR 707). No code, tests, ADR text, switch or install.
+
+**Preserved.** Native language review gate OPEN; Phase 4 not started; real-operation gates unchanged; every owner decision line kept.
+
+**Not verified.** Any signed-in production journey; the route pack editor in production; the AI-researched route facts.

@@ -25,7 +25,8 @@ import {
   guidedRoutePack,
   routePackConfiguration,
 } from '../../packages/missions/src/route-pack-form';
-import { routeConfiguration } from '../../packages/domain/src/corridors';
+import { initialRouteConfiguration } from '../../packages/missions/src/corridors';
+import { initialRoutes, routeConfiguration } from '../../packages/domain/src/corridors';
 import { getTeamToday } from '../../packages/auth/src/team-today';
 import { listDeliveredPublications } from '../../packages/delivery/src/delivered-publications';
 import { notificationTypes } from '../../packages/communications/src/inbox';
@@ -194,7 +195,32 @@ describe('service contracts', () => {
     });
     const configuration = routePackConfiguration(v);
     expect(routeConfiguration.parse(configuration).reviewRequired).toBe(true);
-    expect(configuration.channels).toEqual(['SYNTHETIC']);
+    expect(configuration.channels).toEqual(['MANUAL']);
+  });
+  test('a new route defaults to MANUAL; unticking gives SYNTHETIC and a stored SYNTHETIC pack is read unchanged', () => {
+    const base = {
+      routeId: '00000000-0000-4000-8000-000000000001',
+      version: 1,
+      status: 'DRAFT',
+      effectiveFrom: '2026-11-01T00:00:00Z',
+      reason: 'QA test (madeup) route pack',
+      missionTypes: ['market_entry'],
+    };
+    expect(initialRouteConfiguration(initialRoutes[0]!).channels).toEqual(['MANUAL']);
+    expect(routePackConfiguration(guidedRoutePack.parse(base)).channels).toEqual(['MANUAL']);
+    expect(
+      routePackConfiguration(guidedRoutePack.parse({ ...base, manualChannel: false })).channels,
+    ).toEqual(['SYNTHETIC']);
+    const stored = routeConfiguration.parse({
+      ...initialRouteConfiguration(initialRoutes[0]!),
+      channels: ['SYNTHETIC'],
+    });
+    expect(stored.channels).toEqual(['SYNTHETIC']);
+    const changed = routePackConfiguration(
+      { ...base, missionTypes: ['partners'] } as never,
+      stored,
+    );
+    expect(changed.channels).toEqual(['SYNTHETIC']);
   });
   test('service contracts keep their signatures; real behaviour is proved on the database', async () => {
     // getTeamToday (WS-D): tests/integration/ws-d-team-control.test.ts. listDeliveredPublications

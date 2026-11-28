@@ -15,8 +15,11 @@ import {
   defaultView,
   fieldView,
   factsByKey,
+  formFieldOf,
+  isEditable,
+  overlayCompleteness,
+  todayUtc,
   gapsLine,
-  markedButOpen,
   optionalLine,
   packChangeLine,
   parseAddress,
@@ -33,6 +36,7 @@ import {
   valueWords,
 } from '../../apps/web/lib/route-pack-editor-view';
 import type { RouteSummary } from '../../apps/web/lib/route-pack-editor-read';
+import { emptyStage, stageFact } from '../../apps/web/lib/route-pack-editor-stage';
 
 // ADR-093 Phase 3, PR 1: the pure helpers of the editor. No database, no browser.
 const today = '2026-11-27';
@@ -354,19 +358,62 @@ describe('sections', () => {
       }),
     ).toEqual([]);
   });
+});
 
-  test('a section marked Not applicable that still holds a pack setting Core and Pending says which', () => {
-    const marked = routePackSections.find((section) =>
-      standardFieldsV1.some(
-        (field) => field.section === section.number && field.part === 'Locked' && field.core,
-      ),
-    )!;
-    const document = documentOf([], [{ section: marked.number, note: 'Not part of this route' }]);
-    const completeness = deriveCompleteness(draft, document, today);
-    const sentence = markedButOpen(completeness, document, marked.number, (key) => `Label ${key}`);
-    expect(sentence).toMatch(
-      /^This section is marked Not applicable, but Label .+ Core and still Pending\.$/,
+// ---- PR 2b: the rows with the unsaved edits on top ----------------------------------------------------------------------------
+describe('the overlay of unsaved edits', () => {
+  const coreContent = standardFieldsV1.filter(
+    (f) => f.part === 'Content' && f.core && f.type === 'text',
+  );
+  const key = coreContent[0]!.key;
+  const empty = { standardVersion: 1, sectionMarks: [], facts: [] } as ContentDocument;
+  const stateOf = (completeness: ReturnType<typeof deriveCompleteness>, k: string) =>
+    completeness.fields.find((row) => row.key === k)!.state;
+
+  test('a staged answer changes the state of its row and nothing is saved: Pending turns Filled, Filled turns Pending', () => {
+    const saved = { ...empty, facts: [fact(key)] } as ContentDocument;
+    expect(stateOf(deriveCompleteness(null, empty, today), key)).toBe('PENDING');
+    const filled = stageFact(emptyStage(0), empty, key, fact(key));
+    expect(stateOf(overlayCompleteness(null, empty, filled, today), key)).toBe('FILLED');
+    const pending = stageFact(emptyStage(1), saved, key, null);
+    expect(stateOf(overlayCompleteness(null, saved, pending, today), key)).toBe('PENDING');
+    // The saved truth is untouched by the overlay.
+    expect(stateOf(deriveCompleteness(null, saved, today), key)).toBe('FILLED');
+    expect(overlayCompleteness(null, empty, emptyStage(0), today)).toEqual(
+      deriveCompleteness(null, empty, today),
     );
-    expect(markedButOpen(completeness, null, marked.number, (key) => key)).toBeNull();
+  });
+
+  test('Edit is for the owner on a content row that offers an answer, never a pack setting, never a row the editor has no field for', () => {
+    const content = { part: 'Content' as const, coveredBySection: false };
+    const lockedRow = { part: 'Locked' as const, coveredBySection: false };
+    const field = formFieldOf({ key, custom: false })!;
+    expect(isEditable(content, 'owner', field)).toBe(true);
+    expect(isEditable(content, 'admin', field)).toBe(false);
+    expect(isEditable(content, 'viewer', field)).toBe(false);
+    expect(isEditable(lockedRow, 'owner', field)).toBe(false);
+    expect(isEditable(content, 'owner', null)).toBe(false);
+    const locked = standardFieldsV1.find((f) => f.part === 'Locked' && f.core)!;
+    expect(isEditable(lockedRow, 'owner', formFieldOf({ key: locked.key, custom: false }))).toBe(
+      false,
+    );
+  });
+
+  test('a custom row has a field only where a fact carries its definition (saved or staged)', () => {
+    const definition = { label: 'Dock rules', section: 9 as const, type: 'text' as const };
+    const withFact = { ...empty, facts: [fact('custom.dock', definition)] } as ContentDocument;
+    expect(formFieldOf({ key: 'custom.dock', custom: true }, empty)).toBeNull();
+    expect(formFieldOf({ key: 'custom.dock', custom: true }, empty, withFact)).toMatchObject({
+      custom: true,
+      key: 'custom.dock',
+    });
+    expect(formFieldOf({ key: 'custom.dock', custom: true }, withFact)!.definition).toEqual(
+      definition,
+    );
+  });
+
+  test('todayUtc is a UTC day', () => {
+    expect(todayUtc()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(todayUtc()).toBe(new Date().toISOString().slice(0, 10));
   });
 });

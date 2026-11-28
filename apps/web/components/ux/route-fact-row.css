@@ -97,3 +97,30 @@
   inline-size: var(--space-4);
   block-size: var(--space-4);
 }
+.ux-fact-meta[hidden] {
+  display: none;
+}
+/* PR 2b: the one button of the row (Edit, Undo Change) stands in the state line right after the state mark, where there is always
+   room, so it adds no line of its own whatever the font (the stale mark and a note follow it). It is a
+   quiet text button, a 44 px target up to 1439 px and compact (28 px) from 1440 px. */
+.ux-fact-action {
+  display: inline-flex;
+  align-items: center;
+}
+.ux-fact-action .text-link {
+  min-block-size: 44px;
+  padding-block: 0;
+}
+@media (min-width: 90rem) {
+  .ux-fact-action .text-link {
+    min-block-size: 28px;
+  }
+}
+.ux-fact-unsaved {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+.ux-fact-editor {
+  min-inline-size: 0;
+}

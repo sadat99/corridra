@@ -244,10 +244,21 @@ test.describe('the route view', () => {
     await expect(header).toContainText(
       'Readiness: complete for Supplier discovery on pack version 2.',
     );
-    await expect(header).toContainText(
-      'Pack version 2, proposed and published by you, effective 20 Nov 2026',
-    );
-    await expect(header).toContainText('Route facts are shown read only here.');
+    // PR 4 (spec 8.1 as amended, Guardian G72 ruling 2): the last pack change is the newest pack row of History, not a header line.
+    await expect(
+      header.locator('p.route-editor-quiet', { hasText: 'Pack version 2, proposed' }),
+    ).toHaveCount(0);
+    await header.locator('details.route-history > summary').click();
+    await expect(
+      header
+        .locator('details.route-history li')
+        .filter({ hasText: /^Pack version/ })
+        .first(),
+    ).toContainText('Pack version 2, proposed and published by you, effective 20 Nov 2026');
+    await header.locator('details.route-history > summary').click();
+    // PR 2b: the owner has Edit buttons, so the read only note is gone.
+    await expect(header).not.toContainText('Route facts are shown read only here.');
+    await expect(header).not.toContainText('Only the owner can change route facts and packs.');
     // The View choice, with counts from the data.
     const view = header
       .getByRole('radiogroup', { name: 'View' })
@@ -278,7 +289,7 @@ test.describe('the route view', () => {
     await axeClean(page);
   });
 
-  test('the owner and the admin each read their note once, and no control writes anything', async ({
+  test('the admin reads the note once and sees no control that writes; the owner reads no note', async ({
     page,
   }) => {
     await open(page, { role: 'admin', query: 'route=BD-CN' });
@@ -290,16 +301,39 @@ test.describe('the route view', () => {
       'Only the owner can change route facts and packs. You can read everything here.',
     );
     await expect(editor(page)).not.toContainText('shown read only here');
-    // The only buttons are the ones that read: no Edit, Change, Status, Save, Import or Export.
+    // The only buttons are the ones that read: no Edit, Change, Status, Save or Publish. PR 4 (spec 12.1, 12.2 and 8.1 as
+    // amended, Guardian G72): the admin also has More, which holds exactly Export This Route (a read), and at the list head
+    // Import Route Data (a check that saves nothing for the admin) and Export Route Data.
     const buttons = await editor(page).getByRole('button').allTextContents();
     for (const text of buttons)
       expect(text).toMatch(
-        /^(Show Full Value|Show Less|Show all \d+ fields|Show the first \d+ fields)$/,
+        /^(Show Full Value|Show Less|Show all \d+ fields|Show the first \d+ fields|More)$/,
       );
-    await expect(
-      page.getByRole('button', { name: /Edit|Change|Status|Save|Import|Export|Publish/ }),
-    ).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Edit|Change|Status|Save|Publish/ })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole('button', { name: /Import|Export/ })).toHaveText([
+      'Import Route Data',
+      'Export Route Data',
+    ]);
+    await editor(page)
+      .getByRole('button', { name: /^More actions for / })
+      .click();
+    expect(await editor(page).getByRole('menuitem').allTextContents()).toEqual([
+      'Export This Route',
+    ]);
+    await page.keyboard.press('Escape');
     await axeClean(page);
+    // PR 2b: the owner reads no note at all (Edit, not a note, says what the owner can do), and still sees the same header.
+    await open(page, { role: 'owner', query: 'route=BD-CN' });
+    await expect(editor(page).locator('li.ux-fact-row').first()).toBeVisible();
+    await expect(editor(page)).not.toContainText('shown read only here');
+    await expect(editor(page)).not.toContainText('Only the owner can change route facts');
+    await expect(
+      editor(page)
+        .getByRole('button', { name: /^Edit / })
+        .first(),
+    ).toBeVisible();
   });
 
   test('deep links open the state they name; choosing a segment clears the section; Back and Forward move through them', async ({
@@ -510,7 +544,11 @@ test.describe('states', () => {
     await axeClean(page);
     await editor(page).getByRole('button', { name: 'Try Again' }).click();
     await expect(editor(page).locator('li.ux-fact-row').first()).toBeVisible();
-    await expect(editor(page)).toContainText('The last pack change is not available.');
+    // PR 4: a failed pack history is one quiet line inside History (it was the header's last pack change line).
+    await editor(page).locator('details.route-history > summary').click();
+    await expect(editor(page).locator('details.route-history')).toContainText(
+      'Pack history is not available.',
+    );
     await expect(editor(page)).toContainText('Readiness: complete for Supplier discovery');
     await expect(editor(page).getByRole('alert')).toHaveCount(0);
   });
@@ -549,7 +587,9 @@ test.describe('states', () => {
     page,
   }) => {
     await open(page, { facts: { unreviewedPack: true }, query: 'route=BD-CN' });
-    await expect(editor(page)).toContainText(
+    // PR 4: the newest pack row of History carries what the header line said.
+    await editor(page).locator('details.route-history > summary').click();
+    await expect(editor(page).locator('details.route-history')).toContainText(
       'Pack version 2, effective 20 Nov 2026. This change did not go through review, so no proposer is recorded.',
     );
   });

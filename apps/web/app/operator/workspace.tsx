@@ -41,7 +41,9 @@ import {
 } from '../../lib/workspace-navigation';
 import {
   addressDestination,
+  dashboardTabAddress,
   fragmentFor,
+  isDashboardTab,
   operatorSectionPath,
   sectionOfFragment,
 } from '../../lib/operator-urls';
@@ -325,6 +327,15 @@ function TenantWorkspace({
         (applicationListAddress && section.id === 'workspace-settings')) &&
       (section.roles as readonly string[]).includes(currentRole ?? ''),
   );
+  // An address that names a dashboard tab by its `#` part (`#dash-money`) opens the page that holds the tab with
+  // the tab chosen, as `?tab=` does. Only for a role that may open that page: any other keeps the note on Today.
+  useEffect(() => {
+    if (!loaded || !currentRole || !isDashboardTab(fragment)) return;
+    const next = dashboardTabAddress(new URL(window.location.href), deskV41);
+    const page = next && workspaceSections.find((section) => section.id === next.section);
+    if (!page || !(page.roles as readonly string[]).includes(currentRole)) return;
+    window.location.replace(next.href);
+  }, [loaded, currentRole, fragment, deskV41]);
   // One panel is in view at a time. Every panel stays mounted so entries survive a switch.
   const view = sectionAllowed ? panelFor(sectionId) : 'overview';
   // With the shells switch on only the section in view is rendered (D14); open forms keep their

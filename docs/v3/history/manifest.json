@@ -675,6 +675,22 @@
       "bytes": 10303,
       "sha256": "4c64d25da7fae4ecb04c15dcc1666c5d55a41fa77be11e8722424f10847f6851",
       "meaning": "Exact active ledger at main 8cb406d3 (PR 678 merged), before the 27 Nov 2026 records for PR 678 rewrote the Resume and next action lines (shorter, same owner decisions) to keep the always-read guides within 36 KiB. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "2882b1c0",
+      "archive": "docs/v3/history/ledger-before-g70-records-686-2026-11-27.md",
+      "bytes": 10328,
+      "sha256": "35223d9e4771fc531ca048dbb6027f6c52a355ad41cb29dc290c3633ecff17e9",
+      "meaning": "Exact active ledger at main 2882b1c0 (PR 686 merged), before the 27 Nov 2026 G70 records for PRs 684, 681 and 686 and the ADR-093 2a production install rewrote the Resume and next action lines (shorter, same owner decisions) to keep the always-read guides within 36 KiB. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "2882b1c0",
+      "archive": "docs/v3/history/ledger-before-g71-records-689-2026-11-27.md",
+      "bytes": 10162,
+      "sha256": "cf2facffa3378c813eb4666b7fb02572430993b5862f1e80704fc92c2be2bc73",
+      "meaning": "Exact active ledger at main 2882b1c0 plus the G70 records, before the 27 Nov 2026 G71 records for PR 689 (ADR-093 Phase 3 PR2b, main 97bc2bbd) rewrote the Resume and next action lines (shorter, same owner decisions) to keep the always-read guides within 36 KiB. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

@@ -1,5 +1,6 @@
 import { formatMoney } from '@corridra/domain/opportunities';
 import {
+  deriveCompleteness,
   routePackSections,
   routePackWords,
   standardFieldByKey,
@@ -8,10 +9,18 @@ import {
   type ContentFact,
   type FieldRow,
   type FieldState,
+  type PackView,
   type StandardField,
 } from '@corridra/domain/route-pack-standard';
 import type { RouteConfiguration } from '@corridra/domain/corridors';
 import type { PackVersion, RouteSummary } from './route-pack-editor-read';
+import {
+  answersFor,
+  fieldOfCustomFact,
+  standardField,
+  type FormField,
+} from './route-pack-editor-fact-form';
+import { overlayDocument, type Stage } from './route-pack-editor-stage';
 
 // ADR-093 Phase 3, PR 1: the pure helpers of the route pack editor (address, order of rows, words). No React, no browser, no
 // request. Every count in a sentence is passed in from the data and the schema; none is typed here.
@@ -261,20 +270,42 @@ export function sectionParts(line: SectionLine) {
     line.optionalPending > 0 ? `${line.optionalPending} optional pending` : null,
   ].filter((part): part is string => part !== null);
 }
-/** A section marked Not applicable that still holds a pack setting Core and Pending. Null when it does not. */
-export function markedButOpen(
-  completeness: Completeness,
+// ---- PR 2b: the rows with the unsaved edits on top ----------------------------------------------------------------------------
+
+/** Today as the server reckons it, a UTC day written YYYY-MM-DD. */
+export const todayUtc = () => new Date().toISOString().slice(0, 10);
+/**
+ * The completeness of the saved document with the stage applied: only the state and the value of a row are taken from it. Which
+ * rows there are, their headings and every count of the header stay the saved truth, so nothing moves before it is saved.
+ */
+export function overlayCompleteness(
+  pack: PackView,
   document: ContentDocument | null,
-  section: number,
-  labels: (key: string) => string,
-) {
-  const state = completeness.sections.find((item) => item.section === section);
-  const marked = document?.sectionMarks.some((mark) => mark.section === section) ?? false;
-  if (!state || !marked || !state.pendingLockedCore.length) return null;
-  const [first, ...others] = state.pendingLockedCore;
-  return `This section is marked Not applicable, but ${labels(first!)}${
-    others.length
-      ? ` and ${others.length} more pack ${plural(others.length, 'setting', 'settings')}`
-      : ''
-  } ${plural(state.pendingLockedCore.length, 'is', 'are')} Core and still Pending.`;
+  stage: Stage,
+  today: string,
+): Completeness {
+  return deriveCompleteness(pack, overlayDocument(document, stage), today);
+}
+/** The form field of a row: the standard's own, or the definition a custom fact carries (saved or staged). */
+export function formFieldOf(
+  row: Pick<FieldRow, 'key' | 'custom'>,
+  ...documents: (ContentDocument | null)[]
+): FormField | null {
+  if (!row.custom) return standardField(row.key);
+  for (const document of documents) {
+    const fact = document?.facts.find((item) => item.key === row.key);
+    const field = fact ? fieldOfCustomFact(fact) : null;
+    if (field) return field;
+  }
+  return null;
+}
+/** Edit is drawn for the owner only, on a row that is not a pack setting, that has a field and that offers an answer. */
+export function isEditable(
+  row: Pick<FieldRow, 'part' | 'coveredBySection'>,
+  role: string,
+  field: FormField | null,
+): boolean {
+  return (
+    role === 'owner' && !!field && row.part !== 'Locked' && answersFor({ field, ...row }).length > 0
+  );
 }

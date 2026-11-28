@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { changeMemberNow } from './change-member';
+import { rawContext } from './support';
 import { AccessService } from '../../packages/auth/src/access';
 import { configureSourcingWorkflow } from '../../packages/auth/src/sourcing-workflow-configuration';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
@@ -63,9 +64,15 @@ const watched = () =>
 vi.mock('../../apps/web/lib/foundations', () => ({
   foundations: () => ({
     ready: Promise.resolve(),
-    config: { APP_ORIGIN: 'http://localhost:3300' },
+    config: {
+      APP_ORIGIN: 'http://localhost:3300',
+      AUTH_SECRET: 'synthetic-route-pack-read-test-secret-0123456789',
+    },
     provider: {
-      getSession: async () => (web.actor ? { token: f.users[web.actor]!.ctx.token } : null),
+      getSession: async () =>
+        web.actor
+          ? { token: f.users[web.actor]!.ctx.token, userId: f.users[web.actor]!.identityId }
+          : null,
     },
     routePackContent: watched(),
     routePackSheet: {
@@ -152,6 +159,15 @@ const post = (action: string, query = '') =>
     { params: Promise.resolve({ action }) },
   );
 const reads = ['route-pack-overview', 'route-pack-fact-history', 'route-pack-pack-history'];
+// The keys of one pack history version, sorted (PR 4 adds `reason`, Guardian G72 ruling of 27 Nov).
+const packVersionKeys = [
+  'effectiveFrom',
+  'proposedAndPublishedBySame',
+  'proposedAndPublishedByYou',
+  'reason',
+  'reviewed',
+  'version',
+];
 const overview = async (routeId?: string, tenant = f.tenantA) =>
   (await read('route-pack-overview', routeId ? `routeId=${routeId}` : '', tenant)).json();
 // The answer of an unknown action, which the new actions must match byte for byte (but for the request id).
@@ -324,7 +340,7 @@ describe('route-pack-fact-history and route-pack-pack-history', () => {
     expect(text).not.toContain(f.users.owner.id);
   });
 
-  test('pack history after a reviewed publish says one person proposed and published it, with no id', async () => {
+  test('pack history after a reviewed publish says one person proposed and published it, with its decision reason and no id', async () => {
     const routeId = await newRoute();
     await pause();
     await createRoutePack({ corridors, operations, content }, owner(), {
@@ -343,16 +359,37 @@ describe('route-pack-fact-history and route-pack-pack-history', () => {
     expect(answer.status).toBe(200);
     const body = (await answer.json()) as { versions: PackVersion[] };
     expect(body.versions).toHaveLength(1);
-    // Only what the line "last pack change" needs: no pack id, status or reason text.
+    // PR 4 (Guardian G72, 27 Nov): exactly these keys per version. The one reason sent is the stored publish decision
+    // reason, verbatim; no pack id, status, proposal reason or actor id.
+    expect(Object.keys(body.versions[0]!).sort()).toEqual(packVersionKeys);
+    const [decision] = (
+      await f.owner.query<{ reason: string }>(
+        `SELECT d.reason FROM app.configuration_decision d
+         JOIN app.corridor_pack_version p ON p.tenant_id=d.tenant_id AND p.id=d.published_pack_id
+         WHERE p.tenant_id=$1 AND p.route_id=$2 AND d.decision='PUBLISH'`,
+        [f.tenantA, routeId],
+      )
+    ).rows;
+    expect(decision?.reason).toEqual(expect.any(String));
     expect(body.versions[0]).toEqual({
       version: 1,
       effectiveFrom: expect.any(String),
       reviewed: true,
       proposedAndPublishedByYou: true,
       proposedAndPublishedBySame: true,
+      reason: decision!.reason,
     });
     const text = JSON.stringify(body);
-    for (const word of ['publishedBy"', 'proposedBy"', f.users.owner.id, reason, '"reason"'])
+    for (const word of [
+      'publishedBy"',
+      'proposedBy"',
+      'proposalReason',
+      'decisionReason',
+      'packId',
+      '"status"',
+      '"id"',
+      f.users.owner.id,
+    ])
       expect(text).not.toContain(word);
     // The admin did neither step: not by you, still by one person.
     web.actor = 'reviewer';
@@ -362,7 +399,67 @@ describe('route-pack-fact-history and route-pack-pack-history', () => {
     expect(admin.versions[0]).toMatchObject({
       proposedAndPublishedByYou: false,
       proposedAndPublishedBySame: true,
+      reason: decision!.reason,
     });
+  });
+
+  test('the reason sent is the publish decision reason only: a distinct proposal reason and pack reason never leave', async () => {
+    const routeId = await newRoute();
+    await pause();
+    const proposalId = randomUUID();
+    const reasons = {
+      pack: 'Synthetic pack row reason',
+      proposal: 'Synthetic proposal reason',
+      decision: 'Synthetic decision reason',
+    };
+    await operations.command(owner(), {
+      id: proposalId,
+      action: 'propose',
+      basePackId: null,
+      reason: reasons.proposal,
+      pack: {
+        id: randomUUID(),
+        routeId,
+        version: 1,
+        status: 'DRAFT',
+        effectiveFrom: new Date().toISOString(),
+        reason: reasons.pack,
+        configuration: draftConfiguration(),
+      },
+    });
+    await operations.command(owner(), {
+      id: randomUUID(),
+      action: 'decide',
+      proposalId,
+      decision: 'PUBLISH',
+      reason: reasons.decision,
+    });
+    const answer = await read('route-pack-pack-history', `routeId=${routeId}`);
+    expect(answer.status).toBe(200);
+    const body = (await answer.json()) as { versions: PackVersion[] };
+    expect(body.versions).toHaveLength(1);
+    expect(Object.keys(body.versions[0]!).sort()).toEqual(packVersionKeys);
+    expect(body.versions[0]!.reason).toBe(reasons.decision);
+    const text = JSON.stringify(body);
+    expect(text).not.toContain(reasons.proposal);
+    expect(text).not.toContain(reasons.pack);
+  });
+
+  test('a pack that did not go through review has no decision, so its reason is null, never the pack reason', async () => {
+    const answer = await read('route-pack-pack-history', `routeId=${withPack}`);
+    expect(answer.status).toBe(200);
+    const body = (await answer.json()) as { versions: PackVersion[] };
+    expect(body.versions).toHaveLength(1);
+    expect(Object.keys(body.versions[0]!).sort()).toEqual(packVersionKeys);
+    expect(body.versions[0]).toEqual({
+      version: 1,
+      effectiveFrom: expect.any(String),
+      reviewed: false,
+      proposedAndPublishedByYou: false,
+      proposedAndPublishedBySame: false,
+      reason: null,
+    });
+    expect(JSON.stringify(body)).not.toContain(reason);
   });
 });
 
@@ -381,7 +478,9 @@ describe('roles', () => {
     expect((await read('route-pack-fact-history', `routeId=${withPack}`)).status).toBe(200);
     const refused = await read('route-pack-pack-history', `routeId=${withPack}`);
     expect(refused.status).toBe(403);
-    expect(JSON.stringify(await refused.json())).not.toContain('versions');
+    const text = JSON.stringify(await refused.json());
+    expect(text).not.toContain('versions');
+    expect(text).not.toContain('"reason"');
   });
 });
 
@@ -456,5 +555,38 @@ describe('recovery', () => {
     const again = await read('route-pack-overview');
     expect(again.status).toBe(200);
     expect(((await again.json()) as OverviewList).routes.length).toBeGreaterThan(0);
+  });
+});
+
+describe('route-pack-overview, the stage scope (follow-up per G73)', () => {
+  test('the list carries one opaque key per person and workspace, with no id; the one-route answer has none', async () => {
+    const scopeOf = async (tenant = f.tenantA) =>
+      ((await overview(undefined, tenant)) as OverviewList).stageScope;
+    const mine = await scopeOf();
+    expect(mine).toMatch(/^[A-Za-z0-9_-]{22}$/);
+    expect(await scopeOf()).toBe(mine);
+    const listed = JSON.stringify(await overview());
+    for (const id of [f.users.owner.id, f.users.owner.identityId]) expect(listed).not.toContain(id);
+    web.actor = 'reviewer';
+    const admin = await scopeOf();
+    expect(admin).toMatch(/^[A-Za-z0-9_-]{22}$/);
+    expect(admin).not.toBe(mine);
+    // The same person in another workspace gets another key.
+    await rawContext(
+      f.owner,
+      f.users.other.ctx,
+      "INSERT INTO app.membership(tenant_id,user_id,role) VALUES($1,$2,'viewer')",
+      [f.tenantB, f.users.owner.id],
+    );
+    web.actor = 'owner';
+    const elsewhere = await scopeOf(f.tenantB);
+    expect(elsewhere).toMatch(/^[A-Za-z0-9_-]{22}$/);
+    expect(elsewhere).not.toBe(mine);
+    expect(await overview(withPack)).not.toHaveProperty('stageScope');
+    // Dormant as before: with the marker absent the list is Not found and carries no key.
+    web.installed = false;
+    const absent = await read('route-pack-overview');
+    expect(absent.status).toBe(404);
+    expect(JSON.stringify(await absent.json())).not.toContain('stageScope');
   });
 });

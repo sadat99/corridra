@@ -1,4 +1,5 @@
 import { workspaceSections } from './workspace-navigation';
+import { safeDecode } from './ux/sub-tabs';
 
 type SectionId = (typeof workspaceSections)[number]['id'];
 
@@ -102,6 +103,57 @@ export function addressDestination(address: {
  */
 export function fragmentFor(hash: string, initialSection: string): string {
   return hash.replace(/^#/, '') || initialSection;
+}
+
+/** The tabs of the mission dashboard, the same ids on Operations and Dashboard. */
+export const dashboardTabs = [
+  'dash-summary',
+  'dash-actions',
+  'dash-money',
+  'dash-records',
+] as const;
+export type DashboardTab = (typeof dashboardTabs)[number];
+
+export function isDashboardTab(id: string): id is DashboardTab {
+  return (dashboardTabs as readonly string[]).includes(id);
+}
+
+/**
+ * The page that holds a dashboard tab with team desk v4.1 on (D15): Dashboard holds Money, Operations the rest.
+ * Navigation only: the page and the tab still check the role.
+ */
+export function dashboardTabHome(tab: DashboardTab): 'ops-dashboard' | 'workspace-operations' {
+  return tab === 'dash-money' ? 'ops-dashboard' : 'workspace-operations';
+}
+
+/**
+ * The address for one that names a dashboard tab by its `#` part (`#dash-money`), or null for any other.
+ * The tab moves to `?tab=` (a `#` part wins over a `?tab=` already there, as for the tabs themselves), which
+ * the tabs already read, and the address names the page that holds the tab: by its section word, or on the
+ * workspace home by the `#` part. With team desk v4.1 off only Money is named this way, on the page the address
+ * is on (Dashboard for any other). The new address names no tab by `#`, so it is never moved again.
+ */
+export function dashboardTabAddress(
+  address: Pick<URL, 'href' | 'pathname' | 'hash'>,
+  deskV41: boolean,
+): { href: string; section: string } | null {
+  const word = safeDecode(address.hash);
+  if (!isDashboardTab(word) || (!deskV41 && word !== 'dash-money')) return null;
+  const slug = /^\/operator\/([^/]+)$/.exec(address.pathname)?.[1];
+  const page = slug === undefined ? null : sectionForSlug(slug);
+  if (address.pathname !== '/operator' && !page) return null;
+  const section = deskV41
+    ? dashboardTabHome(word)
+    : page === 'workspace-operations'
+      ? page
+      : 'ops-dashboard';
+  const next = new URL(address.href);
+  next.searchParams.set('tab', word);
+  if (page) {
+    next.pathname = operatorSectionPath(section) ?? next.pathname;
+    next.hash = '';
+  } else next.hash = section;
+  return { href: next.toString(), section };
 }
 
 /**

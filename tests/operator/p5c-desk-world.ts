@@ -22,6 +22,8 @@ const now = new Date().toISOString();
 const later = new Date(Date.now() + 200 * 86400000).toISOString();
 
 export const routeIds = { bdCn: id(101), bdEu: id(102), twAu: id(103) };
+// The list's opaque key of the signed-in person (follow-up per G73): the editor names its sessionStorage copy with it.
+export const stageScope = 'SyntheticStageScope0001';
 export const catalogue = {
   routes: [
     { id: routeIds.bdCn, origin_market: 'BD', destination_market: 'CN' },
@@ -165,6 +167,35 @@ export type FactsWorld = {
   unreviewedPack?: boolean;
   /** Every Core field of Bangladesh to the European Union is done and none is stale. */
   complete?: boolean;
+  /** ADR-093 Phase 3, PR 4: the one-person module is installed (the overview's capabilities). Default false. */
+  onePerson?: boolean;
+  /**
+   * ADR-093 Phase 3, PR 2b: the next answers of route-pack-facts, one for each save the page makes. `theirs` is a save that
+   * landed first (it becomes the saved document at its version, then the answer is sent). With the script empty the world does
+   * what the server does: it takes the document at the written version plus 1 (409 ROUTE_PACK_CONTENT_CHANGED otherwise),
+   * answers 201, and answers an exact replay of an id with 200 duplicate.
+   */
+  saveScript?: Array<{
+    status: number;
+    code?: string;
+    error?: string;
+    body?: unknown;
+    theirs?: { document: ContentDocument; version: number };
+    delay?: number;
+  }>;
+  /** Warnings the next real save answers with. */
+  saveWarnings?: Array<{ code: string; keys: string[] }>;
+  /** What each route holds after saves, by route key (the world fills it). */
+  written?: Record<string, { version: number; document: ContentDocument }>;
+  /** Ids already answered: the body they came with and what was answered. */
+  answered?: Record<string, { body: string; version: number }>; /**
+   * ADR-093 Phase 3, PR 3b: the pack of a route as published since the page opened, by route key (the publish world of
+   * route-pack-publish-world.ts fills it, so the next read shows the new version). Left out, each route has its fixed pack.
+   */
+  packs?: Record<
+    string,
+    { status: PackStatus; version: number; configuration: Record<string, unknown> } | null
+  >;
 };
 const lockedCore = {
   missionTypes: ['supplier_discovery'],
@@ -225,12 +256,18 @@ const configurationOf = (full: boolean) => (full ? lockedCore : {});
 function routeView(
   key: string,
   routeId: string,
-  pack: { status: PackStatus; version: number; full: boolean } | null,
+  pack: {
+    status: PackStatus;
+    version: number;
+    full: boolean;
+    configuration?: Record<string, unknown>;
+  } | null,
   content: { version: number; document: ContentDocument } | null,
   readiness: string[] | null,
 ): RouteView {
   const [origin, destination] = key.split('-') as [string, string];
-  const configuration = pack ? (configurationOf(pack.full) as unknown as RouteConfiguration) : null;
+  const shape = pack ? (pack.configuration ?? configurationOf(pack.full)) : null;
+  const configuration = shape as unknown as RouteConfiguration | null;
   return {
     routeId,
     key,
@@ -259,7 +296,7 @@ function routeView(
         }
       : null,
     completeness: deriveCompleteness(
-      pack ? { status: pack.status, configuration: configurationOf(pack.full) } : null,
+      pack ? { status: pack.status, configuration: shape as RouteConfiguration } : null,
       content?.document ?? null,
       new Date().toISOString().slice(0, 10),
     ),
@@ -269,22 +306,31 @@ function routeView(
         : null,
   };
 }
+type PackShape = Parameters<typeof routeView>[2];
+const packOf = (world: FactsWorld, key: string, fixed: PackShape): PackShape => {
+  const published = world.packs?.[key];
+  return published === undefined
+    ? fixed
+    : published && { ...published, full: true, configuration: published.configuration };
+};
 function routeViews(world: FactsWorld, role: string): RouteView[] {
   const reads = role === 'owner' || role === 'admin';
   const done = world.complete === true;
+  const written = world.written ?? {};
   return [
     routeView(
       'BD-CN',
       routeIds.bdCn,
-      { status: 'ACTIVE', version: 2, full: true },
-      { version: 5, document: documentOf(bdCnFacts) },
-      reads ? ['supplier_discovery'] : null,
+      packOf(world, 'BD-CN', { status: 'ACTIVE', version: 2, full: true }),
+      written['BD-CN'] ?? { version: 5, document: documentOf(bdCnFacts) },
+      // A pack published since the page opened has no readiness recorded yet.
+      reads ? (world.packs?.['BD-CN'] !== undefined ? [] : ['supplier_discovery']) : null,
     ),
     routeView(
       'BD-EU',
       routeIds.bdEu,
-      { status: 'TESTING', version: 1, full: done },
-      {
+      packOf(world, 'BD-EU', { status: 'TESTING', version: 1, full: done }),
+      written['BD-EU'] ?? {
         version: 1,
         document: documentOf(
           done ? coreFacts(0, false) : [],
@@ -293,9 +339,15 @@ function routeViews(world: FactsWorld, role: string): RouteView[] {
       },
       reads ? [] : null,
     ),
-    routeView('TW-AU', routeIds.twAu, null, null, null),
+    routeView('TW-AU', routeIds.twAu, packOf(world, 'TW-AU', null), written['TW-AU'] ?? null, null),
   ];
 }
+/** ADR-093 Phase 3, PR 4: the route summaries the overview list answers, for the sheet world. */
+export const routeSummaries = (facts: FactsWorld, role: string) =>
+  routeViews(facts, role).map((view) => summariseRoute(view, liveStatuses));
+/** ADR-093 Phase 3, PR 3b: the pack a route has now in this world, for the publish world. */
+export const packNow = (facts: FactsWorld, key: string) =>
+  routeViews(facts, 'owner').find((view) => view.key === key)?.pack ?? null;
 const packHistoryOf = (routeId: string, facts: FactsWorld): PackVersion[] =>
   routeId === routeIds.bdCn
     ? [
@@ -305,6 +357,7 @@ const packHistoryOf = (routeId: string, facts: FactsWorld): PackVersion[] =>
           reviewed: facts.unreviewedPack !== true,
           proposedAndPublishedByYou: true,
           proposedAndPublishedBySame: true,
+          reason: facts.unreviewedPack === true ? null : 'Sample pack change for the route editor',
         },
       ]
     : routeId === routeIds.bdEu
@@ -315,6 +368,7 @@ const packHistoryOf = (routeId: string, facts: FactsWorld): PackVersion[] =>
             reviewed: true,
             proposedAndPublishedByYou: false,
             proposedAndPublishedBySame: false,
+            reason: null,
           },
         ]
       : [];
@@ -339,11 +393,22 @@ export type World = {
   facts?: FactsWorld;
   /** Every request the page made under /api, as `METHOD path?query`. */
   asked: string[];
+  /** The bodies the page sent to route-pack-facts, in order. */
+  saves: Array<{ path: string; body: Record<string, unknown> }>;
+  /** What the authenticator check answers: `ok` (the default) or `bad`. */
+  totp?: 'ok' | 'bad';
 };
 
 /** Answers every read of the fixture. Returns the world, with the requests seen so far. */
 export async function answerReads(page: Page, given: Partial<World> = {}): Promise<World> {
-  const world: World = { role: 'owner', catalogue, helperInterest: true, asked: [], ...given };
+  const world: World = {
+    role: 'owner',
+    catalogue,
+    helperInterest: true,
+    asked: [],
+    saves: [],
+    ...given,
+  };
   const json = (body: unknown, status = 200) => ({
     status,
     contentType: 'application/json',
@@ -460,6 +525,78 @@ export async function answerReads(page: Page, given: Partial<World> = {}): Promi
       if (action === 'batches') return route.fulfill(json({ batches: [] }));
       if (action === 'blocks') return route.fulfill(json({ blocks: [] }));
     }
+    if (path.endsWith('/two-factor/verify-totp'))
+      return route.fulfill(
+        world.totp === 'bad'
+          ? json({ message: 'Invalid code' }, 401)
+          : json({ token: 'invented', user: { id: id(990) } }),
+      );
+    if (path === '/api/team-control/route-pack-facts' && world.facts) {
+      const facts = world.facts;
+      if (request.method() !== 'POST') return route.fulfill(json({ error: 'Not found' }, 404));
+      const body = request.postDataJSON() as Record<string, unknown>;
+      world.saves.push({ path: `${path}${url.search}`, body });
+      const keyById: Record<string, string> = {
+        [routeIds.bdCn]: 'BD-CN',
+        [routeIds.bdEu]: 'BD-EU',
+        [routeIds.twAu]: 'TW-AU',
+      };
+      const key = keyById[String(body.routeId)];
+      const reply = (code: number, answer: unknown) => route.fulfill(json(answer, code));
+      const refuse = (code: number, error: string, errorCode?: string) =>
+        reply(code, { error, ...(errorCode ? { code: errorCode } : {}), correlationId: 'fixture' });
+      const answerNow = () => {
+        facts.written ??= {};
+        facts.answered ??= {};
+        const scripted = facts.saveScript?.shift();
+        if (scripted) {
+          if (scripted.theirs && key) facts.written[key] = scripted.theirs;
+          if (scripted.body !== undefined) return reply(scripted.status, scripted.body);
+          return scripted.status === 200 || scripted.status === 201
+            ? reply(scripted.status, {
+                version: Number(body.version),
+                duplicate: false,
+                warnings: [],
+              })
+            : refuse(
+                scripted.status,
+                scripted.error ?? 'The request could not be completed',
+                scripted.code,
+              );
+        }
+        if (!key) return refuse(400, 'Route not found');
+        const current = routeViews(facts, world.role).find((view) => view.key === key)!;
+        const version = current.content?.version ?? 0;
+        const fingerprint = JSON.stringify([
+          body.routeId,
+          body.version,
+          body.document,
+          body.reason,
+        ]);
+        const earlier = facts.answered[String(body.id)];
+        if (earlier)
+          return earlier.body === fingerprint
+            ? reply(200, { version: earlier.version, duplicate: true, warnings: [] })
+            : refuse(409, 'Command key reused with different values', 'ROUTE_PACK_COMMAND_REUSED');
+        if (body.version !== version + 1)
+          return refuse(
+            409,
+            "This route's content changed since you opened it. Reload and try again.",
+            'ROUTE_PACK_CONTENT_CHANGED',
+          );
+        facts.written[key] = { version: version + 1, document: body.document as ContentDocument };
+        facts.answered[String(body.id)] = { body: fingerprint, version: version + 1 };
+        return reply(201, {
+          version: version + 1,
+          duplicate: false,
+          warnings: facts.saveWarnings ?? [],
+        });
+      };
+      const wait = facts.saveScript?.[0]?.delay;
+      return wait
+        ? new Promise((resolve) => setTimeout(resolve, wait)).then(answerNow)
+        : answerNow();
+    }
     if (path.startsWith('/api/team-control/route-pack-') && world.facts) {
       const facts = world.facts;
       const asked = url.searchParams.get('routeId');
@@ -490,7 +627,11 @@ export async function answerReads(page: Page, given: Partial<World> = {}): Promi
           if (!asked)
             return route.fulfill(
               json({
-                capabilities: factsCapabilities,
+                capabilities: {
+                  ...factsCapabilities,
+                  onePersonPublication: facts.onePerson === true,
+                },
+                stageScope,
                 routes: views.map((view) => summariseRoute(view, liveStatuses)),
               }),
             );

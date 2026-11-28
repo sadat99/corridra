@@ -16,7 +16,7 @@ import { ownerName, type Owner } from './missions';
 import { useOperatorFlags } from './operator-flags';
 import './desk-helpers-status-team.css';
 import { missionHref } from './[section]/[missionId]/mission-labels';
-import { operatorSectionPath } from '../../lib/operator-urls';
+import { dashboardTabHome, isDashboardTab, operatorSectionPath } from '../../lib/operator-urls';
 import { placeName } from '../account/request-words';
 import { Flagged, RouteLine, placeMark } from '../../components/ux/flag';
 import {
@@ -326,13 +326,12 @@ export function Operations({
   const { teamDeskV41: deskV41 } = useOperatorFlags();
   // Team desk v4.1 (D15): Operations and Dashboard each hold some of the dashboard tabs. An address that
   // names a tab (`?tab=dash-money`) on the page that no longer holds it opens the page that does, so every
-  // address still shows what it named.
+  // address still shows what it named. A tab named by `#` (`#dash-money`) is moved to `?tab=` by the workspace.
   useEffect(() => {
     if (!deskV41 || (section !== 'workspace-operations' && section !== 'ops-dashboard')) return;
     const tab = new URLSearchParams(window.location.search).get('tab');
-    if (!tab || !['dash-summary', 'dash-actions', 'dash-money', 'dash-records'].includes(tab))
-      return;
-    const home = tab === 'dash-money' ? 'ops-dashboard' : 'workspace-operations';
+    if (!tab || !isDashboardTab(tab)) return;
+    const home = dashboardTabHome(tab);
     if (home === section) return;
     const address = new URL(window.location.href);
     const path = operatorSectionPath(home);

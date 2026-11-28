@@ -172,7 +172,7 @@ export class CorridorService {
             id,
             initialRouteConfiguration(route),
             actorId,
-            'Unreviewed draft, synthetic configuration only',
+            'Starting route, not yet reviewed',
           ],
         );
         ids.push(id);
@@ -266,7 +266,7 @@ export function initialRouteConfiguration(
     requirements: [],
     assessments: [],
     sourceCategories: [],
-    channels: ['SYNTHETIC'],
+    channels: ['MANUAL'],
     jurisdictionPolicyRefs: [],
     evidenceTypes: [],
     reviewRequired: true,

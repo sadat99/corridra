@@ -1,15 +1,29 @@
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
+import { routePackContentOctetBudget } from '@corridra/domain/route-pack-standard';
 import { foundations } from '../../../../lib/foundations';
 import { notify } from '../../../../lib/notify';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
-import { createRoutePack } from '@corridra/missions/route-pack-form';
+import {
+  createRoutePack,
+  previewRoutePackChange,
+  publishRoutePackChange,
+  routePackChangeRequest,
+} from '@corridra/missions/route-pack-form';
+import { contentAppendItem } from '@corridra/missions/route-pack-content';
 import { sheetLimits, sheetWords, type SheetReport } from '@corridra/missions/route-pack-sheet';
 import { csvRows } from '@corridra/delivery/import';
 import { csvCell } from '@corridra/auth/customer-programme-export-csv';
 import { liveStatuses } from '@corridra/domain/route-pack-standard';
+import { proposalOctetBudget } from '@corridra/domain/corridors';
 import { answerRoutePackRead, isRoutePackReadAction } from '../../../../lib/route-pack-editor-read';
+import { factsSavedAnswer, isRoutePackFactsAction } from '../../../../lib/route-pack-editor-write';
+import {
+  isRoutePackPublishAction,
+  packPreviewAnswer,
+  packPublishedAnswer,
+} from '../../../../lib/route-pack-editor-publish';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -28,9 +42,17 @@ const sheetRequest = z
     csv: z.string(),
     saveId: z.uuid().optional(),
     reason: z.string().optional(),
+    // Follow-up per G73: the check's plan fingerprint; the sheet service requires it on a save, so a save without one is 400.
+    planFingerprint: z.string().optional(),
   })
   .strict();
 const sheetBodyOctets = 2 * sheetLimits.octets;
+// ADR-093 Phase 3, PR 2a: a facts document may hold up to the content budget of the domain, and the request adds the command id,
+// the route, the version and the reason around it. The 4096 octets of body() stay for every other action.
+const factsBodyOctets = routePackContentOctetBudget + 8192;
+// ADR-093 Phase 3, PR 3a: a pack change is at most a proposal's worth of settings, and the request adds the mode, the command
+// id, the route, the version and the reason around it.
+const publishBodyOctets = proposalOctetBudget + 8192;
 const utf8 = new TextDecoder('utf-8', { fatal: true });
 // Every cell goes through csvCell, which puts an apostrophe before a cell a spreadsheet could read as a formula; the import
 // takes it off again.
@@ -49,6 +71,13 @@ const sheetRefusal = (report: SheetReport) =>
 async function routePackModuleOn(s: { routePackSheet: { available(): Promise<boolean> } }) {
   return uxSwitchOn('CORRIDRA_ROUTE_PACK_FORM') && (await s.routePackSheet.available());
 }
+// Follow-up per G73: the key the route pack editor names its sessionStorage copy with, one per person and workspace. Keyed
+// under AUTH_SECRET with a purpose label, so it is opaque and no actor id leaves the server.
+const stageScopeOf = (secret: string, tenantId: string, userId: string) =>
+  createHmac('sha256', secret)
+    .update(`corridra:route-pack-stage:v1:${tenantId}:${userId}`)
+    .digest('base64url')
+    .slice(0, 22);
 // Reads at most `limit` octets, stopping as soon as the body passes it; a client-supplied Content-Length is not trusted.
 async function boundedBody(request: Request, limit: number) {
   const reader = request.body?.getReader();
@@ -195,6 +224,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           rows,
           saveId: v.saveId,
           reason: v.reason,
+          planFingerprint: v.planFingerprint,
         });
         if (report.ok) return Response.json(report, { status: 201, headers });
         return Response.json(
@@ -219,9 +249,54 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           action,
           new URL(request.url).searchParams,
           liveStatuses,
+          () => stageScopeOf(s.config.AUTH_SECRET, tenantId, identity.userId),
         ),
         { headers },
       );
+    }
+    if (isRoutePackFactsAction(action)) {
+      // ADR-093 Phase 3, PR 2a: the one write behind the route pack editor, Save Route Facts. The gate comes first and answers
+      // Not found as for an unknown action, for every method but POST too, before a word of the body is read; the service then
+      // holds the authority (config.manage, the fresh authenticator, the content module active) and this handler adds none.
+      if (!(await routePackModuleOn(s)) || request.method !== 'POST')
+        throw new DomainError('Not found', 404);
+      const bytes = await boundedBody(request, factsBodyOctets);
+      let text: string;
+      try {
+        text = utf8.decode(bytes);
+      } catch {
+        throw new DomainError('Send the request as UTF-8 text', 400);
+      }
+      const saved = await s.routePackContent.append(ctx, contentAppendItem.parse(JSON.parse(text)));
+      return Response.json(factsSavedAnswer(saved), {
+        status: saved.duplicate ? 200 : 201,
+        headers,
+      });
+    }
+    if (isRoutePackPublishAction(action)) {
+      // ADR-093 Phase 3, PR 3a: the pack settings and status of the route pack editor, previewed or published. The same gate as
+      // route-pack-facts comes first, for every method but POST too, before a word of the body is read; the services hold the
+      // authority (config.manage and so the fresh authenticator, the content module active) and this handler adds none.
+      if (!(await routePackModuleOn(s)) || request.method !== 'POST')
+        throw new DomainError('Not found', 404);
+      const bytes = await boundedBody(request, publishBodyOctets);
+      let text: string;
+      try {
+        text = utf8.decode(bytes);
+      } catch {
+        throw new DomainError('Send the request as UTF-8 text', 400);
+      }
+      const v = routePackChangeRequest.parse(JSON.parse(text));
+      const deps = { operations: s.operations, content: s.routePackContent };
+      if (v.mode === 'preview')
+        return Response.json(packPreviewAnswer(await previewRoutePackChange(deps, ctx, v.change)), {
+          headers,
+        });
+      const published = await publishRoutePackChange(deps, ctx, v.change);
+      return Response.json(packPublishedAnswer(published), {
+        status: published.duplicate ? 200 : 201,
+        headers,
+      });
     }
     if (action === 'route-pack') {
       // CQ-66: guided route pack form. The reviewed command is built on the server.
