@@ -387,3 +387,15 @@
     transition: none;
   }
 }
+
+.pv-side .hv7-flagdefs {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pv-side {
+  overflow: hidden;
+}
