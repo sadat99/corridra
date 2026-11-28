@@ -6081,3 +6081,27 @@ Checks at f236a8f0, all exit 0:
 **Preserved.** 2c wording unchanged (listed NOT INSTALLED); native language review gate OPEN; Phase 4 not started, per route only on the owner's word; BD-CN template and 7 other launch routes: owner.
 
 **Not verified.** No signed-in production journey: signed-out probes are refused 401/403 before the module gate, so they cannot show it.
+
+## 28 Nov 2026 - records: G74 rotation, PRs 703 and 704 open, route sheet handed to the owner (scribe, for Guardian G75)
+
+**Request.** Records before Guardian G74 rotates to G75 (session_0187kU9uxwC9xBAxVLyticyz). Branch claude/modest-curie-fqwimu from origin/main 31358080ffef3434c5ed1867ac8b9d8ed9da1d53; authority stamp auth-4e835991807d. Docs only. No requirement moves to VERIFIED.
+
+**Why.** Owner first hand to G74: "proceed with next batch" (batch picked by corridra-authority: route-pack facts-version follow-up, #dash-money, then L1 Bangla); later "rotate and update documentations".
+
+**Outcome (as relayed by G74).**
+
+- PR 703 OPEN, draft, branch claude/route-pack-current-facts, head 6ef2f32604cae15285d30d41a41885679e7fac36. A part-way import answer names earlier facts only while this save's record is still the route's latest facts version (ruling G74; review finding 3 on PR 701). One condition in packages/missions/src/route-pack-sheet.ts, new integration test (red first: expected [SV-NI contentVersion 3] to equal []), spec 12.1 sentence "Follow-up per G74". Local: route-pack integration 3 files 106 passed; typecheck, lint, test:docs 0. Guardian read the diff (nextVersion is latest plus one). CI at rotation: 20 of 22 green, operator (6) and verification still running. Not merged.
+- PR 704 OPEN, draft, branch claude/dash-money-address, head abcc4fb57202785688f7b96b2829507ddd8d3e7f. An address naming a dashboard tab by `#dash-*` (follow-up "#dash-money is never opened", PR 645) moves once to `?tab=` on the page holding the tab, only for a role that may open it; switch off handles only #dash-money; no change to the Money panel, financeAvailable, roles, server or API. Red first: 5 cases failed on main, the reviewer denial case passed on main (guard). Independent Opus corridra-reviewer: READY, 0 blocking, 2 notes (switch-off #dash-money from other pages moves to Dashboard, intended; encoded #dash%2Dmoney not moved, harmless). CodeQL raised 1 high alert (incomplete escaping, tests/operator/p5b-helpers-status-team.spec.ts:707, a hand-built RegExp); fixed in abcc4fb by an exact toHaveURL string; CI re-running at rotation; the CodeQL review thread is to be resolved once the alert clears. Not merged.
+- Route pack template: G74 gave the owner the full 8-route sheet (568 rows: 71 standard fields x BD-CN, CN-BD, BD-EU, EU-BD, BD-GB, GB-BD, BD-US, US-BD, example custom rows left out) built from docs/adr/0093/route-pack-template-v1.csv, with fill rules and an OpenAI prompt. Owner: "get me the full template sheet, which i will populate by open ai 100% correctly, validly, completely, then share the populate file with u". The sheet files are not in the repository.
+- Drift fixed: docs/PLAN_STATUS.md Journey modes row said "Not built" and the ledger's 23 Nov bullet said "(spec, approved, not built)"; PR 623 built it (merged ebc7e83f, 24 Nov, behind CORRIDRA_UX_JOURNEY_MODES, off; no signed-in pass recorded). Both now say so.
+- Open, needs owner: v4.3 designer item 15 conflicts with the v4.2 one-line demand sentence rule (do not build).
+
+**Next action.** G75 merges 703 then 704 on exact-head green (704 after its CodeQL thread is resolved) and records. Then the owner's filled route sheet: import dry run (writes nothing), fix errors with the owner, save only on the owner's word; going live per route is a separate owner word (Phase 4). Then L1 Bangla (Class B; about 1214 untranslated bn keys per tests/integration/language-base.test.ts; home.v42 and v4.3 words stay English; native review gate OPEN). Signed-in production check of the route pack editor still NOT VERIFIED.
+
+**Verification.** G74 receipts as relayed; not re-read by this scribe run. This PR: node scripts/authority.mjs stamp, check, node scripts/v3-context.mjs verify, node --test tests/documents.test.mjs, prettier@3.9.10 --check; exit codes in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (23 Nov bullet and next action, size not grown); docs/PLAN_STATUS.md (Journey modes row); this entry. No code, tests, ADR text, switch or install.
+
+**Preserved.** Native language review gate OPEN; Phase 4 not started; real-operation gates unchanged; every owner decision line kept.
+
+**Not verified.** Merge and CI of 703 and 704; any signed-in production journey.
