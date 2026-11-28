@@ -5,8 +5,10 @@
   max-inline-size: 62.5rem;
   margin-inline: auto;
 }
-.pv-window {
+.guide-plan-body.pv-window.pv-window {
   display: grid;
+  align-items: stretch;
+  gap: 0;
   grid-template-columns: minmax(0, 23.75rem) minmax(0, 1fr);
   inline-size: min(62.5rem, 100%);
   margin-inline: auto;
@@ -24,9 +26,6 @@
   grid-column: 2;
   grid-row: 1;
   max-inline-size: none;
-}
-.pv-window > .ux-brief-summary {
-  display: none;
 }
 .pv-side {
   display: flex;
@@ -98,6 +97,11 @@
   display: grid;
   gap: 18px;
   max-inline-size: none;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 .pv-main .intake-form > h2 {
   margin: 0;
@@ -353,7 +357,7 @@
   color: var(--cv-brand);
 }
 @media (max-width: 52rem) {
-  .pv-window {
+  .guide-plan-body.pv-window.pv-window {
     grid-template-columns: minmax(0, 1fr);
     border-radius: 24px;
   }
