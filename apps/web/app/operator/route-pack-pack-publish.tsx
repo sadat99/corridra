@@ -260,7 +260,7 @@ export function PackDialog(props: {
         id={`${id}-reason`}
         ref={reasonBox}
         dir="auto"
-        rows={3}
+        rows={2}
         maxLength={500}
         placeholder={packWords.reasonHint}
         value={reason}

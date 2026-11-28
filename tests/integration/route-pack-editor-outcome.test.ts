@@ -27,6 +27,9 @@ describe('factsOutcome: every status and code', () => {
     [400, 'ROUTE_PACK_INVALID', 'invalid'],
     [400, undefined, 'invalid'],
     [413, undefined, 'tooLarge'],
+    // Keyed on the code, not on the server's words.
+    [400, 'ROUTE_PACK_TOO_LARGE', 'tooLarge'],
+    [409, 'ROUTE_PACK_TOO_LARGE', 'invalid'],
     [401, 'STEP_UP_REQUIRED', 'stepUp'],
     [401, undefined, 'signedOut'],
     [403, undefined, 'denied'],

@@ -75,13 +75,20 @@
   block-size: var(--space-6);
 }
 .route-pack-versions {
-  display: grid;
-  gap: var(--space-1);
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
   font-size: var(--text-sm);
   color: var(--text-2);
+}
+.route-pack-versions li + li::before {
+  content: '\00b7';
+  margin-inline-end: var(--space-3);
+  color: var(--text-3);
 }
 .route-pack-caution {
   display: grid;
