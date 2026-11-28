@@ -129,3 +129,17 @@ export function readCustomerIdentity() {
 export function readServerCustomerIdentity(): CustomerIdentity | null {
   return null;
 }
+
+// Whether the customer account v18 is on, so the signed-in menus leave Listen out. A flag only.
+let accountV18 = false;
+export function setCustomerAccountV18(next: boolean) {
+  if (next === accountV18) return;
+  accountV18 = next;
+  for (const listener of listeners) listener();
+}
+export function readCustomerAccountV18() {
+  return accountV18;
+}
+export function readServerCustomerAccountV18() {
+  return false;
+}

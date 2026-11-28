@@ -2,6 +2,7 @@ import { AssignedMissions } from './assigned-missions';
 import { customerDeliveryEnabled } from '@corridra/auth/customer-assigned-missions';
 import { WorkspaceShell } from '../../components/workspace-shell';
 import { CustomerShell } from '../../components/customer-shell';
+import { MyWorkTabs } from '../../components/ux/my-work-tabs';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { neonAuth } from '../../lib/neon-auth';
@@ -242,6 +243,9 @@ export default async function Page({
       )}
       {view === 'work' && (
         <div id="my-work" tabIndex={-1} className="ux-account-groups">
+          {uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18') && (
+            <MyWorkTabs current="requests" meetings={uxSwitchOn('CORRIDRA_UX_SHELLS_V2')} />
+          )}
           <RequestsTabs
             requests={
               workspaceIssuer && (
@@ -310,6 +314,9 @@ export default async function Page({
       )}
       {view === 'results' && (
         <div id="results" tabIndex={-1} className="ux-account-groups">
+          {uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18') && (
+            <MyWorkTabs current="results" meetings={uxSwitchOn('CORRIDRA_UX_SHELLS_V2')} />
+          )}
           <div id="customer-missions" tabIndex={-1}>
             <InvitationProvider>
               <OpenInvitationButton />

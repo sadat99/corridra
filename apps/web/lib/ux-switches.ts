@@ -81,8 +81,6 @@ export const uxSwitchNames = [
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 
 export function uxSwitchOn(name: UxSwitchName, env: NodeJS.ProcessEnv = process.env): boolean {
-  // Preview-only: the claude/home-v44 branch preview shows the v18 account. Remove before any merge to main.
-  if (name === 'CORRIDRA_UX_ACCOUNT_V18' && env.VERCEL_GIT_COMMIT_REF === 'claude/home-v44') return true;
   return env[name] === 'true';
 }
 

@@ -40,6 +40,8 @@ import {
   readServerCustomerOrganisationProfiles,
   readServerCustomerNote,
   readServerCustomerProblemReports,
+  readCustomerAccountV18,
+  readServerCustomerAccountV18,
   subscribeCustomerNote,
 } from './customer-bar-store';
 import { BarInbox, LanguageMenuGroup, useWorkspaces } from './customer-bar';
@@ -175,10 +177,22 @@ export function useCustomerHelpGroups(whatsappHref?: string | null): HelpGroup[]
     readCustomerProblemReports,
     readServerCustomerProblemReports,
   );
-  return customerHelpGroups(
+  const v18 = useSyncExternalStore(
+    subscribeCustomerNote,
+    readCustomerAccountV18,
+    readServerCustomerAccountV18,
+  );
+  const groups = customerHelpGroups(
     whatsappHref,
     problemReports ? reportProblemHref(customerProblemReportsPath, pathname) : null,
   );
+  // Customer account v18: no Listen row (owner decision: no Listen).
+  return v18
+    ? groups.map((group) => ({
+        ...group,
+        items: group.items.filter((entry) => entry.kind !== 'listen'),
+      }))
+    : groups;
 }
 
 /** Help and accessibility: groups of at most four, Get Help, Make It Easier to Read, About Corridra. */

@@ -5,6 +5,7 @@ import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { uxSwitchOn } from '../lib/ux-switches';
+import { ActingFor } from './ux/acting-for';
 import { journeyModesOn } from '../lib/ux/journey-modes-on';
 import type { JourneyMode } from '../lib/ux/journey-mode';
 import { JourneyModeProvider } from './ux/journey-mode-context';
@@ -224,12 +225,14 @@ function CustomerFrame({
         organisationProfiles={customerOrganisationProfilesEnabled()}
         companies={companies}
         move={homeIsMove}
+        accountV18={v18}
         text={
           real
             ? 'Your work stays private to the people given access.'
             : 'Preview workspace: use made-up names and details here.'
         }
       />
+      {v18 ? <ActingFor /> : null}
       {/* Streams after the frame: the identity is for the header's Search only and nothing waits for it. */}
       <Suspense fallback={null}>
         <CustomerBarIdentity />

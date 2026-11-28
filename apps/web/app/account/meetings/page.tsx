@@ -15,6 +15,7 @@ import { uxSwitchOn } from '../../../lib/ux-switches';
 import { loadWorkItems } from '../../../lib/work-items/load';
 import { MeetingsList, RequestsSection, type MeetingGroup } from './meetings-list';
 import { MeetingsTabs } from './meetings-tabs';
+import { MyWorkTabs } from '../../../components/ux/my-work-tabs';
 import { activeJourneyMode } from '../../../lib/ux/journey-mode-server';
 import { meetingRequests } from '../../../lib/work-items/journey-scope';
 import { JourneyScoped } from '../../../components/ux/journey-scoped';
@@ -150,6 +151,7 @@ export default async function Page() {
     ) : null;
   return (
     <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings" journeyMode={mode}>
+      {uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18') && <MyWorkTabs current="meetings" meetings />}
       <JourneyScoped mode={scoped}>
         {readable ? null : <p>{intro}</p>}
         <div className="room">
