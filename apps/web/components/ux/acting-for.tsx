@@ -1,5 +1,4 @@
 import { Suspense } from 'react';
-import { foundations } from '../../lib/foundations';
 import { activeWorkspaces } from '../../lib/workspace-choice';
 import { ActingForMenu } from './acting-for-menu';
 
@@ -9,10 +8,12 @@ import { ActingForMenu } from './acting-for-menu';
  * Choosing grants nothing; the request page and its API repeat the identity and role checks.
  */
 async function ActingForList() {
-  const s = foundations();
-  if (!s) return null;
   let rows;
   try {
+    // Loaded here, as the closed-account gate does, so the frame itself carries no server-only import.
+    const { foundations } = await import('../../lib/foundations');
+    const s = foundations();
+    if (!s) return null;
     await s.ready;
     rows = await s.customerWorkspaces.list();
   } catch {

@@ -417,12 +417,6 @@ export default async function Page({
                 </Link>
               </li>
               <li className="ux-row">
-                <Link prefetch={false} className="ux-row-link" href="/account/all-tools">
-                  <span className="ux-row-title">All Tools</span>
-                  <span className="ux-row-cell">Every page in your account.</span>
-                </Link>
-              </li>
-              <li className="ux-row">
                 <Link prefetch={false} className="ux-row-link" href="/how-it-works">
                   <span className="ux-row-title">Help and Support</span>
                   <span className="ux-row-cell">How Corridra works and how to reach us.</span>
