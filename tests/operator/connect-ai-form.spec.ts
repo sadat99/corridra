@@ -1182,6 +1182,46 @@ test('Add route pack with the module active keeps a caution naming the Core fiel
   await expect(line.locator('.ux-kit-feedback')).toHaveAttribute('data-kind', 'success');
 });
 
+test("Add route pack shows the chosen route's current channel, and a route with no pack starts manual", async ({
+  page,
+}) => {
+  const pack = (route: string, version: number, channels: string[]) => ({
+    id: id(version + 90),
+    route_id: route,
+    origin_market: 'BD',
+    destination_market: 'CN',
+    status: 'DRAFT',
+    version,
+    configuration: { channels },
+  });
+  await open(page, {
+    read: () => ({ status: 404, json: { error: 'Not found' } }),
+    catalogue: {
+      ...packCatalogue,
+      routes: [
+        { id: id(70), origin_market: 'BD', destination_market: 'CN' },
+        { id: id(72), origin_market: 'CN', destination_market: 'BD' },
+        { id: id(73), origin_market: 'BD', destination_market: 'GB' },
+      ],
+      packs: [
+        pack(id(70), 1, ['MANUAL']),
+        pack(id(70), 2, ['SYNTHETIC']),
+        pack(id(72), 1, ['MANUAL']),
+      ],
+    },
+    routePack: { reviewed: true, answer: () => ({ id: id(80), version: 3 }) },
+  });
+  await page.getByText('Add route pack', { exact: true }).click();
+  const form = page.locator('form').filter({ hasText: 'New route pack' });
+  const manual = form.locator('input[name="manualChannel"]');
+  await form.getByLabel('Route').selectOption(id(70));
+  await expect(manual).not.toBeChecked();
+  await form.getByLabel('Route').selectOption(id(72));
+  await expect(manual).toBeChecked();
+  await form.getByLabel('Route').selectOption(id(73));
+  await expect(manual).toBeChecked();
+});
+
 test('Add route pack with the module inactive sends and says what it always did', async ({
   page,
 }) => {
