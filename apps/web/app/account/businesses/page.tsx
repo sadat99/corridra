@@ -61,11 +61,11 @@ export default async function Page() {
         <p role="status">Your businesses are unavailable right now.</p>
       )}
       <ul className="ux-rows" style={{ listStyle: 'none', padding: 0 }}>
-        <li className="ux-row ux-row-link" aria-disabled="true">
+        <li className="ux-row ux-row-link">
           <span className="ux-row-title">Invite by email</span>
           <span className="ux-badge">Coming soon</span>
         </li>
-        <li className="ux-row ux-row-link" aria-disabled="true">
+        <li className="ux-row ux-row-link">
           <span className="ux-row-title">Requests owned by the business</span>
           <span className="ux-badge">Coming soon</span>
         </li>
