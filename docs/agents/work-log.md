@@ -6056,3 +6056,28 @@ Checks at f236a8f0, all exit 0:
 **Preserved.** Closed gates: ADR-093 2b (migration 0002) NOT installed; route-pack-facts, route-pack-publish and import save dormant (404) in production; native language review gate OPEN; Phase 4 closed.
 
 **Not verified.** No signed-in live journey pass. PR 699 was not exercised in production.
+
+## 28 Nov 2026 - records: PR 701 merged, main 005758b1, ADR-093 2b installed (scribe, for Guardian G74)
+
+**Request.** Records for PR 701 (ADR-093 follow-ups, server half) and the ADR-093 2b install. Branch claude/modest-curie-fqwimu from origin/main 005758b; authority stamp auth-5b96590aca1c. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger said the server half was open and 2b NOT INSTALLED (dormant, 404).
+
+**Outcome (as relayed by G74, session_0187kU9uxwC9xBAxVLyticyz).**
+
+- PR 701 merged as 005758b101f87a90b07c508b5f150253b5bd2fde from head a3c55803244c0d4757038d70c68f77e307dde341. 24 checks green on that head (browser 1-3, integration 1-3, operator 1-6, ux 1-3, verification, validate, checks, changes, CodeQL analyses; CodeQL neutral). Deploy dpl_Uk8MRKwniEijBz1iHAhqEbMeToMi READY (Vercel list_deployments by sha).
+- Scope: F2 base-pack replay (409 ROUTE_PACK_COMMAND_REUSED, exact replay 200 duplicate); ROUTE_PACK_NOT_PUBLISHED (409), pack moved 409 ROUTE_PACK_PACK_CHANGED, 401 keeps STEP_UP_REQUIRED; stageScope keyed hash (AUTH_SECRET) and sessionStorage key v2, legacy key removed and never restored; planFingerprint required on save, first send only, 409 ROUTE_PACK_PLAN_CHANGED; earlier facts named on a later part-way answer; server 400 ROUTE_PACK_TOO_LARGE. No migration, schema change, switch or env var.
+- Review: one independent Opus corridra-reviewer on 6980731: 0 blocking, READY, all 8 builder deviations accepted. Two non-blocking findings fixed before merge by an Opus builder: (1) continued-save detection finds this save's derived pack ids in any version (packIdsWritten, tenant-scoped id=ANY lookup); red-first test failed on 6980731 with the PLAN_CHANGED throw at route-pack-sheet.ts:802, then passed (b8f6366); (2) ROUTE_PACK_NOT_PUBLISHED is 409 per spec, operator mock 403 to 409 (a3c5580). Builder checks: route-pack integration 4 files 161 passed; route-pack-editor-pack.spec.ts 30 passed; typecheck, lint 0; test:docs 138/138; v3-context verify PASS. G74 read the fix delta.
+- Open minor follow-up (review finding 3): a part-way answer may name an earlier facts version of the same save id when others later rewrote the document (still true, "facts saved", not the current version number).
+- 2b INSTALLED 28 Nov 2026: Install customer modules run 46109912348 on 005758b, apply=yes, field_modules_action=route_pack_install, approved by the owner (first hand to G74: "dispatch installation if ready, i will approve", then "apprvd"). Log: "route_pack_migrations: 1 applied" before, "Route pack module installed or already current", "route_pack_migrations: 2 applied" after; conclusion success. PG 18.7 check: 0002 has no version-specific hash pins (the only pins were in 0001, applied on PG 18.7 on 27 Nov); the migrator applies in one transaction under an advisory lock. Rollback: rollback/0002_hide_route_pack_content.sql (hides the module, keeps the rows).
+- Effect: with CORRIDRA_ROUTE_PACK_FORM on, route-pack-facts, route-pack-publish and import save are no longer dormant; the go-live check acts on every pack path.
+
+**Next action.** Signed-in production check of the route pack editor (owner or a signed-in session), then the owner's BD-CN template and 7 launch routes, Phase 4 per route on the owner's word, then native review.
+
+**Verification.** G74 and builder receipts as relayed; not re-read by this scribe run. This PR: node scripts/authority.mjs stamp, node scripts/v3-context.mjs verify, node --test tests/documents.test.mjs, prettier@3.9.10 --check; exit codes in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (first Resume bullet and next action, size not grown); docs/PLAN_STATUS.md (ADR-093 row and route pack editor spec row); docs/adr/README.md (ADR-093 row); this entry. No code, tests, ADR text, switch or install.
+
+**Preserved.** 2c wording unchanged (listed NOT INSTALLED); native language review gate OPEN; Phase 4 not started, per route only on the owner's word; BD-CN template and 7 other launch routes: owner.
+
+**Not verified.** No signed-in production journey: signed-out probes are refused 401/403 before the module gate, so they cannot show it.
