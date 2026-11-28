@@ -132,6 +132,7 @@ describe('sign-in without the account provider', () => {
     state.config = { NEON_AUTH_BASE_URL: 'https://auth.example' };
     const html = await page();
     expect(html).toContain('<h1 class="aw-title">Sign in.</h1>');
+    expect(html).toContain('<form');
     expect(html).not.toContain('Sign-in is coming soon.');
     process.env.CORRIDRA_UX_ACCESS_WINDOW_V11 = 'false';
     const before = await page();

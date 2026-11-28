@@ -88,6 +88,15 @@ test('on a phone the left pane is one heading, the map and the answers wait, and
   await expect(page.locator('.pv-step[data-state="now"]')).toHaveCount(1);
 });
 
+test('with the switch unset the request form says that nothing here is an offer, a quote or a promise', async ({
+  page,
+}) => {
+  await page.goto('/plan');
+  await expect(page.locator('form.intake-form')).toContainText(
+    'Nothing here is an offer, a quote or a promise.',
+  );
+});
+
 test('on a wide screen the left pane is open beside the form and follows the answers, and the receipt check sits under the form', async ({
   page,
 }) => {

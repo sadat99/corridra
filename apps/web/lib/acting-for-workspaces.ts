@@ -1,3 +1,4 @@
+import 'server-only';
 import { foundations } from './foundations';
 import { activeWorkspaces } from './workspace-choice';
 
