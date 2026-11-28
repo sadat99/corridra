@@ -198,6 +198,8 @@ test.describe('Import Route Data: the owner', () => {
       csv: text,
       saveId: expect.stringMatching(uuid),
       reason: reasonText,
+      // Follow-up per G73: the fingerprint of the check that showed the plan.
+      planFingerprint: checkedFingerprint,
     });
     await expect(dialog.getByRole('link', { name: 'Open Bangladesh to China' })).toBeVisible();
     await dialog.locator('.route-dialog-actions').getByRole('button', { name: 'Close' }).click();
