@@ -5,6 +5,7 @@ import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { uxSwitchOn } from '../lib/ux-switches';
+import { ActingFor } from './ux/acting-for';
 import { journeyModesOn } from '../lib/ux/journey-modes-on';
 import type { JourneyMode } from '../lib/ux/journey-mode';
 import { JourneyModeProvider } from './ux/journey-mode-context';
@@ -162,9 +163,9 @@ function CustomerFrame({
       ? 'home'
       : tab === 'work'
         ? 'requests'
-        : tab === 'results'
-          ? 'reports'
-          : tab === 'companies' || tab === 'meetings'
+        : tab === 'results' || tab === 'meetings'
+          ? 'requests'
+          : tab === 'companies' || tab === 'more' || tab === 'delegations'
             ? tab
             : null;
   const items: CustomerSideItem[] = tabs.map((item) => ({
@@ -219,6 +220,7 @@ function CustomerFrame({
             : 'Preview workspace: use made-up names and details here.'
         }
       />
+      <ActingFor />
       {/* Streams after the frame: the identity is for the header's Search only and nothing waits for it. */}
       <Suspense fallback={null}>
         <CustomerBarIdentity />

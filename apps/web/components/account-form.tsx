@@ -1,6 +1,5 @@
 'use client';
 import Link from 'next/link';
-import { operatorSignInPage } from '../lib/workspace-navigation';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { accountClient } from '../lib/neon-auth-client';
@@ -248,12 +247,6 @@ export function AccountForm({
         </p>
       )}
       {mode === 'signup' && (
-        <p>
-          Already have an account? Sign in, or reset your password. Signing up again with the same
-          address does not create a second account and no code is sent.
-        </p>
-      )}
-      {mode === 'signup' && (
         <label className="field">
           Name
           <input
@@ -488,41 +481,16 @@ export function AccountForm({
         </button>
       )}
       {mode === 'signin' && (
-        <>
-          <details className="access-more account-more">
-            <summary>More ways in</summary>
-            <ul className="account-more-links">
-              <li>
-                <Link prefetch={false} className="text-link" href={accessPath('/signup')}>
-                  Create an Account
-                </Link>
-              </li>
-              <li>
-                <Link prefetch={false} className="text-link" href={accessPath('/verify-email')}>
-                  Verify Your Email
-                </Link>
-              </li>
-              <li>
-                <a className="text-link" href={operatorSignInPage}>
-                  Invited Operator Sign-in
-                </a>
-              </li>
-            </ul>
-          </details>
-          <p className="access-signin-row">
-            <span>New here?</span>
-            <Link prefetch={false} className="text-link" href="/plan">
-              Start a Request
-            </Link>
-          </p>
-        </>
+        <Link prefetch={false} className="text-link" href={accessPath('/verify-email')}>
+          Verify Your Email
+        </Link>
       )}
-      {(mode === 'signup' || mode === 'verify') && (
+      {mode === 'verify' && (
         <Link prefetch={false} className="text-link" href={accessPath('/forgot-password')}>
           Forgot Your Password?
         </Link>
       )}
-      {mode !== 'signin' && (
+      {mode !== 'signin' && mode !== 'signup' && (
         <Link prefetch={false} className="text-link" href={accessPath('/signin')}>
           Back to Sign-in
         </Link>

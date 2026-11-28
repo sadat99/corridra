@@ -2044,6 +2044,32 @@ summary:hover {
   --ac-cobalt-pressed: #1e4295;
   --ac-porcelain: #f6f8fb;
   --ac-copper: #bf7548;
+  /* Marigold: the accent of the redesign home (owner, 27 Nov 2026, v4.4 decision 3). Marks and dots only, never text on a light ground, never a call-to-action fill. */
+  --ac-marigold: #f0a92b;
+  /* Home v7 canvas palette (owner-approved board "Home v7", 27 Nov 2026). Used only by components/home-v7.css. */
+  --cv-brand: #2856c5;
+  --cv-ink: #142438;
+  --cv-ink-2: #44546a;
+  --cv-ink-3: #5c6b80;
+  --cv-line: #dde4ee;
+  --cv-hair: #eef1f5;
+  --cv-page: #f7f9fc;
+  --cv-tint: #eef3fc;
+  --cv-chip: #e4ecfb;
+  --cv-seg: #e6eaf1;
+  --cv-rail: #c9d5ec;
+  --cv-land: #d3ddee;
+  --cv-landfill: #d9e3f3;
+  --cv-white: #ffffff;
+  --cv-green: #1e9e6a;
+  --cv-gold: #f0a92b;
+  --cv-grey: #9aa6b8;
+  --cv-gold-bg: #fbebc8;
+  --cv-gold-ink: #8a5a00;
+  --cv-warm: #fbf3e1;
+  --cv-warm-2: #fbf1d9;
+  --cv-green-bg: #e3f5ec;
+  --cv-green-ink: #14724b;
   --ac-copper-ink: #85451e;
   --ac-ink: #18283c;
   --ac-paper: #ffffff;
@@ -2099,6 +2125,7 @@ summary:hover {
   /* Copper is editorial ornament only: never warning, verification or small text. */
   --editorial-accent: var(--ac-copper);
   --accent-gold: var(--editorial-accent);
+  --accent-marigold: var(--ac-marigold);
   /* Status colours are independent of the brand. */
   --positive: var(--ac-positive);
   --positive-surface: var(--ac-positive-surface);

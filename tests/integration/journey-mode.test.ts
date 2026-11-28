@@ -235,11 +235,11 @@ describe('journey mode: the sidebar per mode', () => {
       '/account/move',
       '/account?view=work',
       '/account/companies',
-      '/account/meetings',
-      '/account?view=results',
+      '/account/delegation-hub',
+      '/account?view=more',
     ]);
   });
-  it('in a journey Home and Requests open that journey, and the other three are unchanged', () => {
+  it('in a journey Home and My Work open that journey, and the other three are unchanged', () => {
     for (const journey of ['source', 'organise', 'sell'] as const) {
       const tabs = customerTabs({ companies: true, move: true, journey });
       expect(tabs.map((tab) => tab.key)).toEqual(today.map((tab) => tab.key));
@@ -247,8 +247,8 @@ describe('journey mode: the sidebar per mode', () => {
         `/account/move?journey=${journey}`,
         `/account?view=work&work=${journey}`,
         '/account/companies',
-        '/account/meetings',
-        '/account?view=results',
+        '/account/delegation-hub',
+        '/account?view=more',
       ]);
       const rest = (list: typeof today) => list.map((tab) => ({ ...tab, href: '' }));
       expect(rest(tabs)).toEqual(rest(today));

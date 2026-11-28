@@ -60,6 +60,9 @@ export function customerSearchPages(
   );
   const all = [
     ...customerTabs(input).map((tab) => entry(tab.label, 'Main navigation', tab.href, tab.key)),
+    // Meetings and Results are tabs inside My Work, so the search still finds them by name.
+    entry('Meetings', 'My Work', '/account/meetings'),
+    entry('Results', 'My Work', '/account?view=results'),
     entry('New Request', 'Starts a new Request', newRequestHref(canStart)),
     ...(hasWorkspace ? [entry('Manage Workspaces', 'Account menu', manageWorkspacesHref)] : []),
     ...links(customerAvatarItems(input), 'Account menu'),

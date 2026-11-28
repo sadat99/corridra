@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { sessionChanged } from '../session-events';
 import {
+  setCustomerAccountV18,
   setCustomerBilling,
   setCustomerCompanies,
   setCustomerIdentity,
@@ -22,6 +23,7 @@ export function CustomerBarNote({
   organisationProfiles = false,
   companies = false,
   move = false,
+  accountV18 = true,
 }: {
   text: string;
   billing?: boolean;
@@ -31,6 +33,8 @@ export function CustomerBarNote({
   companies?: boolean;
   /** Home is Your Move: the Search dialog opens the same address as the Home tab. */
   move?: boolean;
+  /** Customer account v18 is on: the signed-in menus leave Listen out. */
+  accountV18?: boolean;
 }) {
   useEffect(() => {
     setCustomerNote(text);
@@ -56,6 +60,10 @@ export function CustomerBarNote({
     setCustomerMove(move);
     return () => setCustomerMove(false);
   }, [move]);
+  useEffect(() => {
+    setCustomerAccountV18(accountV18);
+    return () => setCustomerAccountV18(false);
+  }, [accountV18]);
   return (
     <p hidden className="ux-customer-note">
       {text}

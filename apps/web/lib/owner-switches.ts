@@ -777,6 +777,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_HOME_V44',
+    label: 'Home page v4.4',
+    line: 'While the home page v4.3 is also on, the public home page shows the v4.4 refinement: a centred hero without the photo, a route map beside the route choice that follows the chosen route, and the same map in the request form. Every address, form and payload stays the same. Off by default. Turn it off by removing the setting in Vercel and redeploying.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_UX_HOW_TRUST_V43',
     label: 'One job per page: home, How It Works and Trust',
     line: 'While the home page v4.3 is also on, the home keeps a short summary of the process and of trust, each linking to its page, How It Works carries the full process (six steps, four stages by route, fourteen stages, eight roles, process questions) and Trust carries the full proof (five evidence labels, the history ledger, outcome stages, route statuses, Plain Limits, trust questions). Both pages are shown in full, with one Start a Request at the end. Every address and action stays the same. Off by default, and it does nothing unless the home page v4.3 is on. Turn it off by removing the setting in Vercel and redeploying.',

@@ -3,6 +3,12 @@
 // icon plus a word at 44 px. Menu stays where it is. Under 360 px the same two controls render inside the drawer
 // instead (variant "drawer"), so one set of components serves both places.
 import './top-bar.css';
+import { useSyncExternalStore } from 'react';
+import {
+  readCustomerAccountV18,
+  readServerCustomerAccountV18,
+  subscribeCustomerNote,
+} from './customer-bar-store';
 import { CorridraIcon } from '../corridra-icon';
 import { useListenControl } from '../corner-dock';
 import { useLanguage } from '../language-provider';
@@ -12,7 +18,12 @@ import { LanguageButton } from './language-sheet';
 export function ListenButton({ className = 'top-bar-tool' }: { className?: string }) {
   const { supported, speaking, toggle } = useListenControl();
   const { t } = useLanguage();
-  if (!supported) return null;
+  const v18 = useSyncExternalStore(
+    subscribeCustomerNote,
+    readCustomerAccountV18,
+    readServerCustomerAccountV18,
+  );
+  if (!supported || v18) return null;
   return (
     <button
       type="button"
