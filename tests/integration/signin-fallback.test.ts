@@ -62,11 +62,30 @@ async function page() {
   return render(await signin.default({ searchParams: Promise.resolve({}) }));
 }
 
-const anchors = (html: string) =>
-  [...html.matchAll(/<a [^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g)].map((m) => [
-    m[1],
-    m[2]!.replace(/<[^>]+>/g, '').trim(),
-  ]);
+// The links of a page as [address, visible words], read by walking the markup one anchor at a time with plain string
+// searches (no pattern is used to strip tags). The words are the text between the tags of the anchor.
+function anchors(html: string): string[][] {
+  const found: string[][] = [];
+  let at = html.indexOf('<a ');
+  while (at !== -1) {
+    const open = html.indexOf('>', at);
+    const close = html.indexOf('</a>', open);
+    if (open === -1 || close === -1) break;
+    const tag = html.slice(at, open);
+    const from = tag.indexOf('href="');
+    const href = from === -1 ? '' : tag.slice(from + 6, tag.indexOf('"', from + 6));
+    let words = '';
+    let inTag = false;
+    for (const ch of html.slice(open + 1, close)) {
+      if (ch === '<') inTag = true;
+      else if (ch === '>') inTag = false;
+      else if (!inTag) words += ch;
+    }
+    found.push([href, words.trim()]);
+    at = html.indexOf('<a ', close);
+  }
+  return found;
+}
 
 describe('sign-in without the account provider', () => {
   it('in the window (switch unset) says sign-in is not on and draws no form', async () => {
