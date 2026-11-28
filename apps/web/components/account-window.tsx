@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Inter } from 'next/font/google';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, type ReactNode } from 'react';
 import { accountAccessPath, accountReturnTo } from '../lib/account-return';
@@ -9,6 +10,12 @@ import './account-window.css';
 
 // The sign-in and create-account window (owner canvas board v11, 28 Nov 2026): one two-pane window in the home page's
 // design. The left pane shows what the account is for; the right pane holds the form, which keeps its own logic.
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--aw-font',
+  display: 'swap',
+});
 
 export type AccountWindowMode = 'signin' | 'signup' | 'other';
 
@@ -58,7 +65,13 @@ export function AccountWindow({
   children: ReactNode;
 }) {
   return (
-    <main id="main" lang="en" dir="ltr" tabIndex={-1} className="operator-page aw">
+    <main
+      id="main"
+      lang="en"
+      dir="ltr"
+      tabIndex={-1}
+      className={`operator-page aw ${inter.variable}`}
+    >
       <div className="aw-window">
         <aside className="aw-side" aria-label="What your account is for">
           <p className="aw-eb">Your account</p>

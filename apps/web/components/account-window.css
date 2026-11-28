@@ -2,7 +2,7 @@
    --cv-* tokens; weights 400/500/600. The cards slide in once; the status dot pulses and stops under reduced motion. */
 .aw {
   font-family:
-    var(--font-inter),
+    var(--aw-font),
     -apple-system,
     system-ui,
     sans-serif;

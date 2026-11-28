@@ -71,7 +71,7 @@ const anchors = (html: string) =>
 describe('sign-in without the account provider', () => {
   it('in the window (switch unset) says sign-in is not on and draws no form', async () => {
     const html = await page();
-    expect(html).toContain('class="operator-page aw"');
+    expect(html).toMatch(/class="operator-page aw[ "]/);
     expect(html).toContain('<h1 class="aw-title">Sign-in is coming soon.</h1>');
     expect(html).toContain('Temporarily unavailable');
     expect(html).toContain(

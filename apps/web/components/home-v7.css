@@ -5,7 +5,7 @@
 .hv7 {
   --hv7-w: 70rem;
   font-family:
-    var(--font-inter),
+    var(--hv7-font),
     -apple-system,
     system-ui,
     sans-serif;
@@ -914,7 +914,7 @@
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   font-family:
-    var(--font-inter),
+    var(--hv7-font),
     -apple-system,
     system-ui,
     sans-serif;

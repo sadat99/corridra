@@ -148,7 +148,7 @@ describe('customer account v18 switch', () => {
 describe('sign-up window switch', () => {
   it('off, /signup is the earlier account page; unset, the window', async () => {
     const { SignupAccess } = await load('app/signup/signup-access.tsx');
-    expect(render(createElement(SignupAccess))).toContain('class="operator-page aw"');
+    expect(render(createElement(SignupAccess))).toMatch(/class="operator-page aw[ "]/);
     process.env.CORRIDRA_UX_ACCESS_WINDOW_V11 = 'false';
     const before = render(createElement(SignupAccess));
     expect(before).toContain('data-shell="workspace"');
@@ -164,7 +164,7 @@ describe('work sign-in window switch', () => {
   it('off, /contributor/signin is the earlier workspace page; unset, the window', async () => {
     const { default: page } = await load('app/contributor/signin/page.tsx');
     const on = render(await page({ searchParams: Promise.resolve({}) }));
-    expect(on).toContain('class="operator-page aw"');
+    expect(on).toMatch(/class="operator-page aw[ "]/);
     expect(on).toContain('Helper sign-in.');
     process.env.CORRIDRA_UX_WORK_SIGNIN_V12 = 'false';
     const before = render(await page({ searchParams: Promise.resolve({}) }));
