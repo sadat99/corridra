@@ -261,7 +261,10 @@ export function RouteDataImportDialog({
     setSaveError(null);
     command.current = nextSaveCommand(command.current, file, () => crypto.randomUUID());
     setSaving(true);
-    const outcome = await saveSheet(tenant, saveBody(file, command.current, reason));
+    const outcome = await saveSheet(
+      tenant,
+      saveBody(file, command.current, reason, report.planFingerprint ?? ''),
+    );
     setSaving(false);
     settle(outcome);
   };

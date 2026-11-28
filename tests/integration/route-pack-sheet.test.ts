@@ -148,8 +148,24 @@ const latestPack = async (key: string) =>
 const fact = (document: { facts: { key: string }[] }, key: string) =>
   document.facts.find((item) => item.key === key);
 const plan = (report: SheetReport, route: string) => report.routes.find((r) => r.route === route)!;
-const save = (lines: string[][], ctx = owner(), saveId: string = randomUUID()) =>
-  sheet.save(ctx, { rows: rowsOf(lines), saveId, reason });
+type Rows = ReturnType<typeof rowsOf>;
+// Follow-up per G73: a save sends back the plan fingerprint of the check that showed its plan, as the page does. The check is
+// the owner's (the dry run is read only), so a refused save is refused for its own reason.
+const printOf = async (rows: Rows) => (await sheet.dryRun(owner(), { rows })).planFingerprint!;
+const printOfCsv = (csv: string) => printOf(csvRows(csv, sheetLimits.rows, 'route pack'));
+const save = async (lines: string[][], ctx = owner(), saveId: string = randomUUID()) => {
+  const rows = rowsOf(lines);
+  return sheet.save(ctx, { rows, saveId, reason, planFingerprint: await printOf(rows) });
+};
+// The save body the page sends, with the fingerprint of a check made now unless one is given.
+const saveRequest = async (csv: string, saveId: string, planFingerprint?: string) =>
+  sheetRequest({
+    mode: 'save',
+    csv,
+    saveId,
+    reason,
+    planFingerprint: planFingerprint ?? (await printOfCsv(csv)),
+  });
 // A sheet service whose operations command fails once, on the first command with this action.
 function interruptedOnce(action: string, failure: Error) {
   let interrupt = true;
@@ -281,9 +297,8 @@ test('a file with any error saves nothing, and the same file saves once the erro
     },
   ]);
   expect(await counts()).toEqual(before);
-  const response = await sheetRequest({
-    mode: 'save',
-    csv: csvOf([
+  const response = await saveRequest(
+    csvOf([
       good,
       filled('AR-CL', 'custom.cost_ar_cl', 'USD 45.001', {
         label: 'Cost',
@@ -291,9 +306,8 @@ test('a file with any error saves nothing, and the same file saves once the erro
         type: 'money',
       }),
     ]),
-    saveId: randomUUID(),
-    reason,
-  });
+    randomUUID(),
+  );
   expect(response.status).toBe(409);
   expect((await response.json()).error).toBe('Fix the errors in the dry run first');
   expect(await counts()).toEqual(before);
@@ -636,7 +650,8 @@ test('export then import gives no change, including a formula-like cell and ever
     sectionMarks: { added: [], removed: [] },
   });
   expect(plan(report, 'UY-AR').pack.changed).toBe(false);
-  const again = await sheetRequest({ mode: 'save', csv, saveId: randomUUID(), reason });
+  expect(report.planFingerprint).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  const again = await saveRequest(csv, randomUUID(), report.planFingerprint);
   expect(again.status).toBe(201);
   expect(await counts()).toEqual(before);
 });
@@ -649,7 +664,10 @@ test('a save that stopped between content and pack finishes on retry with the sa
     line({ route: 'PY-BO', field_key: 'pack.missionTypes', state: 'Filled', value: 'buyers' }),
   ]);
   const before = await counts();
-  const first = await interrupted.save(owner(), { rows: file, saveId, reason });
+  // Every send carries the first check's fingerprint: a later send under the same saveId is not compared, though its plan now
+  // differs because of the first send's own steps.
+  const planFingerprint = await printOf(file);
+  const first = await interrupted.save(owner(), { rows: file, saveId, reason, planFingerprint });
   expect(first.ok).toBe(false);
   expect(first.errors).toEqual([
     { row: null, route: 'PY-BO', key: null, message: 'Synthetic interruption' },
@@ -663,7 +681,8 @@ test('a save that stopped between content and pack finishes on retry with the sa
     routes: before.routes + 1,
     contents: before.contents + 1,
   });
-  const second = await interrupted.save(owner(), { rows: file, saveId, reason });
+  expect(await printOf(file)).not.toBe(planFingerprint);
+  const second = await interrupted.save(owner(), { rows: file, saveId, reason, planFingerprint });
   expect(second.ok).toBe(true);
   expect(second.saved).toEqual([
     { route: 'PY-BO', routeId: id, contentVersion: null, packVersion: 1 },
@@ -677,7 +696,9 @@ test('a save that stopped between content and pack finishes on retry with the sa
     decisions: before.decisions + 1,
   };
   expect(await counts()).toEqual(done);
-  expect((await interrupted.save(owner(), { rows: file, saveId, reason })).saved).toEqual([]);
+  expect(
+    (await interrupted.save(owner(), { rows: file, saveId, reason, planFingerprint })).saved,
+  ).toEqual([]);
   expect(await counts()).toEqual(done);
 });
 
@@ -892,11 +913,12 @@ test('a save that stops after writing for any reason answers 409 with the partia
     line({ route: 'BO-EC', field_key: 'pack.missionTypes', state: 'Filled', value: 'buyers' }),
   ];
   const saveId = randomUUID();
+  const planFingerprint = await printOf(rowsOf(file));
   const real = sheet;
   sheet = interruptedOnce('propose', new Error('connection reset by the database'));
   const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
   try {
-    const response = await sheetRequest({ mode: 'save', csv: csvOf(file), saveId, reason });
+    const response = await saveRequest(csvOf(file), saveId, planFingerprint);
     expect(response.status).toBe(409);
     // Logged once, with the request's correlation id and no personal data or internal message.
     expect(logged.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
@@ -919,7 +941,7 @@ test('a save that stops after writing for any reason answers 409 with the partia
     sheet = real;
     logged.mockRestore();
   }
-  const finished = await sheetRequest({ mode: 'save', csv: csvOf(file), saveId, reason });
+  const finished = await saveRequest(csvOf(file), saveId, planFingerprint);
   expect(finished.status).toBe(201);
   expect((await latestPack('BO-EC')).version).toBe(1);
 });
@@ -974,10 +996,11 @@ test('a save that stopped after propose and before decide publishes on retry wit
   ];
   const saveId = randomUUID();
   const before = await counts();
+  const planFingerprint = await printOf(rowsOf(file('buyers')));
   const first = await interruptedOnce(
     'decide',
     new DomainError('Synthetic interruption', 503),
-  ).save(owner(), { rows: rowsOf(file('buyers')), saveId, reason });
+  ).save(owner(), { rows: rowsOf(file('buyers')), saveId, reason, planFingerprint });
   expect(first.ok).toBe(false);
   const id = await routeId('EC-GT');
   expect(first.saved).toEqual([
@@ -996,16 +1019,16 @@ test('a save that stopped after propose and before decide publishes on retry wit
   expect(changed.errors).toMatchObject([
     { row: null, route: 'EC-GT', key: null, message: sheetWords.saveReused },
   ]);
-  const response = await sheetRequest({
-    mode: 'save',
-    csv: csvOf(file('sourcing')),
-    saveId,
-    reason,
-  });
+  const response = await saveRequest(csvOf(file('sourcing')), saveId);
   expect(response.status).toBe(409);
   expect((await response.json()).error).toBe(sheetWords.saveReused);
   expect(await counts()).toEqual(proposed);
-  const finished = await save(file('buyers'), owner(), saveId);
+  const finished = await sheet.save(owner(), {
+    rows: rowsOf(file('buyers')),
+    saveId,
+    reason,
+    planFingerprint,
+  });
   expect(finished.ok).toBe(true);
   expect(finished.saved).toEqual([
     { route: 'EC-GT', routeId: id, contentVersion: null, packVersion: 1 },
@@ -1050,13 +1073,15 @@ test('a pack paused after the plan is not un-paused by the save: the pack step i
     },
   });
   const raced = new RoutePackSheetService(f.runtime, corridors, operations, racing);
+  const rows = rowsOf([
+    filled('GT-HN', 'market.notes', 'Coffee and textiles'),
+    line({ route: 'GT-HN', field_key: 'pack.languages', state: 'Filled', value: 'es' }),
+  ]);
   const report = await raced.save(owner(), {
-    rows: rowsOf([
-      filled('GT-HN', 'market.notes', 'Coffee and textiles'),
-      line({ route: 'GT-HN', field_key: 'pack.languages', state: 'Filled', value: 'es' }),
-    ]),
+    rows,
     saveId: randomUUID(),
     reason,
+    planFingerprint: await printOf(rows),
   });
   expect(plan(report, 'GT-HN').pack.status).toBe('ACTIVE');
   expect(report.ok).toBe(false);
@@ -1108,16 +1133,13 @@ test('a pack published between the proposal and the decision refuses that route 
       return typeof value === 'function' ? value.bind(target) : value;
     },
   });
+  const rows = rowsOf([
+    filled('GT-BZ', 'market.notes', 'Coffee and sugar'),
+    line({ route: 'GT-BZ', field_key: 'pack.languages', state: 'Filled', value: 'es' }),
+  ]);
   const report = await new RoutePackSheetService(f.runtime, corridors, racing, content).save(
     owner(),
-    {
-      rows: rowsOf([
-        filled('GT-BZ', 'market.notes', 'Coffee and sugar'),
-        line({ route: 'GT-BZ', field_key: 'pack.languages', state: 'Filled', value: 'es' }),
-      ]),
-      saveId: randomUUID(),
-      reason,
-    },
+    { rows, saveId: randomUUID(), reason, planFingerprint: await printOf(rows) },
   );
   expect(race).toBe(false);
   expect(report.ok).toBe(false);
@@ -1134,6 +1156,68 @@ test('a pack published between the proposal and the decision refuses that route 
     { route: 'GT-BZ', routeId: id, contentVersion: 2, packVersion: null },
   ]);
   expect((await latestPack('GT-BZ')).version).toBe(draft.version + 1);
+});
+
+test('follow-up per G73: a second part-way answer still names the facts the first answer wrote; once the cause is fixed the same file finishes, and once more it has nothing left', async () => {
+  expect((await save(coreLines('HN-CR'))).ok).toBe(true);
+  const id = (await routeId('HN-CR'))!;
+  let refuse = true;
+  // The decision of the pack step is refused until the cause is fixed.
+  const refusing = new Proxy(operations, {
+    get(target, property) {
+      if (property === 'command')
+        return async (
+          ctx: Parameters<OperationsService['command']>[0],
+          input: { action?: string },
+        ) => {
+          if (refuse && input.action === 'decide')
+            throw new DomainError('Synthetic refusal of the decision', 409, 'FORCED');
+          return target.command(ctx, input);
+        };
+      const value = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+  const refused = new RoutePackSheetService(f.runtime, corridors, refusing, content);
+  const rows = rowsOf([
+    filled('HN-CR', 'market.notes', 'Coffee and bananas'),
+    line({ route: 'HN-CR', field_key: 'pack.languages', state: 'Filled', value: 'es' }),
+  ]);
+  const body = { rows, saveId: randomUUID(), reason, planFingerprint: await printOf(rows) };
+  const words = `Synthetic refusal of the decision ${routePackWords.notPublished}`;
+  const stopped = [
+    { row: null, route: 'HN-CR', key: null, code: 'ROUTE_PACK_NOT_PUBLISHED', message: words },
+  ];
+  const first = await refused.save(owner(), body);
+  expect(first.errors).toEqual(stopped);
+  expect(first.saved).toEqual([
+    { route: 'HN-CR', routeId: id, contentVersion: 2, packVersion: null },
+  ]);
+  const second = await refused.save(owner(), body);
+  expect(plan(second, 'HN-CR').content.changed).toBe(false);
+  expect(second.ok).toBe(false);
+  expect(second.errors).toEqual(stopped);
+  expect(second.saved).toEqual([
+    { route: 'HN-CR', routeId: id, contentVersion: 2, packVersion: null },
+  ]);
+  // The page reads it as the facts saved and the pack refused, and counts no fact twice.
+  expect(routeResults(second)).toEqual([
+    { route: 'HN-CR', kind: 'factsOnly', why: 'refused', reason: words },
+  ]);
+  expect(savedFactCount(second)).toBe(0);
+  expect(await contentVersions('HN-CR')).toBe(2);
+  refuse = false;
+  const finished = await refused.save(owner(), body);
+  expect(finished.ok).toBe(true);
+  expect(finished.saved).toEqual([
+    { route: 'HN-CR', routeId: id, contentVersion: null, packVersion: 2 },
+  ]);
+  // A finished save sent again has nothing left: "Nothing left to save" is unchanged.
+  const again = await refused.save(owner(), body);
+  expect(again.ok).toBe(true);
+  expect(again.saved).toEqual([]);
+  expect(await contentVersions('HN-CR')).toBe(2);
+  expect((await latestPack('HN-CR')).version).toBe(2);
 });
 
 test('the dry run judges go-live against the latest pack, a scheduled one included, and warns', async () => {
@@ -1192,12 +1276,7 @@ test('a pack over the review size limit is a route error in the save report, and
     },
   ]);
   expect(await counts()).toEqual(before);
-  const response = await sheetRequest({
-    mode: 'save',
-    csv: csvOf(file),
-    saveId: randomUUID(),
-    reason,
-  });
+  const response = await saveRequest(csvOf(file), randomUUID());
   expect(response.status).toBe(409);
   expect((await response.json()).error).toBe(routePackWords.proposalTooLarge);
 });
@@ -1329,6 +1408,16 @@ test('with the switch on and the content marker absent, both actions answer 404 
     const save = unread(65536);
     expect((await sheetRequest(save.body)).status).toBe(404);
     expect(save.pulled()).toBe(0);
+    // Follow-up per G73: a save body with its fingerprint is Not found just the same.
+    const withPrint = await sheetRequest({
+      mode: 'save',
+      csv: '"unclosed',
+      saveId: randomUUID(),
+      reason,
+      planFingerprint: 'A'.repeat(43),
+    });
+    expect(withPrint.status).toBe(404);
+    expect((await withPrint.json()).error).toBe('Not found');
     expect((await exportRequest('x'.repeat(200))).status).toBe(404);
     const many = Array.from({ length: 25 }, (_, i) => `R${i}-X${i}`).join('|');
     expect((await exportRequest(many)).status).toBe(404);
@@ -1388,6 +1477,7 @@ test('a save interrupted by a thrown null after a write still returns the partia
       rows: file,
       saveId: randomUUID(),
       reason,
+      planFingerprint: await printOf(file),
     });
     expect(report.ok).toBe(false);
     expect(report.errors).toEqual([
@@ -1407,8 +1497,11 @@ const pageCheck = async (csv: string) => {
   const response = await sheetRequest(dryRunBody(csv));
   return { status: response.status, outcome: checkOutcome(response.status, await response.json()) };
 };
-const pageSave = async (csv: string, command: SaveCommand) => {
-  const response = await sheetRequest(saveBody(csv, command, `  ${reason}  `));
+// The page sends the fingerprint of the check it showed; given none, a check is made now (as the owner, read only).
+const pageSave = async (csv: string, command: SaveCommand, planFingerprint?: string) => {
+  const response = await sheetRequest(
+    saveBody(csv, command, `  ${reason}  `, planFingerprint ?? (await printOfCsv(csv))),
+  );
   const json = await response.json();
   return { status: response.status, json, outcome: sheetOutcome(response.status, json) };
 };
@@ -1471,11 +1564,12 @@ test('PR 4: a save that stopped part way reads as part way with the route not sa
     line({ route: 'DK-IS', field_key: 'pack.missionTypes', state: 'Filled', value: 'buyers' }),
   ]);
   const command = nextSaveCommand(null, csv, randomUUID);
+  const planFingerprint = await printOfCsv(csv);
   const real = sheet;
   sheet = interruptedOnce('propose', new DomainError('Synthetic interruption', 503));
   let stopped;
   try {
-    stopped = await pageSave(csv, command);
+    stopped = await pageSave(csv, command, planFingerprint);
   } finally {
     sheet = real;
   }
@@ -1488,7 +1582,7 @@ test('PR 4: a save that stopped part way reads as part way with the route not sa
   ]);
   expect(savedFactCount(stopped.outcome.report)).toBe(1);
   expect(await contentVersions('DK-IS')).toBe(1);
-  const finished = await pageSave(csv, nextSaveCommand(command, csv, randomUUID));
+  const finished = await pageSave(csv, nextSaveCommand(command, csv, randomUUID), planFingerprint);
   expect(finished.status).toBe(201);
   expect(finished.outcome.kind).toBe('saved');
   expect(await contentVersions('DK-IS')).toBe(1);
@@ -1538,13 +1632,10 @@ test('PR 4: a pack changed between the plan and its step reads as that route cha
   expect(raced.outcome).toMatchObject({ kind: 'routeChanged', route: 'PT-ES' });
 });
 
-test('PR 4: a change made between the check and the save is not a conflict; the file value wins and History keeps both', async () => {
-  expect((await save([filled('MA-TN', 'market.notes', 'First notes')])).ok).toBe(true);
-  const id = (await routeId('MA-TN'))!;
-  const csv = csvOf([filled('MA-TN', 'market.notes', 'Notes from the file')]);
-  const check = await pageCheck(csv);
-  expect(check.outcome.kind).toBe('report');
-  // Someone saves the same route's facts after the check.
+// Follow-up per G73: the first send of a save id is compared with the plan the check showed (this replaces the PR 4 rule, per
+// Guardian G72, that the file value wins over a change made in between).
+const savedBetween = async (key: string) => {
+  const id = (await routeId(key))!;
   const [view] = (await content.overview(owner(), { routeIds: [id] })).routes;
   await content.append(owner(), {
     id: randomUUID(),
@@ -1565,7 +1656,42 @@ test('PR 4: a change made between the check and the save is not a conflict; the 
     },
     reason: 'Saved between the check and the save',
   });
-  const saved = await pageSave(csv, nextSaveCommand(null, csv, randomUUID));
+  return id;
+};
+test('follow-up per G73: a change made between the check and the save is 409 ROUTE_PACK_PLAN_CHANGED with nothing written; checked again, the file saves and History keeps both', async () => {
+  expect((await save([filled('MA-TN', 'market.notes', 'First notes')])).ok).toBe(true);
+  const csv = csvOf([filled('MA-TN', 'market.notes', 'Notes from the file')]);
+  const check = await pageCheck(csv);
+  expect(check.outcome.kind).toBe('report');
+  if (check.outcome.kind !== 'report') return;
+  const checked = check.outcome.report.planFingerprint;
+  expect(checked).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  // Someone saves the same route's facts after the check.
+  const id = await savedBetween('MA-TN');
+  const before = await counts();
+  const writesBefore = await writes();
+  const refused = await pageSave(csv, nextSaveCommand(null, csv, randomUUID), checked);
+  expect(refused.status).toBe(409);
+  expect(refused.json).toMatchObject({
+    code: 'ROUTE_PACK_PLAN_CHANGED',
+    error: sheetWords.planChanged,
+  });
+  expect(refused.json).not.toHaveProperty('report');
+  expect(refused.outcome).toEqual({ kind: 'routeChanged', route: null, report: null });
+  expect(await counts()).toEqual(before);
+  expect(await writes()).toEqual(writesBefore);
+  expect(fact(await latestDocument('MA-TN'), 'market.notes')).toMatchObject({
+    value: 'Notes saved in between',
+  });
+  // Recovery: check again, then the save writes the file's value and History keeps both.
+  const again = await pageCheck(csv);
+  if (again.outcome.kind !== 'report') throw new Error('The second check did not finish');
+  expect(again.outcome.report.planFingerprint).not.toBe(checked);
+  const saved = await pageSave(
+    csv,
+    nextSaveCommand(null, csv, randomUUID),
+    again.outcome.report.planFingerprint,
+  );
   expect(saved.status).toBe(201);
   expect(saved.outcome.kind).toBe('saved');
   expect(fact(await latestDocument('MA-TN'), 'market.notes')).toMatchObject({
@@ -1577,6 +1703,67 @@ test('PR 4: a change made between the check and the save is not a conflict; the 
     'Saved between the check and the save',
     reason,
   ]);
+});
+
+test('follow-up per G73: a check then a save with nothing changed in between saves; the same fingerprint is the same plan', async () => {
+  const csv = csvOf([filled('MA-DZ', 'identity.display_name', 'Morocco to Algeria')]);
+  const first = await pageCheck(csv);
+  const second = await pageCheck(csv);
+  if (first.outcome.kind !== 'report' || second.outcome.kind !== 'report')
+    throw new Error('A check did not finish');
+  expect(second.outcome.report.planFingerprint).toBe(first.outcome.report.planFingerprint);
+  const saved = await pageSave(
+    csv,
+    nextSaveCommand(null, csv, randomUUID),
+    first.outcome.report.planFingerprint,
+  );
+  expect(saved.status).toBe(201);
+  expect(saved.outcome.kind).toBe('saved');
+});
+
+test('follow-up per G73: a save without a fingerprint, or with one that is not well formed, is 400 with nothing written; with the check fingerprint it saves', async () => {
+  const csv = csvOf([filled('TN-LY', 'identity.display_name', 'Tunisia to Libya')]);
+  const before = await counts();
+  const writesBefore = await writes();
+  const missing = await sheetRequest({ mode: 'save', csv, saveId: randomUUID(), reason });
+  expect(missing.status).toBe(400);
+  for (const planFingerprint of ['short', 'A'.repeat(44), `${'A'.repeat(42)}=`, 7]) {
+    const malformed = await sheetRequest({
+      mode: 'save',
+      csv,
+      saveId: randomUUID(),
+      reason,
+      planFingerprint,
+    });
+    expect(malformed.status).toBe(400);
+  }
+  await expect(
+    sheet.save(owner(), {
+      rows: csvRows(csv, sheetLimits.rows, 'route pack'),
+      saveId: randomUUID(),
+      reason,
+    }),
+  ).rejects.toMatchObject({ name: 'ZodError' });
+  expect(await counts()).toEqual(before);
+  expect(await writes()).toEqual(writesBefore);
+  expect((await saveRequest(csv, randomUUID())).status).toBe(201);
+});
+
+test('follow-up per G73: a stale authenticator check is 401 and writes nothing; after a fresh one the same body with the same fingerprint saves', async () => {
+  const csv = csvOf([filled('LY-EG', 'identity.display_name', 'Libya to Egypt')]);
+  const check = await pageCheck(csv);
+  if (check.outcome.kind !== 'report') throw new Error('The check did not finish');
+  const command = nextSaveCommand(null, csv, randomUUID);
+  const before = await counts();
+  await f.owner.query("UPDATE identity.assurance SET verified_at=now()-interval '1 hour'");
+  const stale = await pageSave(csv, command, check.outcome.report.planFingerprint);
+  expect(stale.status).toBe(401);
+  expect(stale.outcome).toEqual({ kind: 'stepUp' });
+  expect(await counts()).toEqual(before);
+  await f.owner.query('UPDATE identity.assurance SET verified_at=now()');
+  const saved = await pageSave(csv, command, check.outcome.report.planFingerprint);
+  expect(saved.status).toBe(201);
+  expect(saved.outcome.kind).toBe('saved');
 });
 
 test('PR 4: the admin checks and is refused the save; a stale authenticator reads as the check to ask again', async () => {

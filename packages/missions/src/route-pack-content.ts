@@ -332,6 +332,23 @@ export async function loadRoutePackState(db: DatabaseClient, tenantId: string) {
     ),
   };
 }
+// The content records with these ids (a save's derived step ids, at most one per route of a file), read inside the caller's
+// transaction, so the sheet can tell a continued save from a first send and name the facts an earlier answer wrote.
+export async function contentRecordsById(db: DatabaseClient, tenantId: string, ids: string[]) {
+  if (!ids.length) return [];
+  const rows = (
+    await db.query<{ id: string; route_id: string; version: number; document: unknown }>(
+      'SELECT id,route_id,version,document FROM app.route_pack_content WHERE tenant_id=$1 AND id=ANY($2::uuid[])',
+      [tenantId, ids],
+    )
+  ).rows;
+  return rows.map((row) => ({
+    id: row.id,
+    routeId: row.route_id,
+    version: row.version,
+    document: parseContentDocument(row.document),
+  }));
+}
 const today = () => new Date().toISOString().slice(0, 10);
 const notFound = () => new DomainError(routePackWords.notFound, 404);
 

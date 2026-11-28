@@ -42,6 +42,8 @@ const sheetRequest = z
     csv: z.string(),
     saveId: z.uuid().optional(),
     reason: z.string().optional(),
+    // Follow-up per G73: the check's plan fingerprint; the sheet service requires it on a save, so a save without one is 400.
+    planFingerprint: z.string().optional(),
   })
   .strict();
 const sheetBodyOctets = 2 * sheetLimits.octets;
@@ -222,6 +224,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           rows,
           saveId: v.saveId,
           reason: v.reason,
+          planFingerprint: v.planFingerprint,
         });
         if (report.ok) return Response.json(report, { status: 201, headers });
         return Response.json(

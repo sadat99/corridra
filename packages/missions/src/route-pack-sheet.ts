@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { z } from 'zod';
 import {
   withTenant,
@@ -7,6 +9,7 @@ import {
 } from '@corridra/db';
 import { DomainError } from '@corridra/domain';
 import { routeConfiguration, type RouteConfiguration } from '@corridra/domain/corridors';
+import { canonicalJson } from '@corridra/domain/counterparty-profiles';
 import { currency, formatMoney, parseMoney } from '@corridra/domain/opportunities';
 import {
   carriedConfiguration,
@@ -37,6 +40,7 @@ import type { CorridorService } from './corridors';
 import { changedPackFields, type OperationsService } from './operations';
 import {
   commandStepId,
+  contentRecordsById,
   judge,
   judgedPacks,
   loadRoutePackState,
@@ -88,6 +92,9 @@ export type SheetReport = {
   warnings: SheetIssue[];
   routes: SheetRoutePlan[];
   readinessInvalidated: boolean;
+  // Follow-up per G73: the dry run's planFingerprint of its plan; the save sends it back and its first send is refused when
+  // the plan made then differs.
+  planFingerprint?: string;
   saved?: {
     route: string;
     routeId: string;
@@ -123,6 +130,8 @@ const saveInput = z
     rows: cellRows,
     saveId: z.uuid(),
     reason: z.string().trim().min(3).max(500),
+    // The planFingerprint of the check the person saw (sha256, base64url).
+    planFingerprint: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
   })
   .strict();
 const exportInput = z
@@ -174,6 +183,9 @@ export const sheetWords = {
   saveErrors: 'Fix the errors in the dry run first',
   savePartly: 'The save stopped part way. Fix the error, then save the same file again to finish.',
   saveStopped: 'Saving this route stopped. Save the same file again to finish.',
+  // Spec 12.1, follow-up per G73: the first send of a save whose plan differs from the plan its check showed.
+  planChanged:
+    'A route changed while you were checking. Nothing was saved. Choose the file again to check it against the current state.',
   saveReused:
     'This save was started with a different file. Run the dry run again and save the file as a new save.',
 } as const;
@@ -653,6 +665,33 @@ function planSheet(
     }
   return { errors, warnings, routes };
 }
+// Follow-up per G73: what a save would write, route by route, as one sha256 (base64url, 43 characters). The dry run answers it
+// and the first send of a save compares it with the plan it makes again, so a route changed after the check is refused, not
+// overwritten. Completeness, go-live and skipped rows are left out: they follow from the rest or only describe it, and the
+// date alone never changes it.
+export function planFingerprint(routes: PlannedRoute[]): string {
+  const keys = (changes: FieldChange[]) => changes.map((change) => change.key);
+  const plan = [...routes]
+    .sort((a, b) => (a.route < b.route ? -1 : a.route > b.route ? 1 : 0))
+    .map((p) => ({
+      route: p.route,
+      routeId: p.routeId,
+      willBeAdded: p.willBeAdded,
+      basePackId: p.basePackId,
+      pack: p.pack,
+      configuration: p.configuration,
+      content: {
+        changed: p.content.changed,
+        nextVersion: p.content.nextVersion,
+        added: keys(p.content.added),
+        updated: keys(p.content.updated),
+        removed: keys(p.content.removed),
+        sectionMarks: p.content.sectionMarks,
+      },
+      document: p.document,
+    }));
+  return createHash('sha256').update(canonicalJson(plan)).digest('base64url');
+}
 const publicPlan = (p: PlannedRoute): SheetRoutePlan => ({
   route: p.route,
   routeId: p.routeId,
@@ -724,22 +763,46 @@ export class RoutePackSheetService {
     return withTenant(this.pool, ctx, 'audit.read', async ({ db }) => {
       await requireContent(db);
       const sheet = readSheet(z.object({ rows: cellRows }).strict().parse(input).rows);
-      return report(
-        'dry-run',
-        planSheet(sheet, await loadRoutePackState(db, ctx.tenantId), today()),
-      );
+      const planned = planSheet(sheet, await loadRoutePackState(db, ctx.tenantId), today());
+      return { ...report('dry-run', planned), planFingerprint: planFingerprint(planned.routes) };
     });
   }
   // Saving plans again against the current state and writes nothing while any error remains. Every step is idempotent by an
   // id derived from saveId, so a save that stopped part way is finished by sending the same file with the same saveId.
   async save(ctx: RequestContext, input: unknown): Promise<SheetReport> {
     // config.manage needs a fresh authenticator check, so a stale one stops here before anything is written.
-    const { v, planned } = await withTenant(this.pool, ctx, 'config.manage', async ({ db }) => {
-      await requireContent(db);
-      const v = saveInput.parse(input);
-      const sheet = readSheet(v.rows);
-      return { v, planned: planSheet(sheet, await loadRoutePackState(db, ctx.tenantId), today()) };
-    });
+    const { v, planned, earlier } = await withTenant(
+      this.pool,
+      ctx,
+      'config.manage',
+      async ({ db }) => {
+        await requireContent(db);
+        const v = saveInput.parse(input);
+        const sheet = readSheet(v.rows);
+        const state = await loadRoutePackState(db, ctx.tenantId);
+        const planned = planSheet(sheet, state, today());
+        // Follow-up per G73: what this save id already wrote. With nothing, this is its first send, and the plan must be the
+        // one the check showed. A later send (Try the Rest Again, or a send after the authenticator check that wrote) is not
+        // compared: the save's own earlier steps changed the state.
+        const earlier = await contentRecordsById(
+          db,
+          ctx.tenantId,
+          planned.routes.map((plan) => commandStepId(v.saveId, plan.route, 'content')),
+        );
+        const continuing =
+          earlier.length > 0 ||
+          planned.routes.some(
+            (plan) =>
+              state.routes.get(plan.route)?.id === commandStepId(v.saveId, plan.route, 'route') ||
+              (plan.routeId !== null &&
+                state.latestPacks.get(plan.routeId)?.id ===
+                  commandStepId(commandStepId(v.saveId, plan.route, 'pack'), 'pack')),
+          );
+        if (!continuing && planFingerprint(planned.routes) !== v.planFingerprint)
+          throw new DomainError(sheetWords.planChanged, 409, 'ROUTE_PACK_PLAN_CHANGED');
+        return { v, planned, earlier };
+      },
+    );
     const result = { ...report('save', planned), saved: [] as NonNullable<SheetReport['saved']> };
     if (!result.ok) return { ...result, saved: undefined };
     const saved = new Map<string, NonNullable<SheetReport['saved']>[number]>();
@@ -845,6 +908,22 @@ export class RoutePackSheetService {
             code: loggedCode(error),
           }),
         );
+      // Follow-up per G73: a route whose facts an earlier answer of this save id wrote, and that has nothing to write now, is
+      // named with that facts version, so a second part-way answer still says its facts are saved. A save id used for another
+      // file names none.
+      if (!reused)
+        for (const plan of planned.routes) {
+          const record = earlier.find(
+            (item) => item.routeId === ids.get(plan.route) || item.routeId === plan.routeId,
+          );
+          if (
+            !plan.content.changed &&
+            record &&
+            isDeepStrictEqual(record.document, plan.document) &&
+            (saved.get(plan.route)?.contentVersion ?? null) === null
+          )
+            progress(plan, record.routeId, { contentVersion: record.version });
+        }
       const message = reused
         ? sheetWords.saveReused
         : error instanceof DomainError

@@ -42,6 +42,7 @@ import {
 // through the real handler in route-pack-sheet.test.ts; here the constants are pinned to the server's and every answer the
 // server can give is read. Red before PR 4: the library did not exist.
 let n = 0;
+const fingerprint = 'A'.repeat(43);
 const makeId = () => `00000000-0000-4000-8000-${String(++n).padStart(12, '0')}`;
 const change = (key: string) => ({ key, label: key });
 const routePlan = (route: string, over: Partial<SheetRoutePlan> = {}): SheetRoutePlan => ({
@@ -99,14 +100,15 @@ describe('a file is refused before upload', () => {
 });
 
 describe('bodies and the save id', () => {
-  test('a check carries the file only; a save carries the kept id and the trimmed reason', () => {
+  test('a check carries the file only; a save carries the kept id, the trimmed reason and the check fingerprint', () => {
     expect(dryRunBody('a,b')).toEqual({ mode: 'dry-run', csv: 'a,b' });
     const command = nextSaveCommand(null, 'a,b', makeId);
-    expect(saveBody('a,b', command, '  Yearly review  ')).toEqual({
+    expect(saveBody('a,b', command, '  Yearly review  ', fingerprint)).toEqual({
       mode: 'save',
       csv: 'a,b',
       saveId: command.id,
       reason: 'Yearly review',
+      planFingerprint: fingerprint,
     });
   });
   test('the same file text keeps its id; another file makes a new one', () => {
@@ -120,9 +122,16 @@ describe('bodies and the save id', () => {
 
 describe('what an answer means', () => {
   test('a check: a report, a file problem in the server words, or a check that did not finish', () => {
-    const dry = report({ mode: 'dry-run', routes: [routePlan('NO-SE')] });
+    const dry = report({
+      mode: 'dry-run',
+      routes: [routePlan('NO-SE')],
+      planFingerprint: fingerprint,
+    });
     expect(checkOutcome(200, dry)).toEqual({ kind: 'report', report: dry });
     expect(checkOutcome(200, { nope: true })).toEqual({ kind: 'failed' });
+    // Follow-up per G73: a check without its plan fingerprint cannot be saved, so it did not finish.
+    expect(checkOutcome(200, { ...dry, planFingerprint: undefined })).toEqual({ kind: 'failed' });
+    expect(checkOutcome(200, { ...dry, planFingerprint: 7 })).toEqual({ kind: 'failed' });
     expect(checkOutcome(400, { error: sheetWords.rows })).toEqual({
       kind: 'fileProblem',
       message: sheetWords.rows,
@@ -166,6 +175,10 @@ describe('what an answer means', () => {
       route: null,
       report: null,
     });
+    // Follow-up per G73: the plan made at save differs from the one the check showed, and nothing was written.
+    expect(
+      sheetOutcome(409, { error: sheetWords.planChanged, code: 'ROUTE_PACK_PLAN_CHANGED' }),
+    ).toEqual({ kind: 'routeChanged', route: null, report: null });
     const reused = report({
       ok: false,
       saved: [],
@@ -249,6 +262,30 @@ describe('reading a report', () => {
     ]);
     expect(savedFactCount(partWay)).toBe(3);
     expect(savedFactCount(report({ routes: [routePlan('NO-SE')], saved: [] }))).toBe(0);
+  });
+
+  test('follow-up per G73: facts an earlier answer wrote, named again with their version, read as facts saved and are not counted twice', () => {
+    const pack = {
+      changed: true,
+      changedFields: ['languages'],
+      status: 'ACTIVE' as const,
+      nextVersion: 3,
+    };
+    const again = report({
+      ok: false,
+      routes: [
+        routePlan('NO-SE', {
+          pack,
+          content: { ...routePlan('NO-SE').content, changed: false, added: [], updated: [] },
+        }),
+      ],
+      saved: [{ route: 'NO-SE', routeId: 'r', contentVersion: 2, packVersion: null }],
+      errors: [{ row: null, route: 'NO-SE', key: null, message: 'Refused.' }],
+    });
+    expect(routeResults(again)).toEqual([
+      { route: 'NO-SE', kind: 'factsOnly', why: 'refused', reason: 'Refused.' },
+    ]);
+    expect(savedFactCount(again)).toBe(0);
   });
 
   test('PR 4 per G72: facts written before a pack step are told apart from routes with nothing written', () => {

@@ -26,7 +26,8 @@ export function fileRefusal(file: {
 }
 
 export type SheetBody =
-  { mode: 'dry-run'; csv: string } | { mode: 'save'; csv: string; saveId: string; reason: string };
+  | { mode: 'dry-run'; csv: string }
+  | { mode: 'save'; csv: string; saveId: string; reason: string; planFingerprint: string };
 /** The body of a check: the file text only. A check writes nothing and carries no save id. */
 export const dryRunBody = (csv: string): Extract<SheetBody, { mode: 'dry-run' }> => ({
   mode: 'dry-run',
@@ -45,16 +46,21 @@ export function nextSaveCommand(
 ): SaveCommand {
   return previous && previous.csv === csv ? previous : { id: makeId(), csv };
 }
-/** The body of a save, under the id kept for this file and the reason as typed (trimmed, as the server keeps it). */
+/**
+ * The body of a save, under the id kept for this file and the reason as typed (trimmed, as the server keeps it), with the plan
+ * fingerprint of the check the person saw (follow-up per G73): the first send of a save id is refused if the plan changed.
+ */
 export const saveBody = (
   csv: string,
   command: SaveCommand,
   reason: string,
+  planFingerprint: string,
 ): Extract<SheetBody, { mode: 'save' }> => ({
   mode: 'save',
   csv,
   saveId: command.id,
   reason: reason.trim(),
+  planFingerprint,
 });
 
 // ---- What an answer means -----------------------------------------------------------------------------------------------
@@ -79,7 +85,10 @@ export type CheckOutcome =
 export function checkOutcome(status: number, json: unknown): CheckOutcome {
   if (status === 200) {
     const report = readReport(json);
-    return report ? { kind: 'report', report } : { kind: 'failed' };
+    // A check without its plan fingerprint cannot be saved, so it is not claimed.
+    return report && typeof report.planFingerprint === 'string'
+      ? { kind: 'report', report }
+      : { kind: 'failed' };
   }
   if (status === 400 || status === 413)
     return { kind: 'fileProblem', message: textOf(recordOf(json).error) };
@@ -117,7 +126,11 @@ export function sheetOutcome(status: number, json: unknown): SaveOutcome {
   if (status === 409) {
     const report = readReport(r.report);
     if (!report) {
-      if (code === 'ROUTE_PACK_CONTENT_CHANGED' || code === 'ROUTE_PACK_PACK_CHANGED')
+      if (
+        code === 'ROUTE_PACK_CONTENT_CHANGED' ||
+        code === 'ROUTE_PACK_PACK_CHANGED' ||
+        code === 'ROUTE_PACK_PLAN_CHANGED'
+      )
         return { kind: 'routeChanged', route: null, report: null };
       if (code === 'ROUTE_PACK_COMMAND_REUSED') return { kind: 'reused', report: null };
       return { kind: 'offline' };
@@ -171,7 +184,8 @@ export function routeResults(report: SheetReport): RouteResult[] {
   return report.routes.map((plan): RouteResult => {
     const saved = savedOf(report, plan.route);
     if (routeDone(plan, saved)) return { route: plan.route, kind: 'done' };
-    const facts = plan.content.changed && (saved?.contentVersion ?? null) !== null;
+    // Follow-up per G73: a route named with a facts version has its facts saved, by this answer or an earlier one of the save.
+    const facts = (saved?.contentVersion ?? null) !== null;
     const here = !!stopped && stopped.route === plan.route;
     const changed =
       here && !!stopped.code && (changedCodes as readonly string[]).includes(stopped.code);
