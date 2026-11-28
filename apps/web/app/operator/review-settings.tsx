@@ -615,6 +615,7 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
             routes={overview.routes}
             summary={openRoute}
             tenant={tenant}
+            stageScope={overview.stageScope}
             role={role}
             refreshKey={catalogue}
             address={address}

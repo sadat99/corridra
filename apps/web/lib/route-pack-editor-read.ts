@@ -33,7 +33,15 @@ export type RouteSummary = {
   /** The pack in force is Limited use or Active and a Core field is still Pending. */
   liveWithGaps: boolean;
 };
-export type OverviewList = { capabilities: Capabilities; routes: RouteSummary[] };
+export type OverviewList = {
+  capabilities: Capabilities;
+  /**
+   * Follow-up per G73: an opaque key of the reader in this workspace (a keyed hash, no id), used only to name the page's
+   * sessionStorage copy of unsaved edits, so another person in the same tab never gets them back.
+   */
+  stageScope: string;
+  routes: RouteSummary[];
+};
 /**
  * One route in full, with only what the page draws: no record id, no actor, no free staff text (the reasons stay in the
  * database and the history reads), and readiness without its pack id.
@@ -144,6 +152,8 @@ export async function answerRoutePackRead(
   query: URLSearchParams,
   /** The pack statuses that are live (the standard's `liveStatuses`). */
   live: readonly PackStatus[],
+  /** The reader's stage scope from the handler, computed only for the list answer, the one that carries it. */
+  stageScope: () => string,
 ) {
   if (action === 'route-pack-overview') {
     const asked = query.get('routeId');
@@ -151,6 +161,7 @@ export async function answerRoutePackRead(
       const overview = await service.overview(ctx);
       return {
         capabilities: overview.capabilities,
+        stageScope: stageScope(),
         routes: overview.routes.map((route) => summariseRoute(route, live)),
       } satisfies OverviewList;
     }

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { changeMemberNow } from './change-member';
+import { rawContext } from './support';
 import { AccessService } from '../../packages/auth/src/access';
 import { configureSourcingWorkflow } from '../../packages/auth/src/sourcing-workflow-configuration';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
@@ -63,9 +64,15 @@ const watched = () =>
 vi.mock('../../apps/web/lib/foundations', () => ({
   foundations: () => ({
     ready: Promise.resolve(),
-    config: { APP_ORIGIN: 'http://localhost:3300' },
+    config: {
+      APP_ORIGIN: 'http://localhost:3300',
+      AUTH_SECRET: 'synthetic-route-pack-read-test-secret-0123456789',
+    },
     provider: {
-      getSession: async () => (web.actor ? { token: f.users[web.actor]!.ctx.token } : null),
+      getSession: async () =>
+        web.actor
+          ? { token: f.users[web.actor]!.ctx.token, userId: f.users[web.actor]!.identityId }
+          : null,
     },
     routePackContent: watched(),
     routePackSheet: {
@@ -548,5 +555,38 @@ describe('recovery', () => {
     const again = await read('route-pack-overview');
     expect(again.status).toBe(200);
     expect(((await again.json()) as OverviewList).routes.length).toBeGreaterThan(0);
+  });
+});
+
+describe('route-pack-overview, the stage scope (follow-up per G73)', () => {
+  test('the list carries one opaque key per person and workspace, with no id; the one-route answer has none', async () => {
+    const scopeOf = async (tenant = f.tenantA) =>
+      ((await overview(undefined, tenant)) as OverviewList).stageScope;
+    const mine = await scopeOf();
+    expect(mine).toMatch(/^[A-Za-z0-9_-]{22}$/);
+    expect(await scopeOf()).toBe(mine);
+    const listed = JSON.stringify(await overview());
+    for (const id of [f.users.owner.id, f.users.owner.identityId]) expect(listed).not.toContain(id);
+    web.actor = 'reviewer';
+    const admin = await scopeOf();
+    expect(admin).toMatch(/^[A-Za-z0-9_-]{22}$/);
+    expect(admin).not.toBe(mine);
+    // The same person in another workspace gets another key.
+    await rawContext(
+      f.owner,
+      f.users.other.ctx,
+      "INSERT INTO app.membership(tenant_id,user_id,role) VALUES($1,$2,'viewer')",
+      [f.tenantB, f.users.owner.id],
+    );
+    web.actor = 'owner';
+    const elsewhere = await scopeOf(f.tenantB);
+    expect(elsewhere).toMatch(/^[A-Za-z0-9_-]{22}$/);
+    expect(elsewhere).not.toBe(mine);
+    expect(await overview(withPack)).not.toHaveProperty('stageScope');
+    // Dormant as before: with the marker absent the list is Not found and carries no key.
+    web.installed = false;
+    const absent = await read('route-pack-overview');
+    expect(absent.status).toBe(404);
+    expect(JSON.stringify(await absent.json())).not.toContain('stageScope');
   });
 });

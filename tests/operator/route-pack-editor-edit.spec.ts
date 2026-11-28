@@ -1,7 +1,7 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fixtureTenant, startP5cFixture } from './p5c-desk-fixture';
-import { answerReads, routeIds, type FactsWorld, type World } from './p5c-desk-world';
+import { answerReads, routeIds, stageScope, type FactsWorld, type World } from './p5c-desk-world';
 import {
   standardFieldByKey,
   standardFieldsV1,
@@ -733,9 +733,17 @@ test.describe('conflict: Someone saved route facts for this route first', () => 
       marks: {},
     };
     await page.evaluate(
-      ({ tenant, route, value }) =>
-        window.sessionStorage.setItem(`corridra:route-pack-stage:${tenant}:${route}`, value),
-      { tenant: fixtureTenant, route: routeIds.bdCn, value: JSON.stringify(stage) },
+      ({ tenant, scope, route, value }) =>
+        window.sessionStorage.setItem(
+          `corridra:route-pack-stage:v2:${tenant}:${scope}:${route}`,
+          value,
+        ),
+      {
+        tenant: fixtureTenant,
+        scope: stageScope,
+        route: routeIds.bdCn,
+        value: JSON.stringify(stage),
+      },
     );
     await page.reload();
     await expect(page.getByText('Restored 4 changes that were not saved.')).toBeVisible();
@@ -794,9 +802,17 @@ test.describe('conflict: Someone saved route facts for this route first', () => 
       marks: {},
     };
     await page.evaluate(
-      ({ tenant, route, value }) =>
-        window.sessionStorage.setItem(`corridra:route-pack-stage:${tenant}:${route}`, value),
-      { tenant: fixtureTenant, route: routeIds.bdCn, value: JSON.stringify(stage) },
+      ({ tenant, scope, route, value }) =>
+        window.sessionStorage.setItem(
+          `corridra:route-pack-stage:v2:${tenant}:${scope}:${route}`,
+          value,
+        ),
+      {
+        tenant: fixtureTenant,
+        scope: stageScope,
+        route: routeIds.bdCn,
+        value: JSON.stringify(stage),
+      },
     );
     await page.reload();
     await expect(status(page)).toHaveText('Restored 2 changes that were not saved.');
@@ -818,6 +834,37 @@ test.describe('conflict: Someone saved route facts for this route first', () => 
     await expect(saveDialog(page)).toBeHidden();
     expect((world.saves[0]!.body as { version: number }).version).toBe(base.version + 1);
   });
+  test('follow-up per G73: a copy kept for another person is not restored, and a copy under the earlier key without a person is removed and not restored', async ({
+    page,
+  }) => {
+    await open(page, { query: 'route=BD-CN&section=1', facts: {} });
+    const base = await savedDocument(page);
+    const saved = base.document.facts.find((fact) => fact.key === summaryKey)!;
+    const stage = JSON.stringify({
+      v: 1,
+      baseVersion: base.version,
+      facts: { [summaryKey]: { base: saved, mine: { ...saved, value: 'Not mine' } } },
+      marks: {},
+    });
+    const other = `corridra:route-pack-stage:v2:${fixtureTenant}:AnotherPersonScope0002:${routeIds.bdCn}`;
+    const legacy = `corridra:route-pack-stage:${fixtureTenant}:${routeIds.bdCn}`;
+    await page.evaluate(
+      ({ keys, value }) => {
+        for (const key of keys) window.sessionStorage.setItem(key, value);
+      },
+      { keys: [other, legacy], value: stage },
+    );
+    await page.reload();
+    await expect(rows(page).first()).toBeVisible();
+    await expect.poll(() => stageKeys(page)).toEqual([other]);
+    await expect(status(page)).not.toContainText('Restored');
+    await expect(bar(page)).toHaveCount(0);
+    await expect(rowOf(page, summaryLabel)).not.toContainText('Not mine');
+    // An edit now is kept under this person's own key only.
+    await stageSummary(page, 'Mine now');
+    const mine = `corridra:route-pack-stage:v2:${fixtureTenant}:${stageScope}:${routeIds.bdCn}`;
+    await expect.poll(async () => (await stageKeys(page)).sort()).toEqual([mine, other].sort());
+  });
   test('a restored stage made on an older version is never sent before a check works: the first read fails, nothing is posted, Check Again reads and asks', async ({
     page,
   }) => {
@@ -831,9 +878,17 @@ test.describe('conflict: Someone saved route facts for this route first', () => 
       marks: {},
     };
     await page.evaluate(
-      ({ tenant, route, value }) =>
-        window.sessionStorage.setItem(`corridra:route-pack-stage:${tenant}:${route}`, value),
-      { tenant: fixtureTenant, route: routeIds.bdCn, value: JSON.stringify(stage) },
+      ({ tenant, scope, route, value }) =>
+        window.sessionStorage.setItem(
+          `corridra:route-pack-stage:v2:${tenant}:${scope}:${route}`,
+          value,
+        ),
+      {
+        tenant: fixtureTenant,
+        scope: stageScope,
+        route: routeIds.bdCn,
+        value: JSON.stringify(stage),
+      },
     );
     await page.reload();
     await expect(status(page)).toHaveText('Restored 1 change that was not saved.');
@@ -1051,9 +1106,9 @@ test.describe('after a save', () => {
     await keepText(page, summaryLabel, 'Stage B');
     const copy = () =>
       page.evaluate(
-        ({ tenant, route }) =>
-          window.sessionStorage.getItem(`corridra:route-pack-stage:${tenant}:${route}`),
-        { tenant: fixtureTenant, route: routeIds.bdCn },
+        ({ tenant, scope, route }) =>
+          window.sessionStorage.getItem(`corridra:route-pack-stage:v2:${tenant}:${scope}:${route}`),
+        { tenant: fixtureTenant, scope: stageScope, route: routeIds.bdCn },
       );
     await expect.poll(copy).toContain('Stage B');
     // The save of stage A lands now; the page that sent it has gone, and what it clears is only a copy of what it sent.
