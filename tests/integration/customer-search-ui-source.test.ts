@@ -359,8 +359,12 @@ describe('the mount', () => {
     const shell = read('apps/web/components/customer-shell.tsx');
     expect(shell.match(/const companies = customerCompaniesEnabled\(\);/g)).toHaveLength(1);
     expect(shell.match(/const homeIsMove = plainNames && move;/g)).toHaveLength(1);
-    expect(shell).toContain('customerTabs({ companies, move: homeIsMove })');
-    expect(shell).toMatch(/<CustomerBarNote[^>]*companies=\{companies\}[^>]*move=\{homeIsMove\}/s);
+    // Customer account v18 is the third flag: the same value chooses the tabs and the dialog's pages.
+    expect(shell.match(/const v18 = uxSwitchOn\('CORRIDRA_UX_ACCOUNT_V18'\);/g)).toHaveLength(1);
+    expect(shell).toContain('customerTabs({ companies, move: homeIsMove, v18 })');
+    expect(shell).toMatch(
+      /<CustomerBarNote[^>]*companies=\{companies\}[^>]*move=\{homeIsMove\}[^>]*accountV18=\{v18\}/s,
+    );
     const note = read('apps/web/components/ux/customer-bar-note.tsx');
     expect(note).toContain('companies = false');
     expect(note).toContain('move = false');

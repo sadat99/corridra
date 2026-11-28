@@ -148,7 +148,7 @@ export default async function Page() {
     ) : null;
   return (
     <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings" journeyMode={mode}>
-      <MyWorkTabs current="meetings" meetings />
+      {uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18') && <MyWorkTabs current="meetings" meetings />}
       <JourneyScoped mode={scoped}>
         {readable ? null : <p>{intro}</p>}
         <div className="room">

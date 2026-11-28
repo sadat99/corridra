@@ -1,9 +1,11 @@
 import '../../../components/ux/row-list.css';
 import '../calm-lists.css';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { CustomerShell } from '../../../components/customer-shell';
+import { uxSwitchOn } from '../../../lib/ux-switches';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -25,6 +27,8 @@ type Choice = {
  * tagged Coming soon, never a link that does nothing.
  */
 export default function Page() {
+  // Customer account v18 (live by default); set to "false", this page does not exist, as before.
+  if (!uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18')) notFound();
   const choices: Choice[] = [
     {
       title: 'Organise',

@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
@@ -12,6 +12,7 @@ import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { readNeonAuthConfig } from '@corridra/config';
 import { CustomerShell } from '../../../components/customer-shell';
 import { neonAuth } from '../../../lib/neon-auth';
+import { uxSwitchOn } from '../../../lib/ux-switches';
 import { CustomerWorkspaces } from '../customer-workspaces';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +29,8 @@ export const metadata = {
  * need server work, so they are tagged Coming soon here.
  */
 export default async function Page() {
+  // Customer account v18 (live by default); set to "false", this page does not exist, as before.
+  if (!uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18')) notFound();
   const auth = neonAuth();
   if (!auth) redirect('/signin');
   const { data } = await auth.getSession({ query: { disableCookieCache: true } });

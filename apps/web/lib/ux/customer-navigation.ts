@@ -12,13 +12,7 @@ import { activeWorkspaces } from '../workspace-choice';
 import { journeyScopedHref, type JourneyMode } from './journey-mode';
 
 export type CustomerTabKey =
-  | 'home'
-  | 'requests'
-  | 'companies'
-  | 'meetings'
-  | 'reports'
-  | 'delegations'
-  | 'more';
+  'home' | 'requests' | 'companies' | 'meetings' | 'reports' | 'delegations' | 'more';
 export type CustomerTab = {
   key: CustomerTabKey;
   label: string;
@@ -76,6 +70,8 @@ export type CustomerNavigationInput = {
   programmes?: boolean;
   /** Participants and customer workspaces on: the Registrations link. */
   registrations?: boolean;
+  /** `CORRIDRA_UX_ACCOUNT_V18`, live by default: the v18 destinations. False is the earlier navigation. */
+  v18?: boolean;
 };
 
 /** Where New Request goes: a person with a workspace goes to where requests are made, otherwise to the plan page. */
@@ -85,15 +81,56 @@ export const manageWorkspacesHref = '/account?view=work#customer-workspaces';
 
 /**
  * The primary destinations in their fixed order. Companies appears only where its module is on. `journey` is the
- * chosen journey mode (journey-mode.ts): in a journey, Home and My Work open that journey.
+ * chosen journey mode (journey-mode.ts): in a journey, Home and My Work (Requests) open that journey; with none, or
+ * Everything, the addresses are exactly what they always were. `v18` is CORRIDRA_UX_ACCOUNT_V18 (live by default):
+ * Home, My Work, Companies, Delegations, More, with Meetings and Results as tabs inside My Work; set to false, the
+ * earlier Home, Requests, Companies, Meetings, Reports.
  */
 export function customerTabs({
   companies,
   move,
   journey,
-}: Pick<CustomerNavigationInput, 'companies' | 'move'> & { journey?: JourneyMode }): CustomerTab[] {
+  v18 = true,
+}: Pick<CustomerNavigationInput, 'companies' | 'move' | 'v18'> & {
+  journey?: JourneyMode;
+}): CustomerTab[] {
   const mode = journey ?? 'all';
-  // Customer account v18: Home, My Work, Companies, Delegations, More. Meetings and Results are tabs inside My Work.
+  if (!v18)
+    return [
+      {
+        key: 'home',
+        label: 'Home',
+        href: move ? journeyScopedHref('home', mode) : '/account',
+        icon: 'home',
+        labelKey: 'wse.nav.home',
+      },
+      {
+        key: 'requests',
+        label: 'Requests',
+        href: journeyScopedHref('requests', mode),
+        icon: 'work',
+        labelKey: 'wse.nav.work',
+      },
+      ...(companies
+        ? [
+            {
+              key: 'companies' as const,
+              label: 'Companies',
+              href: '/account/companies',
+              icon: 'company',
+              labelKey: 'wse.nav.companies' as const,
+            },
+          ]
+        : []),
+      { key: 'meetings', label: 'Meetings', href: '/account/meetings', icon: 'calendar' },
+      {
+        key: 'reports',
+        label: 'Reports',
+        href: '/account?view=results',
+        icon: 'library',
+        labelKey: 'wse.nav.results',
+      },
+    ];
   return [
     {
       key: 'home',
