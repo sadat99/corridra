@@ -29,26 +29,17 @@ const footerLinks = [
 ];
 
 test.describe('the footer (L-02)', () => {
-  test('on a phone Buy Abroad starts open and the other groups are collapsed, the footer stays within its height and every link is still there', async ({
+  test('on a phone every group starts closed, the footer stays within its height and every link is still there', async ({
     page,
   }) => {
     await page.setViewportSize(sizes.phone);
     await page.goto('/about');
-    const footer = page.locator('footer.guide-footer');
-    const groups = footer.locator('details.guide-footer-details');
+    const footer = page.locator('footer[data-footer="v44"]');
+    const groups = footer.locator('details.hv7-footer-group');
     await expect(groups).toHaveCount(4);
-    // Option B (owner decision, 12 Nov 2026): Buy Abroad starts open on a phone; it measured 952 px at 390 x 844
-    // when it shipped, and this bound stops it growing.
-    await expect(groups.first()).toHaveAttribute('open', '');
-    for (const group of (await groups.all()).slice(1))
-      await expect(group).not.toHaveAttribute('open', '');
-    const open = await footer.boundingBox();
-    expect(open!.height / sizes.phone.height, 'footer height, Buy Abroad open').toBeLessThanOrEqual(
-      1.15,
-    );
-    // With every group closed the footer keeps the Ledger bound (874 px when it shipped).
-    await groups.first().locator('summary').click();
-    await expect(groups.first()).not.toHaveAttribute('open', '');
+    // The footer of every page (home v4.4, 28 Nov 2026) starts every group closed on a phone, so the page keeps its
+    // length; the Option B footer it replaces opened Buy Abroad and measured up to 1.15 screens.
+    for (const group of await groups.all()) await expect(group).not.toHaveAttribute('open', '');
     const box = await footer.boundingBox();
     expect(box!.height / sizes.phone.height, 'footer height in phone screens').toBeLessThanOrEqual(
       1.05,
@@ -67,7 +58,7 @@ test.describe('the footer (L-02)', () => {
   }) => {
     await page.setViewportSize(sizes.desktop);
     await page.goto('/about');
-    const footer = page.locator('footer.guide-footer');
+    const footer = page.locator('footer[data-footer="v44"]');
     const box = await footer.boundingBox();
     // The Ledger footer measured 626 px at 1440 x 900 when it shipped; this bound stops it growing.
     expect(
@@ -76,10 +67,9 @@ test.describe('the footer (L-02)', () => {
     ).toBeLessThanOrEqual(0.72);
     for (const href of footerLinks)
       expect(await footer.locator(`a[href="${href}"]`).count(), href).toBeGreaterThan(0);
-    // Every group is open from 701 px: its summary is hidden and its four links are in view. Option B: the three
-    // family tiles share one row and the Corridra links are one row under them.
+    // Every group is open from 701 px: its summary is hidden and its four links are in view, the four groups in one row.
     await expect(footer.locator('a[href="/privacy"]')).toBeVisible();
-    const groups = footer.locator('details.guide-footer-details');
+    const groups = footer.locator('details.hv7-footer-group');
     for (const group of await groups.all()) {
       await expect(group.locator('summary')).toBeHidden();
       for (const link of await group.locator('a').all()) await expect(link).toBeVisible();
@@ -87,8 +77,7 @@ test.describe('the footer (L-02)', () => {
     const tops = await groups.evaluateAll((items) =>
       items.map((item) => Math.round(item.getBoundingClientRect().top)),
     );
-    expect(new Set(tops.slice(0, 3)).size, 'the three family tiles share one row').toBe(1);
-    expect(tops[3]!, 'the Corridra row is under the tiles').toBeGreaterThan(tops[0]!);
+    expect(new Set(tops).size, 'the four groups share one row').toBe(1);
   });
 
   for (const [name, size] of Object.entries(sizes))
@@ -96,7 +85,7 @@ test.describe('the footer (L-02)', () => {
       await page.setViewportSize(size);
       await page.goto('/about');
       const result = await new AxeBuilder({ page })
-        .include('footer.guide-footer')
+        .include('footer[data-footer="v44"]')
         .withTags(['wcag2a', 'wcag2aa'])
         .analyze();
       expect(result.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 120)}`)).toEqual(

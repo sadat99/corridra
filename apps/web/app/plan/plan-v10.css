@@ -276,7 +276,7 @@
   justify-content: space-between;
 }
 .pv-main .plan-action-row .primary-link {
-  min-block-size: 54px;
+  min-block-size: 60px;
   padding-inline: 34px;
   background: var(--cv-brand);
   border: 0;

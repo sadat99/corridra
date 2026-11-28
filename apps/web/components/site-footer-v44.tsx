@@ -74,6 +74,18 @@ export function SiteFooterV44({
         <LanguageSwitcher />
       </footer>
     );
+  const trust = (
+    <div className="hv7-footer-trust">
+      {compact ? null : <span>{t('footer.facts')}</span>}
+      <FactLabel label="Self-declared" english />
+      <FactLabel label="Evidence available" english />
+      <FactLabel label="Verified" english />
+      <NotConfirmedLabel />
+      <Link prefetch={false} href="/trust">
+        {t('footer.factsMore')}
+      </Link>
+    </div>
+  );
   return (
     <footer className="hv7-footer" data-footer="v44" data-compact={compact ? '' : undefined}>
       <div className="hv7-footer-top">
@@ -92,9 +104,12 @@ export function SiteFooterV44({
             <br />
             {t('footer.private')}
           </p>
-          {preview || doors ? null : (
+          {preview ? null : (
             <div className="hv7-footer-actions">
-              {who ? (
+              <Link prefetch={false} className="hv7-footer-button hv7-footer-start" href="/plan">
+                {t('header.start')}
+              </Link>
+              {doors ? null : who ? (
                 <Link
                   prefetch={false}
                   className="hv7-footer-button"
@@ -150,19 +165,17 @@ export function SiteFooterV44({
           groups
         )}
       </div>
-      <div className="hv7-footer-trust">
-        {compact ? null : <span>{t('footer.facts')}</span>}
-        <FactLabel label="Self-declared" english />
-        <FactLabel label="Evidence available" english />
-        <FactLabel label="Verified" english />
-        <NotConfirmedLabel />
-        <Link prefetch={false} href="/trust">
-          {t('footer.factsMore')}
-        </Link>
-      </div>
+      {compact ? (
+        <details className="hv7-footer-fold hv7-footer-trust-fold">
+          <summary>{t('footer.facts')}</summary>
+          {trust}
+        </details>
+      ) : (
+        trust
+      )}
       <div className="hv7-footer-bottom">
         <span>© 2026 Corridra</span>
-        {compact ? null : <span>{t('footer.routes')}</span>}
+        {compact ? null : <span className="hv7-footer-routes">{t('footer.routes')}</span>}
         <LanguageSwitcher />
       </div>
     </footer>

@@ -2,8 +2,8 @@
    every page carries it. Loaded only by site-footer-v44.tsx. */
 .hv7-footer {
   display: block;
-  margin: 70px clamp(1.25rem, 4.1vw, 56px) 0;
-  padding: 44px 0 34px;
+  margin: 48px clamp(1.25rem, 4.1vw, 56px) 0;
+  padding: 32px 0 24px;
   border-block-start: 1px solid var(--cv-line);
 }
 .hv7-footer-top {
@@ -21,7 +21,12 @@
 }
 @media (min-width: 43.8125rem) {
   .hv7-footer-nav {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 48rem) {
+  .hv7-footer-nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 @media (min-width: 64rem) {
@@ -232,6 +237,9 @@
   }
 }
 .hv7-footer-actions p a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
   text-decoration: underline;
 }
 
@@ -255,4 +263,55 @@
 .hv7-footer-trust a {
   max-inline-size: 100%;
   min-inline-size: 0;
+}
+
+.hv7-footer-start {
+  background: var(--cv-brand);
+  border-color: var(--cv-brand);
+  color: var(--cv-white);
+}
+.hv7-footer .hv7-footer-start {
+  color: var(--cv-white);
+}
+@media (max-width: 43.75rem) {
+  .hv7-footer-routes {
+    display: none;
+  }
+}
+
+/* The request page keeps its length: the footer there is one band, the logo and the actions in a row, the link groups
+   folded into one disclosure, and the trust legend and the last line under them. */
+.hv7-footer[data-compact] {
+  margin-block-start: 24px;
+  padding-block: 16px 12px;
+}
+.hv7-footer[data-compact] .hv7-footer-promise {
+  display: none;
+}
+.hv7-footer[data-compact] .hv7-footer-top {
+  gap: 4px 24px;
+}
+.hv7-footer[data-compact] .hv7-footer-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 24px;
+}
+.hv7-footer[data-compact] .hv7-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin-block-start: 0;
+}
+.hv7-footer[data-compact] .hv7-footer-trust {
+  margin-block-start: 8px;
+}
+.hv7-footer[data-compact] .hv7-footer-bottom {
+  margin-block-start: 8px;
+}
+@media (min-width: 64rem) {
+  .hv7-footer[data-compact] .hv7-footer-top {
+    grid-template-columns: 1fr;
+  }
 }

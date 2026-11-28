@@ -26,7 +26,7 @@ test.beforeEach(({}, info) => {
   test.skip(info.project.name !== 'desktop', 'sizes are set in each case');
 });
 
-const footer = (page: Page) => page.locator('footer.guide-footer');
+const footer = (page: Page) => page.locator('footer[data-footer="v44"]');
 
 for (const [name, size] of Object.entries(sizes))
   test(`the request page is within its length at ${name}`, async ({ page }) => {
@@ -68,47 +68,52 @@ test('the test notice is one summary line with its availability sentence, and th
   );
 });
 
-test('on a phone the example request is a closed line with the live count, and opens to its facts', async ({
+// The request page is the two-pane window of 28 Nov 2026 (owner canvas board v10, CORRIDRA_UX_PLAN_V10): the request taking
+// shape sits on the left. It replaces the example-request column, which was a closed line on a phone and an open column
+// on a wide screen; the same two intents hold, the pane is short on a phone and open beside the form on a wide screen.
+test('on a phone the left pane is one heading, the map and the answers wait, and the progress words show', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.phone);
   await page.goto('/plan');
-  const summary = page.locator('.ux-brief-details > summary');
-  await expect(summary).toHaveText(/your example request, 0 of 3 chosen/i);
-  expect((await summary.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
-  await expect(page.locator('.ux-brief-details dl')).toBeHidden();
+  const side = page.locator('aside.pv-side');
+  await expect(side.locator('.pv-side-h')).toHaveText('Taking shape as you answer.');
+  await expect(side.locator('.pv-map')).toBeHidden();
+  await expect(side.locator('dl.pv-sum')).toBeHidden();
+  expect((await side.boundingBox())!.height).toBeLessThanOrEqual(190);
+  // The steps row has no names on a phone, so the progress words are shown and say where the person is.
+  await expect(page.locator('.plan-progress-line')).toBeVisible();
+  await expect(page.locator('.plan-progress-line')).toContainText('Step 1 of 5');
   await page.locator('form.intake-form input[type="radio"]').first().check({ force: true });
-  await expect(summary).toHaveText(/your example request, 1 of 3 chosen/i);
-  await summary.click();
-  await expect(page.locator('.ux-brief-details dl')).toBeVisible();
-  // The budget row stays hidden until a budget is given, so three facts show.
-  await expect(page.locator('.ux-brief-details dt:visible')).toHaveText([
-    'What you want',
-    "Your company's country",
-    'Market you want to reach',
-  ]);
+  await expect(page.locator('.pv-step[data-state="now"]')).toHaveCount(1);
 });
 
-test('on a wide screen the summary column is open, and the receipt check sits under the form', async ({
+test('on a wide screen the left pane is open beside the form and follows the answers, and the receipt check sits under the form', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.desktop);
   await page.goto('/plan');
-  const aside = page.locator('aside.ux-brief-summary');
-  await expect(aside.locator('.ux-brief-details > summary')).toBeHidden();
-  await expect(aside.locator('.ux-brief-heading')).toHaveText(/your example request/i);
-  await expect(aside.locator('dl')).toBeVisible();
+  const aside = page.locator('aside.pv-side');
+  await expect(aside.locator('.pv-eb')).toHaveText('Your request');
+  await expect(aside.locator('dl.pv-sum dt')).toHaveText([
+    'Goal',
+    'Based in',
+    'Market',
+    'When',
+    'Note',
+  ]);
+  await expect(aside.locator('dl.pv-sum dd[data-mute]')).toHaveCount(5);
+  await expect(aside.locator('dl.pv-sum').getByText('Not chosen yet').first()).toBeVisible();
   const [a, r, f] = await Promise.all([
     aside.boundingBox(),
     page.locator('#receipt-check').boundingBox(),
     page.locator('form.intake-form').boundingBox(),
   ]);
-  // B2a (D-006): the receipt check is in the main column, under the form; the summary column holds the summary
-  // alone, to the right of both, so the sticky summary can never meet the receipt check.
+  // B2a (D-006): the receipt check is in the main column, under the form; the left pane sits beside both, so it can
+  // never cover the receipt check.
   expect(r!.y).toBeGreaterThanOrEqual(f!.y + f!.height - 1);
   expect(Math.abs(r!.x - f!.x)).toBeLessThan(2);
-  expect(a!.x).toBeGreaterThan(f!.x + f!.width - 1);
-  expect(a!.x).toBeGreaterThan(r!.x + r!.width - 1);
+  expect(a!.x + a!.width).toBeLessThanOrEqual(f!.x + 1);
   // The receipt check is still a disclosure that opens.
   await page.locator('#receipt-check summary').click();
   await expect(page.locator('#receipt-check input')).toBeVisible();
@@ -120,11 +125,13 @@ test('the footer on the request page keeps every link and action, with the trust
   await page.setViewportSize(sizes.phone);
   await page.goto('/plan');
   const f = footer(page);
-  await expect(f).toHaveClass(/guide-footer-compact/);
-  await expect(f.locator('.guide-footer-actions a[href="/plan"]')).toBeVisible();
-  await expect(f.locator('.guide-footer-actions a[href="/signin"]')).toBeVisible();
-  await expect(f.locator('.guide-footer-actions a[href="/workspace"]')).toBeVisible();
-  const groups = f.locator('details.guide-footer-details');
+  await expect(f).toHaveAttribute('data-compact', '');
+  await expect(f.locator('.hv7-footer-actions a[href="/plan"]')).toBeVisible();
+  await expect(f.locator('.hv7-footer-actions a[href="/signin"]')).toBeVisible();
+  await expect(f.locator('.hv7-footer-actions a[href="/workspace"]')).toBeVisible();
+  // The four link groups sit in one disclosure; open it and each group, then every link is in view.
+  await f.locator('details.hv7-footer-fold > summary').first().click();
+  const groups = f.locator('details.hv7-footer-group');
   await expect(groups).toHaveCount(4);
   for (const group of await groups.all()) await group.locator('summary').click();
   for (const href of [
@@ -147,7 +154,7 @@ test('the footer on the request page keeps every link and action, with the trust
     '/privacy',
   ])
     await expect(f.locator(`a[href="${href}"]`).first(), href).toBeVisible();
-  const trust = f.locator('details.guide-footer-trust-fold');
+  const trust = f.locator('details.hv7-footer-trust-fold');
   await expect(trust).not.toHaveAttribute('open', '');
   await expect(trust.locator('summary')).toHaveText('Every fact says where it comes from:');
   expect((await trust.locator('summary').boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
@@ -166,8 +173,8 @@ test('the footer on the request page keeps every link and action, with the trust
 test('every other public page keeps the full footer with the legend in view', async ({ page }) => {
   await page.setViewportSize(sizes.desktop);
   await page.goto('/about');
-  await expect(footer(page)).not.toHaveClass(/guide-footer-compact/);
-  await expect(footer(page).locator('.guide-footer-legend')).toBeVisible();
+  await expect(footer(page)).not.toHaveAttribute('data-compact', '');
+  await expect(footer(page).locator('.hv7-footer-trust')).toBeVisible();
 });
 
 // Owner 2a and the board's phone bottom action area: the reassurance line sits under Continue in the fixed bar, says
@@ -196,12 +203,12 @@ test('the folded trust legend keeps its exact words and link, and they are the s
 }) => {
   await page.setViewportSize(sizes.desktop);
   await page.goto('/about');
-  const full = await footer(page).locator('.guide-footer-legend').innerText();
+  const full = await footer(page).locator('.hv7-footer-trust').innerText();
   const fullLink = await footer(page)
     .getByRole('link', { name: 'How We Label Facts', exact: true })
     .getAttribute('href');
   await page.goto('/plan');
-  const trust = footer(page).locator('details.guide-footer-trust-fold');
+  const trust = footer(page).locator('details.hv7-footer-trust-fold');
   // Closed: the words are in the page (a closed details keeps its content in the DOM), and the summary is a real,
   // keyboard-reachable control that carries the legend's opening words.
   await expect(trust).not.toHaveAttribute('open', '');
@@ -221,7 +228,8 @@ test('the folded trust legend keeps its exact words and link, and they are the s
   await expect(trust).toHaveAttribute('open', '');
   // Opened: the same words, in the same order, and the same link address, as the full footer on another page.
   const opened = (await trust.innerText()).replace(/\s+/g, ' ').trim();
-  expect(opened).toBe(full.replace(/\s+/g, ' ').trim() + ' How We Label Facts');
+  // (The legend and its link are one row in the new footer, so the full text already ends with the link.)
+  expect(opened).toBe(full.replace(/\s+/g, ' ').trim());
   await expect(
     trust.getByRole('link', { name: 'How We Label Facts', exact: true }),
   ).toHaveAttribute('href', fullLink!);
@@ -249,15 +257,15 @@ for (const chosen of ['en', 'de', 'ar'])
       if (zoom) await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
       await page.evaluate(() => document.fonts.ready);
       const f = footer(page);
-      await expect(f).toHaveClass(/guide-footer-compact/);
-      // Open every group and the trust fold, the tallest state.
+      await expect(f).toHaveAttribute('data-compact', '');
+      // Open the fold, every group and the trust fold, the tallest state.
       for (const summary of await f.locator('summary').all()) {
         await summary.scrollIntoViewIfNeeded();
         await summary.click();
       }
       const result = await page.evaluate(() => {
         const edge = document.documentElement.clientWidth;
-        const footerEl = document.querySelector('footer.guide-footer')!;
+        const footerEl = document.querySelector('footer[data-footer="v44"]')!;
         const out = Array.from(footerEl.querySelectorAll('*'))
           .filter((el) => {
             const box = el.getBoundingClientRect();
@@ -277,5 +285,6 @@ for (const chosen of ['en', 'de', 'ar'])
       expect(result.out, 'boxes past the edge').toEqual([]);
       expect(result.small, 'summaries under 44 px').toEqual([]);
       expect(result.wide, 'sideways scroll').toBe(false);
-      expect(await f.locator('summary').count()).toBe(5);
+      // The fold of the groups, the four groups and the trust fold.
+      expect(await f.locator('summary').count()).toBe(6);
     });
