@@ -9,14 +9,22 @@ export function PlanReceived({
   market,
   answers,
   signedIn,
+  test = false,
 }: {
   goal: string;
   company: string;
   market: string;
   answers: number;
   signedIn: boolean;
+  test?: boolean;
 }) {
-  const steps = [
+  const steps = test
+    ? ([
+        { title: 'Request saved', note: 'Just now', state: 'done' },
+        { title: 'Keep your receipt', note: 'It is how you check this request', state: 'now' },
+        { title: 'We review it', note: 'Then we propose next steps', state: 'next' },
+      ] as const)
+    : ([
     { title: 'Request saved', note: 'Just now', state: 'done' },
     {
       title: signedIn ? 'Verify your email' : 'Create your account',
@@ -25,7 +33,7 @@ export function PlanReceived({
     },
     { title: signedIn ? 'Sign in on this device' : 'Verify your email', note: 'Use this same device and browser', state: 'next' },
     { title: 'We review it', note: 'Then we propose next steps', state: 'next' },
-  ] as const;
+  ] as const);
   return (
     <>
       <span className="pv-saved">✓ Saved</span>

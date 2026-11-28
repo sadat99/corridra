@@ -1,5 +1,4 @@
 import { AccountWindow } from './account-window';
-import { AccessState } from './access-state';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { readNeonAuthConfig } from '@corridra/config';
@@ -36,14 +35,29 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
           />
         </Suspense>
       ) : (
-        <AccessState kind="unavailable">
-          <p>Account access is not available yet.</p>
-          <Link prefetch={false} className="text-link" href="/plan">
-            {realUseEnabled()
-              ? 'Start a Request Without an Account'
-              : 'Prepare an Example Request Without an Account'}
+        <form className="operator-form" aria-describedby="aw-off">
+          <label className="field">
+            Email
+            <input type="email" disabled placeholder="name@company.com" />
+          </label>
+          <button className="primary-link" type="button" disabled>
+            Continue
+          </button>
+          <p id="aw-off" className="aw-off">
+            Customer sign-in is not switched on here yet. You can still send a request.
+          </p>
+        </form>
+      )}
+      {mode === 'signin' && (
+        <div className="aw-noacc">
+          <span>
+            <b>No account yet?</b>
+            You can still send a request first and create the account after.
+          </span>
+          <Link prefetch={false} className="aw-ghost" href="/start">
+            Start a request
           </Link>
-        </AccessState>
+        </div>
       )}
       {config && mode === 'signup' && (
         <p>

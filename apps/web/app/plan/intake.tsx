@@ -449,6 +449,9 @@ function IntakeForm({
     focusField = useRef(''),
     budgetDetails = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
+    if (finished) document.querySelector('.pv-window')?.scrollIntoView({ block: 'start' });
+  }, [finished]);
+  useEffect(() => {
     Promise.resolve().then(() => {
       try {
         let restored = false;
@@ -1178,6 +1181,20 @@ function IntakeForm({
           note={draft.notes}
         />
         <div className="guide-plan-main pv-main">
+          {!realMode && finished && (
+            <section className="receipt-saved" aria-labelledby="test-request-title">
+              <PlanReceived
+                test
+                goal={goalWords}
+                company={companyName}
+                market={marketName}
+                answers={answersKept}
+                signedIn={false}
+              />
+              <h2 id="test-request-title">Your request is saved.</h2>
+              <p>{message}</p>
+            </section>
+          )}
           {realMode && pendingReady && (
             <section className="receipt-saved" aria-labelledby="pending-request-title">
               <PlanReceived
