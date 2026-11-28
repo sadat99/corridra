@@ -21,7 +21,7 @@ export type WorkTab = 'team' | 'helper';
 const words = {
   team: {
     title: 'Team sign-in.',
-    lead: 'Operator, reviewer, viewer, admin or founder. Use your separate work password.',
+    lead: 'Team member, reviewer, viewer, admin or founder. Use your separate work password.',
     forgot: '/operator/forgot-password',
     setup: '/operator/setup',
   },
@@ -64,19 +64,8 @@ export function WorkAccess({
           <p className="aw-eb">Work access</p>
           <p className="aw-side-title">Sign in to your work.</p>
           <div className="aw-ring" aria-hidden="true">
-            <svg viewBox="0 0 210 210" width="210" height="210">
-              <circle cx="105" cy="105" r="92" className="aw-ring-track" />
-              <circle
-                cx="105"
-                cy="105"
-                r="92"
-                className="aw-ring-run"
-                pathLength="1"
-                transform="rotate(-90 105 105)"
-              />
-            </svg>
             <span>
-              <small>Authenticator</small>
+              <small>Authenticator example</small>
               <b>482 913</b>
               <em>Changes every 30 seconds</em>
             </span>

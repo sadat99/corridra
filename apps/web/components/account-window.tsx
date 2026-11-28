@@ -106,7 +106,7 @@ export function AccountWindow({
           <p className="aw-lead">{lead}</p>
           {children}
           <p className="aw-foot">
-            Team member or invited operator? <a href={operatorSignInPage}>Team access</a>
+            Team member? <a href={operatorSignInPage}>Team access</a>
           </p>
         </div>
       </div>

@@ -6,7 +6,6 @@ import { useEffect, useReducer, useState } from 'react';
 import { ctaWords } from './home-routes';
 import { useAnchorReveal } from './home-v43-anchors';
 import { HomeV43Reveal } from './home-v43-reveal';
-import { FlagDefs } from './home-v7-flags';
 import { HomeV44Footer } from './home-v44-footer';
 import { HomeV44Sheet } from './home-v44-sheet';
 import {
@@ -92,7 +91,6 @@ export function HomeV7({ whatsapp = null }: { whatsapp?: string | null }) {
           .
         </p>
       </noscript>
-      <FlagDefs />
       <Hero />
       <Choose intent={intent} onChoose={choose} />
       <Process />

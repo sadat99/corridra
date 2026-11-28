@@ -16,9 +16,9 @@
   margin-inline: auto;
   background: var(--cv-white);
   border: 1px solid var(--cv-line);
-  border-radius: 30px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(20, 36, 56, 0.12);
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--cv-ink) 12%, transparent);
 }
 .pv-window > .pv-side {
   grid-column: 1;
@@ -38,15 +38,15 @@
 .pv-eb {
   margin: 0;
   color: var(--cv-brand);
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .pv-side-h {
   margin: 10px 0 0;
-  font-family: var(--font-newsreader), serif;
-  font-size: 34px;
+  font-family: var(--serif);
+  font-size: var(--text-h1);
   font-weight: 400;
   line-height: 1.08;
   letter-spacing: -0.01em;
@@ -56,7 +56,7 @@
   margin-block-start: 22px;
   background: var(--cv-white);
   border: 1px solid var(--cv-line);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 .pv-map svg {
@@ -73,7 +73,7 @@
   align-items: baseline;
   padding: 12px 0;
   border-block-start: 1px solid var(--cv-line);
-  font-size: 15px;
+  font-size: var(--text-sm);
 }
 .pv-sum dt {
   flex: none;
@@ -107,8 +107,8 @@
 }
 .pv-main .intake-form > h2 {
   margin: 0;
-  font-family: var(--font-newsreader), serif;
-  font-size: 40px;
+  font-family: var(--serif);
+  font-size: var(--text-h1);
   font-weight: 400;
   line-height: 1.06;
   letter-spacing: -0.02em;
@@ -138,7 +138,7 @@
   border: 0;
   color: var(--cv-ink-3);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 .pv-step:disabled {
@@ -153,7 +153,7 @@
   background: var(--cv-white);
   border: 2px solid var(--cv-rail);
   border-radius: 50%;
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 .pv-step[data-state='done'] .pv-step-dot {
@@ -168,7 +168,7 @@
 .pv-step[data-state='now'] .pv-step-dot {
   border-color: var(--cv-brand);
   color: var(--cv-brand);
-  box-shadow: 0 0 0 4px rgba(40, 86, 197, 0.16);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cv-brand) 16%, transparent);
 }
 .pv-step-line {
   flex: 1;
@@ -199,8 +199,8 @@
   padding: 14px 18px;
   background: var(--cv-white);
   border: 1.5px solid var(--cv-line);
-  border-radius: 20px;
-  font-size: 16px;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
   font-weight: 500;
   cursor: pointer;
   transition:
@@ -215,7 +215,7 @@
 .pv-main .choice:has(input:checked) {
   background: var(--cv-tint);
   border-color: var(--cv-brand);
-  box-shadow: 0 0 0 3px rgba(40, 86, 197, 0.14);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cv-brand) 14%, transparent);
 }
 .pv-main .guide-options-row .choice {
   min-block-size: 44px;
@@ -230,7 +230,7 @@
   padding: 0 18px;
   background: var(--cv-white);
   border: 1.5px solid var(--cv-line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   color: var(--cv-ink);
   font: inherit;
 }
@@ -242,7 +242,7 @@
 .pv-main .field textarea:focus-visible {
   border-color: var(--cv-brand);
   outline: 0;
-  box-shadow: 0 0 0 3px rgba(40, 86, 197, 0.14);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cv-brand) 14%, transparent);
 }
 /* The action row: Back as a quiet link, the one primary action as a pill. */
 .pv-main .plan-action-bar {
@@ -277,7 +277,7 @@
   background: var(--cv-green-bg);
   border-radius: 99px;
   color: var(--cv-green-ink);
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 .pv-chips {
@@ -295,7 +295,7 @@
   background: var(--cv-tint);
   border: 1px solid var(--cv-line);
   border-radius: 99px;
-  font-size: 15px;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 .pv-chips .pv-chip-plain {
@@ -311,7 +311,7 @@
   margin: 0 0 18px;
   padding: 8px 22px;
   border: 1px solid var(--cv-line);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   list-style: none;
 }
 .pv-timeline li {
@@ -333,17 +333,17 @@
   border: 2px solid var(--cv-rail);
   border-radius: 50%;
   color: var(--cv-ink-3);
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 .pv-timeline b {
   display: block;
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 600;
 }
 .pv-timeline li > span:last-child > span {
   color: var(--cv-ink-3);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 .pv-timeline li[data-state='done'] .pv-tl-dot {
   background: var(--cv-green);
@@ -353,7 +353,7 @@
 .pv-timeline li[data-state='now'] .pv-tl-dot {
   border-color: var(--cv-brand);
   color: var(--cv-brand);
-  box-shadow: 0 0 0 4px rgba(40, 86, 197, 0.16);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cv-brand) 16%, transparent);
 }
 .pv-timeline li[data-state='now'] b {
   color: var(--cv-brand);
@@ -361,7 +361,7 @@
 @media (max-width: 52rem) {
   .guide-plan-body.pv-window.pv-window {
     grid-template-columns: minmax(0, 1fr);
-    border-radius: 24px;
+    border-radius: var(--radius-lg);
   }
   .pv-window > .pv-main {
     grid-column: 1;
@@ -390,14 +390,6 @@
   }
 }
 
-.pv-side .hv7-flagdefs {
-  position: absolute;
-  inline-size: 0;
-  block-size: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
 .pv-side {
   overflow: hidden;
 }
@@ -409,9 +401,9 @@
   padding: 14px 20px;
   background: var(--cv-tint);
   border: 1px solid var(--cv-line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   color: var(--cv-ink);
-  font-size: 15px;
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 .pv-main h2:focus {

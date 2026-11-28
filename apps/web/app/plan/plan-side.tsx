@@ -1,6 +1,5 @@
 'use client';
 import { DotMap, type SpotKey } from '../../components/home-v44-dotmap';
-import { FlagDefs } from '../../components/home-v7-flags';
 import '../../components/home-v7.css';
 
 // The left pane of the request window (owner canvas board v10, 28 Nov 2026): the request taking shape. A map with the
@@ -51,7 +50,6 @@ export function PlanSide({
       <p className="pv-eb">Your request</p>
       <p className="pv-side-h">Taking shape as you answer.</p>
       <div className="pv-map hv7" aria-hidden="true">
-        <FlagDefs />
         <DotMap
           view={place && place !== 'EU' && place !== 'US' ? '330 10 380 250' : '90 0 620 250'}
           routes={place ? [place] : []}

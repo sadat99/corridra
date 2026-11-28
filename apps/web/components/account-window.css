@@ -1,11 +1,8 @@
 /* Sign in and create account (owner canvas board v11, 28 Nov 2026). Loaded only by account-window.tsx. Own type and the
-   --cv-* tokens; weights 400/500/600. The cards slide in once; the status dot pulses and stops under reduced motion. */
+   --cv-* tokens; weights 400/500/600. The cards slide in once (transform only, so their words keep their contrast while they move) and rest under reduced motion. */
 .aw {
-  font-family:
-    var(--aw-font),
-    -apple-system,
-    system-ui,
-    sans-serif;
+  --font-ui: var(--aw-font), var(--font-geist), system-ui, sans-serif;
+  font-family: var(--font-ui);
   color: var(--cv-ink);
   background: var(--cv-page);
   -webkit-font-smoothing: antialiased;
@@ -27,9 +24,9 @@
   margin-inline: auto;
   background: var(--cv-white);
   border: 1px solid var(--cv-line);
-  border-radius: 30px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(20, 36, 56, 0.12);
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--cv-ink) 12%, transparent);
 }
 .aw-side {
   display: flex;
@@ -39,15 +36,15 @@
 }
 .aw-eb {
   color: var(--cv-brand);
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .aw-side-title {
   margin-block-start: 12px;
-  font-family: var(--font-newsreader), serif;
-  font-size: 38px;
+  font-family: var(--serif);
+  font-size: var(--text-h1);
   font-weight: 400;
   line-height: 1.08;
   letter-spacing: -0.015em;
@@ -60,7 +57,7 @@
 }
 .aw-ex {
   color: var(--cv-ink-3);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -73,9 +70,9 @@
   padding: 14px 16px;
   background: var(--cv-white);
   border: 1px solid var(--cv-line);
-  border-radius: 18px;
-  box-shadow: 0 8px 20px rgba(20, 36, 56, 0.06);
-  animation: aw-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--cv-ink) 6%, transparent);
+  animation: aw-up var(--dur-step) var(--ease-product) both;
 }
 .aw-card:nth-of-type(2) {
   animation-delay: 0.1s;
@@ -90,12 +87,12 @@
 }
 .aw-card b {
   display: block;
-  font-size: 15px;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 .aw-card em {
   color: var(--cv-ink-3);
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-style: normal;
 }
 .aw-pill {
@@ -104,7 +101,7 @@
   gap: 6px;
   padding: 6px 10px;
   border-radius: 99px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -117,9 +114,6 @@
 .aw-green {
   background: var(--cv-green-bg);
   color: var(--cv-green-ink);
-}
-.aw-green i {
-  animation: aw-pulse 2s ease-out infinite;
 }
 .aw-gold {
   background: var(--cv-gold-bg);
@@ -136,7 +130,7 @@
   padding-block-start: 24px;
   list-style: none;
   color: var(--cv-ink-2);
-  font-size: 15px;
+  font-size: var(--text-sm);
   line-height: 1.4;
 }
 .aw-ticks li {
@@ -154,7 +148,7 @@
   border-radius: 50%;
   background: var(--cv-chip);
   color: var(--cv-brand);
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 .aw-main {
@@ -174,21 +168,21 @@
   padding: 10px 0;
   border-radius: 99px;
   color: var(--cv-ink-3);
-  font-size: 15px;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-align: center;
   text-decoration: none;
-  transition: background 0.2s;
+  transition: background var(--dur);
 }
 .aw-switch a[aria-current='page'] {
   background: var(--cv-white);
   color: var(--cv-ink);
-  box-shadow: 0 1px 4px rgba(20, 36, 56, 0.14);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--cv-ink) 14%, transparent);
 }
 .aw-title {
   margin-block-start: 28px;
-  font-family: var(--font-newsreader), serif;
-  font-size: 40px;
+  font-family: var(--serif);
+  font-size: var(--text-h1);
   font-weight: 400;
   line-height: 1.06;
   letter-spacing: -0.02em;
@@ -196,7 +190,7 @@
 .aw-lead {
   margin-block-start: 10px;
   color: var(--cv-ink-2);
-  font-size: 16px;
+  font-size: var(--text-base);
   line-height: 1.5;
 }
 .aw-foot {
@@ -204,7 +198,7 @@
   padding-block-start: 16px;
   border-block-start: 1px solid var(--cv-hair);
   color: var(--cv-ink-3);
-  font-size: 13px;
+  font-size: var(--text-xs);
   line-height: 1.5;
   text-align: center;
 }
@@ -229,7 +223,7 @@
 .aw-main > .ux-draft-notice {
   margin: 0;
   color: var(--cv-ink-2);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 .aw .field {
@@ -238,7 +232,7 @@
   gap: 8px;
   margin: 0;
   color: var(--cv-ink);
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 .aw .field input {
@@ -246,16 +240,16 @@
   padding: 0 18px;
   background: var(--cv-white);
   border: 1.5px solid var(--cv-line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   color: var(--cv-ink);
   font: inherit;
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 400;
 }
 .aw .field input:focus-visible {
   border-color: var(--cv-brand);
   outline: 0;
-  box-shadow: 0 0 0 3px rgba(40, 86, 197, 0.14);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cv-brand) 14%, transparent);
 }
 .aw .field input[aria-invalid='true'] {
   border-color: var(--cv-gold-ink);
@@ -274,16 +268,16 @@
   border-radius: 99px;
   color: var(--cv-white);
   font: inherit;
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 600;
   cursor: pointer;
   transition:
-    transform 0.25s,
-    box-shadow 0.25s;
+    transform var(--dur),
+    box-shadow var(--dur);
 }
 .aw .operator-form .primary-link:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(40, 86, 197, 0.28);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--cv-brand) 28%, transparent);
 }
 .aw .operator-form .text-link {
   align-self: center;
@@ -291,7 +285,7 @@
   border: 0;
   color: var(--cv-brand);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -304,8 +298,8 @@
 .aw .ux-error-summary,
 .aw .ux-draft-notice {
   padding: 12px 16px;
-  border-radius: 14px;
-  font-size: 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 .aw .ux-draft-notice {
@@ -314,22 +308,10 @@
 }
 @keyframes aw-up {
   from {
-    opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(var(--space-4));
   }
   to {
-    opacity: 1;
     transform: none;
-  }
-}
-@keyframes aw-pulse {
-  from {
-    box-shadow: 0 0 0 0 currentcolor;
-    opacity: 1;
-  }
-  to {
-    box-shadow: 0 0 0 7px transparent;
-    opacity: 0.5;
   }
 }
 @media (max-width: 52rem) {
@@ -348,8 +330,7 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .aw-card,
-  .aw-green i {
+  .aw-card {
     animation: none;
   }
 }
@@ -359,23 +340,8 @@
   inline-size: 210px;
   block-size: 210px;
   margin: 26px auto 0;
-}
-.aw-ring svg {
-  display: block;
-}
-.aw-ring circle {
-  fill: none;
-  stroke-width: 8;
-}
-.aw-ring-track {
-  stroke: var(--cv-line);
-}
-.aw-ring-run {
-  stroke: var(--cv-brand);
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 0;
-  animation: aw-count 30s linear infinite;
+  border: 8px solid var(--cv-brand);
+  border-radius: 50%;
 }
 .aw-ring span {
   position: absolute;
@@ -388,32 +354,32 @@
 }
 .aw-ring small {
   color: var(--cv-ink-3);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .aw-ring b {
   margin-block-start: 6px;
-  font-size: 36px;
+  font-size: var(--text-h1);
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 .aw-ring em {
   margin-block-start: 6px;
   color: var(--cv-ink-3);
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-style: normal;
 }
 .aw-side-link {
   margin-block-start: 14px;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 .aw-side-link a,
 .aw-row a,
 .aw-link {
   color: var(--cv-brand);
-  font-size: 15px;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-decoration: none;
 }
@@ -425,14 +391,14 @@
   border-radius: 99px;
   color: var(--cv-ink-3);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
 }
 .aw-switch button[aria-pressed='true'] {
   background: var(--cv-white);
   color: var(--cv-ink);
-  box-shadow: 0 1px 4px rgba(20, 36, 56, 0.14);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--cv-ink) 14%, transparent);
 }
 .aw-row {
   display: flex;
@@ -457,21 +423,8 @@
 /* The work form's own heading and note are small here; the page title above already says who this is for. */
 .aw .operator-form h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 600;
-}
-@keyframes aw-count {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .aw-ring-run {
-    animation: none;
-  }
 }
 @media (max-width: 52rem) {
   .aw-ring {
@@ -530,9 +483,9 @@
   padding: 18px 20px;
   background: var(--cv-white);
   border: 1.5px solid var(--cv-line);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   color: var(--cv-ink-2);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.4;
   text-decoration: none;
 }
@@ -543,7 +496,7 @@
 .aw .aw-opt b {
   display: block;
   color: var(--cv-ink);
-  font-size: 17px;
+  font-size: var(--text-base);
   font-weight: 600;
 }
 .aw .aw-ic {
@@ -556,7 +509,7 @@
   background: var(--cv-tint);
   border-radius: 12px;
   color: var(--cv-brand);
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: 600;
 }
 .aw .aw-tag {
@@ -565,7 +518,7 @@
   background: var(--cv-green-bg);
   border-radius: 99px;
   color: var(--cv-green-ink);
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-style: normal;
   font-weight: 600;
   vertical-align: middle;
@@ -578,15 +531,15 @@
   margin-block: 24px 0;
   padding: 16px 18px;
   border: 1.5px dashed var(--cv-line);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   color: var(--cv-ink-2);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.4;
 }
 .aw .aw-noacc b {
   display: block;
   color: var(--cv-ink);
-  font-size: 15px;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 .aw .aw-ghost {
@@ -596,14 +549,14 @@
   border: 1.5px solid var(--cv-line);
   border-radius: 99px;
   color: var(--cv-ink);
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-decoration: none;
 }
 .aw .aw-off {
   margin-block: 14px 0;
   color: var(--cv-ink-3);
-  font-size: 13px;
+  font-size: var(--text-xs);
   text-align: center;
 }
 .aw .operator-form input:disabled,
@@ -621,4 +574,49 @@
 }
 .aw .aw-opt.aw-pick .aw-ic {
   background: var(--cv-white);
+}
+
+/* Fit and touch size (largest text, 200 percent browser text, 44 px targets). Words may break anywhere rather than
+   run out of their box, the window never grows past its column, and every link or button that stands on its own is
+   at least 44 px high. */
+.aw {
+  padding-inline: min(1.25rem, 3vw);
+}
+.aw-window,
+.aw-side,
+.aw-main {
+  min-inline-size: 0;
+}
+.aw
+  :is(
+    .aw-eb,
+    .aw-side-title,
+    .aw-title,
+    .aw-lead,
+    .aw-foot,
+    .aw-row,
+    .aw-ticks,
+    .aw-card,
+    .aw-opt,
+    .aw-noacc
+  ) {
+  overflow-wrap: anywhere;
+}
+.aw-switch a,
+.aw-switch button,
+.aw .aw-foot a,
+.aw .aw-row a,
+.aw .aw-side-link a,
+.aw .aw-link,
+.aw .operator-form .text-link,
+.aw .aw-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px;
+}
+.aw-switch,
+.aw .aw-row,
+.aw .aw-noacc {
+  flex-wrap: wrap;
 }

@@ -2050,7 +2050,7 @@ summary:hover {
   --cv-brand: #2856c5;
   --cv-ink: #142438;
   --cv-ink-2: #44546a;
-  --cv-ink-3: #5c6b80;
+  --cv-ink-3: #54637a;
   --cv-line: #dde4ee;
   --cv-hair: #eef1f5;
   --cv-page: #f7f9fc;
@@ -2070,6 +2070,9 @@ summary:hover {
   --cv-warm-2: #fbf1d9;
   --cv-green-bg: #e3f5ec;
   --cv-green-ink: #14724b;
+  --cv-sky: #9db5e8;
+  --cv-wash: #f3f7fe;
+  --cv-rule: #c3cbd8;
   --ac-copper-ink: #85451e;
   --ac-ink: #18283c;
   --ac-paper: #ffffff;

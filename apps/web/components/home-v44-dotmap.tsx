@@ -3,7 +3,7 @@ import { worldPath } from '../lib/home-v7-world';
 
 // Home page v7 maps (a real world outline, country by country) (canvas boards "Home v7" and "Home v9"): one world, framed per use, with route arcs from
 // Bangladesh (or towards it when `inbound`) and the place names written on the map. With `flags` every pin is the
-// place's own round flag (home-v7-flags.tsx). Decorative: the route is always written in words beside it. The arcs
+// place's own round flag (static files in public/map-flags, one per place). Decorative: the route is always written in words beside it. The arcs
 // draw once; the dot travelling along each arc and the pulse on each pin are stopped by Pause Motion and by reduced
 // motion (home-v7.css). Coordinates are on the 720 by 276 plane of lib/home-v7-world.ts; sizes match the canvas.
 type Spot = {
@@ -186,8 +186,8 @@ export function DotMap({
         {flags ? (
           <>
             <circle className="hv7-flag-ring" cx={s.x} cy={s.y} r={radius} />
-            <use
-              href={`#hv7-fl-${s.flag}`}
+            <image
+              href={`/map-flags/${s.flag}.svg`}
               x={s.x - size / 2}
               y={s.y - size / 2}
               width={size}

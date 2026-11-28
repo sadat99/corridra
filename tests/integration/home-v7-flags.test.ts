@@ -1,15 +1,13 @@
-import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// The round map-pin flags of the home and the request page (home-v7-flags.tsx) were a constant string written into
-// the page as HTML, which the semgrep rule security.corridra-no-raw-html refuses. They are now SVG elements. These
-// checks pin the drawing to the old string, byte for byte, so the pins look exactly as before.
-const web = createRequire(resolve('apps/web/package.json'));
-const ce = web('react').createElement as (type: unknown, props?: unknown) => unknown;
-const render = web('react-dom/server').renderToStaticMarkup as (element: unknown) => string;
-const loadWeb = async (path: string) => await import(/* @vite-ignore */ `../../apps/web/${path}`);
+// The round map-pin flags of the home and the request page were a constant string written into the page as HTML (which
+// the semgrep rule security.corridra-no-raw-html refuses), then SVG elements in a component (national colours in code,
+// which the colour guard refuses). They are now static files in apps/web/public/map-flags, the way the flags of
+// public/flags are served, and the map draws each as an image. These checks pin each file to the old drawing, shape
+// for shape, so the pins look exactly as before. UAE and Singapore are sovereign states, so a flag for each is allowed
+// by the flag policy (ui-direction.md, "Flags only for sovereign states and the EU").
 
 /** The markup the component injected before (commit aefdcd1), one flag per line. */
 const before = [
@@ -23,28 +21,35 @@ const before = [
   '<clipPath id="hv7-cp-eu"><circle cx="12" cy="12" r="12"/></clipPath><symbol id="hv7-fl-eu" viewBox="0 0 24 24"><g clip-path="url(#hv7-cp-eu)"><rect width="24" height="24" fill="#003399"/><circle cx="19.00" cy="12.00" r="1.1" fill="#FFCC00"/><circle cx="18.06" cy="15.50" r="1.1" fill="#FFCC00"/><circle cx="15.50" cy="18.06" r="1.1" fill="#FFCC00"/><circle cx="12.00" cy="19.00" r="1.1" fill="#FFCC00"/><circle cx="8.50" cy="18.06" r="1.1" fill="#FFCC00"/><circle cx="5.94" cy="15.50" r="1.1" fill="#FFCC00"/><circle cx="5.00" cy="12.00" r="1.1" fill="#FFCC00"/><circle cx="5.94" cy="8.50" r="1.1" fill="#FFCC00"/><circle cx="8.50" cy="5.94" r="1.1" fill="#FFCC00"/><circle cx="12.00" cy="5.00" r="1.1" fill="#FFCC00"/><circle cx="15.50" cy="5.94" r="1.1" fill="#FFCC00"/><circle cx="18.06" cy="8.50" r="1.1" fill="#FFCC00"/></g></symbol>',
 ].join('');
 
-/**
- * The old string wrote SVG empty elements as `<circle/>`; the browser parses that as `<circle></circle>` inside SVG,
- * which is how React writes it, so the comparison is of the same elements and attributes in the same order.
- */
-const expanded = (markup: string) => markup.replace(/<(\w+)([^<>]*?)\/>/g, '<$1$2></$1>');
+const flagsDir = resolve('apps/web/public/map-flags');
+const codes = ['bd', 'cn', 'ae', 'sg', 'uk', 'us', 'au', 'eu'];
+const shapes = (markup: string) =>
+  markup
+    .replace(/clip-path="url\(#[\w-]+\)"/g, 'clip-path="url(#c)"')
+    .replace(/ \/>/g, '/>')
+    .replace(/<(\w+)([^<>]*?)\/>/g, '<$1$2></$1>');
 
 describe('home map-pin flags', () => {
-  it('render the same SVG as the old injected string', async () => {
-    const { FlagDefs } = await loadWeb('components/home-v7-flags.tsx');
-    expect(render(ce(FlagDefs))).toBe(
-      `<svg width="0" height="0" class="hv7-flagdefs" aria-hidden="true" focusable="false"><defs>${expanded(before)}</defs></svg>`,
+  for (const [index, code] of codes.entries()) {
+    it(`${code} draws the same shapes as the old string`, () => {
+      const file = readFileSync(resolve(flagsDir, `${code}.svg`), 'utf8');
+      const old = before.split('</symbol>')[index]!;
+      const inner = old.slice(old.indexOf('<g '));
+      expect(shapes(file)).toContain(shapes(inner));
+      expect(file).toContain('viewBox="0 0 24 24"');
+    });
+  }
+  it('are exactly the eight places the pins use, and no more', () => {
+    expect(readdirSync(flagsDir).sort()).toEqual(codes.map((code) => `${code}.svg`).sort());
+  });
+  it('inject no HTML and keep national colours out of the code', () => {
+    for (const file of ['components/home-v44-dotmap.tsx', 'app/plan/plan-side.tsx']) {
+      const source = readFileSync(resolve('apps/web', file), 'utf8');
+      expect(source).not.toContain('dangerouslySetInnerHTML');
+      expect(source).not.toMatch(/#[0-9a-fA-F]{6}\b/);
+    }
+    expect(readFileSync(resolve('apps/web/components/home-v44-dotmap.tsx'), 'utf8')).toContain(
+      '/map-flags/',
     );
-  });
-  it('inject no HTML', () => {
-    const source = readFileSync(resolve('apps/web/components/home-v7-flags.tsx'), 'utf8');
-    expect(source).not.toContain('dangerouslySetInnerHTML');
-    expect(source).not.toContain('__html');
-  });
-  it('keep one symbol per place the pins use', async () => {
-    const { FlagDefs } = await loadWeb('components/home-v7-flags.tsx');
-    const html = render(ce(FlagDefs));
-    for (const code of ['bd', 'cn', 'ae', 'sg', 'uk', 'us', 'au', 'eu'])
-      expect(html).toContain(`<symbol id="hv7-fl-${code}" viewBox="0 0 24 24">`);
   });
 });
