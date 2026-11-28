@@ -665,77 +665,8 @@
   }
 }
 
-/* Footer: the page's own, standing in for the shared one on this page only. */
-:root:has(.hv7-hero) .site-shell footer:not(.hv7-footer),
 :root:has(.hv7-hero) .site-header button.top-bar-tool[aria-pressed] {
   display: none;
-}
-.hv7-footer {
-  display: block;
-  margin: 70px clamp(1.25rem, 4.1vw, 56px) 0;
-  padding: 44px 0 34px;
-  border-block-start: 1px solid var(--cv-line);
-}
-.hv7-footer-top {
-  display: grid;
-  gap: 32px;
-}
-@media (min-width: 64rem) {
-  .hv7-footer-top {
-    grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr;
-  }
-}
-.hv7-footer-nav {
-  display: contents;
-}
-.hv7-footer-logo {
-  display: block;
-  max-inline-size: 220px;
-}
-.hv7-footer-logo img {
-  display: block;
-  inline-size: 100%;
-  block-size: auto;
-}
-.hv7-footer-promise {
-  max-inline-size: 260px;
-  margin: 12px 0 0;
-  color: var(--cv-ink-3);
-  line-height: 1.5;
-}
-.hv7-footer-group h2 {
-  margin: 0;
-  font-family: inherit;
-  font-size: var(--text-base);
-  font-weight: 600;
-  line-height: 2.1;
-}
-.hv7-footer-group ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.hv7-footer-group a {
-  display: inline-flex;
-  align-items: center;
-  min-block-size: 36px;
-  color: var(--cv-ink-2);
-  line-height: 1.5;
-  text-decoration: none;
-}
-.hv7-footer-group a:hover {
-  color: var(--cv-brand);
-  text-decoration: underline;
-}
-.hv7-footer-bottom {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 24px;
-  margin-block-start: 28px;
-  color: var(--cv-ink-3);
-  font-size: var(--text-xs);
 }
 
 /* Dotted maps */

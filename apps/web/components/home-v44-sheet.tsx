@@ -238,7 +238,9 @@ export function HomeV44Sheet({
                 data-start-action
                 onClick={() => setStep(step + 1)}
               >
-                {step === stepNames.length - 1 ? 'Review' : t('home.v44.sheet.next')}
+                {step === stepNames.length - 1
+                  ? t('home.v44.sheet.review')
+                  : t('home.v44.sheet.next')}
               </button>
             )}
           </div>

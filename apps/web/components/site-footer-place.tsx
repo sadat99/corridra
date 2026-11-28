@@ -11,6 +11,8 @@ import { isQuiet } from './use-signed-in';
 
 // Home page v4.3: the pack footer and its stylesheet load only while the switch is on, so an off build ships neither.
 const SiteFooterPack = dynamic(() => import('./site-footer-pack').then((m) => m.SiteFooterPack));
+// Home page v4.4: the home page's footer on every page, loaded only while its switch is on.
+const SiteFooterV44 = dynamic(() => import('./site-footer-v44').then((m) => m.SiteFooterV44));
 
 /**
  * Chooses the footer for the page. `shells` is CORRIDRA_UX_SHELLS_V2, read on the server, the same switch the
@@ -25,6 +27,7 @@ export function SiteFooterPlace({
   accessDoors = false,
   homeV42 = false,
   homeV43 = false,
+  homeV44 = false,
 }: {
   realUse: boolean;
   shells: boolean;
@@ -37,10 +40,23 @@ export function SiteFooterPlace({
    * groups. It wins over V42. The request page (/plan) and the staff preview keep the trimmed footer.
    */
   homeV43?: boolean;
+  /**
+   * CORRIDRA_UX_HOME_V44, read on the server (live by default; owner, 28 Nov 2026): the home page's footer replaces
+   * every footer below, on every page and also inside a signed-in workspace. Exactly "false" gives the footers of before.
+   */
+  homeV44?: boolean;
 }) {
   const t = useT();
   const pathname = usePathname();
   if (isBarePublicPage(pathname)) return null;
+  if (homeV44)
+    return (
+      <SiteFooterV44
+        realUse={realUse}
+        accessDoors={accessDoors}
+        workspace={shells && !!signedInShellFor(pathname)}
+      />
+    );
   if (!shells || !signedInShellFor(pathname))
     return homeV43 && pathname !== '/plan' && !isQuiet(pathname) ? (
       <SiteFooterPack realUse={realUse} accessDoors={accessDoors} />

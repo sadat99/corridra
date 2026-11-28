@@ -5,8 +5,10 @@ import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 
 import { DotMap, type SpotKey, type Tone } from './home-v44-dotmap';
 import { useHomeV44Motion } from './home-v44-motion';
 import { useT } from './language-provider';
+import { PlaceWords } from './place-words';
 import { StartBar } from './ux/start-bar';
 import { v43 } from '../lib/home-v43-data';
+import type { MessageKey } from '../lib/i18n/messages';
 import type { RouteKey } from '../lib/home-routes-data';
 import type { Shown } from './home-routes';
 
@@ -370,45 +372,34 @@ export function Trust() {
   );
 }
 
+// One literal key per word, so the catalogue's own check can see each one is used.
 const story = [
-  ['you', 'You', 'Day 1', 'Send the request', 'Cotton fabric, Guangzhou, within a month.'],
-  [
-    'team',
-    'Corridra',
-    'Day 2',
-    'Checks who fits',
-    'Three suppliers shortlisted, each with its sources.',
-  ],
-  ['you', 'You', 'Day 4', 'Choose and approve', 'You pick two. Nothing is sent before you say so.'],
-  [
-    'team',
-    'Corridra',
-    'Week 2',
-    'Meetings booked',
-    'Two meetings in Guangzhou, with a plan to follow.',
-  ],
-] as const;
+  ['you', 'home.v44.eg.1.when', 'home.v44.eg.1.title', 'home.v44.eg.1.line'],
+  ['team', 'home.v44.eg.2.when', 'home.v44.eg.2.title', 'home.v44.eg.2.line'],
+  ['you', 'home.v44.eg.3.when', 'home.v44.eg.3.title', 'home.v44.eg.3.line'],
+  ['team', 'home.v44.eg.4.when', 'home.v44.eg.4.title', 'home.v44.eg.4.line'],
+] as const satisfies readonly (readonly [string, MessageKey, MessageKey, MessageKey])[];
 
 export function Example() {
+  const t = useT();
   return (
     <section className="hv7-band" id="example" aria-labelledby="example-title">
-      <Eb>Worked example, invented names</Eb>
+      <Eb>{t('home.v44.eg.eyebrow')}</Eb>
       <h2 className="hv7-h2" id="example-title" tabIndex={-1}>
-        One request, start to meeting.
+        {t('home.v44.eg.title')}
       </h2>
       <p className="hv7-sub">
-        Mina Textiles, a shirt maker in Dhaka, needs cotton fabric from China. Here is what happens,
-        and who does what.
+        <PlaceWords text={t('home.v44.eg.lead')} />
       </p>
       <ol className="hv7-cards">
-        {story.map(([who, label, when, title, line]) => (
+        {story.map(([who, when, title, line]) => (
           <li key={when} className="hv7-card">
             <div className="hv7-card-top">
-              <b data-who={who}>{label}</b>
-              <span>{when}</span>
+              <b data-who={who}>{t(who === 'you' ? 'home.v44.eg.you' : 'home.v44.eg.team')}</b>
+              <span>{t(when)}</span>
             </div>
-            <strong>{title}</strong>
-            <span>{line}</span>
+            <strong>{t(title)}</strong>
+            <span>{t(line)}</span>
           </li>
         ))}
       </ol>
@@ -484,15 +475,15 @@ export function Closing({ shown, href, cta }: { shown: Shown; href: string; cta:
       <section className="hv7-band hv7-band-close" aria-labelledby="final-title">
         <div className="hv7-closing" id="final">
           <div className="hv7-closing-text">
-            <Eb>Your move</Eb>
+            <Eb>{t('home.v44.close.eyebrow')}</Eb>
             <h2 id="final-title">
-              The next <span className="hv7-outline">partner</span>
+              {t('home.v44.close.a')} <span className="hv7-outline">{t('home.v44.close.b')}</span>
               <br />
-              is one request away.
+              {t('home.v44.close.c')}
             </h2>
             <div>
               <a className="hv7-btn" href="#brief" id="final-start" data-start-action>
-                Start a request
+                Start a Request
               </a>
               <p className="hv7-closing-note">
                 Takes about two minutes. Nothing is sent until reviewed.

@@ -178,8 +178,17 @@ function CustomerFrame({
               : null;
   const items: CustomerSideItem[] = tabs.map((item) => ({
     key: item.key,
-    // Meetings is a new word with no reviewed translation yet, so it is marked as English.
-    label: item.labelKey ? <T k={item.labelKey} /> : <span lang="en">{item.label}</span>,
+    // A word with no reviewed translation yet (Meetings, and the home.v44 words of account v18) is marked as English.
+    label:
+      item.labelKey && !item.labelKey.startsWith('home.v44.') ? (
+        <T k={item.labelKey} />
+      ) : item.labelKey ? (
+        <span lang="en">
+          <T k={item.labelKey} />
+        </span>
+      ) : (
+        <span lang="en">{item.label}</span>
+      ),
     href: item.href,
     icon: item.icon,
     count: item.key === 'home' && here === 'home' ? count : undefined,

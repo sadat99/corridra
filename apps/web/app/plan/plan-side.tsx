@@ -1,5 +1,7 @@
 'use client';
 import { DotMap, type SpotKey } from '../../components/home-v44-dotmap';
+import { useT } from '../../components/language-provider';
+import type { MessageKey } from '../../lib/i18n/messages';
 import '../../components/home-v7.css';
 
 // The left pane of the request window (owner canvas board v10, 28 Nov 2026): the request taking shape. A map with the
@@ -35,20 +37,21 @@ export function PlanSide({
   when: string;
   note: string;
 }) {
+  const t = useT();
   const place = places[marketCode];
   const labels: Partial<Record<SpotKey, { name?: string }>> = {};
   if (place) labels[place] = {};
-  const rows: readonly (readonly [string, string])[] = [
-    ['Goal', goal],
-    ['Based in', company],
-    ['Market', market],
-    ['When', when],
-    ['Note', shortNote(note)],
+  const rows: readonly (readonly [MessageKey, string])[] = [
+    ['home.v44.plan.side.goal', goal],
+    ['home.v44.plan.side.based', company],
+    ['home.v44.plan.side.market', market],
+    ['home.v44.plan.side.when', when],
+    ['home.v44.plan.side.note', shortNote(note)],
   ];
   return (
-    <aside className="pv-side" aria-label="Your request so far">
-      <p className="pv-eb">Your request</p>
-      <p className="pv-side-h">Taking shape as you answer.</p>
+    <aside className="pv-side" aria-label={t('home.v44.plan.side.label')}>
+      <p className="pv-eb">{t('home.v44.plan.side.eyebrow')}</p>
+      <p className="pv-side-h">{t('home.v44.plan.side.heading')}</p>
       <div className="pv-map hv7" aria-hidden="true">
         <DotMap
           view={place && place !== 'EU' && place !== 'US' ? '330 10 380 250' : '90 0 620 250'}
@@ -60,8 +63,8 @@ export function PlanSide({
       <dl className="pv-sum">
         {rows.map(([name, value]) => (
           <div key={name}>
-            <dt>{name}</dt>
-            <dd data-mute={value ? undefined : ''}>{value || 'Not chosen yet'}</dd>
+            <dt>{t(name)}</dt>
+            <dd data-mute={value ? undefined : ''}>{value || t('home.v44.plan.side.empty')}</dd>
           </div>
         ))}
       </dl>

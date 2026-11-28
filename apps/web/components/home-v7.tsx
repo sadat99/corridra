@@ -6,7 +6,6 @@ import { useEffect, useReducer, useState } from 'react';
 import { ctaWords } from './home-routes';
 import { useAnchorReveal } from './home-v43-anchors';
 import { HomeV43Reveal } from './home-v43-reveal';
-import { HomeV44Footer } from './home-v44-footer';
 import { HomeV44Sheet } from './home-v44-sheet';
 import {
   Choose,
@@ -130,7 +129,6 @@ export function HomeV7({ whatsapp = null }: { whatsapp?: string | null }) {
         </div>
       </Dialog>
       <Closing shown={shown} href={href} cta={cta} />
-      <HomeV44Footer />
     </div>
   );
 }

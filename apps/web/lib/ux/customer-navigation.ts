@@ -139,7 +139,13 @@ export function customerTabs({
       icon: 'home',
       labelKey: 'wse.nav.home',
     },
-    { key: 'requests', label: 'My Work', href: journeyScopedHref('requests', mode), icon: 'work' },
+    {
+      key: 'requests',
+      label: 'My Work',
+      href: journeyScopedHref('requests', mode),
+      icon: 'work',
+      labelKey: 'home.v44.nav.work',
+    },
     ...(companies
       ? [
           {
@@ -151,8 +157,20 @@ export function customerTabs({
           },
         ]
       : []),
-    { key: 'delegations', label: 'Delegations', href: '/account/delegation-hub', icon: 'trip' },
-    { key: 'more', label: 'More', href: '/account?view=more', icon: 'more' },
+    {
+      key: 'delegations',
+      label: 'Delegations',
+      href: '/account/delegation-hub',
+      icon: 'trip',
+      labelKey: 'home.v44.nav.delegations',
+    },
+    {
+      key: 'more',
+      label: 'More',
+      href: '/account?view=more',
+      icon: 'more',
+      labelKey: 'home.v44.nav.more',
+    },
   ];
 }
 

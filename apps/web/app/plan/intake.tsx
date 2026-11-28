@@ -45,7 +45,7 @@ import { currencies } from '@corridra/domain/currencies';
 import { intakeExperience } from '@corridra/domain/experience';
 import { originalAmountToMinor } from '@corridra/domain/locale';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
-import { useLanguage } from '../../components/language-provider';
+import { useLanguage, useT } from '../../components/language-provider';
 import { LanguageSheetExtra } from '../../components/ux/language-sheet-slot';
 import { subscribeToHash } from '../../lib/address-store';
 import {
@@ -408,6 +408,7 @@ function IntakeForm({
     wsa,
   } = useFormWords();
   // The language button exists only when more than one language is offered (language-sheet.tsx).
+  const t = useT();
   const languageChip = useLanguage().offered.length > 1;
   const draftStorageKey =
     privateSubmission?.draftStorageKey ??
@@ -1209,7 +1210,7 @@ function IntakeForm({
                 answers={answersKept}
                 signedIn={false}
               />
-              <h2 id="test-request-title">Your request is saved.</h2>
+              <h2 id="test-request-title">{t('home.v44.plan.saved.title')}</h2>
               <p>{message}</p>
             </section>
           )}
@@ -1224,7 +1225,7 @@ function IntakeForm({
                     answers={answersKept}
                     signedIn={!!account}
                   />
-                  <h2 id="pending-request-title">Your request is saved.</h2>
+                  <h2 id="pending-request-title">{t('home.v44.plan.saved.title')}</h2>
                 </>
               ) : (
                 <h2 id="pending-request-title">{say('form.pending.title')}</h2>
@@ -1746,6 +1747,11 @@ function IntakeForm({
                   )}
                   <PlanContactNote realMode={realMode} account={account} />
                 </>
+              )}
+              {windowDesign && (
+                <p className="guide-hint plan-promise-line">
+                  {englishIsland('Nothing here is an offer, a quote or a promise.')}
+                </p>
               )}
               <PlanActionBar
                 waiting={step === 0 && nothingChosen}
