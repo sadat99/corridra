@@ -6033,3 +6033,26 @@ Checks at f236a8f0, all exit 0:
 **Preserved.** Every owner decision line and closed gate: ADR-093 2b (migration 0002) NOT installed (needs the owner's separate approval and a production PG 18.7 major check; pins proven on PG16); route-pack-facts, route-pack-publish and import save dormant (404) in production; native language review gate OPEN.
 
 **Not verified.** No signed-in live journey pass. PR4 was not exercised in production.
+
+## 28 Nov 2026 - records: PR 699 merged, main 2223e060, ADR-093 follow-ups UI half (scribe, for Guardian G73)
+
+**Request.** Records for the merge of PR 699, "ADR-093 follow-ups: TW-AU every section, tooLarge on status and code, Review step height, plain Current setting words". Branch claude/records-699 from origin/main (2223e06); authority stamp auth-c92a91cb8b33 was confirmed at 143b75a in the brief. Docs only. No requirement moves to VERIFIED.
+
+**Why.** The ledger named the whole follow-up batch as the next action. The UI half is merged; the server half is still open.
+
+**Outcome (as relayed by G73).**
+
+- PR 699 squash-merged 28 Nov 2026 as 2223e060fbad345975565c20451b7e3a6bbcc880 by Guardian G73 from exact head 3f3ee3e4. 24 checks green; mergeable clean. Builder C (Sonnet). Opus review MERGE-READY yes; no blocking or should-fix findings.
+- Contents: the TW-AU browser test checks all 17 sections for a stray Change; packOutcome and factsOutcome read tooLarge from the 400 code ROUTE_PACK_TOO_LARGE, any 413, or (pack only) the old words; the status Review step is 790 px, was 849, at 1440x900 with no inner scroll (it scrolls inside the dialog at 320x568 by design); "Now: none" is replaced by "Current setting: ...", "Current setting: nothing is set" and "Current status: Active" (spec 8.9 and the Status step updated).
+- deploy dpl_9hj51wLesTz2XNaD1uPifjQFMxrv
+- Open: the server half is in progress on claude/route-pack-followups-server (F2 base-pack read, ROUTE_PACK_NOT_PUBLISHED, mirror key without user, plan fingerprint ROUTE_PACK_PLAN_CHANGED, earlier facts named on a second Try the Rest Again, server emits ROUTE_PACK_TOO_LARGE).
+
+**Next action.** Finish and merge the server half. Owner items unchanged: 2b install approval (production Postgres major check first); BD-CN template and the 7 other launch routes; Phase 4 per route on the owner's word.
+
+**Verification.** G73 and builder receipts as relayed; not re-read by this scribe run. This PR: node scripts/v3-context.mjs verify, node scripts/authority.mjs check, node --test tests/documents.test.mjs, prettier@3.9.10 --check; results in the final report.
+
+**Changed files.** docs/V3_LEDGER.md (first Resume bullet and next action); docs/PLAN_STATUS.md (ADR-093 row); docs/adr/README.md (ADR-093 row only, which still said design only and nothing built, installed or live; now matches PLAN_STATUS); this entry. No code, tests, ADR text, switch or install.
+
+**Preserved.** Closed gates: ADR-093 2b (migration 0002) NOT installed; route-pack-facts, route-pack-publish and import save dormant (404) in production; native language review gate OPEN; Phase 4 closed.
+
+**Not verified.** No signed-in live journey pass. PR 699 was not exercised in production.
