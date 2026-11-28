@@ -1082,12 +1082,77 @@ describe('route-pack-publish, one command id, one request', () => {
       expect(replay.status).toBe(200);
       expect(await asJson(replay)).toMatchObject({ duplicate: true });
     }
-    // The known limit: the configuration before a published proposal cannot be read, so the same id with its list left out
-    // rebuilds to the same pack and is answered as the duplicate. Nothing is written twice.
-    const limit = await publish({ ...settled, languages: undefined });
-    expect(limit.status).toBe(200);
-    expect(await asJson(limit)).toMatchObject({ version: 2, duplicate: true });
+    // Follow-up per G73 (F2): the replay is rebuilt on the pack it was proposed on, so the same id with its list left out no
+    // longer rebuilds to the published pack and is refused, with nothing written.
+    for (const ask of [preview, publish]) {
+      const refused = await ask({ ...settled, languages: undefined });
+      expect(refused.status).toBe(409);
+      expect(await asJson(refused)).toMatchObject({ code: 'ROUTE_PACK_COMMAND_REUSED' });
+    }
     expect(await counts()).toEqual(before);
+  });
+});
+
+describe('route-pack-publish, a replay rebuilt on its base pack (follow-up per G73)', () => {
+  test('after publish, the same id with a list left out is 409 COMMAND_REUSED for the preview and the publish, nothing written; the exact body is the duplicate and a new id publishes', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING');
+    const settled = settings(routeId, 2, { languages: ['en', 'fr'] });
+    expect((await publish(settled)).status).toBe(201);
+    const before = await counts();
+    for (const ask of [preview, publish]) {
+      const refused = await ask({ ...settled, languages: undefined });
+      expect(refused.status).toBe(409);
+      expect(await asJson(refused)).toMatchObject({
+        code: 'ROUTE_PACK_COMMAND_REUSED',
+        error: routePackWords.commandReused,
+      });
+    }
+    expect(await counts()).toEqual(before);
+    const replay = await publish(settled);
+    expect(replay.status).toBe(200);
+    expect(await asJson(replay)).toMatchObject({ version: 2, duplicate: true });
+    expect(await counts()).toEqual(before);
+    // Recovery: the next change under a new command id publishes the next version.
+    const next = await publish({
+      ...settled,
+      commandId: randomUUID(),
+      version: 3,
+      languages: ['en', 'fr', 'de'],
+    });
+    expect(next.status).toBe(201);
+    expect(await asJson(next)).toMatchObject({ version: 3, duplicate: false });
+  });
+
+  test('after Remove sourcing profile is published, the same id without it is 409 COMMAND_REUSED; on a base without a block the same pack stays the duplicate', async () => {
+    const routeId = await newRoute();
+    await appendPack(routeId, 1, 'TESTING', {
+      ...filledConfiguration(),
+      sourcing: bdCnSourcingProfile,
+    });
+    const remove = settings(routeId, 2, { languages: ['en', 'fr'], removeSourcingProfile: true });
+    expect((await publish(remove)).status).toBe(201);
+    const before = await counts();
+    for (const ask of [preview, publish]) {
+      const refused = await ask({ ...remove, removeSourcingProfile: false });
+      expect(refused.status).toBe(409);
+      expect(await asJson(refused)).toMatchObject({ code: 'ROUTE_PACK_COMMAND_REUSED' });
+    }
+    expect(await counts()).toEqual(before);
+    expect((await publish(remove)).status).toBe(200);
+    // A base with no sourcing block rebuilds to the very pack published: nothing differs, so it is the duplicate it is.
+    const bare = await newRoute();
+    await appendPack(bare, 1, 'TESTING');
+    const plain = settings(bare, 2, { languages: ['en', 'fr'] });
+    expect((await publish(plain)).status).toBe(201);
+    const same = await publish({ ...plain, removeSourcingProfile: true });
+    expect(same.status).toBe(200);
+    expect(await asJson(same)).toMatchObject({ version: 2, duplicate: true });
+    // A status change replayed after publish still reads its base status and stays the duplicate.
+    const move = statusChange(bare, 3, 'LIMITED');
+    expect((await publish(move)).status).toBe(201);
+    expect(await asJson(await publish(move))).toMatchObject({ version: 3, duplicate: true });
+    expect(await packsOf(bare)).toHaveLength(3);
   });
 });
 
