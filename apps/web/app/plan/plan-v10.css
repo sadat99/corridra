@@ -16,6 +16,15 @@
   overflow: hidden;
   box-shadow: 0 24px 60px rgba(20, 36, 56, 0.12);
 }
+.pv-window > .pv-side {
+  grid-column: 1;
+  grid-row: 1;
+}
+.pv-window > .pv-main {
+  grid-column: 2;
+  grid-row: 1;
+  max-inline-size: none;
+}
 .pv-window > .ux-brief-summary {
   display: none;
 }
@@ -347,6 +356,10 @@
   .pv-window {
     grid-template-columns: minmax(0, 1fr);
     border-radius: 24px;
+  }
+  .pv-window > .pv-main {
+    grid-column: 1;
+    grid-row: 2;
   }
   .pv-side {
     padding: 24px;
