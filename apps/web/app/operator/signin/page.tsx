@@ -1,10 +1,8 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { AccessOptions } from '../../../components/access-options';
-import { accessHelp } from '../../../lib/access-doors';
+import { WorkAccess } from '../../../components/work-access';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
-import { OperatorSignin } from './signin-form';
 import { operatorReturnTo } from '../../../lib/workspace-navigation';
 import { OperatorInvitationHint } from '../../../components/operator-invitation-hint';
 import { InvitationHintRefresh } from '../../../components/invitation-hint-refresh';
@@ -30,19 +28,19 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
       </WorkspaceShell>
     );
   return (
-    <WorkspaceShell eyebrow="OPERATOR ACCESS" title="Sign in to your workspace." compact>
-      {/* Signed out of the customer account, there is no invitation to find and nothing is asked; coming back to the
-          tab draws the page again, so a customer sign-in in another tab still brings the hint. */}
-      {customerSessionHinted((await cookies()).getAll()) ? (
-        <OperatorInvitationHint />
-      ) : (
-        <InvitationHintRefresh />
-      )}
-      <OperatorSignin returnTo={returnTo} />
-      <Link prefetch={false} className="text-link" href="/operator/forgot-password">
-        Forgot operator password?
-      </Link>
-      <AccessOptions {...accessHelp.operatorSignIn(returnTo)} />
-    </WorkspaceShell>
+    <WorkAccess
+      initial="team"
+      teamReturn={returnTo}
+      helperReturn="/contributor"
+      hint={
+        // Signed out of the customer account, there is no invitation to find and nothing is asked; coming back to the
+        // tab draws the page again, so a customer sign-in in another tab still brings the hint.
+        customerSessionHinted((await cookies()).getAll()) ? (
+          <OperatorInvitationHint />
+        ) : (
+          <InvitationHintRefresh />
+        )
+      }
+    />
   );
 }
