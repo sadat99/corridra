@@ -1,8 +1,8 @@
 # Customer account v18 (canvas Home_V18_Account, 28 Nov 2026)
 
-Switch: `CORRIDRA_UX_ACCOUNT_V18` (on only when exactly `true`, off by default; off, every page is unchanged). Presentation over existing pages; no new server command, migration or permission.
+No switch: this is the customer account for everyone once merged (owner, 28 Nov 2026: "removing it is best"). Presentation over existing pages; no new server command, migration or permission.
 
-## Built (behind the switch)
+## Built
 
 - Navigation: Home, My Work, Companies, Delegations, More (`customerTabs({ v18: true })`, `components/customer-shell.tsx`).
 - My Work: Requests, Meetings, Results as one row of tabs (`components/ux/my-work-tabs.tsx`); each tab is the page that always held it. Meetings appears with `CORRIDRA_UX_SHELLS_V2`.
@@ -11,7 +11,8 @@ Switch: `CORRIDRA_UX_ACCOUNT_V18` (on only when exactly `true`, off by default; 
 - My Businesses `/account/businesses`: the existing workspace list, team, profile, plan and invoices.
 - More: My Businesses, Plan and Invoices, Notifications, All Tools, Help and Support.
 - Companies: Fit and Evidence columns from the approved report contexts; "Your submitted information" line removed.
-- No Listen in the signed-in menus and header while the switch is on (public header and the rail Help sheet still offer it).
+- No Listen in the signed-in menus and header (public header and the rail Help sheet still offer it).
+- Search still finds Meetings and Results by name; the old Programmes and Registrations rail links stay under the hub.
 
 ## Needs server work first (shown as Coming soon or not offered)
 

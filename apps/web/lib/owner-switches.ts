@@ -777,13 +777,6 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
-    name: 'CORRIDRA_UX_ACCOUNT_V18',
-    label: 'Customer account v18',
-    line: 'The signed-in customer account shows Home, My Work, Companies, Delegations and More, the Acting for business switcher and the My businesses page. Every address, form and payload stays the same, and parts that need server work show Coming soon. Off by default. Turn it off by removing the setting in Vercel and redeploying.',
-    group: 'Accounts and requests',
-    kind: 'flag',
-  },
-  {
     name: 'CORRIDRA_UX_HOME_V44',
     label: 'Home page v4.4',
     line: 'While the home page v4.3 is also on, the public home page shows the v4.4 refinement: a centred hero without the photo, a route map beside the route choice that follows the chosen route, and the same map in the request form. Every address, form and payload stays the same. Off by default. Turn it off by removing the setting in Vercel and redeploying.',

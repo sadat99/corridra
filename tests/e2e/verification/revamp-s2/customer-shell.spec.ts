@@ -18,9 +18,9 @@ const header = (page: Page) => page.locator('header.ux-app-header');
 // neither of which is on this server. So the five tabs are four here, and Home is /account.
 const destinations: [string, string][] = [
   ['Home', '/account'],
-  ['Requests', '/account?view=work'],
-  ['Meetings', '/account/meetings'],
-  ['Reports', '/account?view=results'],
+  ['My Work', '/account?view=work'],
+  ['Delegations', '/account/delegation-hub'],
+  ['More', '/account?view=more'],
 ];
 const hrefsOf = (links: ReturnType<Page['getByRole']>) =>
   links.evaluateAll((all) => all.map((a) => a.getAttribute('href')));
@@ -921,11 +921,11 @@ test('the Meetings tab opens a real page: it says what it is for, has no Coming 
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/account');
-  await sidebar(page).getByRole('link', { name: 'Meetings' }).click();
+  await page.goto('/account?view=work');
+  await page.getByRole('navigation', { name: 'My Work sections' }).getByRole('link', { name: 'Meetings' }).click();
   await expect(page).toHaveURL(/\/account\/meetings$/);
   await expect(page.locator('main h1')).toHaveText('Meetings');
-  await expect(sidebar(page).getByRole('link', { name: 'Meetings' })).toHaveAttribute(
+  await expect(sidebar(page).getByRole('link', { name: 'My Work' })).toHaveAttribute(
     'aria-current',
     'page',
   );

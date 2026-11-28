@@ -168,7 +168,7 @@ for (const width of [1024, 1440] as const)
     await page.goto('/account');
     await expect(sidebar(page)).toBeVisible();
     const names = await sidebar(page).getByRole('link').allInnerTexts();
-    expect(names.map((name) => name.trim())).toEqual(['Home', 'Requests', 'Meetings', 'Reports']);
+    expect(names.map((name) => name.trim())).toEqual(['Home', 'My Work', 'Delegations', 'More']);
     await expect(phoneTabs(page)).toHaveCount(0);
   });
 

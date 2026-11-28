@@ -479,7 +479,7 @@ test.describe('positive: Pages', () => {
     ).toBeVisible();
     await expect(options(page)).toHaveCount(6);
     const labels = await options(page).locator('strong').allInnerTexts();
-    expect(labels).toEqual(['Home', 'Requests', 'Companies', 'Meetings', 'Reports', 'New Request']);
+    expect(labels).toEqual(['Home', 'My Work', 'Companies', 'Delegations', 'More', 'New Request']);
     await expect(dialogOf(page)).toContainText(
       'Type at least 2 letters to search your Requests and Companies.',
     );
@@ -493,9 +493,9 @@ test.describe('positive: Pages', () => {
     await openDialog(page);
     expect(await options(page).locator('strong').allInnerTexts()).toEqual([
       'Home',
-      'Requests',
-      'Meetings',
-      'Reports',
+      'My Work',
+      'Delegations',
+      'More',
       'New Request',
     ]);
     await field(page).click();
@@ -583,7 +583,7 @@ test.describe('keyboard', () => {
   test('P4: Up and Down stop at the ends, Enter opens the selected row', async ({ page }) => {
     await mount(page);
     await openDialog(page);
-    const labels = ['Home', 'Requests', 'Companies', 'Meetings', 'Reports', 'New Request'];
+    const labels = ['Home', 'My Work', 'Companies', 'Delegations', 'More', 'New Request'];
     expect(await selectedLabel(page)).toBe('Home');
     await page.keyboard.press('ArrowUp');
     expect(await selectedLabel(page)).toBe('Home');

@@ -10,7 +10,6 @@ import { groupMeetings, serverNowMs } from '../../../lib/meetings/group';
 import { loadMeetings, meetingReportCap } from '../../../lib/meetings/load';
 import { meetingsPartial, requestsMayBeMissing } from '../../../lib/meetings/notice';
 import { neonAuth } from '../../../lib/neon-auth';
-import { customerTabs } from '../../../lib/ux/customer-navigation';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 import { loadWorkItems } from '../../../lib/work-items/load';
 import { MeetingsList, RequestsSection, type MeetingGroup } from './meetings-list';
@@ -76,9 +75,7 @@ export default async function Page() {
     }),
   );
   const shown = meetings.rows.length;
-  const libraryHref = customerTabs({ companies: false, move: false }).find(
-    (tab) => tab.key === 'reports',
-  )?.href;
+  const libraryHref = '/account?view=results';
   const intro =
     'This page lists every meeting and visit the Corridra team has set up for your requests.';
   // With nothing shown, What Happens Next is the only explanation of the page, so it starts open.
@@ -151,7 +148,7 @@ export default async function Page() {
     ) : null;
   return (
     <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings" journeyMode={mode}>
-      {uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18') && <MyWorkTabs current="meetings" meetings />}
+      <MyWorkTabs current="meetings" meetings />
       <JourneyScoped mode={scoped}>
         {readable ? null : <p>{intro}</p>}
         <div className="room">

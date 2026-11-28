@@ -155,30 +155,19 @@ function CustomerFrame({
   // Home is Your Move only with both the navigation and the Move switches, exactly as the old list decided.
   const companies = customerCompaniesEnabled();
   const homeIsMove = plainNames && move;
-  const v18 = uxSwitchOn('CORRIDRA_UX_ACCOUNT_V18');
   const tabs = mode
-    ? customerTabs({ companies, move: homeIsMove, journey: mode, v18 })
-    : customerTabs({ companies, move: homeIsMove, v18 });
+    ? customerTabs({ companies, move: homeIsMove, journey: mode })
+    : customerTabs({ companies, move: homeIsMove });
   const here: CustomerTabKey | null =
     tab === 'home' || tab === 'move'
       ? 'home'
       : tab === 'work'
         ? 'requests'
-        : tab === 'results'
-          ? v18
-            ? 'requests'
-            : 'reports'
-          : tab === 'meetings'
-            ? v18
-              ? 'requests'
-              : 'meetings'
-            : tab === 'companies'
-              ? tab
-              : tab === 'more'
-                ? 'more'
-                : tab === 'delegations'
-                  ? 'delegations'
-                  : null;
+        : tab === 'results' || tab === 'meetings'
+          ? 'requests'
+          : tab === 'companies' || tab === 'more' || tab === 'delegations'
+            ? tab
+            : null;
   const items: CustomerSideItem[] = tabs.map((item) => ({
     key: item.key,
     // Meetings is a new word with no reviewed translation yet, so it is marked as English.
@@ -225,14 +214,13 @@ function CustomerFrame({
         organisationProfiles={customerOrganisationProfilesEnabled()}
         companies={companies}
         move={homeIsMove}
-        accountV18={v18}
         text={
           real
             ? 'Your work stays private to the people given access.'
             : 'Preview workspace: use made-up names and details here.'
         }
       />
-      {v18 ? <ActingFor /> : null}
+      <ActingFor />
       {/* Streams after the frame: the identity is for the header's Search only and nothing waits for it. */}
       <Suspense fallback={null}>
         <CustomerBarIdentity />

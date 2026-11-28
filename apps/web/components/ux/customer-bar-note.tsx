@@ -23,7 +23,7 @@ export function CustomerBarNote({
   organisationProfiles = false,
   companies = false,
   move = false,
-  accountV18 = false,
+  accountV18 = true,
 }: {
   text: string;
   billing?: boolean;
