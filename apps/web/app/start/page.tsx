@@ -33,7 +33,7 @@ export default function Page() {
           </span>
         </Link>
         <Link prefetch={false} className="aw-opt" href="/plan">
-          <span className="aw-ic" aria-hidden="true">✉</span>
+          <span className="aw-ic" aria-hidden="true">↗</span>
           <span>
             <b>Send without an account</b>
             Start the request now and finish the account step at the end.

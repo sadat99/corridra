@@ -607,3 +607,11 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.aw .aw-side .aw-ticks {
+  margin-block: auto 0;
+  padding-block: 28px 0;
+}
+.aw .aw-opt b {
+  margin-block-end: 3px;
+}
